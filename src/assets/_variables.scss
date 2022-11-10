@@ -1,0 +1,18 @@
+:root {
+	// background: #2e8b57; // green 
+	// background: #228b22; // green 
+	// background: #008000; // green 
+	// background: #0066cc; //blue
+	// background: #3b6fba; //blue     
+	--color-primary: #3b6fba;
+	--color-secondary: #28a745;
+	--color-header: var(--color-primary);
+	// --color-body-bg: color-mix(in srgb, var(--color-primary), #0000 98%);
+	--color-body-bg: #e8ecf3;
+	// --color-table-thead-bg: color-mix(in srgb, var(--color-primary), #0000 15%);
+	--color-table-thead-bg: #5884c4;
+	--color-table-thead-text: #fff;
+	// --color-table-td-even-bg: color-mix(in srgb, var(--color-primary), #0000 92%);
+	--color-table-td-even-bg: #f0f4fa;
+	--color-btn-primary: var(--color-primary);
+}
