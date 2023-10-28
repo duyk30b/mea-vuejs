@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '@/core/local-storage.service'
-import { AuthService } from '@/modules/auth'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { AuthService } from '../../modules/auth/auth.service'
 
 const router = useRouter()
 
 const formState = reactive({
-  phone: localStorage.getItem(ORG_PHONE) || '',
+  phone: LocalStorageService.getOrgPhone(),
   username: '',
   password: '',
   email: '',
@@ -21,56 +21,68 @@ const onFinishFailed = (errorInfo: any) => {
 const loading = ref(false)
 
 const startLogin = async () => {
-  try {
-    loading.value = true
-    await AuthService.register({
-      phone: formState.phone,
-      email: formState.email,
-      username: formState.username,
-      password: formState.password,
-    })
+  loading.value = true
+  const result = await AuthService.register({
+    phone: formState.phone,
+    email: formState.email,
+    username: formState.username,
+    password: formState.password,
+  })
+  loading.value = false
+  if (result) {
     router.push({ name: 'AppHome' })
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: 'Đăng ký thất bại' })
-    console.log('🚀 ~ file: Login.vue:34 ~ startLogin ~ error:', error)
-  } finally {
-    loading.value = false
   }
 }
-
 </script>
 
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem">ĐĂNG KÝ TÀI KHOẢN</a-divider>
+      <a-divider style="font-size: 1.5rem"> ĐĂNG KÝ TÀI KHOẢN </a-divider>
       <br />
-      <a-form :model="formState" name="basic" :label-col="{ span: 4 }" :wrapper-col="{ span: 20 }" autocomplete="off"
-        @finish="startLogin" @finishFailed="onFinishFailed">
-        <a-form-item label="ID Cơ sở" name="phone" :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]">
+      <a-form
+        :model="formState"
+        name="basic"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 20 }"
+        autocomplete="off"
+        @finish="startLogin"
+        @finishFailed="onFinishFailed"
+      >
+        <a-form-item
+          label="ID Cơ sở"
+          name="phone"
+          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
+        >
           <a-input v-model:value="formState.phone" />
         </a-form-item>
 
-        <a-form-item label="Email Cơ sở" name="phone" :rules="[{ required: true, message: 'Cần nhập Email!' }]">
+        <a-form-item
+          label="Email Cơ sở"
+          name="phone"
+          :rules="[{ required: true, message: 'Cần nhập Email!' }]"
+        >
           <a-input v-model:value="formState.email" />
         </a-form-item>
 
-        <a-form-item label="Tài khoản" name="username" :rules="[
-          { required: true, message: 'Tên tài khoản không được để trống!' },
-        ]">
+        <a-form-item
+          label="Tài khoản"
+          name="username"
+          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
+        >
           <a-input v-model:value="formState.username" />
         </a-form-item>
 
-        <a-form-item label="Mật khẩu" name="password" :rules="[
-          { required: true, message: 'Mật khẩu không được để trống!' },
-        ]">
+        <a-form-item
+          label="Mật khẩu"
+          name="password"
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
+        >
           <a-input-password v-model:value="formState.password" />
         </a-form-item>
 
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button type="primary" html-type="submit" :loading="loading">
-            Đăng ký
-          </a-button>
+          <a-button type="primary" html-type="submit" :loading="loading"> Đăng ký </a-button>
         </a-form-item>
       </a-form>
     </div>
@@ -85,7 +97,7 @@ const startLogin = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url("@/assets/image/background-login.jpg");
+  background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -97,7 +109,9 @@ const startLogin = async () => {
     margin: 0 auto;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.02), 0px 0px 2px rgba(0, 0, 0, 0.05),
+    box-shadow:
+      0px 3px 5px rgba(0, 0, 0, 0.02),
+      0px 0px 2px rgba(0, 0, 0, 0.05),
       0px 1px 4px rgba(0, 0, 0, 0.08);
     background-color: #fff;
   }

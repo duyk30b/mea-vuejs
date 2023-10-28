@@ -1,16 +1,17 @@
-
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
-const settingDisplay = ref<typeof store.SCREEN_PROCEDURE_LIST>(JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST)))
+const store = useScreenStore()
+const settingDisplay = ref<typeof store.SCREEN_PROCEDURE_LIST>(
+  JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST))
+)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -27,7 +28,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_PROCEDURE_LIST, settingData)
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_PROCEDURE_LIST, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_PROCEDURE_LIST = JSON.parse(settingData)
 
@@ -44,8 +45,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -55,20 +62,30 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.table.detail">Hiển thị nút xem chi tiết (
-                <FileSearchOutlined /> )
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.detail">
+                Hiển thị nút xem chi tiết ( <FileSearchOutlined /> )
               </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.group">Hiển thị nhóm</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.status">Hiển thị trạng thái</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.group"> Hiển thị nhóm </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.action">Hiển thị nút sửa</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.status">
+                Hiển thị trạng thái
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.action">
+                Hiển thị nút sửa
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
       </table>

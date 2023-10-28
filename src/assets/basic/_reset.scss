@@ -1,45 +1,56 @@
 * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-	font-family: 'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
 }
 
 a {
-	text-decoration: none;
-	cursor: pointer;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 img {
-	max-width: 100%;
+  max-width: 100%;
 }
 
 ol,
 ul {
-	list-style-type: none;
-	list-style-position: inside;
+  list-style-type: none;
+  list-style-position: inside;
 }
 
 table {
-	border-collapse: collapse;
-	border-spacing: 0;
-	white-space: nowrap;
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  thead {
+    tr {
+      th {
+        white-space: nowrap;
+      }
+    }
+  }
 }
 
 pre,
 code {
-	font-family: monospace, monospace;
+  font-family: monospace, monospace;
 }
 
 summary {
-	cursor: pointer;
-	user-select: none;
+  cursor: pointer;
+  user-select: none;
 }
 
 select {
-	cursor: pointer;
-	user-select: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+input {
+  font-size: 16px !important;
 }

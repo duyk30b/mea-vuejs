@@ -1,92 +1,146 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Transform, Type } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Type,
+} from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { Distributor } from '../distributor'
-import { DiscountType, type PaymentStatus } from '../enum'
-import { ReceiptItem } from './receipt-item.model'
+import { DistributorPayment } from '../distributor-payment/distributor-payment.model'
+import { DiscountType } from '../enum'
+import { ReceiptItem } from '../receipt-item/receipt-item.model'
 
-export class Receipt extends BaseModel {
-	@Expose({ name: 'purchase_id', toClassOnly: true })
-	purchaseId: number
+export enum ReceiptStatus {
+  Refund = -1,
+  Draft = 0,
+  AwaitingShipment = 1, // Chờ gửi hàng
+  Debt = 2,
+  Success = 3,
+}
 
-	@Expose({ name: 'distributor_id', groups: ['CREATE'] })
-	distributorId: number
+// Sử dụng Group Transform trong 1 số trường hợp nhất định
+//                 GROUP          distributorId        debt         status
+// Fetch Data       ALL               ✓                 ✓
+// Insert          CREATE             ✓
+// Update          UPDATE
+// COPY             COPY              ✓                 ✓
+// Blank            BLANK          chỉ dùng giá trị mặc định cho trường hợp này
 
-	@Expose({ name: 'payment_status', toClassOnly: true })
-	paymentStatus: PaymentStatus
+export class Receipt {
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  id: number
 
-	@Expose({ name: 'payment_time', toClassOnly: true })
-	paymentTime?: number
+  @Expose({ groups: [FROM_PLAIN, USER_CREATE] })
+  distributorId: number
 
-	@Expose({ name: 'refund_time', toClassOnly: true })
-	refundTime?: number
+  @Expose({ groups: [FROM_PLAIN] })
+  status: ReceiptStatus
 
-	@Expose({ name: 'total_item_money' })
-	totalItemMoney: number = 0                    // tiền sản phẩm
+  @Expose()
+  itemsActualMoney: number // tiền sản phẩm
 
-	@Expose({ name: 'discount_money' })
-	@Transform(({ value }) => value || 0)  
-	discountMoney: number = 0                       // tiền giảm giá
+  @Expose()
+  discountMoney: number // tiền giảm giá
 
-	@Expose({ name: 'discount_percent' })
-	@Transform(({ value }) => value || 0)  
-	discountPercent: number = 0                     // % giảm giá
+  @Expose()
+  discountPercent: number // % giảm giá
 
-	@Expose({ name: 'discount_type' })
-	discountType: DiscountType = DiscountType.Percent               // Loại giảm giá
+  @Expose()
+  discountType: DiscountType // Loại giảm giá
 
-	@Expose({ name: 'surcharge' })
-	@Transform(({ value }) => value || 0)  
-	surcharge: number = 0                           // phụ phí: tiền phải trả thêm: như tiền ship, tiền vé, hao phí xăng dầu
+  @Expose()
+  surcharge: number // phụ phí: tiền phải trả thêm: như tiền ship, tiền vé, hao phí xăng dầu
 
-	@Expose({ name: 'total_money' })
-	totalMoney: number = 0                          // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
+  @Expose()
+  revenue: number // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
 
-	@Expose({ name: 'debt' })
-	@Transform(({ value }) => value || 0)  
-	debt: number = 0                                // tiền nợ
+  @Expose({ groups: [FROM_PLAIN] })
+  paid: number
 
-	@Expose({ name: 'note' })
-	note: string
+  @Expose({ groups: [FROM_PLAIN] })
+  debt: number // tiền nợ
 
-	@Expose({ name: 'receipt_items' })
-	@Type(() => ReceiptItem)
-	receiptItems: ReceiptItem[] = []
+  @Expose()
+  note: string
 
-	@Expose({ name: 'distributor', toClassOnly: true })
-	@Type(() => Distributor)
-	distributor: Distributor
+  @Expose()
+  startedAt: number
 
-	static blank(): Receipt {
-		return new Receipt()
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  shippedAt: number
 
-	static fromPlain(plain: Record<string, any>): Receipt {
-		return plainToInstance(Receipt, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
 
-	static fromPlains(plains: Record<string, any>[]): Receipt[] {
-		return plainToInstance(Receipt, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
+  @Type(() => ReceiptItem)
+  receiptItems?: ReceiptItem[]
 
-	static fromInstance(instance: Receipt): Receipt {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => Distributor)
+  distributor?: Distributor
 
-	static toPlain(instance: Receipt, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			groups: [type],
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => DistributorPayment)
+  distributorPayments?: DistributorPayment[]
+
+  static init(): Receipt {
+    const ins = new Receipt()
+    ins.id = 0
+    ins.status = ReceiptStatus.Draft
+    ins.itemsActualMoney = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.discountType = DiscountType.Percent
+    ins.surcharge = 0
+    ins.revenue = 0
+    ins.paid = 0
+    ins.debt = 0
+
+    return ins
+  }
+
+  static blank(): Receipt {
+    const ins = Receipt.init()
+    ins.receiptItems = []
+    ins.distributor = Distributor.init()
+    ins.distributorPayments = []
+    return ins
+  }
+
+  static fromPlain(plain: Record<string, any>): Receipt {
+    return plainToInstance(Receipt, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromPlains(plains: Record<string, any>[]): Receipt[] {
+    return plainToInstance(Receipt, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromInstance(instance: Receipt): Receipt {
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_INSTANCE],
+    })
+  }
+
+  static toPlain(
+    instance: Receipt,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
 }

@@ -1,8 +1,5 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <div>
-    Đăng ký khám
-  </div>
+  <div>Đăng ký khám</div>
 </template>

@@ -1,39 +1,151 @@
+<script setup lang="ts">
+import { useScreenStore } from '../../modules/_me/screen.store'
+
+const props = withDefaults(
+  defineProps<{
+    value: number
+    prepend?: string
+    append?: string
+    textAlign?: 'left' | 'right'
+    disabled?: boolean
+    placeholder?: string
+    required?: boolean
+  }>(),
+  {
+    value: 0,
+    disabled: false,
+    prepend: '',
+    append: '',
+    textAlign: 'left',
+    placeholder: '',
+    required: false,
+  }
+)
+const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
+
+const screenStore = useScreenStore()
+
+const handleInput = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const number = Number(target.value.replace(/,/g, '')) || 0
+  emit('update:value', number * screenStore.SYSTEM_SETTING.moneyDivisionFormat)
+}
+
+const handleFocus = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    target.select()
+  }
+}
+</script>
+
 <template>
-  <div :class="{ 'input-text': true, disabled: disabled }">
-    <input :value="money" @input="input" type="number" :placeholder="placeholder" :disabled="disabled" :step="step"
-      :min="min" :max="max" />
-    <div class="append">.000 vnđ</div>
-    <label>{{ label }}</label>
+  <div :class="{ 'input-money': true, 'disabled': disabled }">
+    <div v-if="prepend" class="prepend">
+      {{ prepend }}
+    </div>
+    <div class="input-area">
+      <input
+        ref="inputMoney"
+        :style="{ textAlign }"
+        :value="
+          value
+            ? (value / screenStore.SYSTEM_SETTING.moneyDivisionFormat)
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            : ''
+        "
+        :placeholder="placeholder || '0'"
+        :disabled="disabled"
+        :required="required"
+        inputmode="decimal"
+        @focus="handleFocus"
+        @input="handleInput"
+      />
+    </div>
+    <div v-if="append" class="append">
+      {{ append }}
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-export default {
-  props: {
-    label: { type: String, default: () => '' },
-    value: { type: Number, default: () => 0 },
-    placeholder: { type: String, default: () => '' },
-    disabled: { type: Boolean, default: () => false },
-    step: { type: Number, default: () => 1 },
-    min: { type: Number },
-    max: { type: Number },
-  },
+<style lang="scss" scoped>
+.input-money {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  display: flex;
+  align-items: stretch;
 
-  data() {
-    return { money: this.value / 1000 }
-  },
+  &:focus-within {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px #1890ff33;
+  }
 
-  watch: {
-    value(newValue) {
-      this.money = newValue / 1000
-    },
-  },
+  &:hover {
+    border-color: #40a9ff;
+  }
 
-  methods: {
-    input(e: Event) {
-      const target = e.target as HTMLInputElement
-      this.$emit('update:value', Number(target.value) * 1000)
-    },
-  },
+  &.disabled {
+    background-color: #eeeeee;
+    border-color: #d9d9d9;
+
+    &:hover {
+      border-color: #bbb;
+    }
+
+    .append {
+      opacity: 0.8;
+    }
+
+    .prepend {
+      opacity: 0.8;
+    }
+  }
+
+  .input-area {
+    flex: 1;
+
+    input {
+      width: 100%;
+      padding: 2px 12px;
+      outline: none;
+      border: none;
+
+      &::placeholder {
+        opacity: 0.4;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.8;
+      }
+    }
+  }
+
+  .append {
+    padding: 0 12px;
+    border-left: 1px solid #d9d9d9;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    background-color: #eee;
+    color: #777;
+    font-size: 0.8em;
+  }
+
+  .prepend {
+    padding: 0 12px;
+    border-right: 1px solid #d9d9d9;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    background-color: #eee;
+    color: #777;
+    font-size: 0.8em;
+  }
 }
-</script>
+</style>
+

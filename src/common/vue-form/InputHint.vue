@@ -6,14 +6,14 @@
     @update:searchText="(e) => $emit('update:searchText', e)"
     @selectItem="(e) => $emit('update:searchText', e)"
   >
-    <template v-slot:each="{ item }">
-      <p v-html="formatItem(item)"></p>
+    <template #each="{ item }">
+      <p v-html="formatItem(item)" />
     </template>
   </InputOptions>
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { convertViToEn } from '@/utils/helpers/string.helper'
+import { convertViToEn } from '../../utils/helpers/string.helper'
 import InputOptions from './InputOptions.vue'
 
 export default {
@@ -23,7 +23,7 @@ export default {
     searchText: { type: String, default: () => '' },
     disabled: { type: Boolean, default: () => false },
   },
-
+  emits: ['update:searchText'],
   computed: {
     optionsFilter() {
       const { searchText } = this
@@ -46,7 +46,10 @@ export default {
       if (index1 === -1) return ''
 
       const index2 = index1 + textEng.length
-      return `${item.slice(0, index1)}<b>${item.slice(index1, index2)}</b>${item.slice(index2, itemEng.length)}`
+      return `${item.slice(0, index1)}<b>${item.slice(index1, index2)}</b>${item.slice(
+        index2,
+        itemEng.length
+      )}`
     },
   },
 }

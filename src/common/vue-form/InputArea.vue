@@ -1,6 +1,6 @@
 <template>
   <div class="input-text">
-    <textarea :value="value" @input="input" :disabled="disabled"> </textarea>
+    <textarea :value="value" :disabled="disabled" @input="input" />
     <label>{{ label }}</label>
   </div>
 </template>
@@ -12,6 +12,7 @@ export default {
     value: { type: String, default: () => '' },
     disabled: { type: Boolean, default: () => false },
   },
+  emits: ['update:value'],
   methods: {
     input(e: Event) {
       const target = e.target as HTMLInputElement

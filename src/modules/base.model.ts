@@ -1,6 +1,6 @@
-import { Expose } from 'class-transformer'
+import { Expose, Transform } from 'class-transformer'
 
 export class BaseModel {
-	@Expose({ name: 'id', toClassOnly: true })
-	id: number
+  @Expose({ name: 'id', toClassOnly: true })
+  id: number
 }

@@ -1,4 +1,5 @@
-export * from './invoice-item.model'
-export * from './invoice-item.service'
+export * from './invoice-expense.model'
+export * from './invoice-surcharge.model'
+export * from './invoice.dto'
 export * from './invoice.model'
 export * from './invoice.service'

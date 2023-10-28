@@ -1,65 +1,110 @@
-import { CONFIG } from '@/config'
-import { LocalStorageService } from '@/core/local-storage.service'
-import { useUserStore } from '@/store/user.store'
-import axios from 'axios'
-import { Employee } from '../employee'
-
-export type LoginDto = {
-	orgPhone: string;
-	username: string;
-	password: string;
-}
-
-export type RegisterDto = {
-	phone: string;
-	email: string;
-	username: string;
-	password: string;
-}
-
-const userStore = useUserStore()
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { MeaDatabase } from '../../core/indexed-db/database'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { useMeStore } from '../_me/me.store'
+import { AuthApi } from './auth.api'
+import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto'
 
 export class AuthService {
-	static async register(credentials: RegisterDto) {
-		const { data } = await axios.post(`${CONFIG.API_URL}/auth/register`, credentials)
-		LocalStorageService.setAuth(data)
-		userStore.userInfo = Employee.fromPlain(data.user)
-	}
+  static async register(body: RegisterDto) {
+    try {
+      const data = await AuthApi.register(body)
+      LocalStorageService.setToken(data)
+      LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
+      useMeStore().user = data.user
+      return true
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
 
-	static async login(credentials: LoginDto) {
-		const { data } = await axios.post(`${CONFIG.API_URL}/auth/login`, credentials)
-		LocalStorageService.setAuth(data)
-		userStore.userInfo = Employee.fromPlain(data.user)
-	}
+  static async login(body: LoginDto) {
+    try {
+      const data = await AuthApi.login(body)
+      LocalStorageService.setToken(data)
+      LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
+      useMeStore().user = data.user
+      return true
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
 
-	static async loginDemo() {
-		const { data } = await axios.post(`${CONFIG.API_URL}/auth/login-demo`)
-		LocalStorageService.setAuth(data)
-		userStore.userInfo = Employee.fromPlain(data.user)
-		// reconnectSocket()
-	}
+  static async loginDemo() {
+    try {
+      const data = await AuthApi.loginDemo()
+      LocalStorageService.setToken(data)
+      // LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
+      useMeStore().user = data.user
+      return true
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
 
-	static async forgotPassword(dto: { orgPhone: string, email: string, username: string }) {
-		const { data } = await axios.post(`${CONFIG.API_URL}/auth/forgot-password`, {
-			org_phone: dto.orgPhone,
-			email: dto.email,
-			username: dto.username,
-		})
-		return data as { success: boolean }
-	}
+  static async forgotPassword(body: ForgotPasswordDto) {
+    try {
+      const { data, message } = await AuthApi.forgotPassword(body)
+      AlertStore.addSuccess(message)
+      return { data, message }
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
 
-	static async resetPassword(dto: { orgPhone: string, username: string, password: string, token: string }) {
-		const { data } = await axios.post(`${CONFIG.API_URL}/auth/reset-password`, {
-			org_phone: dto.orgPhone,
-			password: dto.password,
-			username: dto.username,
-			token: dto.token,
-		})
-		return data as { success: boolean }
-	}
+  static async resetPassword(body: ResetPasswordDto) {
+    try {
+      return await AuthApi.resetPassword(body)
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
 
-	static async logout() {
-		LocalStorageService.removeAuth()
-		userStore.userInfo = null
-	}
+  static async logout() {
+    const refreshToken = LocalStorageService.getRefreshToken()
+    if (refreshToken) {
+      try {
+        await AuthApi.logout(refreshToken)
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message || error.message || error?.config.signal?.reason
+        AlertStore.addError(message)
+      }
+    }
+    await MeaDatabase.destroy()
+    LocalStorageService.removeToken()
+    useMeStore().user = null
+  }
+
+  static getAccessToken = (() => {
+    const start = async () => {
+      try {
+        const refreshToken = LocalStorageService.getRefreshToken()
+        if (!refreshToken) throw new Error()
+        const data = await AuthApi.refreshToken(refreshToken)
+        LocalStorageService.setAccessToken(data)
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message || error.message || error?.config.signal?.reason
+        AlertStore.addError(message)
+        await AuthService.logout()
+      }
+    }
+    let fetching: any = null
+    return async () => {
+      if (!fetching) fetching = start()
+      await fetching
+      fetching = null
+    }
+  })()
 }

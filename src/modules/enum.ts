@@ -1,60 +1,46 @@
+// export type ComparisonType = 'LIKE' | 'EQUAL' | 'BETWEEN' | 'IS_NULL' | 'NOT_NULL' | '>' | '<'
+export const ComparisonType = [
+  'LIKE',
+  'BETWEEN',
+  'IS_NULL',
+  'NOT_NULL',
+  '>',
+  '<',
+  '>=',
+  '<=',
+  '==',
+  '!=',
+] as const
+export type ComparisonType = (typeof ComparisonType)[number]
+
+export const UNKNOWN_KEY = '_unknown'
+
 export enum EGender {
-	Female = 0,
-	Male = 1,
+  Female = 0,
+  Male = 1,
 }
 
 export enum ERole {
-	Root = 0,
-	Admin = 1,
-	User = 2
+  Root = 0,
+  Admin = 1,
+  User = 2,
 }
 
 export enum DiscountType {
-	Percent = '%',
-	VND = 'VNĐ',
+  Percent = '%',
+  VND = 'VNĐ',
 }
 
-export enum DebtType {
-	Borrow = 1,
-	PayUp = 2,
-	Refund = 3,
+export enum PaymentType {
+  ReceiveRefund = -1, // Nhận tiền hoàn trả
+  Prepayment = 0, // Thanh toán trước mua hàng
+  ImmediatePayment = 1, // Thanh toán ngay khi mua hàng
+  PayDebt = 2, // Trả nợ (thanh toán sau mua hàng )
 }
 
-export enum PaymentStatus {
-	Unknown = 0,
-	Unpaid = 1,
-	Partial = 2,
-	Full = 3,
-	Refund = 4,
-}
+export type UnitType = { name: string; rate: number; default?: boolean }
 
-export const PaymentStatusText = {
-	[PaymentStatus.Unknown]: 'Không xác định',
-	[PaymentStatus.Unpaid]: 'Nháp',
-	[PaymentStatus.Partial]: 'Thanh toán một phần',
-	[PaymentStatus.Full]: 'Đã thanh toán',
-	[PaymentStatus.Refund]: 'Hoàn trả',
-}
-
-export enum InvoiceItemType {
-	ProductBatch = 1,
-	Procedure = 2,
-}
-
-export enum ProductMovementType {
-	Receipt = 1,
-	Invoice = 2,
-}
-
-export enum ArrivalType {
-	Invoice = 1,
-	Normal = 2,
-}
-
-export enum ArrivalStatus {
-	Unknown = 0,
-	Waiting = 1,
-	Examining = 2,
-	Paying = 3,
-	Finish = 4,
+export enum MovementType {
+  Receipt = 1,
+  Invoice = 2,
 }

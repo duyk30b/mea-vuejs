@@ -1,4 +1,6 @@
 export const CONFIG = {
-	// API_URL: 'https://api.medihome.vn',
-	API_URL: 'http://localhost:20000',
+  API_URL:
+    import.meta.env.MODE === 'production'
+      ? 'https://api.mea.vn'
+      : `http://${location.hostname}:20000`,
 }

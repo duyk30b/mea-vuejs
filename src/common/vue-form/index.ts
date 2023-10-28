@@ -9,7 +9,13 @@ import InputText from './InputText.vue'
 import VueSelect from './VueSelect.vue'
 
 export {
-	InputArea, InputDate,
-	InputHint, InputMoney, InputNumber, InputOptions,
-	InputPhone, InputText, VueSelect,
+  InputArea,
+  InputDate,
+  InputHint,
+  InputMoney,
+  InputNumber,
+  InputOptions,
+  InputPhone,
+  InputText,
+  VueSelect,
 }

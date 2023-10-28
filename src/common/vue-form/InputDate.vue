@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { textToTime, timeToText } from '@/utils'
 import { onMounted, ref, watch } from 'vue'
+import { DTimer } from '../../utils'
 
 const props = withDefaults(
-  defineProps<{ value?: string | number | Date, format?: string, typeParser?: string }>(),
-  { value: undefined, format: 'DD/MM/YYYY', typeParser: 'string' }
+  defineProps<{ value?: string | number | Date; format?: string; typeParser?: string }>(),
+  {
+    value: undefined,
+    format: 'DD/MM/YYYY',
+    typeParser: 'string',
+  }
 )
 const emit = defineEmits<{ (e: 'update:value', value: string | number | Date | undefined): void }>()
 
@@ -19,16 +23,16 @@ watch(
   () => props.value,
   (newValue, oldValue) => {
     if (!inputDate.value) return
-    if (newValue == null) return inputDate.value.value = ''
-    inputDate.value.value = timeToText(newValue, props.format)
+    if (newValue == null) return (inputDate.value.value = '')
+    inputDate.value.value = DTimer.timeToText(newValue, props.format)
   },
   { immediate: true }
 )
 
 onMounted(() => {
   if (!inputDate.value) return
-  if (props.value == null) return inputDate.value.value = ''
-  inputDate.value.value = timeToText(props.value, props.format)
+  if (props.value == null) return (inputDate.value.value = '')
+  inputDate.value.value = DTimer.timeToText(props.value, props.format)
 })
 
 const startFormatMask = (text: string, format: string) => {
@@ -56,7 +60,7 @@ const handleChange = (e: Event) => {
     return
   }
 
-  const time = textToTime(target.value, props.format)
+  const time = DTimer.textToTime(target.value, props.format)
 
   if (props.typeParser === 'number') {
     emit('update:value', time.getTime())
@@ -85,8 +89,7 @@ const handleInput = (e: Event) => {
         break
       }
     }
-  }
-  else if ((e as InputEvent).inputType === 'insertText') {
+  } else if ((e as InputEvent).inputType === 'insertText') {
     for (let i = 0; i < ruleValidIndex.length; i++) {
       if (ruleValidIndex[i] >= selectionStart) {
         target.selectionStart = ruleValidIndex[i]
@@ -99,7 +102,7 @@ const handleInput = (e: Event) => {
 </script>
 
 <template>
-  <input ref="inputDate" @input="handleInput" @change="handleChange" :placeholder="props.format" />
+  <input ref="inputDate" :placeholder="props.format" @input="handleInput" @change="handleChange" />
 </template>
 
 <style lang="scss" scoped>

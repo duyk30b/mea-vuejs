@@ -1,14 +1,13 @@
-
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { OrganizationService } from '../../../modules/organization'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
 const GROUP = ref<typeof store.PROCEDURE_GROUP>(JSON.parse(JSON.stringify(store.PROCEDURE_GROUP)))
 
 const showModal = ref(false)
@@ -32,7 +31,7 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PROCEDURE_GROUP, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PROCEDURE_GROUP, data)
       store.PROCEDURE_GROUP = JSON.parse(data)
     }
 
@@ -53,16 +52,21 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt dữ liệu" :confirm-loading="saveLoading"
-    :afterClose="refreshModal">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt dữ liệu"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+  >
     <template #footer>
       <div class="flex justify-between px-2">
         <div>
-          <a-button @click="handleReload">Tải lại</a-button>
+          <a-button @click="handleReload"> Tải lại </a-button>
         </div>
         <div>
-          <a-button @click="showModal = false">Hủy</a-button>
-          <a-button type="primary" @click="handleSave" :loading="saveLoading">Lưu lại</a-button>
+          <a-button @click="showModal = false"> Hủy </a-button>
+          <a-button type="primary" :loading="saveLoading" @click="handleSave"> Lưu lại </a-button>
         </div>
       </div>
     </template>
@@ -73,13 +77,15 @@ defineExpose({ openModal })
             <div class="text-center font-bold">Danh sách nhóm dịch vụ</div>
             <div v-for="(r, key, i) in GROUP" :key="key">
               <div class="py-2 flex">
-                <a-input :addon-before="i + 1" v-model:value="GROUP[key]" style="flex: 1" />
-                <a-button type="text" @click="delete GROUP[key]" danger>Xóa</a-button>
+                <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="delete GROUP[key]"> Xóa </a-button>
               </div>
             </div>
           </div>
           <div class="py-2 flex justify-center">
-            <a-button type="primary" @click="GROUP[Date.now().toString(36)] = ''">Thêm mới</a-button>
+            <a-button type="primary" @click="GROUP[Date.now().toString(36)] = ''">
+              Thêm mới
+            </a-button>
           </div>
         </a-tab-pane>
       </a-tabs>

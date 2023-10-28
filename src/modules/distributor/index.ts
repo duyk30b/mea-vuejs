@@ -1,4 +1,4 @@
-export * from './distributor-debt.model'
-export * from './distributor-debt.service'
+export * from './distributor.api'
+export * from './distributor.dto'
 export * from './distributor.model'
-export * from './distributor.service'
+export * from './distributor.store'

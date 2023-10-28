@@ -1,67 +1,111 @@
 import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 
-export class Distributor extends BaseModel {
-	@Expose({ name: 'full_name_en' })
-	fullNameEn: string = ''
+export class Distributor {
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  id: number
 
-	@Expose({ name: 'full_name_vi' })
-	fullNameVi: string = ''
+  @Expose()
+  fullName: string
 
-	@Expose({ name: 'phone' })
-	phone?: string
+  @Expose()
+  phone?: string
 
-	@Expose({ name: 'address_province' })
-	addressProvince: string
+  @Expose()
+  addressProvince?: string
 
-	@Expose({ name: 'address_district' })
-	addressDistrict: string
+  @Expose()
+  addressDistrict?: string
 
-	@Expose({ name: 'address_ward' })
-	addressWard: string
+  @Expose()
+  addressWard?: string
 
-	@Expose({ name: 'address_street' })
-	addressStreet: string
+  @Expose()
+  addressStreet?: string
 
-	@Expose({ name: 'debt', toClassOnly: true })
-	debt: number = 0
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  debt: number
 
-	@Expose({ name: 'is_active' })
-	isActive: boolean = true                            // Trạng thái
+  @Expose()
+  note?: string
 
-	@Expose({ name: 'note' })
-	note: string
+  @Expose()
+  isActive: 1 | 0 // Trạng thái
 
-	static blank(): Distributor {
-		return new Distributor()
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  createdAt: number
 
-	static fromPlain(plain: Record<string, any>): Distributor {
-		return plainToInstance(Distributor, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
 
-	static fromPlains(plains: Record<string, any>[]): Distributor[] {
-		return plainToInstance(Distributor, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
 
-	static fromInstance(instance: Distributor): Distributor {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  static init(): Distributor {
+    const ins = new Distributor()
+    ins.id = 0
+    ins.isActive = 1
+    ins.debt = 0
+    return ins
+  }
 
-	static toPlain(instance: Distributor): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static blank(): Distributor {
+    const ins = Distributor.init()
+    return ins
+  }
+
+  static fromObject(object: Partial<Distributor>) {
+    const ins = new Distributor()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Distributor>[]) {
+    return objects.map((i) => Distributor.fromObject(i))
+  }
+
+  static fromPlain(plain: Record<string, any> = {}): Distributor {
+    return plainToInstance(Distributor, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromPlains(plains: Record<string, any>[] = []): Distributor[] {
+    return plainToInstance(Distributor, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromInstance(instance: Distributor): Distributor {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
+      throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
+    }
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_INSTANCE],
+    })
+  }
+
+  static fromInstances(instances: Distributor[]): Distributor[] {
+    return instances.map((i) => Distributor.fromInstance(i))
+  }
+
+  static toPlain(
+    instance: Distributor,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
+      throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
+    }
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
 }

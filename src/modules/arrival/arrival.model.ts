@@ -1,85 +1,92 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { Diagnosis } from '../diagnosis/diagnosis.model'
-import { Customer } from '../customer'
-import type { ArrivalStatus, ArrivalType, PaymentStatus } from '../enum'
-import { Invoice } from '../invoice'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
+import { Customer } from '../customer'
+import { Diagnosis } from '../diagnosis/diagnosis.model'
+import { Invoice } from '../invoice'
+
+export enum ArrivalType {
+  Invoice = 1,
+  Normal = 2,
+}
+
+export enum ArrivalStatus {
+  Unknown = 0,
+  Waiting = 1,
+  Examining = 2,
+  Paying = 3,
+  Finish = 4,
+}
 
 export class Arrival extends BaseModel {
-	@Expose({ name: 'customer_id' })
-	customerId?: number
+  @Expose({ name: 'customer_id', groups: ['CREATE'] })
+  customerId?: number
 
-	@Expose({ name: 'diagnosis_id' })
-	diagnosisId?: number
+  @Expose({ name: 'type' })
+  type: ArrivalType
 
-	@Expose({ name: 'type' })
-	type: ArrivalType
+  @Expose({ name: 'status', toClassOnly: true })
+  status: ArrivalStatus
 
-	@Expose({ name: 'status' })
-	status: ArrivalStatus
+  @Expose({ name: 'start_time' })
+  startTime: number // Giờ vào khám
 
-	@Expose({ name: 'payment_status', toClassOnly: true })
-	paymentStatus: PaymentStatus
+  @Expose({ name: 'end_time' })
+  endTime: number // Giờ kết thúc khám
 
-	@Expose({ name: 'create_time' })
-	createTime: number // Giờ vào khám
+  @Expose({ name: 'customer', toClassOnly: true })
+  @Type(() => Customer)
+  customer?: Customer
 
-	@Expose({ name: 'end_time' })
-	endTime: number // Giờ kết thúc khám
+  @Expose({ name: 'arrival_diagnosis' })
+  @Type(() => Diagnosis)
+  diagnosis?: Diagnosis
 
-	@Expose({ name: 'total_money' })
-	totalMoney: number                                        // tổng tiền 
+  @Expose({ name: 'invoices' })
+  @Type(() => Invoice)
+  invoices: Invoice[] = []
 
-	@Expose({ name: 'profit' })
-	profit: number
+  static blank(): Arrival {
+    const arrival = new Arrival()
+    arrival.customer = new Customer()
+    return arrival
+  }
 
-	@Expose({ name: 'debt' })
-	debt: number                                              // tiền nợ
+  static fromPlain(plain: Record<string, any>): Arrival {
+    return plainToInstance(Arrival, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	@Expose({ name: 'customer' })
-	@Type(() => Customer)
-	customer?: Customer
+  static fromPlains(plains: Record<string, any>[]): Arrival[] {
+    return plainToInstance(Arrival, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	@Expose({ name: 'arrival_diagnosis' })
-	@Type(() => Diagnosis)
-	diagnosis?: Diagnosis
+  static fromInstance(instance: Arrival): Arrival {
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      ignoreDecorators: true,
+      groups: ['ALL'],
+    })
+  }
 
-	@Expose({ name: 'invoices' })
-	@Type(() => Invoice)
-	invoices: Invoice[] = []
-
-	static blank(): Arrival {
-		const arrival = new Arrival()
-		arrival.customer = new Customer()
-		return arrival
-	}
-
-	static fromPlain(plain: Record<string, any>): Arrival {
-		return plainToInstance(Arrival, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
-
-	static fromPlains(plains: Record<string, any>[]): Arrival[] {
-		return plainToInstance(Arrival, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
-
-	static toPlain(instance: Arrival): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
-
-	static fromInstance(instance: Arrival): Arrival {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  static toPlain(instance: Arrival, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
 }

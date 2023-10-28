@@ -1,88 +1,127 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { EGender } from '../enum'
-import { CustomerDebt } from './customer-debt.model'
 
-export class Customer extends BaseModel {
-	@Expose({ name: 'full_name_en' })
-	fullNameEn: string = ''
+export class Customer {
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  id: number
 
-	@Expose({ name: 'full_name_vi' })
-	fullNameVi: string = ''
+  @Expose()
+  fullName: string
 
-	@Expose({ name: 'phone' })
-	phone?: string
+  @Expose()
+  phone?: string
 
-	@Expose({ name: 'birthday' })
-	birthday?: number
+  @Expose()
+  birthday?: number
 
-	@Expose({ name: 'gender' })
-	gender?: EGender
+  @Expose()
+  gender?: EGender
 
-	@Expose({ name: 'identity_card' })              // số căn cước
-	identityCard?: string
+  @Expose() // số căn cước
+  identityCard?: string
 
-	@Expose({ name: 'address_province' })
-	addressProvince: string
+  @Expose()
+  addressProvince: string
 
-	@Expose({ name: 'address_district' })
-	addressDistrict: string
+  @Expose()
+  addressDistrict: string
 
-	@Expose({ name: 'address_ward' })
-	addressWard: string
+  @Expose()
+  addressWard: string
 
-	@Expose({ name: 'address_street' })
-	addressStreet: string
+  @Expose()
+  addressStreet: string
 
-	@Expose({ name: 'relative' })                   // người thân
-	relative?: string
+  @Expose() // người thân
+  relative?: string
 
-	@Expose({ name: 'health_history' })
-	healthHistory?: string // Tiền sử bệnh
+  @Expose()
+  healthHistory?: string // Tiền sử bệnh
 
-	@Expose({ name: 'debt', toClassOnly: true })
-	debt: number = 0
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  debt: number
 
-	@Expose({ name: 'note' })
-	note: string
+  @Expose()
+  note: string
 
-	@Expose({ name: 'is_active' })
-	isActive: boolean = true                            // Trạng thái
+  @Expose()
+  isActive: 1 | 0 // Trạng thái
 
-	@Expose({ name: 'customer_debts', toClassOnly: true })
-	@Type(() => CustomerDebt)
-	customerDebts: CustomerDebt[] = []
+  @Expose({ groups: [FROM_PLAIN] })
+  createdAt: number
 
-	static blank(): Customer {
-		return new Customer()
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
 
-	static fromPlain(plain: Record<string, any>): Customer {
-		return plainToInstance(Customer, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
 
-	static fromPlains(plains: Record<string, any>[]): Customer[] {
-		return plainToInstance(Customer, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static init(): Customer {
+    const ins = new Customer()
+    ins.id = 0
+    ins.isActive = 1
+    ins.debt = 0
+    return ins
+  }
 
-	static toPlain(instance: Partial<Customer>): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static blank(): Customer {
+    const ins = Customer.init()
+    return ins
+  }
 
-	static fromInstance(instance: Customer): Customer {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  static fromObject(object: Partial<Customer>) {
+    const ins = new Customer()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Customer>[]): Customer[] {
+    return objects.map((i) => Customer.fromObject(i))
+  }
+
+  static fromPlain(plain: Record<string, any> = {}): Customer {
+    return plainToInstance(Customer, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromPlains(plains: Record<string, any>[]): Customer[] {
+    return plainToInstance(Customer, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_PLAIN],
+    })
+  }
+
+  static fromInstance(instance: Customer): Customer {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
+      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
+    }
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [FROM_INSTANCE],
+    })
+  }
+
+  static fromInstances(instances: Customer[]): Customer[] {
+    return instances.map((i) => Customer.fromInstance(i))
+  }
+
+  static toPlain(
+    instance: Customer,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
+      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
+    }
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
 }

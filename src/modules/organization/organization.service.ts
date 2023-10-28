@@ -1,28 +1,31 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { useMeStore } from '../_me/me.store'
+import type { ScreenSettingKey } from '../_me/store.variable'
+import { OrganizationApi } from './organization.api'
 import { Organization } from './organization.model'
-import type { OrganizationSettingsType } from '../../store/store.variable'
 
 export class OrganizationService {
-	static async detail(): Promise<Organization> {
-		const { data } = await AxiosInstance.get('/organization/detail')
-		return Organization.fromPlain(data)
-	}
+  static async info() {
+    try {
+      const organization = await OrganizationApi.info()
+      useMeStore().organization = Organization.fromInstance(organization)
+      return organization
+    } catch (error) {
+      console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
+      return Organization.blank()
+    }
+  }
 
-	static async updateInfo(organization: Partial<Organization>) {
-		const organizationDto = Organization.toPlain(organization)
-		const response = await AxiosInstance.patch('/organization/update', organizationDto)
+  static async updateInfo(plain: Partial<Organization>) {
+    try {
+      const organization = await OrganizationApi.updateInfo(plain)
+      useMeStore().organization = Organization.fromInstance(organization)
+      return organization
+    } catch (error) {
+      console.log('🚀 ~ OrganizationService ~ updateInfo ~ error:', error)
+    }
+  }
 
-		return Organization.fromPlain(response.data)
-	}
-
-	static async getAllSettings() {
-		const response = await AxiosInstance.get('/organization/settings/get')
-		const data = response.data as { type: OrganizationSettingsType, data: string }[]
-		return data
-	}
-
-	static async saveSettings(type: OrganizationSettingsType, data: string) {
-		const response = await AxiosInstance.post(`/organization/settings/upsert/${type}`, { data })
-		return response.data
-	}
+  static async saveSettings(type: ScreenSettingKey, plain: string) {
+    return await OrganizationApi.saveSettings(type, plain)
+  }
 }

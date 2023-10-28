@@ -1,23 +1,22 @@
 <script setup lang="ts">
-import VueAlert from '@/common/vue-alert/VueAlert.vue'
 import { RouterView, useRouter } from 'vue-router'
-import { useUserStore } from './store/user.store'
+import VueAlert from './common/vue-alert/VueAlert.vue'
+import { useMeStore } from './modules/_me/me.store'
 
-const userStore = useUserStore()
+const meStore = useMeStore()
 const router = useRouter()
 
-userStore.$subscribe((mutation, state) => {
-  if (state.userInfo == null) {
+meStore.$subscribe((mutation, state) => {
+  if (state.user == null) {
     router.push({ name: 'Login' })
   }
 })
-
 </script>
 <template>
   <Suspense>
     <RouterView />
   </Suspense>
   <VueAlert />
-  <iframe id="iframe-print" style="display: none;"></iframe>
+  <iframe id="iframe-print" style="display: none" />
 </template>
 <style scoped></style>

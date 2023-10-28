@@ -14,19 +14,30 @@ const setSideCollapsed = (value: boolean) => {
   localStorage.setItem('SIDE_COLLAPSED', String(value))
   collapsed.value = value
 }
-
 </script>
 
 <template>
   <a-layout id="dashboard-layout">
     <VueHeader @handleShowDrawer="openSideDrawer = $event" />
     <a-layout>
-      <a-layout-sider theme="light" :defaultCollapsed="defaultCollapsed" @collapse="setSideCollapsed" collapsible
-        collapsedWidth="60" width="240">
+      <a-layout-sider
+        theme="light"
+        :defaultCollapsed="defaultCollapsed"
+        collapsible
+        collapsedWidth="60"
+        width="240"
+        @collapse="setSideCollapsed"
+      >
         <VueSider :collapsed="collapsed" />
       </a-layout-sider>
-      <a-drawer v-model:visible="openSideDrawer" placement="left" width="240" :closable="false"
-        :bodyStyle="{ padding: 0 }" :drawerStyle="{ backgroundColor: '#fff' }">
+      <a-drawer
+        v-model:visible="openSideDrawer"
+        placement="left"
+        width="240"
+        :closable="false"
+        :bodyStyle="{ padding: 0 }"
+        :drawerStyle="{ backgroundColor: '#fff' }"
+      >
         <VueSider :collapsed="collapsed" @handleShowDrawer="openSideDrawer = $event" />
       </a-drawer>
       <a-layout>
@@ -45,7 +56,7 @@ const setSideCollapsed = (value: boolean) => {
           <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333;"><strong>Medihome</strong>©2023 - Version 2.0 - Hotline: 0376.899.866</span>
+          <span style="color: #333"><strong>MEA-v3.2</strong>©2023 - Hotline: 0376.899.866</span>
         </a-layout-footer>
       </a-layout>
     </a-layout>
@@ -62,6 +73,11 @@ const setSideCollapsed = (value: boolean) => {
     }
   }
 
+  .ant-layout-content {
+    display: flex;
+    flex-direction: column;
+  }
+
   .ant-layout-footer {
     margin-top: 12px;
     padding: 12px;
@@ -76,6 +92,9 @@ const setSideCollapsed = (value: boolean) => {
 
   .ant-layout-sider-trigger {
     background-color: #3b70ba15 !important;
+  }
+  .ant-pagination-options {
+    display: inline-block !important;
   }
 }
 </style>

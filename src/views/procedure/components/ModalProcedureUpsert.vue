@@ -1,13 +1,25 @@
-
 <script setup lang="ts">
-import { Procedure } from '@/modules/procedure/procedure.model'
-import { ProcedureService } from '@/modules/procedure/procedure.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
-import { ref } from 'vue'
+import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
+import { createVNode, ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney, InputText } from '../../../common/vue-form'
+import { useProcedureStore } from '../../../modules/procedure'
+import { Procedure } from '../../../modules/procedure/procedure.model'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { convertViToEn } from '../../../utils'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
-const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
-const organizationStore = useOrganizationStore()
+const emit = defineEmits<{
+  (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+}>()
+
+const procedureStore = useProcedureStore()
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const procedure = ref(Procedure.blank())
@@ -18,14 +30,14 @@ const saveLoading = ref(false)
 
 // const consumableList = ref<{ product?: Product, quantity: number }[]>([])
 
-const openModal = async (p?: Procedure) => {
+const openModal = async (instance?: Procedure) => {
   showModal.value = true
-  procedure.value = p ? Procedure.fromInstance(p) : Procedure.blank()
+  procedure.value = instance ? Procedure.fromInstance(instance) : Procedure.blank()
 
   // if (procedure.value.consumableHint) {
   //   const consumableHint = JSON.parse(procedure.value.consumableHint) as { productId: number, quantity: number }[]
   //   if (Array.isArray(consumableHint)) {
-  //     const productListResponse = await ProductService.getManyByIds(consumableHint.map((i) => i.productId))
+  //     const productListResponse = await ProductApi.getManyByIds(consumableHint.map((i) => i.productId))
   //     consumableList.value = consumableHint.map((i) => {
   //       const productFind = productListResponse.find((j) => j.id === i.productId)
   //       return {
@@ -37,7 +49,7 @@ const openModal = async (p?: Procedure) => {
   // }
 }
 
-const refreshModal = () => {
+const closeModal = () => {
   procedure.value = Procedure.blank()
   // consumableList.value = []
   showModal.value = false
@@ -49,18 +61,40 @@ const handleSave = async () => {
   // procedure.value.consumableHint = JSON.stringify(consumableHint)
   try {
     if (!procedure.value.id) {
-      const response = await ProcedureService.createOne(procedure.value)
+      const response = await procedureStore.createOne(procedure.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await ProcedureService.updateOne(procedure.value.id, procedure.value)
+      const response = await procedureStore.updateOne(procedure.value.id, procedure.value)
       emit('success', response, 'UPDATE')
     }
-    showModal.value = false
+    saveLoading.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:42 ~ handleSave ~ error:', error)
-  } finally {
+    console.log('🚀 ~ file: ModalProcedureUpsert.vue:73 ~ handleSave ~ error:', error)
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  try {
+    await procedureStore.deleteOne(procedure.value.id)
+    emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+  }
+}
+
+const clickDelete = () => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa dịch vụ này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Dịch vụ đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const filterOption = (input: string, option: any) => {
@@ -72,7 +106,7 @@ const filterOption = (input: string, option: any) => {
 // const searchingProduct = async (text: string) => {
 //   productList.value = []
 //   if (text) {
-//     productList.value = await ProductService.search(
+//     productList.value = await ProductApi.search(
 //       text,
 //       { productBatches: true },
 //       { overdue: true, quantityZero: true }
@@ -89,33 +123,55 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" :title="procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ Mới'"
-    :confirm-loading="saveLoading" :afterClose="refreshModal" @ok="handleSave">
-    <div>
-      <div class="flex items-center">
-        <div class="w-[100px] flex-none">Tên dịch vụ</div>
-        <a-input v-model:value="procedure.nameVi" class="flex-auto"></a-input>
-      </div>
-      <div v-if="organizationStore.SCREEN_PRODUCT_LIST.upsert.group" class="flex items-center mt-2">
-        <div class="w-[100px] flex-none">Nhóm</div>
-        <a-select v-model:value="procedure.group" :filter-option="filterOption" class="flex-auto" show-search
-          :options="Object.entries(organizationStore.PROCEDURE_GROUP).map(([value, label]) => ({ value, label }))">
-        </a-select>
-      </div>
-      <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none;">Giá dịch vụ</div>
-        <div style="flex:1">
-          <a-input-number style="width: 100%;" v-model:value="procedure.price" step="1000" :min="0"
-            :formatter="(value: any) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value: any) => value.replace(/(,*)/g, '')" />
+  <VueModal v-model:show="showModal">
+    <form class="bg-white" @submit.prevent="(e) => handleSave()">
+      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 text-lg font-medium">
+          {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
+        </div>
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
         </div>
       </div>
-      <div class="flex items-center mt-4">
-        <div class="w-[100px] flex-none">Active</div>
-        <a-switch v-model:checked="procedure.isActive" />
-      </div>
 
-      <!-- <div class="mt-10 font-bold">
+      <div class="p-4">
+        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div class="w-[100px] flex-none">Tên dịch vụ</div>
+          <div class="flex-auto">
+            <InputText v-model:value="procedure.name" required />
+          </div>
+        </div>
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+          <div class="w-[100px] flex-none">Nhóm</div>
+          <a-select
+            v-model:value="procedure.group"
+            :filter-option="filterOption"
+            class="flex-auto"
+            show-search
+            :options="
+              Object.entries(screenStore.PROCEDURE_GROUP).map(([value, label]) => ({
+                value,
+                label,
+              }))
+            "
+          />
+        </div>
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+          <div style="width: 100px; flex: none">Giá dịch vụ</div>
+          <div style="flex: 1">
+            <InputMoney v-model:value="procedure.price" :min="0" style="width: 100%" />
+          </div>
+        </div>
+        <div class="mt-4 flex items-center">
+          <div class="w-[100px] flex-none">Active</div>
+          <a-switch
+            :checked="Boolean(procedure.isActive)"
+            @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)"
+          />
+          <div v-if="!procedure.isActive" class="ml-4">Dịch vụ này tạm thời không thể sử dụng</div>
+        </div>
+
+        <!-- <div class="mt-10 font-bold">
         <DoubleRightOutlined /> Vật tư tiêu hao khi sử dụng dịch vụ
       </div>
       <div class="mt-4">
@@ -153,7 +209,7 @@ defineExpose({ openModal })
               <tr v-for="(p, i) in consumableList" :key="i">
                 <td class="index"></td>
                 <td>{{ p.product!.brandName }}</td>
-                <td> <a-input-number v-model:value="consumableList[i].quantity" class="w-full" :min="0" /></td>
+                <td> <InputNumber v-model:value="consumableList[i].quantity" class="w-full" :min="0" /></td>
                 <td>{{ }}</td>
                 <td class="text-center">
                   <a @click="consumableList.splice(i, 1)" class="text-red-500 text-xl">
@@ -165,6 +221,31 @@ defineExpose({ openModal })
           </table>
         </div>
       </div> -->
-    </div>
-  </a-modal>
+      </div>
+
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <a-button
+            v-if="permissionIdMap[PermissionId.PROCEDURE_DELETE] && procedure.id"
+            danger
+            @click="clickDelete"
+          >
+            Xóa
+          </a-button>
+          <a-button class="ml-auto" @click="closeModal">
+            <template #icon>
+              <CloseOutlined />
+            </template>
+            Hủy bỏ
+          </a-button>
+          <a-button type="primary" htmlType="submit" :loading="saveLoading">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            Lưu lại
+          </a-button>
+        </div>
+      </div>
+    </form>
+  </VueModal>
 </template>

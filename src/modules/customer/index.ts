@@ -1,4 +1,4 @@
-export * from './customer-debt.model'
-export * from './customer-debt.service'
+export * from './customer.api'
+export * from './customer.dto'
 export * from './customer.model'
-export * from './customer.service'
+export * from './customer.store'

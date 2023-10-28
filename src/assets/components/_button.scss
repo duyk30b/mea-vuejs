@@ -1,25 +1,25 @@
 .ant-btn-primary {
-	background-color: var(--color-btn-primary) !important;
-	border-color: var(--color-btn-primary) !important;
+  background-color: var(--color-btn-primary) !important;
+  border-color: var(--color-btn-primary) !important;
 
-	&:hover {
-		// background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
-		// border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
-		background-color: #5886c5 !important;
-		border-color: #446797 !important;
-	}
+  &:hover {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
 
-	&:focus {
-		// background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
-		// border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
-		background-color: #5886c5 !important;
-		border-color: #446797 !important;
-	}
+  &:focus {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
 
-	&:active {
-		// background-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
-		// border-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
-		background-color: #5886c5 !important;
-		border-color: #446797 !important;
-	}
+  &:active {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
 }
