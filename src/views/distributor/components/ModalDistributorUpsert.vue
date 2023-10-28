@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import { InputPhone } from '@/common/vue-form'
 import { AddressInstance } from '@/core/address.instance'
+import { useDistributorStore } from '@/modules/distributor'
 import { Distributor } from '@/modules/distributor/distributor.model'
 import { DistributorService } from '@/modules/distributor/distributor.service'
 import { convertViToEn } from '@/utils'
@@ -9,6 +10,9 @@ import { message, type SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 
 const emit = defineEmits(['success'])
+
+const distributorStore = useDistributorStore()
+
 const showModal = ref(false)
 const distributor = ref(Distributor.blank())
 const saveLoading = ref(false)
@@ -31,15 +35,17 @@ const refreshModal = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
-  if (!distributor.value.fullNameVi) {
+  if (!distributor.value.fullName) {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
     if (!distributor.value.id) {
       const response = await DistributorService.createOne(distributor.value)
+      distributorStore.createOne(response)
       emit('success', response, 'CREATE')
     } else {
       const response = await DistributorService.updateOne(distributor.value.id, distributor.value)
+      distributorStore.updateOne(response.id, response)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -84,7 +90,7 @@ defineExpose({ openModal })
     <div>
       <div class="flex items-center mb-3">
         <div class="w-[100px] flex-none">Tên NCC</div>
-        <a-input v-model:value="distributor.fullNameVi" class="flex-auto"></a-input>
+        <a-input v-model:value="distributor.fullName" class="flex-auto"></a-input>
       </div>
       <div class="flex items-center mb-3">
         <div class="w-[100px] flex-none">Số điện thoại</div>

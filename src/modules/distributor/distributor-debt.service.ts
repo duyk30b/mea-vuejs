@@ -2,6 +2,7 @@ import { AxiosInstance } from '@/core/axios.instance'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { DistributorDebt } from './distributor-debt.model'
 import { Distributor } from './distributor.model'
+import { DistributorService } from './distributor.service'
 
 export interface DistributorDebtPaginationQuery extends ApiPaginationRequest {
 	filter: { distributor_id: number },
@@ -18,13 +19,13 @@ export class DistributorDebtService {
 		}
 	}
 
-	static async payment(distributorDebt: DistributorDebt) {
-		const distributorDebtDto = DistributorDebt.toPlain(distributorDebt)
-		const { data } = await AxiosInstance.post('/distributor-debt/payment', distributorDebtDto)
+	static async payment(data: DistributorDebt) {
+		const distributorDebtDto = DistributorDebt.toPlain(data)
+		const response = await AxiosInstance.post('/distributor-debt/payment', distributorDebtDto)
 
-		return {
-			distributor: Distributor.fromPlain(data.distributor),
-			distributorDebt: DistributorDebt.fromPlain(data.distributorDebt),
-		}
+		const distributor = Distributor.fromPlain(response.data.distributor)
+		const distributorDebt = DistributorDebt.fromPlain(response.data.distributorDebt)
+
+		return { distributor, distributorDebt }
 	}
 }

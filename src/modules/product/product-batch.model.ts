@@ -18,11 +18,14 @@ export class ProductBatch extends BaseModel {
 	@Expose({ name: 'quantity', toClassOnly: true })
 	quantity: number = 0
 
+	@Expose({ name: 'wholesale_price' })
+	wholesalePrice: number = 0                                   // Giá bán sỉ
+
 	@Expose({ name: 'retail_price' })
 	retailPrice: number = 0                                      // Giá bán lẻ
 
-	@Expose({ name: 'wholesale_price' })
-	wholesalePrice: number = 0                                   // Giá bán sỉ
+	@Expose({ name: 'is_active' })
+	isActive: boolean = true                            // Trạng thái
 
 	@Expose({ name: 'product', toClassOnly: true })
 	@Type(() => Product)

@@ -79,13 +79,24 @@ export const convertViToEn = (root: string): string =>
 		.replace(/đ/g, 'd')
 		.replace(/Đ/g, 'D')
 
-export const formatNumber = (number: number, fixed = 0, part = 3, sec = ',', dec = '.') => {
-	number = number || 0
-	const regex = '\\d(?=(\\d{' + part + '})+' + (fixed > 0 ? '\\D' : '$') + ')'
-	return number
-		.toFixed(fixed)
+// export const formatNumber = (number: number, fixed = 0, part = 3, sec = ',', dec = '.') => {
+// 	const numberStr = (number || 0).toFixed(fixed)
+// 	const regex = '\\d(?=(\\d{' + part + '})+' + (fixed > 0 ? '\\D' : '$') + ')'
+// 	return numberStr
+// 		.replace('.', dec)
+// 		.replace(new RegExp(regex, 'g'), '$&' + sec)
+// }
+
+export const formatNumber = (number: number, part = 3, sec = ',', dec = '.') => {
+	const numberStr = (number || 0).toString()
+	const regex = '\\d(?=(\\d{' + part + '})+' + (numberStr.includes('.') ? '\\D' : '$') + ')'
+	return numberStr
 		.replace('.', dec)
 		.replace(new RegExp(regex, 'g'), '$&' + sec)
+}
+
+export const formatPhone = (phone: string) => {
+	return (phone || '').replace(/(\d{4})(\d{3})(\d{3})/, '$1.$2.$3')
 }
 
 export const snakeCaseToCamelCase = (input: string) => input.replace(/(_\w)/g, (k) => k[1].toUpperCase())
@@ -94,4 +105,16 @@ export const camelCaseToSnakeCase = (input: string) => input.replace(/[A-Z]/g, (
 
 export const formatUrlEncode = (text: string) => { // remove all symbol, keep: . * - _
 	return text.replace(/[^a-zA-Z0-9_\-.*]+/g, '')
+}
+
+export const customFilter = (str: string, filter: string, skip = 2): boolean => {
+	const key = convertViToEn(filter.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
+	const stringConvert = convertViToEn(str.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
+	let pattern = ''
+	key.split('').forEach((item) => {
+		pattern = `${pattern}.{0,${skip}}${item}`
+	})
+	const regex = new RegExp(pattern, 'i')
+
+	return regex.test(stringConvert)
 }

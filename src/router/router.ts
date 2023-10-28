@@ -1,5 +1,5 @@
 import { useUserStore } from '@/store/user.store'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
 
 enum AuthLevel {
 	GUEST = 'guest',
@@ -19,26 +19,40 @@ const Router = createRouter({
 					path: '',
 					name: 'AppHome',
 					component: () => import('../views/AppHome.vue'),
+					meta: { title: 'Trang chủ' },
 				},
 				{
-					path: 'arrival-invoice',
-					name: 'ArrivalInvoice',
-					redirect: () => ({ name: 'ArrivalInvoiceList' }),
+					path: 'arrival',
+					name: 'Arrival',
+					component: () => import('../views/arrival/Arrival.vue'),
+				},
+				{
+					path: 'invoice',
+					name: 'Invoice',
+					redirect: () => ({ name: 'InvoiceList' }),
 					children: [
 						{
 							path: 'list',
-							name: 'ArrivalInvoiceList',
-							component: () => import('../views/arrival-invoice/ArrivalInvoiceList.vue'),
+							name: 'InvoiceList',
+							meta: { title: 'Hóa đơn' },
+							component: () => import('../views/invoice/InvoiceList.vue'),
 						},
 						{
 							path: 'detail/:id',
-							name: 'ArrivalInvoiceDetail',
-							component: () => import('../views/arrival-invoice/details/ArrivalInvoiceDetails.vue'),
+							name: 'InvoiceDetail',
+							meta: { title: 'Hóa đơn' },
+							component: () => import('../views/invoice/detail/InvoiceDetail.vue'),
 						},
 						{
-							path: 'invoice-upsert/:id?',
-							name: 'ArrivalInvoiceUpsert',
-							component: () => import('../views/arrival-invoice/upsert/ArrivalInvoiceUpsert.vue'),
+							path: 'upsert/:id?',
+							name: 'InvoiceUpsert',
+							component: () => import('../views/invoice/upsert/InvoiceUpsert.vue'),
+							meta: {
+								title: (route: RouteLocationNormalizedLoaded) => {
+									if (route.query?.mode === 'UPDATE') return 'Hóa đơn'
+									return 'Hóa đơn'
+								},
+							},
 						},
 					],
 				},
@@ -50,6 +64,7 @@ const Router = createRouter({
 						{
 							path: 'list',
 							name: 'CustomerList',
+							meta: { title: 'Khách Hàng' },
 							component: () => import('../views/customer/CustomerList.vue'),
 						},
 					],
@@ -68,28 +83,37 @@ const Router = createRouter({
 									path: 'list',
 									name: 'ProductList',
 									component: () => import('../views/product/ProductList.vue'),
+									meta: { title: 'Tồn kho' },
 								},
 							],
 						},
 						{
-							path: 'purchase-receipt',
-							name: 'PurchaseReceipt',
-							redirect: () => ({ name: 'PurchaseReceiptList' }),
+							path: 'receipt',
+							name: 'Receipt',
+							redirect: () => ({ name: 'ReceiptList' }),
 							children: [
 								{
 									path: 'list',
-									name: 'PurchaseReceiptList',
-									component: () => import('../views/purchase/PurchaseReceiptList.vue'),
+									name: 'ReceiptList',
+									component: () => import('../views/receipt/ReceiptList.vue'),
+									meta: { title: 'Nhập hàng' },
 								},
 								{
 									path: 'detail/:id',
-									name: 'PurchaseReceiptDetails',
-									component: () => import('../views/purchase/details/PurchaseReceiptDetails.vue'),
+									name: 'ReceiptDetail',
+									component: () => import('../views/receipt/detail/ReceiptDetail.vue'),
+									meta: { title: 'Nhập hàng' },
 								},
 								{
-									path: 'receipt-upsert/:id?',
-									name: 'PurchaseReceiptUpsert',
-									component: () => import('../views/purchase/upsert/PurchaseReceiptUpsert.vue'),
+									path: 'upsert/:id?',
+									name: 'ReceiptUpsert',
+									component: () => import('../views/receipt/upsert/ReceiptUpsert.vue'),
+									meta: {
+										title: (route: RouteLocationNormalizedLoaded) => {
+											if (route.query?.mode === 'UPDATE') return 'Nhập hàng'
+											return 'Nhập hàng'
+										},
+									},
 								},
 							],
 						},
@@ -102,6 +126,7 @@ const Router = createRouter({
 									path: 'list',
 									name: 'DistributorList',
 									component: () => import('../views/distributor/DistributorList.vue'),
+									meta: { title: 'Nhà cung cấp' },
 								},
 							],
 						},
@@ -116,6 +141,7 @@ const Router = createRouter({
 							path: 'list',
 							name: 'ProcedureList',
 							component: () => import('../views/procedure/ProcedureList.vue'),
+							meta: { title: 'Dịch vụ' },
 						},
 					],
 				},
@@ -144,11 +170,19 @@ const Router = createRouter({
 							path: 'organization-info',
 							name: 'OrganizationInfo',
 							component: () => import('../views/systems/OrganizationInfo.vue'),
+							meta: { title: 'Hệ thống' },
 						},
 						{
 							path: 'employee-info',
 							name: 'EmployeeInfo',
 							component: () => import('../views/systems/EmployeeInfo.vue'),
+							meta: { title: 'Hệ thống' },
+						},
+						{
+							path: 'setting',
+							name: 'SystemSetting',
+							component: () => import('../views/systems/SystemSetting.vue'),
+							meta: { title: 'Hệ thống' },
 						},
 					],
 				},

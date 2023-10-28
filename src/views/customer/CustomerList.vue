@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CustomerDebt, CustomerService, type Customer } from '@/modules/customer'
+import { CustomerDebt, CustomerService, type Customer, useCustomerStore } from '@/modules/customer'
 import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn, formatNumber, timeToText } from '@/utils'
+import { formatPhone, timeToText } from '@/utils'
 import {
   CheckCircleOutlined, ContactsOutlined, FileSearchOutlined,
   FormOutlined, MinusCircleOutlined, PlusOutlined, SettingOutlined,
@@ -10,43 +10,47 @@ import { onBeforeMount, ref } from 'vue'
 import ModalCustomerListSettingScreen from './components/ModalCustomerListSettingScreen.vue'
 import ModalCustomerPayDebt from './components/ModalCustomerPayDebt.vue'
 import ModalCustomerUpsert from './components/ModalCustomerUpsert.vue'
-import ModalCustomerDetails from './details/ModalCustomerDetails.vue'
+import ModalCustomerDetail from './detail/ModalCustomerDetail.vue'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerListSettingScreen>>()
-const modalCustomerDetails = ref<InstanceType<typeof ModalCustomerDetails>>()
+const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
+const customerStore = useCustomerStore()
 const organizationStore = useOrganizationStore()
+const { formatMoney } = organizationStore
+
+const isMobile = window.innerWidth < 768
+
 const customerList = ref<Customer[]>([])
 
 const loadingComponent = ref(false)
 
 const page = ref(1)
-const limit = ref(10)
+const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const searchText = ref('')
-const sortColumn = ref<'full_name_en' | 'debt' | 'id' | ''>('')
-const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const isActive = ref<'true' | 'false' | ''>('true')
+
+const sortColumn = ref<'full_name' | 'debt' | 'id' | ''>('')
+const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
     loadingComponent.value = true
-    const isPhoneText = /^\d+$/.test(searchText.value)
-    let sort
+    let sort: any
     if (sortColumn.value !== '' && sortValue.value !== '') {
       sort = { [sortColumn.value]: sortValue.value }
     }
 
-    const response = await CustomerService.pagination({
+    const response = customerStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
         is_active: isActive.value ? isActive.value : undefined,
-        phone: isPhoneText && searchText.value ? searchText.value : undefined,
-        full_name_en: (!isPhoneText && searchText.value) ? convertViToEn(searchText.value) : undefined,
+        search_text: searchText.value ? searchText.value : undefined,
       },
       sort: sort || { id: 'DESC' },
     })
@@ -61,6 +65,7 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
+  await customerStore.fetchAll()
   await startFetchData()
 })
 
@@ -69,11 +74,16 @@ const startSearch = async () => {
   await startFetchData()
 }
 
+const handleInputSearchText = (event: any) => {
+  searchText.value = event.target.value
+  startSearch()
+}
+
 const handleSelectStatus = async (value: 'true' | 'false' | '') => {
   await startSearch()
 }
 
-const changeSort = async (column: 'full_name_en' | 'debt' | 'id') => {
+const changeSort = async (column: 'full_name' | 'debt' | 'id') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -89,29 +99,26 @@ const changeSort = async (column: 'full_name_en' | 'debt' | 'id') => {
 
 const changePagination = async (options: { page?: number, limit?: number }) => {
   if (options.page) page.value = options.page
-  if (options.limit) limit.value = options.limit
+  if (options.limit) {
+    limit.value = options.limit
+    localStorage.setItem('CUSTOMER_PAGINATION_LIMIT', String(options.limit))
+  }
   await startFetchData()
 }
 
 const updateCustomer = async (data: Customer) => {
-  const findIndex = customerList.value.findIndex((i) => i.id === data.id)
-  if (findIndex !== -1) {
-    customerList.value[findIndex] = data
-  }
+  await startFetchData()
 }
 
 const handleModalCustomerUpsertSuccess = async (data: Customer, type: 'CREATE' | 'UPDATE') => {
-  if (type === 'CREATE') {
-    customerList.value.unshift(data)
-  }
-  else if (type === 'UPDATE') updateCustomer(data)
+  await startFetchData()
 }
 
 const handleModalDistributorPayDebtSuccess = async (data: {
   customer: Customer,
   customerDebt: CustomerDebt
 }) => {
-  updateCustomer(data.customer)
+  await startFetchData()
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
@@ -123,45 +130,47 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 <template>
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
-  <ModalCustomerDetails ref="modalCustomerDetails" @update_customer="updateCustomer" />
+  <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalDistributorPayDebtSuccess" />
   <ModalCustomerListSettingScreen ref="modalCustomerListSettingScreen" />
 
-  <div class="mx-4 mt-4">
-    <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.3rem;">
-        <ContactsOutlined style="margin-right: 1rem" />Danh sách khách hàng
-        <a-button type="primary" @click="modalCustomerUpsert?.openModal()" class="ml-4">
-          <template #icon>
-            <PlusOutlined />
-          </template>
-          Thêm khách hàng
-        </a-button>
+  <div class="page-header">
+    <div class="page-header-content">
+      <div class="hidden md:block">
+        <ContactsOutlined /> Danh sách khách hàng
       </div>
-      <div>
-        <a-dropdown trigger="click">
-          <span style="font-size: 1.1rem; cursor: pointer;">
-            <SettingOutlined />
-          </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </div>
+      <a-button type="primary" @click="modalCustomerUpsert?.openModal()">
+        <template #icon>
+          <PlusOutlined />
+        </template>
+        Thêm mới
+      </a-button>
+    </div>
+    <div class="page-header-setting">
+      <a-dropdown trigger="click">
+        <span>
+          <SettingOutlined />
+        </span>
+        <template #overlay>
+          <a-menu @click="handleMenuSettingClick">
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </div>
   </div>
 
-  <div class="mx-4 mt-4 p-4 bg-white">
-    <div class="flex flex-wrap gap-4">
-      <div style="width: 600px">
+  <div class="page-main">
+    <div class="page-main-options">
+      <div style="flex: 2; flex-basis: 500px;">
         <div>Tìm kiếm</div>
-        <a-input-search v-model:value="searchText" allow-clear enter-button @search="(text: string) => startSearch()"
-          placeholder="Tìm kiếm theo tên hoặc số điện thoại. Ấn Enter để tìm kiếm" class="w-full" />
+        <a-input-group compact class="w-full">
+          <a-input :value="searchText" @input="handleInputSearchText" allow-clear style="width: calc(100% - 100px)" />
+          <a-button type="primary" class="w-[100px]">Tìm kiếm</a-button>
+        </a-input-group>
       </div>
 
-      <div style="flex-basis: 300px;">
+      <div style="flex: 1; flex-basis: 300px;">
         <div>Chọn trạng thái</div>
         <a-select v-model:value="isActive" allow-clear @change="handleSelectStatus" class="w-full" placeholder="Tất cả">
           <a-select-option value="">Tất cả</a-select-option>
@@ -171,7 +180,69 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div class="w-full table-wrapper mt-4">
+    <div v-if="isMobile" class="page-main-list">
+      <table class="table-mobile">
+        <thead>
+          <tr>
+            <th>Tên KH</th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.phone">SĐT</th>
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')"> Nợ &nbsp;
+              <font-awesome-icon v-if="sortColumn !== 'debt'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
+              <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
+              <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="customerList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(customer, index) in customerList" :key="index">
+            <td style="border-right: none;">
+              <div class="font-medium text-justify">
+                {{ customer.fullName }}
+                <a v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.detail" class="text-base"
+                  @click="modalCustomerDetail?.openModal(customer)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
+              <div class="text-xs text-justify" v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.address">
+                {{ customer.addressProvince }} - {{ customer.addressDistrict }} - {{ customer.addressWard }}
+              </div>
+              <div class="flex gap-4 text-xs">
+                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.birthday" class="text-center">
+                  {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
+                </div>
+                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.gender" class="text-center">
+                  <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
+                </div>
+              </div>
+              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.note" class="text-center">
+                {{ customer.note }}
+              </div>
+            </td>
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.phone" style="white-space: nowrap; border-left: none; border-right: none;">
+              <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+            </td>
+            <td class="text-right" style="border-left: none;">
+              <div> {{ formatMoney(customer.debt) }} </div>
+              <div v-if="customer.debt != 0">
+                <a-button type="default" @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
+                  size="small">
+                  Trả nợ
+                </a-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 float-right mb-2">
+        <a-pagination size="small" v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      </div>
+    </div>
+
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -181,12 +252,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon v-if="sortColumn === 'id' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
               <font-awesome-icon v-if="sortColumn === 'id' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
-            <th class="cursor-pointer" @click="changeSort('full_name_en')">
+            <th class="cursor-pointer" @click="changeSort('full_name')">
               Họ Tên &nbsp;
-              <font-awesome-icon v-if="sortColumn !== 'full_name_en'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
-              <font-awesome-icon v-if="sortColumn === 'full_name_en' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
-              <font-awesome-icon v-if="sortColumn === 'full_name_en' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <font-awesome-icon v-if="sortColumn !== 'full_name'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
+              <font-awesome-icon v-if="sortColumn === 'full_name' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
+              <font-awesome-icon v-if="sortColumn === 'full_name' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
             <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.phone">SĐT</th>
             <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.gender">Giới tính</th>
@@ -198,7 +268,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
               <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.note">Ghi chú</th>
             <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.isActive">Trạng thái</th>
             <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.action">Sửa</th>
           </tr>
@@ -210,12 +279,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr v-for="(customer, index) in customerList" :key="index">
             <td class="text-center">CM{{ customer.id }}</td>
             <td>
-              <div class="flex justify-between">
-                <div>{{ customer.fullNameVi }}</div>
-                <a v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.detail" class="text-xl"
-                  @click="modalCustomerDetails?.openModal(customer)">
+              <div>
+
+                {{ customer.fullName }}
+                <a v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.detail" class="ml-1"
+                  @click="modalCustomerDetail?.openModal(customer)">
                   <FileSearchOutlined />
                 </a>
+              </div>
+              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.note" class="text-center">
+                {{ customer.note }}
               </div>
             </td>
             <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.phone" class="text-center">
@@ -240,12 +313,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   </a-button>
                 </div>
                 <div>
-                  {{ formatNumber(customer.debt) }}
+                  {{ formatMoney(customer.debt) }}
                 </div>
               </div>
-            </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.note" class="text-center">
-              {{ customer.note }}
             </td>
             <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.table.isActive" class="text-center">
               <a-tag v-if="customer.isActive" color="success">
@@ -271,7 +341,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </table>
 
       <div class="mt-4 float-right mb-2">
-        <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total"
+        <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
           @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
       </div>
     </div>

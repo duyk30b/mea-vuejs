@@ -4,11 +4,8 @@ import type { EGender } from '../enum'
 import { CustomerDebt } from './customer-debt.model'
 
 export class Customer extends BaseModel {
-	@Expose({ name: 'full_name_en' })
-	fullNameEn: string = ''
-
-	@Expose({ name: 'full_name_vi' })
-	fullNameVi: string = ''
+	@Expose({ name: 'full_name' })
+	fullName: string = ''
 
 	@Expose({ name: 'phone' })
 	phone?: string

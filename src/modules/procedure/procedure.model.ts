@@ -2,11 +2,8 @@ import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'cl
 import { BaseModel } from '../base.model'
 
 export class Procedure extends BaseModel {
-	@Expose({ name: 'name_vi' })
-	nameVi: string                                             // Tên dịch vụ
-
-	@Expose({ name: 'name_en' })
-	nameEn: string                                             // Tên dịch vụ
+	@Expose({ name: 'name' })
+	name: string                                             // Tên dịch vụ
 
 	@Expose({ name: 'group' })
 	group: string = ''                                         // Nhóm dịch vụ ...

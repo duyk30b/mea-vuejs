@@ -7,31 +7,25 @@ export class ReceiptItem extends BaseModel {
 	@Expose({ name: 'receipt_id', toClassOnly: true })
 	receiptId: number
 
+	@Expose({ name: 'distributor_id', toClassOnly: true })
+	distributorId: number
+
 	@Expose({ name: 'product_batch_id' })
 	productBatchId: number
+
+	@Expose({ name: 'unit' })
+	unit: { name: string, rate: number } = { name: '', rate: 1 }
 
 	@Expose({ name: 'quantity' })
 	quantity: number = 0
 
-	@Expose({ name: 'unit' })
-	@Transform(({ type, value }) => {
-		if (type === TransformationType.PLAIN_TO_CLASS) {
-			try { return JSON.parse(value) }
-			catch (error) { return { name: '', rate: 1 } }
-		} else if (type === TransformationType.CLASS_TO_PLAIN) {
-			return JSON.stringify(value)
-		}
-		return value
-	})
-	unit: { name: string, rate: number } = { name: '', rate: 1 }
+	@Expose({ name: 'receipt', toClassOnly: true })
+	@Type(() => Receipt)
+	receipt?: Receipt
 
 	@Expose({ name: 'product_batch', toClassOnly: true })
 	@Type(() => ProductBatch)
 	productBatch: ProductBatch
-
-	@Expose({ name: 'receipt', toClassOnly: true })
-	@Type(() => Receipt)
-	receipt?: Receipt
 
 	static fromPlain(plain: Record<string, any>): ReceiptItem {
 		return plainToInstance(ReceiptItem, plain, {

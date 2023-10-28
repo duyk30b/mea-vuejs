@@ -2,11 +2,8 @@ import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'cl
 import { BaseModel } from '../base.model'
 
 export class Distributor extends BaseModel {
-	@Expose({ name: 'full_name_en' })
-	fullNameEn: string = ''
-
-	@Expose({ name: 'full_name_vi' })
-	fullNameVi: string = ''
+	@Expose({ name: 'full_name' })
+	fullName: string = ''
 
 	@Expose({ name: 'phone' })
 	phone?: string

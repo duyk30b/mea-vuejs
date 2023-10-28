@@ -26,7 +26,14 @@ ul {
 table {
 	border-collapse: collapse;
 	border-spacing: 0;
-	white-space: nowrap;
+
+	thead {
+		tr {
+			th {
+				white-space: nowrap;
+			}
+		}
+	}
 }
 
 pre,
@@ -42,4 +49,8 @@ summary {
 select {
 	cursor: pointer;
 	user-select: none;
+}
+
+input {
+	font-size: 16px !important;
 }

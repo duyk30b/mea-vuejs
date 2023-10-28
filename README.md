@@ -1,7 +1,7 @@
 # Run project
 ```
 nvm use 16.18.1
-npm install
+npm install --include=dev
 npm run dev
 ```
 Now, access: http://127.0.0.1:5173/ 

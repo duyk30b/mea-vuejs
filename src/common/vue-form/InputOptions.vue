@@ -121,7 +121,7 @@ export default {
   }
 
   input {
-    padding: 0.5rem 0.8rem;
+    padding: 0.4rem 0.8rem;
     width: 100%;
     outline: none;
     border: none;

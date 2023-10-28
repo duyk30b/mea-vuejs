@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { Organization } from '../modules/organization/organization.model'
+import { formatNumber } from '@/utils'
 
 export const useOrganizationStore = defineStore('organization-store', {
 	state: () => {
@@ -44,6 +45,7 @@ export const useOrganizationStore = defineStore('organization-store', {
 				2: 'Làm đẹp',
 				3: 'Chăm sóc',
 			},
+			SYSTEM_SETTING: { moneyDivisionFormat: 1 },
 
 			SCREEN_PRODUCT_LIST: {
 				table: {
@@ -68,9 +70,9 @@ export const useOrganizationStore = defineStore('organization-store', {
 					hintUsage: true,
 				},
 			},
-			SCREEN_PURCHASE_RECEIPT_LIST: {},
-			SCREEN_PURCHASE_RECEIPT_DETAIL: {
-				receiptItem: {
+			SCREEN_RECEIPT_LIST: {},
+			SCREEN_RECEIPT_DETAIL: {
+				receiptItemsTable: {
 					substance: true,
 					detail: true,
 					batch: true,
@@ -86,7 +88,7 @@ export const useOrganizationStore = defineStore('organization-store', {
 				},
 			},
 
-			SCREEN_PURCHASE_RECEIPT_UPSERT: {
+			SCREEN_RECEIPT_UPSERT: {
 				receiptItemInput: {
 					batch: true,
 					expectedPrice: true,
@@ -108,11 +110,12 @@ export const useOrganizationStore = defineStore('organization-store', {
 				other: { expenses: true },
 			},
 
-			SCREEN_INVOICE_ARRIVAL_LIST: {},
-			SCREEN_INVOICE_ARRIVAL_DETAIL: {
-				invoiceItems: {
+			SCREEN_INVOICE_LIST: {},
+			SCREEN_INVOICE_DETAIL: {
+				invoiceItemsTable: {
 					detail: true,
 					substance: true,
+					batch: true,
 					expiryDate: false,
 					unit: true,
 					discount: true,
@@ -125,9 +128,10 @@ export const useOrganizationStore = defineStore('organization-store', {
 					payment: true,
 					debt: true,
 				},
+				invoiceProcessType: 2,
 			},
 
-			SCREEN_INVOICE_ARRIVAL_UPSERT: {
+			SCREEN_INVOICE_UPSERT: {
 				invoiceItemInput: {
 					quantity: true,
 					expectedPrice: true,
@@ -138,12 +142,19 @@ export const useOrganizationStore = defineStore('organization-store', {
 					actualPrice: true,
 				},
 				invoiceItemsTable: {
+					detail: true,
 					substance: true,
+					batch: true,
 					expiryDate: true,
 					unit: true,
+					expectedPrice: true,
 					discount: true,
 				},
-				paymentInfo: { discount: true, surcharge: true },
+				paymentInfo: {
+					discount: true,
+					surcharge: true,
+					paymentZero: false,
+				},
 				other: { expenses: true },
 			},
 
@@ -182,4 +193,11 @@ export const useOrganizationStore = defineStore('organization-store', {
 			SCREEN_PROCEDURE_DETAIL: {},
 		}
 	},
+	getters: {
+    formatMoney: (state) => {
+      return (money: number) => {
+				return formatNumber(money / state.SYSTEM_SETTING.moneyDivisionFormat)
+      }
+    },
+  },
 })

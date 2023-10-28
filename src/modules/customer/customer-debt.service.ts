@@ -2,6 +2,7 @@ import { AxiosInstance } from '@/core/axios.instance'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { CustomerDebt } from './customer-debt.model'
 import { Customer } from './customer.model'
+import { CustomerService } from './customer.service'
 
 export interface CustomerDebtPaginationQuery extends ApiPaginationRequest {
 	filter: { customer_id: number }
@@ -18,13 +19,13 @@ export class CustomerDebtService {
 		}
 	}
 
-	static async payment(customerDebt: CustomerDebt) {
-		const customerDebtDto = CustomerDebt.toPlain(customerDebt)
-		const { data } = await AxiosInstance.post('/customer-debt/payment', customerDebtDto)
+	static async payment(data: CustomerDebt) {
+		const customerDebtDto = CustomerDebt.toPlain(data)
+		const response = await AxiosInstance.post('/customer-debt/payment', customerDebtDto)
 
-		return {
-			customer: Customer.fromPlain(data.customer),
-			customerDebt: CustomerDebt.fromPlain(data.customerDebt),
-		}
+		const customer = Customer.fromPlain(response.data.customer)
+		const customerDebt = CustomerDebt.fromPlain(response.data.customerDebt)
+
+		return { customer, customerDebt }
 	}
 }

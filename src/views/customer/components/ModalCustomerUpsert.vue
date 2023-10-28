@@ -1,7 +1,7 @@
-
 <script setup lang="ts">
 import { InputDate, InputPhone } from '@/common/vue-form'
 import { AddressInstance } from '@/core/address.instance'
+import { useCustomerStore } from '@/modules/customer'
 import { Customer } from '@/modules/customer/customer.model'
 import { CustomerService } from '@/modules/customer/customer.service'
 import { convertViToEn } from '@/utils'
@@ -9,6 +9,9 @@ import { message, type SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE'): void }>()
+
+const customerStore = useCustomerStore()
+
 const showModal = ref(false)
 const customer = ref(Customer.blank())
 const saveLoading = ref(false)
@@ -31,15 +34,17 @@ const refreshModal = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
-  if (!customer.value.fullNameVi) {
+  if (!customer.value.fullName) {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
     if (!customer.value.id) {
       const response = await CustomerService.createOne(customer.value)
+      customerStore.createOne(response)
       emit('success', response, 'CREATE')
     } else {
       const response = await CustomerService.updateOne(customer.value.id, customer.value)
+      customerStore.updateOne(response.id, response)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -84,7 +89,7 @@ defineExpose({ openModal })
     <div>
       <div class="flex items-center mb-3">
         <div style="width: 100px; flex: none;">Họ Tên</div>
-        <a-input v-model:value="customer.fullNameVi" class="flex-auto"></a-input>
+        <a-input v-model:value="customer.fullName" class="flex-auto"></a-input>
       </div>
 
       <div class="flex items-center mb-3">

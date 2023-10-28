@@ -1,10 +1,15 @@
-import { Expose, instanceToInstance, plainToInstance, Transform, TransformationType, Type } from 'class-transformer'
+import { Expose, instanceToInstance, plainToInstance, Transform, Type } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Customer } from '../customer'
-import { DiscountType, InvoiceItemType } from '../enum'
+import { DiscountType } from '../enum'
 import { Procedure } from '../procedure'
 import { ProductBatch } from '../product'
 import { Invoice } from './invoice.model'
+
+export enum InvoiceItemType {
+	ProductBatch = 1,
+	Procedure = 2,
+}
 
 export class InvoiceItem extends BaseModel {
 	@Expose({ name: 'invoice_id', toClassOnly: true })
@@ -20,15 +25,6 @@ export class InvoiceItem extends BaseModel {
 	type: InvoiceItemType
 
 	@Expose({ name: 'unit' })
-	@Transform(({ type, value }) => {
-		if (type === TransformationType.PLAIN_TO_CLASS) {
-			try { return JSON.parse(value) }
-			catch (error) { return { name: '', rate: 1 } }
-		} else if (type === TransformationType.CLASS_TO_PLAIN) {
-			return JSON.stringify(value)
-		}
-		return value
-	})
 	unit: { name: string, rate: number } = { name: '', rate: 1 }
 
 	@Expose({ name: 'cost_price' })

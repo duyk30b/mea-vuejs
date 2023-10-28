@@ -54,3 +54,17 @@ export const textToTime = (text: string, pattern: string): Date => {
 
 	return time
 }
+
+// sử dụng khi không biết timezone hệ thống là bao nhiêu mà muốn output chính xác như +7
+export const startOfDay = (time: string | number | Date, offsetOut?: number): Date => {
+	if (typeof time !== 'object') time = new Date(time)                     // time: '2023-09-20T22:39:46.711Z'
+	const offset = time.getTimezoneOffset()                                 // offset: -420
+
+	const timeMove = new Date(time.getTime() - offset * 60 * 1000)          // timeMove: '2023-09-21T05:39:46.711Z'
+	timeMove.setUTCHours(0, 0, 0, 0)                                        // timeMove: '2023-09-21T00:00:00.000Z'
+
+	offsetOut = offsetOut != null ? offsetOut : offset
+	const result = new Date(timeMove.getTime() + offsetOut * 60 * 1000)     // result: '2023-09-20T17:00:00.000Z'
+
+	return result
+}

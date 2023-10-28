@@ -2,17 +2,34 @@ import { AxiosInstance } from '@/core/axios.instance'
 import type { ApiPaginationRequest } from '../pagination'
 import { ProductBatch } from './product-batch.model'
 
+export type ProductBatchFilterQuery = {
+	product_id?: number,
+	quantity_zero?: 'true' | 'false',
+	overdue?: boolean,
+	is_active?: 'true' | 'false',
+	group?: string
+	search_text?: string,
+}
+
+export type ProductBatchRelationQuery = {
+	product?: boolean
+}
+
 export interface ProductBatchPaginationQuery extends ApiPaginationRequest {
-	relations?: { product?: boolean },
-	filter?: {
-		product_id?: number,
-		quantity_zero?: boolean
-	},
+	relation?: ProductBatchRelationQuery,
+	filter?: ProductBatchFilterQuery,
 	sort?: {
 		id?: 'ASC' | 'DESC',
-		expiry_date?: 'ASC' | 'DESC'
+		expiry_date?: 'ASC' | 'DESC',
 	}
 }
+
+export type ProductBatchListQuery = {
+	relation?: ProductBatchRelationQuery
+	filter?: ProductBatchFilterQuery,
+	limit?: number
+}
+
 export class ProductBatchService {
 	static async pagination(params: ProductBatchPaginationQuery) {
 		const response = await AxiosInstance.get('/product-batch/pagination', { params })
@@ -24,10 +41,15 @@ export class ProductBatchService {
 		}
 	}
 
-	static async getOne(id: number, relations?: { product: boolean }) {
+	static async list(params: ProductBatchListQuery): Promise<ProductBatch[]> {
+		const { data } = await AxiosInstance.get('/product-batch/list', { params })
+		return ProductBatch.fromPlains(data)
+	}
+
+	static async getOne(id: number, relation?: { product: boolean }) {
 		const { data } = await AxiosInstance.get(
 			`/product-batch/detail/${id}`,
-			{ params: { relations: { product: relations?.product } } }
+			{ params: { relation: { product: relation?.product } } }
 		)
 		return ProductBatch.fromPlain(data)
 	}
@@ -48,6 +70,6 @@ export class ProductBatchService {
 
 	static async deleteOne(id: number) {
 		const response = await AxiosInstance.delete(`/product-batch/delete/${id}`)
-		return response.data as { success: boolean, message?: string }
+		return response.data as { success: 'true' | 'false', message?: string }
 	}
 }

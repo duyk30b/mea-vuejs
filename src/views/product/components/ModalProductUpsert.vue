@@ -23,6 +23,7 @@ const openModal = async (p?: Product) => {
 const refreshModal = () => {
   product.value = Product.blank()
   showModal.value = false
+  showUnitForm.value = false
 }
 
 const handleAddUnit = () => {

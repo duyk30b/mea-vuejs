@@ -39,14 +39,17 @@ const handleMenuClick = (menu: { key: string }) => {
       <AppstoreOutlined />
       <span>Home</span>
     </a-menu-item>
-    <a-sub-menu key="ArrivalInvoice">
+    <a-sub-menu key="Invoice">
       <template #icon>
         <RocketOutlined />
       </template>
-      <template #title>Tiếp đón nhanh</template>
-      <a-menu-item key="ArrivalInvoiceUpsert">Tiếp đón mới</a-menu-item>
-      <a-menu-item key="ArrivalInvoiceList">Danh sách tiếp đón</a-menu-item>
+      <template #title>Hóa đơn</template>
+      <a-menu-item key="InvoiceUpsert">Tạo hóa đơn</a-menu-item>
+      <a-menu-item key="InvoiceList">Danh sách hóa đơn</a-menu-item>
     </a-sub-menu>
+    <!-- <a-menu-item key="ArrivalDiagnosis">
+      <TeamOutlined /> <span>Khám bệnh</span>
+    </a-menu-item> -->
     <a-menu-item key="Customer">
       <ContactsOutlined /> <span>Khách Hàng</span>
     </a-menu-item>
@@ -64,7 +67,7 @@ const handleMenuClick = (menu: { key: string }) => {
       </template>
       <template #title>Kho hàng</template>
       <a-menu-item key="Product">Tồn kho</a-menu-item>
-      <a-menu-item key="PurchaseReceipt">Nhập hàng</a-menu-item>
+      <a-menu-item key="Receipt">Nhập hàng</a-menu-item>
       <a-menu-item key="Distributor">Nhà cung cấp</a-menu-item>
     </a-sub-menu>
     <a-menu-item key="Procedure">
@@ -84,6 +87,7 @@ const handleMenuClick = (menu: { key: string }) => {
       <template #title>Hệ thống</template>
       <a-menu-item key="OrganizationInfo">Thông tin cơ sở</a-menu-item>
       <a-menu-item key="EmployeeInfo">Thông tin cá nhân</a-menu-item>
+      <a-menu-item key="SystemSetting">Cài đặt</a-menu-item>
     </a-sub-menu>
   </a-menu>
 </template>

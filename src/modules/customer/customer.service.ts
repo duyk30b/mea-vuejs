@@ -1,21 +1,24 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { convertViToEn } from '@/utils'
-import { debounceAsync } from '@/utils/helpers/function.helper'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Customer } from './customer.model'
+import { debounceAsync } from '@/utils/helpers'
 
 export interface CustomerFilterQuery {
 	is_active?: 'true' | 'false',
-	phone?: string,
-	full_name_en?: string
+	search_text?: string,
 }
 export interface CustomerPaginationQuery extends ApiPaginationRequest {
 	filter?: CustomerFilterQuery,
 	sort?: {
 		id?: 'ASC' | 'DESC',
 		debt?: 'ASC' | 'DESC',
-		full_name_en?: 'ASC' | 'DESC'
+		full_name?: 'ASC' | 'DESC'
 	}
+}
+
+export type CustomerListQuery = {
+	limit?: number
+	filter?: CustomerFilterQuery,
 }
 
 export class CustomerService {
@@ -30,13 +33,15 @@ export class CustomerService {
 		}
 	}
 
-	static searchByFullNameOrPhone = debounceAsync(async (text: string): Promise<Customer[]> => {
-		const filter: CustomerFilterQuery = { is_active: 'true' }
-		if (text) {
-			if (/^\d+$/.test(text)) filter.phone = text
-			else {
-				filter.full_name_en = convertViToEn(text)
-			}
+	static async list(params: CustomerListQuery): Promise<Customer[]> {
+		const { data } = await AxiosInstance.get('/customer/list', { params })
+		return Customer.fromPlains(data)
+	}
+
+	static search = debounceAsync(async (text: string): Promise<Customer[]> => {
+		const filter: CustomerFilterQuery = {
+			is_active: 'true',
+			search_text: text,
 		}
 		const response = await AxiosInstance.get('/customer/list', {
 			params: {
@@ -53,9 +58,6 @@ export class CustomerService {
 	}
 
 	static async createOne(customer: Customer) {
-		if (customer.fullNameVi) {
-			customer.fullNameEn = convertViToEn(customer.fullNameVi)
-		}
 		const customerDto = Customer.toPlain(customer)
 		const { data } = await AxiosInstance.post('/customer/create', customerDto)
 
@@ -63,9 +65,6 @@ export class CustomerService {
 	}
 
 	static async updateOne(id: number, customer: Partial<Customer>) {
-		if (customer.fullNameVi) {
-			customer.fullNameEn = convertViToEn(customer.fullNameVi)
-		}
 		const customerDto = Customer.toPlain(customer)
 		const response = await AxiosInstance.patch(`/customer/update/${id}`, customerDto)
 

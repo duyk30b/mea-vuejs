@@ -1,21 +1,24 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { convertViToEn } from '@/utils'
-import { debounceAsync } from '@/utils/helpers'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Distributor } from './distributor.model'
+import { debounceAsync } from '@/utils/helpers'
 
 export interface DistributorFilterQuery {
 	is_active?: 'true' | 'false',
-	phone?: string,
-	full_name_en?: string
+	search_text?: string,
 }
 export interface DistributorPaginationQuery extends ApiPaginationRequest {
 	filter?: DistributorFilterQuery,
 	sort?: {
 		id?: 'ASC' | 'DESC',
 		debt?: 'ASC' | 'DESC',
-		full_name_en?: 'ASC' | 'DESC'
+		full_name?: 'ASC' | 'DESC'
 	}
+}
+
+export type DistributorListQuery = {
+	limit?: number
+	filter?: DistributorFilterQuery,
 }
 
 export class DistributorService {
@@ -30,14 +33,17 @@ export class DistributorService {
 		}
 	}
 
+	static async list(params: DistributorListQuery): Promise<Distributor[]> {
+		const { data } = await AxiosInstance.get('/distributor/list', { params })
+		return Distributor.fromPlains(data)
+	}
+
 	static search = debounceAsync(async (text: string): Promise<Distributor[]> => {
-		const filter: DistributorFilterQuery = { is_active: 'true' }
-		if (text) {
-			if (/^\d+$/.test(text)) filter.phone = text
-			else {
-				filter.full_name_en = convertViToEn(text)
-			}
+		const filter: DistributorFilterQuery = {
+			is_active: 'true',
+			search_text: text,
 		}
+		// if (/^\d+$/.test(text)) { } // text search phone
 		const response = await AxiosInstance.get('/distributor/list', {
 			params: {
 				filter,
@@ -53,22 +59,14 @@ export class DistributorService {
 	}
 
 	static async createOne(distributor: Distributor) {
-		if (distributor.fullNameVi) {
-			distributor.fullNameEn = convertViToEn(distributor.fullNameVi)
-		}
 		const distributorDto = Distributor.toPlain(distributor)
 		const { data } = await AxiosInstance.post('/distributor/create', distributorDto)
-
 		return Distributor.fromPlain(data)
 	}
 
 	static async updateOne(id: number, distributor: Distributor) {
-		if (distributor.fullNameVi) {
-			distributor.fullNameEn = convertViToEn(distributor.fullNameVi)
-		}
 		const distributorDto = Distributor.toPlain(distributor)
 		const { data } = await AxiosInstance.patch(`/distributor/update/${id}`, distributorDto)
-
 		return Distributor.fromPlain(data)
 	}
 }

@@ -1,53 +1,68 @@
 <script setup lang="ts">
-import { DistributorDebt, DistributorService, type Distributor } from '@/modules/distributor'
+import { DistributorDebt, DistributorService, type Distributor, useDistributorStore } from '@/modules/distributor'
 import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn, formatNumber } from '@/utils'
-import { ApartmentOutlined, FileSearchOutlined, FormOutlined, PlusOutlined, SettingOutlined, MinusCircleOutlined, CheckCircleOutlined } from '@ant-design/icons-vue'
+import { ApartmentOutlined, CheckCircleOutlined, FileSearchOutlined, FormOutlined, MinusCircleOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import ModalDistributorListSettingScreen from './components/ModalDistributorListSettingScreen.vue'
 import ModalDistributorPayDebt from './components/ModalDistributorPayDebt.vue'
 import ModalDistributorUpsert from './components/ModalDistributorUpsert.vue'
-import ModalDistributorDetails from './details/ModalDistributorDetails.vue'
+import ModalDistributorDetail from './detail/ModalDistributorDetail.vue'
+import { formatPhone } from '@/utils'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
-const modalDistributorDetails = ref<InstanceType<typeof ModalDistributorDetails>>()
+const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
 const modalDistributorListSettingScreen = ref<InstanceType<typeof ModalDistributorListSettingScreen>>()
 
+const distributorStore = useDistributorStore()
 const organizationStore = useOrganizationStore()
+const { formatMoney } = organizationStore
+
+const isMobile = window.innerWidth < 768
+
 const distributorList = ref<Distributor[]>([])
 
 const loadingComponent = ref(false)
 
 const page = ref(1)
-const limit = ref(10)
+const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const searchText = ref('')
-const sortColumn = ref<'full_name_en' | 'debt' | 'id' | ''>('')
-const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const isActive = ref<'true' | 'false' | ''>('true')
 
-const startFetchData = async () => {
-  loadingComponent.value = true
-  const isPhoneText = /^\d+$/.test(searchText.value)
-  const response = await DistributorService.pagination({
-    page: page.value,
-    limit: limit.value,
-    filter: {
-      is_active: isActive.value ? isActive.value : undefined,
-      phone: isPhoneText && searchText.value ? searchText.value : undefined,
-      full_name_en: (!isPhoneText && searchText.value) ? convertViToEn(searchText.value) : undefined,
-    },
-    sort: (sortColumn.value !== '') && (sortValue.value !== '') ? { [sortColumn.value]: sortValue.value } : undefined,
-  })
+const sortColumn = ref<'full_name' | 'debt' | 'id' | ''>('')
+const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-  distributorList.value = response.data
-  total.value = response.total
-  loadingComponent.value = false
+const startFetchData = async () => {
+  try {
+    loadingComponent.value = true
+    let sort: any
+    if (sortColumn.value !== '' && sortValue.value !== '') {
+      sort = { [sortColumn.value]: sortValue.value }
+    }
+
+    const response = distributorStore.pagination({
+      page: page.value,
+      limit: limit.value,
+      filter: {
+        is_active: isActive.value ? isActive.value : undefined,
+        search_text: searchText.value ? searchText.value : undefined,
+      },
+      sort: sort || { id: 'DESC' },
+    })
+
+    distributorList.value = response.data
+    total.value = response.total
+
+    loadingComponent.value = false
+  } catch (error) {
+    console.log('🚀 ~ file: DistributorList.vue:56 ~ startFetchData ~ error:', error)
+  }
 }
 
 onBeforeMount(async () => {
+  await distributorStore.fetchAll()
   await startFetchData()
 })
 
@@ -56,11 +71,16 @@ const startSearch = async () => {
   await startFetchData()
 }
 
+const handleInputSearchText = (event: any) => {
+  searchText.value = event.target.value
+  startSearch()
+}
+
 const handleSelectStatus = async (value: 'true' | 'false' | '') => {
   await startSearch()
 }
 
-const changeSort = (column: 'full_name_en' | 'debt' | 'id') => {
+const changeSort = (column: 'full_name' | 'debt' | 'id') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -76,29 +96,26 @@ const changeSort = (column: 'full_name_en' | 'debt' | 'id') => {
 
 const changePagination = async (options: { page?: number, limit?: number }) => {
   if (options.page) page.value = options.page
-  if (options.limit) limit.value = options.limit
+  if (options.limit) {
+    limit.value = options.limit
+    localStorage.setItem('DISTRIBUTOR_PAGINATION_LIMIT', String(options.limit))
+  }
   await startFetchData()
 }
 
 const updateDistributor = async (data: Distributor) => {
-  const findIndex = distributorList.value.findIndex((i) => i.id === data.id)
-  if (findIndex !== -1) {
-    distributorList.value[findIndex] = data
-  }
+  await startFetchData()
 }
 
 const handleModalDistributorUpsertSuccess = async (data: Distributor, type: 'CREATE' | 'UPDATE') => {
-  if (type === 'CREATE') {
-    distributorList.value.unshift(data)
-  }
-  else if (type === 'UPDATE') updateDistributor(data)
+  await startFetchData()
 }
 
 const handleModalDistributorPayDebtSuccess = async (data: {
   distributor: Distributor,
   distributorDebt: DistributorDebt
 }) => {
-  updateDistributor(data.distributor)
+  await startFetchData()
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
@@ -110,45 +127,48 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 <template>
   <ModalDistributorUpsert ref="modalDistributorUpsert" @success="handleModalDistributorUpsertSuccess" />
-  <ModalDistributorDetails ref="modalDistributorDetails" @update_distributor="updateDistributor" />
+  <ModalDistributorDetail ref="modalDistributorDetail" @update_distributor="updateDistributor" />
   <ModalDistributorPayDebt ref="modalDistributorPayDebt" @success="handleModalDistributorPayDebtSuccess" />
   <ModalDistributorListSettingScreen ref="modalDistributorListSettingScreen" />
 
-  <div class="mx-4 mt-4">
-    <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.3rem;">
-        <ApartmentOutlined style="margin-right: 1rem" />Danh sách nhà cung cấp
-        <a-button type="primary" @click="modalDistributorUpsert?.openModal()" class="ml-4">
-          <template #icon>
-            <PlusOutlined />
-          </template>
-          Thêm nhà cung cấp
-        </a-button>
+  <div class="page-header">
+    <div class="page-header-content">
+      <div class="hidden md:block">
+        <ApartmentOutlined /> Danh sách nhà cung cấp
       </div>
-      <div>
-        <a-dropdown trigger="click">
-          <span style="font-size: 1.1rem; cursor: pointer;">
-            <SettingOutlined />
-          </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </div>
+      <a-button type="primary" @click="modalDistributorUpsert?.openModal()">
+        <template #icon>
+          <PlusOutlined />
+        </template>
+        Thêm mới
+      </a-button>
     </div>
+    <div class="page-header-setting">
+      <a-dropdown trigger="click">
+        <span>
+          <SettingOutlined />
+        </span>
+        <template #overlay>
+          <a-menu @click="handleMenuSettingClick">
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
+
   </div>
 
-  <div class="mx-4 mt-4 p-4 bg-white">
-    <div class="flex flex-wrap gap-4">
-      <div style="width: 600px">
+  <div class="page-main">
+    <div class="page-main-options">
+      <div style="flex: 2; flex-basis: 500px;">
         <div>Tìm kiếm</div>
-        <a-input-search v-model:value="searchText" allow-clear enter-button @search="(text: string) => startSearch()"
-          class="w-full" placeholder="Tìm kiếm theo tên hoặc số điện thoại. Ấn Enter để tìm kiếm" />
+        <a-input-group compact class="w-full">
+          <a-input :value="searchText" @input="handleInputSearchText" allow-clear style="width: calc(100% - 100px)" />
+          <a-button type="primary" class="w-[100px]">Tìm kiếm</a-button>
+        </a-input-group>
       </div>
 
-      <div style="flex-basis: 300px;">
+      <div style="flex: 1; flex-basis: 300px;">
         <div>Chọn trạng thái</div>
         <a-select v-model:value="isActive" allow-clear @change="handleSelectStatus" class="w-full" placeholder="Tất cả">
           <a-select-option value="">Tất cả</a-select-option>
@@ -158,7 +178,61 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div class="table-wrapper mt-4 w-full">
+    <div v-if="isMobile" class="page-main-list">
+      <table class="table-mobile">
+        <thead>
+          <tr>
+            <th>Tên NCC</th>
+            <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.phone">SĐT</th>
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')"> Nợ &nbsp;
+              <font-awesome-icon v-if="sortColumn !== 'debt'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
+              <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
+              <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="distributorList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(distributor, index) in distributorList" :key="index">
+            <td style="border-right: none;">
+              <div class="font-medium text-justify">
+                {{ distributor.fullName }}
+                <a v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.detail" class="text-base"
+                  @click="modalDistributorDetail?.openModal(distributor)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
+              <div class="text-xs text-justify" v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.address">
+                {{ distributor.addressProvince }} - {{ distributor.addressDistrict }} - {{ distributor.addressWard }}
+              </div>
+              <div v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.note" class="text-center">
+                {{ distributor.note }}
+              </div>
+            </td>
+            <td v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.phone" style="white-space: nowrap; border-left: none; border-right: none;">
+              <a :href="'tel:' + distributor.phone">{{ formatPhone(distributor.phone || '') }}</a>
+            </td>
+            <td class="text-right" style="border-left: none;">
+              <div> {{ formatMoney(distributor.debt) }} </div>
+              <div v-if="distributor.debt != 0">
+                <a-button type="default" @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
+                  size="small">
+                  Trả nợ
+                </a-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 float-right mb-2">
+        <a-pagination size="small" v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      </div>
+    </div>
+
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -168,11 +242,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon v-if="sortColumn === 'id' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
               <font-awesome-icon v-if="sortColumn === 'id' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
-            <th class="cursor-pointer" @click="changeSort('full_name_en')">
+            <th class="cursor-pointer" @click="changeSort('full_name')">
               Họ Tên&nbsp;
-              <font-awesome-icon v-if="sortColumn !== 'full_name_en'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
-              <font-awesome-icon v-if="sortColumn === 'full_name_en' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
-              <font-awesome-icon v-if="sortColumn === 'full_name_en' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
+              <font-awesome-icon v-if="sortColumn !== 'full_name'" :icon="['fas', 'sort']" style="opacity: 0.4;" />
+              <font-awesome-icon v-if="sortColumn === 'full_name' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
+              <font-awesome-icon v-if="sortColumn === 'full_name' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
             <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.phone">SĐT</th>
             <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.address">Địa Chỉ</th>
@@ -182,7 +256,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'ASC'" :icon="['fas', 'sort-up']" />
               <font-awesome-icon v-if="sortColumn === 'debt' && sortValue === 'DESC'" :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.note">Ghi chú</th>
             <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.isActive">Trạng thái</th>
             <th v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.action">Sửa</th>
           </tr>
@@ -194,12 +267,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr v-for="(distributor, index) in distributorList" :key="index">
             <td class="text-center">DT{{ distributor.id }}</td>
             <td>
-              <div class="flex justify-between">
-                <div> {{ distributor.fullNameVi }}</div>
-                <a v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.detail" class="text-xl"
-                  @click="modalDistributorDetails?.openModal(distributor)">
+              <div>
+                {{ distributor.fullName }}
+                <a v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.detail" class="ml-1"
+                  @click="modalDistributorDetail?.openModal(distributor)">
                   <FileSearchOutlined />
                 </a>
+              </div>
+              <div v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.note" style="font-size: 0.8rem;">
+                {{ distributor.note }}
               </div>
             </td>
             <td v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.phone" class="text-center">
@@ -217,12 +293,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   </a-button>
                 </div>
                 <div>
-                  {{ formatNumber(distributor.debt) }}
+                  {{ formatMoney(distributor.debt) }}
                 </div>
               </div>
-            </td>
-            <td v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.note" class="text-center">
-              {{ distributor.note }}
             </td>
             <td v-if="organizationStore.SCREEN_DISTRIBUTOR_LIST.table.isActive" class="text-center">
               <a-tag v-if="distributor.isActive" color="success">
@@ -248,7 +321,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </table>
 
       <div class="mt-4 float-right mb-2">
-        <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total"
+        <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
           @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
       </div>
     </div>

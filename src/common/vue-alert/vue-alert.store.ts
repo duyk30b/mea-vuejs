@@ -17,7 +17,7 @@ const add = (alert: { type: 'success' | 'warning' | 'error'; message: string; ti
 	data[key] = {
 		type: alert.type,
 		message: alert.message,
-		time: alert.time || 5000,
+		time: alert.time || 3000,
 		progress: 0,
 	}
 

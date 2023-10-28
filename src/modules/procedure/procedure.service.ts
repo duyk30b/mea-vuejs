@@ -1,5 +1,5 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { convertViToEn, debounceAsync } from '@/utils/helpers'
+import { convertViToEn, customFilter, debounceAsync } from '@/utils/helpers'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Procedure } from './procedure.model'
 
@@ -8,13 +8,18 @@ export interface ProcedureFilterQuery {
 	group?: string,
 	search_text?: string,
 }
-export interface ProcedurePaginationQuery extends ApiPaginationRequest {
-	filter?: ProcedureFilterQuery,
-}
 
 export type ProcedureListQuery = {
-	limit: number
+	limit?: number
 	filter?: ProcedureFilterQuery,
+}
+export interface ProcedurePaginationQuery extends ApiPaginationRequest {
+	filter?: ProcedureFilterQuery,
+	sort?: {
+		id?: 'ASC' | 'DESC',
+		name?: 'ASC' | 'DESC',
+		price?: 'ASC' | 'DESC'
+	}
 }
 
 export class ProcedureService {
@@ -29,11 +34,18 @@ export class ProcedureService {
 		}
 	}
 
-	static list: (params: ProcedureListQuery) => Promise<Procedure[]>
-		= debounceAsync(async (params: ProcedureListQuery): Promise<Procedure[]> => {
+	static async list(params: ProcedureListQuery): Promise<Procedure[]> {
+		const { data } = await AxiosInstance.get('/procedure/list', { params })
+		return Procedure.fromPlains(data)
+	}
+
+	static search: (params: ProcedureListQuery) => Promise<Procedure[]> = debounceAsync(
+		async (params: ProcedureListQuery): Promise<Procedure[]> => {
 			const { data } = await AxiosInstance.get('/procedure/list', { params })
 			return Procedure.fromPlains(data)
-		}, 200)
+		},
+		200
+	)
 
 	static async getOne(id: number): Promise<Procedure> {
 		const { data } = await AxiosInstance.get(`/procedure/detail/${id}`)
@@ -41,9 +53,6 @@ export class ProcedureService {
 	}
 
 	static async createOne(procedure: Procedure) {
-		if (procedure.nameVi) {
-			procedure.nameEn = convertViToEn(procedure.nameVi)
-		}
 		const procedureDto = Procedure.toPlain(procedure)
 		const { data } = await AxiosInstance.post('/procedure/create', procedureDto)
 
@@ -51,9 +60,6 @@ export class ProcedureService {
 	}
 
 	static async updateOne(id: number, procedure: Procedure) {
-		if (procedure.nameVi) {
-			procedure.nameEn = convertViToEn(procedure.nameVi)
-		}
 		const procedureDto = Procedure.toPlain(procedure)
 		const { data } = await AxiosInstance.patch(`/procedure/update/${id}`, procedureDto)
 

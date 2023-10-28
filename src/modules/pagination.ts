@@ -3,7 +3,7 @@ export interface ApiPaginationRequest {
 	limit: number,
 	filter?: Record<string, any>
 	sort?: { id: 'ASC' | 'DESC' } | Record<string, 'ASC' | 'DESC'>
-	relations?: { [P in string]?: boolean | Object }
+	relation?: { [P in string]?: boolean | Object }
 }
 
 export interface ApiPaginationResponse {

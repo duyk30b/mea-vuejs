@@ -7,7 +7,7 @@ export interface ProductMovementPaginationQuery extends ApiPaginationRequest {
 		product_id?: number,
 		product_batch_id?: number
 	}
-	relations?: {
+	relation?: {
 		product_batch?: boolean,
 		invoice?: boolean,
 		receipt?: boolean

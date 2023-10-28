@@ -1,37 +1,36 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { debounceAsync } from '@/utils/helpers/function.helper'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Product } from './product.model'
+import { debounceAsync } from '@/utils/helpers'
 
 export type ProductFilterQuery = {
 	is_active?: 'true' | 'false',
 	group?: string,
 	search_text?: string,
-	quantity_zero?: 'true' | 'false',
-	overdue?: 'true' | 'false'
 }
 
-export type ProductRelationsQuery = {
+export type ProductRelationQuery = {
 	product_batches?: boolean
 }
 
 export type ProductListQuery = {
-	limit: number
+	limit?: number
 	filter?: ProductFilterQuery,
-	relations?: ProductRelationsQuery
+	relation?: ProductRelationQuery
 }
 
-export interface ApiProductPaginationQuery extends ApiPaginationRequest {
+export interface ProductPaginationQuery extends ApiPaginationRequest {
 	filter?: ProductFilterQuery,
-	relations?: ProductRelationsQuery
+	relation?: ProductRelationQuery
 	sort?: {
 		id?: 'ASC' | 'DESC',
-		brand_name?: 'ASC' | 'DESC'
+		brand_name?: 'ASC' | 'DESC',
+		quantity?: 'ASC' | 'DESC'
 	}
 }
 
 export class ProductService {
-	static async pagination(params: ApiProductPaginationQuery) {
+	static async pagination(params: ProductPaginationQuery) {
 		const response = await AxiosInstance.get('/product/pagination', { params })
 		const data = response.data as ApiPaginationResponse
 		return {
@@ -47,28 +46,20 @@ export class ProductService {
 		return Product.fromPlains(data)
 	}
 
-	static search: (params: ProductListQuery) => Promise<Product[]>
-		= debounceAsync(async (params: ProductListQuery): Promise<Product[]> => {
+	static search: (params: ProductListQuery) => Promise<Product[]> = debounceAsync(
+		async (params: ProductListQuery): Promise<Product[]> => {
 			const { data } = await AxiosInstance.get('/product/list', { params })
 			return Product.fromPlains(data)
-		}, 200)
+		},
+		200
+	)
 
-	static async getOne(id: number, relations?: { productBatches: boolean }): Promise<Product> {
+	static async getOne(id: number, relation?: { productBatches: boolean }): Promise<Product> {
 		const { data } = await AxiosInstance.get(
 			`/product/detail/${id}`,
-			{ params: { relations: { product_batches: relations?.productBatches } } }
+			{ params: { relation: { product_batches: relation?.productBatches } } }
 		)
 		return Product.fromPlain(data)
-	}
-
-	static async getManyByIds(ids: number[], relations?: { productBatches: boolean }): Promise<Product[]> {
-		const { data } = await AxiosInstance.get('/product/list', {
-			params: {
-				ids,
-				relations: { product_batches: relations?.productBatches },
-			},
-		})
-		return Product.fromPlains(data)
 	}
 
 	static async createOne(product: Product) {

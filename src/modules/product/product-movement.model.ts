@@ -1,9 +1,13 @@
 import { Expose, instanceToPlain, plainToInstance, Type } from 'class-transformer'
 import { BaseModel } from '../base.model'
-import type { ProductMovementType } from '../enum'
 import { Invoice } from '../invoice'
 import { Receipt } from '../receipt'
 import { ProductBatch } from './product-batch.model'
+
+export enum ProductMovementType {
+	Receipt = 1,
+	Invoice = 2,
+}
 
 export class ProductMovement extends BaseModel {
 	@Expose({ name: 'product_id', toClassOnly: true })

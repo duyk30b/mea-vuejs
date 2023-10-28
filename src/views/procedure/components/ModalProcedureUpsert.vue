@@ -1,5 +1,7 @@
 
 <script setup lang="ts">
+import { InputMoney } from '@/common/vue-form'
+import { useProcedureStore } from '@/modules/procedure'
 import { Procedure } from '@/modules/procedure/procedure.model'
 import { ProcedureService } from '@/modules/procedure/procedure.service'
 import { useOrganizationStore } from '@/store/organization.store'
@@ -7,7 +9,9 @@ import { convertViToEn } from '@/utils'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
+
 const organizationStore = useOrganizationStore()
+const procedureStore = useProcedureStore()
 
 const showModal = ref(false)
 const procedure = ref(Procedure.blank())
@@ -50,9 +54,11 @@ const handleSave = async () => {
   try {
     if (!procedure.value.id) {
       const response = await ProcedureService.createOne(procedure.value)
+      procedureStore.createOne(response)
       emit('success', response, 'CREATE')
     } else {
       const response = await ProcedureService.updateOne(procedure.value.id, procedure.value)
+      procedureStore.updateOne(response.id, response)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -94,7 +100,7 @@ defineExpose({ openModal })
     <div>
       <div class="flex items-center">
         <div class="w-[100px] flex-none">Tên dịch vụ</div>
-        <a-input v-model:value="procedure.nameVi" class="flex-auto"></a-input>
+        <a-input v-model:value="procedure.name" class="flex-auto"></a-input>
       </div>
       <div v-if="organizationStore.SCREEN_PRODUCT_LIST.upsert.group" class="flex items-center mt-2">
         <div class="w-[100px] flex-none">Nhóm</div>
@@ -105,9 +111,7 @@ defineExpose({ openModal })
       <div class="flex items-center mt-2">
         <div style="width: 100px; flex: none;">Giá dịch vụ</div>
         <div style="flex:1">
-          <a-input-number style="width: 100%;" v-model:value="procedure.price" step="1000" :min="0"
-            :formatter="(value: any) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value: any) => value.replace(/(,*)/g, '')" />
+          <InputMoney v-model:value="procedure.price" :min="0" style="width: 100%;" />
         </div>
       </div>
       <div class="flex items-center mt-4">

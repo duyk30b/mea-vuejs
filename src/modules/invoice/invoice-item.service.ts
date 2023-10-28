@@ -1,7 +1,6 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { InvoiceItem } from '.'
-import type { InvoiceItemType } from '../enum'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
+import { InvoiceItem, InvoiceItemType } from './invoice-item.model'
 
 export interface InvoiceItemPaginationQuery extends ApiPaginationRequest {
 	filter?: {
@@ -9,7 +8,7 @@ export interface InvoiceItemPaginationQuery extends ApiPaginationRequest {
 		customer_id?: number,
 		type?: InvoiceItemType,
 	}
-	relations?: {
+	relation?: {
 		invoice?: { customer?: boolean },
 		product_batch?: { product?: boolean }
 		procedure?: boolean,

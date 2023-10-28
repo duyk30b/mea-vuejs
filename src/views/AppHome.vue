@@ -68,11 +68,11 @@ const options = { responsive: true }
       <div class="flex flex-wrap justify-between">
 
         <div class="w-[100%] md:w-[50%] xl:w-[25%] p-4">
-          <div @click="$router.push({ name: 'ArrivalInvoiceUpsert' })"
+          <div @click="$router.push({ name: 'Invoice' })"
             class="bg-[#008080] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer">
             <div>
-              <div class="text-xl uppercase" style="font-weight: 500;"> Tiếp đón nhanh </div>
-              <div class="mt-4">Tạo hóa đơn nhanh bán hàng, dịch vụ cho khách lẻ</div>
+              <div class="text-xl uppercase" style="font-weight: 500;"> HÓA ĐƠN </div>
+              <div class="mt-4">Tạo hóa đơn bán hàng, dịch vụ cho khách lẻ</div>
             </div>
             <div class="text-6xl mt-2" style="opacity: 0.3">
               <DeploymentUnitOutlined />

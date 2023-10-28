@@ -58,7 +58,7 @@ const saveOrganization = async () => {
 <template>
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.3rem;">
+      <div class="font-medium" style="font-size: 1.2rem;">
         <SettingOutlined style="margin-right: 1rem" />Thông tin cơ sở
       </div>
     </div>
