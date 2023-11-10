@@ -1,14 +1,15 @@
 import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Transform, Type } from 'class-transformer'
 import { BaseModel } from '../base.model'
-import { Distributor } from '../distributor'
+import { Distributor, DistributorPayment } from '../distributor'
 import { DiscountType } from '../enum'
 import { ReceiptItem } from './receipt-item.model'
 
 export enum ReceiptStatus {
-	Refund = 0,
-	Draft = 1,
-	Process = 2,
-	Finish = 3
+	Refund = -1,
+	Draft = 0,
+	AwaitingShipment = 1, // Chờ gửi hàng
+	Debt = 2,
+	Success = 3
 }
 
 export class Receipt extends BaseModel {
@@ -21,14 +22,8 @@ export class Receipt extends BaseModel {
 	@Expose({ name: 'create_time' })
 	createTime: number
 
-	@Expose({ name: 'payment_time', toClassOnly: true })
-	paymentTime?: number
-
-	@Expose({ name: 'ship_time', toClassOnly: true })
-	shipTime?: number
-
-	@Expose({ name: 'refund_time', toClassOnly: true })
-	refundTime?: number
+	@Expose({ name: 'delete_time', toClassOnly: true })
+	deleteTime: number
 
 	@Expose({ name: 'total_item_money' })
 	totalItemMoney: number = 0                      // tiền sản phẩm
@@ -51,7 +46,11 @@ export class Receipt extends BaseModel {
 	@Expose({ name: 'total_money' })
 	totalMoney: number = 0                          // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
 
-	@Expose({ name: 'debt' })
+	@Expose({ name: 'paid', toClassOnly: true })
+	@Transform(({ value }) => value || 0)
+	paid: number = 0
+
+	@Expose({ name: 'debt', toClassOnly: true })
 	@Transform(({ value }) => value || 0)
 	debt: number = 0                                // tiền nợ
 
@@ -65,6 +64,9 @@ export class Receipt extends BaseModel {
 	@Expose({ name: 'distributor', toClassOnly: true })
 	@Type(() => Distributor)
 	distributor: Distributor
+
+	@Expose({ name: 'distributor_payments', toClassOnly: true })
+	distributorPayments: DistributorPayment[] = []
 
 	static blank(): Receipt {
 		return new Receipt()

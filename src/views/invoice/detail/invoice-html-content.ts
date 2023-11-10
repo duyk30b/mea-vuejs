@@ -140,7 +140,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
 					</tbody>
 				</table>
 				<div style="text-align:right; font-style:italic; margin-top: 1rem">
-					${timeToText(invoice.paymentTime, 'hh:mm:ss DD/MM/YYYY')}
+					${timeToText(invoice.createTime, 'hh:mm:ss DD/MM/YYYY')}
 				</div>
 				<table style="width: 100%; margin-top: 0.5rem">
 					<tr>

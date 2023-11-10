@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Customer } from '@/modules/customer'
-import { InvoiceItem, InvoiceItemService, InvoiceService, type Invoice, InvoiceItemType, InvoiceStatus } from '@/modules/invoice'
+import { InvoiceItem, InvoiceItemService, InvoiceItemType } from '@/modules/invoice'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
-import { CheckCircleOutlined, ExclamationCircleOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons-vue'
+import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -15,9 +15,7 @@ const props = withDefaults(
 const router = useRouter()
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const invoiceItems = ref<InvoiceItem[]>([])
 const page = ref(1)
@@ -103,30 +101,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 ĐH <a class="mr-2" @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
                   IV{{ invoiceItem.invoice!.id }}
                 </a>
-                <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Draft" color="warning">
-                  <template #icon>
-                    <CheckCircleOutlined />
-                  </template>
-                  Nháp
-                </a-tag>
-                <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Process" color="processing">
-                  <template #icon>
-                    <ExclamationCircleOutlined />
-                  </template>
-                  Đang thực hiện
-                </a-tag>
-                <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Finish" color="success">
-                  <template #icon>
-                    <ExclamationCircleOutlined />
-                  </template>
-                  Hoàn thành
-                </a-tag>
-                <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Refund" color="error">
-                  <template #icon>
-                    <StopOutlined />
-                  </template>
-                  Hoàn trả
-                </a-tag>
+                <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
               </div>
               <div style="font-size: 0.8rem;">
                 TG {{ timeToText(invoiceItem.invoice?.createTime, 'DD/MM/YYYY hh:mm') }}
@@ -169,30 +144,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"> IV{{ invoiceItem.invoice!.id }}
                 </a>
                 <span class="ml-2">
-                  <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Draft" color="warning">
-                    <template #icon>
-                      <CheckCircleOutlined />
-                    </template>
-                    Nháp
-                  </a-tag>
-                  <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Process" color="processing">
-                    <template #icon>
-                      <ExclamationCircleOutlined />
-                    </template>
-                    Đang thực hiện
-                  </a-tag>
-                  <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Finish" color="success">
-                    <template #icon>
-                      <ExclamationCircleOutlined />
-                    </template>
-                    Hoàn thành
-                  </a-tag>
-                  <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Refund" color="error">
-                    <template #icon>
-                      <StopOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
+                  <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
                 </span>
               </div>
               <div style="font-size: 0.8rem;">

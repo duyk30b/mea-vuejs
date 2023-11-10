@@ -1,10 +1,8 @@
 import { DiscountType } from '@/modules/enum'
 import { Invoice } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
 import { ref, watchEffect } from 'vue'
 
 const invoice = ref<Invoice>(Invoice.blank())
-const organizationStore = useOrganizationStore()
 
 watchEffect(() => {
   const totalCostMoney = invoice.value.invoiceItems.reduce((acc, item) => acc + item.costPrice * item.quantity, 0)
@@ -36,10 +34,6 @@ watchEffect(() => {
   invoice.value.discountType = discountType
   invoice.value.totalMoney = totalMoney
   invoice.value.profit = profit
-
-  if (organizationStore.SCREEN_INVOICE_UPSERT.paymentInfo.paymentZero === true) {
-    invoice.value.debt = totalMoney
-  }
 })
 
 export { invoice }

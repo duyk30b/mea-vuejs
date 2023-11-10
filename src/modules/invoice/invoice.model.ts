@@ -1,15 +1,15 @@
 import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Transform, Type } from 'class-transformer'
-import { Arrival } from '../arrival'
 import { BaseModel } from '../base.model'
-import { Customer } from '../customer'
-import { DiscountType } from '../enum'
+import { Customer, CustomerPayment } from '../customer'
+import { DiscountType, type ExpensesDetailType, type SurchargeDetailType } from '../enum'
 import { InvoiceItem } from './invoice-item.model'
 
 export enum InvoiceStatus {
-	Refund = 0,
-	Draft = 1,
-	Process = 2,
-	Finish = 3
+	Refund = -1,
+	Draft = 0,
+	AwaitingShipment = 1,
+	Debt = 2,
+	Success = 3
 }
 
 export class Invoice extends BaseModel {
@@ -25,17 +25,11 @@ export class Invoice extends BaseModel {
 	@Expose({ name: 'create_time' })
 	createTime: number
 
-	@Expose({ name: 'payment_time', toClassOnly: true })
-	paymentTime: number
-
-	@Expose({ name: 'ship_time', toClassOnly: true })
-	shipTime: number
-
-	@Expose({ name: 'refund_time', toClassOnly: true })
-	refundTime: number
+	@Expose({ name: 'delete_time', toClassOnly: true })
+	deleteTime: number
 
 	@Expose({ name: 'total_cost_money' })
-	totalCostMoney: number = 0				          // tổng tiền cost = tổng cost sản phẩm   
+	totalCostMoney: number = 0				                // tổng tiền cost = tổng cost sản phẩm   
 
 	@Expose({ name: 'total_item_money' })
 	totalItemMoney: number = 0                        // totalItemProduct + totalItemProcedure
@@ -63,33 +57,40 @@ export class Invoice extends BaseModel {
 	expenses: number = 0                                   // Mục này sẽ không hiện trong đơn hàng, khách hàng ko nhìn thấy
 
 	@Expose({ name: 'surcharge_details' })
-	surchargeDetails: { key: string, name: string, money: number }[] = []   // Phụ phí chi tiết
+	surchargeDetails: SurchargeDetailType[] = [{ key: '_unknown', money: 0, name: '' }]   // Phụ phí chi tiết
 
 	@Expose({ name: 'expenses_details' })
-	expensesDetails: { key: string, name: string, money: number }[] = []   // Chi phí chi tiết
+	expensesDetails: ExpensesDetailType[] = [{ key: '_unknown', money: 0, name: '' }]   // Chi phí chi tiết
 
 	@Expose({ name: 'profit' })
 	@Transform(({ value }) => value || 0)
 	profit: number                                            // tiền lãi = Doanh thu - tiền cost - khoản chi
 
-	@Expose({ name: 'debt' })
+	@Expose({ name: 'paid', toClassOnly: true })
 	@Transform(({ value }) => value || 0)
-	debt: number = 0                            // tiền nợ
+	paid: number = 0                                          // tiền đã thanh toán
+
+	@Expose({ name: 'debt', toClassOnly: true })
+	@Transform(({ value }) => value || 0)
+	debt: number = 0                                          // tiền nợ
 
 	@Expose({ name: 'note' })
-	note: string = ''                               // Ghi chú
+	note: string = ''                                         // Ghi chú
+
+	// @Expose({ name: 'arrival' })
+	// @Type(() => Arrival)
+	// arrival: Arrival
+
+	@Expose({ name: 'invoice_items' })
+	@Type(() => InvoiceItem)
+	invoiceItems: InvoiceItem[] = []
 
 	@Expose({ name: 'customer', toClassOnly: true })
 	@Type(() => Customer)
 	customer?: Customer
 
-	@Expose({ name: 'arrival' })
-	@Type(() => Arrival)
-	arrival: Arrival
-
-	@Expose({ name: 'invoice_items' })
-	@Type(() => InvoiceItem)
-	invoiceItems: InvoiceItem[] = []
+	@Expose({ name: 'customer_payments', toClassOnly: true })
+	customerPayments: CustomerPayment[] = []
 
 	static blank(): Invoice {
 		return new Invoice()

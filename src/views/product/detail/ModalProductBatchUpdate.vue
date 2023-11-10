@@ -1,6 +1,5 @@
-
 <script setup lang="ts">
-import { InputDate } from '@/common/vue-form'
+import { InputDate, InputMoney, InputNumber } from '@/common/vue-form'
 import { Product, ProductBatch, ProductBatchService } from '@/modules/product'
 import { useProductBatchStore } from '@/modules/product/product-batch.store'
 import { useProductStore } from '@/modules/product/product.store'
@@ -70,21 +69,21 @@ defineExpose({ openModal })
       </div>
       <div class="flex items-center mt-2">
         <div style="width: 100px; flex: none;">Giá nhập</div>
-        <a-input-number :value="productBatch.costPrice" step="1000" style="width: 100%;" :min="0" disabled
-          :formatter="(value: any) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-          :parser="(value: any) => value.replace(/(,*)/g, '')" />
+        <div class="flex-1">
+          <InputMoney :value="productBatch.costPrice" disabled />
+        </div>
       </div>
       <div class="flex items-center mt-2">
         <div style="width: 100px; flex: none;">Giá bán sỉ</div>
-        <a-input-number v-model:value="productBatch.wholesalePrice" step="1000" style="width: 100%;" :min="0"
-          :formatter="(value: any) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-          :parser="(value: any) => value.replace(/(,*)/g, '')" />
+        <div class="flex-1">
+          <InputMoney v-model:value="productBatch.wholesalePrice" />
+        </div>
       </div>
       <div class="flex items-center mt-2">
         <div style="width: 100px; flex: none;">Giá bán lẻ</div>
-        <a-input-number v-model:value="productBatch.retailPrice" step="1000" style="width: 100%;" :min="0"
-          :formatter="(value: any) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-          :parser="(value: any) => value.replace(/(,*)/g, '')" />
+        <div class="flex-1">
+          <InputMoney v-model:value="productBatch.retailPrice" />
+        </div>
       </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>

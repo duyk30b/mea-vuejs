@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InputMoney, InputOptions } from '@/common/vue-form'
+import { InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
 import { Distributor, DistributorService, useDistributorStore } from '@/modules/distributor'
 import { Receipt, ReceiptItem, ReceiptService } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
@@ -8,7 +8,7 @@ import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalDistributorUpsert from '../../distributor/components/ModalDistributorUpsert.vue'
+import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
@@ -57,7 +57,7 @@ onBeforeMount(async () => {
   if (receiptId) {
     const receiptResponse = await ReceiptService.detail(receiptId, {
       distributor: true,
-      receiptItems: true,
+      receipt_items: true,
     })
 
     receipt.value = receiptResponse
@@ -188,7 +188,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       <div class="md:w-1/3">
         <div class="bg-white p-4">
           <div class="flex justify-between">
-            <span>Tên nhà cung cấp (nợ cũ: <b>{{ formatMoney(distributor.debt) }}</b>)</span>
+            <span>Tên NCC (nợ cũ: <b>{{ formatMoney(distributor.debt) }}</b>)</span>
             <a @click="modalDistributorUpsert?.openModal()">Thêm NCC mới</a>
           </div>
           <InputOptions ref="inputSearchDistributor" :options="distributorList" v-model:searchText="distributor.fullName"
@@ -208,8 +208,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <tbody>
                 <tr>
                   <td>Thời gian</td>
-                  <td><a-date-picker show-time placeholder="Select Time" v-model:value="createTime"
-                      :format="'DD/MM/YYYY HH:mm:ss'" /></td>
+                  <td>
+                    <a-date-picker show-time placeholder="Select Time" v-model:value="createTime"
+                      :format="'DD/MM/YYYY HH:mm:ss'" style="width: 100%;" />
+                  </td>
                 </tr>
                 <tr>
                   <td class="font-bold" style="width: 120px;">Tiền hàng</td>
@@ -221,16 +223,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <td>Giảm giá</td>
                   <td style="padding-right: 11px;">
                     <div class="flex gap-2">
-                      <a-input-group compact>
-                        <a-input-number v-if="receipt.discountType == '%'" style="width: 100px;"
-                          v-model:value="receipt.discountPercent" :min="0" :max="100" />
-                        <InputMoney v-if="receipt.discountType == 'VNĐ'" v-model:value="receipt.discountMoney" :min="0"
-                          class="input-payment" />
+                      <div>
+                        <div v-if="receipt.discountType == '%'" style="width: 100px;">
+                          <InputNumber v-model:value="receipt.discountPercent" />
+                        </div>
+                        <div v-if="receipt.discountType == 'VNĐ'">
+                          <InputMoney v-model:value="receipt.discountMoney" />
+                        </div>
                         <a-select v-model:value="receipt.discountType" style="min-width: 70px;">
                           <a-select-option value="%">%</a-select-option>
                           <a-select-option value="VNĐ">VNĐ</a-select-option>
                         </a-select>
-                      </a-input-group>
+                      </div>
                       {{ formatMoney(receipt.discountMoney) }}
                     </div>
                   </td>
@@ -241,27 +245,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     <InputMoney v-model:value="receipt.surcharge" class="input-payment" />
                   </td>
                 </tr>
+                <tr><td></td><td></td></tr>
                 <tr>
                   <td class="font-bold">Tổng tiền</td>
-                  <td class="text-right font-bold" style="padding-right: 11px;">
+                  <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px;">
                     {{ formatMoney(receipt.totalMoney) }}
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>Thanh toán</td>
-                  <td>
-                    <InputMoney :value="receipt.totalMoney - receipt.debt"
-                      @update:value="(e: number) => receipt.debt = receipt.totalMoney - e" class="input-payment" />
-                  </td>
-                </tr>
-                <tr>
-                  <td>Ghi nợ</td>
-                  <td>
-                    <InputMoney v-model:value="receipt.debt" class="input-payment" />
                   </td>
                 </tr>
               </tbody>

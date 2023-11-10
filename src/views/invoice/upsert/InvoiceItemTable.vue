@@ -5,12 +5,10 @@ import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { invoice } from './invoice-upsert.store'
-import { InputMoney } from '@/common/vue-form'
+import { InputMoney, InputNumber } from '@/common/vue-form'
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const handleChangeInvoiceItemDiscountMoney = (data: number, index: number) => {
   const discountMoney = data / invoice.value.invoiceItems[index].unit.rate
@@ -32,10 +30,14 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
   invoice.value.invoiceItems[index].actualPrice = actualPrice
   invoice.value.invoiceItems[index].discountType = DiscountType.Percent
 }
+
+const handleChangeInvoiceItemHintUsage = (data: string, index: number) => {
+  invoice.value.invoiceItems[index].hintUsage = data
+}
 </script>
 
 <template>
-  <div class="py-2">
+  <div class="py-4">
     <div class="px-4">Danh sách sản phẩm trong phiếu</div>
     <div v-if="isMobile" class="mt-2">
       <table class="table-mobile">
@@ -73,6 +75,11 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
                   <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
                     HSD: {{ timeToText(invoiceItem.productBatch.expiryDate, 'DD/MM/YY') }}
                   </div>
+                </div>
+                <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage" style="font-size: 0.8rem;"
+                  class="flex gap-2" contenteditable="true"
+                  @input="e => handleChangeInvoiceItemHintUsage((e.target as HTMLElement)?.innerText, index)">
+                  {{ invoiceItem.hintUsage }}
                 </div>
               </div>
               <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
@@ -112,9 +119,8 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
                             style="width: 100%;" :append="'VNĐ'" />
                         </div>
                         <div class="mt-2">
-                          <a-input-number :value="invoiceItem.discountPercent"
-                            @change="(e: number) => handleChangeInvoiceItemDiscountPercent(e, index)" addon-after="%"
-                            :min="0" :max="100" style="width: 100%;"></a-input-number>
+                          <InputNumber :value="invoiceItem.discountPercent"
+                            @update:value="(e: number) => handleChangeInvoiceItemDiscountPercent(e, index)" append="%" />
                         </div>
                       </div>
                     </template>
@@ -168,13 +174,12 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
         </tbody>
       </table>
     </div>
-    <div v-else class="table-wrapper mt-2">
+    <div v-else class="table-wrapper mt-2 mx-4">
       <table class="table">
         <thead>
           <tr>
             <th>#</th>
             <th>Tên</th>
-            <th v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">HSD</th>
             <th style="width: 120px;">Số lượng</th>
             <th v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đơn vị</th>
             <th v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">Chiết khấu</th>
@@ -187,27 +192,42 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
           <tr v-if="invoice.invoiceItems.length == 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(ii, index) in invoice.invoiceItems" :key="index">
-            <td class="index"></td>
-            <td v-if="ii.type === InvoiceItemType.ProductBatch">
-              <div style="font-weight: 500;" class="text-justify">{{ ii.productBatch?.product?.brandName }}</div>
-              <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance" class="text-justify">
-                {{ ii.productBatch?.product?.substance }}
+          <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
+            <td>{{ index + 1 }}</td>
+            <td>
+              <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+                <div style="font-weight: 500;" class="text-justify">{{ invoiceItem.productBatch?.product?.brandName }}
+                </div>
+                <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance" class="text-justify"
+                  style="font-size: 0.8rem;">
+                  {{ invoiceItem.productBatch?.product?.substance }}
+                </div>
+                <div style="font-size: 0.8rem;" class="flex gap-2">
+                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
+                    Lô {{ invoiceItem.productBatch?.batch }}
+                  </span>
+                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
+                    - HSD {{ timeToText(invoiceItem.productBatch?.expiryDate) }}
+                  </span>
+                </div>
+                <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                  @input="e => handleChangeInvoiceItemHintUsage((e.target as HTMLElement)?.innerText, index)"
+                  contenteditable="true" style="font-size: 0.8rem;">
+                  {{ invoiceItem.hintUsage }}
+                </div>
+              </div>
+              <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
+                <div style="font-weight: 500;">{{ invoiceItem.procedure.name }}</div>
               </div>
             </td>
-            <td v-if="ii.type === InvoiceItemType.Procedure">
-              <div style="font-weight: 500;">{{ ii.procedure.name }}</div>
-            </td>
-            <td v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate" class="text-center">
-              {{ timeToText(ii.productBatch?.expiryDate) }}
-            </td>
             <td>
-              <a-input-number :value="ii.quantity / ii.unit.rate"
-                @update:value="(e: number) => invoice.invoiceItems[index].quantity = e * ii.unit.rate" class="w-full"
-                :min="0" />
+              <div class="w-full">
+                <InputNumber :value="invoiceItem.quantity / invoiceItem.unit.rate"
+                  @update:value="(e: number) => invoice.invoiceItems[index].quantity = e * invoiceItem.unit.rate" />
+              </div>
             </td>
             <td v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit" class="text-center">
-              {{ ii.unit?.name || 'Lần' }}
+              {{ invoiceItem.unit?.name || 'Lần' }}
             </td>
             <td v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount" class="text-center">
               <a-popconfirm>
@@ -218,35 +238,37 @@ const handleChangeInvoiceItemDiscountPercent = (discountPercent: number, index: 
                   <div></div>
                 </template>
                 <template #title>
-                  <div>Chiết khấu (Tiền hàng: <b>{{ formatMoney(ii.expectedPrice * ii.unit.rate) }}</b>)</div>
+                  <div>Chiết khấu (Tiền hàng: <b>{{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unit.rate) }}</b>)
+                  </div>
                   <div class="mt-2">
                     <div>
-                      <InputMoney :value="ii.discountMoney * ii.unit.rate"
+                      <InputMoney :value="invoiceItem.discountMoney * invoiceItem.unit.rate"
                         @update:value="(e: number) => handleChangeInvoiceItemDiscountMoney(e, index)" addon-after="VNĐ"
                         style="width: 100%;" />
                     </div>
                     <div class="mt-2">
-                      <a-input-number :value="ii.discountPercent"
-                        @change="(e: number) => handleChangeInvoiceItemDiscountPercent(e, index)" addon-after="%" :min="0"
-                        :max="100" style="width: 100%;"></a-input-number>
+                      <div class="w-full">
+                        <InputNumber :value="invoiceItem.discountPercent"
+                          @change="(e: number) => handleChangeInvoiceItemDiscountPercent(e, index)" append="%" />
+                      </div>
                     </div>
                   </div>
                 </template>
-                <a-tag v-if="ii.discountType === 'VNĐ'" color="success" style="cursor: pointer;">
-                  {{ formatMoney(ii.discountMoney * ii.unit.rate) }}
+                <a-tag v-if="invoiceItem.discountType === 'VNĐ'" color="success" style="cursor: pointer;">
+                  {{ formatMoney(invoiceItem.discountMoney * invoiceItem.unit.rate) }}
                 </a-tag>
-                <a-tag v-if="ii.discountType === '%'" color="success" style="cursor: pointer;">
-                  {{ ii.discountPercent || 0 }}%
+                <a-tag v-if="invoiceItem.discountType === '%'" color="success" style="cursor: pointer;">
+                  {{ invoiceItem.discountPercent || 0 }}%
                 </a-tag>
               </a-popconfirm>
             </td>
             <td class="text-right">
-              <div v-if="ii.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(ii.expectedPrice * ii.unit.rate) }}</del>
+              <div v-if="invoiceItem.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unit.rate) }}</del>
               </div>
-              <div>{{ formatMoney(ii.actualPrice * ii.unit.rate) }}</div>
+              <div>{{ formatMoney(invoiceItem.actualPrice * invoiceItem.unit.rate) }}</div>
             </td>
-            <td class="text-right">{{ formatMoney(ii.actualPrice * ii.quantity) }} </td>
+            <td class="text-right">{{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }} </td>
             <td class="text-center">
               <a @click="invoice.invoiceItems.splice(index, 1)" class="text-red-500 text-xl">
                 <DeleteOutlined />

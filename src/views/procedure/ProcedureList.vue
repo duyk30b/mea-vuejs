@@ -18,9 +18,7 @@ const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const procedureStore = useProcedureStore()
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const procedureList = ref<Procedure[]>([])
 

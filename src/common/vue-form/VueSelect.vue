@@ -1,17 +1,15 @@
 <template>
-  <div :class="{ 'input-text': true, disabled: disabled }" v-click-outside="() => showOptions = false">
-    <select :value="value" @change="handleChange" @focusin="handleFocusIn" @keydown="handleKeydown"
-      :disabled="disabled">
+  <div :class="{ 'vue-select': true, disabled: disabled }" v-click-outside="() => showOptions = false">
+    <select :value="value" @change="handleChange" @focusin="handleFocusIn" @keydown="handleKeydown" :disabled="disabled">
       <option v-for="(option, index) in options" :key="index" :value="option.value">
         {{ option.text }}
       </option>
     </select>
     <div :class="{ 'wrap-select': true, 'active': showOptions }" @click="handleClickWrapSelect">
     </div>
-    <label>{{ label }}</label>
     <div class="options" v-if="showOptions" :style="{ maxHeight: `${maxHeight}px` }" ref="optionsElement">
-      <div v-for="(option, index) in options" :key="index"
-        :class="{ 'item-search': true, 'active': index == indexFocus }" @click="handleClickItem(option.value)">
+      <div v-for="(option, index) in options" :key="index" :class="{ 'item-search': true, 'active': index == indexFocus }"
+        @click="handleClickItem(option.value)">
         <div class="item-json"> {{ option.text }}</div>
       </div>
     </div>
@@ -24,7 +22,6 @@ import { ref } from 'vue'
 
 export default {
   props: {
-    label: { type: String, default: () => '' },
     value: { type: [Number, String] as PropType<number | string | null>, default: () => '' },
     options: { type: Array as PropType<{ value: string | number | null, text: string }[]>, default: () => [] },
     disabled: { type: Boolean, default: () => false },
@@ -117,5 +114,121 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.vue-select {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 4px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  display: flex;
+  align-items: stretch;
 
+  &:focus-within {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px #1890ff33;
+  }
+
+  &:hover {
+    border-color: #40a9ff;
+  }
+
+  &.disabled {
+    background-color: #eeeeee;
+
+    label {
+      border: 1px solid #eee;
+    }
+
+    .wrap-select {
+      cursor: not-allowed;
+    }
+  }
+
+  select {
+    width: 100%;
+    outline: none;
+    border: none;
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: '';
+
+    &::placeholder {
+      opacity: 0.4;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      background-color: #eeeeee;
+      opacity: 0.8;
+    }
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+
+  .options {
+    position: absolute;
+    z-index: 9;
+    background-color: #fff;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    border: 1px solid #d4d4d4;
+    box-shadow: 5px 5px 4px #aaaaaa;
+    overflow-y: auto;
+
+    .item-search {
+      position: relative;
+      padding: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid #d4d4d4;
+
+      &.active {
+        background-color: dodgerblue !important;
+        color: #fff;
+      }
+
+      &:hover {
+        background-color: #e9e9e9;
+      }
+
+      .item-json {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .wrap-select {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    cursor: pointer;
+
+    &:after {
+      --border-width: 6px;
+      position: absolute;
+      content: "";
+      top: calc(50% - var(--border-width) * 0.5);
+      right: 12px;
+      width: 0;
+      height: 0;
+      border: var(--border-width) solid transparent;
+      border-color: gray transparent transparent transparent;
+    }
+
+    &.active::after {
+      top: calc(50% - var(--border-width) * 1.5);
+      border-color: transparent transparent gray transparent;
+    }
+  }
+}
 </style>

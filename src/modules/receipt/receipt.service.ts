@@ -2,17 +2,29 @@ import { AxiosInstance } from '@/core/axios.instance'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Receipt, ReceiptStatus } from './receipt.model'
 
+export type ReceiptFilterQuery = {
+	distributor_id?: number,
+	from_time?: number,
+	to_time?: number,
+	status?: ReceiptStatus,
+	has_delete?: boolean,
+}
+
+export type ReceiptRelationQuery = {
+	distributor?: boolean,
+	distributor_payments?: boolean,
+	receipt_items?: boolean,
+}
+
 export interface ReceiptPaginationQuery extends ApiPaginationRequest {
-	filter?: {
-		distributor_id?: number,
-		from_time?: number,
-		to_time?: number,
-		status?: ReceiptStatus
-	}
-	relation?: {
-		distributor?: boolean,
-		receipt_items?: boolean,
-	}
+	filter?: ReceiptFilterQuery
+	relation?: ReceiptRelationQuery
+}
+
+export type ReceiptListQuery = {
+	limit?: number
+	filter?: ReceiptFilterQuery
+	relation?: ReceiptRelationQuery
 }
 
 export class ReceiptService {
@@ -27,12 +39,18 @@ export class ReceiptService {
 		}
 	}
 
-	static async detail(id: number, relation?: { distributor?: boolean, receiptItems?: boolean }): Promise<Receipt> {
+	static async list(params: ReceiptListQuery) {
+		const { data } = await AxiosInstance.get('/receipt/list', { params })
+		return Receipt.fromPlains(data)
+	}
+
+	static async detail(id: number, relation?: ReceiptRelationQuery): Promise<Receipt> {
 		const { data } = await AxiosInstance.get(`/receipt/detail/${id}`, {
 			params: {
 				relation: {
 					distributor: relation?.distributor,
-					receipt_items: relation?.receiptItems,
+					receipt_items: relation?.receipt_items,
+					distributor_payments: relation?.distributor_payments,
 				},
 			},
 		})
@@ -51,18 +69,33 @@ export class ReceiptService {
 		return data as { receiptId: number }
 	}
 
-	static async deleteDraft(receiptId: number) {
-		const { data } = await AxiosInstance.delete(`/receipt/delete-draft/${receiptId}`)
+	static async destroyDraft(receiptId: number) {
+		const { data } = await AxiosInstance.delete(`/receipt/destroy-draft/${receiptId}`)
 		return data as { success: boolean }
 	}
 
-	static async startShipAndPayment(receiptId: number) {
-		const { data } = await AxiosInstance.post(`/receipt/start-ship-and-payment/${receiptId}`)
+	static async prepayment(receiptId: number, money: number) {
+		const { data } = await AxiosInstance.post(`/receipt/prepayment/${receiptId}`, { money })
+		return data as { success: boolean }
+	}
+
+	static async startShipAndPayment(receiptId: number, money: number) {
+		const { data } = await AxiosInstance.post(`/receipt/start-ship-and-payment/${receiptId}`, { money })
+		return data as { success: boolean }
+	}
+
+	static async payDebt(receiptId: number, money: number) {
+		const { data } = await AxiosInstance.post(`/receipt/pay-debt/${receiptId}`, { money })
 		return data as { success: boolean }
 	}
 
 	static async startRefund(receiptId: number) {
 		const { data } = await AxiosInstance.post(`/receipt/start-refund/${receiptId}`)
+		return data as { success: boolean }
+	}
+
+	static async softDeleteRefund(receiptId: number) {
+		const { data } = await AxiosInstance.delete(`/receipt/soft-delete-refund/${receiptId}`)
 		return data as { success: boolean }
 	}
 }

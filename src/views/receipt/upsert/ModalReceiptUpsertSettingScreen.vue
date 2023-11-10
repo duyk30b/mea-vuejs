@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { OrganizationService } from '@/modules/organization'
 import { useOrganizationStore } from '@/store/organization.store'

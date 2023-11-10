@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { InputMoney } from '@/common/vue-form'
 import { useProcedureStore } from '@/modules/procedure'
@@ -10,8 +9,9 @@ import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
 
-const organizationStore = useOrganizationStore()
 const procedureStore = useProcedureStore()
+const organizationStore = useOrganizationStore()
+const { isMobile } = organizationStore
 
 const showModal = ref(false)
 const procedure = ref(Procedure.blank())
@@ -98,23 +98,23 @@ defineExpose({ openModal })
   <a-modal v-model:visible="showModal" width="900px" :title="procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ Mới'"
     :confirm-loading="saveLoading" :afterClose="refreshModal" @ok="handleSave">
     <div>
-      <div class="flex items-center">
+      <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
         <div class="w-[100px] flex-none">Tên dịch vụ</div>
         <a-input v-model:value="procedure.name" class="flex-auto"></a-input>
       </div>
-      <div v-if="organizationStore.SCREEN_PRODUCT_LIST.upsert.group" class="flex items-center mt-2">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div class="w-[100px] flex-none">Nhóm</div>
         <a-select v-model:value="procedure.group" :filter-option="filterOption" class="flex-auto" show-search
           :options="Object.entries(organizationStore.PROCEDURE_GROUP).map(([value, label]) => ({ value, label }))">
         </a-select>
       </div>
-      <div class="flex items-center mt-2">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Giá dịch vụ</div>
         <div style="flex:1">
           <InputMoney v-model:value="procedure.price" :min="0" style="width: 100%;" />
         </div>
       </div>
-      <div class="flex items-center mt-4">
+      <div class="mt-4 flex items-center">
         <div class="w-[100px] flex-none">Active</div>
         <a-switch v-model:checked="procedure.isActive" />
       </div>
@@ -157,7 +157,7 @@ defineExpose({ openModal })
               <tr v-for="(p, i) in consumableList" :key="i">
                 <td class="index"></td>
                 <td>{{ p.product!.brandName }}</td>
-                <td> <a-input-number v-model:value="consumableList[i].quantity" class="w-full" :min="0" /></td>
+                <td> <InputNumber v-model:value="consumableList[i].quantity" class="w-full" :min="0" /></td>
                 <td>{{ }}</td>
                 <td class="text-center">
                   <a @click="consumableList.splice(i, 1)" class="text-red-500 text-xl">

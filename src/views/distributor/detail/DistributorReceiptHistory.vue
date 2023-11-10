@@ -3,6 +3,7 @@ import { Distributor } from '@/modules/distributor'
 import { ReceiptService, type Receipt, ReceiptStatus } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
+import ReceiptStatusTag from '@/views/receipt/ReceiptStatusTag.vue'
 import { CheckCircleOutlined, ExclamationCircleOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -26,7 +27,10 @@ const startFetchData = async () => {
   const data = await ReceiptService.pagination({
     page: page.value,
     limit: limit.value,
-    filter: { distributor_id: props.distributor.id! },
+    filter: {
+      distributor_id: props.distributor.id!,
+      has_delete: true,
+    },
     relation: { distributor: false, receipt_items: false },
     sort: { id: 'DESC' },
   })
@@ -103,24 +107,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
                   RC{{ receipt.id }}
                 </a>
                 <span class="ml-2">
-                  <a-tag v-if="receipt.status === ReceiptStatus.Draft" color="warning">
-                    <template #icon>
-                      <CheckCircleOutlined />
-                    </template>
-                    Nháp
-                  </a-tag>
-                  <a-tag v-if="receipt.status === ReceiptStatus.Finish" color="success">
-                    <template #icon>
-                      <ExclamationCircleOutlined />
-                    </template>
-                    Hoàn thành
-                  </a-tag>
-                  <a-tag v-if="receipt.status === ReceiptStatus.Refund" color="error">
-                    <template #icon>
-                      <StopOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
+                  <ReceiptStatusTag :status="receipt.status" />
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">

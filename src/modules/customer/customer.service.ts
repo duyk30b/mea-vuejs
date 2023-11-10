@@ -52,7 +52,7 @@ export class CustomerService {
 		return Customer.fromPlains(response.data)
 	}, 200)
 
-	static async getOne(id: number): Promise<Customer> {
+	static async detail(id: number): Promise<Customer> {
 		const { data } = await AxiosInstance.get(`/customer/detail/${id}`)
 		return Customer.fromPlain(data)
 	}

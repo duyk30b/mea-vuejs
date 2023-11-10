@@ -3,6 +3,7 @@ import { InvoiceItem, InvoiceItemService, InvoiceItemType, InvoiceStatus } from 
 import { Procedure } from '@/modules/procedure'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
+import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -90,36 +91,13 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"> IV{{ invoiceItem.invoiceId }} </a>
           </td>
           <td class="text-center"> {{ invoiceItem.invoice?.customer?.fullName }} </td>
-          <td class="text-center"> {{ timeToText(invoiceItem.invoice?.paymentTime, "DD/MM/YYYY") }} </td>
+          <td class="text-center"> {{ timeToText(invoiceItem.invoice?.createTime, "DD/MM/YYYY") }} </td>
           <td class="text-right"> {{ invoiceItem.quantity }}</td>
           <td class="text-right"> {{ formatMoney(invoiceItem.actualPrice) }}</td>
           <td class="text-right"> {{ formatMoney(invoiceItem.quantity * invoiceItem.actualPrice) }}</td>
 
           <td class="text-center">
-            <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Draft" color="warning">
-              <template #icon>
-                <CheckCircleOutlined />
-              </template>
-              Nháp
-            </a-tag>
-            <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Process" color="processing">
-              <template #icon>
-                <CheckCircleOutlined />
-              </template>
-              Đang thực hiện
-            </a-tag>
-            <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Finish" color="success">
-              <template #icon>
-                <ExclamationCircleOutlined />
-              </template>
-              Hoàn thành
-            </a-tag>
-            <a-tag v-if="invoiceItem.invoice?.status === InvoiceStatus.Refund" color="error">
-              <template #icon>
-                <StopOutlined />
-              </template>
-              Hoàn trả
-            </a-tag>
+            <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
           </td>
         </tr>
       </tbody>

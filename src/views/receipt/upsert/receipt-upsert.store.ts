@@ -21,7 +21,6 @@ watchEffect(() => {
     discountType = DiscountType.Percent
   }
   const surcharge = receipt.value.surcharge || 0
-  const debt = receipt.value.debt || 0
   const totalMoney = totalItemMoney - discountMoney + surcharge
 
   receipt.value.totalItemMoney = totalItemMoney
@@ -30,7 +29,6 @@ watchEffect(() => {
   receipt.value.discountType = discountType
   receipt.value.surcharge = surcharge
   receipt.value.totalMoney = totalMoney
-  receipt.value.debt = debt
 })
 
 export { receipt }

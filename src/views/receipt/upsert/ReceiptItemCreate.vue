@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { InputDate, InputMoney, InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService, ProductService, useProductStore } from '@/modules/product'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
+import { Product, ProductBatch, ProductBatchService, useProductStore } from '@/modules/product'
 import { ReceiptItem } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText, customFilter } from '@/utils'
+import { timeToText } from '@/utils'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
-import ModalProductUpsert from '../../product/components/ModalProductUpsert.vue'
+import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
@@ -168,18 +168,19 @@ const addReceiptItem = async () => {
           {{ product.unit.find(i => i.rate === 1)?.name }})
         </span>
       </div>
-      <a-input-number :value="receiptItem.quantity / receiptItem.unit.rate"
-        @update:value="(e: any) => receiptItem.quantity = e * receiptItem.unit.rate" style="width: 100%;" :min="0">
-        <template #addonBefore>
-          <a-select :value="receiptItem.unit.rate" @change="handleChangeSelectUnit"
-            :disabled="(productBatch.product?.unit?.length || 0) <= 1" style="width: 100px">
-            <a-select-option v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]" :key="index"
-              :value="item.rate">
-              {{ item.name }}
-            </a-select-option>
-          </a-select>
-        </template>
-      </a-input-number>
+      <div class="flex">
+        <a-select :value="receiptItem.unit.rate" @change="handleChangeSelectUnit"
+          :disabled="(productBatch.product?.unit?.length || 0) <= 1" style="flex-basis: 100px">
+          <a-select-option v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]" :key="index"
+            :value="item.rate">
+            {{ item.name }}
+          </a-select-option>
+        </a-select>
+        <div class="flex-1">
+          <InputNumber :value="receiptItem.quantity / receiptItem.unit.rate"
+            @update:value="(e: number) => receiptItem.quantity = e * receiptItem.unit.rate" />
+        </div>
+      </div>
     </div>
 
     <div style="flex: 1; flex-basis: 280px;">
@@ -189,10 +190,11 @@ const addReceiptItem = async () => {
           {{ product.unit.find(i => i.rate === 1)?.name }})
         </span>
       </div>
-      <InputMoney :value="productBatch.costPrice * receiptItem.unit.rate"
-        @update:value="(e: number) => productBatch.costPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
-        :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''">
-      </InputMoney>
+      <div>
+        <InputMoney :value="productBatch.costPrice * receiptItem.unit.rate"
+          @update:value="(e: number) => productBatch.costPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
+          :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+      </div>
     </div>
     <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
       style="flex: 1; flex-basis: 280px;">
@@ -202,10 +204,11 @@ const addReceiptItem = async () => {
           {{ product.unit.find(i => i.rate === 1)?.name }})
         </span>
       </div>
-      <InputMoney :value="productBatch.wholesalePrice * receiptItem.unit.rate"
-        @update:value="(e: any) => productBatch.wholesalePrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
-        :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''">
-      </InputMoney>
+      <div>
+        <InputMoney :value="productBatch.wholesalePrice * receiptItem.unit.rate"
+          @update:value="(e: any) => productBatch.wholesalePrice = e / receiptItem.unit.rate" style="width: 100%;"
+          :min="0" :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+      </div>
     </div>
     <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice" style="flex: 1; flex-basis: 280px;">
       <div>Giá bán lẻ
@@ -214,10 +217,11 @@ const addReceiptItem = async () => {
           {{ product.unit.find(i => i.rate === 1)?.name }})
         </span>
       </div>
-      <InputMoney :value="productBatch.retailPrice * receiptItem.unit.rate"
-        @update:value="(e: any) => productBatch.retailPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
-        :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''">
-      </InputMoney>
+      <div>
+        <InputMoney :value="productBatch.retailPrice * receiptItem.unit.rate"
+          @update:value="(e: any) => productBatch.retailPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
+          :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+      </div>
     </div>
   </div>
 

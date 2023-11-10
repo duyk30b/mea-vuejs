@@ -8,6 +8,7 @@ import { message, type SelectProps } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
 
 const orgStore = useOrganizationStore()
+const { isMobile } = orgStore
 
 const provinceOptions = ref<SelectProps['options']>([])
 const districtOptions = ref<SelectProps['options']>([])
@@ -63,24 +64,24 @@ const saveOrganization = async () => {
       </div>
     </div>
   </div>
-  <div class="mx-4 mt-4 p-4 bg-white">
+  <div class="mx-4 p-4 bg-white">
     <div style="max-width: 800px;">
-      <div class="flex items-center mb-3">
+      <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Tên Cơ sở</div>
         <a-input v-model:value="organization.organizationName" class="flex-auto"></a-input>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Email</div>
         <a-input disabled :value="organization.email" class="flex-auto"></a-input>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">SĐT</div>
         <a-input disabled :value="organization.phone" class="flex-auto"></a-input>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Địa chỉ</div>
         <div class="flex-auto flex gap-4 flex-wrap">
           <a-select v-model:value="organization.addressProvince" :options="provinceOptions" :filter-option="filterOption"
@@ -97,7 +98,7 @@ const saveOrganization = async () => {
         </div>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;"></div>
         <a-input v-model:value="organization.addressStreet" style="flex:1"
           placeholder="Số nhà / Tòa nhà / Ngõ / Đường"></a-input>

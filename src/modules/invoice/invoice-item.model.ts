@@ -43,7 +43,7 @@ export class InvoiceItem extends BaseModel {
 	discountPercent: number = 0                         // % giảm giá
 
 	@Expose({ name: 'discount_type' })
-	discountType: DiscountType = DiscountType.Percent                    // Loại giảm giá
+	discountType: DiscountType = DiscountType.Percent   // Loại giảm giá
 
 	@Expose({ name: 'actual_price' })
 	@Transform(({ value }) => value || 0)
@@ -51,6 +51,9 @@ export class InvoiceItem extends BaseModel {
 
 	@Expose({ name: 'quantity' })
 	quantity: number = 0
+
+	@Expose({ name: 'hint_usage' })                    // Hướng dẫn sử dụng
+	hintUsage: string | null
 
 	@Expose({ name: 'invoice', toClassOnly: true })
 	@Type(() => Invoice)

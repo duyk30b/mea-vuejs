@@ -1,10 +1,11 @@
-
 <script setup lang="ts">
 import { Product } from '@/modules/product'
 import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ProductInfo from './ProductInfo.vue'
 import ProductMovement from './ProductMovement.vue'
+import VueModal from '@/common/VueModal.vue'
+import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -17,7 +18,7 @@ const openModal = async (p: Product) => {
   product.value = Product.fromInstance(p)
 }
 
-const refreshModal = () => {
+const closeModal = () => {
   showModal.value = false
   product.value = Product.blank()
 }
@@ -27,36 +28,48 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="1200px" :title="'Hàng hóa: ' + product.brandName"
-    :confirm-loading="saveLoading" :afterClose="refreshModal">
-    <template #footer>
-      <div class="flex justify-end px-2">
-        <div>
-          <a-button @click="showModal = false">Đóng</a-button>
+  <VueModal v-model:show="showModal">
+    <div class="bg-white">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede;">
+        <div class="flex-1 font-medium" style="font-size: 16px;">Hàng hóa: {{ product.brandName }}</div>
+        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
         </div>
       </div>
-    </template>
-    <div class="product-detail">
-      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
-        <a-tab-pane key="product-batch">
-          <template #tab>
-            <span>
-              <DeploymentUnitOutlined />Thông tin
-            </span>
-          </template>
-          <ProductInfo :product="product" />
-        </a-tab-pane>
-        <a-tab-pane key="product-movement">
-          <template #tab>
-            <span>
-              <DiffOutlined />Nhập/Xuất
-            </span>
-          </template>
-          <ProductMovement :product="product" />
-        </a-tab-pane>
-      </a-tabs>
+
+      <div class="p-4 product-detail">
+        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
+          <a-tab-pane key="product-batch">
+            <template #tab>
+              <span>
+                <DeploymentUnitOutlined />Thông tin
+              </span>
+            </template>
+            <ProductInfo :product="product" />
+          </a-tab-pane>
+          <a-tab-pane key="product-movement">
+            <template #tab>
+              <span>
+                <DiffOutlined />Nhập/Xuất
+              </span>
+            </template>
+            <ProductMovement :product="product" />
+          </a-tab-pane>
+        </a-tabs>
+      </div>
+
+      <div class="p-4">
+        <div class="flex justify-end gap-4">
+          <a-button @click="closeModal">
+            <template #icon>
+              <CloseOutlined />
+            </template>
+            Đóng
+          </a-button>
+        </div>
+      </div>
     </div>
-  </a-modal>
+  </VueModal>
 </template>
 
 <style lang="scss">

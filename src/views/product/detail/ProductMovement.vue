@@ -15,9 +15,7 @@ const props = withDefaults(
 const router = useRouter()
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const productMovements = ref<ProductMovement[]>([])
 const productBatchAll = ref<ProductBatch[]>([])

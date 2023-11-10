@@ -35,7 +35,7 @@ const Router = createRouter({
 							path: 'list',
 							name: 'InvoiceList',
 							meta: { title: 'Hóa đơn' },
-							component: () => import('../views/invoice/InvoiceList.vue'),
+							component: () => import('../views/invoice/list/InvoiceList.vue'),
 						},
 						{
 							path: 'detail/:id',
@@ -65,7 +65,7 @@ const Router = createRouter({
 							path: 'list',
 							name: 'CustomerList',
 							meta: { title: 'Khách Hàng' },
-							component: () => import('../views/customer/CustomerList.vue'),
+							component: () => import('../views/customer/list/CustomerList.vue'),
 						},
 					],
 				},
@@ -82,7 +82,7 @@ const Router = createRouter({
 								{
 									path: 'list',
 									name: 'ProductList',
-									component: () => import('../views/product/ProductList.vue'),
+									component: () => import('../views/product/list/ProductList.vue'),
 									meta: { title: 'Tồn kho' },
 								},
 							],
@@ -95,7 +95,7 @@ const Router = createRouter({
 								{
 									path: 'list',
 									name: 'ReceiptList',
-									component: () => import('../views/receipt/ReceiptList.vue'),
+									component: () => import('../views/receipt/list/ReceiptList.vue'),
 									meta: { title: 'Nhập hàng' },
 								},
 								{
@@ -125,7 +125,7 @@ const Router = createRouter({
 								{
 									path: 'list',
 									name: 'DistributorList',
-									component: () => import('../views/distributor/DistributorList.vue'),
+									component: () => import('../views/distributor/list/DistributorList.vue'),
 									meta: { title: 'Nhà cung cấp' },
 								},
 							],

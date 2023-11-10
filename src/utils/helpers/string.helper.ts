@@ -72,12 +72,13 @@ export const decrypt = (cipherText: string, privateKey?: string): string => {
 	return r
 }
 
-export const convertViToEn = (root: string): string =>
-	root
+export const convertViToEn = (root: string): string => {
+	return (root || '')
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
 		.replace(/đ/g, 'd')
 		.replace(/Đ/g, 'D')
+}
 
 // export const formatNumber = (number: number, fixed = 0, part = 3, sec = ',', dec = '.') => {
 // 	const numberStr = (number || 0).toFixed(fixed)

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { InputMoney, InputOptions } from '@/common/vue-form'
+import { InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
 import { DiscountType } from '@/modules/enum'
 import { Invoice, InvoiceItem, InvoiceItemType } from '@/modules/invoice'
 import { Procedure, useProcedureStore } from '@/modules/procedure'
 import { Product, ProductBatch, ProductBatchService, useProductStore } from '@/modules/product'
 import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
+import { convertViToEn, timeToText } from '@/utils'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
@@ -40,7 +40,7 @@ const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const { formatMoney, isMobile } = organizationStore
 const productStore = useProductStore()
 const procedureStore = useProcedureStore()
 
@@ -124,6 +124,7 @@ const selectProductBatch = (batch: ProductBatch) => {
   ii.discountPercent = 0
   ii.discountType = DiscountType.Percent
   ii.quantity = 0
+  ii.hintUsage = product.value.hintUsage
   ii.productBatch = batch
   ii.productBatch.product = product.value
 
@@ -225,8 +226,10 @@ const addInvoiceItem = () => {
   invoiceItem.value = new InvoiceItem()
   procedure.value = new Procedure()
 
-  // if (tabsKey.value === 'product') return inputSearchProduct.value?.focus()
-  // if (tabsKey.value === 'procedure') return inputSearchProcedure.value?.focus()
+  if (!isMobile) {
+    if (tabsKey.value === 'product') return inputSearchProduct.value?.focus()
+    if (tabsKey.value === 'procedure') return inputSearchProcedure.value?.focus()
+  }
 }
 
 // const autoAddConsumableByHint = async (hintText: string, quantity: number) => {
@@ -274,6 +277,16 @@ const addInvoiceItem = () => {
 
 const handleChangeTabs = (activeKey: any) => {
   localStorage.setItem('ARRIVAL_INVOICE_UPSERT_TABS', activeKey)
+  procedure.value = Procedure.blank()
+  product.value = Product.blank()
+  productBatch.value = ProductBatch.blank()
+  invoiceItem.value = InvoiceItem.blank()
+}
+
+const filterOption = (input: string, option: any) => {
+  const inputText = convertViToEn(input).toLowerCase()
+  const optionLabel = convertViToEn(option.label || option.value).toLowerCase()
+  return optionLabel.indexOf(inputText) >= 0
 }
 
 </script>
@@ -308,28 +321,14 @@ const handleChangeTabs = (activeKey: any) => {
               value: i.id,
               label: `${i.batch} (${i.quantity} ${product.unit?.[0].name}) `
                 + ` - ${timeToText(i.expiryDate, 'DD/MM/YYYY')} - Giá ${formatMoney(i.retailPrice)}`,
-            }))" :disabled="product.productBatches.length == 1"></a-select>
+            }))" :disabled="product.productBatches.length == 1">
+          </a-select>
         </div>
-        <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
-          style="flex: 1; flex-basis: 400px;">
-          <div>Giá niêm yết
-            <span v-if="invoiceItem.unit.rate !== 1">
-              (Quy đổi: <b>{{ formatMoney(invoiceItem.expectedPrice) }} / </b>
-              {{ product.unit.find(i => i.rate === 1)?.name }})
-            </span>
-          </div>
-          <a-input-group compact>
-            <a-select style="width: 120px;" v-model:value="productOutSellType"
-              @change="handleChangeInvoiceProductSellType">
-              <a-select-option value="retailPrice">Giá bán lẻ</a-select-option>
-              <a-select-option v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.wholesalePrice"
-                value="wholesalePrice">Giá bán sỉ</a-select-option>
-              <a-select-option v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice"
-                value="costPrice">Giá nhập</a-select-option>
-            </a-select>
-            <InputMoney :value="invoiceItem.expectedPrice * invoiceItem.unit.rate" style="width: calc(100% - 120px)"
-              disabled />
-          </a-input-group>
+
+        <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage" style="flex: 1;flex-basis: 400px;">
+          <div>Hướng dẫn sử dụng</div>
+          <a-auto-complete v-model:value="invoiceItem.hintUsage" :filter-option="filterOption"
+            :options="organizationStore.PRODUCT_HINT_USAGE.map(i => ({ value: i }))" class="w-full" />
         </div>
       </div>
     </a-tab-pane>
@@ -353,56 +352,95 @@ const handleChangeTabs = (activeKey: any) => {
 
   <div class="mt-4">
     <div class="flex flex-wrap gap-4">
+      <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
+        style="flex: 1; flex-basis: 400px;">
+        <div>Giá niêm yết
+          <template v-if="tabsKey === 'product'">
+            <span v-if="invoiceItem.unit.rate !== 1">
+              (Quy đổi: <b>{{ formatMoney(invoiceItem.expectedPrice) }} / </b>
+              {{ product.unit.find(i => i.rate === 1)?.name }})
+            </span>
+          </template>
+        </div>
+        <div class="flex">
+          <a-select v-if="tabsKey === 'product'" style="width: 120px" v-model:value="productOutSellType"
+            @change="handleChangeInvoiceProductSellType">
+            <a-select-option value="retailPrice">Giá bán lẻ</a-select-option>
+            <a-select-option v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.wholesalePrice"
+              value="wholesalePrice">Giá bán sỉ</a-select-option>
+            <a-select-option v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice"
+              value="costPrice">Giá nhập</a-select-option>
+          </a-select>
+          <div class="flex-1">
+            <InputMoney :value="invoiceItem.expectedPrice * invoiceItem.unit.rate" disabled />
+          </div>
+        </div>
+      </div>
+
       <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity" style="flex: 1; flex-basis: 400px;">
         <div>Số lượng
-          <span v-if="invoiceItem.unit.rate !== 1">
-            (Quy đổi: <b>{{ invoiceItem.quantity }}</b>
-            {{ product.unit.find(i => i.rate === 1)?.name }})
-          </span>
-        </div>
-        <a-input-number style="width: 100%;" :value="invoiceItem.quantity / invoiceItem.unit.rate"
-          @update:value="(e: number) => invoiceItem.quantity = e * invoiceItem.unit.rate">
-          <template #addonBefore>
-            <a-select :value="invoiceItem.unit.rate" @change="handleChangeSelectUnit" style="width: 80px"
-              :disabled="(productBatch.product?.unit?.length || 0) <= 1">
-              <a-select-option v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]" :key="index"
-                :value="item.rate">
-                {{ item.name }}
-              </a-select-option>
-            </a-select>
+          <template v-if="tabsKey === 'product'">
+            <span v-if="invoiceItem.unit.rate !== 1">
+              (Quy đổi: <b>{{ invoiceItem.quantity }}</b>
+              {{ product.unit.find(i => i.rate === 1)?.name }})
+            </span>
           </template>
-        </a-input-number>
+        </div>
+        <div class="flex">
+          <a-select :value="invoiceItem.unit.rate" @change="handleChangeSelectUnit" style="flex-basis: 80px"
+            :disabled="(productBatch.product?.unit?.length || 0) <= 1">
+            <a-select-option v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]" :key="index"
+              :value="item.rate">
+              {{ item.name }}
+            </a-select-option>
+          </a-select>
+          <div class="flex-1">
+            <InputNumber :value="invoiceItem.quantity / invoiceItem.unit.rate"
+              @update:value="(e: any) => invoiceItem.quantity = e * invoiceItem.unit.rate" />
+          </div>
+        </div>
       </div>
 
       <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount" style="flex: 1; flex-basis: 400px;">
         <div>Chiết khấu
-          <span
-            v-if="(invoiceItem.discountType === DiscountType.Percent && invoiceItem.discountPercent !== 0) || invoiceItem.unit.rate > 1">
-            <b>(Quy đổi: {{ formatMoney(invoiceItem.discountMoney) }} / </b>
-            {{ product.unit.find(i => i.rate === 1)?.name }})
-          </span>
+          <template v-if="tabsKey === 'product'">
+            <span
+              v-if="(invoiceItem.discountType === DiscountType.Percent && invoiceItem.discountPercent !== 0) || invoiceItem.unit.rate > 1">
+              <b>(Quy đổi: {{ formatMoney(invoiceItem.discountMoney) }} / </b>
+              {{ product.unit.find(i => i.rate === 1)?.name }})
+            </span>
+          </template>
+          <template v-if="tabsKey === 'procedure'">
+            <span v-if="invoiceItem.discountType === DiscountType.Percent && invoiceItem.discountPercent !== 0">
+              <b>(Quy đổi: {{ formatMoney(invoiceItem.discountMoney) }}) </b>
+            </span>
+          </template>
         </div>
-        <a-input-group compact>
-          <a-select style="width: 120px;" v-model:value="invoiceItem.discountType">
-            <a-select-option :value="DiscountType.Percent">%</a-select-option>
-            <a-select-option :value="DiscountType.VND">VNĐ</a-select-option>
-          </a-select>
-          <InputMoney v-if="invoiceItem.discountType === DiscountType.VND" style="width: calc(100% - 120px)"
-            :value="invoiceItem.discountMoney * invoiceItem.unit.rate" @update:value="handleChangeDiscountMoney" />
-          <a-input-number v-if="invoiceItem.discountType === DiscountType.Percent" :value="invoiceItem.discountPercent"
-            @change="handleChangeDiscountPercent" :min="0" :max="100" style="width: calc(100% - 120px)" />
-        </a-input-group>
+        <div class="flex">
+          <VueSelect v-model:value="invoiceItem.discountType" style="width: 120px;"
+            :options="[{ value: DiscountType.Percent, text: '%' }, { value: DiscountType.VND, text: 'VNĐ' }]" />
+          <div v-if="invoiceItem.discountType === DiscountType.VND" style="width: calc(100% - 120px)">
+            <InputMoney :value="invoiceItem.discountMoney * invoiceItem.unit.rate"
+              @update:value="handleChangeDiscountMoney" />
+          </div>
+          <div v-if="invoiceItem.discountType === DiscountType.Percent" style="width: calc(100% - 120px)">
+            <InputNumber :value="invoiceItem.discountPercent" @update:value="handleChangeDiscountPercent" />
+          </div>
+        </div>
       </div>
 
       <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice" style="flex: 1;flex-basis: 400px;">
         <div>Đơn giá
-          <span v-if="invoiceItem.unit.rate !== 1">
-            (Quy đổi: <b>{{ formatMoney(invoiceItem.actualPrice) }} / </b>
-            {{ product.unit.find(i => i.rate === 1)?.name }})
-          </span>
+          <template v-if="tabsKey === 'product'">
+            <span v-if="invoiceItem.unit.rate !== 1">
+              (Quy đổi: <b>{{ formatMoney(invoiceItem.actualPrice) }} / </b>
+              {{ product.unit.find(i => i.rate === 1)?.name }})
+            </span>
+          </template>
         </div>
-        <InputMoney :value="invoiceItem.actualPrice * invoiceItem.unit.rate" @update:value="handleChangeActualPrice"
-          style="width: 100%;" />
+        <div style="width: 100%;">
+          <InputMoney :value="invoiceItem.actualPrice * invoiceItem.unit.rate" @update:value="handleChangeActualPrice" />
+        </div>
       </div>
     </div>
     <div class="mt-4 text-center">

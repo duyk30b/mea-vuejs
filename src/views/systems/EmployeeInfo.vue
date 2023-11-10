@@ -6,6 +6,10 @@ import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
+import { useOrganizationStore } from '@/store/organization.store'
+
+const organizationStore = useOrganizationStore()
+const { isMobile } = organizationStore
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 const userStore = useUserStore()
@@ -36,19 +40,19 @@ const saveEmployee = async () => {
       </div>
     </div>
   </div>
-  <div class="mx-4 mt-4 p-4 bg-white">
+  <div class="mx-4 p-4 bg-white">
     <div style="max-width: 800px;">
-      <div class="flex items-center mb-3">
+      <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Họ Tên</div>
         <a-input v-model:value="employee.fullName" class="flex-auto"></a-input>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Tên đăng nhập</div>
         <a-input disabled :value="employee.username" class="flex-auto"></a-input>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Mật khẩu</div>
         <a-input-group class="flex-auto" compact>
           <a-input value="********************" style="width: calc(100% - 150px)" />
@@ -58,14 +62,14 @@ const saveEmployee = async () => {
         </a-input-group>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Ngày sinh</div>
         <div style="flex:1">
           <InputDate v-model:value="employee.birthday" format="DD/MM/YYYY" type-parser="number" class="w-full" />
         </div>
       </div>
 
-      <div class="flex items-center mb-3">
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none;">Giới tính</div>
         <div style="flex:1">
           <a-radio-group v-model:value="employee.gender">

@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { LocalStorageService, REFRESH_EXP, REFRESH_TOKEN } from '@/core/local-storage.service'
 import { OrganizationService } from '@/modules/organization'
@@ -25,9 +24,15 @@ onMounted(async () => {
       ])
       organizationStore.organizationInfo = orgInfo
       settings.forEach((i) => {
-        if (i.type === OrganizationSettingsType.PRODUCT_GROUP || i.type === OrganizationSettingsType.PROCEDURE_GROUP) {
+        if ([
+          OrganizationSettingsType.PRODUCT_GROUP,
+          OrganizationSettingsType.PROCEDURE_GROUP,
+          OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
+          OrganizationSettingsType.INVOICE_EXPENSES_DETAIL,
+        ].includes(i.type)) {
           organizationStore[i.type] = JSON.parse(i.data)
-        } else {
+        }
+        else {
           organizationStore[i.type] = objectUpdatePropertyByObject(organizationStore[i.type], JSON.parse(i.data))
         }
       })

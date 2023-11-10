@@ -1,29 +1,33 @@
 <script setup lang="ts">
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import type { Distributor } from '@/modules/distributor'
-import type { Product } from '@/modules/product'
 import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
-import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
-import { AuditOutlined, CheckCircleOutlined, ExceptionOutlined, ExclamationCircleOutlined, FileDoneOutlined, FileSearchOutlined, FileSyncOutlined, MoreOutlined, SettingOutlined, StopOutlined } from '@ant-design/icons-vue'
+import {
+  AuditOutlined, ExceptionOutlined,
+  ExclamationCircleOutlined, FileDoneOutlined,
+  FileSearchOutlined, FileSyncOutlined,
+  MoreOutlined, SettingOutlined,
+} from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
+import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.vue'
+import ModalReceiptPayment from './ModalReceiptPayment.vue'
+import ReceiptDetailTable from './ReceiptDetailTable.vue'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
-const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalReceiptPayment = ref<InstanceType<typeof ModalReceiptPayment>>()
 
 const route = useRoute()
 const router = useRouter()
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const receipt = ref<Receipt>(Receipt.blank())
 
@@ -32,7 +36,8 @@ const loadingProcess = ref(false)
 const startFetchData = async (receiptId: number) => {
   receipt.value = await ReceiptService.detail(receiptId, {
     distributor: true,
-    receiptItems: true,
+    receipt_items: true,
+    distributor_payments: true,
   })
 }
 
@@ -43,31 +48,18 @@ onBeforeMount(async () => {
   }
 })
 
-const startShipAndPayment = async () => {
-  try {
-    loadingProcess.value = true
-    await ReceiptService.startShipAndPayment(receipt.value.id!)
-    await startFetchData(receipt.value.id)
-    AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
-  } catch (error: any) {
-    console.log('🚀 ~ file: ReceiptDetail.vue:51 ~ startShipAndPayment ~ error:', error)
-  } finally {
-    loadingProcess.value = false
-  }
-}
-
 const startEdit = () => {
   router.push({ name: 'ReceiptUpsert', params: { id: receipt.value.id }, query: { mode: 'UPDATE' } })
 }
 
-const startDelete = async () => {
+const destroyDraft = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptService.deleteDraft(receipt.value.id!)
-    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công' })
+    await ReceiptService.destroyDraft(receipt.value.id!)
+    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'ReceiptList' })
   } catch (error) {
-    console.log('🚀 ~ startDelete ~ error:', error)
+    console.log('🚀 ~ destroyDraft ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -78,9 +70,35 @@ const startRefund = async () => {
     loadingProcess.value = true
     const response = await ReceiptService.startRefund(receipt.value.id!)
     await startFetchData(receipt.value.id)
-    AlertStore.add({ type: 'success', message: 'Thành công' })
+    AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {
     console.log('🚀 ~ startRefund ~ error:', error)
+  } finally {
+    loadingProcess.value = false
+  }
+}
+
+const softDeleteRefund = async () => {
+  try {
+    loadingProcess.value = true
+    await ReceiptService.softDeleteRefund(receipt.value.id!)
+    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
+    router.push({ name: 'ReceiptList' })
+  } catch (error) {
+    console.log('🚀 ~ softDeleteRefund ~ error:', error)
+  } finally {
+    loadingProcess.value = false
+  }
+}
+
+const startShipAndPayment = async (money: number) => {
+  try {
+    loadingProcess.value = true
+    await ReceiptService.startShipAndPayment(receipt.value.id!, money)
+    await startFetchData(receipt.value.id)
+    AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
+  } catch (error: any) {
+    console.log('🚀 ~ file: ReceiptDetail.vue:51 ~ startShipAndPayment ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -98,13 +116,25 @@ const clickRefund = () => {
   })
 }
 
-const clickDelete = () => {
+const clickDestroyDraft = () => {
   Modal.confirm({
     title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
     icon: createVNode(ExclamationCircleOutlined),
     content: 'Đơn hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await startDelete()
+      await destroyDraft()
+    },
+    onCancel() { },
+  })
+}
+
+const clickSoftDeleteRefund = () => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Đơn hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await softDeleteRefund()
     },
     onCancel() { },
   })
@@ -118,15 +148,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'REFUND') clickRefund()
-  if (menu.key === 'DELETE') clickDelete()
+  if (menu.key === 'DELETE') {
+    if (receipt.value.status === ReceiptStatus.Draft) {
+      clickDestroyDraft()
+    } else if (receipt.value.status === ReceiptStatus.Refund) {
+      clickSoftDeleteRefund()
+    }
+  }
 }
 
 const openModalDistributorDetail = (data?: Distributor) => {
   if (data) modalDistributorDetail.value?.openModal(data)
-}
-
-const openModalProductDetail = (data?: Product) => {
-  if (data) modalProductDetail.value?.openModal(data)
 }
 
 </script>
@@ -134,10 +166,12 @@ const openModalProductDetail = (data?: Product) => {
 <template>
   <ModalReceiptDetailSettingScreen ref="modalReceiptDetailSettingScreen" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <ModalProductDetail ref="modalProductDetail" />
+  <ModalReceiptPayment ref="modalReceiptPayment" :receipt="receipt" @success="startFetchData(receipt.id)" />
+
   <div class="page-header">
     <div class="page-header-content">
       <AuditOutlined /> Thông tin phiếu nhập hàng
+      <span v-if="receipt.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
     </div>
     <div class="page-header-setting">
       <a-dropdown trigger="click">
@@ -174,34 +208,9 @@ const openModalProductDetail = (data?: Product) => {
         <td class="px-2 py-1">{{ timeToText(receipt.createTime, "hh:mm DD/MM/YY") }}</td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">T.Gian thanh toán</td>
-        <td class="px-2 py-1">{{ timeToText(receipt.paymentTime, "hh:mm DD/MM/YY") }}</td>
-      </tr>
-      <tr v-if="receipt.status === ReceiptStatus.Refund">
-        <td class="px-2 py-1 whitespace-nowrap">T.Gian hoàn trả</td>
-        <td class="px-2 py-1"> {{ timeToText(receipt.refundTime, "hh:mm DD/MM/YY") }}</td>
-      </tr>
-      <tr>
         <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
         <td class="px-2 py-1">
-          <a-tag v-if="receipt.status === ReceiptStatus.Draft" color="warning">
-            <template #icon>
-              <ExclamationCircleOutlined />
-            </template>
-            Nháp
-          </a-tag>
-          <a-tag v-if="receipt.status === ReceiptStatus.Finish" color="success">
-            <template #icon>
-              <CheckCircleOutlined />
-            </template>
-            Hoàn thành
-          </a-tag>
-          <a-tag v-if="receipt.status === ReceiptStatus.Refund" color="error">
-            <template #icon>
-              <StopOutlined />
-            </template>
-            Hoàn trả
-          </a-tag>
+          <ReceiptStatusTag :status="receipt.status" />
         </td>
       </tr>
       <tr>
@@ -223,13 +232,14 @@ const openModalProductDetail = (data?: Product) => {
       <a-dropdown class="ml-4">
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
-            <a-menu-item v-if="receipt.status === ReceiptStatus.Finish || receipt.status === ReceiptStatus.Process"
+            <a-menu-item
+              v-if="[ReceiptStatus.Success, ReceiptStatus.Debt, ReceiptStatus.AwaitingShipment].includes(receipt.status)"
               key="REFUND">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" /> Hoàn trả
               </span>
             </a-menu-item>
-            <a-menu-item v-if="receipt.status === ReceiptStatus.Draft" key="DELETE">
+            <a-menu-item v-if="[ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)" key="DELETE">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" /> Xóa phiếu
               </span>
@@ -244,148 +254,46 @@ const openModalProductDetail = (data?: Product) => {
       </a-dropdown>
     </div>
 
-    <div v-if="isMobile" class="mt-2">
-      <table class="table-mobile">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Sản phẩm</th>
-            <th>SL</th>
-            <th>ĐG</th>
-            <th>TT</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(receiptItem, index) in (receipt.receiptItems || [])" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem;">{{ index + 1 }}</td>
-            <td>
-              <div class="font-medium">
-                {{ receiptItem.productBatch?.product?.brandName }}
-                <a v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail" class="ml-1"
-                  @click="openModalProductDetail(receiptItem.productBatch?.product)">
-                  <FileSearchOutlined />
-                </a>
-              </div>
-              <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance" style="font-size: 0.8rem;">
-                {{ receiptItem.productBatch?.product?.substance }}
-              </div>
-              <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem;">
-                <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">
-                  Lô: {{ receiptItem.productBatch.batch }}
-                </div>
-                <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">
-                  HSD: {{ timeToText(receiptItem.productBatch.expiryDate, 'DD/MM/YY') }}
-                </div>
-              </div>
-            </td>
-            <td class="text-center whitespace-nowrap">
-              {{ receiptItem.quantity / receiptItem.unit.rate }}
-            </td>
-            <td class="text-right whitespace-nowrap">
-              {{ formatMoney(receiptItem.productBatch?.costPrice * receiptItem.unit.rate) }}
-            </td>
-            <td class="text-right whitespace-nowrap">
-              {{ formatMoney(receiptItem.productBatch.costPrice * receiptItem.quantity) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="mt-2">
+      <ReceiptDetailTable :receipt="receipt" @show-receipt-payment="modalReceiptPayment?.openModal()" />
     </div>
 
-    <div v-else class="mt-2 px-4 table-wrapper w-full">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Tên</th>
-            <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">Lô</th>
-            <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">HSD</th>
-            <th>Số lượng</th>
-            <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">Đơn vị</th>
-            <th>Giá nhập</th>
-            <th>Tổng tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(receiptItem, index) in (receipt.receiptItems || [])" :key="index">
-            <td class="index"></td>
-            <td>
-              <div class="text-justify">
-                <div style="font-weight: 500;">{{ receiptItem.productBatch?.product?.brandName }} <a
-                    v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail" class="ml-1"
-                    @click="openModalProductDetail(receiptItem.productBatch?.product)">
-                    <FileSearchOutlined />
-                  </a></div>
-                <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance">
-                  {{ receiptItem.productBatch?.product?.substance }}
-                </div>
-              </div>
-            </td>
-            <td v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch" class="text-center">
-              {{ receiptItem.productBatch?.batch }}
-            </td>
-            <td v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate" class="text-center">
-              {{ timeToText(receiptItem.productBatch?.expiryDate) }}
-            </td>
-            <td class="text-right"> {{ receiptItem.quantity / receiptItem.unit.rate }} </td>
-            <td v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit" class="text-center">
-              {{ receiptItem.unit?.name }}
-            </td>
-            <td class="text-right">
-              {{ formatMoney(receiptItem.productBatch?.costPrice * receiptItem.unit.rate) }}
-            </td>
-            <td class="text-right">
-              {{ formatMoney(receiptItem.productBatch?.costPrice * receiptItem.quantity) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="flex justify-center gap-4 my-4">
+      <template v-if="receipt.status === ReceiptStatus.Draft">
+        <a-button v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1" type="primary"
+          @click="startShipAndPayment(receipt.totalMoney)" :loading="loadingProcess">
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Nhập hàng và thanh toán
+        </a-button>
 
-    <div class="md:px-4">
-      <table class="table-mobile ">
-        <tbody>
-          <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.totalItemMoney">
-            <td class="text-right font-bold" style="width: 70%;">Tiền hàng</td>
-            <td class="text-right font-bold whitespace-nowrap"> {{ formatMoney(receipt.totalItemMoney) }} </td>
-          </tr>
-          <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.discount">
-            <td class="text-right">Giảm giá</td>
-            <td class="text-right whitespace-nowrap">
-              <a-tag v-if="receipt.discountType === '%'" color="success">
-                {{ receipt.discountPercent || 0 }}%
-              </a-tag>
-              {{ formatMoney(receipt.discountMoney) }}
-            </td>
-          </tr>
-          <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.surcharge">
-            <td class="text-right">Phụ phí</td>
-            <td class="text-right whitespace-nowrap">{{ formatMoney(receipt.surcharge) }}</td>
-          </tr>
-          <tr>
-            <td class="text-right font-bold">Tổng tiền</td>
-            <td class="text-right font-bold whitespace-nowrap">{{ formatMoney(receipt.totalMoney) }}</td>
-          </tr>
-          <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.payment">
-            <td class="text-right">Thanh toán</td>
-            <td class="text-right whitespace-nowrap">{{ formatMoney(receipt.totalMoney - receipt.debt) }}</td>
-          </tr>
-          <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.debt">
-            <td class="text-right">Ghi nợ</td>
-            <td class="text-right whitespace-nowrap">{{ formatMoney(receipt.debt) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        <a-button v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2" type="primary"
+          @click="modalReceiptPayment?.openModal()" :loading="loadingProcess">
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Thanh toán
+        </a-button>
+      </template>
 
-    <div class="mx-2 flex justify-center mt-6 mb-2">
-      <a-button v-if="receipt.status === ReceiptStatus.Draft" type="primary" @click="startShipAndPayment"
-        :loading="loadingProcess" style="background-color: #28a745; border-color: #28a745;">
-        <template #icon>
-          <FileDoneOutlined />
-        </template>
-        Nhập hàng và thanh toán
-      </a-button>
+      <template v-if="receipt.status === ReceiptStatus.AwaitingShipment">
+        <a-button type="primary" @click="startShipAndPayment(0)" :loading="loadingProcess">
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Nhập hàng
+        </a-button>
+      </template>
+
+      <template v-if="receipt.status === ReceiptStatus.Debt">
+        <a-button type="primary" @click="modalReceiptPayment?.openModal()" :loading="loadingProcess">
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Trả nợ
+        </a-button>
+      </template>
     </div>
   </div>
 </template>

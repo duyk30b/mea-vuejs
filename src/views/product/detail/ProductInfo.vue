@@ -15,9 +15,7 @@ const props = withDefaults(
 )
 
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_BATCH_PAGINATION_LIMIT')) || 10)
@@ -173,9 +171,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
         <thead>
           <tr>
             <th>Lô</th>
-            <th>Nhập</th>
-            <th>Sỉ</th>
-            <th>Lẻ</th>
+            <th>Giá</th>
             <th>SL</th>
             <th></th>
           </tr>
@@ -186,13 +182,15 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
           </tr>
           <tr v-for="(productBatch, index) in productBatches" :key="index">
             <td>
-              <div>Mã PB{{ productBatch.id }}</div>
-              <div>Lô {{ productBatch.batch }}</div>
-              <div>HSD {{ timeToText(productBatch.expiryDate, "DD/MM/YYYY") }}</div>
+              <div>Mã PB: {{ productBatch.id }}</div>
+              <div>Lô: {{ productBatch.batch }}</div>
+              <div>HSD: {{ timeToText(productBatch.expiryDate, "DD/MM/YYYY") }}</div>
             </td>
-            <td class="text-right"> {{ formatMoney(productBatch.costPrice) }}</td>
-            <td class="text-right"> {{ formatMoney(productBatch.wholesalePrice) }}</td>
-            <td class="text-right"> {{ formatMoney(productBatch.retailPrice) }}</td>
+            <td class="text-right">
+              <div> Nhập: {{ formatMoney(productBatch.costPrice) }} </div>
+              <div> Sỉ: {{ formatMoney(productBatch.wholesalePrice) }} </div>
+              <div> Lẻ: {{ formatMoney(productBatch.retailPrice) }} </div>
+            </td>
             <td class="text-right"> {{ productBatch.quantity }}</td>
             <td class="text-center">
               <div class="flex flex-col">
@@ -213,7 +211,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
       <table class="table-mobile">
         <tbody>
           <tr>
-            <td class="font-bold">Tổng</td>
+            <td class="font-bold whitespace-nowrap">Tổng</td>
             <td>
               <div class="flex gap-4 justify-between">
                 <span>

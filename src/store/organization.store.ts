@@ -5,8 +5,12 @@ import { formatNumber } from '@/utils'
 export const useOrganizationStore = defineStore('organization-store', {
 	state: () => {
 		return {
+			// const isMobile = ref(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+			isMobile: window.innerWidth <= 768,
 			organizationInfo: Organization.blank(),
-			arrivalSettingStore: { examinationFee: 0 },
+
+			SYSTEM_SETTING: { moneyDivisionFormat: 1 },
+
 			PRODUCT_GROUP: <Record<string, string>>{
 				1: 'Kháng sinh - Kháng Virus',
 				2: 'Dị ứng',
@@ -40,36 +44,93 @@ export const useOrganizationStore = defineStore('organization-store', {
 				'Tiêm',
 				'Xịt',
 			],
+			PRODUCT_HINT_USAGE: <string[]>[
+				'Uống 2 lần/ngày sau ăn, sáng 1 viên, chiều 1 viên',
+				'Uống 1 viên khi sốt, sau 4h có thể uống tiếp',
+				'Bôi dưới da 3 lần/ngày',
+			],
+
 			PROCEDURE_GROUP: <Record<string, string>>{
 				1: 'Tiêm truyền',
 				2: 'Làm đẹp',
 				3: 'Chăm sóc',
 			},
-			SYSTEM_SETTING: { moneyDivisionFormat: 1 },
+
+			INVOICE_SURCHARGE_DETAIL: <Record<string, string>>{
+				_unknown: 'Khác',
+				shipCost: 'Tiền vận chuyển',
+				advisory: 'Phí tư vấn',
+			},
+			INVOICE_EXPENSES_DETAIL: <Record<string, string>>{
+				_unknown: 'Khác',
+				brokers: 'Hoa hồng',
+				package: 'Đóng gói',
+			},
 
 			SCREEN_PRODUCT_LIST: {
-				table: {
-					detail: true,
-					substance: true,
-					group: true,
-					unit: true,
-					batch: true,
-					expiryDate: true,
-					costPrice: true,
-					wholesalePrice: true,
-					retailPrice: true,
-					isActive: true,
-					action: true,
-				},
-				upsert: {
-					substance: true,
-					group: true,
-					unit: true,
-					source: true,
-					route: true,
-					hintUsage: true,
-				},
+				detail: true,
+				substance: true,
+				group: true,
+				unit: true,
+				batch: true,
+				expiryDate: true,
+				costPrice: true,
+				wholesalePrice: true,
+				retailPrice: true,
+				isActive: true,
+				action: true,
 			},
+			SCREEN_PRODUCT_DETAIL: {},
+			SCREEN_PRODUCT_UPSERT: {
+				substance: true,
+				group: true,
+				unit: true,
+				source: true,
+				route: true,
+				hintUsage: true,
+			},
+
+			SCREEN_PROCEDURE_LIST: {
+				table: { detail: true, group: true, status: true, action: true },
+				upsert: {},
+			},
+			SCREEN_PROCEDURE_DETAIL: {},
+			SCREEN_PROCEDURE_UPSERT: {},
+
+			SCREEN_DISTRIBUTOR_LIST: {
+				detail: true,
+				phone: true,
+				address: true,
+				note: true,
+				isActive: true,
+				action: true,
+			},
+			SCREEN_DISTRIBUTOR_DETAIL: {},
+			SCREEN_DISTRIBUTOR_UPSERT: {
+				phone: true,
+				address: true,
+			},
+
+			SCREEN_CUSTOMER_LIST: {
+				detail: true,
+				phone: true,
+				gender: true,
+				birthday: true,
+				address: true,
+				note: true,
+				isActive: true,
+				action: true,
+			},
+			SCREEN_CUSTOMER_DETAIL: {},
+			SCREEN_CUSTOMER_UPSERT: {
+				phone: true,
+				birthday: true,
+				gender: true,
+				identityCard: true,
+				address: true,
+				relative: true,
+			},
+
 			SCREEN_RECEIPT_LIST: {},
 			SCREEN_RECEIPT_DETAIL: {
 				receiptItemsTable: {
@@ -83,11 +144,11 @@ export const useOrganizationStore = defineStore('organization-store', {
 					totalItemMoney: true,
 					discount: true,
 					surcharge: true,
-					payment: true,
+					paid: true,
 					debt: true,
 				},
+				receiptProcessType: 1,
 			},
-
 			SCREEN_RECEIPT_UPSERT: {
 				receiptItemInput: {
 					batch: true,
@@ -116,7 +177,8 @@ export const useOrganizationStore = defineStore('organization-store', {
 					detail: true,
 					substance: true,
 					batch: true,
-					expiryDate: false,
+					expiryDate: true,
+					hintUsage: false,
 					unit: true,
 					discount: true,
 					expectedPrice: true,
@@ -125,12 +187,26 @@ export const useOrganizationStore = defineStore('organization-store', {
 					totalItemMoney: true,
 					surcharge: true,
 					discount: true,
-					payment: true,
+					paid: true,
 					debt: true,
 				},
 				invoiceProcessType: 2,
 			},
-
+			SCREEN_INVOICE_PREVIEW: {
+				invoiceItemsTable: {
+					substance: true,
+					batch: true,
+					expiryDate: true,
+					unit: true,
+					expectedPrice: true,
+					hintUsage: true,
+				},
+				paymentInfo: {
+					totalItemMoney: true,
+					surcharge: true,
+					discount: true,
+				},
+			},
 			SCREEN_INVOICE_UPSERT: {
 				invoiceItemInput: {
 					quantity: true,
@@ -140,12 +216,14 @@ export const useOrganizationStore = defineStore('organization-store', {
 					retailPrice: true,
 					discount: true,
 					actualPrice: true,
+					hintUsage: true,
 				},
 				invoiceItemsTable: {
 					detail: true,
 					substance: true,
 					batch: true,
 					expiryDate: true,
+					hintUsage: false,
 					unit: true,
 					expectedPrice: true,
 					discount: true,
@@ -153,51 +231,16 @@ export const useOrganizationStore = defineStore('organization-store', {
 				paymentInfo: {
 					discount: true,
 					surcharge: true,
-					paymentZero: false,
 				},
 				other: { expenses: true },
 			},
-
-			SCREEN_CUSTOMER_LIST: {
-				table: {
-					detail: true,
-					phone: true,
-					gender: true,
-					birthday: true,
-					address: true,
-					note: true,
-					isActive: true,
-					action: true,
-				},
-				upsert: { address: true },
-			},
-			SCREEN_CUSTOMER_DETAIL: {},
-
-			SCREEN_DISTRIBUTOR_LIST: {
-				table: {
-					detail: true,
-					phone: true,
-					address: true,
-					note: true,
-					isActive: true,
-					action: true,
-				},
-				upsert: { address: true },
-			},
-			SCREEN_DISTRIBUTOR_DETAIL: {},
-
-			SCREEN_PROCEDURE_LIST: {
-				table: { detail: true, group: true, status: true, action: true },
-				upsert: {},
-			},
-			SCREEN_PROCEDURE_DETAIL: {},
 		}
 	},
 	getters: {
-    formatMoney: (state) => {
-      return (money: number) => {
+		formatMoney: (state) => {
+			return (money: number) => {
 				return formatNumber(money / state.SYSTEM_SETTING.moneyDivisionFormat)
-      }
-    },
-  },
+			}
+		},
+	},
 })

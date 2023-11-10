@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { OrganizationService } from '@/modules/organization'
 import { useOrganizationStore } from '@/store/organization.store'
@@ -63,18 +62,32 @@ defineExpose({ openModal })
             </td>
           </tr>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">Hiển thị hoạt chất</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">Hiển thị lô hàng</a-checkbox></td>
-          </tr>
-          <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">Hiển thị hạn sử dụng</a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
+                Hiển thị hoạt chất
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">Hiển thị đơn vị</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
+                Hiển thị lô hàng
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">
+                Hiển thị hạn sử dụng
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
+                Hiển thị đơn vị
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
         <thead>
@@ -84,24 +97,59 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalItemMoney">Hiển thị tiền hàng</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalItemMoney">
+                Hiển thị tiền hàng
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">Hiển thị giảm giá</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">Hiển thị phụ phí</a-checkbox></td>
+            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                Hiển thị chiết khấu
+              </a-checkbox></td>
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.paymentInfo.payment">
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                Hiển thị phụ phí
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.paid">
                 Hiển thị tiền đã thanh toán
               </a-checkbox>
             </td>
           </tr>
           <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">
+                Hiển thị nợ
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
             <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">Hiển thị nợ</a-checkbox></td>
+          </tr>
+        </tbody>
+        <thead>
+          <tr>
+            <th>Nhập hàng và thanh toán</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a-radio-group v-model:value="settingDisplay.receiptProcessType">
+                <a-radio style="display:flex; line-height: 36px" :value="1">
+                  Phiếu nhập hàng không nợ: Nhập hàng và thanh toán đồng thời
+                </a-radio>
+                <a-radio style="display:flex; line-height: 36px;" :value="2">
+                  Phiếu nhập hàng có nợ: Nhập hàng riêng, thanh toán riêng
+                </a-radio>
+              </a-radio-group>
+            </td>
           </tr>
         </tbody>
       </table>

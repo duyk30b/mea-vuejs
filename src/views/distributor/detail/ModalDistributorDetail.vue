@@ -1,18 +1,18 @@
-
 <script setup lang="ts">
-import { Distributor, DistributorDebt } from '@/modules/distributor'
-import { DeploymentUnitOutlined, DollarOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
-import ModalDistributorPayDebt from '../components/ModalDistributorPayDebt.vue'
-import DistributorDebtsHistory from './DistributorDebtsHistory.vue'
-import DistributorInfo from './DistributorInfo.vue'
-import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
+import VueModal from '@/common/VueModal.vue'
+import { Distributor } from '@/modules/distributor'
 import { useOrganizationStore } from '@/store/organization.store'
+import { CloseOutlined, DeploymentUnitOutlined, DollarOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { ref } from 'vue'
+import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
+import DistributorInfo from './DistributorInfo.vue'
+import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
+import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
 
 const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }>()
 
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
-const distributorDebtsHistory = ref<InstanceType<typeof DistributorDebtsHistory>>()
+const distributorPaymentHistory = ref<InstanceType<typeof DistributorPaymentHistory>>()
 
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
@@ -28,17 +28,16 @@ const openModal = async (d: Distributor) => {
   distributor.value = Distributor.fromInstance(d)
 }
 
-const refreshModal = () => {
+const closeModal = () => {
   showModal.value = false
   distributor.value = Distributor.blank()
 }
 
 const handleModalDistributorPayDebtSuccess = async (data: {
   distributor: Distributor,
-  distributorDebt: DistributorDebt
 }) => {
   distributor.value = data.distributor
-  distributorDebtsHistory.value?.addCustomerDebt(data.distributorDebt)
+  distributorPaymentHistory.value?.startFetchData()
   emit('update_distributor', data.distributor)
 }
 
@@ -47,59 +46,71 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <ModalDistributorPayDebt ref="modalDistributorPayDebt" @success="handleModalDistributorPayDebtSuccess" />
-  <a-modal v-model:visible="showModal" width="1200px" :title="'Nhà cung cấp: ' + distributor.fullName"
-    :confirm-loading="saveLoading" :afterClose="refreshModal">
-    <template #footer>
-      <div class="flex justify-end px-2">
-        <div>
-          <a-button @click="showModal = false">Đóng</a-button>
+  <VueModal v-model:show="showModal" style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)">
+    <div class="bg-white">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede;">
+        <div class="flex-1 font-medium" style="font-size: 16px;">NCC: {{ distributor.fullName }}</div>
+        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
         </div>
       </div>
-    </template>
-    <div class="distributor-detail">
-      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
-        <a-tab-pane key="info">
-          <template #tab>
-            <span>
-              <UserOutlined />Thông tin cá nhân
-            </span>
-          </template>
-          <DistributorInfo :distributor="distributor" />
-        </a-tab-pane>
-        <a-tab-pane key="debts-history">
-          <template #tab>
-            <span>
-              <DollarOutlined />Lịch sử nợ
-            </span>
-          </template>
-          <div class="flex justify-between items-end">
-            <div>
-              Khách hàng: <b>{{ distributor.fullName }}</b>
-              - Công nợ hiện tại: <b> {{ formatMoney(distributor.debt) }} </b>
+
+      <div class="p-4 distributor-detail">
+        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
+          <a-tab-pane key="info">
+            <template #tab>
+              <span>
+                <UserOutlined />Thông tin cá nhân
+              </span>
+            </template>
+            <DistributorInfo :distributor="distributor" />
+          </a-tab-pane>
+          <a-tab-pane key="debts-history">
+            <template #tab>
+              <span>
+                <DollarOutlined />Thanh toán
+              </span>
+            </template>
+            <div class="flex justify-between items-end">
+              <div>
+                Khách hàng: <b>{{ distributor.fullName }}</b>
+                - Công nợ hiện tại: <b> {{ formatMoney(distributor.debt) }} </b>
+              </div>
+              <div>
+                <a-button type="primary" @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
+                  <template #icon>
+                    <PlusOutlined />
+                  </template>
+                  Trả nợ
+                </a-button>
+              </div>
             </div>
-            <div>
-              <a-button type="primary" @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
-                <template #icon>
-                  <PlusOutlined />
-                </template>
-                Trả nợ
-              </a-button>
-            </div>
-          </div>
-          <DistributorDebtsHistory ref="distributorDebtsHistory" :distributor="distributor" />
-        </a-tab-pane>
-        <a-tab-pane key="receipts-history">
-          <template #tab>
-            <span>
-              <DeploymentUnitOutlined />Lịch sử nhập hàng
-            </span>
-          </template>
-          <DistributorReceiptHistory :distributor="distributor" />
-        </a-tab-pane>
-      </a-tabs>
+            <DistributorPaymentHistory ref="distributorPaymentHistory" :distributor="distributor" />
+          </a-tab-pane>
+          <a-tab-pane key="receipts-history">
+            <template #tab>
+              <span>
+                <DeploymentUnitOutlined />Lịch sử nhập hàng
+              </span>
+            </template>
+            <DistributorReceiptHistory :distributor="distributor" />
+          </a-tab-pane>
+        </a-tabs>
+      </div>
+
+      <div class="p-4">
+        <div class="flex justify-end gap-4">
+          <a-button @click="closeModal">
+            <template #icon>
+              <CloseOutlined />
+            </template>
+            Đóng
+          </a-button>
+        </div>
+      </div>
     </div>
-  </a-modal>
+  </VueModal>
+  <ModalDistributorPayDebt ref="modalDistributorPayDebt" @success="handleModalDistributorPayDebtSuccess" />
 </template>
 
 <style lang="scss">

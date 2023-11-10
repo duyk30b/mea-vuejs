@@ -6,12 +6,11 @@ import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
+import { InputNumber } from '@/common/vue-form'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
-
-const isMobile = window.innerWidth < 768
+const { formatMoney, isMobile } = organizationStore
 
 const openModalProductDetail = (product?: Product) => {
   if (product) modalProductDetail.value?.openModal(product)
@@ -125,9 +124,10 @@ const openModalProductDetail = (product?: Product) => {
             {{ timeToText(ri.productBatch?.expiryDate) }}
           </td>
           <td class="text-center" style="min-width: 100px;">
-            <a-input-number :value="receipt.receiptItems[index].quantity / receipt.receiptItems[index].unit.rate"
-              @update:value="(e: any) => receipt.receiptItems[index].quantity = e * receipt.receiptItems[index].unit.rate"
-              class="w-full" :min="0" />
+            <div class="w-full">
+              <InputNumber :value="receipt.receiptItems[index].quantity / receipt.receiptItems[index].unit.rate"
+                @update:value="(e: any) => receipt.receiptItems[index].quantity = e * receipt.receiptItems[index].unit.rate" />
+            </div>
           </td>
           <td v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
             {{ ri.unit.name }}

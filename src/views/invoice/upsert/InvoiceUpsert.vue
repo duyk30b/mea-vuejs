@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputOptions } from '@/common/vue-form'
+import { InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
 import { Customer, CustomerService, useCustomerStore } from '@/modules/customer'
+import { DiscountType } from '@/modules/enum'
 import { Invoice, InvoiceItem, InvoiceService } from '@/modules/invoice'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
-import { NodeIndexOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import {
+  ExclamationCircleOutlined, NodeIndexOutlined,
+  SaveOutlined, SettingOutlined,
+} from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ModalCustomerUpsert from '../../customer/components/ModalCustomerUpsert.vue'
+import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceItemCreate from './InvoiceItemCreate.vue'
 import InvoiceItemTable from './InvoiceItemTable.vue'
+import ModalDataInvoice from './ModalDataInvoice.vue'
 import ModalInvoiceUpsertSettingScreen from './ModalInvoiceUpsertSettingScreen.vue'
 import { invoice } from './invoice-upsert.store'
 
 const modalInvoiceUpsertSettingScreen = ref<InstanceType<typeof ModalInvoiceUpsertSettingScreen>>()
 const inputSearchCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
+const modalDataInvoice = ref<InstanceType<typeof ModalDataInvoice>>()
 
 const router = useRouter()
 const route = useRoute()
@@ -46,10 +51,16 @@ onBeforeMount(async () => {
     if (invoiceId) {
       const invoiceResponse = await InvoiceService.detail(invoiceId, {
         customer: true,
-        invoiceItems: true,
+        invoice_items: true,
       })
 
       invoice.value = invoiceResponse
+      if (invoice.value.expensesDetails.length === 0) {
+        invoice.value.expensesDetails.push({ key: '_unknown', name: '', money: invoice.value.expenses })
+      }
+      if (invoice.value.surchargeDetails.length === 0) {
+        invoice.value.surchargeDetails.push({ key: '_unknown', name: '', money: invoice.value.surcharge })
+      }
       customer.value = Customer.fromInstance(invoiceResponse.customer!)
       if (mode.value === 'CREATE' || mode.value === 'COPY') {
         createTime.value = dayjs(new Date())
@@ -58,7 +69,7 @@ onBeforeMount(async () => {
       }
     }
     if (customerId) {
-      const customerRes = await CustomerService.getOne(customerId)
+      const customerRes = await CustomerService.detail(customerId)
       customer.value = customerRes
       invoice.value.customer = customerRes
       invoice.value.customerId = customerId
@@ -99,6 +110,91 @@ const selectCustomer = (data: Customer) => {
   customer.value = snapCustomer
 }
 
+const handleChangeInvoiceDiscountMoney = (data: number) => {
+  invoice.value.discountMoney = data
+  invoice.value.discountType = DiscountType.VND
+}
+const handleChangeInvoiceDiscountPercent = (data: number) => {
+  invoice.value.discountPercent = data
+  invoice.value.discountType = DiscountType.Percent
+}
+
+const handleChangeInvoiceExpenses = (data: number) => {
+  invoice.value.expenses = data
+  const hasOther = invoice.value.expensesDetails.find((i) => i.key === '_unknown')
+  if (!hasOther) {
+    const key = '_unknown'
+    const name = organizationStore.INVOICE_EXPENSES_DETAIL[key]
+    invoice.value.expensesDetails.push({ key, name, money: data })
+  }
+
+  let totalKnownExpenses = 0
+  let indexOther = 0
+  for (let i = 0; i < invoice.value.expensesDetails.length; i++) {
+    const item = invoice.value.expensesDetails[i]
+    if (item.key !== '_unknown') totalKnownExpenses += item.money
+    else indexOther = i
+  }
+  invoice.value.expensesDetails[indexOther].money = data - totalKnownExpenses
+}
+
+const handleChangeMoneyInvoiceExpensesDetail = (money: number, index: number) => {
+  invoice.value.expensesDetails[index].money = money
+  invoice.value.expenses = invoice.value.expensesDetails.reduce((acc, cur) => acc + cur.money, 0)
+}
+
+const handleAddExpensesDetail = () => {
+  const existKey = invoice.value.expensesDetails.map((i) => i.key)
+  existKey.push('_unknown')
+  const allKey = Object.keys(organizationStore.INVOICE_EXPENSES_DETAIL)
+  const key = allKey.find((i) => !existKey.includes(i)) || '_unknown'
+  const name = organizationStore.INVOICE_EXPENSES_DETAIL[key]
+  invoice.value.expensesDetails.push({ key, name, money: 0 })
+}
+
+const handleDeleteExpensesDetail = (index: number) => {
+  invoice.value.expensesDetails.splice(index, 1)
+  invoice.value.expenses = invoice.value.expensesDetails.reduce((acc, cur) => acc + cur.money, 0)
+}
+
+const handleChangeInvoiceSurcharge = (data: number) => {
+  invoice.value.surcharge = data
+  const hasOther = invoice.value.surchargeDetails.find((i) => i.key === '_unknown')
+  if (!hasOther) {
+    const key = '_unknown'
+    const name = organizationStore.INVOICE_SURCHARGE_DETAIL[key]
+    invoice.value.surchargeDetails.push({ key, name, money: data })
+  }
+
+  let totalKnownSurcharge = 0
+  let indexOther = 0
+  for (let i = 0; i < invoice.value.surchargeDetails.length; i++) {
+    const item = invoice.value.surchargeDetails[i]
+    if (item.key !== '_unknown') totalKnownSurcharge += item.money
+    else indexOther = i
+  }
+  invoice.value.surchargeDetails[indexOther].money = data - totalKnownSurcharge
+}
+
+const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
+  invoice.value.surchargeDetails[index].money = money
+  invoice.value.surcharge = invoice.value.surchargeDetails.reduce((acc, cur) => acc + cur.money, 0)
+}
+
+const handleAddSurchargeDetail = () => {
+  const existKey = invoice.value.surchargeDetails.map((i) => i.key)
+  existKey.push('_unknown')
+  const allKey = Object.keys(organizationStore.INVOICE_SURCHARGE_DETAIL)
+  const key = allKey.find((i) => !existKey.includes(i)) || '_unknown'
+  const name = organizationStore.INVOICE_SURCHARGE_DETAIL[key]
+  invoice.value.surchargeDetails.push({ key, name, money: 0 })
+}
+
+const handleDeleteSurchargeDetail = (index: number) => {
+  invoice.value.surchargeDetails.splice(index, 1)
+  invoice.value.surcharge = invoice.value.surchargeDetails.reduce((acc, cur) => acc + cur.money, 0)
+}
+
 const saveInvoice = async () => {
   if (!customer.value.id) {
     message.error('Lỗi: chưa chọn khách hàng')
@@ -116,6 +212,14 @@ const saveInvoice = async () => {
   try {
     saveLoading.value = true
     invoice.value.createTime = createTime.value.valueOf()
+    invoice.value.surchargeDetails = invoice.value.surchargeDetails.filter((i) => {
+      i.name = organizationStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
+      return i.money != 0
+    })
+    invoice.value.expensesDetails = invoice.value.expensesDetails.filter((i) => {
+      i.name = organizationStore.INVOICE_EXPENSES_DETAIL[i.key] || i.name
+      return i.money != 0
+    })
     let response: { invoiceId: number }
     if (mode.value === 'CREATE') {
       response = await InvoiceService.createDraft(invoice.value)
@@ -141,12 +245,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
     modalInvoiceUpsertSettingScreen.value?.openModal()
   }
+  if (menu.key === 'data-setting') {
+    modalDataInvoice.value?.openModal()
+  }
 }
 </script>
 
 <template>
   <ModalInvoiceUpsertSettingScreen ref="modalInvoiceUpsertSettingScreen" />
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="selectCustomer" />
+  <ModalDataInvoice ref="modalDataInvoice" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
@@ -164,6 +272,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -203,64 +312,116 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr>
-                  <td>Thời gian</td>
-                  <td><a-date-picker show-time placeholder="Select Time" v-model:value="createTime"
-                      :format="'DD/MM/YYYY HH:mm:ss'" /></td>
+                  <td class="whitespace-nowrap">Thời gian</td>
+                  <td>
+                    <a-date-picker show-time placeholder="Select Time" v-model:value="createTime"
+                      :format="'DD/MM/YYYY HH:mm:ss'" style="width: 100%;" />
+                  </td>
                 </tr>
                 <tr>
-                  <td class="font-bold" style="width: 120px;">Tiền hàng</td>
-                  <td class="text-right" style="padding-right: 11px;">
+                  <td class="font-bold whitespace-nowrap" style="width: 120px;">Tiền hàng</td>
+                  <td class="text-right" style="padding-right: 11px; font-size: 16px;">
                     {{ formatMoney(invoice.totalItemMoney) }}
                   </td>
                 </tr>
                 <tr v-if="organizationStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
-                  <td>Chiết khấu</td>
-                  <td style="padding-right: 11px;">
-                    <div class="flex flex-wrap gap-2 justify-end items-center">
-                      <a-input-group compact style="width: 200px; margin-right: auto;">
-                        <a-select v-model:value="invoice.discountType" style="min-width: 80px;">
-                          <a-select-option value="%">%</a-select-option>
-                          <a-select-option value="VNĐ">VNĐ</a-select-option>
-                        </a-select>
-                        <a-input-number v-if="invoice.discountType == '%'" style="width: 120px;"
-                          v-model:value="invoice.discountPercent" :min="0" :max="100" />
-                        <InputMoney v-if="invoice.discountType == 'VNĐ'" v-model:value="invoice.discountMoney"
-                          style="width: 120px;" :min="0" />
-                      </a-input-group>
-                      <span>
-                        {{ formatMoney(invoice.discountMoney) }}
-                      </span>
-                    </div>
+                  <td class="whitespace-nowrap">Chiết khấu</td>
+                  <td class="cursor-pointer" style="font-size: 16px;">
+                    <a-popconfirm>
+                      <template #cancelButton>
+                        <div></div>
+                      </template>
+                      <template #okButton>
+                        <div></div>
+                      </template>
+                      <template #title>
+                        <div>Chiết khấu (Tiền hàng: <b>{{ formatMoney(invoice.totalItemMoney) }}</b>)
+                        </div>
+                        <div class="mt-2">
+                          <div>
+                            <InputMoney :value="invoice.discountMoney" @update:value="handleChangeInvoiceDiscountMoney"
+                              append="VNĐ" style="width: 100%;" />
+                          </div>
+                          <div class="mt-2">
+                            <InputNumber :value="invoice.discountPercent"
+                              @update:value="handleChangeInvoiceDiscountPercent" append="%" />
+                          </div>
+                        </div>
+                      </template>
+                      <div class="flex">
+                        <div>
+                          <a-tag color="success">
+                            {{ invoice.discountPercent || 0 }}%
+                          </a-tag>
+                        </div>
+                        <div class="flex-1 text-right" style="padding-right: 11px; border-bottom: 1px solid #cdcdcd;">
+                          {{ formatMoney(invoice.discountMoney) }}
+                        </div>
+                      </div>
+                    </a-popconfirm>
                   </td>
                 </tr>
                 <tr v-if="organizationStore.SCREEN_INVOICE_UPSERT.paymentInfo.surcharge">
-                  <td>Phụ phí</td>
+                  <td class="cursor-pointer whitespace-nowrap">
+                    <a-popconfirm>
+                      <template #cancelButton>
+                        <div></div>
+                      </template>
+                      <template #okButton>
+                        <div></div>
+                      </template>
+                      <template #title>
+                        <div style="width: 320px;">
+                          <div class="flex">
+                            <div style="width: 160px; font-size: 13px;">Loại phụ phí</div>
+                            <div style="flex: 1; font-size: 13px;">Số tiền</div>
+                          </div>
+                          <div class="flex flex-col gap-2 mt-2">
+                            <div v-for="(surcharge, index) in invoice.surchargeDetails" :key="index"
+                              class="flex items-stretch">
+                              <VueSelect style="width: 160px;" v-model:value="invoice.surchargeDetails[index].key"
+                                :options="[
+                                  ...Object.entries(organizationStore.INVOICE_SURCHARGE_DETAIL).map(([key, text]) => ({ value: key, text: text })),
+                                  ...(organizationStore.INVOICE_SURCHARGE_DETAIL[surcharge.key] ? [] : [{ value: surcharge.key, text: surcharge.name }])
+                                ].reverse()" />
+                              <div style="flex: 1">
+                                <InputMoney :value="surcharge.money"
+                                  @update:value="(data) => handleChangeMoneyInvoiceSurchargeDetail(data, index)" />
+                              </div>
+                              <div style="width: 60px;">
+                                <a-button danger @click="handleDeleteSurchargeDetail(index)">Xóa</a-button>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="text-end mt-1" style="font-size: 13px;">
+                            <a @click="handleAddSurchargeDetail">Thêm phụ phí khác</a>
+                          </div>
+                          <div class="flex mt-2">
+                            <div style="width: 160px;">Tổng phụ phí:</div>
+                            <div style="flex: 1">
+                              <b class="ml-3" style="font-size: 16px;">
+                                {{ formatMoney(invoice.surcharge) }}
+                              </b>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <div>
+                        <span class="mr-2"> Phụ phí</span>
+                        <ExclamationCircleOutlined />
+                      </div>
+                    </a-popconfirm>
+                  </td>
                   <td>
-                    <InputMoney v-model:value="invoice.surcharge" class="input-payment" style="width: 100%;" />
+                    <InputMoney :value="invoice.surcharge" @update:value="handleChangeInvoiceSurcharge"
+                      class="input-payment" style="width: 100%;" />
                   </td>
                 </tr>
+                <tr><td></td><td></td></tr>
                 <tr>
-                  <td class="font-bold">Tổng tiền</td>
+                  <td class="font-bold whitespace-nowrap">Tổng tiền</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px;">
                     {{ formatMoney(invoice.totalMoney) }}
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td>Thanh toán</td>
-                  <td>
-                    <InputMoney :value="invoice.totalMoney - invoice.debt"
-                      @update:value="(e: number) => invoice.debt = invoice.totalMoney - e" min="0" class="input-payment"
-                      style="width: 100%;" />
-                  </td>
-                </tr>
-                <tr>
-                  <td>Ghi nợ</td>
-                  <td>
-                    <InputMoney v-model:value="invoice.debt" class="input-payment" style="width: 100%;" />
                   </td>
                 </tr>
               </tbody>
@@ -274,18 +435,63 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr v-if="organizationStore.SCREEN_INVOICE_UPSERT.other.expenses">
-                  <td>
-                    <a-tooltip>
-                      <template #title>Số tiền bên bán phải trả (VD: tiền hoa hồng cho người giới thiệu ...)</template>
-                      Chi phí
-                    </a-tooltip>
+                  <td class="cursor-pointer whitespace-nowrap">
+                    <a-popconfirm>
+                      <template #cancelButton>
+                        <div></div>
+                      </template>
+                      <template #okButton>
+                        <div></div>
+                      </template>
+                      <template #title>
+                        <div style="width: 320px;">
+                          <div class="flex">
+                            <div style="width: 160px; font-size: 13px;">Loại chi phí</div>
+                            <div style="flex: 1; font-size: 13px;">Số tiền</div>
+                          </div>
+                          <div class="flex flex-col gap-2 mt-2">
+                            <div v-for="(expenses, index) in invoice.expensesDetails" :key="index"
+                              class="flex items-stretch">
+                              <VueSelect style="width: 160px;" v-model:value="invoice.expensesDetails[index].key"
+                                :options="[
+                                  ...Object.entries(organizationStore.INVOICE_EXPENSES_DETAIL).map(([key, text]) => ({ value: key, text: text })),
+                                  ...(organizationStore.INVOICE_EXPENSES_DETAIL[expenses.key] ? [] : [{ value: expenses.key, text: expenses.name }])
+                                ].reverse()" />
+                              <div style="flex: 1">
+                                <InputMoney :value="expenses.money"
+                                  @update:value="(data) => handleChangeMoneyInvoiceExpensesDetail(data, index)" />
+                              </div>
+                              <div style="width: 60px;">
+                                <a-button danger @click="handleDeleteExpensesDetail(index)">Xóa</a-button>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="text-end mt-1" style="font-size: 13px;">
+                            <a @click="handleAddExpensesDetail"> Thêm chi phí khác</a>
+                          </div>
+                          <div class="flex mt-2">
+                            <div style="width: 160px;">Tổng chi phí:</div>
+                            <div style="flex: 1">
+                              <b class="ml-3" style="font-size: 16px;">
+                                {{ formatMoney(invoice.expenses) }}
+                              </b>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+                      <div>
+                        <span class="mr-2"> Chi phí</span>
+                        <ExclamationCircleOutlined />
+                      </div>
+                    </a-popconfirm>
                   </td>
                   <td>
-                    <InputMoney v-model:value="invoice.expenses" class="input-payment" style="width: 100%;" />
+                    <InputMoney :value="invoice.expenses" @update:value="handleChangeInvoiceExpenses"
+                      class="input-payment" style="width: 100%;" />
                   </td>
                 </tr>
                 <tr>
-                  <td>Ghi chú</td>
+                  <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
                     <a-input v-model:value="invoice.note" class="input-payment" />
                   </td>

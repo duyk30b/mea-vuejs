@@ -1,5 +1,5 @@
-export * from './distributor-debt.model'
-export * from './distributor-debt.service'
+export * from './distributor-payment.model'
+export * from './distributor-payment.service'
 export * from './distributor.model'
 export * from './distributor.service'
 export * from './distributor.store'

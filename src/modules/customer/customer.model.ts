@@ -1,7 +1,6 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import type { EGender } from '../enum'
-import { CustomerDebt } from './customer-debt.model'
 
 export class Customer extends BaseModel {
 	@Expose({ name: 'full_name' })
@@ -45,10 +44,6 @@ export class Customer extends BaseModel {
 
 	@Expose({ name: 'is_active' })
 	isActive: boolean = true                            // Trạng thái
-
-	@Expose({ name: 'customer_debts', toClassOnly: true })
-	@Type(() => CustomerDebt)
-	customerDebts: CustomerDebt[] = []
 
 	static blank(): Customer {
 		return new Customer()
