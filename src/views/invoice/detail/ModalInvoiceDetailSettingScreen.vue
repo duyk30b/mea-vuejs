@@ -43,8 +43,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -119,7 +125,7 @@ defineExpose({ openModal })
         <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalItemMoney">
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
                 Hiển thị tiền hàng
               </a-checkbox>
             </td>
@@ -134,7 +140,8 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
-                Hiển thị phụ phí</a-checkbox>
+                Hiển thị phụ phí
+              </a-checkbox>
             </td>
           </tr>
           <tr>
@@ -161,10 +168,16 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-radio-group v-model:value="settingDisplay.invoiceProcessType">
-                <a-radio style="display:flex; line-height: 36px" :value="1">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="1"
+                >
                   Đơn hàng không nợ: Gửi hàng và thanh toán đồng thời
                 </a-radio>
-                <a-radio style="display:flex; line-height: 36px;" :value="2">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="2"
+                >
                   Đơn hàng có nợ: Gửi hàng riêng, thanh toán riêng
                 </a-radio>
               </a-radio-group>

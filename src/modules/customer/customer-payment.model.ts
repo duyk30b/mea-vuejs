@@ -3,58 +3,66 @@ import { BaseModel } from '../base.model'
 import type { PaymentType } from '../enum'
 
 export class CustomerPayment extends BaseModel {
-	@Expose({ name: 'customer_id' })
-	customerId: number
+  @Expose()
+  customerId: number
 
-	@Expose({ name: 'invoice_id' })
-	invoiceId: number
+  @Expose()
+  invoiceId: number
 
-	@Expose({ name: 'time' })
-	time: number
+  @Expose()
+  time: number
 
-	@Expose({ name: 'type' })
-	type: PaymentType
+  @Expose()
+  type: PaymentType
 
-	@Expose({ name: 'paid' })
-	paid: number = 0                                 // Số tiền thanh toán
+  @Expose()
+  paid: number = 0 // Số tiền thanh toán
 
-	@Expose({ name: 'open_debt' })
-	openDebt: number = 0                              // Dư nợ đầu kỳ
+  @Expose()
+  debit: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
 
-	@Expose({ name: 'debit' })
-	debit: number                                      // Ghi nợ: tiền nợ thêm hoặc trả nợ
+  @Expose()
+  customerOpenDebt: number = 0 // Dư nợ đầu kỳ của khách hàng
 
-	@Expose({ name: 'close_debt' })                    // openDebt + debit = closeDebt
-	closeDebt: number = 0                              // Dư nợ cuối kỳ
+  @Expose() // customerOpenDebt + debit = customerCloseDebt
+  customerCloseDebt: number = 0 // Dư nợ cuối kỳ của khách hàng
 
-	@Expose({ name: 'note' })
-	note: string = ''
+  @Expose()
+  invoiceOpenDebt: number = 0 // Dư nợ đầu kỳ của hóa đơn
 
-	@Expose({ name: 'description' })
-	description: string = ''
+  @Expose() // invoiceOpenDebt + debit = invoiceCloseDebt
+  invoiceCloseDebt: number = 0 // Dư nợ cuối kỳ của hóa đơn
 
-	static blank(): CustomerPayment {
-		return new CustomerPayment()
-	}
+  @Expose()
+  note: string = ''
 
-	static fromPlain(plain: Record<string, any>): CustomerPayment {
-		return plainToInstance(CustomerPayment, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  @Expose()
+  description: string = ''
 
-	static fromPlains(plains: Record<string, any>[]): CustomerPayment[] {
-		return plainToInstance(CustomerPayment, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static blank(): CustomerPayment {
+    return new CustomerPayment()
+  }
 
-	static toPlain(instance: Partial<CustomerPayment>): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static fromPlain(plain: Record<string, any>): CustomerPayment {
+    return plainToInstance(CustomerPayment, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
+
+  static fromPlains(plains: Record<string, any>[]): CustomerPayment[] {
+    return plainToInstance(CustomerPayment, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
+
+  static toPlain(instance: Partial<CustomerPayment>): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+    })
+  }
 }

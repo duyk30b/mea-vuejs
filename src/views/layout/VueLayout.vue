@@ -14,20 +14,34 @@ const setSideCollapsed = (value: boolean) => {
   localStorage.setItem('SIDE_COLLAPSED', String(value))
   collapsed.value = value
 }
-
 </script>
 
 <template>
   <a-layout id="dashboard-layout">
     <VueHeader @handleShowDrawer="openSideDrawer = $event" />
     <a-layout>
-      <a-layout-sider theme="light" :defaultCollapsed="defaultCollapsed" @collapse="setSideCollapsed" collapsible
-        collapsedWidth="60" width="240">
+      <a-layout-sider
+        theme="light"
+        :defaultCollapsed="defaultCollapsed"
+        collapsible
+        collapsedWidth="60"
+        width="240"
+        @collapse="setSideCollapsed"
+      >
         <VueSider :collapsed="collapsed" />
       </a-layout-sider>
-      <a-drawer v-model:visible="openSideDrawer" placement="left" width="240" :closable="false"
-        :bodyStyle="{ padding: 0 }" :drawerStyle="{ backgroundColor: '#fff' }">
-        <VueSider :collapsed="collapsed" @handleShowDrawer="openSideDrawer = $event" />
+      <a-drawer
+        v-model:visible="openSideDrawer"
+        placement="left"
+        width="240"
+        :closable="false"
+        :bodyStyle="{ padding: 0 }"
+        :drawerStyle="{ backgroundColor: '#fff' }"
+      >
+        <VueSider
+          :collapsed="collapsed"
+          @handleShowDrawer="openSideDrawer = $event"
+        />
       </a-drawer>
       <a-layout>
         <a-layout-content>
@@ -42,10 +56,10 @@ const setSideCollapsed = (value: boolean) => {
           </a-breadcrumb-item>
           <a-breadcrumb-item>{{ matchedRouter.slice(-1)[0]?.meta.breadcrumb }}</a-breadcrumb-item>
         </a-breadcrumb> -->
-          <slot></slot>
+          <slot />
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333;"><strong>Medihome</strong>©2023 - Version 2.2 - Hotline: 0376.899.866</span>
+          <span style="color: #333"><strong>Medihome</strong>©2023 - Version 2.3 - Hotline: 0376.899.866</span>
         </a-layout-footer>
       </a-layout>
     </a-layout>

@@ -1,4 +1,4 @@
-<script setup lang="ts" >
+<script setup lang="ts">
 import { AuthService } from '@/modules/auth'
 import { message } from 'ant-design-vue'
 import { reactive, ref } from 'vue'
@@ -41,45 +41,81 @@ const startResetPassword = async () => {
     loading.value = false
   }
 }
-
 </script>
 
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem">Đổi mật khẩu</a-divider>
+      <a-divider style="font-size: 1.5rem">
+        Đổi mật khẩu
+      </a-divider>
       <br>
-      <a-form :model="formState" name="basic" :label-col="{ span: 4 }" :wrapper-col="{ span: 20 }" autocomplete="off"
-        @finish="startResetPassword" @finishFailed="onFinishFailed">
-        <a-form-item label="Cơ sở" name="orgPhone" :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]">
-          <a-input v-model:value="formState.orgPhone" disabled />
+      <a-form
+        :model="formState"
+        name="basic"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 20 }"
+        autocomplete="off"
+        @finish="startResetPassword"
+        @finishFailed="onFinishFailed"
+      >
+        <a-form-item
+          label="Cơ sở"
+          name="orgPhone"
+          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
+        >
+          <a-input
+            v-model:value="formState.orgPhone"
+            disabled
+          />
         </a-form-item>
 
-        <a-form-item label="Tài khoản" name="username"
-          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]">
-          <a-input v-model:value="formState.username" disabled />
+        <a-form-item
+          label="Tài khoản"
+          name="username"
+          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
+        >
+          <a-input
+            v-model:value="formState.username"
+            disabled
+          />
         </a-form-item>
 
-        <a-form-item label="Mật khẩu" name="password"
-          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]">
+        <a-form-item
+          label="Mật khẩu"
+          name="password"
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
+        >
           <a-input-password v-model:value="formState.password" />
         </a-form-item>
 
-        <a-form-item label="Mật khẩu" name="passwordRepeat"
-          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]">
+        <a-form-item
+          label="Mật khẩu"
+          name="passwordRepeat"
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
+        >
           <a-input-password v-model:value="formState.passwordRepeat" />
         </a-form-item>
 
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button type="primary" html-type="submit" :loading="loading">
+          <a-button
+            type="primary"
+            html-type="submit"
+            :loading="loading"
+          >
             Cập nhật mật khẩu mới
           </a-button>
         </a-form-item>
       </a-form>
     </div>
     <div class="company-text">
-      <p> Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p> HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
+      <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
+      <p>
+        HOTLINE: <a
+          href="tel:0376899866"
+          class="hotline"
+        >0376.899.866</a>
+      </p>
     </div>
   </div>
 </template>
@@ -100,7 +136,10 @@ const startResetPassword = async () => {
     margin: 0 auto;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.02), 0px 0px 2px rgba(0, 0, 0, 0.05), 0px 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0px 3px 5px rgba(0, 0, 0, 0.02),
+      0px 0px 2px rgba(0, 0, 0, 0.05),
+      0px 1px 4px rgba(0, 0, 0, 0.08);
     background-color: #fff;
   }
 

@@ -13,6 +13,7 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { receipt } from './receipt-upsert.store'
+import { DiscountType } from '@/modules/enum'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 
@@ -44,7 +45,7 @@ const mode = ref<'CREATE' | 'UPDATE' | 'COPY'>('CREATE')
 const distributor = ref<Distributor>(Distributor.blank())
 const distributorList = ref<Distributor[]>([])
 
-const createTime = ref<Dayjs>(dayjs())
+const time = ref<Dayjs>(dayjs())
 
 const saveLoading = ref(false)
 
@@ -56,19 +57,20 @@ onBeforeMount(async () => {
   }
   if (receiptId) {
     const receiptResponse = await ReceiptService.detail(receiptId, {
-      distributor: true,
-      receipt_items: true,
+      relation: {
+        distributor: true,
+        receiptItems: true,
+      },
     })
 
     receipt.value = receiptResponse
     distributor.value = Distributor.fromInstance(receiptResponse.distributor)
     if (mode.value === 'CREATE' || mode.value === 'COPY') {
-      createTime.value = dayjs(new Date())
+      time.value = dayjs(new Date())
     } else if (mode.value === 'UPDATE') {
-      createTime.value = dayjs(new Date(receipt.value.createTime))
+      time.value = dayjs(new Date(receipt.value.time))
     }
-  }
-  else if (distributorId) {
+  } else if (distributorId) {
     const distributorRes = await DistributorService.getOne(distributorId)
     distributor.value = distributorRes
     receipt.value.distributor = distributorRes
@@ -94,11 +96,20 @@ const searchingDistributor = async (text: string) => {
   }
 }
 
-const selectDistributor = (data: Distributor) => {
-  const snapDistributor = Distributor.fromInstance(data)
+const selectDistributor = (data?: Distributor) => {
+  const snapDistributor = Distributor.fromInstance(data || Distributor.blank())
   distributor.value = snapDistributor
   receipt.value.distributorId = snapDistributor.id!
   receipt.value.distributor = snapDistributor
+}
+
+const handleChangeReceiptDiscountMoney = (data: number) => {
+  receipt.value.discountMoney = data
+  receipt.value.discountType = DiscountType.VND
+}
+const handleChangeReceiptDiscountPercent = (data: number) => {
+  receipt.value.discountPercent = data
+  receipt.value.discountType = DiscountType.Percent
 }
 
 const saveReceipt = async () => {
@@ -117,7 +128,7 @@ const saveReceipt = async () => {
 
   try {
     saveLoading.value = true
-    receipt.value.createTime = createTime.value.valueOf()
+    receipt.value.time = time.value.valueOf()
     let response: { receiptId: number }
     if (mode.value === 'CREATE') {
       response = await ReceiptService.createDraft(receipt.value)
@@ -144,11 +155,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalReceiptUpsertSettingScreen.value?.openModal()
   }
 }
-
 </script>
 
 <template>
-  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="selectDistributor" />
+  <ModalDistributorUpsert
+    ref="modalDistributorUpsert"
+    @success="selectDistributor"
+  />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
     <div class="page-header-content">
@@ -177,7 +190,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
   <div class="mt-4 md:mx-4">
     <div class="flex flex-col md:flex-row gap-4">
-      <div class="md:w-2/3 ">
+      <div class="md:w-2/3">
         <div class="bg-white p-4">
           <ReceiptItemCreate @add_receipt_item="handleAddReceiptItem" />
         </div>
@@ -191,65 +204,134 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <span>Tên NCC (nợ cũ: <b>{{ formatMoney(distributor.debt) }}</b>)</span>
             <a @click="modalDistributorUpsert?.openModal()">Thêm NCC mới</a>
           </div>
-          <InputOptions ref="inputSearchDistributor" :options="distributorList" v-model:searchText="distributor.fullName"
-            @selectItem="selectDistributor" :maxHeight="260" @update:searchText="searchingDistributor"
-            placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại" :disabled="mode !== 'CREATE'">
-            <template v-slot:each="{ item: { fullName, phone, address } }">
-              <div> <b>{{ fullName }}</b> - {{ phone }} </div>
-              <div> {{ address }} </div>
-            </template>
-          </InputOptions>
+          <div style="height: 40px">
+            <InputOptions
+              ref="inputSearchDistributor"
+              v-model:searchText="distributor.fullName"
+              :options="distributorList"
+              :maxHeight="260"
+              placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+              :disabled="mode !== 'CREATE'"
+              @selectItem="selectDistributor"
+              @update:searchText="searchingDistributor"
+            >
+              <template #each="{ item: { fullName, phone, address } }">
+                <div>
+                  <b>{{ fullName }}</b> - {{ phone }}
+                </div>
+                <div>{{ address }}</div>
+              </template>
+            </InputOptions>
+          </div>
         </div>
 
-        <div class="mt-4   p-4 bg-white">
+        <div class="mt-4 p-4 bg-white">
           <div>Thông tin thanh toán</div>
-          <div class="px-4 pb-4" style="border: 1px solid #cdcdcd;">
+          <div
+            class="px-4 pb-4"
+            style="border: 1px solid #cdcdcd"
+          >
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr>
                   <td>Thời gian</td>
                   <td>
-                    <a-date-picker show-time placeholder="Select Time" v-model:value="createTime"
-                      :format="'DD/MM/YYYY HH:mm:ss'" style="width: 100%;" />
+                    <a-date-picker
+                      v-model:value="time"
+                      show-time
+                      placeholder="Select Time"
+                      :format="'DD/MM/YYYY HH:mm:ss'"
+                      style="width: 100%"
+                    />
                   </td>
                 </tr>
                 <tr>
-                  <td class="font-bold" style="width: 120px;">Tiền hàng</td>
-                  <td class="text-right" style="padding-right: 11px;">
-                    {{ formatMoney(receipt.totalItemMoney) }}
+                  <td
+                    class="font-bold"
+                    style="width: 120px"
+                  >
+                    Tiền hàng
+                  </td>
+                  <td
+                    class="text-right"
+                    style="padding-right: 11px"
+                  >
+                    {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
-                  <td>Giảm giá</td>
-                  <td style="padding-right: 11px;">
-                    <div class="flex gap-2">
-                      <div>
-                        <div v-if="receipt.discountType == '%'" style="width: 100px;">
-                          <InputNumber v-model:value="receipt.discountPercent" />
+                  <td>Chiết khấu</td>
+                  <td
+                    class="cursor-pointer"
+                    style="font-size: 16px"
+                  >
+                    <a-popconfirm>
+                      <template #cancelButton>
+                        <div />
+                      </template>
+                      <template #okButton>
+                        <div />
+                      </template>
+                      <template #title>
+                        <div>
+                          Chiết khấu (Tiền hàng: <b>{{ formatMoney(receipt.itemsActualMoney) }}</b>)
                         </div>
-                        <div v-if="receipt.discountType == 'VNĐ'">
-                          <InputMoney v-model:value="receipt.discountMoney" />
+                        <div class="mt-2">
+                          <div>
+                            <InputMoney
+                              :value="receipt.discountMoney"
+                              append="VNĐ"
+                              style="width: 100%"
+                              @update:value="handleChangeReceiptDiscountMoney"
+                            />
+                          </div>
+                          <div class="mt-2">
+                            <InputNumber
+                              :value="receipt.discountPercent"
+                              append="%"
+                              @update:value="handleChangeReceiptDiscountPercent"
+                            />
+                          </div>
                         </div>
-                        <a-select v-model:value="receipt.discountType" style="min-width: 70px;">
-                          <a-select-option value="%">%</a-select-option>
-                          <a-select-option value="VNĐ">VNĐ</a-select-option>
-                        </a-select>
+                      </template>
+                      <div class="flex">
+                        <div>
+                          <a-tag color="success">
+                            {{ receipt.discountPercent || 0 }}%
+                          </a-tag>
+                        </div>
+                        <div
+                          class="flex-1 text-right"
+                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
+                        >
+                          {{ formatMoney(receipt.discountMoney) }}
+                        </div>
                       </div>
-                      {{ formatMoney(receipt.discountMoney) }}
-                    </div>
+                    </a-popconfirm>
                   </td>
                 </tr>
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
                   <td>Phụ phí</td>
                   <td>
-                    <InputMoney v-model:value="receipt.surcharge" class="input-payment" />
+                    <InputMoney
+                      v-model:value="receipt.surcharge"
+                      class="input-payment"
+                    />
                   </td>
                 </tr>
-                <tr><td></td><td></td></tr>
                 <tr>
-                  <td class="font-bold">Tổng tiền</td>
-                  <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px;">
-                    {{ formatMoney(receipt.totalMoney) }}
+                  <td />
+                  <td />
+                </tr>
+                <tr>
+                  <td class="font-bold">
+                    Tổng tiền
+                  </td>
+                  <td
+                    class="text-right font-bold"
+                    style="padding-right: 11px; font-size: 16px"
+                  >
+                    {{ formatMoney(receipt.revenue) }}
                   </td>
                 </tr>
               </tbody>
@@ -258,7 +340,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </div>
 
         <div class="mt-4">
-          <a-button @click="saveReceipt" type="primary" :loading="saveLoading" size="large" block>
+          <a-button
+            type="primary"
+            :loading="saveLoading"
+            size="large"
+            block
+            @click="saveReceipt"
+          >
             <template #icon>
               <SaveOutlined />
             </template>
@@ -270,20 +358,27 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   </div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
+:deep(.ant-tabs-tab) {
+  border-top: 5px solid #d6d6d6 !important;
+
+  &.ant-tabs-tab-active {
+    border-top-color: #1890ff !important;
+  }
+}
+
 .table-payment {
   td {
     padding: 6px 0;
   }
 }
 
-.input-payment {
-  text-align: right;
+:deep(.input-payment) {
   width: 100%;
   border-top: none;
   border-left: none;
   border-right: none;
-  box-shadow: none;
+  box-shadow: none !important;
 
   .ant-input-number-handler-wrap {
     display: none !important;

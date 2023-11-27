@@ -13,16 +13,12 @@ const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const organizationStore = useOrganizationStore()
 const { formatMoney, isMobile } = organizationStore
 
-const props = withDefaults(
-  defineProps<{ invoice: Invoice }>(),
-  { invoice: () => Invoice.blank() }
-)
+const props = withDefaults(defineProps<{ invoice: Invoice }>(), { invoice: () => Invoice.blank() })
 const emit = defineEmits<{ (e: 'show-invoice-payment'): void }>()
 
 const handleClickInvoicePaymentInfo = () => {
   emit('show-invoice-payment')
 }
-
 </script>
 
 <template>
@@ -40,22 +36,39 @@ const handleClickInvoicePaymentInfo = () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(invoiceItem, index) in (invoice.invoiceItems || [])" :key="index">
-          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem;">{{ index + 1 }}</td>
+        <tr
+          v-for="(invoiceItem, index) in invoice.invoiceItems || []"
+          :key="index"
+        >
+          <td
+            class="text-center whitespace-nowrap"
+            style="padding: 0.5rem 0.2rem"
+          >
+            {{ index + 1 }}
+          </td>
           <td>
             <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
               <div class="font-medium text-justify">
                 {{ invoiceItem.productBatch?.product?.brandName }}
-                <a v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail" class="ml-1"
-                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)">
+                <a
+                  v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)"
+                >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance" style="font-size: 0.8rem;"
-                class="text-justify">
+              <div
+                v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
+                style="font-size: 0.8rem"
+                class="text-justify"
+              >
                 {{ invoiceItem.productBatch?.product?.substance }}
               </div>
-              <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem;">
+              <div
+                class="flex gap-2 flex-wrap"
+                style="font-size: 0.8rem"
+              >
                 <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch">
                   Lô: {{ invoiceItem.productBatch.batch }}
                 </div>
@@ -63,21 +76,31 @@ const handleClickInvoicePaymentInfo = () => {
                   HSD: {{ timeToText(invoiceItem.productBatch.expiryDate, 'DD/MM/YY') }}
                 </div>
               </div>
-              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage" style="font-size: 0.8rem;">
+              <div
+                v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
+                style="font-size: 0.8rem"
+              >
                 {{ invoiceItem.hintUsage }}
               </div>
             </div>
             <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
               <div class="font-medium text-justify">
                 {{ invoiceItem.procedure?.name }}
-                <a v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail" class="ml-1"
-                  @click="modalProcedureDetail?.openModal(invoiceItem.procedure!)">
+                <a
+                  v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="modalProcedureDetail?.openModal(invoiceItem.procedure!)"
+                >
                   <FileSearchOutlined />
                 </a>
               </div>
             </div>
-            <div class="flex gap-2" style="font-size: 0.8rem;">
-              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">NY:
+            <div
+              class="flex gap-2"
+              style="font-size: 0.8rem"
+            >
+              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">
+                NY:
                 <span class="font-medium">
                   {{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unit.rate) }}
                 </span>
@@ -85,16 +108,25 @@ const handleClickInvoicePaymentInfo = () => {
                   /{{ invoiceItem.unit.name }}
                 </span>
               </div>
-              <div v-if="invoiceItem.discountMoney && organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">
+              <div
+                v-if="invoiceItem.discountMoney && organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
+              >
                 - CK:
-                <span v-if="invoiceItem.discountType === 'VNĐ'" class="font-medium">
+                <span
+                  v-if="invoiceItem.discountType === 'VNĐ'"
+                  class="font-medium"
+                >
                   {{ formatMoney(invoiceItem.discountMoney * invoiceItem.unit.rate) }}
                 </span>
-                <span v-if="invoiceItem.discountType === '%'" class="font-medium">
+                <span
+                  v-if="invoiceItem.discountType === '%'"
+                  class="font-medium"
+                >
                   {{ invoiceItem.discountPercent || 0 }}%
                 </span>
               </div>
-              <div>- ĐG:
+              <div>
+                - ĐG:
                 <span class="font-medium">
                   {{ formatMoney(invoiceItem.actualPrice * invoiceItem.unit.rate) }}
                 </span>
@@ -115,34 +147,56 @@ const handleClickInvoicePaymentInfo = () => {
     </table>
   </div>
 
-  <div v-else class="px-4 table-wrapper w-full">
+  <div
+    v-else
+    class="px-4 table-wrapper w-full"
+  >
     <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Tên</th>
           <th>S.Lượng</th>
-          <th v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
-          <th v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>
+          <th v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">
+            Đ.Vị
+          </th>
+          <th v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">
+            C.Khấu
+          </th>
           <th>Đ.Giá</th>
           <th>T.Tiền</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
-          <td class="text-center">{{ index + 1 }}</td>
+        <tr
+          v-for="(invoiceItem, index) in invoice.invoiceItems"
+          :key="index"
+        >
+          <td class="text-center">
+            {{ index + 1 }}
+          </td>
           <td>
             <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
-              <div class="text-justify font-medium">{{ invoiceItem.productBatch?.product?.brandName }}
-                <a v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail" class="ml-1"
-                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)">
+              <div class="text-justify font-medium">
+                {{ invoiceItem.productBatch?.product?.brandName }}
+                <a
+                  v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)"
+                >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance" style="font-size: 0.8rem;">
+              <div
+                v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
+                style="font-size: 0.8rem"
+              >
                 {{ invoiceItem.productBatch?.product?.substance }}
               </div>
-              <div style="font-size: 0.8rem;" class="flex gap-2">
+              <div
+                style="font-size: 0.8rem"
+                class="flex gap-2"
+              >
                 <span v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch">
                   Lô {{ invoiceItem.productBatch?.batch }}
                 </span>
@@ -150,40 +204,71 @@ const handleClickInvoicePaymentInfo = () => {
                   - HSD {{ timeToText(invoiceItem.productBatch?.expiryDate) }}
                 </span>
               </div>
-              <div v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage" style="font-size: 0.8rem;">
+              <div
+                v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
+                style="font-size: 0.8rem"
+              >
                 {{ invoiceItem.hintUsage }}
               </div>
             </div>
-            <div v-if="invoiceItem.type === InvoiceItemType.Procedure" class="text-justify font-medium whitespace-nowrap"
-              style="word-break: break-all;">
+            <div
+              v-if="invoiceItem.type === InvoiceItemType.Procedure"
+              class="text-justify font-medium whitespace-nowrap"
+              style="word-break: break-all"
+            >
               {{ invoiceItem.procedure?.name }}
-              <a v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail" class="ml-1"
-                @click="modalProcedureDetail?.openModal(invoiceItem.procedure!)">
+              <a
+                v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                class="ml-1"
+                @click="modalProcedureDetail?.openModal(invoiceItem.procedure!)"
+              >
                 <FileSearchOutlined />
               </a>
             </div>
           </td>
-          <td class="text-center">{{ invoiceItem.quantity / invoiceItem.unit.rate }}</td>
-          <td v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit" class="text-center">
+          <td class="text-center">
+            {{ invoiceItem.quantity / invoiceItem.unit.rate }}
+          </td>
+          <td
+            v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit"
+            class="text-center"
+          >
             {{ invoiceItem.unit?.name || invoiceItem.productBatch?.product?.unit?.[0]?.name || 'Lần' }}
           </td>
-          <td v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount" class="text-center">
-            <a-tag v-if="invoiceItem.discountType === 'VNĐ'" color="success" style="cursor: pointer;">
+          <td
+            v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
+            class="text-center"
+          >
+            <a-tag
+              v-if="invoiceItem.discountType === 'VNĐ'"
+              color="success"
+              style="cursor: pointer"
+            >
               {{ formatMoney(invoiceItem.discountMoney * invoiceItem.unit.rate) }}
             </a-tag>
-            <a-tag v-if="invoiceItem.discountType === '%'" color="success" style="cursor: pointer;">
+            <a-tag
+              v-if="invoiceItem.discountType === '%'"
+              color="success"
+              style="cursor: pointer"
+            >
               {{ invoiceItem.discountPercent || 0 }}%
             </a-tag>
           </td>
           <td class="text-right">
             <div
-              v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice && invoiceItem.discountMoney"
-              class="text-xs italic" style="color: #ff4d4f">
+              v-if="
+                organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice && invoiceItem.discountMoney
+              "
+              class="text-xs italic"
+              style="color: #ff4d4f"
+            >
               <del> {{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unit.rate) }}</del>
             </div>
             <div>{{ formatMoney(invoiceItem.actualPrice * invoiceItem.unit.rate) }}</div>
           </td>
-          <td class="text-right">{{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}</td>
+          <td class="text-right">
+            {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -192,42 +277,75 @@ const handleClickInvoicePaymentInfo = () => {
   <div class="md:px-4">
     <table class="table-mobile">
       <tbody>
-        <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.totalItemMoney">
-          <td class="text-right font-medium" style="width: 60%;">Tiền hàng</td>
-          <td class="text-right font-medium"> {{ formatMoney(invoice.totalItemMoney) }} </td>
+        <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
+          <td
+            class="text-right font-medium"
+            style="width: 60%"
+          >
+            Tiền hàng
+          </td>
+          <td class="text-right font-medium">
+            {{ formatMoney(invoice.itemsActualMoney) }}
+          </td>
         </tr>
         <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount">
-          <td class="text-right">Chiết khấu</td>
           <td class="text-right">
-            <a-tag v-if="invoice.discountType === '%'" color="success">
+            Chiết khấu
+          </td>
+          <td class="text-right">
+            <a-tag
+              v-if="invoice.discountType === '%'"
+              color="success"
+            >
               {{ invoice.discountPercent || 0 }}%
             </a-tag>
             {{ formatMoney(invoice.discountMoney) }}
           </td>
         </tr>
         <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge">
-          <td class="text-right">Phụ phí
-            <span class="ml-1" v-if="invoice.surchargeDetails.length > 1
-              || (invoice.surchargeDetails.length == 1 && invoice.surchargeDetails[0].key !== '_unknown')">
-              ({{ invoice.surchargeDetails.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ') }})
+          <td class="text-right">
+            Phụ phí
+            <span
+              v-if="
+                invoice.invoiceSurcharges.length > 1 ||
+                  (invoice.invoiceSurcharges.length == 1 && invoice.invoiceSurcharges[0].key !== '_unknown')
+              "
+              class="ml-1"
+            >
+              ({{ invoice.invoiceSurcharges.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ') }})
             </span>
           </td>
-          <td class="text-right">{{ formatMoney(invoice.surcharge) }}</td>
+          <td class="text-right">
+            {{ formatMoney(invoice.surcharge) }}
+          </td>
         </tr>
         <tr>
-          <td class="text-right font-medium">Tổng tiền</td>
-          <td class="text-right font-medium">{{ formatMoney(invoice.totalMoney) }}</td>
+          <td class="text-right font-medium">
+            Tổng tiền
+          </td>
+          <td class="text-right font-medium">
+            {{ formatMoney(invoice.revenue) }}
+          </td>
         </tr>
         <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid">
-          <td class="text-right cursor-pointer" @click="handleClickInvoicePaymentInfo">
+          <td
+            class="text-right cursor-pointer"
+            @click="handleClickInvoicePaymentInfo"
+          >
             <span class="mr-1"> Thanh toán </span>
             <ExclamationCircleOutlined />
           </td>
-          <td class="text-right"> {{ formatMoney(invoice.paid) }} </td>
+          <td class="text-right">
+            {{ formatMoney(invoice.paid) }}
+          </td>
         </tr>
         <tr v-if="organizationStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt">
-          <td class="text-right">Ghi nợ</td>
-          <td class="text-right">{{ formatMoney(invoice.debt) }}</td>
+          <td class="text-right">
+            Ghi nợ
+          </td>
+          <td class="text-right">
+            {{ formatMoney(invoice.debt) }}
+          </td>
         </tr>
       </tbody>
     </table>

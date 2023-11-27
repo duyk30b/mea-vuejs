@@ -43,8 +43,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -54,14 +60,24 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.receiptItemInput.batch">Hiển thị lô hàng</a-checkbox> </td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemInput.batch">
+                Hiển thị lô hàng
+              </a-checkbox>
+            </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemInput.wholesalePrice">Hiển thị giá bán
-                sỉ</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemInput.wholesalePrice">
+                Hiển thị giá bán sỉ
+              </a-checkbox>
+            </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemInput.retailPrice">Hiển thị giá bán lẻ</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemInput.retailPrice">
+                Hiển thị giá bán lẻ
+              </a-checkbox>
             </td>
           </tr>
         </tbody>
@@ -72,7 +88,10 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">Hiển thị hoạt chất</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
+                Hiển thị hoạt chất
+              </a-checkbox>
             </td>
           </tr>
           <tr>
@@ -84,14 +103,25 @@ defineExpose({ openModal })
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">Hiển thị lô hàng</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
+                Hiển thị lô hàng
+              </a-checkbox>
+            </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">Hiển thị hạn sử
-                dụng</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">
+                Hiển thị hạn sử dụng
+              </a-checkbox>
+            </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">Hiển thị đơn vị</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
+                Hiển thị đơn vị
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
         <thead>
@@ -102,16 +132,24 @@ defineExpose({ openModal })
         <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalActualMoney">Hiển thị tiền hàng</a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalActualMoney">
+                Hiển thị tiền hàng
+              </a-checkbox>
             </td>
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">Hiển thị chiết khấu</a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                Hiển thị chiết khấu
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">Hiển thị phụ phí</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                Hiển thị phụ phí
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
       </table>

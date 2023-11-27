@@ -8,8 +8,4 @@ import InputPhone from './InputPhone.vue'
 import InputText from './InputText.vue'
 import VueSelect from './VueSelect.vue'
 
-export {
-	InputArea, InputDate,
-	InputHint, InputMoney, InputNumber, InputOptions,
-	InputPhone, InputText, VueSelect,
-}
+export { InputArea, InputDate, InputHint, InputMoney, InputNumber, InputOptions, InputPhone, InputText, VueSelect }

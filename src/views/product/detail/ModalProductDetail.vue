@@ -13,9 +13,9 @@ const activeTab = ref('product-batch')
 
 const product = ref<Product>(Product.blank())
 
-const openModal = async (p: Product) => {
+const openModal = async (data: Product) => {
   showModal.value = true
-  product.value = Product.fromInstance(p)
+  product.value = Product.fromInstance(data)
 }
 
 const closeModal = () => {
@@ -24,34 +24,49 @@ const closeModal = () => {
 }
 
 defineExpose({ openModal })
-
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal
+    v-model:show="showModal"
+    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
-      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 font-medium" style="font-size: 16px;">Hàng hóa: {{ product.brandName }}</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="closeModal">
+      <div
+        class="pl-4 py-3 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div
+          class="flex-1 font-medium"
+          style="font-size: 16px"
+        >
+          Hàng hóa: {{ product.brandName }}
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="closeModal"
+        >
           <CloseOutlined />
         </div>
       </div>
 
       <div class="p-4 product-detail">
-        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
+        <a-tabs
+          v-model:activeKey="activeTab"
+          type="card"
+          :tabBarGutter="10"
+          :destroyInactiveTabPane="true"
+        >
           <a-tab-pane key="product-batch">
             <template #tab>
-              <span>
-                <DeploymentUnitOutlined />Thông tin
-              </span>
+              <span> <DeploymentUnitOutlined />Thông tin </span>
             </template>
             <ProductInfo :product="product" />
           </a-tab-pane>
           <a-tab-pane key="product-movement">
             <template #tab>
-              <span>
-                <DiffOutlined />Nhập/Xuất
-              </span>
+              <span> <DiffOutlined />Nhập/Xuất </span>
             </template>
             <ProductMovement :product="product" />
           </a-tab-pane>

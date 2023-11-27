@@ -11,13 +11,15 @@ userStore.$subscribe((mutation, state) => {
     router.push({ name: 'Login' })
   }
 })
-
 </script>
 <template>
   <Suspense>
     <RouterView />
   </Suspense>
   <VueAlert />
-  <iframe id="iframe-print" style="display: none;"></iframe>
+  <iframe
+    id="iframe-print"
+    style="display: none"
+  />
 </template>
 <style scoped></style>

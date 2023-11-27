@@ -18,20 +18,20 @@ import { faAddressCard, faHospitalUser, faSort, faSortDown, faSortUp } from '@fo
 library.add(faSort, faSortDown, faSortUp, faHospitalUser, faAddressCard)
 
 const start = async () => {
-	// await TokensService.init()
-	// initSocket()
+  // await TokensService.init()
+  // initSocket()
 
-	const app = createApp(App)
+  const app = createApp(App)
 
-	registerDirective(app)
+  registerDirective(app)
 
-	app.component('font-awesome-icon', FontAwesomeIcon)
+  app.component('FontAwesomeIcon', FontAwesomeIcon)
 
-	app.use(Antd)
-	app.use(createPinia())
-	app.use(Router)
+  app.use(Antd)
+  app.use(createPinia())
+  app.use(Router)
 
-	app.mount('#app')
+  app.mount('#app')
 }
 
 start()

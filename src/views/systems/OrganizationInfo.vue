@@ -53,59 +53,119 @@ const saveOrganization = async () => {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
   }
 }
-
 </script>
 
 <template>
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.2rem;">
+      <div
+        class="font-medium"
+        style="font-size: 1.2rem"
+      >
         <SettingOutlined style="margin-right: 1rem" />Thông tin cơ sở
       </div>
     </div>
   </div>
   <div class="mx-4 p-4 bg-white">
-    <div style="max-width: 800px;">
-      <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;">Tên Cơ sở</div>
-        <a-input v-model:value="organization.organizationName" class="flex-auto"></a-input>
+    <div style="max-width: 800px">
+      <div
+        class="flex"
+        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+      >
+        <div style="width: 100px; flex: none">
+          Tên Cơ sở
+        </div>
+        <a-input
+          v-model:value="organization.organizationName"
+          class="flex-auto"
+        />
       </div>
 
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;">Email</div>
-        <a-input disabled :value="organization.email" class="flex-auto"></a-input>
+      <div
+        class="mt-3 flex"
+        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+      >
+        <div style="width: 100px; flex: none">
+          Email
+        </div>
+        <a-input
+          disabled
+          :value="organization.email"
+          class="flex-auto"
+        />
       </div>
 
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;">SĐT</div>
-        <a-input disabled :value="organization.phone" class="flex-auto"></a-input>
+      <div
+        class="mt-3 flex"
+        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+      >
+        <div style="width: 100px; flex: none">
+          SĐT
+        </div>
+        <a-input
+          disabled
+          :value="organization.phone"
+          class="flex-auto"
+        />
       </div>
 
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;">Địa chỉ</div>
+      <div
+        class="mt-3 flex"
+        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+      >
+        <div style="width: 100px; flex: none">
+          Địa chỉ
+        </div>
         <div class="flex-auto flex gap-4 flex-wrap">
-          <a-select v-model:value="organization.addressProvince" :options="provinceOptions" :filter-option="filterOption"
-            show-search allow-clear @change="handleChangeProvince" style="flex:1; flex-basis: 30%;"
-            placeholder="Thành Phố / Tỉnh">
-          </a-select>
-          <a-select v-model:value="organization.addressDistrict" :options="districtOptions" :filter-option="filterOption"
-            show-search allow-clear @change="handleChangeDistrict" style="flex:1;  flex-basis: 30%;"
-            placeholder="Quận / Huyện">
-          </a-select>
-          <a-select v-model:value="organization.addressWard" :options="wardOptions" :filter-option="filterOption"
-            show-search allow-clear style="flex:1 ;flex-basis: 30%;" placeholder="Phường / Xã">
-          </a-select>
+          <a-select
+            v-model:value="organization.addressProvince"
+            :options="provinceOptions"
+            :filter-option="filterOption"
+            show-search
+            allow-clear
+            style="flex: 1; flex-basis: 30%"
+            placeholder="Thành Phố / Tỉnh"
+            @change="handleChangeProvince"
+          />
+          <a-select
+            v-model:value="organization.addressDistrict"
+            :options="districtOptions"
+            :filter-option="filterOption"
+            show-search
+            allow-clear
+            style="flex: 1; flex-basis: 30%"
+            placeholder="Quận / Huyện"
+            @change="handleChangeDistrict"
+          />
+          <a-select
+            v-model:value="organization.addressWard"
+            :options="wardOptions"
+            :filter-option="filterOption"
+            show-search
+            allow-clear
+            style="flex: 1; flex-basis: 30%"
+            placeholder="Phường / Xã"
+          />
         </div>
       </div>
 
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;"></div>
-        <a-input v-model:value="organization.addressStreet" style="flex:1"
-          placeholder="Số nhà / Tòa nhà / Ngõ / Đường"></a-input>
+      <div
+        class="mt-3 flex"
+        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+      >
+        <div style="width: 100px; flex: none" />
+        <a-input
+          v-model:value="organization.addressStreet"
+          style="flex: 1"
+          placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+        />
       </div>
 
       <div class="my-8 text-center">
-        <a-button type="primary" @click="saveOrganization">
+        <a-button
+          type="primary"
+          @click="saveOrganization"
+        >
           <template #icon>
             <SaveOutlined />
           </template>

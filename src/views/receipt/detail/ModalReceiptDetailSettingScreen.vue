@@ -43,8 +43,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -98,15 +104,17 @@ defineExpose({ openModal })
         <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalItemMoney">
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
                 Hiển thị tiền hàng
               </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
                 Hiển thị chiết khấu
-              </a-checkbox></td>
+              </a-checkbox>
+            </td>
           </tr>
           <tr>
             <td>
@@ -130,7 +138,11 @@ defineExpose({ openModal })
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">Hiển thị nợ</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">
+                Hiển thị nợ
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
         <thead>
@@ -142,10 +154,16 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-radio-group v-model:value="settingDisplay.receiptProcessType">
-                <a-radio style="display:flex; line-height: 36px" :value="1">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="1"
+                >
                   Phiếu nhập hàng không nợ: Nhập hàng và thanh toán đồng thời
                 </a-radio>
-                <a-radio style="display:flex; line-height: 36px;" :value="2">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="2"
+                >
                   Phiếu nhập hàng có nợ: Nhập hàng riêng, thanh toán riêng
                 </a-radio>
               </a-radio-group>

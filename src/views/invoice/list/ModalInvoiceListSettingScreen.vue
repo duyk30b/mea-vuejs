@@ -42,8 +42,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -53,8 +59,7 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td>
-            </td>
+            <td />
           </tr>
         </tbody>
       </table>

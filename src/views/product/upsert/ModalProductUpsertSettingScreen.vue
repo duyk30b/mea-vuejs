@@ -46,9 +46,18 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="handleClose">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div class="flex-1 text-lg font-medium">
+          Cài đặt hiển thị
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="handleClose"
+        >
           <CloseOutlined />
         </div>
       </div>
@@ -62,23 +71,46 @@ defineExpose({ openModal })
           </thead>
           <tbody>
             <tr>
-              <td> <a-checkbox v-model:checked="settingDisplay.substance">Hiển thị hoạt chất</a-checkbox>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.substance">
+                  Hiển thị hoạt chất
+                </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td><a-checkbox v-model:checked="settingDisplay.group">Hiển thị nhóm</a-checkbox></td>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.group">
+                  Hiển thị nhóm
+                </a-checkbox>
+              </td>
             </tr>
             <tr>
-              <td><a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox></td>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.unit">
+                  Hiển thị đơn vị
+                </a-checkbox>
+              </td>
             </tr>
             <tr>
-              <td><a-checkbox v-model:checked="settingDisplay.route">Hiển thị đường dùng</a-checkbox></td>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.route">
+                  Hiển thị đường dùng
+                </a-checkbox>
+              </td>
             </tr>
             <tr>
-              <td><a-checkbox v-model:checked="settingDisplay.source">Hiển thị nguồn gốc</a-checkbox></td>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.source">
+                  Hiển thị nguồn gốc
+                </a-checkbox>
+              </td>
             </tr>
             <tr>
-              <td><a-checkbox v-model:checked="settingDisplay.hintUsage">Hiển thị cách sử dụng</a-checkbox></td>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.hintUsage">
+                  Hiển thị cách sử dụng
+                </a-checkbox>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -92,7 +124,10 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" @click="handleSave">
+          <a-button
+            type="primary"
+            @click="handleSave"
+          >
             <template #icon>
               <PlusOutlined />
             </template>

@@ -43,8 +43,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -54,45 +60,80 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.detail">Hiển thị nút xem chi tiết (
-                <FileSearchOutlined /> )
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.detail">
+                Hiển thị nút xem chi tiết ( <FileSearchOutlined /> )
               </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.substance">Hiển thị hoạt chất</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.substance">
+                Hiển thị hoạt chất
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.group">Hiển thị nhóm</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.batch">Hiển thị lô hàng</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.expiryDate">Hiển thị hạn sử dụng</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.group">
+                Hiển thị nhóm
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.costPrice">Hiển thị giá nhập</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.wholesalePrice">Hiển thị giá bán sỉ</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.unit">
+                Hiển thị đơn vị
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.retailPrice">Hiển thị giá bán lẻ</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.batch">
+                Hiển thị lô hàng
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.isActive">Hiển thị trạng thái</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.expiryDate">
+                Hiển thị hạn sử dụng
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.costPrice">
+                Hiển thị giá nhập
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.wholesalePrice">
+                Hiển thị giá bán sỉ
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.retailPrice">
+                Hiển thị giá bán lẻ
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.isActive">
+                Hiển thị trạng thái
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.action">
+                Hiển thị nút sửa
+              </a-checkbox>
             </td>
           </tr>
         </tbody>

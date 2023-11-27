@@ -7,11 +7,7 @@ import { Distributor } from '@/modules/distributor/distributor.model'
 import { DistributorService } from '@/modules/distributor/distributor.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
-import {
-  CloseOutlined,
-  SaveOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message, type SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
@@ -97,52 +93,107 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede;">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
         <div class="flex-1 text-lg font-medium">
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer"
-          @click="modalDistributorUpsertSettingScreen?.openModal()">
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="modalDistributorUpsertSettingScreen?.openModal()"
+        >
           <SettingOutlined />
         </div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="handleClose">
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="handleClose"
+        >
           <CloseOutlined />
         </div>
       </div>
 
       <div class="px-6 mt-4">
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div class="w-[100px] flex-none">Tên NCC</div>
-          <a-input v-model:value="distributor.fullName" class="flex-auto"></a-input>
+        <div
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div class="w-[100px] flex-none">
+            Tên NCC
+          </div>
+          <a-input
+            v-model:value="distributor.fullName"
+            class="flex-auto"
+          />
         </div>
-        <div v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.phone" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div class="w-[100px] flex-none">Số điện thoại</div>
-          <InputPhone v-model:value="distributor.phone" format="xxxx.xxx.xxx" class="flex-auto" />
+        <div
+          v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.phone"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div class="w-[100px] flex-none">
+            Số điện thoại
+          </div>
+          <InputPhone
+            v-model:value="distributor.phone"
+            format="xxxx.xxx.xxx"
+            class="flex-auto"
+          />
         </div>
 
-        <div v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div class="w-[100px] flex-none">Địa chỉ</div>
+        <div
+          v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.address"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div class="w-[100px] flex-none">
+            Địa chỉ
+          </div>
           <div class="flex-auto flex gap-4 flex-wrap">
-            <a-select v-model:value="distributor.addressProvince" :options="provinceOptions" :filter-option="filterOption"
-              show-search allow-clear @change="handleChangeProvince" style="flex:1; flex-basis: 30%;"
-              placeholder="Thành Phố / Tỉnh">
-            </a-select>
-            <a-select v-model:value="distributor.addressDistrict" :options="districtOptions" :filter-option="filterOption"
-              show-search allow-clear @change="handleChangeDistrict" style="flex:1;  flex-basis: 30%;"
-              placeholder="Quận / Huyện">
-            </a-select>
-            <a-select v-model:value="distributor.addressWard" :options="wardOptions" :filter-option="filterOption"
-              show-search allow-clear style="flex:1 ;flex-basis: 30%;" placeholder="Phường / Xã">
-            </a-select>
-            <a-input v-model:value="distributor.addressStreet" style="flex:1 ;flex-basis: 100%;"
-              placeholder="Số nhà / Đường"></a-input>
+            <a-select
+              v-model:value="distributor.addressProvince"
+              :options="provinceOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Thành Phố / Tỉnh"
+              @change="handleChangeProvince"
+            />
+            <a-select
+              v-model:value="distributor.addressDistrict"
+              :options="districtOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Quận / Huyện"
+              @change="handleChangeDistrict"
+            />
+            <a-select
+              v-model:value="distributor.addressWard"
+              :options="wardOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Phường / Xã"
+            />
+            <a-input
+              v-model:value="distributor.addressStreet"
+              style="flex: 1; flex-basis: 100%"
+              placeholder="Số nhà / Đường"
+            />
           </div>
         </div>
 
         <div class="flex items-center mt-3">
-          <div class="w-[100px] flex-none">Active</div>
+          <div class="w-[100px] flex-none">
+            Active
+          </div>
           <a-switch v-model:checked="distributor.isActive" />
         </div>
       </div>
@@ -155,7 +206,11 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" @click="handleSave">
+          <a-button
+            type="primary"
+            :loading="saveLoading"
+            @click="handleSave"
+          >
             <template #icon>
               <SaveOutlined />
             </template>

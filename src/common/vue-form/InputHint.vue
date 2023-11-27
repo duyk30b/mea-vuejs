@@ -6,8 +6,8 @@
     @update:searchText="(e) => $emit('update:searchText', e)"
     @selectItem="(e) => $emit('update:searchText', e)"
   >
-    <template v-slot:each="{ item }">
-      <p v-html="formatItem(item)"></p>
+    <template #each="{ item }">
+      <p v-html="formatItem(item)" />
     </template>
   </InputOptions>
 </template>
@@ -23,7 +23,7 @@ export default {
     searchText: { type: String, default: () => '' },
     disabled: { type: Boolean, default: () => false },
   },
-
+  emits: ['update:searchText'],
   computed: {
     optionsFilter() {
       const { searchText } = this

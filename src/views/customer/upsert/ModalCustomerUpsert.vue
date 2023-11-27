@@ -7,11 +7,7 @@ import { Customer } from '@/modules/customer/customer.model'
 import { CustomerService } from '@/modules/customer/customer.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
-import {
-  CloseOutlined,
-  SaveOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message, type SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
@@ -97,89 +93,183 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede;">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
         <div class="flex-1 text-lg font-medium">
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer"
-          @click="modalCustomerUpsertSettingScreen?.openModal()">
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="modalCustomerUpsertSettingScreen?.openModal()"
+        >
           <SettingOutlined />
         </div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="handleClose">
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="handleClose"
+        >
           <CloseOutlined />
         </div>
       </div>
 
       <div class="px-6 mt-4">
-        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none;">Họ Tên</div>
-          <a-input v-model:value="customer.fullName" class="flex-auto"></a-input>
+        <div
+          class="flex"
+          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Họ Tên
+          </div>
+          <a-input
+            v-model:value="customer.fullName"
+            class="flex-auto"
+          />
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.phone" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;">Số điện thoại</div>
-          <InputPhone v-model:value="customer.phone" format="xxxx.xxx.xxx" class="flex-auto" />
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.phone"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Số điện thoại
+          </div>
+          <InputPhone
+            v-model:value="customer.phone"
+            format="xxxx.xxx.xxx"
+            class="flex-auto"
+          />
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.birthday" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;">Ngày sinh</div>
-          <div style="flex:1">
-            <InputDate v-model:value="customer.birthday" format="DD/MM/YYYY" type-parser="number" class="w-full" />
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.birthday"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Ngày sinh
+          </div>
+          <div style="flex: 1">
+            <InputDate
+              v-model:value="customer.birthday"
+              format="DD/MM/YYYY"
+              type-parser="number"
+              class="w-full"
+            />
           </div>
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
-          <div style="width: 100px; flex: none;">Giới tính</div>
-          <div style="flex:1">
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.gender"
+          class="mt-3 flex items-center"
+        >
+          <div style="width: 100px; flex: none">
+            Giới tính
+          </div>
+          <div style="flex: 1">
             <a-radio-group v-model:value="customer.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
+              <a-radio :value="1">
+                Nam
+              </a-radio>
+              <a-radio :value="0">
+                Nữ
+              </a-radio>
             </a-radio-group>
           </div>
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.identityCard" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;">Số CCCD</div>
-          <a-input v-model:value="customer.identityCard" class="flex-auto"
-            placeholder="Số căn cước công dân / Số chứng minh thư"></a-input>
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.identityCard"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Số CCCD
+          </div>
+          <a-input
+            v-model:value="customer.identityCard"
+            class="flex-auto"
+            placeholder="Số căn cước công dân / Số chứng minh thư"
+          />
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;">Địa chỉ</div>
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Địa chỉ
+          </div>
           <div class="flex-auto flex gap-4 flex-wrap">
-            <a-select v-model:value="customer.addressProvince" :options="provinceOptions" :filter-option="filterOption"
-              show-search allow-clear @change="handleChangeProvince" style="flex:1; flex-basis: 30%;"
-              placeholder="Thành Phố / Tỉnh">
-            </a-select>
-            <a-select v-model:value="customer.addressDistrict" :options="districtOptions" :filter-option="filterOption"
-              show-search allow-clear @change="handleChangeDistrict" style="flex:1;  flex-basis: 30%;"
-              placeholder="Quận / Huyện">
-            </a-select>
-            <a-select v-model:value="customer.addressWard" :options="wardOptions" :filter-option="filterOption"
-              show-search allow-clear style="flex:1 ;flex-basis: 30%;" placeholder="Phường / Xã">
-            </a-select>
+            <a-select
+              v-model:value="customer.addressProvince"
+              :options="provinceOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Thành Phố / Tỉnh"
+              @change="handleChangeProvince"
+            />
+            <a-select
+              v-model:value="customer.addressDistrict"
+              :options="districtOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Quận / Huyện"
+              @change="handleChangeDistrict"
+            />
+            <a-select
+              v-model:value="customer.addressWard"
+              :options="wardOptions"
+              :filter-option="filterOption"
+              show-search
+              allow-clear
+              style="flex: 1; flex-basis: 30%"
+              placeholder="Phường / Xã"
+            />
           </div>
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;"></div>
-          <a-input v-model:value="customer.addressStreet" style="flex:1"
-            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"></a-input>
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none" />
+          <a-input
+            v-model:value="customer.addressStreet"
+            style="flex: 1"
+            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+          />
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.relative" class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none;">Người thân</div>
-          <a-input v-model:value="customer.relative" style="flex:1" placeholder="Tên người thân, số điện thoại"></a-input>
+        <div
+          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.relative"
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Người thân
+          </div>
+          <a-input
+            v-model:value="customer.relative"
+            style="flex: 1"
+            placeholder="Tên người thân, số điện thoại"
+          />
         </div>
 
         <div class="flex items-center mt-3">
-          <div class="w-[100px] flex-none">Active</div>
+          <div class="w-[100px] flex-none">
+            Active
+          </div>
           <a-switch v-model:checked="customer.isActive" />
         </div>
       </div>
@@ -192,7 +282,11 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" @click="handleSave">
+          <a-button
+            type="primary"
+            :loading="saveLoading"
+            @click="handleSave"
+          >
             <template #icon>
               <SaveOutlined />
             </template>

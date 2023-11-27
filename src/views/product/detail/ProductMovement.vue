@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService, ProductMovement, ProductMovementService, ProductMovementType } from '@/modules/product'
+import { InputOptions, VueSelect } from '@/common/vue-form'
+import {
+  Product,
+  ProductBatch,
+  ProductBatchService,
+  ProductMovement,
+  ProductMovementService,
+  ProductMovementType,
+} from '@/modules/product'
 import { useOrganizationStore } from '@/store/organization.store'
 import { customFilter, timeToText } from '@/utils'
 import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(
-  defineProps<{ product: Product }>(),
-  { product: () => Product.blank() }
-)
+const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
 const router = useRouter()
 
@@ -22,6 +26,7 @@ const productBatchAll = ref<ProductBatch[]>([])
 const productBatchList = ref<ProductBatch[]>([])
 
 const currentBatch = ref<ProductBatch>(ProductBatch.blank())
+const productMovementType = ref<ProductMovementType>()
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_MOVEMENT_PAGINATION_LIMIT')) || 10)
@@ -32,10 +37,12 @@ const startFetchProductMovements = async () => {
     const movPagination = await ProductMovementService.pagination({
       page: page.value,
       limit: limit.value,
-      filter: currentBatch.value.id
-        ? { product_batch_id: currentBatch.value.id }
-        : { product_id: props.product.id },
-      relation: { product_batch: true, invoice: true, receipt: true },
+      filter: {
+        type: productMovementType.value != null ? productMovementType.value : undefined,
+        productBatchId: currentBatch.value?.id ? currentBatch.value.id : undefined,
+        productId: currentBatch.value?.id ? undefined : props.product.id,
+      },
+      relation: { productBatch: true, invoice: true, receipt: true },
       sort: { id: 'DESC' },
     })
     productMovements.value = movPagination.data
@@ -47,7 +54,7 @@ const startFetchProductMovements = async () => {
 
 const startFetchProductBatches = async () => {
   try {
-    const productBatches = await ProductBatchService.list({ filter: { product_id: props.product.id } })
+    const productBatches = await ProductBatchService.list({ filter: { productId: props.product.id } })
     productBatchAll.value = productBatches
     productBatchList.value = productBatches
   } catch (error) {
@@ -61,14 +68,13 @@ watch(
     if (newValue) {
       await startFetchProductMovements()
       await startFetchProductBatches()
-    }
-    else productMovements.value = []
+    } else productMovements.value = []
   },
   { immediate: true }
 )
 
-const selectBatch = async (data: ProductBatch) => {
-  currentBatch.value = ProductBatch.fromInstance(data)
+const selectBatch = async (data?: ProductBatch) => {
+  currentBatch.value = ProductBatch.fromInstance(data || ProductBatch.blank())
   startFetchProductMovements()
 }
 
@@ -84,7 +90,7 @@ const searchingBatch = async (text: string) => {
   }
 }
 
-const changePagination = async (options: { page?: number, limit?: number }) => {
+const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
@@ -108,21 +114,53 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
   })
   window.open(route.href, '_blank')
 }
-
 </script>
 
 <template>
-  <div class="flex items-center gap-4">
-    <span class="whitespace-nowrap">Lô hàng</span>
-    <div style="width: 300px; display: flex;">
-      <InputOptions :options="productBatchList" v-model:searchText="currentBatch.batch" @selectItem="selectBatch"
-        @update:searchText="searchingBatch" :maxHeight="320" placeholder="Lô hàng">
-        <template v-slot:each="{ item: { batch, expiryDate, quantity } }">
-          <div> <b>{{ batch }}</b> {{ timeToText(expiryDate) }} -
-            ({{ quantity }} {{ product.unit.find(i => i.rate === 1)?.name }})
-          </div>
-        </template>
-      </InputOptions>
+  <div class="flex gap-4 items-stretch">
+    <div style="flex: 1">
+      <span
+        style="font-size: 0.8rem"
+        class="whitespace-nowrap"
+      >Lô hàng</span>
+      <div>
+        <InputOptions
+          v-model:searchText="currentBatch.batch"
+          :options="productBatchList"
+          :maxHeight="320"
+          placeholder="Nhập tên lô hàng"
+          @selectItem="selectBatch"
+          @update:searchText="searchingBatch"
+        >
+          <template #each="{ item: { batch, expiryDate, quantity } }">
+            <div>
+              <b>{{ batch }}</b> {{ timeToText(expiryDate) }} - ({{ quantity }}
+              {{ product.unit.find((i) => i.rate === 1)?.name }})
+            </div>
+          </template>
+        </InputOptions>
+      </div>
+    </div>
+
+    <div style="flex: 1">
+      <span style="font-size: 0.8rem">Chọn loại</span>
+      <a-select
+        v-model:value="productMovementType"
+        allow-clear
+        class="w-full"
+        placeholder="Tất cả"
+        @change="startFetchProductMovements"
+      >
+        <a-select-option :value="undefined">
+          Tất cả
+        </a-select-option>
+        <a-select-option :value="ProductMovementType.Receipt">
+          Nhập
+        </a-select-option>
+        <a-select-option :value="ProductMovementType.Invoice">
+          Xuất
+        </a-select-option>
+      </a-select>
     </div>
   </div>
   <div v-if="isMobile">
@@ -130,28 +168,38 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       <thead>
         <tr>
           <th>
-            <a-tag color="blue">K.Hàng</a-tag>- <a-tag color="green">NCC</a-tag>
+            <a-tag color="blue">
+              K.Hàng
+            </a-tag>- <a-tag color="green">
+              NCC
+            </a-tag>
           </th>
           <th>Số lượng</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="productMovements.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
+          <td
+            colspan="20"
+            class="text-center"
+          >
+            Không có dữ liệu
+          </td>
         </tr>
-        <tr v-for="(mov, index) in productMovements" :key="index">
+        <tr
+          v-for="(mov, index) in productMovements"
+          :key="index"
+        >
           <td>
             <div v-if="mov.type === ProductMovementType.Invoice">
               <div>
-                <a @click="openBlankInvoiceDetail(mov.invoice!.id)">
-                  IV{{ mov.invoice!.id }}
-                </a>
+                <a @click="openBlankInvoiceDetail(mov.invoice!.id)"> IV{{ mov.invoice!.id }} </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ mov.invoice?.customer?.fullName }}</a-tag>
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(mov.invoice?.createTime, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(mov.invoice?.time, 'hh:mm DD/MM/YYYY') }}
                 <span v-if="mov.isRefund">
                   <a-tag color="error">
                     <template #icon>
@@ -164,9 +212,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
             <div v-if="mov.type === ProductMovementType.Receipt">
               <div>
-                <a @click="openBlankReceiptDetail(mov.receipt!.id)">
-                  RC{{ mov.receipt!.id }}
-                </a>
+                <a @click="openBlankReceiptDetail(mov.receipt!.id)"> RC{{ mov.receipt!.id }} </a>
                 <span class="ml-2">
                   <a-tag color="green">{{ mov.receipt?.distributor?.fullName }}</a-tag>
                 </span>
@@ -183,30 +229,51 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
                 </span>
               </div>
             </div>
-            <div style="white-space: nowrap;">Lô: {{ mov.productBatch?.batch }}</div>
-            <div style="white-space: nowrap;"> HSD: {{ timeToText(mov.productBatch?.expiryDate, "DD/MM/YYYY") }}</div>
+            <div style="white-space: nowrap">
+              Lô: {{ mov.productBatch?.batch }}
+            </div>
+            <div style="white-space: nowrap">
+              HSD: {{ timeToText(mov.productBatch?.expiryDate, 'DD/MM/YYYY') }}
+            </div>
           </td>
           <td class="">
             <div>Đầu kỳ: {{ mov.openQuantity }}</div>
-            <div v-if="mov.number > 0">Nhập: <span class="font-bold">{{ mov.number }}</span></div>
-            <div v-if="mov.number < 0">Xuất: <span class="font-bold">{{ mov.number }}</span></div>
+            <div v-if="mov.number > 0">
+              Nhập: <span class="font-bold">{{ mov.number }}</span>
+            </div>
+            <div v-if="mov.number < 0">
+              Xuất: <span class="font-bold">{{ mov.number }}</span>
+            </div>
             <div>Cuối kỳ: {{ mov.closeQuantity }}</div>
-            <div>Giá: {{ formatMoney(mov.price) }} / {{ product.unit.find(i => i.rate === 1)?.name }}</div>
+            <div>Giá: {{ formatMoney(mov.price) }} / {{ product.unit.find((i) => i.rate === 1)?.name }}</div>
           </td>
         </tr>
       </tbody>
     </table>
     <div class="mt-4 float-right mb-2">
-      <a-pagination size="small" v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      <a-pagination
+        v-model:current="page"
+        v-model:pageSize="limit"
+        size="small"
+        :total="total"
+        show-size-changer
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+      />
     </div>
   </div>
-  <div v-else class="table-wrapper mt-4">
+  <div
+    v-else
+    class="table-wrapper mt-4"
+  >
     <table class="table">
       <thead>
         <tr>
           <th>
-            <a-tag color="blue">K.Hàng</a-tag>- <a-tag color="green">NCC</a-tag>
+            <a-tag color="blue">
+              K.Hàng
+            </a-tag>- <a-tag color="green">
+              NCC
+            </a-tag>
           </th>
           <th>Lô</th>
           <th>SL trước</th>
@@ -218,21 +285,27 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       </thead>
       <tbody>
         <tr v-if="productMovements.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
+          <td
+            colspan="20"
+            class="text-center"
+          >
+            Không có dữ liệu
+          </td>
         </tr>
-        <tr v-for="(mov, index) in productMovements" :key="index">
+        <tr
+          v-for="(mov, index) in productMovements"
+          :key="index"
+        >
           <td>
             <div v-if="mov.type === ProductMovementType.Invoice">
               <div>
-                <a @click="openBlankInvoiceDetail(mov.invoice!.id)">
-                  IV{{ mov.invoice!.id }}
-                </a>
+                <a @click="openBlankInvoiceDetail(mov.invoice!.id)"> IV{{ mov.invoice!.id }} </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ mov.invoice?.customer?.fullName }}</a-tag>
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(mov.invoice?.createTime, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(mov.invoice?.time, 'hh:mm DD/MM/YYYY') }}
                 <span v-if="mov.isRefund">
                   <a-tag color="error">
                     <template #icon>
@@ -245,9 +318,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
             <div v-if="mov.type === ProductMovementType.Receipt">
               <div>
-                <a @click="openBlankReceiptDetail(mov.receipt!.id)">
-                  RC{{ mov.receipt!.id }}
-                </a>
+                <a @click="openBlankReceiptDetail(mov.receipt!.id)"> RC{{ mov.receipt!.id }} </a>
                 <span class="ml-2">
                   <a-tag color="green">{{ mov.receipt?.distributor?.fullName }}</a-tag>
                 </span>
@@ -266,25 +337,44 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
           </td>
           <td>
-            <div style="white-space: nowrap;">Lô: {{ mov.productBatch?.batch }}</div>
-            <div style="white-space: nowrap;"> HSD: {{ timeToText(mov.productBatch?.expiryDate, "DD/MM/YYYY") }}</div>
+            <div
+              v-if="mov.productBatch?.batch"
+              style="white-space: nowrap; font-size: 0.8rem"
+            >
+              Lô: {{ mov.productBatch?.batch }}
+            </div>
+            <div style="white-space: nowrap; font-size: 0.8rem">
+              HSD: {{ timeToText(mov.productBatch?.expiryDate, 'DD/MM/YYYY') }}
+            </div>
           </td>
-          <td class="text-center"> {{ mov.openQuantity }}</td>
           <td class="text-center">
-
+            {{ mov.openQuantity }}
+          </td>
+          <td class="text-center">
             <div>
               {{ mov.number }}
             </div>
           </td>
-          <td class="text-center"> {{ mov.closeQuantity }} </td>
-          <td class="text-right"> {{ formatMoney(mov.price) }}</td>
-          <td class="text-right"> {{ formatMoney(mov.totalMoney) }}</td>
+          <td class="text-center">
+            {{ mov.closeQuantity }}
+          </td>
+          <td class="text-right">
+            {{ formatMoney(mov.price) }}
+          </td>
+          <td class="text-right">
+            {{ formatMoney(mov.totalMoney) }}
+          </td>
         </tr>
       </tbody>
     </table>
     <div class="mt-4 float-right mb-2">
-      <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      <a-pagination
+        v-model:current="page"
+        v-model:pageSize="limit"
+        :total="total"
+        show-size-changer
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+      />
     </div>
   </div>
 </template>

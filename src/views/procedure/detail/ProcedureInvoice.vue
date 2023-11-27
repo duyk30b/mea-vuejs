@@ -8,10 +8,7 @@ import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@a
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(
-  defineProps<{ procedure: Procedure }>(),
-  { procedure: () => Procedure.blank() }
-)
+const props = withDefaults(defineProps<{ procedure: Procedure }>(), { procedure: () => Procedure.blank() })
 
 const router = useRouter()
 
@@ -28,7 +25,7 @@ const startFetchData = async () => {
     page: page.value,
     limit: limit.value,
     filter: {
-      reference_id: props.procedure.id,
+      referenceId: props.procedure.id,
       type: InvoiceItemType.Procedure,
     },
     relation: { invoice: { customer: true } },
@@ -38,7 +35,7 @@ const startFetchData = async () => {
   total.value = data.total
 }
 
-const changePagination = async (options: { page?: number, limit?: number }) => {
+const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
@@ -63,7 +60,6 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
   })
   window.open(route.href, '_blank')
 }
-
 </script>
 
 <template>
@@ -83,18 +79,38 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       </thead>
       <tbody>
         <tr v-if="invoiceItems.length === 0">
-          <td colspan="20" class="text-center">No data</td>
+          <td
+            colspan="20"
+            class="text-center"
+          >
+            No data
+          </td>
         </tr>
-        <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
-          <td class="text-center">II{{ invoiceItem.id }}</td>
+        <tr
+          v-for="(invoiceItem, index) in invoiceItems"
+          :key="index"
+        >
+          <td class="text-center">
+            II{{ invoiceItem.id }}
+          </td>
           <td class="text-center">
             <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"> IV{{ invoiceItem.invoiceId }} </a>
           </td>
-          <td class="text-center"> {{ invoiceItem.invoice?.customer?.fullName }} </td>
-          <td class="text-center"> {{ timeToText(invoiceItem.invoice?.createTime, "DD/MM/YYYY") }} </td>
-          <td class="text-right"> {{ invoiceItem.quantity }}</td>
-          <td class="text-right"> {{ formatMoney(invoiceItem.actualPrice) }}</td>
-          <td class="text-right"> {{ formatMoney(invoiceItem.quantity * invoiceItem.actualPrice) }}</td>
+          <td class="text-center">
+            {{ invoiceItem.invoice?.customer?.fullName }}
+          </td>
+          <td class="text-center">
+            {{ timeToText(invoiceItem.invoice?.time, 'DD/MM/YYYY') }}
+          </td>
+          <td class="text-right">
+            {{ invoiceItem.quantity }}
+          </td>
+          <td class="text-right">
+            {{ formatMoney(invoiceItem.actualPrice) }}
+          </td>
+          <td class="text-right">
+            {{ formatMoney(invoiceItem.quantity * invoiceItem.actualPrice) }}
+          </td>
 
           <td class="text-center">
             <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
@@ -103,8 +119,13 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       </tbody>
     </table>
     <div class="mt-4 float-right mb-2">
-      <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      <a-pagination
+        v-model:current="page"
+        v-model:pageSize="limit"
+        :total="total"
+        show-size-changer
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+      />
     </div>
   </div>
 </template>

@@ -1,8 +1,5 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <div>
-    Danh sách đăng ký
-  </div>
+  <div>Danh sách đăng ký</div>
 </template>

@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { Procedure } from '@/modules/procedure'
 import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
@@ -28,35 +27,42 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="1200px" title="Thông tin dịch vụ" :confirm-loading="saveLoading"
-    :afterClose="refreshModal">
+  <a-modal
+    v-model:visible="showModal"
+    width="1200px"
+    title="Thông tin dịch vụ"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+  >
     <template #footer>
       <div class="flex justify-end px-2">
         <div>
-          <a-button @click="showModal = false">Đóng</a-button>
+          <a-button @click="showModal = false">
+            Đóng
+          </a-button>
         </div>
       </div>
     </template>
     <div class="procedure-detail">
-      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
+      <a-tabs
+        v-model:activeKey="activeTab"
+        type="card"
+        :tabBarGutter="10"
+        :destroyInactiveTabPane="true"
+      >
         <a-tab-pane key="procedure-info">
           <template #tab>
-            <span>
-              <DeploymentUnitOutlined />Thông tin
-            </span>
+            <span> <DeploymentUnitOutlined />Thông tin </span>
           </template>
           <ProcedureInfo :procedure="procedure" />
         </a-tab-pane>
         <a-tab-pane key="procedure-invoice">
           <template #tab>
-            <span>
-              <DiffOutlined />Lịch sử hóa đơn
-            </span>
+            <span> <DiffOutlined />Lịch sử hóa đơn </span>
           </template>
           <ProcedureInvoice :procedure="procedure" />
         </a-tab-pane>
       </a-tabs>
-
     </div>
   </a-modal>
 </template>

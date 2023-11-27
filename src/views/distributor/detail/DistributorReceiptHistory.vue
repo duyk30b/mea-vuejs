@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import { Distributor } from '@/modules/distributor'
-import { ReceiptService, type Receipt, ReceiptStatus } from '@/modules/receipt'
+import { ReceiptService, type Receipt } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
 import ReceiptStatusTag from '@/views/receipt/ReceiptStatusTag.vue'
-import { CheckCircleOutlined, ExclamationCircleOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(
-  defineProps<{ distributor: Distributor }>(),
-  { distributor: () => Distributor.blank() }
-)
+const props = withDefaults(defineProps<{ distributor: Distributor }>(), { distributor: () => Distributor.blank() })
 
 const router = useRouter()
 
@@ -27,18 +24,15 @@ const startFetchData = async () => {
   const data = await ReceiptService.pagination({
     page: page.value,
     limit: limit.value,
-    filter: {
-      distributor_id: props.distributor.id!,
-      has_delete: true,
-    },
-    relation: { distributor: false, receipt_items: false },
+    filter: { distributorId: props.distributor.id! },
+    relation: { distributor: false, receiptItems: false },
     sort: { id: 'DESC' },
   })
   receipts.value = data.data
   total.value = data.total
 }
 
-const changePagination = async (options: { page?: number, limit?: number }) => {
+const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
@@ -80,7 +74,10 @@ const openBlankReceiptUpsert = (distributorId: number) => {
         NCC: <b>{{ distributor.fullName }}</b> - {{ distributor.phone }}
       </div>
       <div>
-        <a-button type="primary" @click="openBlankReceiptUpsert(distributor.id)">
+        <a-button
+          type="primary"
+          @click="openBlankReceiptUpsert(distributor.id)"
+        >
           <template #icon>
             <PlusOutlined />
           </template>
@@ -98,32 +95,47 @@ const openBlankReceiptUpsert = (distributorId: number) => {
         </thead>
         <tbody>
           <tr v-if="receipts.length === 0">
-            <td colspan="20" class="text-center">Không có dữ liệu</td>
+            <td
+              colspan="20"
+              class="text-center"
+            >
+              Không có dữ liệu
+            </td>
           </tr>
-          <tr v-for="(receipt, index) in receipts" :key="index">
+          <tr
+            v-for="(receipt, index) in receipts"
+            :key="index"
+          >
             <td>
               <div>
-                <a @click="openBlankReceiptDetail(receipt.id)">
-                  RC{{ receipt.id }}
-                </a>
+                <a @click="openBlankReceiptDetail(receipt.id)"> RC{{ receipt.id }} </a>
                 <span class="ml-2">
                   <ReceiptStatusTag :status="receipt.status" />
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(receipt.createTime, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(receipt.time, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td class="text-right">
-              <div style="font-weight: 500;">{{ formatMoney(receipt.totalMoney) }}</div>
-              <div v-if="receipt.debt"><i><small>Nợ: {{ formatMoney(receipt.debt) }}</small></i></div>
+              <div style="font-weight: 500">
+                {{ formatMoney(receipt.revenue) }}
+              </div>
+              <div v-if="receipt.debt">
+                <i><small>Nợ: {{ formatMoney(receipt.debt) }}</small></i>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
       <div class="mt-4 float-right mb-2">
-        <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+        <a-pagination
+          v-model:current="page"
+          v-model:pageSize="limit"
+          :total="total"
+          show-size-changer
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

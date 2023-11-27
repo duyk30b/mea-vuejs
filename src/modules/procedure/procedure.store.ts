@@ -32,14 +32,14 @@ export const useProcedureStore = defineStore('procedure-store', {
       return (params: ProcedurePaginationQuery) => {
         const { filter, sort, page, limit } = params
         const response = state.procedureList.filter((procedure) => {
-          if (filter?.is_active && String(procedure.isActive) !== filter?.is_active) {
+          if (filter?.isActive && String(procedure.isActive) !== filter?.isActive) {
             return false
           }
           if (filter?.group && procedure.group !== filter?.group) {
             return false
           }
-          if (filter?.search_text) {
-            if (!customFilter(procedure.name, filter?.search_text, 2)) {
+          if (filter?.searchText) {
+            if (!customFilter(procedure.name, filter?.searchText, 2)) {
               return false
             }
           }

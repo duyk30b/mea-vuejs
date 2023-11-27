@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { useOrganizationStore } from '@/store/organization.store'
 
-const props = withDefaults(defineProps<{
-  value: number,
-  prepend?: string,
-  append?: string,
-  textAlign?: 'left' | 'right'
-  disabled?: boolean,
-  placeholder?: string,
-}>(), { value: 0, disabled: false, placeholder: '' })
+const props = withDefaults(
+  defineProps<{
+    value: number
+    prepend?: string
+    append?: string
+    textAlign?: 'left' | 'right'
+    disabled?: boolean
+    placeholder?: string
+  }>(),
+  { value: 0, disabled: false, prepend: '', append: '', textAlign: 'left', placeholder: '' }
+)
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
 const organizationStore = useOrganizationStore()
@@ -19,17 +22,40 @@ const handleInput = (e: Event) => {
   emit('update:value', number * organizationStore.SYSTEM_SETTING.moneyDivisionFormat)
 }
 
+const handleFocus = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    target.select()
+  }
+}
 </script>
 
 <template>
-  <div :class="{ 'input-money': true, disabled: disabled }">
-    <div v-if="prepend" class="prepend">{{ prepend }}</div>
-    <div class="input-area">
-      <input ref="inputMoney" :style="{ textAlign }"
-        :value="(value / organizationStore.SYSTEM_SETTING.moneyDivisionFormat).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-        @input="handleInput" type="tel" :placeholder="placeholder" :disabled="disabled" />
+  <div :class="{ 'input-money': true, 'disabled': disabled }">
+    <div v-if="prepend" class="prepend">
+      {{ prepend }}
     </div>
-    <div v-if="append" class="append">{{ append }}</div>
+    <div class="input-area">
+      <input
+        ref="inputMoney"
+        :style="{ textAlign }"
+        :value="
+          value != 0
+            ? (value / organizationStore.SYSTEM_SETTING.moneyDivisionFormat)
+              .toString()
+              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            : ''
+        "
+        type="tel"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        @focus="handleFocus"
+        @input="handleInput"
+      >
+    </div>
+    <div v-if="append" class="append">
+      {{ append }}
+    </div>
   </div>
 </template>
 

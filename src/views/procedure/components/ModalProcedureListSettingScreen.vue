@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { OrganizationService } from '@/modules/organization'
 import { useOrganizationStore } from '@/store/organization.store'
@@ -44,8 +43,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -55,20 +60,32 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td> <a-checkbox v-model:checked="settingDisplay.table.detail">Hiển thị nút xem chi tiết (
-                <FileSearchOutlined /> )
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.detail">
+                Hiển thị nút xem chi tiết ( <FileSearchOutlined /> )
               </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.group">Hiển thị nhóm</a-checkbox></td>
-          </tr>
-          <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.status">Hiển thị trạng thái</a-checkbox>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.group">
+                Hiển thị nhóm
+              </a-checkbox>
             </td>
           </tr>
           <tr>
-            <td><a-checkbox v-model:checked="settingDisplay.table.action">Hiển thị nút sửa</a-checkbox></td>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.status">
+                Hiển thị trạng thái
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.table.action">
+                Hiển thị nút sửa
+              </a-checkbox>
+            </td>
           </tr>
         </tbody>
       </table>

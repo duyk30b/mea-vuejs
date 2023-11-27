@@ -17,22 +17,28 @@ onUnmounted(() => {
 })
 
 const show = ref(false)
-
 </script>
 
 <template>
-  <div style="position: relative;">
+  <div style="position: relative">
     <slot>
       <div @click="show = true">
         <div>Click here show popover</div>
       </div>
     </slot>
     <Transition name="popover">
-      <div v-if="show" class="popover-container right">
+      <div
+        v-if="show"
+        class="popover-container right"
+      >
         <slot name="popover">
-          <div style="padding: 20px; background-color: #fff;">
+          <div style="padding: 20px; background-color: #fff">
             <div>Popover Header</div>
-            <div><button @click="show = false">Close</button></div>
+            <div>
+              <button @click="show = false">
+                Close
+              </button>
+            </div>
           </div>
         </slot>
       </div>
@@ -52,7 +58,10 @@ const show = ref(false)
 
   background-color: #fff;
   border-radius: 2px;
-  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
   z-index: 9;
 
   &.right {
@@ -60,7 +69,7 @@ const show = ref(false)
   }
 
   &.left {
-    left: 0
+    left: 0;
   }
 }
 

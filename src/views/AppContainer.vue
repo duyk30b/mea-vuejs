@@ -7,11 +7,11 @@ import { useUserStore } from '@/store/user.store'
 import { objectUpdatePropertyByObject } from '@/utils'
 import { RouterView, useRouter } from 'vue-router'
 import VueLayout from './layout/VueLayout.vue'
-import { onMounted } from 'vue'
+import { onBeforeMount, onMounted } from 'vue'
 
 const organizationStore = useOrganizationStore()
 
-onMounted(async () => {
+onBeforeMount(async () => {
   if (!localStorage.getItem(REFRESH_TOKEN) || Number(localStorage.getItem(REFRESH_EXP)) - 60 * 1000 < Date.now()) {
     LocalStorageService.removeAuth()
     useUserStore().userInfo = null
@@ -24,16 +24,21 @@ onMounted(async () => {
       ])
       organizationStore.organizationInfo = orgInfo
       settings.forEach((i) => {
-        if ([
-          OrganizationSettingsType.PRODUCT_GROUP,
-          OrganizationSettingsType.PROCEDURE_GROUP,
-          OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
-          OrganizationSettingsType.INVOICE_EXPENSES_DETAIL,
-        ].includes(i.type)) {
+        if (
+          [
+            OrganizationSettingsType.PRODUCT_GROUP,
+            OrganizationSettingsType.PROCEDURE_GROUP,
+            OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
+            OrganizationSettingsType.INVOICE_EXPENSE_DETAIL,
+          ].includes(i.type)
+        ) {
           organizationStore[i.type] = JSON.parse(i.data)
-        }
-        else {
+        } else {
           organizationStore[i.type] = objectUpdatePropertyByObject(organizationStore[i.type], JSON.parse(i.data))
+        }
+
+        if ([OrganizationSettingsType.SYSTEM_SETTING].includes(i.type)) {
+          localStorage.setItem(i.type, i.data)
         }
       })
     } catch (error) {

@@ -1,16 +1,41 @@
 <template>
-  <div :class="{ 'vue-select': true, disabled: disabled }" v-click-outside="() => showOptions = false">
-    <select :value="value" @change="handleChange" @focusin="handleFocusIn" @keydown="handleKeydown" :disabled="disabled">
-      <option v-for="(option, index) in options" :key="index" :value="option.value">
+  <div
+    v-click-outside="() => (showOptions = false)"
+    :class="{ 'vue-select': true, 'disabled': disabled }"
+  >
+    <select
+      :value="value"
+      :disabled="disabled"
+      @change="handleChange"
+      @focusin="handleFocusIn"
+    >
+      <option
+        v-for="(option, index) in options"
+        :key="index"
+        :value="option.value"
+      >
         {{ option.text }}
       </option>
     </select>
-    <div :class="{ 'wrap-select': true, 'active': showOptions }" @click="handleClickWrapSelect">
-    </div>
-    <div class="options" v-if="showOptions" :style="{ maxHeight: `${maxHeight}px` }" ref="optionsElement">
-      <div v-for="(option, index) in options" :key="index" :class="{ 'item-search': true, 'active': index == indexFocus }"
-        @click="handleClickItem(option.value)">
-        <div class="item-json"> {{ option.text }}</div>
+    <div
+      :class="{ 'wrap-select': true, 'active': showOptions }"
+      @click="handleClickWrapSelect"
+    />
+    <div
+      v-if="showOptions"
+      ref="optionsElement"
+      class="options"
+      :style="{ maxHeight: `${maxHeight}px` }"
+    >
+      <div
+        v-for="(option, index) in options"
+        :key="index"
+        :class="{ 'item-search': true, 'active': index == indexFocus }"
+        @click="handleClickItem(option.value)"
+      >
+        <div class="item-json">
+          {{ option.text }}
+        </div>
       </div>
     </div>
   </div>
@@ -22,11 +47,12 @@ import { ref } from 'vue'
 
 export default {
   props: {
-    value: { type: [Number, String] as PropType<number | string | null>, default: () => '' },
-    options: { type: Array as PropType<{ value: string | number | null, text: string }[]>, default: () => [] },
+    value: { type: [Number, String, Boolean] as PropType<number | string | boolean>, default: () => '' },
+    options: { type: Array as PropType<{ value: any; text: string }[]>, default: () => [] },
     disabled: { type: Boolean, default: () => false },
     maxHeight: { type: Number, default: () => 300 },
   },
+  emits: ['update:value'],
   setup() {
     return {
       indexFocus: ref<number>(-1),
@@ -52,33 +78,6 @@ export default {
     handleFocusIn(e: Event) {
       this.showOptions = true
       this.setScrollOption('ArrowDown')
-    },
-
-    handleKeydown(e: KeyboardEvent) {
-      if (e.key === 'Tab' || e.key === 'Escape') {
-        this.showOptions = false
-        return
-      }
-      e.preventDefault()
-
-      if (e.key === 'ArrowDown') {
-        this.indexFocus += 1
-        if (this.indexFocus >= this.options.length) this.indexFocus = 0
-        this.$emit('update:value', this.options[this.indexFocus].value)
-        this.setScrollOption('ArrowDown')
-      }
-      else if (e.key === 'ArrowUp') {
-        this.indexFocus -= 1
-        if (this.indexFocus < 0) this.indexFocus = this.options.length - 1
-        this.$emit('update:value', this.options[this.indexFocus].value)
-        this.setScrollOption('ArrowDown')
-      }
-      else if (e.key === 'Enter') {
-        if (this.showOptions) {
-          this.$emit('update:value', this.options[this.indexFocus].value)
-        }
-        this.showOptions = !this.showOptions
-      }
     },
 
     handleClickWrapSelect(e: Event) {
@@ -118,7 +117,7 @@ export default {
   position: relative;
   width: 100%;
   height: 100%;
-  padding: 4px 8px;
+  padding: 5px 12px;
   border: 1px solid #d9d9d9;
   border-radius: 2px;
   display: flex;
@@ -183,7 +182,7 @@ export default {
 
     .item-search {
       position: relative;
-      padding: 0.5rem;
+      padding: 5px 12px;
       cursor: pointer;
       user-select: none;
       border-bottom: 1px solid #d4d4d4;
@@ -216,7 +215,7 @@ export default {
     &:after {
       --border-width: 6px;
       position: absolute;
-      content: "";
+      content: '';
       top: calc(50% - var(--border-width) * 0.5);
       right: 12px;
       width: 0;

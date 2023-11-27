@@ -7,10 +7,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import DistributorPaymentTypeTag from '../DistributorPaymentTypeTag.vue'
 
-const props = withDefaults(
-  defineProps<{ distributor: Distributor }>(),
-  { distributor: () => Distributor.blank() }
-)
+const props = withDefaults(defineProps<{ distributor: Distributor }>(), { distributor: () => Distributor.blank() })
 
 const router = useRouter()
 
@@ -27,7 +24,7 @@ const startFetchData = async () => {
     const data = await DistributorPaymentService.pagination({
       page: page.value,
       limit: limit.value,
-      filter: { distributor_id: props.distributor.id! },
+      filter: { distributorId: props.distributor.id! },
       sort: { id: 'DESC' },
     })
     distributorPaymentList.value = data.data
@@ -46,7 +43,7 @@ watch(
   { immediate: true }
 )
 
-const changePagination = async (options: { page?: number, limit?: number }) => {
+const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
@@ -68,7 +65,10 @@ defineExpose({ startFetchData })
 
 <template>
   <div class="mt-4 w-full">
-    <table v-if="isMobile" class="table-mobile">
+    <table
+      v-if="isMobile"
+      class="table-mobile"
+    >
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -77,12 +77,22 @@ defineExpose({ startFetchData })
       </thead>
       <tbody>
         <tr v-if="distributorPaymentList.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
+          <td
+            colspan="20"
+            class="text-center"
+          >
+            Không có dữ liệu
+          </td>
         </tr>
-        <tr v-for="(distributorPayment, index) in distributorPaymentList" :key="index">
+        <tr
+          v-for="(distributorPayment, index) in distributorPaymentList"
+          :key="index"
+        >
           <td>
             <div v-if="distributorPayment.receiptId">
-              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)"> IV{{ distributorPayment.receiptId }} </a>
+              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)">
+                IV{{ distributorPayment.receiptId }}
+              </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(distributorPayment.time, 'hh:mm DD/MM/YYYY') }}
@@ -90,17 +100,33 @@ defineExpose({ startFetchData })
             <div>
               <DistributorPaymentTypeTag :type="distributorPayment.type" />
             </div>
-            <div v-if="distributorPayment.note" style="font-size: 0.8rem;">{{ distributorPayment.note }}</div>
-            <div v-if="distributorPayment.description" style="font-size: 0.8rem;">{{ distributorPayment.description }}</div>
+            <div
+              v-if="distributorPayment.note"
+              style="font-size: 0.8rem"
+            >
+              {{ distributorPayment.note }}
+            </div>
+            <div
+              v-if="distributorPayment.description"
+              style="font-size: 0.8rem"
+            >
+              {{ distributorPayment.description }}
+            </div>
           </td>
           <td class="text-right">
-            <div class="flex justify-between item-center" style="white-space: nowrap">
-              <span style="font-size: 0.8rem;"> TT: </span>
+            <div
+              class="flex justify-between item-center"
+              style="white-space: nowrap"
+            >
+              <span style="font-size: 0.8rem"> TT: </span>
               <span>{{ formatMoney(distributorPayment.paid) }}</span>
             </div>
-            <div v-if="distributorPayment.debit != 0" style="white-space: nowrap">
+            <div
+              v-if="distributorPayment.debit != 0"
+              style="white-space: nowrap"
+            >
               <div class="flex justify-between item-center">
-                <div style="font-size: 0.8rem;">
+                <div style="font-size: 0.8rem">
                   <span v-if="distributorPayment.type === PaymentType.ImmediatePayment">Ghi nợ:</span>
                   <span v-if="distributorPayment.type === PaymentType.ReceiveRefund">Hoàn nợ:</span>
                   <span v-if="distributorPayment.type === PaymentType.PayDebt">Trừ nợ:</span>
@@ -108,15 +134,18 @@ defineExpose({ startFetchData })
                 <span>{{ formatMoney(distributorPayment.debit) }}</span>
               </div>
               <div class="flex justify-between item-center">
-                <span style="font-size: 0.8rem;"> Nợ cuối kỳ: </span>
-                <span>{{ formatMoney(distributorPayment.closeDebt) }}</span>
+                <span style="font-size: 0.8rem"> Nợ cuối kỳ: </span>
+                <span>{{ formatMoney(distributorPayment.distributorCloseDebt) }}</span>
               </div>
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <table v-else class="table-mobile">
+    <table
+      v-else
+      class="table-mobile"
+    >
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -127,30 +156,53 @@ defineExpose({ startFetchData })
       </thead>
       <tbody>
         <tr v-if="distributorPaymentList.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
+          <td
+            colspan="20"
+            class="text-center"
+          >
+            Không có dữ liệu
+          </td>
         </tr>
-        <tr v-for="(distributorPayment, index) in distributorPaymentList" :key="index">
+        <tr
+          v-for="(distributorPayment, index) in distributorPaymentList"
+          :key="index"
+        >
           <td>
             <div v-if="distributorPayment.receiptId">
-              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)"> IV{{ distributorPayment.receiptId }} </a>
+              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)">
+                IV{{ distributorPayment.receiptId }}
+              </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(distributorPayment.time, 'hh:mm DD/MM/YYYY') }}
             </div>
 
-            <div v-if="distributorPayment.note" style="font-size: 0.8rem;">{{ distributorPayment.note }}</div>
+            <div
+              v-if="distributorPayment.note"
+              style="font-size: 0.8rem"
+            >
+              {{ distributorPayment.note }}
+            </div>
           </td>
           <td class="px-4">
             <DistributorPaymentTypeTag :type="distributorPayment.type" />
-            <div v-if="distributorPayment.description" style="font-size: 0.8rem;">{{ distributorPayment.description }}</div>
+            <div
+              v-if="distributorPayment.description"
+              style="font-size: 0.8rem"
+            >
+              {{ distributorPayment.description }}
+            </div>
           </td>
-          <td style="white-space: nowrap; text-align: right;">
+          <td style="white-space: nowrap; text-align: right">
             {{ formatMoney(distributorPayment.paid) }}
           </td>
           <td class="text-right">
-            <div v-if="distributorPayment.debit != 0" style="white-space: nowrap">
+            <div
+              v-if="distributorPayment.debit != 0"
+              style="white-space: nowrap"
+            >
               <div class="flex justify-between">
-                <div style="font-size: 0.8rem;">
+                <div style="font-size: 0.8rem">
                   <span v-if="distributorPayment.type === PaymentType.ImmediatePayment">Ghi nợ:</span>
                   <span v-if="distributorPayment.type === PaymentType.ReceiveRefund">Hoàn nợ:</span>
                   <span v-if="distributorPayment.type === PaymentType.PayDebt">Trừ nợ:</span>
@@ -158,8 +210,8 @@ defineExpose({ startFetchData })
                 <span>{{ formatMoney(distributorPayment.debit) }}</span>
               </div>
               <div class="flex justify-between">
-                <span style="font-size: 0.8rem;"> Nợ cuối kỳ: </span>
-                <span>{{ formatMoney(distributorPayment.closeDebt) }}</span>
+                <span style="font-size: 0.8rem"> Nợ cuối kỳ: </span>
+                <span>{{ formatMoney(distributorPayment.distributorCloseDebt) }}</span>
               </div>
             </div>
           </td>
@@ -167,8 +219,13 @@ defineExpose({ startFetchData })
       </tbody>
     </table>
     <div class="mt-4 mb-2 flex justify-end">
-      <a-pagination v-model:current="page" v-model:pageSize="limit" :total="total" show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+      <a-pagination
+        v-model:current="page"
+        v-model:pageSize="limit"
+        :total="total"
+        show-size-changer
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+      />
     </div>
   </div>
 </template>

@@ -1,9 +1,26 @@
 <template>
-  <div :class="{ 'input-text': true, disabled: disabled }">
-    <div v-if="prepend" class="prepend">{{ prepend }}</div>
-    <input ref="inputRef" :value="value" @input="input" type="text" :placeholder="placeholder" :disabled="disabled"
-      :maxlength="maxlength" />
-    <div v-if="append" class="append">{{ append }}</div>
+  <div :class="{ 'input-text': true, 'disabled': disabled }">
+    <div
+      v-if="prepend"
+      class="prepend"
+    >
+      {{ prepend }}
+    </div>
+    <input
+      ref="inputRef"
+      :value="value"
+      type="text"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :maxlength="maxlength"
+      @input="input"
+    >
+    <div
+      v-if="append"
+      class="append"
+    >
+      {{ append }}
+    </div>
     <label>{{ label }}</label>
   </div>
 </template>
@@ -17,11 +34,11 @@ export default {
     value: { type: String, default: () => '' },
     placeholder: { type: String, default: () => '' },
     disabled: { type: Boolean, default: () => false },
-    maxlength: { type: String },
-    append: { type: String },
-    prepend: { type: String },
+    maxlength: { type: String, default: () => '' },
+    append: { type: String, default: () => '' },
+    prepend: { type: String, default: () => '' },
   },
-
+  emits: ['update:value'],
   setup() {
     return { inputRef: ref<HTMLInputElement>() }
   },
@@ -36,6 +53,5 @@ export default {
       this.inputRef?.focus()
     },
   },
-
 }
 </script>

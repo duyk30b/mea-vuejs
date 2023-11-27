@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { AuthService } from '@/modules/auth'
 import { Employee, UserService } from '@/modules/employee'
@@ -45,28 +44,54 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px"
-    :title="user.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới'" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    :title="user.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới'"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div>
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none;">Tên đăng nhập</div>
-        <a-input disabled :value="user.username" class="flex-auto"></a-input>
+        <div style="width: 100px; flex: none">
+          Tên đăng nhập
+        </div>
+        <a-input
+          disabled
+          :value="user.username"
+          class="flex-auto"
+        />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none;">Mật khẩu cũ</div>
-        <a-input-password v-model:value="oldPassword" class="flex-auto"></a-input-password>
+        <div style="width: 100px; flex: none">
+          Mật khẩu cũ
+        </div>
+        <a-input-password
+          v-model:value="oldPassword"
+          class="flex-auto"
+        />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none;">Mật khẩu mới</div>
-        <a-input-password v-model:value="newPassword" class="flex-auto"></a-input-password>
+        <div style="width: 100px; flex: none">
+          Mật khẩu mới
+        </div>
+        <a-input-password
+          v-model:value="newPassword"
+          class="flex-auto"
+        />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none;">Mật khẩu mới</div>
-        <a-input-password v-model:value="newPasswordRepeat" class="flex-auto"></a-input-password>
+        <div style="width: 100px; flex: none">
+          Mật khẩu mới
+        </div>
+        <a-input-password
+          v-model:value="newPasswordRepeat"
+          class="flex-auto"
+        />
       </div>
     </div>
   </a-modal>

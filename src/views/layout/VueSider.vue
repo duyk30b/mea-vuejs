@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import {
-  AppstoreOutlined, ContactsOutlined,
+  AppstoreOutlined,
+  ContactsOutlined,
   NodeIndexOutlined,
   PicCenterOutlined,
   RocketOutlined,
-  ScheduleOutlined, SettingOutlined, ShopOutlined, TeamOutlined,
+  AreaChartOutlined,
+  ScheduleOutlined,
+  SettingOutlined,
+  ShopOutlined,
+  TeamOutlined,
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
@@ -25,33 +30,54 @@ watchEffect(() => {
   }
 })
 
-const handleMenuClick = (menu: { key: string }) => {
-  router.push({ name: menu.key, params: {} })
+const handleMenuClick = (menu: { key: string, keyPath: string[] }) => {
+  // router.push({ name: menu.key, params: {} })
+  openKeys.value = menu.keyPath
   emit('handleShowDrawer', false)
 }
-
 </script>
 
 <template>
-  <a-menu theme="light" mode="inline" v-model:selectedKeys="selectedKeys" @click="handleMenuClick"
-    :inline-collapsed="false" :openKeys=openKeys>
+  <a-menu
+    v-model:selectedKeys="selectedKeys"
+    theme="light"
+    mode="inline"
+    :inline-collapsed="false"
+    :openKeys="openKeys"
+    @click="handleMenuClick"
+  >
     <a-menu-item key="AppHome">
       <AppstoreOutlined />
-      <span>Home</span>
+      <span>
+        <router-link :to="{ name: 'AppHome' }">Home</router-link>
+      </span>
     </a-menu-item>
     <a-sub-menu key="Invoice">
       <template #icon>
         <RocketOutlined />
       </template>
-      <template #title>Hóa đơn</template>
-      <a-menu-item key="InvoiceUpsert">Tạo hóa đơn</a-menu-item>
-      <a-menu-item key="InvoiceList">Danh sách hóa đơn</a-menu-item>
+      <template #title>
+        Hóa đơn
+      </template>
+      <a-menu-item key="InvoiceUpsert">
+        <router-link :to="{ name: 'InvoiceUpsert' }">
+          Tạo hóa đơn
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="InvoiceList">
+        <router-link :to="{ name: 'InvoiceList' }">
+          Danh sách hóa đơn
+        </router-link>
+      </a-menu-item>
     </a-sub-menu>
     <!-- <a-menu-item key="ArrivalDiagnosis">
       <TeamOutlined /> <span>Khám bệnh</span>
     </a-menu-item> -->
     <a-menu-item key="Customer">
-      <ContactsOutlined /> <span>Khách Hàng</span>
+      <ContactsOutlined />
+      <span>
+        <router-link :to="{ name: 'Customer' }">Khách Hàng</router-link>
+      </span>
     </a-menu-item>
     <!-- <a-sub-menu key="Reception">
       <template #icon>
@@ -65,29 +91,81 @@ const handleMenuClick = (menu: { key: string }) => {
       <template #icon>
         <ShopOutlined />
       </template>
-      <template #title>Kho hàng</template>
-      <a-menu-item key="Product">Tồn kho</a-menu-item>
-      <a-menu-item key="Receipt">Nhập hàng</a-menu-item>
-      <a-menu-item key="Distributor">Nhà cung cấp</a-menu-item>
+      <template #title>
+        Kho hàng
+      </template>
+      <a-menu-item key="Product">
+        <router-link :to="{ name: 'Product' }">
+          Tồn kho
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="Receipt">
+        <router-link :to="{ name: 'Receipt' }">
+          Nhập hàng
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="Distributor">
+        <router-link :to="{ name: 'Distributor' }">
+          Nhà cung cấp
+        </router-link>
+      </a-menu-item>
     </a-sub-menu>
     <a-menu-item key="Procedure">
-      <PicCenterOutlined /> <span>Dịch vụ</span>
+      <PicCenterOutlined />
+      <span>
+        <router-link :to="{ name: 'Procedure' }">Dịch vụ</router-link>
+      </span>
     </a-menu-item>
-    <!-- <a-sub-menu key="Report">
+    <a-sub-menu key="Statistic">
       <template #icon>
         <AreaChartOutlined />
       </template>
-      <template #title>Báo cáo</template>
-      <a-menu-item key="FinanceReport">Báo cáo thu chi</a-menu-item>
-    </a-sub-menu> -->
+      <template #title>
+        Thống kê
+      </template>
+      <a-menu-item key="StatisticProduct">
+        <router-link :to="{ name: 'StatisticProduct' }">
+          Báo cáo kho
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="StatisticProcedure">
+        <router-link :to="{ name: 'StatisticProcedure' }">
+          Báo cáo dịch vụ
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="StatisticCustomer">
+        <router-link :to="{ name: 'StatisticCustomer' }">
+          Báo cáo khách hàng
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="StatisticOrder">
+        <router-link :to="{ name: 'StatisticOrder' }">
+          Báo cáo đơn hàng
+        </router-link>
+      </a-menu-item>
+    </a-sub-menu>
     <a-sub-menu key="Systems">
       <template #icon>
         <SettingOutlined />
       </template>
-      <template #title>Hệ thống</template>
-      <a-menu-item key="OrganizationInfo">Thông tin cơ sở</a-menu-item>
-      <a-menu-item key="EmployeeInfo">Thông tin cá nhân</a-menu-item>
-      <a-menu-item key="SystemSetting">Cài đặt</a-menu-item>
+      <template #title>
+        Hệ thống
+      </template>
+      <a-menu-item key="OrganizationInfo">
+        <router-link :to="{ name: 'OrganizationInfo' }">
+          Thông tin cơ sở
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="EmployeeInfo">
+        <router-link :to="{ name: 'EmployeeInfo' }">
+          Thông tin cá nhân
+        </router-link>
+      </a-menu-item>
+      <a-menu-item key="SystemSetting">
+        <router-link :to="{ name: 'SystemSetting' }">
+          Cài đặt
+        </router-link>
+      </a-menu-item>
     </a-sub-menu>
   </a-menu>
 </template>

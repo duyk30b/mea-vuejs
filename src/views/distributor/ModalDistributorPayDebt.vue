@@ -25,7 +25,7 @@ const openDebt = ref(0)
 const money = ref(0)
 const note = ref('')
 const distributorId = ref(0)
-const receiptPayments = ref<{ receipt: Receipt, money: number }[]>([])
+const receiptPayments = ref<{ receipt: Receipt; money: number }[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -39,7 +39,7 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
 
   const receiptDebtList = await ReceiptService.list({
     filter: {
-      distributor_id: distributorIdProp,
+      distributorId: distributorIdProp,
       status: ReceiptStatus.Debt,
     },
   })
@@ -57,12 +57,14 @@ const handleSave = async () => {
       return message.error('Số tiền trả nợ phải khác 0')
     }
     const data = await DistributorPaymentService.payDebt({
-      distributor_id: distributorId.value,
+      distributorId: distributorId.value,
       note: note.value,
-      receipt_payments: receiptPayments.value.map((i) => ({
-        receipt_id: i.receipt.id,
-        money: i.money,
-      })).filter((i) => i.money > 0),
+      receiptPayments: receiptPayments.value
+        .map((i) => ({
+          receiptId: i.receipt.id,
+          money: i.money,
+        }))
+        .filter((i) => i.money > 0),
     })
     distributorStore.updateOne(data.distributor.id, data.distributor)
     emit('success', data)
@@ -112,48 +114,81 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 font-medium" style="font-size: 16px;">Công nợ: {{ formatMoney(openDebt) }}</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="closeModal">
+      <div
+        class="pl-4 py-3 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div
+          class="flex-1 font-medium"
+          style="font-size: 16px"
+        >
+          Công nợ: {{ formatMoney(openDebt) }}
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="closeModal"
+        >
           <CloseOutlined />
         </div>
       </div>
 
       <div class="p-4">
         <div class="w-full flex items-center">
-          <div style="width: 100px; flex: none;">Số tiền trả:</div>
-          <div class="flex-1">
-            <InputMoney ref="inputMoneyPay" :value="money" @update:value="handleChangeMoney" />
+          <div style="width: 100px; flex: none">
+            Số tiền trả:
           </div>
-          <a-button type="primary" @click="handleClickPayAllDebt">Tất cả</a-button>
+          <div class="flex-1">
+            <InputMoney
+              ref="inputMoneyPay"
+              :value="money"
+              @update:value="handleChangeMoney"
+            />
+          </div>
+          <a-button
+            type="primary"
+            @click="handleClickPayAllDebt"
+          >
+            Tất cả
+          </a-button>
         </div>
-        <div class="mt-4">Trả tiền vào đơn (tự động)</div>
+        <div class="mt-4">
+          Trả tiền vào đơn (tự động)
+        </div>
         <div class="mt-2">
           <table class="table-mobile">
             <thead>
               <tr>
-                <th> Đơn </th>
-                <th> Số tiền trả </th>
+                <th>Đơn</th>
+                <th>Số tiền trả</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(receiptPayment, index) in receiptPayments" :key="index">
+              <tr
+                v-for="(receiptPayment, index) in receiptPayments"
+                :key="index"
+              >
                 <td>
                   <div>
                     <a @click="openBlankReceiptDetail(receiptPayment.receipt.id)">
                       IV{{ receiptPayment.receipt.id }}
-                    </a> - Nợ
+                    </a>
+                    - Nợ
                     <span class="font-medium"> {{ formatMoney(receiptPayment.receipt.debt) }}</span>
                   </div>
-                  <div>{{ timeToText(receiptPayment.receipt.createTime, 'DD/MM/YYYY hh:mm') }}</div>
+                  <div>{{ timeToText(receiptPayment.receipt.time, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
-                <td class="text-right">{{ formatMoney(receiptPayment.money) }}</td>
+                <td class="text-right">
+                  {{ formatMoney(receiptPayment.money) }}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none;">Ghi chú:</div>
+          <div style="width: 100px; flex: none">
+            Ghi chú:
+          </div>
           <a-input v-model:value="note" />
         </div>
       </div>
@@ -166,7 +201,10 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" @click="handleSave">
+          <a-button
+            type="primary"
+            @click="handleSave"
+          >
             <template #icon>
               <SaveOutlined />
             </template>

@@ -3,10 +3,7 @@ import VueModal from '@/common/VueModal.vue'
 import { Invoice, InvoiceItemType } from '@/modules/invoice'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
-import {
-  CloseOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import { CloseOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
 
@@ -34,13 +31,25 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 text-lg font-medium">Hóa đơn</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer"
-          @click="modalInvoicePreviewSettingScreen?.openModal()">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div class="flex-1 text-lg font-medium">
+          Hóa đơn
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="modalInvoicePreviewSettingScreen?.openModal()"
+        >
           <SettingOutlined />
         </div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="handleClose">
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="handleClose"
+        >
           <CloseOutlined />
         </div>
       </div>
@@ -49,21 +58,27 @@ defineExpose({ openModal })
         <div class="flex justify-between">
           <div class="flex flex-col items-center">
             <div>{{ organizationStore.organizationInfo.organizationName }}</div>
-            <div>SĐT: {{ organizationStore.organizationInfo.phone }}</div>
+            <div>{{ organizationStore.organizationInfo.phone }}</div>
           </div>
           <div class="flex flex-col items-center">
             <div>Mã hóa đơn</div>
             <div>HĐ{{ invoice.id }}</div>
           </div>
         </div>
-        <div style="text-align: center; font-size: 1.2rem; font-weight: bold; line-height: 2.5">HÓA ĐƠN</div>
+        <div style="text-align: center; font-size: 1.2rem; font-weight: bold; line-height: 2.5">
+          HÓA ĐƠN
+        </div>
         <div>
           <div class="flex">
-            <div style="width: 6rem;">Khách hàng:</div>
+            <div style="width: 6rem">
+              Khách hàng:
+            </div>
             <div>{{ invoice.customer?.fullName }}</div>
           </div>
           <div class="flex">
-            <div style="width: 6rem;">Địa chỉ:</div>
+            <div style="width: 6rem">
+              Địa chỉ:
+            </div>
             <div>
               {{ invoice.customer?.addressStreet }}
               {{ invoice.customer?.addressWard }}
@@ -78,25 +93,37 @@ defineExpose({ openModal })
               <tr>
                 <th>#</th>
                 <th>Tên</th>
-                <th v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">Đ.Vị</th>
+                <th v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">
+                  Đ.Vị
+                </th>
                 <th>SL</th>
                 <th>Đ.Giá</th>
                 <th>T.Tiền</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
-                <td class="text-center">{{ index + 1 }}</td>
+              <tr
+                v-for="(invoiceItem, index) in invoice.invoiceItems"
+                :key="index"
+              >
+                <td class="text-center">
+                  {{ index + 1 }}
+                </td>
                 <td>
                   <div class="text-justify">
                     {{ invoiceItem.productBatch?.product?.brandName || invoiceItem.procedure?.name }}
                   </div>
                   <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
-                    <div v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
-                      style="font-size: 0.8rem;">
+                    <div
+                      v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
+                      style="font-size: 0.8rem"
+                    >
                       {{ invoiceItem.productBatch?.product?.substance }}
                     </div>
-                    <div style="font-size: 0.8rem;" class="flex gap-2">
+                    <div
+                      style="font-size: 0.8rem"
+                      class="flex gap-2"
+                    >
                       <span v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch">
                         Lô {{ invoiceItem.productBatch?.batch }}
                       </span>
@@ -104,26 +131,36 @@ defineExpose({ openModal })
                         - HSD {{ timeToText(invoiceItem.productBatch?.expiryDate) }}
                       </span>
                     </div>
-                    <div v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
-                      style="font-size: 0.8rem;">
+                    <div
+                      v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
+                      style="font-size: 0.8rem"
+                    >
                       {{ invoiceItem.hintUsage }}
                     </div>
                   </div>
                 </td>
-                <td v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit" class="text-center">
+                <td
+                  v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
+                  class="text-center"
+                >
                   {{ invoiceItem.unit.name || 'Lần' }}
                 </td>
-                <td class="text-center">{{ invoiceItem.quantity }}</td>
+                <td class="text-center">
+                  {{ invoiceItem.quantity }}
+                </td>
                 <td class="text-right">
                   <div
-                    v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice && invoiceItem.discountMoney != 0"
-                    style="color:rgb(255, 102, 0)">
+                    v-if="
+                      organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
+                        invoiceItem.discountMoney != 0
+                    "
+                    style="color: rgb(255, 102, 0)"
+                  >
                     <del><i><small>
-                          {{ formatMoney(invoiceItem.expectedPrice) }}
-                        </small></i></del>
+                      {{ formatMoney(invoiceItem.expectedPrice) }}
+                    </small></i></del>
                   </div>
-                  <div>{{ formatMoney(invoiceItem.actualPrice) }}
-                  </div>
+                  <div>{{ formatMoney(invoiceItem.actualPrice) }}</div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
@@ -133,39 +170,48 @@ defineExpose({ openModal })
           </table>
           <table class="invoice-preview">
             <tbody>
-              <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.totalItemMoney">
-                <td style="width: 60%; text-align: right"><b>Tiền hàng</b></td>
+              <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney">
+                <td style="width: 60%; text-align: right">
+                  <b>Tiền hàng</b>
+                </td>
                 <td style="text-align: right">
                   <b>
-                    {{ formatMoney(invoice.totalItemMoney) }}
+                    {{ formatMoney(invoice.itemsActualMoney) }}
                   </b>
                 </td>
               </tr>
               <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
-                <td style="text-align: right">Chiết khấu</td>
+                <td style="text-align: right">
+                  Chiết khấu
+                </td>
                 <td style="text-align: right">
                   {{ formatMoney(invoice.discountMoney) }}
                 </td>
               </tr>
               <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
-                <td style="text-align: right">Phụ phí</td>
+                <td style="text-align: right">
+                  Phụ phí
+                </td>
                 <td style="text-align: right">
                   {{ formatMoney(invoice.surcharge) }}
                 </td>
               </tr>
               <tr>
-                <td style="text-align: right"><b>Tổng tiền</b></td>
+                <td style="text-align: right">
+                  <b>Tổng tiền</b>
+                </td>
                 <td style="text-align: right">
                   <b>
-                    {{ formatMoney(invoice.totalMoney) }}
+                    {{ formatMoney(invoice.revenue) }}
                   </b>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="flex justify-end mt-4">Ngày tạo đơn:
-          {{ timeToText(invoice.createTime, 'hh:mm DD/MM/YY') }}
+        <div class="flex justify-end mt-4">
+          Ngày tạo đơn:
+          {{ timeToText(invoice.time, 'hh:mm DD/MM/YY') }}
         </div>
       </div>
 

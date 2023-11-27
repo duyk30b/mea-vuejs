@@ -8,7 +8,9 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 const organizationStore = useOrganizationStore()
 
-const settingDisplay = ref<typeof organizationStore.SYSTEM_SETTING>(JSON.parse(JSON.stringify(organizationStore.SYSTEM_SETTING)))
+const settingDisplay = ref<typeof organizationStore.SYSTEM_SETTING>(
+  JSON.parse(JSON.stringify(organizationStore.SYSTEM_SETTING))
+)
 
 const unsubscribe = organizationStore.$subscribe((mutation, state) => {
   settingDisplay.value = JSON.parse(JSON.stringify(organizationStore.SYSTEM_SETTING))
@@ -31,20 +33,22 @@ const saveSystemSetting = async () => {
     saveLoading.value = false
   }
 }
-
 </script>
 
 <template>
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.2rem;">
+      <div
+        class="font-medium"
+        style="font-size: 1.2rem"
+      >
         <SettingOutlined style="margin-right: 1rem" />Cài đặt hệ thống
       </div>
     </div>
   </div>
 
   <div class="mx-4 mt-4 p-4 bg-white">
-    <div style="max-width: 800px;">
+    <div style="max-width: 800px">
       <div class="table-wrapper">
         <table class="screen-setting">
           <thead>
@@ -56,10 +60,16 @@ const saveSystemSetting = async () => {
             <tr>
               <td>
                 <a-radio-group v-model:value="settingDisplay.moneyDivisionFormat">
-                  <a-radio style="display:flex; line-height: 36px" :value="1">
+                  <a-radio
+                    style="display: flex; line-height: 36px"
+                    :value="1"
+                  >
                     Hiển thị cơ bản: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230,500
                   </a-radio>
-                  <a-radio style="display:flex; line-height: 36px;" :value="1000">
+                  <a-radio
+                    style="display: flex; line-height: 36px"
+                    :value="1000"
+                  >
                     Hiển thị rút gọn: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230.5
                   </a-radio>
                 </a-radio-group>
@@ -69,7 +79,10 @@ const saveSystemSetting = async () => {
         </table>
       </div>
       <div class="my-4 text-center">
-        <a-button type="primary" @click="saveSystemSetting">
+        <a-button
+          type="primary"
+          @click="saveSystemSetting"
+        >
           <template #icon>
             <SaveOutlined />
           </template>

@@ -5,13 +5,18 @@ import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
 import {
-  AuditOutlined, ExceptionOutlined,
-  ExclamationCircleOutlined, FileDoneOutlined,
-  FileSearchOutlined, FileSyncOutlined,
-  MoreOutlined, SettingOutlined,
+  AuditOutlined,
+  ExceptionOutlined,
+  ExclamationCircleOutlined,
+  FileDoneOutlined,
+  FileSearchOutlined,
+  FileSyncOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import { createVNode, onBeforeMount, ref } from 'vue'
+import { createVNode, h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
@@ -28,16 +33,18 @@ const router = useRouter()
 
 const organizationStore = useOrganizationStore()
 const { formatMoney, isMobile } = organizationStore
-
+const saveLoading = ref(false)
 const receipt = ref<Receipt>(Receipt.blank())
 
 const loadingProcess = ref(false)
 
 const startFetchData = async (receiptId: number) => {
   receipt.value = await ReceiptService.detail(receiptId, {
-    distributor: true,
-    receipt_items: true,
-    distributor_payments: true,
+    relation: {
+      distributor: true,
+      receiptItems: true,
+      distributorPayments: true,
+    },
   })
 }
 
@@ -106,9 +113,17 @@ const startShipAndPayment = async (money: number) => {
 
 const clickRefund = () => {
   Modal.confirm({
-    title: 'Bạn có chắc chắn hoàn trả phiếu nhập này',
+    title: 'Bạn có chắc chắn hoàn trả phiếu nhập này ?',
     icon: createVNode(ExclamationCircleOutlined),
-    content: 'Sau khi hoàn trả, kho hàng sẽ phải xuất ra số lượng tất cả hàng hóa trong phiếu nhập, hoàn trả ghi nợ của phiếu nhập này nếu có',
+    content: h('div', {}, [
+      h('div', '- Kho hàng sẽ xuất ra tất cả hàng hóa trong phiếu'),
+      ...(receipt.value.debt > 0
+        ? [h('div', `- Trừ nợ nhà cung cấp: ${formatMoney(receipt.value.debt)}`)]
+        : []),
+      ...(receipt.value.paid > 0
+        ? [h('div', `- Nhà cung cấp nhận lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`)]
+        : []),
+    ]),
     async onOk() {
       await startRefund()
     },
@@ -160,7 +175,6 @@ const handleMenuActionClick = (menu: { key: string }) => {
 const openModalDistributorDetail = (data?: Distributor) => {
   if (data) modalDistributorDetail.value?.openModal(data)
 }
-
 </script>
 
 <template>
@@ -172,6 +186,12 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="page-header-content">
       <AuditOutlined /> Thông tin phiếu nhập hàng
       <span v-if="receipt.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
+      <a-button type="primary" @click="$router.push({ name: 'ReceiptUpsert', query: { mode: 'CREATE' } })">
+        <template #icon>
+          <PlusOutlined />
+        </template>
+        Tạo phiếu nhập mới
+      </a-button>
     </div>
     <div class="page-header-setting">
       <a-dropdown trigger="click">
@@ -192,30 +212,47 @@ const openModalDistributorDetail = (data?: Distributor) => {
   <div class="md:mx-4 mt-4 p-4 bg-white">
     <table>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap" style="width: 120px;">Nhà cung cấp</td>
-        <td class="font-medium px-2 py-1">{{ receipt.distributor?.fullName }}
+        <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">
+          Nhà cung cấp
+        </td>
+        <td class="font-medium px-2 py-1">
+          {{ receipt.distributor?.fullName }}
           <a class="ml-1" @click="openModalDistributorDetail(receipt.distributor)">
             <FileSearchOutlined />
           </a>
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
-        <td class="px-2 py-1">RC{{ receipt.id }}</td>
+        <td class="px-2 py-1 whitespace-nowrap">
+          Mã phiếu
+        </td>
+        <td class="px-2 py-1">
+          RC{{ receipt.id }}
+        </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
-        <td class="px-2 py-1">{{ timeToText(receipt.createTime, "hh:mm DD/MM/YY") }}</td>
+        <td class="px-2 py-1 whitespace-nowrap">
+          T.Gian tạo
+        </td>
+        <td class="px-2 py-1">
+          {{ timeToText(receipt.time, 'hh:mm DD/MM/YY') }}
+        </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
+        <td class="px-2 py-1 whitespace-nowrap align-top">
+          Trạng thái
+        </td>
         <td class="px-2 py-1">
           <ReceiptStatusTag :status="receipt.status" />
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Ghi chú</td>
-        <td class="px-2 py-1">{{ receipt.note }}</td>
+        <td class="px-2 py-1 whitespace-nowrap">
+          Ghi chú
+        </td>
+        <td class="px-2 py-1">
+          {{ receipt.note }}
+        </td>
       </tr>
     </table>
   </div>
@@ -233,8 +270,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
-              v-if="[ReceiptStatus.Success, ReceiptStatus.Debt, ReceiptStatus.AwaitingShipment].includes(receipt.status)"
-              key="REFUND">
+              v-if="[ReceiptStatus.Success, ReceiptStatus.Debt, ReceiptStatus.AwaitingShipment].includes(receipt.status)
+              "
+              key="REFUND"
+            >
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" /> Hoàn trả
               </span>
@@ -248,7 +287,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </template>
         <a-button shape="circle">
           <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold;" />
+            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
           </template>
         </a-button>
       </a-dropdown>
@@ -260,16 +299,24 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
     <div class="flex justify-center gap-4 my-4">
       <template v-if="receipt.status === ReceiptStatus.Draft">
-        <a-button v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1" type="primary"
-          @click="startShipAndPayment(receipt.totalMoney)" :loading="loadingProcess">
+        <a-button
+          v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1"
+          type="primary"
+          :loading="loadingProcess"
+          @click="startShipAndPayment(receipt.revenue)"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
           Nhập hàng và thanh toán
         </a-button>
 
-        <a-button v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2" type="primary"
-          @click="modalReceiptPayment?.openModal()" :loading="loadingProcess">
+        <a-button
+          v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2"
+          type="primary"
+          :loading="loadingProcess"
+          @click="modalReceiptPayment?.openModal()"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -278,7 +325,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </template>
 
       <template v-if="receipt.status === ReceiptStatus.AwaitingShipment">
-        <a-button type="primary" @click="startShipAndPayment(0)" :loading="loadingProcess">
+        <a-button type="primary" :loading="loadingProcess" @click="startShipAndPayment(0)">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -287,7 +334,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </template>
 
       <template v-if="receipt.status === ReceiptStatus.Debt">
-        <a-button type="primary" @click="modalReceiptPayment?.openModal()" :loading="loadingProcess">
+        <a-button type="primary" :loading="loadingProcess" @click="modalReceiptPayment?.openModal()">
           <template #icon>
             <FileDoneOutlined />
           </template>

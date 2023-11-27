@@ -27,22 +27,31 @@ const handleUserAction = async (e: any) => {
     await AuthService.logout()
   }
 }
-
 </script>
 
 <template>
   <a-layout-header>
-    <div class="header-logo hidden md:flex" @click="$router.push({ name: 'AppHome' })">
+    <router-link
+      :to="{ name: 'AppHome' }"
+      class="header-logo hidden md:flex"
+    >
       <div class="logo-icon">
         <font-awesome-icon :icon="['fas', 'hospital-user']" />
       </div>
       <div class="logo-text">
-        <div class="logo-title">Medihome</div>
-        <div class="logo-description">looking for new solutions</div>
+        <div class="logo-title">
+          Medihome
+        </div>
+        <div class="logo-description">
+          looking for new solutions
+        </div>
       </div>
-    </div>
+    </router-link>
     <div class="dashboard-menu flex md:hidden">
-      <MenuUnfoldOutlined class="icon-menu-fold" @click="emitShowDrawer" />
+      <MenuUnfoldOutlined
+        class="icon-menu-fold"
+        @click="emitShowDrawer"
+      />
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
     <div>
@@ -60,8 +69,16 @@ const handleUserAction = async (e: any) => {
         </template>
       </a-dropdown>
     </div>
-    <div v-if="AxiosLoading.loading" class="progress-loader">
-      <a-progress :percent="AxiosLoading.percent" :show-info="false" status="active" :strokeWidth="3" />
+    <div
+      v-if="AxiosLoading.loading"
+      class="progress-loader"
+    >
+      <a-progress
+        :percent="AxiosLoading.percent"
+        :show-info="false"
+        status="active"
+        :strokeWidth="3"
+      />
     </div>
   </a-layout-header>
 </template>
@@ -81,7 +98,6 @@ const handleUserAction = async (e: any) => {
     justify-content: center;
     align-items: center;
     color: white;
-    cursor: pointer;
 
     .logo-icon {
       font-size: 32px;

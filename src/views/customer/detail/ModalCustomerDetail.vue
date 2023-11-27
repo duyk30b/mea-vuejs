@@ -2,7 +2,15 @@
 import VueModal from '@/common/VueModal.vue'
 import { Customer } from '@/modules/customer'
 import { useOrganizationStore } from '@/store/organization.store'
-import { CloseOutlined, ContainerOutlined, DeploymentUnitOutlined, DollarOutlined, OneToOneOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons-vue'
+import {
+  CloseOutlined,
+  ContainerOutlined,
+  DeploymentUnitOutlined,
+  DollarOutlined,
+  OneToOneOutlined,
+  PlusOutlined,
+  UserOutlined,
+} from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import CustomerInfo from './CustomerInfo.vue'
@@ -35,43 +43,56 @@ const closeModal = () => {
   customer.value = Customer.blank()
 }
 
-const handleModalCustomerPayDebtSuccess = async (data: {
-  customer: Customer,
-}) => {
+const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) => {
   customer.value = data.customer
   customerPaymentHistory.value?.startFetchData()
   emit('update_customer', data.customer)
 }
 
 defineExpose({ openModal })
-
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px);">
+  <VueModal
+    v-model:show="showModal"
+    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
-      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 font-medium" style="font-size: 16px;">Khách hàng: {{ customer.fullName }}</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="closeModal">
+      <div
+        class="pl-4 py-3 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div
+          class="flex-1 font-medium"
+          style="font-size: 16px"
+        >
+          Khách hàng: {{ customer.fullName }}
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="closeModal"
+        >
           <CloseOutlined />
         </div>
       </div>
 
       <div class="p-4 customer-detail">
-        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10" :destroyInactiveTabPane="true">
+        <a-tabs
+          v-model:activeKey="activeTab"
+          type="card"
+          :tabBarGutter="10"
+          :destroyInactiveTabPane="true"
+        >
           <a-tab-pane key="info">
             <template #tab>
-              <span>
-                <UserOutlined />Thông tin cá nhân
-              </span>
+              <span> <UserOutlined />Thông tin cá nhân </span>
             </template>
             <CustomerInfo :customer="customer" />
           </a-tab-pane>
           <a-tab-pane key="debts-history">
             <template #tab>
-              <span>
-                <DollarOutlined />Thanh toán
-              </span>
+              <span> <DollarOutlined />Thanh toán </span>
             </template>
             <div class="flex justify-between items-center">
               <div class="flex flex-wrap">
@@ -79,7 +100,10 @@ defineExpose({ openModal })
                 <span>Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b></span>
               </div>
               <div>
-                <a-button type="primary" @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)">
+                <a-button
+                  type="primary"
+                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
+                >
                   <template #icon>
                     <PlusOutlined />
                   </template>
@@ -87,29 +111,26 @@ defineExpose({ openModal })
                 </a-button>
               </div>
             </div>
-            <CustomerPaymentHistory ref="customerPaymentHistory" :customer="customer" />
+            <CustomerPaymentHistory
+              ref="customerPaymentHistory"
+              :customer="customer"
+            />
           </a-tab-pane>
           <a-tab-pane key="invoices-history">
             <template #tab>
-              <span>
-                <DeploymentUnitOutlined />Hóa Đơn
-              </span>
+              <span> <DeploymentUnitOutlined />Hóa Đơn </span>
             </template>
             <CustomerInvoiceHistory :customer="customer" />
           </a-tab-pane>
           <a-tab-pane key="products-history">
             <template #tab>
-              <span>
-                <OneToOneOutlined />Sản phẩm
-              </span>
+              <span> <OneToOneOutlined />Sản phẩm </span>
             </template>
             <CustomerProductHistory :customer="customer" />
           </a-tab-pane>
           <a-tab-pane key="procedures-history">
             <template #tab>
-              <span>
-                <ContainerOutlined />Dịch vụ
-              </span>
+              <span> <ContainerOutlined />Dịch vụ </span>
             </template>
             <CustomerProcedureHistory :customer="customer" />
           </a-tab-pane>
@@ -128,7 +149,10 @@ defineExpose({ openModal })
       </div>
     </div>
   </VueModal>
-  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
+  <ModalCustomerPayDebt
+    ref="modalCustomerPayDebt"
+    @success="handleModalCustomerPayDebtSuccess"
+  />
 </template>
 
 <style lang="scss">

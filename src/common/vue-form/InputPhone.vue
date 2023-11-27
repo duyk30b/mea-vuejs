@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 
-const props = withDefaults(
-  defineProps<{ value?: string, format?: string }>(),
-  { value: '', format: 'xxxx.xxx.xxx' }
-)
+const props = withDefaults(defineProps<{ value?: string; format?: string }>(), { value: '', format: 'xxxx.xxx.xxx' })
 const emit = defineEmits<{ (e: 'update:value', value: string | undefined): void }>()
 
 const inputPhone = ref<HTMLInputElement>()
@@ -71,8 +68,7 @@ const handleInput = (e: Event) => {
         break
       }
     }
-  }
-  else if ((e as InputEvent).inputType === 'insertText') {
+  } else if ((e as InputEvent).inputType === 'insertText') {
     for (let i = 0; i < ruleValidIndex.length; i++) {
       if (ruleValidIndex[i] >= selectionStart) {
         target.selectionStart = ruleValidIndex[i]
@@ -82,11 +78,16 @@ const handleInput = (e: Event) => {
     }
   }
 }
-
 </script>
 
 <template>
-  <input ref="inputPhone" @input="handleInput" @change="handleChange" type="text" :placeholder="props.format" />
+  <input
+    ref="inputPhone"
+    type="text"
+    :placeholder="props.format"
+    @input="handleInput"
+    @change="handleChange"
+  >
 </template>
 
 <style lang="scss" scoped>

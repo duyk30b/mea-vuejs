@@ -1,12 +1,15 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{
-  value: number,
-  prepend?: string,
-  append?: string,
-  textAlign?: 'left' | 'right'
-  disabled?: boolean,
-  placeholder?: string,
-}>(), { value: 0, disabled: false, placeholder: '' })
+const props = withDefaults(
+  defineProps<{
+    value: number
+    prepend?: string
+    append?: string
+    textAlign?: 'left' | 'right'
+    disabled?: boolean
+    placeholder?: string
+  }>(),
+  { value: 0, prepend: '', append: '', textAlign: 'left', disabled: false, placeholder: '' }
+)
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
 const handleInput = (e: Event) => {
@@ -14,16 +17,35 @@ const handleInput = (e: Event) => {
   const number = Number(target.value.replace(/,/g, '')) || 0
   emit('update:value', number)
 }
+
+const handleFocus = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    target.select()
+  }
+}
 </script>
 
 <template>
-  <div :class="{ 'input-money': true, disabled: disabled }">
-    <div v-if="prepend" class="prepend">{{ prepend }}</div>
-    <div class="input-area">
-      <input ref="inputMoney" :style="{ textAlign }" :value="value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-        @input="handleInput" type="tel" :placeholder="placeholder" :disabled="disabled" />
+  <div :class="{ 'input-money': true, 'disabled': disabled }">
+    <div v-if="prepend" class="prepend">
+      {{ prepend }}
     </div>
-    <div v-if="append" class="append">{{ append }}</div>
+    <div class="input-area">
+      <input
+        ref="inputMoney"
+        :style="{ textAlign }"
+        :value="value != 0 ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''"
+        type="tel"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        @input="handleInput"
+        @focus="handleFocus"
+      >
+    </div>
+    <div v-if="append" class="append">
+      {{ append }}
+    </div>
   </div>
 </template>
 

@@ -1,12 +1,23 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-mask" @mousedown.self="closeModal">
-        <div class="modal-container" :style="style">
+      <div
+        v-if="show"
+        class="modal-mask"
+        @mousedown.self="closeModal"
+      >
+        <div
+          class="modal-container"
+          :style="style"
+        >
           <slot>
-            <div style="padding: 20px; background-color: #fff;">
+            <div style="padding: 20px; background-color: #fff">
               <div>Modal Header</div>
-              <div><button @click="closeModal">Close</button></div>
+              <div>
+                <button @click="closeModal">
+                  Close
+                </button>
+              </div>
             </div>
           </slot>
         </div>
@@ -26,6 +37,7 @@ export default {
       default: () => ({ width: '800px' }),
     },
   },
+  emits: ['update:show'],
   methods: {
     closeModal() {
       this.$emit('update:show', false)

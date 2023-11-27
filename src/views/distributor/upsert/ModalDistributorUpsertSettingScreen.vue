@@ -10,7 +10,9 @@ import { ref } from 'vue'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useOrganizationStore()
-const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_UPSERT>(JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_UPSERT)))
+const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_UPSERT>(
+  JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_UPSERT))
+)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -46,9 +48,18 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede;">
-        <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
-        <div style="font-size: 1.2rem;" class="px-4 cursor-pointer" @click="handleClose">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div class="flex-1 text-lg font-medium">
+          Cài đặt hiển thị
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="handleClose"
+        >
           <CloseOutlined />
         </div>
       </div>
@@ -87,7 +98,10 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" @click="handleSave">
+          <a-button
+            type="primary"
+            @click="handleSave"
+          >
             <template #icon>
               <PlusOutlined />
             </template>

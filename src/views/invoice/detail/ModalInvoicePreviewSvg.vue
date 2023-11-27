@@ -59,10 +59,18 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="820px" title="Ảnh hóa đơn" :afterClose="refreshModal">
+  <a-modal
+    v-model:visible="showModal"
+    width="820px"
+    title="Ảnh hóa đơn"
+    :afterClose="refreshModal"
+  >
     <template #footer>
       <div class="flex justify-between px-2">
-        <a-button type="primary" @click="startDownloadImage">
+        <a-button
+          type="primary"
+          @click="startDownloadImage"
+        >
           <template #icon>
             <DownloadOutlined />
           </template>
@@ -70,20 +78,37 @@ defineExpose({ openModal })
         </a-button>
 
         <div>
-          <a-button @click="showModal = false">Đóng</a-button>
+          <a-button @click="showModal = false">
+            Đóng
+          </a-button>
         </div>
       </div>
     </template>
     <div style="width: 1000px; position: fixed; top: 0; left: 200vw">
-      <svg xmlns="http://www.w3.org/2000/svg" id="svg-demo" :width="width" :height="height">
-        <foreignObject width="100%" height="100%">
-          <div id="svg-demo-content-div" v-html="svgDivHtml" xmlns="http://www.w3.org/1999/xhtml"
-            style="height: 100%; overflow: auto"></div>
+      <svg
+        id="svg-demo"
+        xmlns="http://www.w3.org/2000/svg"
+        :width="width"
+        :height="height"
+      >
+        <foreignObject
+          width="100%"
+          height="100%"
+        >
+          <div
+            id="svg-demo-content-div"
+            xmlns="http://www.w3.org/1999/xhtml"
+            style="height: 100%; overflow: auto"
+            v-html="svgDivHtml"
+          />
         </foreignObject>
       </svg>
     </div>
-    <div style="display: flex; justify-content: center;">
-      <img id="img-demo" style="object-fit: contain" />
+    <div style="display: flex; justify-content: center">
+      <img
+        id="img-demo"
+        style="object-fit: contain"
+      >
     </div>
   </a-modal>
 </template>

@@ -32,12 +32,14 @@ export const useDistributorStore = defineStore('distributor-store', {
       return (params: DistributorPaginationQuery) => {
         const { filter, sort, page, limit } = params
         const response = state.distributorList.filter((distributor) => {
-          if (filter?.is_active && String(distributor.isActive) !== filter?.is_active) {
+          if (filter?.isActive && String(distributor.isActive) !== filter?.isActive) {
             return false
           }
-          if (filter?.search_text) {
-            if (!customFilter(distributor.fullName, filter?.search_text, 2)
-              && !customFilter((distributor.phone || ''), filter?.search_text, 2)) {
+          if (filter?.searchText) {
+            if (
+              !customFilter(distributor.fullName, filter?.searchText, 2) &&
+              !customFilter(distributor.phone || '', filter?.searchText, 2)
+            ) {
               return false
             }
           }
@@ -52,9 +54,9 @@ export const useDistributorStore = defineStore('distributor-store', {
             if (sort?.debt === 'ASC') return a.debt < b.debt ? -1 : 1
             if (sort?.debt === 'DESC') return a.debt > b.debt ? -1 : 1
           }
-          if (sort?.full_name) {
-            if (sort?.full_name === 'ASC') return a.fullName < b.fullName ? -1 : 1
-            if (sort?.full_name === 'DESC') return a.fullName > b.fullName ? -1 : 1
+          if (sort?.fullName) {
+            if (sort?.fullName === 'ASC') return a.fullName < b.fullName ? -1 : 1
+            if (sort?.fullName === 'DESC') return a.fullName > b.fullName ? -1 : 1
           }
           return a.id > b.id ? -1 : 1
         })
@@ -73,8 +75,7 @@ export const useDistributorStore = defineStore('distributor-store', {
       return (text: string) => {
         return state.distributorList.filter((item) => {
           if (!item.isActive) return false
-          if (!customFilter(item.fullName, text, 2)
-            && !customFilter((item.phone || ''), text, 2)) {
+          if (!customFilter(item.fullName, text, 2) && !customFilter(item.phone || '', text, 2)) {
             return false
           }
           return true

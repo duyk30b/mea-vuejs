@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import VueModal from '@/common/VueModal.vue'
 import { InputMoney } from '@/common/vue-form'
 import { useProcedureStore } from '@/modules/procedure'
 import { Procedure } from '@/modules/procedure/procedure.model'
 import { ProcedureService } from '@/modules/procedure/procedure.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
+import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
@@ -41,7 +43,7 @@ const openModal = async (p?: Procedure) => {
   // }
 }
 
-const refreshModal = () => {
+const closeModal = () => {
   procedure.value = Procedure.blank()
   // consumableList.value = []
   showModal.value = false
@@ -95,31 +97,75 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" :title="procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ Mới'"
-    :confirm-loading="saveLoading" :afterClose="refreshModal" @ok="handleSave">
-    <div>
-      <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-        <div class="w-[100px] flex-none">Tên dịch vụ</div>
-        <a-input v-model:value="procedure.name" class="flex-auto"></a-input>
-      </div>
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div class="w-[100px] flex-none">Nhóm</div>
-        <a-select v-model:value="procedure.group" :filter-option="filterOption" class="flex-auto" show-search
-          :options="Object.entries(organizationStore.PROCEDURE_GROUP).map(([value, label]) => ({ value, label }))">
-        </a-select>
-      </div>
-      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none;">Giá dịch vụ</div>
-        <div style="flex:1">
-          <InputMoney v-model:value="procedure.price" :min="0" style="width: 100%;" />
+  <VueModal v-model:show="showModal">
+    <div class="bg-white">
+      <div
+        class="pl-4 py-4 flex items-center"
+        style="border-bottom: 1px solid #dedede"
+      >
+        <div class="flex-1 text-lg font-medium">
+          {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
+        </div>
+        <div
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="closeModal"
+        >
+          <CloseOutlined />
         </div>
       </div>
-      <div class="mt-4 flex items-center">
-        <div class="w-[100px] flex-none">Active</div>
-        <a-switch v-model:checked="procedure.isActive" />
-      </div>
 
-      <!-- <div class="mt-10 font-bold">
+      <div class="p-4">
+        <div
+          class="flex"
+          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+        >
+          <div class="w-[100px] flex-none">
+            Tên dịch vụ
+          </div>
+          <a-input
+            v-model:value="procedure.name"
+            class="flex-auto"
+          />
+        </div>
+        <div
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div class="w-[100px] flex-none">
+            Nhóm
+          </div>
+          <a-select
+            v-model:value="procedure.group"
+            :filter-option="filterOption"
+            class="flex-auto"
+            show-search
+            :options="Object.entries(organizationStore.PROCEDURE_GROUP).map(([value, label]) => ({ value, label }))"
+          />
+        </div>
+        <div
+          class="mt-3 flex"
+          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+        >
+          <div style="width: 100px; flex: none">
+            Giá dịch vụ
+          </div>
+          <div style="flex: 1">
+            <InputMoney
+              v-model:value="procedure.price"
+              :min="0"
+              style="width: 100%"
+            />
+          </div>
+        </div>
+        <div class="mt-4 flex items-center">
+          <div class="w-[100px] flex-none">
+            Active
+          </div>
+          <a-switch v-model:checked="procedure.isActive" />
+        </div>
+
+        <!-- <div class="mt-10 font-bold">
         <DoubleRightOutlined /> Vật tư tiêu hao khi sử dụng dịch vụ
       </div>
       <div class="mt-4">
@@ -169,6 +215,28 @@ defineExpose({ openModal })
           </table>
         </div>
       </div> -->
+      </div>
+
+      <div class="p-4">
+        <div class="flex justify-end gap-4">
+          <a-button @click="closeModal">
+            <template #icon>
+              <CloseOutlined />
+            </template>
+            Hủy bỏ
+          </a-button>
+          <a-button
+            type="primary"
+            :loading="saveLoading"
+            @click="handleSave"
+          >
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            Lưu lại
+          </a-button>
+        </div>
+      </div>
     </div>
-  </a-modal>
+  </VueModal>
 </template>

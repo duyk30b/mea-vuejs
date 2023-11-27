@@ -33,7 +33,7 @@ const receiptItem = ref<ReceiptItem>(new ReceiptItem())
 
 onMounted(async () => {
   window.addEventListener('keydown', handleDocumentKeyup)
-  await productStore.fetchAll()
+  await productStore.fetchAll({ relation: { productBatches: false } })
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -50,26 +50,30 @@ const searchingProduct = async (text: string) => {
   }
 }
 
-const selectProduct = async (p: Product) => {
-  const snapProduct = Product.fromInstance(p)
-  snapProduct.productBatches = await ProductBatchService.list({
-    filter: {
-      product_id: snapProduct.id,
-      is_active: 'true',
-      overdue: false,
-    },
-  })
+const selectProduct = async (data?: Product) => {
+  if (data) {
+    const snapProduct = Product.fromInstance(data)
+    snapProduct.productBatches = await ProductBatchService.list({
+      filter: {
+        productId: snapProduct.id,
+        isActive: true,
+        // expiryDate: ['>', new Date().toISOString()],
+      },
+    })
 
-  product.value = snapProduct
+    product.value = snapProduct
 
-  const newBatch = ProductBatch.blank()
-  newBatch.productId = snapProduct.id
-  product.value.productBatches.unshift(newBatch)
+    const newBatch = ProductBatch.blank()
+    newBatch.productId = snapProduct.id
+    product.value.productBatches.unshift(newBatch)
 
-  let defaultBatch = snapProduct.productBatches.find((i) => !i.batch && !i.expiryDate)
-  selectProductBatch(defaultBatch!)
+    let defaultBatch = snapProduct.productBatches.find((i) => !i.batch && !i.expiryDate)
+    selectProductBatch(defaultBatch!)
 
-  productList.value = []
+    productList.value = []
+  } else {
+    product.value = Product.blank()
+  }
 }
 
 const handleChangeSelectProductBatch = (value: number) => {
@@ -115,118 +119,186 @@ const addReceiptItem = async () => {
   // inputSearchProduct.value?.focus()
   productList.value = []
 }
-
 </script>
 
 <template>
-  <ModalProductUpsert ref="modalProductUpsert" @success="selectProduct" />
+  <ModalProductUpsert
+    ref="modalProductUpsert"
+    @success="selectProduct"
+  />
   <div>
     <div class="flex justify-between">
       <span>Tên sản phẩm</span>
       <a @click="modalProductUpsert?.openModal()">Thêm sản phẩm mới</a>
     </div>
-    <InputOptions ref="inputSearchProduct" :options="productList" :searchText="product.brandName"
-      @selectItem="selectProduct" @update:searchText="searchingProduct" :maxHeight="260"
-      placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm">
-      <template v-slot:each="{ item: { brandName, substance, unit, quantity } }">
-        <div> <b>{{ brandName }}</b> - {{ quantity }} {{ unit?.[0].name }}</div>
-        <div> {{ substance }} </div>
-      </template>
-    </InputOptions>
+    <div style="height: 40px">
+      <InputOptions
+        ref="inputSearchProduct"
+        :options="productList"
+        :searchText="product.brandName"
+        :maxHeight="260"
+        placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
+        @selectItem="selectProduct"
+        @update:searchText="searchingProduct"
+      >
+        <template #each="{ item: { brandName, substance, unit, quantity } }">
+          <div>
+            <b>{{ brandName }}</b> - {{ quantity }} {{ unit?.[0].name }}
+          </div>
+          <div>{{ substance }}</div>
+        </template>
+      </InputOptions>
+    </div>
   </div>
 
   <div class="mt-2 flex gap-4">
-    <div style="flex: 1; flex-basis: 100%;">
+    <div style="flex: 1; flex-basis: 100%">
       <div>Nhập vào lô hàng</div>
-      <a-select :value="receiptItem.productBatchId" :options="product.productBatches.map((i: ProductBatch) => ({
-        value: i.id,
-        label: i.id === 0 ? 'Lô mới' : `Lô: ${i.batch} ${timeToText(i.expiryDate, 'DD/MM/YYYY')}`
-          + ` - Tồn: ${i.quantity} ${product.unit?.[0].name}`
-          + ` - Nhập: ${formatMoney(i.costPrice)}`
-          + ` - Sỉ: ${formatMoney(i.wholesalePrice)}`
-          + ` - Lẻ: ${formatMoney(i.retailPrice)}`
-      }))" @change="handleChangeSelectProductBatch" :disabled="product.productBatches.length == 1" class="w-full"
-        placeholder="">
-      </a-select>
+      <a-select
+        :value="receiptItem.productBatchId"
+        :options="
+          product.productBatches.map((i: ProductBatch) => ({
+            value: i.id,
+            label:
+              i.id === 0
+                ? 'Lô mới'
+                : `Lô: ${i.batch} ${timeToText(i.expiryDate, 'DD/MM/YYYY')}` +
+                  ` - Tồn: ${i.quantity} ${product.unit?.[0].name}` +
+                  ` - Nhập: ${formatMoney(i.costPrice)}` +
+                  ` - Sỉ: ${formatMoney(i.wholesalePrice)}` +
+                  ` - Lẻ: ${formatMoney(i.retailPrice)}`,
+          }))
+        "
+        :disabled="product.productBatches.length == 1"
+        class="w-full"
+        placeholder=""
+        @change="handleChangeSelectProductBatch"
+      />
     </div>
   </div>
 
   <div class="mt-2 flex flex-wrap gap-4">
-    <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch" style="flex: 1; flex-basis: 280px;">
+    <div
+      v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch"
+      style="flex: 1; flex-basis: 280px"
+    >
       <div>Số lô</div>
-      <a-input v-model:value="productBatch.batch" class="w-full" :disabled="!!productBatch.id"></a-input>
+      <a-input
+        v-model:value="productBatch.batch"
+        class="w-full"
+        :disabled="!!productBatch.id"
+      />
     </div>
-    <div style="flex: 1; flex-basis: 280px;">
+    <div style="flex: 1; flex-basis: 280px">
       <div>Hạn sử dụng</div>
-      <InputDate v-model:value="productBatch.expiryDate" typeParser="number" class="w-full"
-        :disabled="!!productBatch.id" />
+      <InputDate
+        v-model:value="productBatch.expiryDate"
+        typeParser="number"
+        class="w-full"
+        :disabled="!!productBatch.id"
+      />
     </div>
-    <div style="flex: 1; flex-basis: 280px;">
-      <div>Số lượng
+    <div style="flex: 1; flex-basis: 280px">
+      <div>
+        Số lượng
         <span v-if="receiptItem.unit.rate !== 1">
-          (Quy đổi: <b>{{ receiptItem.quantity }}</b>
-          {{ product.unit.find(i => i.rate === 1)?.name }})
+          (Quy đổi: <b>{{ receiptItem.quantity }}</b> {{ product.unit.find((i) => i.rate === 1)?.name }})
         </span>
       </div>
       <div class="flex">
-        <a-select :value="receiptItem.unit.rate" @change="handleChangeSelectUnit"
-          :disabled="(productBatch.product?.unit?.length || 0) <= 1" style="flex-basis: 100px">
-          <a-select-option v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]" :key="index"
-            :value="item.rate">
+        <a-select
+          :value="receiptItem.unit.rate"
+          :disabled="(productBatch.product?.unit?.length || 0) <= 1"
+          style="flex-basis: 100px"
+          @change="handleChangeSelectUnit"
+        >
+          <a-select-option
+            v-for="(item, index) in productBatch.product?.unit || [{ name: '', rate: 1 }]"
+            :key="index"
+            :value="item.rate"
+          >
             {{ item.name }}
           </a-select-option>
         </a-select>
         <div class="flex-1">
-          <InputNumber :value="receiptItem.quantity / receiptItem.unit.rate"
-            @update:value="(e: number) => receiptItem.quantity = e * receiptItem.unit.rate" />
+          <InputNumber
+            :value="receiptItem.quantity / receiptItem.unit.rate"
+            @update:value="(e: number) => (receiptItem.quantity = e * receiptItem.unit.rate)"
+          />
         </div>
       </div>
     </div>
 
-    <div style="flex: 1; flex-basis: 280px;">
-      <div>Giá nhập
+    <div style="flex: 1; flex-basis: 280px">
+      <div>
+        Giá nhập
         <span v-if="receiptItem.unit.rate !== 1">
           (Quy đổi: <b>{{ formatMoney(productBatch.costPrice) }} / </b>
-          {{ product.unit.find(i => i.rate === 1)?.name }})
+          {{ product.unit.find((i) => i.rate === 1)?.name }})
         </span>
       </div>
       <div>
-        <InputMoney :value="productBatch.costPrice * receiptItem.unit.rate"
-          @update:value="(e: number) => productBatch.costPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
-          :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+        <InputMoney
+          :value="productBatch.costPrice * receiptItem.unit.rate"
+          style="width: 100%"
+          :min="0"
+          :disabled="!!productBatch.id"
+          :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''"
+          @update:value="(e: number) => (productBatch.costPrice = e / receiptItem.unit.rate)"
+        />
       </div>
     </div>
-    <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
-      style="flex: 1; flex-basis: 280px;">
-      <div>Giá bán sỉ
+    <div
+      v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
+      style="flex: 1; flex-basis: 280px"
+    >
+      <div>
+        Giá bán sỉ
         <span v-if="receiptItem.unit.rate !== 1">
           (Quy đổi: <b>{{ formatMoney(productBatch.wholesalePrice) }} / </b>
-          {{ product.unit.find(i => i.rate === 1)?.name }})
+          {{ product.unit.find((i) => i.rate === 1)?.name }})
         </span>
       </div>
       <div>
-        <InputMoney :value="productBatch.wholesalePrice * receiptItem.unit.rate"
-          @update:value="(e: any) => productBatch.wholesalePrice = e / receiptItem.unit.rate" style="width: 100%;"
-          :min="0" :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+        <InputMoney
+          :value="productBatch.wholesalePrice * receiptItem.unit.rate"
+          style="width: 100%"
+          :min="0"
+          :disabled="!!productBatch.id"
+          :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''"
+          @update:value="(e: any) => (productBatch.wholesalePrice = e / receiptItem.unit.rate)"
+        />
       </div>
     </div>
-    <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice" style="flex: 1; flex-basis: 280px;">
-      <div>Giá bán lẻ
+    <div
+      v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice"
+      style="flex: 1; flex-basis: 280px"
+    >
+      <div>
+        Giá bán lẻ
         <span v-if="receiptItem.unit.rate !== 1">
           (Quy đổi: <b>{{ formatMoney(productBatch.retailPrice) }} / </b>
-          {{ product.unit.find(i => i.rate === 1)?.name }})
+          {{ product.unit.find((i) => i.rate === 1)?.name }})
         </span>
       </div>
       <div>
-        <InputMoney :value="productBatch.retailPrice * receiptItem.unit.rate"
-          @update:value="(e: any) => productBatch.retailPrice = e / receiptItem.unit.rate" style="width: 100%;" :min="0"
-          :disabled="!!productBatch.id" :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''" />
+        <InputMoney
+          :value="productBatch.retailPrice * receiptItem.unit.rate"
+          style="width: 100%"
+          :min="0"
+          :disabled="!!productBatch.id"
+          :prepend="receiptItem.unit.rate !== 1 ? receiptItem.unit.name : ''"
+          @update:value="(e: any) => (productBatch.retailPrice = e / receiptItem.unit.rate)"
+        />
       </div>
     </div>
   </div>
 
   <div class="mt-4 text-center">
-    <a-button type="primary" @click="addReceiptItem">
+    <a-button
+      type="primary"
+      @click="addReceiptItem"
+    >
       <template #icon>
         <PlusOutlined />
       </template>

@@ -1,7 +1,8 @@
 import { customFilter } from '@/utils'
 import { defineStore } from 'pinia'
 import type { Customer } from './customer.model'
-import { CustomerService, type CustomerPaginationQuery } from './customer.service'
+import { CustomerService } from './customer.service'
+import type { CustomerPaginationQuery } from './customer.dto'
 
 export const useCustomerStore = defineStore('customer-store', {
   state: () => {
@@ -32,12 +33,14 @@ export const useCustomerStore = defineStore('customer-store', {
       return (params: CustomerPaginationQuery) => {
         const { filter, sort, page, limit } = params
         const response = state.customerList.filter((customer) => {
-          if (filter?.is_active && String(customer.isActive) !== filter?.is_active) {
+          if (filter?.isActive != null && customer.isActive !== filter?.isActive) {
             return false
           }
-          if (filter?.search_text) {
-            if (!customFilter(customer.fullName, filter?.search_text, 2)
-              && !customFilter((customer.phone || ''), filter?.search_text, 2)) {
+          if (filter?.searchText) {
+            if (
+              !customFilter(customer.fullName, filter?.searchText, 2) &&
+              !customFilter(customer.phone || '', filter?.searchText, 2)
+            ) {
               return false
             }
           }
@@ -52,9 +55,9 @@ export const useCustomerStore = defineStore('customer-store', {
             if (sort?.debt === 'ASC') return a.debt < b.debt ? -1 : 1
             if (sort?.debt === 'DESC') return a.debt > b.debt ? -1 : 1
           }
-          if (sort?.full_name) {
-            if (sort?.full_name === 'ASC') return a.fullName < b.fullName ? -1 : 1
-            if (sort?.full_name === 'DESC') return a.fullName > b.fullName ? -1 : 1
+          if (sort?.fullName) {
+            if (sort?.fullName === 'ASC') return a.fullName < b.fullName ? -1 : 1
+            if (sort?.fullName === 'DESC') return a.fullName > b.fullName ? -1 : 1
           }
           return a.id > b.id ? -1 : 1
         })
@@ -73,8 +76,7 @@ export const useCustomerStore = defineStore('customer-store', {
       return (text: string) => {
         return state.customerList.filter((item) => {
           if (!item.isActive) return false
-          if (!customFilter(item.fullName, text, 2)
-            && !customFilter((item.phone || ''), text, 2)) {
+          if (!customFilter(item.fullName, text, 2) && !customFilter(item.phone || '', text, 2)) {
             return false
           }
           return true

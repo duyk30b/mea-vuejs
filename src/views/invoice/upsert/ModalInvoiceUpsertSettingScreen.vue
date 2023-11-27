@@ -42,8 +42,14 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal v-model:visible="showModal" width="900px" title="Cài đặt hiển thị" :confirm-loading="saveLoading"
-    :afterClose="refreshModal" @ok="handleSave">
+  <a-modal
+    v-model:visible="showModal"
+    width="900px"
+    title="Cài đặt hiển thị"
+    :confirm-loading="saveLoading"
+    :afterClose="refreshModal"
+    @ok="handleSave"
+  >
     <div class="table-wrapper">
       <table class="screen-setting">
         <thead>
@@ -181,8 +187,15 @@ defineExpose({ openModal })
         <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.other.expenses">
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.expense">
                 Hiển thị chi phí
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.profit">
+                Hiển thị tiền lãi
               </a-checkbox>
             </td>
           </tr>

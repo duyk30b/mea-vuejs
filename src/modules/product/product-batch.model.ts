@@ -3,67 +3,69 @@ import { BaseModel } from '../base.model'
 import { Product } from './product.model'
 
 export class ProductBatch extends BaseModel {
-	@Expose({ name: 'product_id', groups: ['CREATE'] })
-	productId: number
+  @Expose({ groups: ['ALL', 'CREATE'] })
+  productId: number
 
-	@Expose({ name: 'batch' })
-	batch: string = ''                                           // Lô sản phẩm
+  @Expose()
+  batch: string = '' // Lô sản phẩm
 
-	@Expose({ name: 'expiry_date' })
-	expiryDate?: number
+  @Expose()
+  expiryDate?: number
 
-	@Expose({ name: 'cost_price', groups: ['CREATE'] })
-	costPrice: number = 0                                        // Giá nhập
+  @Expose({ groups: ['ALL', 'CREATE'] })
+  costPrice: number = 0 // Giá nhập
 
-	@Expose({ name: 'quantity', toClassOnly: true })
-	quantity: number = 0
+  @Expose({ toClassOnly: true })
+  quantity: number = 0
 
-	@Expose({ name: 'wholesale_price' })
-	wholesalePrice: number = 0                                   // Giá bán sỉ
+  @Expose()
+  wholesalePrice: number = 0 // Giá bán sỉ
 
-	@Expose({ name: 'retail_price' })
-	retailPrice: number = 0                                      // Giá bán lẻ
+  @Expose()
+  retailPrice: number = 0 // Giá bán lẻ
 
-	@Expose({ name: 'is_active' })
-	isActive: boolean = true                            // Trạng thái
+  @Expose()
+  isActive: boolean = true // Trạng thái
 
-	@Expose({ name: 'product', toClassOnly: true })
-	@Type(() => Product)
-	product?: Product
+  @Expose({ toClassOnly: true })
+  @Type(() => Product)
+  product?: Product
 
-	static blank() {
-		const batch = new ProductBatch()
-		batch.id = 0
-		return batch
-	}
+  static blank() {
+    const batch = new ProductBatch()
+    batch.id = 0
+    return batch
+  }
 
-	static fromPlain(plain: Record<string, any>): ProductBatch {
-		return plainToInstance(ProductBatch, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static fromPlain(plain: Record<string, any>): ProductBatch {
+    return plainToInstance(ProductBatch, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	static fromPlains(plains: Record<string, any>[]): ProductBatch[] {
-		return plainToInstance(ProductBatch, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static fromPlains(plains: Record<string, any>[]): ProductBatch[] {
+    return plainToInstance(ProductBatch, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	static fromInstance(instance: ProductBatch): ProductBatch {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  static fromInstance(instance: ProductBatch): ProductBatch {
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      ignoreDecorators: true,
+    })
+  }
 
-	static toPlain(instance: ProductBatch, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			groups: [type],
-		})
-	}
+  static toPlain(instance: ProductBatch, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
 }

@@ -2,63 +2,65 @@ import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'cl
 import { BaseModel } from '../base.model'
 
 export class Distributor extends BaseModel {
-	@Expose({ name: 'full_name' })
-	fullName: string = ''
+  @Expose()
+  fullName: string = ''
 
-	@Expose({ name: 'phone' })
-	phone?: string
+  @Expose()
+  phone?: string
 
-	@Expose({ name: 'address_province' })
-	addressProvince: string
+  @Expose()
+  addressProvince: string
 
-	@Expose({ name: 'address_district' })
-	addressDistrict: string
+  @Expose()
+  addressDistrict: string
 
-	@Expose({ name: 'address_ward' })
-	addressWard: string
+  @Expose()
+  addressWard: string
 
-	@Expose({ name: 'address_street' })
-	addressStreet: string
+  @Expose()
+  addressStreet: string
 
-	@Expose({ name: 'debt', toClassOnly: true })
-	debt: number = 0
+  @Expose({ toClassOnly: true })
+  debt: number = 0
 
-	@Expose({ name: 'is_active' })
-	isActive: boolean = true                            // Trạng thái
+  @Expose()
+  isActive: boolean = true // Trạng thái
 
-	@Expose({ name: 'note' })
-	note: string
+  @Expose()
+  note: string
 
-	static blank(): Distributor {
-		return new Distributor()
-	}
+  static blank(): Distributor {
+    return new Distributor()
+  }
 
-	static fromPlain(plain: Record<string, any>): Distributor {
-		return plainToInstance(Distributor, plain, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static fromPlain(plain: Record<string, any>): Distributor {
+    return plainToInstance(Distributor, plain, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	static fromPlains(plains: Record<string, any>[]): Distributor[] {
-		return plainToInstance(Distributor, plains, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static fromPlains(plains: Record<string, any>[]): Distributor[] {
+    return plainToInstance(Distributor, plains, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['ALL'],
+    })
+  }
 
-	static fromInstance(instance: Distributor): Distributor {
-		return instanceToInstance(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-			ignoreDecorators: true,
-		})
-	}
+  static fromInstance(instance: Distributor): Distributor {
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      ignoreDecorators: true,
+    })
+  }
 
-	static toPlain(instance: Distributor): Record<string, any> {
-		return instanceToPlain(instance, {
-			exposeUnsetFields: false,
-			excludeExtraneousValues: true,
-		})
-	}
+  static toPlain(instance: Distributor): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+    })
+  }
 }

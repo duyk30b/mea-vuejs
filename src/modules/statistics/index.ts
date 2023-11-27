@@ -1,1 +1,1 @@
-export * from './statistics.service'
+export * from './statistic.service'
