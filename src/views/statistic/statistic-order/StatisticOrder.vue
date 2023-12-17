@@ -102,7 +102,11 @@ const startFetchReceipt = async (fromTime: Date, toTime: Date, timeType: 'date' 
   ]
 }
 
-const startFetchSurchargeAndExpense = async (fromTime: Date, toTime: Date, timeType: 'date' | 'month') => {
+const startFetchSurchargeAndExpense = async (
+  fromTime: Date,
+  toTime: Date,
+  timeType: 'date' | 'month'
+) => {
   const data = await StatisticService.sumInvoiceSurchargeAndExpense({
     fromTime: fromTime.toISOString(),
     toTime: toTime.toISOString(),
@@ -259,22 +263,16 @@ onMounted(async () => await startFetchData())
           <div>
             <span style="font-size: 18px; font-weight: 500">Số hóa đơn: {{ invoiceCount }} </span>
           </div>
-          <Bar
-            v-if="loaded"
-            :data="invoiceData"
-            :options="(options as any)"
-          />
+          <Bar v-if="loaded" :data="invoiceData" :options="options as any" />
         </div>
 
         <div style="flex: 1; height: 500px">
           <div>
-            <span style="font-size: 18px; font-weight: 500">Số phiếu nhập: {{ receiptCount }} </span>
+            <span style="font-size: 18px; font-weight: 500"
+              >Số phiếu nhập: {{ receiptCount }}
+            </span>
           </div>
-          <Bar
-            v-if="loaded"
-            :data="receiptData"
-            :options="(options as any)"
-          />
+          <Bar v-if="loaded" :data="receiptData" :options="options as any" />
         </div>
       </div>
 
@@ -283,22 +281,14 @@ onMounted(async () => await startFetchData())
           <div>
             <span style="font-size: 18px; font-weight: 500"> Phụ phí </span>
           </div>
-          <Bar
-            v-if="loaded"
-            :data="surchargeData"
-            :options="(options as any)"
-          />
+          <Bar v-if="loaded" :data="surchargeData" :options="options as any" />
         </div>
 
         <div style="flex: 1; height: 500px">
           <div>
             <span style="font-size: 18px; font-weight: 500"> Chi phí </span>
           </div>
-          <Bar
-            v-if="loaded"
-            :data="expenseData"
-            :options="(options as any)"
-          />
+          <Bar v-if="loaded" :data="expenseData" :options="options as any" />
         </div>
       </div>
     </div>

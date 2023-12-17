@@ -30,7 +30,12 @@ const options: ChartOptions = {
           const characterLimit = 12
           const label = this.getLabelForValue(value as number)
           if (label.length >= characterLimit) {
-            return label.slice(0, label.length).substring(0, characterLimit - 1).trim() + '...'
+            return (
+              label
+                .slice(0, label.length)
+                .substring(0, characterLimit - 1)
+                .trim() + '...'
+            )
           }
           return label
         },
@@ -90,7 +95,11 @@ const startFetchHighActualMoney = async () => {
     },
   ]
   barData.labels.splice(0, data.length, ...data.map((i) => `${i.procedureName} (${i.sumQuantity})`))
-  barData.datasets[0].data.splice(0, data.length, ...data.map((i) => i.sumActualMoney / moneyDivision))
+  barData.datasets[0].data.splice(
+    0,
+    data.length,
+    ...data.map((i) => i.sumActualMoney / moneyDivision)
+  )
 }
 
 const startFetchData = async () => {
@@ -122,10 +131,7 @@ onBeforeMount(async () => await startFetchData())
 </script>
 
 <template>
-  <div
-    class="flex flex-col"
-    style="height: 100%"
-  >
+  <div class="flex flex-col" style="height: 100%">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="flex justify-between items-center gap-2">
         <span style="font-size: 18px; font-weight: 500">Top dịch vụ:</span>
@@ -148,11 +154,7 @@ onBeforeMount(async () => await startFetchData())
       />
     </div>
     <div class="flex-1">
-      <Bar
-        v-if="loaded"
-        :data="barData"
-        :options="(options as any)"
-      />
+      <Bar v-if="loaded" :data="barData" :options="options as any" />
     </div>
   </div>
 </template>

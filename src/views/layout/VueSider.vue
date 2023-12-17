@@ -30,7 +30,7 @@ watchEffect(() => {
   }
 })
 
-const handleMenuClick = (menu: { key: string, keyPath: string[] }) => {
+const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
   // router.push({ name: menu.key, params: {} })
   openKeys.value = menu.keyPath
   emit('handleShowDrawer', false)
@@ -56,18 +56,12 @@ const handleMenuClick = (menu: { key: string, keyPath: string[] }) => {
       <template #icon>
         <RocketOutlined />
       </template>
-      <template #title>
-        Hóa đơn
-      </template>
+      <template #title> Hóa đơn </template>
       <a-menu-item key="InvoiceUpsert">
-        <router-link :to="{ name: 'InvoiceUpsert' }">
-          Tạo hóa đơn
-        </router-link>
+        <router-link :to="{ name: 'InvoiceUpsert' }"> Tạo hóa đơn </router-link>
       </a-menu-item>
       <a-menu-item key="InvoiceList">
-        <router-link :to="{ name: 'InvoiceList' }">
-          Danh sách hóa đơn
-        </router-link>
+        <router-link :to="{ name: 'InvoiceList' }"> Danh sách hóa đơn </router-link>
       </a-menu-item>
     </a-sub-menu>
     <!-- <a-menu-item key="ArrivalDiagnosis">
@@ -91,23 +85,15 @@ const handleMenuClick = (menu: { key: string, keyPath: string[] }) => {
       <template #icon>
         <ShopOutlined />
       </template>
-      <template #title>
-        Kho hàng
-      </template>
+      <template #title> Kho hàng </template>
       <a-menu-item key="Product">
-        <router-link :to="{ name: 'Product' }">
-          Tồn kho
-        </router-link>
+        <router-link :to="{ name: 'Product' }"> Tồn kho </router-link>
       </a-menu-item>
       <a-menu-item key="Receipt">
-        <router-link :to="{ name: 'Receipt' }">
-          Nhập hàng
-        </router-link>
+        <router-link :to="{ name: 'Receipt' }"> Nhập hàng </router-link>
       </a-menu-item>
       <a-menu-item key="Distributor">
-        <router-link :to="{ name: 'Distributor' }">
-          Nhà cung cấp
-        </router-link>
+        <router-link :to="{ name: 'Distributor' }"> Nhà cung cấp </router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-menu-item key="Procedure">
@@ -120,51 +106,33 @@ const handleMenuClick = (menu: { key: string, keyPath: string[] }) => {
       <template #icon>
         <AreaChartOutlined />
       </template>
-      <template #title>
-        Thống kê
-      </template>
+      <template #title> Thống kê </template>
       <a-menu-item key="StatisticProduct">
-        <router-link :to="{ name: 'StatisticProduct' }">
-          Báo cáo kho
-        </router-link>
+        <router-link :to="{ name: 'StatisticProduct' }"> Báo cáo kho </router-link>
       </a-menu-item>
       <a-menu-item key="StatisticProcedure">
-        <router-link :to="{ name: 'StatisticProcedure' }">
-          Báo cáo dịch vụ
-        </router-link>
+        <router-link :to="{ name: 'StatisticProcedure' }"> Báo cáo dịch vụ </router-link>
       </a-menu-item>
       <a-menu-item key="StatisticCustomer">
-        <router-link :to="{ name: 'StatisticCustomer' }">
-          Báo cáo khách hàng
-        </router-link>
+        <router-link :to="{ name: 'StatisticCustomer' }"> Báo cáo khách hàng </router-link>
       </a-menu-item>
       <a-menu-item key="StatisticOrder">
-        <router-link :to="{ name: 'StatisticOrder' }">
-          Báo cáo đơn hàng
-        </router-link>
+        <router-link :to="{ name: 'StatisticOrder' }"> Báo cáo đơn hàng </router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">
       <template #icon>
         <SettingOutlined />
       </template>
-      <template #title>
-        Hệ thống
-      </template>
+      <template #title> Hệ thống </template>
       <a-menu-item key="OrganizationInfo">
-        <router-link :to="{ name: 'OrganizationInfo' }">
-          Thông tin cơ sở
-        </router-link>
+        <router-link :to="{ name: 'OrganizationInfo' }"> Thông tin cơ sở </router-link>
       </a-menu-item>
       <a-menu-item key="EmployeeInfo">
-        <router-link :to="{ name: 'EmployeeInfo' }">
-          Thông tin cá nhân
-        </router-link>
+        <router-link :to="{ name: 'EmployeeInfo' }"> Thông tin cá nhân </router-link>
       </a-menu-item>
       <a-menu-item key="SystemSetting">
-        <router-link :to="{ name: 'SystemSetting' }">
-          Cài đặt
-        </router-link>
+        <router-link :to="{ name: 'SystemSetting' }"> Cài đặt </router-link>
       </a-menu-item>
     </a-sub-menu>
   </a-menu>

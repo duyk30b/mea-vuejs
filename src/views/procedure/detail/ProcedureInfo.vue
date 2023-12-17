@@ -2,7 +2,9 @@
 import { Procedure } from '@/modules/procedure'
 import { useOrganizationStore } from '@/store/organization.store'
 
-const props = withDefaults(defineProps<{ procedure: Procedure }>(), { procedure: () => Procedure.blank() })
+const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
+  procedure: () => Procedure.blank(),
+})
 
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore

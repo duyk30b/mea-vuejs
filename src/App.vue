@@ -17,9 +17,6 @@ userStore.$subscribe((mutation, state) => {
     <RouterView />
   </Suspense>
   <VueAlert />
-  <iframe
-    id="iframe-print"
-    style="display: none"
-  />
+  <iframe id="iframe-print" style="display: none" />
 </template>
 <style scoped></style>

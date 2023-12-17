@@ -10,6 +10,7 @@ import InvoiceStatusTag from '../InvoiceStatusTag.vue'
 import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
 import { InputOptions } from '@/common/vue-form'
 import { useCustomerStore, type Customer } from '@/modules/customer'
+import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 
 const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -53,8 +54,8 @@ const startFetchData = async () => {
       },
       sort: sortValue.value
         ? {
-          id: sortColumn.value === 'id' ? sortValue.value : undefined,
-        }
+            id: sortColumn.value === 'id' ? sortValue.value : undefined,
+          }
         : { id: 'DESC' },
     })
 
@@ -144,12 +145,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <ScheduleOutlined /> Danh sách hóa đơn
-      </div>
+      <div class="hidden md:block"><ScheduleOutlined /> Danh sách hóa đơn</div>
       <a-button
         type="primary"
-        @click="$router.push({ name: 'InvoiceUpsert', query: { mode: 'CREATE' } })"
+        @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
       >
         <template #icon>
           <PlusOutlined />
@@ -186,7 +185,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             @update:searchText="searchingCustomer"
           >
             <template
-              #each="{ item: { fullName, phone, addressProvince, addressDistrict, addressWard, birthday } }"
+              #each="{
+                item: { fullName, phone, addressProvince, addressDistrict, addressWard, birthday },
+              }"
             >
               <div>
                 <b>{{ fullName }}</b> - {{ phone }} - {{ timeToText(birthday, 'DD/MM/YYYY') }}
@@ -219,32 +220,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           placeholder="Tất cả"
           @change="handleSelectInvoiceStatus"
         >
-          <a-select-option :value="null">
-            Tất cả
-          </a-select-option>
-          <a-select-option :value="InvoiceStatus.Draft">
-            Nháp
-          </a-select-option>
-          <a-select-option :value="InvoiceStatus.AwaitingShipment">
-            Chờ gửi hàng
-          </a-select-option>
-          <a-select-option :value="InvoiceStatus.Debt">
-            Nợ
-          </a-select-option>
-          <a-select-option :value="InvoiceStatus.Success">
-            Hoàn thành
-          </a-select-option>
-          <a-select-option :value="InvoiceStatus.Refund">
-            Hoàn trả
-          </a-select-option>
+          <a-select-option :value="null"> Tất cả </a-select-option>
+          <a-select-option :value="InvoiceStatus.Draft"> Nháp </a-select-option>
+          <a-select-option :value="InvoiceStatus.AwaitingShipment"> Chờ gửi hàng </a-select-option>
+          <a-select-option :value="InvoiceStatus.Debt"> Nợ </a-select-option>
+          <a-select-option :value="InvoiceStatus.Success"> Hoàn thành </a-select-option>
+          <a-select-option :value="InvoiceStatus.Refund"> Hoàn trả </a-select-option>
         </a-select>
       </div>
     </div>
 
-    <div
-      v-if="isMobile"
-      class="page-main-list"
-    >
+    <div v-if="isMobile" class="page-main-list">
       <table class="table-mobile">
         <thead>
           <tr>
@@ -255,12 +241,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </thead>
         <tbody>
           <tr v-if="invoiceList.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
             v-for="(invoice, index) in invoiceList"
@@ -270,10 +251,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div class="font-medium text-justify">
                 {{ invoice.customer?.fullName }}
-                <a
-                  class="text-base"
-                  @click="modalCustomerDetail?.openModal(invoice.customer!)"
-                >
+                <a class="text-base" @click="modalCustomerDetail?.openModal(invoice.customer!)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -283,16 +261,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(invoice.revenue) }}</div>
-              <div
-                v-if="invoice.status === InvoiceStatus.Debt"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.AwaitingShipment"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>
@@ -314,17 +286,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div
-      v-else
-      class="page-main-table table-wrapper"
-    >
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('id')"
-            >
+            <th class="cursor-pointer" @click="changeSort('id')">
               Mã &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
@@ -348,17 +314,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </thead>
         <tbody>
           <tr v-if="invoiceList.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              No data
-            </td>
+            <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr
-            v-for="(invoice, index) in invoiceList"
-            :key="index"
-          >
+          <tr v-for="(invoice, index) in invoiceList" :key="index">
             <td class="text-center">
               <router-link :to="{ name: 'InvoiceDetail', params: { id: invoice.id } }">
                 IV{{ invoice.id }}
@@ -369,25 +327,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td>
               {{ invoice.customer?.fullName }}
-              <a
-                class="ml-1"
-                @click="modalCustomerDetail?.openModal(invoice.customer!)"
-              >
+              <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customer!)">
                 <FileSearchOutlined />
               </a>
             </td>
             <td class="text-right">
               <div>{{ formatMoney(invoice.revenue) }}</div>
-              <div
-                v-if="invoice.status === InvoiceStatus.Debt"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.AwaitingShipment"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>

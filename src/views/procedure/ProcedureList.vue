@@ -35,7 +35,7 @@ const total = ref(0)
 
 const searchText = ref('')
 const group = ref<string>()
-const isActive = ref<'true' | 'false' | ''>('true')
+const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'id' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -54,10 +54,10 @@ const startFetchData = async () => {
       },
       sort: sortValue.value
         ? {
-          name: sortColumn.value === 'name' ? sortValue.value : undefined,
-          id: sortColumn.value === 'id' ? sortValue.value : undefined,
-          price: sortColumn.value === 'price' ? sortValue.value : undefined,
-        }
+            name: sortColumn.value === 'name' ? sortValue.value : undefined,
+            id: sortColumn.value === 'id' ? sortValue.value : undefined,
+            price: sortColumn.value === 'price' ? sortValue.value : undefined,
+          }
         : { id: 'DESC' },
     })
     procedureList.value = response.data
@@ -111,7 +111,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalProcedureUpsertSuccess = async (newProcedure: Procedure, type: 'CREATE' | 'UPDATE') => {
+const handleModalProcedureUpsertSuccess = async (
+  newProcedure: Procedure,
+  type: 'CREATE' | 'UPDATE'
+) => {
   await startFetchData()
 }
 
@@ -126,22 +129,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalProcedureUpsert
-    ref="modalProcedureUpsert"
-    @success="handleModalProcedureUpsertSuccess"
-  />
+  <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
   <ModalSettingDataProcedure ref="modalSettingDataProcedure" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <NodeIndexOutlined />Danh sách dịch vụ
-      </div>
-      <a-button
-        type="primary"
-        @click="modalProcedureUpsert?.openModal()"
-      >
+      <div class="hidden md:block"><NodeIndexOutlined />Danh sách dịch vụ</div>
+      <a-button type="primary" @click="modalProcedureUpsert?.openModal()">
         <template #icon>
           <PlusOutlined />
         </template>
@@ -155,12 +150,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">
-              Cài đặt hiển thị
-            </a-menu-item>
-            <a-menu-item key="data-setting">
-              Cài đặt dữ liệu
-            </a-menu-item>
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -171,22 +162,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <a-input-group
-          compact
-          class="w-full"
-        >
+        <a-input-group compact class="w-full">
           <a-input
             :value="searchText"
             allow-clear
             style="width: calc(100% - 100px)"
             @input="handleInputSearchText"
           />
-          <a-button
-            type="primary"
-            class="w-[100px]"
-          >
-            Tìm kiếm
-          </a-button>
+          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
         </a-input-group>
         <!-- <span class="ant-input-affix-wrapper">
           <input :value="searchText" @input="handleInputSearchText" allow-clear enter-button class="ant-input w-full"
@@ -203,9 +186,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           placeholder="Tất cả"
           @change="startSearch"
         >
-          <a-select-option :value="undefined">
-            Tất cả
-          </a-select-option>
+          <a-select-option :value="undefined"> Tất cả </a-select-option>
           <a-select-option
             v-for="(text, value) in organizationStore.PROCEDURE_GROUP"
             :key="value"
@@ -225,22 +206,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           placeholder="Tất cả"
           @change="handleSelectStatus"
         >
-          <a-select-option value="">
-            Tất cả
-          </a-select-option>
-          <a-select-option value="true">
-            Active
-          </a-select-option>
-          <a-select-option value="false">
-            Inactive
-          </a-select-option>
+          <a-select-option value=""> Tất cả </a-select-option>
+          <a-select-option :value="1"> Active </a-select-option>
+          <a-select-option :value="0"> Inactive </a-select-option>
         </a-select>
       </div>
     </div>
-    <div
-      v-if="isMobile"
-      class="page-main-list"
-    >
+    <div v-if="isMobile" class="page-main-list">
       <div
         class="py-2 px-4 flex justify-between text-white font-bold"
         style="background-color: var(--color-table-thead-bg)"
@@ -269,10 +241,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               {{ procedure.name }}
             </div>
             <div v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.detail">
-              <a
-                class="text-base"
-                @click="modalProcedureDetail?.openModal(procedure)"
-              >
+              <a class="text-base" @click="modalProcedureDetail?.openModal(procedure)">
                 <FileSearchOutlined />
               </a>
             </div>
@@ -296,17 +265,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         />
       </div>
     </div>
-    <div
-      v-else
-      class="page-main-table table-wrapper"
-    >
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('id')"
-            >
+            <th class="cursor-pointer" @click="changeSort('id')">
               Mã DV &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
@@ -322,10 +285,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('name')"
-            >
+            <th class="cursor-pointer" @click="changeSort('name')">
               Tên thủ thuật &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'name'"
@@ -341,13 +301,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group">
-              Nhóm
-            </th>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('price')"
-            >
+            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
+            <th class="cursor-pointer" @click="changeSort('price')">
               Giá tiền&nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'price'"
@@ -363,30 +318,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status">
-              Trạng thái
-            </th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action">
-              Thao tác
-            </th>
+            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
+            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="procedureList.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              No data
-            </td>
+            <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr
-            v-for="(procedure, i) in procedureList"
-            :key="i"
-          >
-            <td class="text-center">
-              PD{{ procedure.id }}
-            </td>
+          <tr v-for="(procedure, i) in procedureList" :key="i">
+            <td class="text-center">PD{{ procedure.id }}</td>
             <td>
               {{ procedure.name }}
               <a
@@ -397,42 +338,27 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <FileSearchOutlined />
               </a>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
               {{ organizationStore.PROCEDURE_GROUP[procedure.group] }}
             </td>
             <td class="text-right">
               {{ formatMoney(procedure.price) }}
             </td>
-            <td
-              v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status"
-              class="text-center"
-            >
-              <a-tag
-                v-if="procedure.isActive"
-                color="success"
-              >
+            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
+              <a-tag v-if="procedure.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
                 </template>
                 Active
               </a-tag>
-              <a-tag
-                v-else
-                color="warning"
-              >
+              <a-tag v-else color="warning">
                 <template #icon>
                   <MinusCircleOutlined />
                 </template>
                 Inactive
               </a-tag>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action" class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"

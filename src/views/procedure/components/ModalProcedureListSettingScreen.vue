@@ -9,7 +9,9 @@ import { ref } from 'vue'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useOrganizationStore()
-const settingDisplay = ref<typeof store.SCREEN_PROCEDURE_LIST>(JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST)))
+const settingDisplay = ref<typeof store.SCREEN_PROCEDURE_LIST>(
+  JSON.parse(JSON.stringify(store.SCREEN_PROCEDURE_LIST))
+)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -26,7 +28,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_PROCEDURE_LIST, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_PROCEDURE_LIST,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_PROCEDURE_LIST = JSON.parse(settingData)
 
@@ -68,9 +73,7 @@ defineExpose({ openModal })
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.table.group">
-                Hiển thị nhóm
-              </a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.table.group"> Hiển thị nhóm </a-checkbox>
             </td>
           </tr>
           <tr>

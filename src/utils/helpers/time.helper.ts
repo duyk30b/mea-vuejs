@@ -1,4 +1,8 @@
-export const timeToText = (time?: Date | string | number | null, pattern = 'DD/MM/YYYY', offset?: number): string => {
+export const timeToText = (
+  time?: Date | string | number | null,
+  pattern = 'DD/MM/YYYY',
+  offset?: number
+): string => {
   if (time == null || time === '') return ''
   if (typeof time !== 'object') time = new Date(time)
   if (time.toString() === 'Invalid Date') return 'Invalid Date'
@@ -130,7 +134,11 @@ export class DTimer {
     return timeMove
   }
 
-  static timeToText = (time?: Date | string | number | null, pattern = 'DD/MM/YYYY', utcOffset?: number): string => {
+  static timeToText = (
+    time?: Date | string | number | null,
+    pattern = 'DD/MM/YYYY',
+    utcOffset?: number
+  ): string => {
     if (time == null || time === '') return ''
     if (typeof time !== 'object') time = new Date(time)
     if (time.toString() === 'Invalid Date') return 'Invalid Date'

@@ -14,6 +14,7 @@ import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
+import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
@@ -51,8 +52,8 @@ const startFetchData = async () => {
       limit: limit.value,
       sort: sortValue.value
         ? {
-          id: sortColumn.value === 'id' ? sortValue.value : undefined,
-        }
+            id: sortColumn.value === 'id' ? sortValue.value : undefined,
+          }
         : { id: 'DESC' },
     })
 
@@ -115,12 +116,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <AuditOutlined /> Danh sách phiếu nhập hàng
-      </div>
+      <div class="hidden md:block"><AuditOutlined /> Danh sách phiếu nhập hàng</div>
       <a-button
         type="primary"
-        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: 'CREATE' } })"
+        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
       >
         <template #icon>
           <PlusOutlined />
@@ -165,18 +164,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           placeholder="Tất cả"
           @change="handleSelectReceiptStatus"
         >
-          <a-select-option :value="null">
-            Tất cả
-          </a-select-option>
-          <a-select-option :value="ReceiptStatus.Draft">
-            Nháp
-          </a-select-option>
-          <a-select-option :value="ReceiptStatus.Success">
-            Hoàn thành
-          </a-select-option>
-          <a-select-option :value="ReceiptStatus.Refund">
-            Hoàn trả
-          </a-select-option>
+          <a-select-option :value="null"> Tất cả </a-select-option>
+          <a-select-option :value="ReceiptStatus.Draft"> Nháp </a-select-option>
+          <a-select-option :value="ReceiptStatus.Success"> Hoàn thành </a-select-option>
+          <a-select-option :value="ReceiptStatus.Refund"> Hoàn trả </a-select-option>
         </a-select>
       </div>
       <!-- <div style="flex: 2; flex-basis: 500px;">
@@ -188,11 +179,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div> -->
     </div>
 
-    <div
-      v-if="isMobile"
-      class="page-main-list"
-      style="width: 100%"
-    >
+    <div v-if="isMobile" class="page-main-list" style="width: 100%">
       <table class="table-mobile">
         <thead>
           <tr>
@@ -203,12 +190,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </thead>
         <tbody>
           <tr v-if="receipts.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
             v-for="(receipt, index) in receipts"
@@ -231,12 +213,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.revenue) }}</div>
-              <div
-                v-if="receipt.debt"
-                class="text-xs"
-              >
-                Nợ: {{ formatMoney(receipt.debt) }}
-              </div>
+              <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
             </td>
             <td class="text-left">
               <ReceiptStatusTag :status="receipt.status" />
@@ -256,17 +233,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div
-      v-else
-      class="page-main-table table-wrapper"
-    >
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('id')"
-            >
+            <th class="cursor-pointer" @click="changeSort('id')">
               Mã &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
@@ -290,19 +261,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </thead>
         <tbody>
           <tr v-if="receipts.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              No data
-            </td>
+            <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr
-            v-for="(receipt, index) in receipts"
-            :key="index"
-          >
+          <tr v-for="(receipt, index) in receipts" :key="index">
             <td class="text-center">
-              <a @click="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"> RC{{ receipt.id }} </a>
+              <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
+                RC{{ receipt.id }}
+              </router-link>
             </td>
             <td class="text-center">
               {{ timeToText(receipt.time, 'hh:mm DD/MM/YYYY') }}
@@ -310,22 +275,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div>
                 {{ receipt.distributor?.fullName }}
-                <a
-                  class="ml-1"
-                  @click="modalDistributorDetail?.openModal(receipt.distributor!)"
-                >
+                <a class="ml-1" @click="modalDistributorDetail?.openModal(receipt.distributor!)">
                   <FileSearchOutlined />
                 </a>
               </div>
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.revenue) }}</div>
-              <div
-                v-if="receipt.debt"
-                class="text-xs"
-              >
-                Nợ: {{ formatMoney(receipt.debt) }}
-              </div>
+              <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
             </td>
             <td class="text-center">
               <ReceiptStatusTag :status="receipt.status" />

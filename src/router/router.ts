@@ -160,13 +160,15 @@ const Router = createRouter({
               path: 'statistic-procedure',
               meta: { title: 'Thống kê' },
               name: 'StatisticProcedure',
-              component: () => import('../views/statistic/statistic-procedure/StatisticProcedure.vue'),
+              component: () =>
+                import('../views/statistic/statistic-procedure/StatisticProcedure.vue'),
             },
             {
               path: 'statistic-customer',
               meta: { title: 'Thống kê' },
               name: 'StatisticCustomer',
-              component: () => import('../views/statistic/statistic-customer/StatisticCustomer.vue'),
+              component: () =>
+                import('../views/statistic/statistic-customer/StatisticCustomer.vue'),
             },
             {
               path: 'statistic-order',

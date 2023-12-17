@@ -83,3 +83,32 @@ table.table-mobile {
     }
   }
 }
+
+table.table-setting {
+  width: 100%;
+
+  thead {
+    background-color: var(--color-table-thead-bg);
+    color: var(--color-table-thead-text);
+    border: 1px solid var(--color-table-thead-bg);
+
+    th {
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+    }
+  }
+
+  tbody {
+    tr {
+      &:nth-child(even) {
+        background-color: var(--color-table-td-even-bg);
+      }
+
+      td {
+        word-break: break-word;
+        border: 1px solid #e8e8e8;
+        padding: 0.5rem;
+      }
+    }
+  }
+}

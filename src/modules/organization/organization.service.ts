@@ -1,11 +1,18 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { Organization } from './organization.model'
 import type { OrganizationSettingsType } from '../../store/store.variable'
+import { Customer } from '../customer'
+import { Distributor } from '../distributor'
+import { Organization } from './organization.model'
 
 export class OrganizationService {
-  static async detail(): Promise<Organization> {
-    const { data } = await AxiosInstance.get('/organization/detail')
-    return Organization.fromPlain(data)
+  static async info() {
+    const { data } = await AxiosInstance.get('/organization/info')
+    return {
+      organization: Organization.fromPlain(data.organization),
+      settings: data.settings as Record<string, any>,
+      distributorDefault: Distributor.fromPlain(data.distributorDefault),
+      customerDefault: Customer.fromPlain(data.customerDefault),
+    }
   }
 
   static async updateInfo(organization: Partial<Organization>) {
@@ -13,12 +20,6 @@ export class OrganizationService {
     const response = await AxiosInstance.patch('/organization/update', organizationDto)
 
     return Organization.fromPlain(response.data)
-  }
-
-  static async getAllSettings() {
-    const response = await AxiosInstance.get('/organization/settings/get')
-    const data = response.data as { type: OrganizationSettingsType; data: string }[]
-    return data
   }
 
   static async saveSettings(type: OrganizationSettingsType, data: string) {

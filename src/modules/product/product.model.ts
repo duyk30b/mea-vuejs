@@ -1,50 +1,104 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Transform,
+  TransformationType,
+  Type,
+} from 'class-transformer'
+import type { UnitType } from '../enum'
 import { ProductBatch } from './product-batch.model'
 import { ProductMovement } from './product-movement.model'
 
-export class Product extends BaseModel {
-  @Expose({ toClassOnly: true })
-  quantity: number = 0
+export class Product {
+  @Expose({ groups: ['ALL', 'COPY'] })
+  id: number
+
+  @Expose({ groups: ['ALL', 'COPY'] })
+  quantity: number
 
   @Expose()
-  brandName: string = '' // Tên biệt dược
+  brandName: string // Tên biệt dược
 
   @Expose()
-  substance?: string = '' // Hoạt chất
+  substance: string // Hoạt chất
 
   @Expose()
-  group: string = '' // Nhóm thuốc: kháng sinh, dinh dưỡng ...
+  group: string // Nhóm sản phẩm: kháng sinh, dinh dưỡng ...
 
   @Expose()
-  unit: { name: string; rate: number; default?: boolean }[] = [{ name: '', rate: 1 }]
+  @Transform(({ value, type }) => {
+    if (type === TransformationType.PLAIN_TO_CLASS) {
+      return JSON.parse(value || JSON.stringify([{ name: '', rate: 1, default: true }]))
+    } else if (type === TransformationType.CLASS_TO_PLAIN) {
+      return JSON.stringify(value || [{ name: '', rate: 1, default: true }])
+    } else if (type === TransformationType.CLASS_TO_CLASS) {
+      return JSON.parse(JSON.stringify(value || [{ name: '', rate: 1, default: true }]))
+    }
+    return value
+  })
+  unit: UnitType[]
 
   @Expose()
-  route: string = '' // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
+  route: string // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
 
   @Expose()
-  source: string = '' // Nguồn gốc: ... Ấn Độ, Ý, Pháp, ...
+  source: string // Nguồn gốc: ... Ấn Độ, Ý, Pháp, ...
 
   @Expose()
-  image: string = ''
+  image: string
 
   @Expose()
-  hintUsage: string = '' // Gợi ý cách sử dụng
+  hintUsage: string // Gợi ý cách sử dụng
 
   @Expose()
-  isActive: boolean = true // Trạng thái
+  @Transform(({ value, type }) => (value != null ? value : 1))
+  isActive: 1 | 0 // Trạng thái
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => ProductBatch)
-  productBatches: ProductBatch[] = []
+  productBatches: ProductBatch[]
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => ProductMovement)
-  productMovements: ProductMovement[] = []
+  productMovements: ProductMovement[]
+
+  get unitDefault() {
+    const unitDefault = this.unit?.find((u) => !!u.default)
+    return unitDefault || this.unit?.[0] || { name: '', rate: 1, default: true }
+  }
+
+  get unitName() {
+    return this.unitDefault.name
+  }
+
+  get unitBasicName() {
+    const unitBasic = this.unit?.find((u) => u.rate === 1) || { name: '', rate: 1 }
+    return unitBasic.name
+  }
+
+  get unitRate() {
+    return this.unitDefault.rate
+  }
+
+  get unitQuantity() {
+    return Number(((this.quantity || 0) / this.unitRate).toFixed(3))
+  }
+
+  static init(): Product {
+    const ins = new Product()
+    ins.id = 0
+    ins.unit = [{ name: '', rate: 1, default: true }]
+    ins.isActive = 1
+    return ins
+  }
 
   static blank(): Product {
-    const product = new Product()
-    return product
+    const ins = Product.init()
+    ins.productBatches = []
+    ins.productMovements = []
+    return ins
   }
 
   static fromPlain(plain: Record<string, any>): Product {
@@ -67,14 +121,15 @@ export class Product extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 
-  static toPlain(instance: Product): Record<string, any> {
+  static toPlain(instance: Product, type: 'CREATE' | 'UPDATE'): Record<string, any> {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
+      groups: [type],
     })
   }
 }

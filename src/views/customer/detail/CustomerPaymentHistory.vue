@@ -7,7 +7,9 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), { customer: () => Customer.blank() })
+const props = withDefaults(defineProps<{ customer: Customer }>(), {
+  customer: () => Customer.blank(),
+})
 
 const router = useRouter()
 
@@ -65,10 +67,7 @@ defineExpose({ startFetchData })
 
 <template>
   <div class="mt-4 w-full">
-    <table
-      v-if="isMobile"
-      class="table-mobile"
-    >
+    <table v-if="isMobile" class="table-mobile">
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -77,20 +76,14 @@ defineExpose({ startFetchData })
       </thead>
       <tbody>
         <tr v-if="customerPaymentList.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Không có dữ liệu
-          </td>
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(customerPayment, index) in customerPaymentList"
-          :key="index"
-        >
+        <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
           <td>
             <div v-if="customerPayment.invoiceId">
-              <a @click="openBlankInvoiceDetail(customerPayment.invoiceId)"> IV{{ customerPayment.invoiceId }} </a>
+              <a @click="openBlankInvoiceDetail(customerPayment.invoiceId)">
+                IV{{ customerPayment.invoiceId }}
+              </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(customerPayment.time, 'hh:mm DD/MM/YYYY') }}
@@ -98,31 +91,19 @@ defineExpose({ startFetchData })
             <div>
               <CustomerPaymentTypeTag :type="customerPayment.type" />
             </div>
-            <div
-              v-if="customerPayment.note"
-              style="font-size: 0.8rem"
-            >
+            <div v-if="customerPayment.note" style="font-size: 0.8rem">
               {{ customerPayment.note }}
             </div>
-            <div
-              v-if="customerPayment.description"
-              style="font-size: 0.8rem"
-            >
+            <div v-if="customerPayment.description" style="font-size: 0.8rem">
               {{ customerPayment.description }}
             </div>
           </td>
           <td class="text-right">
-            <div
-              class="flex justify-between item-center"
-              style="white-space: nowrap"
-            >
+            <div class="flex justify-between item-center" style="white-space: nowrap">
               <span style="font-size: 0.8rem"> TT: </span>
               <span>{{ formatMoney(customerPayment.paid) }}</span>
             </div>
-            <div
-              v-if="customerPayment.debit != 0"
-              style="white-space: nowrap"
-            >
+            <div v-if="customerPayment.debit != 0" style="white-space: nowrap">
               <div class="flex justify-between item-center">
                 <div style="font-size: 0.8rem">
                   <span v-if="customerPayment.type === PaymentType.ImmediatePayment">Ghi nợ:</span>
@@ -140,10 +121,7 @@ defineExpose({ startFetchData })
         </tr>
       </tbody>
     </table>
-    <table
-      v-else
-      class="table-mobile"
-    >
+    <table v-else class="table-mobile">
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -154,38 +132,26 @@ defineExpose({ startFetchData })
       </thead>
       <tbody>
         <tr v-if="customerPaymentList.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Không có dữ liệu
-          </td>
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(customerPayment, index) in customerPaymentList"
-          :key="index"
-        >
+        <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
           <td>
             <div v-if="customerPayment.invoiceId">
-              <a @click="openBlankInvoiceDetail(customerPayment.invoiceId)"> IV{{ customerPayment.invoiceId }} </a>
+              <a @click="openBlankInvoiceDetail(customerPayment.invoiceId)">
+                IV{{ customerPayment.invoiceId }}
+              </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(customerPayment.time, 'hh:mm DD/MM/YYYY') }}
             </div>
 
-            <div
-              v-if="customerPayment.note"
-              style="font-size: 0.8rem"
-            >
+            <div v-if="customerPayment.note" style="font-size: 0.8rem">
               {{ customerPayment.note }}
             </div>
           </td>
           <td class="px-4">
             <CustomerPaymentTypeTag :type="customerPayment.type" />
-            <div
-              v-if="customerPayment.description"
-              style="font-size: 0.8rem"
-            >
+            <div v-if="customerPayment.description" style="font-size: 0.8rem">
               {{ customerPayment.description }}
             </div>
           </td>
@@ -193,10 +159,7 @@ defineExpose({ startFetchData })
             {{ formatMoney(customerPayment.paid) }}
           </td>
           <td class="text-right">
-            <div
-              v-if="customerPayment.debit != 0"
-              style="white-space: nowrap"
-            >
+            <div v-if="customerPayment.debit != 0" style="white-space: nowrap">
               <div class="flex justify-between">
                 <div style="font-size: 0.8rem">
                   <span v-if="customerPayment.type === PaymentType.ImmediatePayment">Ghi nợ:</span>

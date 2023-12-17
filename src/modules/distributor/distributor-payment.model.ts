@@ -40,7 +40,9 @@ export class DistributorPayment extends BaseModel {
   description: string = ''
 
   static blank(): DistributorPayment {
-    return new DistributorPayment()
+    const instance = new DistributorPayment()
+    instance.id = 0
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): DistributorPayment {

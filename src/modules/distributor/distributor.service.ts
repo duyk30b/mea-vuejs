@@ -4,7 +4,7 @@ import { Distributor } from './distributor.model'
 import { debounceAsync } from '@/utils/helpers'
 
 export interface DistributorFilterQuery {
-  isActive?: 'true' | 'false'
+  isActive?: 1 | 0
   searchText?: string
 }
 export interface DistributorPaginationQuery extends ApiPaginationRequest {
@@ -40,7 +40,7 @@ export class DistributorService {
 
   static search = debounceAsync(async (text: string): Promise<Distributor[]> => {
     const filter: DistributorFilterQuery = {
-      isActive: 'true',
+      isActive: 1,
       searchText: text,
     }
     // if (/^\d+$/.test(text)) { } // text search phone

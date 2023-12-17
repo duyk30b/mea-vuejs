@@ -46,10 +46,8 @@ const startResetPassword = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem">
-        Đổi mật khẩu
-      </a-divider>
-      <br>
+      <a-divider style="font-size: 1.5rem"> Đổi mật khẩu </a-divider>
+      <br />
       <a-form
         :model="formState"
         name="basic"
@@ -64,10 +62,7 @@ const startResetPassword = async () => {
           name="orgPhone"
           :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
         >
-          <a-input
-            v-model:value="formState.orgPhone"
-            disabled
-          />
+          <a-input v-model:value="formState.orgPhone" disabled />
         </a-form-item>
 
         <a-form-item
@@ -75,10 +70,7 @@ const startResetPassword = async () => {
           name="username"
           :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
         >
-          <a-input
-            v-model:value="formState.username"
-            disabled
-          />
+          <a-input v-model:value="formState.username" disabled />
         </a-form-item>
 
         <a-form-item
@@ -98,11 +90,7 @@ const startResetPassword = async () => {
         </a-form-item>
 
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button
-            type="primary"
-            html-type="submit"
-            :loading="loading"
-          >
+          <a-button type="primary" html-type="submit" :loading="loading">
             Cập nhật mật khẩu mới
           </a-button>
         </a-form-item>
@@ -110,12 +98,7 @@ const startResetPassword = async () => {
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>
-        HOTLINE: <a
-          href="tel:0376899866"
-          class="hotline"
-        >0376.899.866</a>
-      </p>
+      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
     </div>
   </div>
 </template>

@@ -58,21 +58,11 @@ defineExpose({ openModal })
     style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
   >
     <div class="bg-white">
-      <div
-        class="pl-4 py-3 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
-        <div
-          class="flex-1 font-medium"
-          style="font-size: 16px"
-        >
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 font-medium" style="font-size: 16px">
           Khách hàng: {{ customer.fullName }}
         </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="closeModal"
-        >
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>
       </div>
@@ -96,8 +86,12 @@ defineExpose({ openModal })
             </template>
             <div class="flex justify-between items-center">
               <div class="flex flex-wrap">
-                <span class="mr-4">Khách hàng: <b>{{ customer.fullName }}</b></span>
-                <span>Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b></span>
+                <span class="mr-4"
+                  >Khách hàng: <b>{{ customer.fullName }}</b></span
+                >
+                <span
+                  >Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b></span
+                >
               </div>
               <div>
                 <a-button
@@ -111,10 +105,7 @@ defineExpose({ openModal })
                 </a-button>
               </div>
             </div>
-            <CustomerPaymentHistory
-              ref="customerPaymentHistory"
-              :customer="customer"
-            />
+            <CustomerPaymentHistory ref="customerPaymentHistory" :customer="customer" />
           </a-tab-pane>
           <a-tab-pane key="invoices-history">
             <template #tab>
@@ -149,10 +140,7 @@ defineExpose({ openModal })
       </div>
     </div>
   </VueModal>
-  <ModalCustomerPayDebt
-    ref="modalCustomerPayDebt"
-    @success="handleModalCustomerPayDebtSuccess"
-  />
+  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
 </template>
 
 <style lang="scss">

@@ -1,8 +1,16 @@
-import { Expose, instanceToPlain, plainToInstance, Type } from 'class-transformer'
+import {
+  Expose,
+  instanceToPlain,
+  plainToInstance,
+  Transform,
+  TransformationType,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Invoice } from '../invoice'
 import { Receipt } from '../receipt'
 import { ProductBatch } from './product-batch.model'
+import type { UnitType } from '../enum'
 
 export enum ProductMovementType {
   Receipt = 1,
@@ -32,6 +40,19 @@ export class ProductMovement extends BaseModel {
   number: number // Số lượng +/-
 
   @Expose()
+  @Transform(({ value, type }) => {
+    if (type === TransformationType.PLAIN_TO_CLASS) {
+      return JSON.parse(value || JSON.stringify({ name: '', rate: 1 }))
+    } else if (type === TransformationType.CLASS_TO_PLAIN) {
+      return JSON.stringify(value || { name: '', rate: 1 })
+    } else if (type === TransformationType.CLASS_TO_CLASS) {
+      return JSON.parse(JSON.stringify(value || { name: '', rate: 1 }))
+    }
+    return value
+  })
+  unit: UnitType
+
+  @Expose()
   closeQuantity: number // Số lượng sau thay đổi
 
   @Expose()
@@ -54,6 +75,14 @@ export class ProductMovement extends BaseModel {
   @Expose({ toClassOnly: true })
   @Type(() => Receipt)
   receipt?: Receipt
+
+  get unitNumber() {
+    return this.number / this.unit.rate
+  }
+
+  get unitPrice() {
+    return this.price * this.unit.rate
+  }
 
   static fromPlain(plain: Record<string, any>): ProductMovement {
     return plainToInstance(ProductMovement, plain, {

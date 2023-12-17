@@ -65,10 +65,7 @@ const handleChangeTabs = (activeKey: any) => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div
-        class="font-medium"
-        style="font-size: 1.3rem"
-      >
+      <div class="font-medium" style="font-size: 1.3rem">
         <ScheduleOutlined style="margin-right: 1rem" />
         Khám bệnh
       </div>
@@ -90,83 +87,30 @@ const handleChangeTabs = (activeKey: any) => {
   <div class="mx-4 mt-4 flex-1 flex gap-4">
     <div style="width: 300px; background: green; overflow: scroll">
       <a-collapse v-model:activeKey="activeKey">
-        <a-collapse-panel
-          key="1"
-          header="Danh sách chờ khám"
-        >
-          <div
-            v-for="(item, index) in arrivals"
-            :key="index"
-            class="arrival-item"
-          >
+        <a-collapse-panel key="1" header="Danh sách chờ khám">
+          <div v-for="(item, index) in arrivals" :key="index" class="arrival-item">
             {{ item.customer?.fullName }}
           </div>
         </a-collapse-panel>
-        <a-collapse-panel
-          key="2"
-          header="Danh sách đang khám"
-        >
-          <div
-            v-for="(item, index) in arrivals"
-            :key="index"
-            class="arrival-item"
-          >
+        <a-collapse-panel key="2" header="Danh sách đang khám">
+          <div v-for="(item, index) in arrivals" :key="index" class="arrival-item">
             {{ item.customer?.fullName }}
           </div>
         </a-collapse-panel>
-        <a-collapse-panel
-          key="3"
-          header="Danh sách hoàn thành"
-        >
-          <div
-            v-for="(item, index) in arrivals"
-            :key="index"
-            class="arrival-item"
-          >
+        <a-collapse-panel key="3" header="Danh sách hoàn thành">
+          <div v-for="(item, index) in arrivals" :key="index" class="arrival-item">
             {{ item.customer?.fullName }}
           </div>
         </a-collapse-panel>
       </a-collapse>
     </div>
-    <div
-      class="bg-violet-500 p-2"
-      style="flex: 1"
-    >
-      <a-tabs
-        v-model:activeKey="tabsKey"
-        :tabBarGutter="10"
-        type="card"
-      >
-        <a-tab-pane
-          key="1"
-          tab="Chẩn đoán"
-        >
-          Content of Tab Pane 1
-        </a-tab-pane>
-        <a-tab-pane
-          key="2"
-          tab="Dịch vụ"
-        >
-          Content of Tab Pane 2
-        </a-tab-pane>
-        <a-tab-pane
-          key="3"
-          tab="Vật tư tiêu hao"
-        >
-          Content of Tab Pane 2
-        </a-tab-pane>
-        <a-tab-pane
-          key="4"
-          tab="Đơn thuốc"
-        >
-          Content of Tab Pane 3
-        </a-tab-pane>
-        <a-tab-pane
-          key="4"
-          tab="Thanh toán"
-        >
-          Content of Tab Pane 3
-        </a-tab-pane>
+    <div class="bg-violet-500 p-2" style="flex: 1">
+      <a-tabs v-model:activeKey="tabsKey" :tabBarGutter="10" type="card">
+        <a-tab-pane key="1" tab="Chẩn đoán"> Content of Tab Pane 1 </a-tab-pane>
+        <a-tab-pane key="2" tab="Dịch vụ"> Content of Tab Pane 2 </a-tab-pane>
+        <a-tab-pane key="3" tab="Vật tư tiêu hao"> Content of Tab Pane 2 </a-tab-pane>
+        <a-tab-pane key="4" tab="Đơn thuốc"> Content of Tab Pane 3 </a-tab-pane>
+        <a-tab-pane key="4" tab="Thanh toán"> Content of Tab Pane 3 </a-tab-pane>
       </a-tabs>
     </div>
   </div>

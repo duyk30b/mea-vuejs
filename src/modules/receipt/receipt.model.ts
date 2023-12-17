@@ -1,4 +1,11 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Transform, Type } from 'class-transformer'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Transform,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Distributor, DistributorPayment } from '../distributor'
 import { DiscountType } from '../enum'
@@ -12,65 +19,93 @@ export enum ReceiptStatus {
   Success = 3,
 }
 
-export class Receipt extends BaseModel {
+// Sử dụng Group Transform trong 1 số trường hợp nhất định
+//                 GROUP          distributorId        debt         status
+// Fetch Data       ALL               ✓                 ✓
+// Insert          CREATE             ✓
+// Update          UPDATE
+// COPY             COPY              ✓                 ✓
+// Blank            BLANK          chỉ dùng giá trị mặc định cho trường hợp này
+
+export class Receipt {
+  @Expose({ groups: ['ALL', 'COPY'] })
+  id: number
+
   @Expose({ groups: ['ALL', 'CREATE'] })
   distributorId: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   status: ReceiptStatus
 
   @Expose()
   time: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   deleteTime: number
 
   @Expose()
-  itemsActualMoney: number = 0 // tiền sản phẩm
+  itemsActualMoney: number // tiền sản phẩm
 
   @Expose()
-  @Transform(({ value }) => value || 0)
-  discountMoney: number = 0 // tiền giảm giá
+  discountMoney: number // tiền giảm giá
 
   @Expose()
-  @Transform(({ value }) => value || 0)
-  discountPercent: number = 0 // % giảm giá
+  discountPercent: number // % giảm giá
 
   @Expose()
-  discountType: DiscountType = DiscountType.Percent // Loại giảm giá
+  discountType: DiscountType // Loại giảm giá
 
   @Expose()
-  @Transform(({ value }) => value || 0)
-  surcharge: number = 0 // phụ phí: tiền phải trả thêm: như tiền ship, tiền vé, hao phí xăng dầu
+  surcharge: number // phụ phí: tiền phải trả thêm: như tiền ship, tiền vé, hao phí xăng dầu
 
   @Expose()
-  revenue: number = 0 // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
+  revenue: number // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Transform(({ value }) => value || 0)
-  paid: number = 0
+  paid: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Transform(({ value }) => value || 0)
-  debt: number = 0 // tiền nợ
+  debt: number // tiền nợ
 
   @Expose()
   note: string
 
-  @Expose()
+  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
   @Type(() => ReceiptItem)
-  receiptItems: ReceiptItem[] = []
+  receiptItems?: ReceiptItem[]
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => Distributor)
-  distributor: Distributor
+  distributor?: Distributor
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => DistributorPayment)
-  distributorPayments: DistributorPayment[] = []
+  distributorPayments?: DistributorPayment[]
+
+  static init(): Receipt {
+    const ins = new Receipt()
+    ins.id = 0
+    ins.status = ReceiptStatus.Draft
+    ins.itemsActualMoney = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.discountType = DiscountType.Percent
+    ins.surcharge = 0
+    ins.revenue = 0
+    ins.paid = 0
+    ins.debt = 0
+
+    return ins
+  }
 
   static blank(): Receipt {
-    return new Receipt()
+    const ins = Receipt.init()
+    ins.receiptItems = []
+    ins.distributor = Distributor.init()
+    ins.distributorPayments = []
+    return ins
   }
 
   static fromPlain(plain: Record<string, any>): Receipt {
@@ -93,8 +128,7 @@ export class Receipt extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
-      groups: ['ALL'],
+      groups: ['COPY'],
     })
   }
 

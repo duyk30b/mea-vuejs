@@ -32,7 +32,7 @@ export const useDistributorStore = defineStore('distributor-store', {
       return (params: DistributorPaginationQuery) => {
         const { filter, sort, page, limit } = params
         const response = state.distributorList.filter((distributor) => {
-          if (filter?.isActive && String(distributor.isActive) !== filter?.isActive) {
+          if (filter?.isActive != null && distributor.isActive !== filter?.isActive) {
             return false
           }
           if (filter?.searchText) {

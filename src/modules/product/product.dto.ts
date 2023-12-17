@@ -2,9 +2,26 @@ import { Expose, Transform, Type, instanceToPlain, plainToInstance } from 'class
 import type { ComparisonType } from '../enum'
 import { PaginationQuery } from '../pagination'
 
+export class ProductFilterProductBatchQuery {
+  @Expose()
+  isActive?: 1 | 0
+
+  @Expose()
+  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
+  quantity?: [ComparisonType, number]
+
+  @Expose()
+  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
+  expiryDate?: [ComparisonType, string | number]
+}
+
 export class ProductFilterQuery {
   @Expose()
-  isActive?: boolean
+  @Type(() => ProductFilterProductBatchQuery)
+  productBatch?: ProductFilterProductBatchQuery
+
+  @Expose()
+  isActive?: 1 | 0
 
   @Expose()
   group?: string

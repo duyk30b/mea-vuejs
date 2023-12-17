@@ -88,7 +88,11 @@ export class StatisticService {
     return data.customerSumDebt as number
   }
 
-  static async sumMoneyInvoice(params: { fromTime: string; toTime: string; timeType: 'date' | 'month' }) {
+  static async sumMoneyInvoice(params: {
+    fromTime: string
+    toTime: string
+    timeType: 'date' | 'month'
+  }) {
     const response = await AxiosInstance.get('/statistic/sum-money-invoice', { params })
     const data = response.data as Record<
       string,
@@ -112,7 +116,11 @@ export class StatisticService {
     return Object.entries(data).map(([key, value]) => ({ time: key, ...value }))
   }
 
-  static async sumMoneyReceipt(params: { fromTime: string; toTime: string; timeType: 'date' | 'month' }) {
+  static async sumMoneyReceipt(params: {
+    fromTime: string
+    toTime: string
+    timeType: 'date' | 'month'
+  }) {
     const response = await AxiosInstance.get('/statistic/sum-money-receipt', { params })
     const data = response.data as Record<
       string,
@@ -128,8 +136,14 @@ export class StatisticService {
     return Object.entries(data).map(([key, value]) => ({ time: key, ...value }))
   }
 
-  static async sumInvoiceSurchargeAndExpense(params: { fromTime: string; toTime: string; timeType: 'date' | 'month' }) {
-    const response = await AxiosInstance.get('/statistic/sum-invoice-surcharge-and-expense', { params })
+  static async sumInvoiceSurchargeAndExpense(params: {
+    fromTime: string
+    toTime: string
+    timeType: 'date' | 'month'
+  }) {
+    const response = await AxiosInstance.get('/statistic/sum-invoice-surcharge-and-expense', {
+      params,
+    })
     const data = response.data as {
       surcharge: Record<string, { name: string; data: Record<string, { sumMoney: number }> }>
       expense: Record<string, { name: string; data: Record<string, { sumMoney: number }> }>

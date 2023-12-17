@@ -25,7 +25,12 @@ const options: ChartOptions = {
           let characterLimit = 12
           let label = this.getLabelForValue(value as number)
           if (label.length >= characterLimit) {
-            return label.slice(0, label.length).substring(0, characterLimit - 1).trim() + '...'
+            return (
+              label
+                .slice(0, label.length)
+                .substring(0, characterLimit - 1)
+                .trim() + '...'
+            )
           }
           return label
         },
@@ -58,12 +63,20 @@ const startFetchData = async () => {
       },
     ]
     barData.labels.splice(0, data.length, ...data.map((i) => i.product.brandName))
-    barData.datasets[0].data.splice(0, data.length, ...data.map((i) => {
-      return i.sumCostMoney / moneyDivision
-    }))
-    barData.datasets[1].data.splice(0, data.length, ...data.map((i) => {
-      return (i.sumRetailMoney - i.sumCostMoney) / moneyDivision
-    }))
+    barData.datasets[0].data.splice(
+      0,
+      data.length,
+      ...data.map((i) => {
+        return i.sumCostMoney / moneyDivision
+      })
+    )
+    barData.datasets[1].data.splice(
+      0,
+      data.length,
+      ...data.map((i) => {
+        return (i.sumRetailMoney - i.sumCostMoney) / moneyDivision
+      })
+    )
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
   } finally {
@@ -75,22 +88,12 @@ onBeforeMount(async () => await startFetchData())
 </script>
 
 <template>
-  <div
-    class="flex flex-col"
-    style="height: 100%"
-  >
-    <div
-      style="height: 80px"
-      class="flex items-center"
-    >
+  <div class="flex flex-col" style="height: 100%">
+    <div style="height: 80px" class="flex items-center">
       <span style="font-size: 18px; font-weight: 500"> Hàng tồn tổng giá trị cao </span>
     </div>
     <div class="flex-1">
-      <Bar
-        v-if="loaded"
-        :data="barData"
-        :options="(options as any)"
-      />
+      <Bar v-if="loaded" :data="barData" :options="options as any" />
     </div>
   </div>
 </template>

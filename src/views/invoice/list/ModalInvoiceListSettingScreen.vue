@@ -8,7 +8,9 @@ import { ref } from 'vue'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useOrganizationStore()
-const settingDisplay = ref<typeof store.SCREEN_INVOICE_LIST>(JSON.parse(JSON.stringify(store.SCREEN_INVOICE_LIST)))
+const settingDisplay = ref<typeof store.SCREEN_INVOICE_LIST>(
+  JSON.parse(JSON.stringify(store.SCREEN_INVOICE_LIST))
+)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -25,7 +27,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_INVOICE_LIST, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_INVOICE_LIST,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_LIST = JSON.parse(settingData)
 

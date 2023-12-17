@@ -1,10 +1,6 @@
 <template>
   <div class="input-text">
-    <textarea
-      :value="value"
-      :disabled="disabled"
-      @input="input"
-    />
+    <textarea :value="value" :disabled="disabled" @input="input" />
     <label>{{ label }}</label>
   </div>
 </template>

@@ -1,39 +1,56 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import {
+  Expose,
+  Transform,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+} from 'class-transformer'
 
-export class Distributor extends BaseModel {
+export class Distributor {
+  @Expose({ groups: ['ALL', 'COPY'] })
+  id: number
+
   @Expose()
-  fullName: string = ''
+  fullName: string
 
   @Expose()
   phone?: string
 
   @Expose()
-  addressProvince: string
+  addressProvince?: string
 
   @Expose()
-  addressDistrict: string
+  addressDistrict?: string
 
   @Expose()
-  addressWard: string
+  addressWard?: string
 
   @Expose()
-  addressStreet: string
+  addressStreet?: string
 
-  @Expose({ toClassOnly: true })
-  debt: number = 0
-
-  @Expose()
-  isActive: boolean = true // Trạng thái
+  @Expose({ groups: ['ALL', 'COPY'] })
+  debt: number
 
   @Expose()
-  note: string
+  isActive: 1 | 0 // Trạng thái
 
-  static blank(): Distributor {
-    return new Distributor()
+  @Expose()
+  note?: string
+
+  static init(): Distributor {
+    const ins = new Distributor()
+    ins.id = 0
+    ins.isActive = 1
+    ins.debt = 0
+    return ins
   }
 
-  static fromPlain(plain: Record<string, any>): Distributor {
+  static blank(): Distributor {
+    const ins = Distributor.init()
+    return ins
+  }
+
+  static fromPlain(plain: Record<string, any> = {}): Distributor {
     return plainToInstance(Distributor, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -41,7 +58,7 @@ export class Distributor extends BaseModel {
     })
   }
 
-  static fromPlains(plains: Record<string, any>[]): Distributor[] {
+  static fromPlains(plains: Record<string, any>[] = []): Distributor[] {
     return plainToInstance(Distributor, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -53,7 +70,7 @@ export class Distributor extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 
@@ -61,6 +78,7 @@ export class Distributor extends BaseModel {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
+      groups: ['CREATE'],
     })
   }
 }

@@ -27,7 +27,9 @@ export class Organization extends BaseModel {
   addressStreet: string
 
   static blank() {
-    return new Organization()
+    const instance = new Organization()
+    instance.id = 0
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): Organization {

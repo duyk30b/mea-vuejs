@@ -42,10 +42,8 @@ const startLogin = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem">
-        ĐĂNG KÝ TÀI KHOẢN
-      </a-divider>
-      <br>
+      <a-divider style="font-size: 1.5rem"> ĐĂNG KÝ TÀI KHOẢN </a-divider>
+      <br />
       <a-form
         :model="formState"
         name="basic"
@@ -88,24 +86,13 @@ const startLogin = async () => {
         </a-form-item>
 
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button
-            type="primary"
-            html-type="submit"
-            :loading="loading"
-          >
-            Đăng ký
-          </a-button>
+          <a-button type="primary" html-type="submit" :loading="loading"> Đăng ký </a-button>
         </a-form-item>
       </a-form>
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>
-        HOTLINE: <a
-          href="tel:0376899866"
-          class="hotline"
-        >0376.899.866</a>
-      </p>
+      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
     </div>
   </div>
 </template>

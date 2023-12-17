@@ -54,7 +54,9 @@ const startFetchProductMovements = async () => {
 
 const startFetchProductBatches = async () => {
   try {
-    const productBatches = await ProductBatchService.list({ filter: { productId: props.product.id } })
+    const productBatches = await ProductBatchService.list({
+      filter: { productId: props.product.id },
+    })
     productBatchAll.value = productBatches
     productBatchList.value = productBatches
   } catch (error) {
@@ -119,10 +121,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
 <template>
   <div class="flex gap-4 items-stretch">
     <div style="flex: 1">
-      <span
-        style="font-size: 0.8rem"
-        class="whitespace-nowrap"
-      >Lô hàng</span>
+      <span style="font-size: 0.8rem" class="whitespace-nowrap">Lô hàng</span>
       <div>
         <InputOptions
           v-model:searchText="currentBatch.batch"
@@ -135,7 +134,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           <template #each="{ item: { batch, expiryDate, quantity } }">
             <div>
               <b>{{ batch }}</b> {{ timeToText(expiryDate) }} - ({{ quantity }}
-              {{ product.unit.find((i) => i.rate === 1)?.name }})
+              {{ product.unitBasicName }})
             </div>
           </template>
         </InputOptions>
@@ -151,15 +150,9 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         placeholder="Tất cả"
         @change="startFetchProductMovements"
       >
-        <a-select-option :value="undefined">
-          Tất cả
-        </a-select-option>
-        <a-select-option :value="ProductMovementType.Receipt">
-          Nhập
-        </a-select-option>
-        <a-select-option :value="ProductMovementType.Invoice">
-          Xuất
-        </a-select-option>
+        <a-select-option :value="undefined"> Tất cả </a-select-option>
+        <a-select-option :value="ProductMovementType.Receipt"> Nhập </a-select-option>
+        <a-select-option :value="ProductMovementType.Invoice"> Xuất </a-select-option>
       </a-select>
     </div>
   </div>
@@ -167,29 +160,15 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
     <table class="table-mobile mt-2">
       <thead>
         <tr>
-          <th>
-            <a-tag color="blue">
-              K.Hàng
-            </a-tag>- <a-tag color="green">
-              NCC
-            </a-tag>
-          </th>
+          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
           <th>Số lượng</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="productMovements.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Không có dữ liệu
-          </td>
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(mov, index) in productMovements"
-          :key="index"
-        >
+        <tr v-for="(mov, index) in productMovements" :key="index">
           <td>
             <div v-if="mov.type === ProductMovementType.Invoice">
               <div>
@@ -229,23 +208,21 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
                 </span>
               </div>
             </div>
-            <div style="white-space: nowrap">
-              Lô: {{ mov.productBatch?.batch }}
-            </div>
+            <div style="white-space: nowrap">Lô: {{ mov.productBatch?.batch }}</div>
             <div style="white-space: nowrap">
               HSD: {{ timeToText(mov.productBatch?.expiryDate, 'DD/MM/YYYY') }}
             </div>
           </td>
           <td class="">
             <div>Đầu kỳ: {{ mov.openQuantity }}</div>
-            <div v-if="mov.number > 0">
-              Nhập: <span class="font-bold">{{ mov.number }}</span>
-            </div>
-            <div v-if="mov.number < 0">
-              Xuất: <span class="font-bold">{{ mov.number }}</span>
+            <div>
+              <span v-if="mov.number > 0">Nhập: </span>
+              <span v-if="mov.number < 0">Xuất: </span>
+              <span class="font-bold">{{ mov.unitNumber }}</span>
+              <span v-if="mov.unit.rate !== 1">{{ mov.unit.name }} ({{ mov.number }})</span>
             </div>
             <div>Cuối kỳ: {{ mov.closeQuantity }}</div>
-            <div>Giá: {{ formatMoney(mov.price) }} / {{ product.unit.find((i) => i.rate === 1)?.name }}</div>
+            <div>Giá: {{ formatMoney(mov.price) }} / {{ product.unitBasicName }}</div>
           </td>
         </tr>
       </tbody>
@@ -261,20 +238,11 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       />
     </div>
   </div>
-  <div
-    v-else
-    class="table-wrapper mt-4"
-  >
+  <div v-else class="table-wrapper mt-4">
     <table class="table">
       <thead>
         <tr>
-          <th>
-            <a-tag color="blue">
-              K.Hàng
-            </a-tag>- <a-tag color="green">
-              NCC
-            </a-tag>
-          </th>
+          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
           <th>Lô</th>
           <th>SL trước</th>
           <th>Nhập/Xuất</th>
@@ -285,17 +253,9 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       </thead>
       <tbody>
         <tr v-if="productMovements.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Không có dữ liệu
-          </td>
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(mov, index) in productMovements"
-          :key="index"
-        >
+        <tr v-for="(mov, index) in productMovements" :key="index">
           <td>
             <div v-if="mov.type === ProductMovementType.Invoice">
               <div>
@@ -337,10 +297,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
           </td>
           <td>
-            <div
-              v-if="mov.productBatch?.batch"
-              style="white-space: nowrap; font-size: 0.8rem"
-            >
+            <div v-if="mov.productBatch?.batch" style="white-space: nowrap; font-size: 0.8rem">
               Lô: {{ mov.productBatch?.batch }}
             </div>
             <div style="white-space: nowrap; font-size: 0.8rem">
@@ -352,14 +309,18 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           </td>
           <td class="text-center">
             <div>
-              {{ mov.number }}
+              {{ mov.unitNumber }}
+              <span v-if="mov.unit.rate !== 1">{{ mov.unit.name }} ({{ mov.number }})</span>
             </div>
           </td>
           <td class="text-center">
             {{ mov.closeQuantity }}
           </td>
           <td class="text-right">
-            {{ formatMoney(mov.price) }}
+            <div>
+              {{ formatMoney(mov.unitPrice) }}
+              <span v-if="mov.unit.rate !== 1">({{ formatMoney(mov.price) }})</span>
+            </div>
           </td>
           <td class="text-right">
             {{ formatMoney(mov.totalMoney) }}

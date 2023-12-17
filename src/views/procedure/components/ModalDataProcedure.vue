@@ -62,63 +62,28 @@ defineExpose({ openModal })
     <template #footer>
       <div class="flex justify-between px-2">
         <div>
-          <a-button @click="handleReload">
-            Tải lại
-          </a-button>
+          <a-button @click="handleReload"> Tải lại </a-button>
         </div>
         <div>
-          <a-button @click="showModal = false">
-            Hủy
-          </a-button>
-          <a-button
-            type="primary"
-            :loading="saveLoading"
-            @click="handleSave"
-          >
-            Lưu lại
-          </a-button>
+          <a-button @click="showModal = false"> Hủy </a-button>
+          <a-button type="primary" :loading="saveLoading" @click="handleSave"> Lưu lại </a-button>
         </div>
       </div>
     </template>
     <div class="modal-data-procedure-tabs">
-      <a-tabs
-        v-model:activeKey="activeTab"
-        type="card"
-        :tabBarGutter="10"
-      >
-        <a-tab-pane
-          key="1"
-          tab="Nhóm dịch vụ"
-        >
+      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
+        <a-tab-pane key="1" tab="Nhóm dịch vụ">
           <div class="w-full">
-            <div class="text-center font-bold">
-              Danh sách nhóm dịch vụ
-            </div>
-            <div
-              v-for="(r, key, i) in GROUP"
-              :key="key"
-            >
+            <div class="text-center font-bold">Danh sách nhóm dịch vụ</div>
+            <div v-for="(r, key, i) in GROUP" :key="key">
               <div class="py-2 flex">
-                <a-input
-                  v-model:value="GROUP[key]"
-                  :addon-before="i + 1"
-                  style="flex: 1"
-                />
-                <a-button
-                  type="text"
-                  danger
-                  @click="delete GROUP[key]"
-                >
-                  Xóa
-                </a-button>
+                <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="delete GROUP[key]"> Xóa </a-button>
               </div>
             </div>
           </div>
           <div class="py-2 flex justify-center">
-            <a-button
-              type="primary"
-              @click="GROUP[Date.now().toString(36)] = ''"
-            >
+            <a-button type="primary" @click="GROUP[Date.now().toString(36)] = ''">
               Thêm mới
             </a-button>
           </div>

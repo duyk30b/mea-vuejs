@@ -7,8 +7,17 @@ const props = withDefaults(
     textAlign?: 'left' | 'right'
     disabled?: boolean
     placeholder?: string
+    required?: boolean
   }>(),
-  { value: 0, prepend: '', append: '', textAlign: 'left', disabled: false, placeholder: '' }
+  {
+    value: 0,
+    prepend: '',
+    append: '',
+    textAlign: 'left',
+    disabled: false,
+    placeholder: '',
+    required: false,
+  }
 )
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
@@ -35,13 +44,14 @@ const handleFocus = (e: Event) => {
       <input
         ref="inputMoney"
         :style="{ textAlign }"
-        :value="value != 0 ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''"
+        :value="value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''"
         type="tel"
-        :placeholder="placeholder"
+        :placeholder="placeholder || '0'"
         :disabled="disabled"
+        :required="required"
         @input="handleInput"
         @focus="handleFocus"
-      >
+      />
     </div>
     <div v-if="append" class="append">
       {{ append }}

@@ -8,7 +8,9 @@ import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@a
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(defineProps<{ procedure: Procedure }>(), { procedure: () => Procedure.blank() })
+const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
+  procedure: () => Procedure.blank(),
+})
 
 const router = useRouter()
 
@@ -67,10 +69,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
     <table class="table">
       <thead>
         <tr>
-          <th>Mã</th>
-          <th>Phiếu</th>
-          <th>KH</th>
-          <th>Thời gian</th>
+          <th>Đơn</th>
           <th>SL</th>
           <th>Giá</th>
           <th>T.Tiền</th>
@@ -79,33 +78,33 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
       </thead>
       <tbody>
         <tr v-if="invoiceItems.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            No data
-          </td>
+          <td colspan="20" class="text-center">No data</td>
         </tr>
-        <tr
-          v-for="(invoiceItem, index) in invoiceItems"
-          :key="index"
-        >
+        <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
           <td class="text-center">
-            II{{ invoiceItem.id }}
-          </td>
-          <td class="text-center">
-            <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"> IV{{ invoiceItem.invoiceId }} </a>
-          </td>
-          <td class="text-center">
-            {{ invoiceItem.invoice?.customer?.fullName }}
-          </td>
-          <td class="text-center">
-            {{ timeToText(invoiceItem.invoice?.time, 'DD/MM/YYYY') }}
+            <div style="white-space: nowrap">
+              <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
+                IV{{ invoiceItem.invoiceId }}
+              </a>
+              <span class="ml-2">
+                <a-tag color="blue">{{ invoiceItem.invoice?.customer?.fullName }}</a-tag>
+              </span>
+            </div>
+            <div style="font-size: 0.8rem; white-space: nowrap">
+              {{ timeToText(invoiceItem.invoice?.time, 'hh:mm DD/MM/YYYY') }}
+            </div>
           </td>
           <td class="text-right">
             {{ invoiceItem.quantity }}
           </td>
           <td class="text-right">
+            <div
+              v-if="invoiceItem.discountMoney"
+              class="text-xs italic line-through"
+              style="color: #ff4d4f"
+            >
+              {{ formatMoney(invoiceItem.expectedPrice) }}
+            </div>
             {{ formatMoney(invoiceItem.actualPrice) }}
           </td>
           <td class="text-right">

@@ -16,6 +16,8 @@ export class InvoiceSurcharge extends BaseModel {
   money: number = 0
 
   static blank(): InvoiceSurcharge {
-    return new InvoiceSurcharge()
+    const instance = new InvoiceSurcharge()
+    instance.id = 0
+    return instance
   }
 }

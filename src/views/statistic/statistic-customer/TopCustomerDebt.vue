@@ -52,7 +52,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 <template>
   <div class="flex flex-col" style="height: 100%">
     <div class="flex justify-between items-center">
-      <span style="font-size: 18px; font-weight: 500"> Danh sách khách nợ: (Tổng nợ {{ formatMoney(sumDebt) }}) </span>
+      <span style="font-size: 18px; font-weight: 500">
+        Danh sách khách nợ: (Tổng nợ {{ formatMoney(sumDebt) }})
+      </span>
     </div>
     <div class="mt-2">
       <table class="table-mobile">
@@ -66,9 +68,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         </thead>
         <tbody>
           <tr v-if="customerList.length === 0">
-            <td colspan="20" class="text-center">
-              Không có sản phẩm cận date
-            </td>
+            <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
             <td class="text-center" style="white-space: nowrap">

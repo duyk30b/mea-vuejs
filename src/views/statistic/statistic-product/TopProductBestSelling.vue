@@ -29,7 +29,12 @@ const options: ChartOptions = {
           const characterLimit = 12
           const label = this.getLabelForValue(value as number)
           if (label.length >= characterLimit) {
-            return label.slice(0, label.length).substring(0, characterLimit - 1).trim() + '...'
+            return (
+              label
+                .slice(0, label.length)
+                .substring(0, characterLimit - 1)
+                .trim() + '...'
+            )
           }
           return label
         },
@@ -92,12 +97,20 @@ const startFetchHighProfit = async () => {
     },
   ]
   barData.labels.splice(0, data.length, ...data.map((i) => i.product.brandName))
-  barData.datasets[0].data.splice(0, data.length, ...data.map((i) => {
-    return i.sumCostMoney / moneyDivision
-  }))
-  barData.datasets[1].data.splice(0, data.length, ...data.map((i) => {
-    return i.sumProfit / moneyDivision
-  }))
+  barData.datasets[0].data.splice(
+    0,
+    data.length,
+    ...data.map((i) => {
+      return i.sumCostMoney / moneyDivision
+    })
+  )
+  barData.datasets[1].data.splice(
+    0,
+    data.length,
+    ...data.map((i) => {
+      return i.sumProfit / moneyDivision
+    })
+  )
 }
 
 const startFetchHighActualMoney = async () => {
@@ -125,12 +138,20 @@ const startFetchHighActualMoney = async () => {
     },
   ]
   barData.labels.splice(0, data.length, ...data.map((i) => i.product.brandName))
-  barData.datasets[0].data.splice(0, data.length, ...data.map((i) => {
-    return i.sumCostMoney / moneyDivision
-  }))
-  barData.datasets[1].data.splice(0, data.length, ...data.map((i) => {
-    return i.sumProfit / moneyDivision
-  }))
+  barData.datasets[0].data.splice(
+    0,
+    data.length,
+    ...data.map((i) => {
+      return i.sumCostMoney / moneyDivision
+    })
+  )
+  barData.datasets[1].data.splice(
+    0,
+    data.length,
+    ...data.map((i) => {
+      return i.sumProfit / moneyDivision
+    })
+  )
 }
 
 const startFetchData = async () => {
@@ -164,10 +185,7 @@ onBeforeMount(async () => await startFetchData())
 </script>
 
 <template>
-  <div
-    class="flex flex-col"
-    style="height: 100%"
-  >
+  <div class="flex flex-col" style="height: 100%">
     <div
       class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       style="height: 80px"
@@ -194,11 +212,7 @@ onBeforeMount(async () => await startFetchData())
       />
     </div>
     <div class="flex-1">
-      <Bar
-        v-if="loaded"
-        :data="barData"
-        :options="(options as any)"
-      />
+      <Bar v-if="loaded" :data="barData" :options="options as any" />
     </div>
   </div>
 </template>

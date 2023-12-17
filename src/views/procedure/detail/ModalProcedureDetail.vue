@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Procedure } from '@/modules/procedure'
-import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
+import { DeploymentUnitOutlined, DiffOutlined, CloseOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ProcedureInfo from './ProcedureInfo.vue'
 import ProcedureInvoice from './ProcedureInvoice.vue'
+import VueModal from '@/common/VueModal.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -23,48 +24,61 @@ const refreshModal = () => {
   procedure.value = Procedure.blank()
 }
 
+const closeModal = () => {
+  showModal.value = false
+  procedure.value = Procedure.blank()
+}
+
 defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal
-    v-model:visible="showModal"
-    width="1200px"
-    title="Thông tin dịch vụ"
-    :confirm-loading="saveLoading"
-    :afterClose="refreshModal"
+  <VueModal
+    v-model:show="showModal"
+    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
   >
-    <template #footer>
-      <div class="flex justify-end px-2">
-        <div>
-          <a-button @click="showModal = false">
+    <div class="bg-white">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 font-medium" style="font-size: 16px">Dịch vụ</div>
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
+        </div>
+      </div>
+
+      <div class="p-4 procedure-detail">
+        <a-tabs
+          v-model:activeKey="activeTab"
+          type="card"
+          :tabBarGutter="10"
+          :destroyInactiveTabPane="true"
+        >
+          <a-tab-pane key="procedure-info">
+            <template #tab>
+              <span> <DeploymentUnitOutlined />Thông tin </span>
+            </template>
+            <ProcedureInfo :procedure="procedure" />
+          </a-tab-pane>
+          <a-tab-pane key="procedure-invoice">
+            <template #tab>
+              <span> <DiffOutlined />Lịch sử hóa đơn </span>
+            </template>
+            <ProcedureInvoice :procedure="procedure" />
+          </a-tab-pane>
+        </a-tabs>
+      </div>
+
+      <div class="p-4">
+        <div class="flex justify-end gap-4">
+          <a-button @click="closeModal">
+            <template #icon>
+              <CloseOutlined />
+            </template>
             Đóng
           </a-button>
         </div>
       </div>
-    </template>
-    <div class="procedure-detail">
-      <a-tabs
-        v-model:activeKey="activeTab"
-        type="card"
-        :tabBarGutter="10"
-        :destroyInactiveTabPane="true"
-      >
-        <a-tab-pane key="procedure-info">
-          <template #tab>
-            <span> <DeploymentUnitOutlined />Thông tin </span>
-          </template>
-          <ProcedureInfo :procedure="procedure" />
-        </a-tab-pane>
-        <a-tab-pane key="procedure-invoice">
-          <template #tab>
-            <span> <DiffOutlined />Lịch sử hóa đơn </span>
-          </template>
-          <ProcedureInvoice :procedure="procedure" />
-        </a-tab-pane>
-      </a-tabs>
     </div>
-  </a-modal>
+  </VueModal>
 </template>
 
 <style lang="scss">

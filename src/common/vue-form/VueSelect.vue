@@ -3,24 +3,12 @@
     v-click-outside="() => (showOptions = false)"
     :class="{ 'vue-select': true, 'disabled': disabled }"
   >
-    <select
-      :value="value"
-      :disabled="disabled"
-      @change="handleChange"
-      @focusin="handleFocusIn"
-    >
-      <option
-        v-for="(option, index) in options"
-        :key="index"
-        :value="option.value"
-      >
+    <select :value="value" :disabled="disabled" @change="handleChange" @focusin="handleFocusIn">
+      <option v-for="(option, index) in options" :key="index" :value="option.value">
         {{ option.text }}
       </option>
     </select>
-    <div
-      :class="{ 'wrap-select': true, 'active': showOptions }"
-      @click="handleClickWrapSelect"
-    />
+    <div :class="{ 'wrap-select': true, 'active': showOptions }" @click="handleClickWrapSelect" />
     <div
       v-if="showOptions"
       ref="optionsElement"
@@ -33,9 +21,9 @@
         :class="{ 'item-search': true, 'active': index == indexFocus }"
         @click="handleClickItem(option.value)"
       >
-        <div class="item-json">
-          {{ option.text }}
-        </div>
+        <slot name="each" :item="option" :index="index">
+          <div class="item-json">{{ option.text }}</div>
+        </slot>
       </div>
     </div>
   </div>
@@ -47,7 +35,11 @@ import { ref } from 'vue'
 
 export default {
   props: {
-    value: { type: [Number, String, Boolean] as PropType<number | string | boolean>, default: () => '' },
+    value: {
+      // VueSelect không sử dụng được giá trị null (vì select ko sử dụng được)
+      type: [Number, String, Boolean] as PropType<number | string | boolean>,
+      default: () => '',
+    },
     options: { type: Array as PropType<{ value: any; text: string }[]>, default: () => [] },
     disabled: { type: Boolean, default: () => false },
     maxHeight: { type: Number, default: () => 300 },
@@ -101,7 +93,10 @@ export default {
         const bottomItem = activeItem.offsetTop + activeItem.offsetHeight
 
         // nếu item vẫn đang trong khoảng có thể hiển thị thì không scroll
-        if (topItem > optionsElement.scrollTop && bottomItem < optionsElement.scrollTop + this.maxHeight) {
+        if (
+          topItem > optionsElement.scrollTop &&
+          bottomItem < optionsElement.scrollTop + this.maxHeight
+        ) {
           return
         }
         if (type === 'ArrowUp') optionsElement.scrollTop = topItem - 20
@@ -134,6 +129,7 @@ export default {
 
   &.disabled {
     background-color: #eeeeee;
+    border-color: #d9d9d9;
 
     label {
       border: 1px solid #eee;

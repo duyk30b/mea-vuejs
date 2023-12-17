@@ -50,11 +50,7 @@ onBeforeMount(async () => await startFetchData())
 <template>
   <div>
     <div>
-      <Pie
-        v-if="loaded"
-        :data="pieData"
-        :options="options"
-      />
+      <Pie v-if="loaded" :data="pieData" :options="options" />
     </div>
   </div>
 </template>

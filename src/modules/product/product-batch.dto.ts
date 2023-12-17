@@ -7,7 +7,7 @@ export class ProductBatchFilterQuery {
   productId?: number
 
   @Expose()
-  isActive?: boolean
+  isActive?: 1 | 0
 
   @Expose()
   @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
@@ -17,7 +17,7 @@ export class ProductBatchFilterQuery {
   @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
   expiryDate?: [ComparisonType, string | number]
 
-  product?: { group?: string; searchText?: string; isActive?: boolean }
+  product?: { group?: string; searchText?: string; isActive?: 1 | 0 }
 }
 
 export class ProductBatchRelationQuery {
@@ -48,6 +48,7 @@ export class ProductBatchPaginationQuery extends PaginationQuery {
 
   static plainFromPlain(plain: Record<string, any>): Record<string, any> {
     const instance = plainToInstance(ProductBatchPaginationQuery, plain, { ignoreDecorators: true })
+    
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

@@ -1,10 +1,19 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import {
+  Expose,
+  Transform,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import type { EGender } from '../enum'
 
-export class Customer extends BaseModel {
+export class Customer {
+  @Expose({ groups: ['ALL', 'COPY'] })
+  id: number
+
   @Expose()
-  fullName: string = ''
+  fullName: string
 
   @Expose()
   phone?: string
@@ -36,20 +45,29 @@ export class Customer extends BaseModel {
   @Expose()
   healthHistory?: string // Tiền sử bệnh
 
-  @Expose({ toClassOnly: true })
-  debt: number = 0
+  @Expose({ groups: ['ALL', 'COPY'] })
+  debt: number
 
   @Expose()
   note: string
 
   @Expose()
-  isActive: boolean = true // Trạng thái
+  isActive: 1 | 0 // Trạng thái
 
-  static blank(): Customer {
-    return new Customer()
+  static init(): Customer {
+    const ins = new Customer()
+    ins.id = 0
+    ins.isActive = 1
+    ins.debt = 0
+    return ins
   }
 
-  static fromPlain(plain: Record<string, any>): Customer {
+  static blank(): Customer {
+    const ins = Customer.init()
+    return ins
+  }
+
+  static fromPlain(plain: Record<string, any> = {}): Customer {
     return plainToInstance(Customer, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -65,18 +83,19 @@ export class Customer extends BaseModel {
     })
   }
 
-  static toPlain(instance: Partial<Customer>): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-
   static fromInstance(instance: Customer): Customer {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
+    })
+  }
+
+  static toPlain(instance: Partial<Customer>): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['CREATE'],
     })
   }
 }

@@ -11,7 +11,9 @@ const store = useOrganizationStore()
 const GROUP = ref<typeof store.PRODUCT_GROUP>(JSON.parse(JSON.stringify(store.PRODUCT_GROUP)))
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
-const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE)))
+const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(
+  JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE))
+)
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -87,55 +89,23 @@ defineExpose({ openModal })
     <template #footer>
       <div class="flex justify-between px-2">
         <div>
-          <a-button @click="handleReload">
-            Tải lại
-          </a-button>
+          <a-button @click="handleReload"> Tải lại </a-button>
         </div>
         <div>
-          <a-button @click="showModal = false">
-            Hủy
-          </a-button>
-          <a-button
-            type="primary"
-            :loading="saveLoading"
-            @click="handleSave"
-          >
-            Lưu lại
-          </a-button>
+          <a-button @click="showModal = false"> Hủy </a-button>
+          <a-button type="primary" :loading="saveLoading" @click="handleSave"> Lưu lại </a-button>
         </div>
       </div>
     </template>
     <div class="modal-data-product-tabs">
-      <a-tabs
-        v-model:activeKey="activeTab"
-        type="card"
-        :tabBarGutter="10"
-      >
-        <a-tab-pane
-          key="1"
-          tab="Nhóm thuốc"
-        >
+      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
+        <a-tab-pane key="1" tab="Nhóm hàng">
           <div class="w-full">
-            <div class="text-center font-bold">
-              Danh sách nhóm hàng hóa
-            </div>
-            <div
-              v-for="(r, key, i) in GROUP"
-              :key="key"
-            >
+            <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
+            <div v-for="(r, key, i) in GROUP" :key="key">
               <div class="py-2 flex">
-                <a-input
-                  v-model:value="GROUP[key]"
-                  :addon-before="i + 1"
-                  style="flex: 1"
-                />
-                <a-button
-                  type="text"
-                  danger
-                  @click="delete GROUP[key]"
-                >
-                  Xóa
-                </a-button>
+                <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="delete GROUP[key]"> Xóa </a-button>
               </div>
             </div>
           </div>
@@ -149,31 +119,13 @@ defineExpose({ openModal })
             </a-button>
           </div>
         </a-tab-pane>
-        <a-tab-pane
-          key="2"
-          tab="Đơn vị"
-        >
+        <a-tab-pane key="2" tab="Đơn vị">
           <div class="w-full">
-            <div class="text-center font-bold">
-              Danh sách đơn vị hàng hóa
-            </div>
-            <div
-              v-for="(u, i) in UNIT"
-              :key="i"
-            >
+            <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+            <div v-for="(u, i) in UNIT" :key="i">
               <div class="py-2 flex">
-                <a-input
-                  v-model:value="UNIT[i]"
-                  :addon-before="i + 1"
-                  style="flex: 1"
-                />
-                <a-button
-                  type="text"
-                  danger
-                  @click="UNIT.splice(i, 1)"
-                >
-                  Xóa
-                </a-button>
+                <a-input v-model:value="UNIT[i]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="UNIT.splice(i, 1)"> Xóa </a-button>
               </div>
             </div>
           </div>
@@ -187,31 +139,13 @@ defineExpose({ openModal })
             </a-button>
           </div>
         </a-tab-pane>
-        <a-tab-pane
-          key="3"
-          tab="Đường dùng"
-        >
+        <a-tab-pane key="3" tab="Đường dùng">
           <div class="w-full">
-            <div class="text-center font-bold">
-              Danh sách đường dùng
-            </div>
-            <div
-              v-for="(r, i) in ROUTE"
-              :key="i"
-            >
+            <div class="text-center font-bold">Danh sách đường dùng</div>
+            <div v-for="(r, i) in ROUTE" :key="i">
               <div class="py-2 flex">
-                <a-input
-                  v-model:value="ROUTE[i]"
-                  :addon-before="i + 1"
-                  style="flex: 1"
-                />
-                <a-button
-                  type="text"
-                  danger
-                  @click="ROUTE.splice(i, 1)"
-                >
-                  Xóa
-                </a-button>
+                <a-input v-model:value="ROUTE[i]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="ROUTE.splice(i, 1)"> Xóa </a-button>
               </div>
             </div>
           </div>
@@ -225,31 +159,13 @@ defineExpose({ openModal })
             </a-button>
           </div>
         </a-tab-pane>
-        <a-tab-pane
-          key="4"
-          tab="Cách sử dụng"
-        >
+        <a-tab-pane key="4" tab="Cách sử dụng">
           <div class="w-full">
-            <div class="text-center font-bold">
-              Danh sách đơn vị hàng hóa
-            </div>
-            <div
-              v-for="(u, i) in HINT_USAGE"
-              :key="i"
-            >
+            <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+            <div v-for="(u, i) in HINT_USAGE" :key="i">
               <div class="py-2 flex">
-                <a-input
-                  v-model:value="HINT_USAGE[i]"
-                  :addon-before="i + 1"
-                  style="flex: 1"
-                />
-                <a-button
-                  type="text"
-                  danger
-                  @click="HINT_USAGE.splice(i, 1)"
-                >
-                  Xóa
-                </a-button>
+                <a-input v-model:value="HINT_USAGE[i]" :addon-before="i + 1" style="flex: 1" />
+                <a-button type="text" danger @click="HINT_USAGE.splice(i, 1)"> Xóa </a-button>
               </div>
             </div>
           </div>

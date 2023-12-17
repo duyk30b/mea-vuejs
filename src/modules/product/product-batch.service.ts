@@ -1,5 +1,9 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { ProductBatchDetailQuery, ProductBatchListQuery, ProductBatchPaginationQuery } from './product-batch.dto'
+import {
+  ProductBatchDetailQuery,
+  ProductBatchListQuery,
+  ProductBatchPaginationQuery,
+} from './product-batch.dto'
 import { ProductBatch } from './product-batch.model'
 
 export class ProductBatchService {

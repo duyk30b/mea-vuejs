@@ -14,6 +14,7 @@ import {
   MoreOutlined,
   PlusOutlined,
   SettingOutlined,
+  CopyOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, h, onBeforeMount, ref } from 'vue'
@@ -23,6 +24,7 @@ import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.vue'
 import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
+import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -32,7 +34,7 @@ const route = useRoute()
 const router = useRouter()
 
 const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const { formatMoney } = organizationStore
 const saveLoading = ref(false)
 const receipt = ref<Receipt>(Receipt.blank())
 
@@ -56,7 +58,19 @@ onBeforeMount(async () => {
 })
 
 const startEdit = () => {
-  router.push({ name: 'ReceiptUpsert', params: { id: receipt.value.id }, query: { mode: 'UPDATE' } })
+  router.push({
+    name: 'ReceiptUpsert',
+    params: { id: receipt.value.id },
+    query: { mode: EReceiptUpsertMode.UPDATE },
+  })
+}
+
+const startCopy = () => {
+  router.push({
+    name: 'ReceiptUpsert',
+    params: { id: receipt.value.id },
+    query: { mode: EReceiptUpsertMode.COPY },
+  })
 }
 
 const destroyDraft = async () => {
@@ -75,8 +89,8 @@ const destroyDraft = async () => {
 const startRefund = async () => {
   try {
     loadingProcess.value = true
-    const response = await ReceiptService.startRefund(receipt.value.id!)
-    await startFetchData(receipt.value.id)
+    const { receiptId } = await ReceiptService.startRefund(receipt.value.id!)
+    await startFetchData(receiptId)
     AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {
     console.log('🚀 ~ startRefund ~ error:', error)
@@ -121,13 +135,18 @@ const clickRefund = () => {
         ? [h('div', `- Trừ nợ nhà cung cấp: ${formatMoney(receipt.value.debt)}`)]
         : []),
       ...(receipt.value.paid > 0
-        ? [h('div', `- Nhà cung cấp nhận lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`)]
+        ? [
+            h(
+              'div',
+              `- Nhà cung cấp nhận lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`
+            ),
+          ]
         : []),
     ]),
     async onOk() {
       await startRefund()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -139,7 +158,7 @@ const clickDestroyDraft = () => {
     async onOk() {
       await destroyDraft()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -151,7 +170,7 @@ const clickSoftDeleteRefund = () => {
     async onOk() {
       await softDeleteRefund()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -180,13 +199,20 @@ const openModalDistributorDetail = (data?: Distributor) => {
 <template>
   <ModalReceiptDetailSettingScreen ref="modalReceiptDetailSettingScreen" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <ModalReceiptPayment ref="modalReceiptPayment" :receipt="receipt" @success="startFetchData(receipt.id)" />
+  <ModalReceiptPayment
+    ref="modalReceiptPayment"
+    :receipt="receipt"
+    @success="startFetchData(receipt.id)"
+  />
 
   <div class="page-header">
     <div class="page-header-content">
       <AuditOutlined /> Thông tin phiếu nhập hàng
       <span v-if="receipt.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
-      <a-button type="primary" @click="$router.push({ name: 'ReceiptUpsert', query: { mode: 'CREATE' } })">
+      <a-button
+        type="primary"
+        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+      >
         <template #icon>
           <PlusOutlined />
         </template>
@@ -200,9 +226,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">
-              Cài đặt hiển thị
-            </a-menu-item>
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -212,9 +236,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
   <div class="md:mx-4 mt-4 p-4 bg-white">
     <table>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">
-          Nhà cung cấp
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">Nhà cung cấp</td>
         <td class="font-medium px-2 py-1">
           {{ receipt.distributor?.fullName }}
           <a class="ml-1" @click="openModalDistributorDetail(receipt.distributor)">
@@ -223,33 +245,23 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Mã phiếu
-        </td>
-        <td class="px-2 py-1">
-          RC{{ receipt.id }}
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
+        <td class="px-2 py-1">RC{{ receipt.id }}</td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          T.Gian tạo
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
         <td class="px-2 py-1">
           {{ timeToText(receipt.time, 'hh:mm DD/MM/YY') }}
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap align-top">
-          Trạng thái
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
         <td class="px-2 py-1">
           <ReceiptStatusTag :status="receipt.status" />
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Ghi chú
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Ghi chú</td>
         <td class="px-2 py-1">
           {{ receipt.note }}
         </td>
@@ -258,30 +270,51 @@ const openModalDistributorDetail = (data?: Distributor) => {
   </div>
 
   <div class="page-main">
-    <div class="px-4 pt-2 flex justify-end">
-      <a-button v-if="receipt.status === ReceiptStatus.Draft" type="primary" @click="startEdit">
+    <div class="px-4 pt-2 flex justify-end gap-2">
+      <a-button class="ml-auto" type="default" @click="startCopy">
         <template #icon>
-          <ExceptionOutlined />
+          <CopyOutlined />
         </template>
-        Sửa phiếu
+        Copy phiếu
       </a-button>
 
-      <a-dropdown class="ml-4">
+      <template v-if="receipt.status !== ReceiptStatus.Refund">
+        <a-button
+          v-if="
+            receipt.status === ReceiptStatus.Draft ||
+            (organizationStore.SCREEN_RECEIPT_DETAIL.function.forceEdit &&
+              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status))
+          "
+          type="primary"
+          @click="startEdit"
+        >
+          <template #icon>
+            <ExceptionOutlined />
+          </template>
+          Sửa phiếu
+        </a-button>
+      </template>
+
+      <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
-              v-if="[ReceiptStatus.Success, ReceiptStatus.Debt, ReceiptStatus.AwaitingShipment].includes(receipt.status)
+              v-if="
+                [
+                  ReceiptStatus.Success,
+                  ReceiptStatus.Debt,
+                  ReceiptStatus.AwaitingShipment,
+                ].includes(receipt.status)
               "
               key="REFUND"
             >
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" /> Hoàn trả
-              </span>
+              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
             </a-menu-item>
-            <a-menu-item v-if="[ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)" key="DELETE">
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" /> Xóa phiếu
-              </span>
+            <a-menu-item
+              v-if="[ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)"
+              key="DELETE"
+            >
+              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Xóa phiếu </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -294,7 +327,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
     </div>
 
     <div class="mt-2">
-      <ReceiptDetailTable :receipt="receipt" @show-receipt-payment="modalReceiptPayment?.openModal()" />
+      <ReceiptDetailTable
+        :receipt="receipt"
+        @show-receipt-payment="modalReceiptPayment?.openModal()"
+      />
     </div>
 
     <div class="flex justify-center gap-4 my-4">
@@ -334,7 +370,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </template>
 
       <template v-if="receipt.status === ReceiptStatus.Debt">
-        <a-button type="primary" :loading="loadingProcess" @click="modalReceiptPayment?.openModal()">
+        <a-button
+          type="primary"
+          :loading="loadingProcess"
+          @click="modalReceiptPayment?.openModal()"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>

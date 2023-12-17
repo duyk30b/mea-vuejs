@@ -1,4 +1,11 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Transform, Type } from 'class-transformer'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Transform,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Customer, CustomerPayment } from '../customer'
 import { DiscountType } from '../enum'
@@ -21,84 +28,92 @@ export class Invoice extends BaseModel {
   @Expose({ groups: ['ALL', 'CREATE'] })
   customerId: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
+  @Transform(({ value }) => (value != null ? value : InvoiceStatus.Draft))
   status: InvoiceStatus
 
   @Expose()
   time: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   deleteTime: number
 
   @Expose()
-  itemsCostMoney: number = 0 // tổng tiền cost = tổng cost sản phẩm
+  itemsCostMoney: number // tổng tiền cost = tổng cost sản phẩm
 
   @Expose()
-  itemsActualMoney: number = 0 // totalItemProduct + totalItemProcedure
-
-  @Expose()
-  @Transform(({ value }) => value || 0)
-  discountMoney: number = 0 // tiền giảm giá
+  itemsActualMoney: number // totalItemProduct + totalItemProcedure
 
   @Expose()
   @Transform(({ value }) => value || 0)
-  discountPercent: number = 0 // % giảm giá
-
-  @Expose()
-  discountType: DiscountType = DiscountType.Percent // Loại giảm giá
+  discountMoney: number // tiền giảm giá
 
   @Expose()
   @Transform(({ value }) => value || 0)
-  surcharge: number = 0 // phụ phí
+  discountPercent: number // % giảm giá
+
+  @Expose()
+  @Transform(({ value }) => (value != null ? value : DiscountType.Percent))
+  discountType: DiscountType // Loại giảm giá
+
+  @Expose()
+  @Transform(({ value }) => value || 0)
+  surcharge: number // phụ phí
 
   @Expose()
   revenue: number // Doanh thu = totalItemMoney + phụ phí - tiền giảm giá
 
   @Expose()
   @Transform(({ value }) => value || 0) // Mục này sinh ra để tính lãi cho chính xác, nghĩa là để trừ cả các chi phí sinh ra khi tạo đơn
-  expense: number = 0 // Mục này sẽ không hiện trong đơn hàng, khách hàng ko nhìn thấy
+  expense: number // Mục này sẽ không hiện trong đơn hàng, khách hàng ko nhìn thấy
 
   @Expose()
   @Transform(({ value }) => value || 0)
   profit: number // tiền lãi = Doanh thu - tiền cost - khoản chi
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Transform(({ value }) => value || 0)
-  paid: number = 0 // tiền đã thanh toán
+  paid: number // tiền đã thanh toán
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Transform(({ value }) => value || 0)
-  debt: number = 0 // tiền nợ
+  debt: number // tiền nợ
 
   @Expose()
-  note: string = '' // Ghi chú
+  note: string // Ghi chú
 
   // @Expose({ name: 'arrival' })
   // @Type(() => Arrival)
   // arrival: Arrival
 
-  @Expose()
+  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
   @Type(() => InvoiceItem)
-  invoiceItems: InvoiceItem[] = []
+  invoiceItems?: InvoiceItem[]
 
-  @Expose()
+  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
   @Type(() => InvoiceSurcharge)
-  invoiceSurcharges: InvoiceSurcharge[] = [InvoiceSurcharge.blank()] // Phụ phí chi tiết
+  invoiceSurcharges?: InvoiceSurcharge[] // Phụ phí chi tiết
 
-  @Expose()
+  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
   @Type(() => InvoiceExpense)
-  invoiceExpenses: InvoiceExpense[] = [InvoiceExpense.blank()] // Chi phí chi tiết
+  invoiceExpenses?: InvoiceExpense[] // Chi phí chi tiết
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => Customer)
   customer?: Customer
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => CustomerPayment)
-  customerPayments: CustomerPayment[] = []
+  customerPayments: CustomerPayment[]
 
   static blank(): Invoice {
-    return new Invoice()
+    const instance = Invoice.fromInstance(new Invoice())
+    instance.invoiceItems = []
+    instance.customerPayments = []
+    instance.customer = Customer.fromInstance(new Customer())
+    instance.invoiceExpenses = [new InvoiceExpense()]
+    instance.invoiceSurcharges = [new InvoiceExpense()]
+    return instance
   }
 
   static fromPlain(dto: Record<string, any>): Invoice {
@@ -121,8 +136,7 @@ export class Invoice extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
-      groups: ['ALL'],
+      groups: ['COPY'],
     })
   }
 

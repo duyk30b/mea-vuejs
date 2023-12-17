@@ -7,7 +7,9 @@ import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), { customer: () => Customer.blank() })
+const props = withDefaults(defineProps<{ customer: Customer }>(), {
+  customer: () => Customer.blank(),
+})
 
 const router = useRouter()
 
@@ -74,12 +76,9 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
       <div>
         Khách hàng: <b>{{ customer.fullName }}</b> - {{ customer.phone }}
       </div>
-      <div />
+      <div></div>
     </div>
-    <div
-      v-if="isMobile"
-      class="mt-4 w-full"
-    >
+    <div v-if="isMobile" class="mt-4 w-full">
       <table class="table-mobile">
         <thead>
           <tr>
@@ -90,27 +89,16 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
         </thead>
         <tbody>
           <tr v-if="invoiceItems.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr
-            v-for="(invoiceItem, index) in invoiceItems"
-            :key="index"
-          >
+          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
             <td>
               <div class="font-medium">
-                {{ invoiceItem.procedure.name }}
+                {{ invoiceItem.procedure!.name }}
               </div>
               <div style="font-size: 0.8rem">
                 ĐH
-                <a
-                  class="mr-2"
-                  @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"
-                >
+                <a class="mr-2" @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
                   IV{{ invoiceItem.invoice!.id }}
                 </a>
                 <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
@@ -125,7 +113,12 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
             <td class="text-right">
               <div
                 v-if="invoiceItem.discountMoney"
-                style="font-size: 0.8rem; text-decoration: line-through; font-style: italic; white-space: nowrap"
+                style="
+                  font-size: 0.8rem;
+                  text-decoration: line-through;
+                  font-style: italic;
+                  white-space: nowrap;
+                "
               >
                 {{ formatMoney(invoiceItem.expectedPrice) }}
               </div>
@@ -147,10 +140,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
         />
       </div>
     </div>
-    <div
-      v-else
-      class="table-wrapper mt-4 w-full"
-    >
+    <div v-else class="table-wrapper mt-4 w-full">
       <table class="table">
         <thead>
           <tr>
@@ -162,20 +152,14 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
         </thead>
         <tbody>
           <tr v-if="invoiceItems.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              No data
-            </td>
+            <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr
-            v-for="(invoiceItem, index) in invoiceItems"
-            :key="index"
-          >
+          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
             <td>
               <div>
-                <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)"> IV{{ invoiceItem.invoice!.id }} </a>
+                <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
+                  IV{{ invoiceItem.invoice!.id }}
+                </a>
                 <span class="ml-2">
                   <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
                 </span>
@@ -191,7 +175,12 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
             <td class="text-right">
               <div
                 v-if="invoiceItem.discountMoney"
-                style="font-size: 0.8rem; text-decoration: line-through; font-style: italic; white-space: nowrap"
+                style="
+                  font-size: 0.8rem;
+                  text-decoration: line-through;
+                  font-style: italic;
+                  white-space: nowrap;
+                "
               >
                 {{ formatMoney(invoiceItem.expectedPrice) }}
               </div>

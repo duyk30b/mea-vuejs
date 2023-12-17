@@ -6,47 +6,32 @@ defineProps<{ status: ReceiptStatus }>()
 </script>
 
 <template>
-  <a-tag
-    v-if="status === ReceiptStatus.Draft"
-    color="warning"
-  >
+  <a-tag v-if="status === ReceiptStatus.Draft" color="warning">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
     Nháp
   </a-tag>
-  <a-tag
-    v-if="status === ReceiptStatus.AwaitingShipment"
-    color="processing"
-  >
+  <a-tag v-if="status === ReceiptStatus.AwaitingShipment" color="processing">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
     Chờ nhập hàng
   </a-tag>
-  <a-tag
-    v-if="status === ReceiptStatus.Debt"
-    color="error"
-  >
+  <a-tag v-if="status === ReceiptStatus.Debt" color="error">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
     Nợ
   </a-tag>
-  <a-tag
-    v-if="status === ReceiptStatus.Success"
-    color="success"
-  >
+  <a-tag v-if="status === ReceiptStatus.Success" color="success">
     <template #icon>
       <CheckCircleOutlined />
     </template>
     Hoàn thành
   </a-tag>
 
-  <a-tag
-    v-if="status === ReceiptStatus.Refund"
-    color="default"
-  >
+  <a-tag v-if="status === ReceiptStatus.Refund" color="default">
     <template #icon>
       <StopOutlined />
     </template>

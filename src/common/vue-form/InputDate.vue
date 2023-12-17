@@ -2,11 +2,14 @@
 import { DTimer } from '@/utils'
 import { onMounted, ref, watch } from 'vue'
 
-const props = withDefaults(defineProps<{ value?: string | number | Date; format?: string; typeParser?: string }>(), {
-  value: undefined,
-  format: 'DD/MM/YYYY',
-  typeParser: 'string',
-})
+const props = withDefaults(
+  defineProps<{ value?: string | number | Date; format?: string; typeParser?: string }>(),
+  {
+    value: undefined,
+    format: 'DD/MM/YYYY',
+    typeParser: 'string',
+  }
+)
 const emit = defineEmits<{ (e: 'update:value', value: string | number | Date | undefined): void }>()
 
 const inputDate = ref<HTMLInputElement>()
@@ -99,12 +102,7 @@ const handleInput = (e: Event) => {
 </script>
 
 <template>
-  <input
-    ref="inputDate"
-    :placeholder="props.format"
-    @input="handleInput"
-    @change="handleChange"
-  >
+  <input ref="inputDate" :placeholder="props.format" @input="handleInput" @change="handleChange" />
 </template>
 
 <style lang="scss" scoped>

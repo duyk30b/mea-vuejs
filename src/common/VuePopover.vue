@@ -27,17 +27,12 @@ const show = ref(false)
       </div>
     </slot>
     <Transition name="popover">
-      <div
-        v-if="show"
-        class="popover-container right"
-      >
+      <div v-if="show" class="popover-container right">
         <slot name="popover">
           <div style="padding: 20px; background-color: #fff">
             <div>Popover Header</div>
             <div>
-              <button @click="show = false">
-                Close
-              </button>
+              <button @click="show = false">Close</button>
             </div>
           </div>
         </slot>

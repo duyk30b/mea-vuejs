@@ -54,44 +54,23 @@ defineExpose({ openModal })
   >
     <div>
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none">
-          Tên đăng nhập
-        </div>
-        <a-input
-          disabled
-          :value="user.username"
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Tên đăng nhập</div>
+        <a-input disabled :value="user.username" class="flex-auto" />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none">
-          Mật khẩu cũ
-        </div>
-        <a-input-password
-          v-model:value="oldPassword"
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Mật khẩu cũ</div>
+        <a-input-password v-model:value="oldPassword" class="flex-auto" />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none">
-          Mật khẩu mới
-        </div>
-        <a-input-password
-          v-model:value="newPassword"
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Mật khẩu mới</div>
+        <a-input-password v-model:value="newPassword" class="flex-auto" />
       </div>
 
       <div class="flex items-center mb-3">
-        <div style="width: 100px; flex: none">
-          Mật khẩu mới
-        </div>
-        <a-input-password
-          v-model:value="newPasswordRepeat"
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Mật khẩu mới</div>
+        <a-input-password v-model:value="newPasswordRepeat" class="flex-auto" />
       </div>
     </div>
   </a-modal>

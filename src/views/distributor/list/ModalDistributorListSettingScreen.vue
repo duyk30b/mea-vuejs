@@ -28,7 +28,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_DISTRIBUTOR_LIST, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_DISTRIBUTOR_LIST,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_DISTRIBUTOR_LIST = JSON.parse(settingData)
 
@@ -77,16 +80,12 @@ defineExpose({ openModal })
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.address">
-                Hiển thị địa chỉ
-              </a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.address"> Hiển thị địa chỉ </a-checkbox>
             </td>
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.note">
-                Hiển thị ghi chú
-              </a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.note"> Hiển thị ghi chú </a-checkbox>
             </td>
           </tr>
           <tr>
@@ -98,9 +97,7 @@ defineExpose({ openModal })
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.action">
-                Hiển thị nút sửa
-              </a-checkbox>
+              <a-checkbox v-model:checked="settingDisplay.action"> Hiển thị nút sửa </a-checkbox>
             </td>
           </tr>
         </tbody>

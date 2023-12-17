@@ -16,6 +16,8 @@ export class InvoiceExpense extends BaseModel {
   money: number = 0
 
   static blank(): InvoiceExpense {
-    return new InvoiceExpense()
+    const instance = new InvoiceExpense()
+    instance.id = 0
+    return instance
   }
 }

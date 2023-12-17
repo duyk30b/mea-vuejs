@@ -33,6 +33,7 @@
     "iconsets",
     "materialdesignicons",
     "Medihome",
+    "oneline",
     "pinia",
     "popconfirm",
     "rushstack",
@@ -40,6 +41,7 @@
     "srgb",
     "tailwindcss",
     "unplugin",
+    "vuejs",
     "vuetify"
   ],
   "liveServer.settings.port": 5501,

@@ -1,4 +1,11 @@
-import { Exclude, Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
+import {
+  Exclude,
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import type { EGender } from '../enum'
 
@@ -19,7 +26,8 @@ export class Employee extends BaseModel {
   gender?: EGender
 
   static blank(): Employee {
-    return new Employee()
+    const instance = Employee.fromInstance(new Employee())
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): Employee {
@@ -49,7 +57,7 @@ export class Employee extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 }

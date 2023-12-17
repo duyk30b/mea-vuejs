@@ -1,4 +1,10 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import {
+  Expose,
+  Transform,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 
 export class Procedure extends BaseModel {
@@ -6,19 +12,21 @@ export class Procedure extends BaseModel {
   name: string // Tên dịch vụ
 
   @Expose()
-  group: string = '' // Nhóm dịch vụ ...
+  group: string // Nhóm dịch vụ ...
 
   @Expose()
-  price: number = 0 // Giá dự kiến
+  price: number // Giá dự kiến
 
   @Expose()
   consumableHint: string // Gợi ý vậy tư tiêu hao
 
   @Expose()
-  isActive: boolean = true // Trạng thái
+  @Transform(({ value, type }) => (value != null ? value : 1))
+  isActive: 1 | 0 // Trạng thái
 
   static blank(): Procedure {
-    return new Procedure()
+    const instance = Procedure.fromInstance(new Procedure())
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): Procedure {
@@ -41,14 +49,15 @@ export class Procedure extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 
-  static toPlain(instance: Procedure): Record<string, any> {
+  static toPlain(instance: Procedure, type: 'CREATE' | 'UPDATE'): Record<string, any> {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
+      groups: [type],
     })
   }
 }

@@ -20,10 +20,7 @@ const openModalProductDetail = (product?: Product) => {
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <div>Danh sách hàng trong phiếu</div>
-  <div
-    v-if="isMobile"
-    class="mt-2"
-  >
+  <div v-if="isMobile" class="mt-2">
     <table class="table-mobile">
       <thead>
         <tr>
@@ -32,26 +29,15 @@ const openModalProductDetail = (product?: Product) => {
           <th>SL</th>
           <th>ĐG</th>
           <th>TT</th>
-          <th />
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="receipt.receiptItems.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Không có dữ liệu
-          </td>
+        <tr v-if="receipt.receiptItems!.length === 0">
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(receiptItem, index) in receipt.receiptItems || []"
-          :key="index"
-        >
-          <td
-            class="text-center whitespace-nowrap"
-            style="padding: 0.5rem 0.2rem"
-          >
+        <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
+          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             {{ index + 1 }}
           </td>
           <td>
@@ -71,52 +57,34 @@ const openModalProductDetail = (product?: Product) => {
             >
               {{ receiptItem.productBatch?.product?.substance }}
             </div>
-            <div
-              class="flex gap-2 flex-wrap"
-              style="font-size: 0.8rem"
-            >
+            <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
               <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
-                Lô: {{ receiptItem.productBatch.batch }}
+                Lô: {{ receiptItem.productBatch!.batch }}
               </div>
               <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">
-                HSD: {{ timeToText(receiptItem.productBatch.expiryDate, 'DD/MM/YY') }}
+                HSD: {{ timeToText(receiptItem.productBatch!.expiryDate, 'DD/MM/YY') }}
               </div>
             </div>
           </td>
           <td class="text-center whitespace-nowrap">
             <div class="item-quantity">
-              <div
-                class="item-quantity-up"
-                @click="receipt.receiptItems[index].quantity += receiptItem.unit.rate"
-              >
-                <font-awesome-icon
-                  :icon="['fas', 'sort-up']"
-                  style="opacity: 0.3"
-                />
+              <div class="item-quantity-up" @click="receiptItem.unitQuantity++">
+                <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.3" />
               </div>
-              <div
-                class="item-quantity-down"
-                @click="receipt.receiptItems[index].quantity -= receiptItem.unit.rate"
-              >
-                <font-awesome-icon
-                  :icon="['fas', 'sort-down']"
-                  style="opacity: 0.3"
-                />
+              <div class="item-quantity-down" @click="receiptItem.unitQuantity--">
+                <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.3" />
               </div>
-              {{ receiptItem.quantity / receiptItem.unit.rate }}
+              {{ receiptItem.unitQuantity }}
             </div>
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receiptItem.productBatch?.costPrice * receiptItem.unit.rate) }}
+            {{ formatMoney(receiptItem.unitCostPrice) }}
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receiptItem.productBatch.costPrice * receiptItem.quantity) }}
+            {{ formatMoney(receiptItem.costPrice * receiptItem.quantity) }}
           </td>
           <td class="text-center">
-            <a
-              class="text-red-500"
-              @click="receipt.receiptItems.splice(index, 1)"
-            >
+            <a class="text-red-500" @click="receipt.receiptItems!.splice(index, 1)">
               <DeleteOutlined />
             </a>
           </td>
@@ -124,44 +92,29 @@ const openModalProductDetail = (product?: Product) => {
       </tbody>
     </table>
   </div>
-  <div
-    v-else
-    class="table-wrapper mt-2"
-  >
+  <div v-else class="table-wrapper mt-2">
     <table class="table">
       <thead>
         <tr>
           <th>#</th>
           <th>Tên hàng</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
-            Lô
-          </th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">
-            HSD
-          </th>
+          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">Lô</th>
+          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">HSD</th>
           <th>Số lượng</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">
-            Đơn vị
-          </th>
+          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đơn vị</th>
           <th>Giá nhập</th>
           <th>Tổng tiền</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="receipt.receiptItems.length === 0">
-          <td
-            colspan="20"
-            class="text-center"
-          >
-            Chưa có dữ liệu
-          </td>
+        <tr v-if="receipt.receiptItems!.length === 0">
+          <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
-        <tr
-          v-for="(ri, index) in receipt.receiptItems"
-          :key="index"
-        >
-          <td class="index" />
+        <tr v-for="(ri, index) in receipt.receiptItems" :key="index">
+          <td class="text-center">
+            {{ index + 1 }}
+          </td>
           <td style="min-width: 150px">
             <div>
               <div class="font-bold">
@@ -191,17 +144,28 @@ const openModalProductDetail = (product?: Product) => {
           >
             {{ timeToText(ri.productBatch?.expiryDate) }}
           </td>
-          <td
-            class="text-center"
-            style="min-width: 100px"
-          >
-            <div class="w-full">
-              <InputNumber
-                :value="receipt.receiptItems[index].quantity / receipt.receiptItems[index].unit.rate"
-                @update:value="
-                  (e: any) => (receipt.receiptItems[index].quantity = e * receipt.receiptItems[index].unit.rate)
-                "
-              />
+          <td class="text-center" style="width: 150px">
+            <div class="flex items-center justify-between">
+              <div
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                @click="receipt.receiptItems![index].unitQuantity--"
+              >
+                <font-awesome-icon :icon="['fas', 'minus']" />
+              </div>
+              <div style="width: calc(100% - 60px); min-width: 50px">
+                <InputNumber
+                  v-model:value="receipt.receiptItems![index].unitQuantity"
+                  :textAlign="'right'"
+                />
+              </div>
+              <div
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                @click="receipt.receiptItems![index].unitQuantity++"
+              >
+                <font-awesome-icon :icon="['fas', 'plus']" />
+              </div>
             </div>
           </td>
           <td
@@ -211,25 +175,19 @@ const openModalProductDetail = (product?: Product) => {
             {{ ri.unit.name }}
           </td>
           <td class="text-right">
-            {{ formatMoney(ri.productBatch?.costPrice * ri.unit.rate) }}
+            {{ formatMoney(ri.unitCostPrice) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(ri.productBatch?.costPrice * ri.quantity) }}
+            {{ formatMoney(ri.productBatch!.costPrice * ri.quantity) }}
           </td>
           <td class="text-center">
-            <a
-              class="text-red-500 text-xl"
-              @click="receipt.receiptItems.splice(index, 1)"
-            >
+            <a class="text-red-500 text-xl" @click="receipt.receiptItems!.splice(index, 1)">
               <DeleteOutlined />
             </a>
           </td>
         </tr>
         <tr>
-          <td
-            colspan="100"
-            class="text-right"
-          >
+          <td colspan="100" class="text-right">
             <span class="mr-10">Tổng tiền hàng:</span>
             <span class="mr-20"> {{ formatMoney(receipt.revenue) }} </span>
           </td>

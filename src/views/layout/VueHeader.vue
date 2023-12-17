@@ -31,27 +31,17 @@ const handleUserAction = async (e: any) => {
 
 <template>
   <a-layout-header>
-    <router-link
-      :to="{ name: 'AppHome' }"
-      class="header-logo hidden md:flex"
-    >
+    <router-link :to="{ name: 'AppHome' }" class="header-logo hidden md:flex">
       <div class="logo-icon">
         <font-awesome-icon :icon="['fas', 'hospital-user']" />
       </div>
       <div class="logo-text">
-        <div class="logo-title">
-          Medihome
-        </div>
-        <div class="logo-description">
-          looking for new solutions
-        </div>
+        <div class="logo-title">Medihome</div>
+        <div class="logo-description">looking for new solutions</div>
       </div>
     </router-link>
     <div class="dashboard-menu flex md:hidden">
-      <MenuUnfoldOutlined
-        class="icon-menu-fold"
-        @click="emitShowDrawer"
-      />
+      <MenuUnfoldOutlined class="icon-menu-fold" @click="emitShowDrawer" />
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
     <div>
@@ -62,17 +52,12 @@ const handleUserAction = async (e: any) => {
         </a-button>
         <template #overlay>
           <a-menu @click="handleUserAction">
-            <a-menu-item key="logout">
-              <LogoutOutlined /> &nbsp; Đăng xuất
-            </a-menu-item>
+            <a-menu-item key="logout"> <LogoutOutlined /> &nbsp; Đăng xuất </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
     </div>
-    <div
-      v-if="AxiosLoading.loading"
-      class="progress-loader"
-    >
+    <div v-if="AxiosLoading.loading" class="progress-loader">
       <a-progress
         :percent="AxiosLoading.percent"
         :show-info="false"

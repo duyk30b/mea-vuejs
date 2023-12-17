@@ -7,7 +7,8 @@ import { CloseOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
 
-const modalInvoicePreviewSettingScreen = ref<InstanceType<typeof ModalInvoicePreviewSettingScreen>>()
+const modalInvoicePreviewSettingScreen =
+  ref<InstanceType<typeof ModalInvoicePreviewSettingScreen>>()
 
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
@@ -31,13 +32,8 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div
-        class="pl-4 py-4 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
-        <div class="flex-1 text-lg font-medium">
-          Hóa đơn
-        </div>
+      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 text-lg font-medium">Hóa đơn</div>
         <div
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
@@ -45,11 +41,7 @@ defineExpose({ openModal })
         >
           <SettingOutlined />
         </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="handleClose"
-        >
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
           <CloseOutlined />
         </div>
       </div>
@@ -70,15 +62,11 @@ defineExpose({ openModal })
         </div>
         <div>
           <div class="flex">
-            <div style="width: 6rem">
-              Khách hàng:
-            </div>
+            <div style="width: 6rem">Khách hàng:</div>
             <div>{{ invoice.customer?.fullName }}</div>
           </div>
           <div class="flex">
-            <div style="width: 6rem">
-              Địa chỉ:
-            </div>
+            <div style="width: 6rem">Địa chỉ:</div>
             <div>
               {{ invoice.customer?.addressStreet }}
               {{ invoice.customer?.addressWard }}
@@ -93,47 +81,46 @@ defineExpose({ openModal })
               <tr>
                 <th>#</th>
                 <th>Tên</th>
-                <th v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">
-                  Đ.Vị
-                </th>
+                <th v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">Đ.Vị</th>
                 <th>SL</th>
                 <th>Đ.Giá</th>
                 <th>T.Tiền</th>
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(invoiceItem, index) in invoice.invoiceItems"
-                :key="index"
-              >
+              <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
                 <td>
                   <div class="text-justify">
-                    {{ invoiceItem.productBatch?.product?.brandName || invoiceItem.procedure?.name }}
+                    <span v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+                      {{ invoiceItem.productBatch!.product!.brandName }}
+                    </span>
+                    <span v-if="invoiceItem.type === InvoiceItemType.Procedure">
+                      {{ invoiceItem.procedure!.name }}
+                    </span>
                   </div>
                   <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
                     <div
                       v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
                       style="font-size: 0.8rem"
                     >
-                      {{ invoiceItem.productBatch?.product?.substance }}
+                      {{ invoiceItem.productBatch!.product!.substance }}
                     </div>
-                    <div
-                      style="font-size: 0.8rem"
-                      class="flex gap-2"
-                    >
+                    <div style="font-size: 0.8rem" class="flex gap-2">
                       <span v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch">
-                        Lô {{ invoiceItem.productBatch?.batch }}
+                        Lô {{ invoiceItem.productBatch!.batch }}
                       </span>
-                      <span v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expiryDate">
-                        - HSD {{ timeToText(invoiceItem.productBatch?.expiryDate) }}
+                      <span
+                        v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expiryDate"
+                      >
+                        - HSD {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
                       </span>
                     </div>
                     <div
                       v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
-                      style="font-size: 0.8rem"
+                      style="font-size: 0.8rem; font-style: italic;"
                     >
                       {{ invoiceItem.hintUsage }}
                     </div>
@@ -152,13 +139,17 @@ defineExpose({ openModal })
                   <div
                     v-if="
                       organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
-                        invoiceItem.discountMoney != 0
+                      invoiceItem.discountMoney != 0
                     "
                     style="color: rgb(255, 102, 0)"
                   >
-                    <del><i><small>
-                      {{ formatMoney(invoiceItem.expectedPrice) }}
-                    </small></i></del>
+                    <del
+                      ><i
+                        ><small>
+                          {{ formatMoney(invoiceItem.expectedPrice) }}
+                        </small></i
+                      ></del
+                    >
                   </div>
                   <div>{{ formatMoney(invoiceItem.actualPrice) }}</div>
                 </td>
@@ -181,17 +172,13 @@ defineExpose({ openModal })
                 </td>
               </tr>
               <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
-                <td style="text-align: right">
-                  Chiết khấu
-                </td>
+                <td style="text-align: right">Chiết khấu</td>
                 <td style="text-align: right">
                   {{ formatMoney(invoice.discountMoney) }}
                 </td>
               </tr>
               <tr v-if="organizationStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
-                <td style="text-align: right">
-                  Phụ phí
-                </td>
+                <td style="text-align: right">Phụ phí</td>
                 <td style="text-align: right">
                   {{ formatMoney(invoice.surcharge) }}
                 </td>

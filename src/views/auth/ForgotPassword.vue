@@ -48,10 +48,8 @@ const startSendEmail = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem">
-        QUÊN MẬT KHẨU
-      </a-divider>
-      <br>
+      <a-divider style="font-size: 1.5rem"> QUÊN MẬT KHẨU </a-divider>
+      <br />
       <a-form
         :model="formState"
         name="basic"
@@ -91,12 +89,7 @@ const startSendEmail = async () => {
 
         <div>{{ result }}</div>
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button
-            type="primary"
-            html-type="submit"
-            :loading="loading"
-            :disabled="btnDisable"
-          >
+          <a-button type="primary" html-type="submit" :loading="loading" :disabled="btnDisable">
             Gửi Email
           </a-button>
         </a-form-item>
@@ -104,12 +97,7 @@ const startSendEmail = async () => {
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>
-        HOTLINE: <a
-          href="tel:0376899866"
-          class="hotline"
-        >0376.899.866</a>
-      </p>
+      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
     </div>
   </div>
 </template>

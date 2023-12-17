@@ -5,15 +5,22 @@ import { ref, watchEffect } from 'vue'
 const invoice = ref<Invoice>(Invoice.blank())
 
 watchEffect(() => {
-  const itemsCostMoney = invoice.value.invoiceItems.reduce((acc, item) => acc + item.costPrice * item.quantity, 0)
-  const itemsActualMoney = invoice.value.invoiceItems.reduce((acc, item) => acc + item.actualPrice * item.quantity, 0)
+  const itemsCostMoney = invoice.value.invoiceItems!.reduce(
+    (acc, item) => acc + item.costPrice * item.quantity,
+    0
+  )
+  const itemsActualMoney = invoice.value.invoiceItems!.reduce(
+    (acc, item) => acc + item.actualPrice * item.quantity,
+    0
+  )
 
   let discountMoney = 0
   let discountPercent = 0
   let discountType: DiscountType = DiscountType.VND
   if (invoice.value.discountType === DiscountType.VND) {
     discountMoney = invoice.value.discountMoney || 0
-    discountPercent = itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
+    discountPercent =
+      itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
     discountType = DiscountType.VND
   }
   if (invoice.value.discountType === DiscountType.Percent) {
@@ -37,3 +44,17 @@ watchEffect(() => {
 })
 
 export { invoice }
+
+export enum EInvoiceUpsertMode {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  COPY = 'COPY',
+}
+
+export enum EInvoiceSave {
+  CREATE_DRAFT = 'CREATE_DRAFT',
+  CREATE_BASIC_AND_NEW = 'CREATE_BASIC_AND_NEW',
+  CREATE_BASIC_AND_DETAIL = 'CREATE_BASIC_AND_DETAIL',
+  UPDATE_DRAFT = 'UPDATE_DRAFT',
+  UPDATE_BASIC = 'UPDATE_BASIC',
+}

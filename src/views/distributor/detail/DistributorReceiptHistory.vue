@@ -8,7 +8,9 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(defineProps<{ distributor: Distributor }>(), { distributor: () => Distributor.blank() })
+const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
+  distributor: () => Distributor.blank(),
+})
 
 const router = useRouter()
 
@@ -17,7 +19,9 @@ const { formatMoney } = organizationStore
 
 const receipts = ref<Receipt[]>([])
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_RECEIPT_HISTORY_PAGINATION_LIMIT')) || 10)
+const limit = ref(
+  Number(localStorage.getItem('DISTRIBUTOR_RECEIPT_HISTORY_PAGINATION_LIMIT')) || 10
+)
 const total = ref(0)
 
 const startFetchData = async () => {
@@ -74,10 +78,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
         NCC: <b>{{ distributor.fullName }}</b> - {{ distributor.phone }}
       </div>
       <div>
-        <a-button
-          type="primary"
-          @click="openBlankReceiptUpsert(distributor.id)"
-        >
+        <a-button type="primary" @click="openBlankReceiptUpsert(distributor.id)">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -95,17 +96,9 @@ const openBlankReceiptUpsert = (distributorId: number) => {
         </thead>
         <tbody>
           <tr v-if="receipts.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr
-            v-for="(receipt, index) in receipts"
-            :key="index"
-          >
+          <tr v-for="(receipt, index) in receipts" :key="index">
             <td>
               <div>
                 <a @click="openBlankReceiptDetail(receipt.id)"> RC{{ receipt.id }} </a>
@@ -122,7 +115,9 @@ const openBlankReceiptUpsert = (distributorId: number) => {
                 {{ formatMoney(receipt.revenue) }}
               </div>
               <div v-if="receipt.debt">
-                <i><small>Nợ: {{ formatMoney(receipt.debt) }}</small></i>
+                <i
+                  ><small>Nợ: {{ formatMoney(receipt.debt) }}</small></i
+                >
               </div>
             </td>
           </tr>

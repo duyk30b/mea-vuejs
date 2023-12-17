@@ -1,9 +1,16 @@
-import { Expose, instanceToInstance, plainToInstance, Transform, Type } from 'class-transformer'
+import {
+  Expose,
+  instanceToInstance,
+  plainToInstance,
+  Transform,
+  TransformationType,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Customer } from '../customer'
-import { DiscountType } from '../enum'
+import { DiscountType, type UnitType } from '../enum'
 import { Procedure } from '../procedure'
-import { ProductBatch } from '../product'
+import { Product, ProductBatch } from '../product'
 import { Invoice } from './invoice.model'
 
 export enum InvoiceItemType {
@@ -12,10 +19,10 @@ export enum InvoiceItemType {
 }
 
 export class InvoiceItem extends BaseModel {
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL', 'COPY'] })
   invoiceId: number
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL', 'COPY'] })
   customerId: number
 
   @Expose()
@@ -25,54 +32,107 @@ export class InvoiceItem extends BaseModel {
   type: InvoiceItemType
 
   @Expose()
-  unit: { name: string; rate: number } = { name: '', rate: 1 }
+  @Transform(({ value, type }) => {
+    if (type === TransformationType.PLAIN_TO_CLASS) {
+      return JSON.parse(value || JSON.stringify({ name: '', rate: 1 }))
+    } else if (type === TransformationType.CLASS_TO_PLAIN) {
+      return JSON.stringify(value || { name: '', rate: 1 })
+    } else if (type === TransformationType.CLASS_TO_CLASS) {
+      return JSON.parse(JSON.stringify(value || { name: '', rate: 1 }))
+    }
+    return value
+  })
+  unit: UnitType
 
   @Expose()
   @Transform(({ value }) => value || 0)
   costPrice: number // Giá cost
 
   @Expose()
-  expectedPrice: number = 0 // Giá dự kiến
+  @Transform(({ value }) => value || 0)
+  expectedPrice: number // Giá dự kiến
 
   @Expose()
   @Transform(({ value }) => value || 0)
-  discountMoney: number = 0 // tiền giảm giá
+  discountMoney: number // tiền giảm giá
 
   @Expose()
   @Transform(({ value }) => value || 0)
-  discountPercent: number = 0 // % giảm giá
+  discountPercent: number // % giảm giá
 
   @Expose()
-  discountType: DiscountType = DiscountType.Percent // Loại giảm giá
+  @Transform(({ value }) => value || DiscountType.Percent)
+  discountType: DiscountType // Loại giảm giá
 
   @Expose()
   @Transform(({ value }) => value || 0)
-  actualPrice: number = 0 // Giá thực tế
+  actualPrice: number // Giá thực tế
 
   @Expose()
-  quantity: number = 0
+  quantity: number
 
   @Expose() // Hướng dẫn sử dụng
   hintUsage: string | null
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => Invoice)
   invoice?: Invoice
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => ProductBatch)
-  productBatch: ProductBatch
+  productBatch?: ProductBatch
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => Procedure)
-  procedure: Procedure
+  procedure?: Procedure
 
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   @Type(() => Customer)
   customer?: Customer
 
+  get unitQuantity() {
+    return Number((this.quantity / this.unit.rate).toFixed(3))
+  }
+
+  get unitCostPrice() {
+    return this.costPrice * this.unit.rate
+  }
+
+  get unitExpectedPrice() {
+    return this.expectedPrice * this.unit.rate
+  }
+
+  get unitDiscountMoney() {
+    return this.discountMoney * this.unit.rate
+  }
+
+  get unitActualPrice() {
+    return this.actualPrice * this.unit.rate
+  }
+
+  set unitQuantity(data: number) {
+    this.quantity = data * this.unit.rate
+  }
+
+  set unitCostPrice(data: number) {
+    this.costPrice = data / this.unit.rate
+  }
+
+  set unitExpectedPrice(data: number) {
+    this.expectedPrice = data / this.unit.rate
+  }
+
+  set unitDiscountMoney(data: number) {
+    this.discountMoney = data / this.unit.rate
+  }
+
+  set unitActualPrice(data: number) {
+    this.actualPrice = data / this.unit.rate
+  }
+
   static blank(): InvoiceItem {
-    return new InvoiceItem()
+    const instance = InvoiceItem.fromInstance(new InvoiceItem())
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): InvoiceItem {
@@ -95,7 +155,7 @@ export class InvoiceItem extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 
@@ -103,13 +163,25 @@ export class InvoiceItem extends BaseModel {
     return instanceToInstance(instances, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
     })
   }
 
-  static fromObject(object: InvoiceItem): InvoiceItem {
-    const instance = new InvoiceItem()
-    Object.assign(instance, object)
-    return instance
+  static clone(root: InvoiceItem): InvoiceItem {
+    const ins = InvoiceItem.fromInstance(root)
+    if (ins.type === InvoiceItemType.Procedure) {
+      if (root.procedure) {
+        ins.procedure = Procedure.fromInstance(root.procedure)
+      }
+    }
+    if (ins.type === InvoiceItemType.ProductBatch) {
+      if (root.productBatch) {
+        ins.productBatch = ProductBatch.fromInstance(root.productBatch)
+        if (root.productBatch.product) {
+          ins.productBatch.product = Product.fromInstance(root.productBatch?.product)
+        }
+      }
+    }
+    return ins
   }
 }

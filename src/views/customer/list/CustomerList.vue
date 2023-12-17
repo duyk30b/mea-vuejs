@@ -36,7 +36,7 @@ const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 1
 const total = ref(0)
 
 const searchText = ref('')
-const isActive = ref<boolean | ''>('')
+const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'fullName' | 'debt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -54,10 +54,10 @@ const startFetchData = async () => {
       },
       sort: sortValue.value
         ? {
-          fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
-          id: sortColumn.value === 'id' ? sortValue.value : undefined,
-          debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
-        }
+            fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
+            id: sortColumn.value === 'id' ? sortValue.value : undefined,
+            debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
+          }
         : { id: 'DESC' },
     })
 
@@ -132,14 +132,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalCustomerUpsert
-    ref="modalCustomerUpsert"
-    @success="handleModalCustomerUpsertSuccess"
-  />
-  <ModalCustomerDetail
-    ref="modalCustomerDetail"
-    @update_customer="updateCustomer"
-  />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
+  <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <ModalCustomerPayDebt
     ref="modalCustomerPayDebt"
     @success="handleModalDistributorPayDebtSuccess"
@@ -148,13 +142,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <ContactsOutlined /> Danh sách khách hàng
-      </div>
-      <a-button
-        type="primary"
-        @click="modalCustomerUpsert?.openModal()"
-      >
+      <div class="hidden md:block"><ContactsOutlined /> Danh sách khách hàng</div>
+      <a-button type="primary" @click="modalCustomerUpsert?.openModal()">
         <template #icon>
           <PlusOutlined />
         </template>
@@ -168,9 +157,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">
-              Cài đặt hiển thị
-            </a-menu-item>
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -181,22 +168,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <a-input-group
-          compact
-          class="w-full"
-        >
+        <a-input-group compact class="w-full">
           <a-input
             :value="searchText"
             allow-clear
             style="width: calc(100% - 100px)"
             @input="handleInputSearchText"
           />
-          <a-button
-            type="primary"
-            class="w-[100px]"
-          >
-            Tìm kiếm
-          </a-button>
+          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
         </a-input-group>
       </div>
 
@@ -207,8 +186,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="isActive"
             :options="[
               { text: 'Tất cả', value: '' },
-              { text: 'Active', value: true },
-              { text: 'Inactive', value: false },
+              { text: 'Active', value: 1 },
+              { text: 'Inactive', value: 0 },
             ]"
             @update:value="handleSelectStatus"
           />
@@ -216,21 +195,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div
-      v-if="isMobile"
-      class="page-main-list"
-    >
+    <div v-if="isMobile" class="page-main-list">
       <table class="table-mobile">
         <thead>
           <tr>
             <th>Tên KH</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">
-              SĐT
-            </th>
-            <th
-              class="cursor-pointer whitespace-nowrap"
-              @click="changeSort('debt')"
-            >
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
@@ -250,12 +221,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </thead>
         <tbody>
           <tr v-if="customerList.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
             v-for="(customer, index) in customerList"
@@ -277,26 +243,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 v-if="organizationStore.SCREEN_CUSTOMER_LIST.address"
                 class="text-xs text-justify"
               >
-                {{ customer.addressProvince }} - {{ customer.addressDistrict }} - {{ customer.addressWard }}
+                {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
+                {{ customer.addressWard }}
               </div>
               <div class="flex gap-4 text-xs">
-                <div
-                  v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday"
-                  class="text-center"
-                >
+                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
                   {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div
-                  v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender"
-                  class="text-center"
-                >
+                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
                   <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
                 </div>
               </div>
-              <div
-                v-if="organizationStore.SCREEN_CUSTOMER_LIST.note"
-                class="text-center"
-              >
+              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
                 {{ customer.note }}
               </div>
             </td>
@@ -306,10 +264,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             >
               <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
             </td>
-            <td
-              class="text-right"
-              style="border-left: none"
-            >
+            <td class="text-right" style="border-left: none">
               <div>{{ formatMoney(customer.debt) }}</div>
               <div v-if="customer.debt != 0">
                 <a-button
@@ -336,17 +291,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div
-      v-else
-      class="page-main-table table-wrapper"
-    >
+    <div v-else class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('id')"
-            >
+            <th class="cursor-pointer" @click="changeSort('id')">
               Mã KH &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
@@ -362,10 +311,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('fullName')"
-            >
+            <th class="cursor-pointer" @click="changeSort('fullName')">
               Họ Tên &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'fullName'"
@@ -381,22 +327,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">
-              SĐT
-            </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender">
-              Giới tính
-            </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday">
-              Ngày sinh
-            </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.address">
-              Địa Chỉ
-            </th>
-            <th
-              class="cursor-pointer"
-              @click="changeSort('debt')"
-            >
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
+            <th class="cursor-pointer" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
@@ -412,30 +347,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive">
-              Trạng thái
-            </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.action">
-              Sửa
-            </th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
+            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.action">Sửa</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="customerList.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              No data
-            </td>
+            <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr
-            v-for="(customer, index) in customerList"
-            :key="index"
-          >
-            <td class="text-center">
-              CM{{ customer.id }}
-            </td>
+          <tr v-for="(customer, index) in customerList" :key="index">
+            <td class="text-center">CM{{ customer.id }}</td>
             <td>
               <div>
                 {{ customer.fullName }}
@@ -447,34 +368,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div
-                v-if="organizationStore.SCREEN_CUSTOMER_LIST.note"
-                class="text-center"
-              >
+              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
                 {{ customer.note }}
               </div>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
               {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
             </td>
 
             <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.address">
-              {{ customer.addressProvince }} - {{ customer.addressDistrict }} - {{ customer.addressWard }}
+              {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
+              {{ customer.addressWard }}
             </td>
             <td class="text-right">
               <div class="flex justify-between">
@@ -493,33 +403,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
               </div>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive"
-              class="text-center"
-            >
-              <a-tag
-                v-if="customer.isActive"
-                color="success"
-              >
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
+              <a-tag v-if="customer.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
                 </template>
                 Active
               </a-tag>
-              <a-tag
-                v-else
-                color="warning"
-              >
+              <a-tag v-else color="warning">
                 <template #icon>
                   <MinusCircleOutlined />
                 </template>
                 Inactive
               </a-tag>
             </td>
-            <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.action"
-              class="text-center"
-            >
+            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.action" class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"

@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
 import { Distributor, DistributorService, useDistributorStore } from '@/modules/distributor'
-import { Receipt, ReceiptItem, ReceiptService } from '@/modules/receipt'
+import { DiscountType } from '@/modules/enum'
+import { useProductStore } from '@/modules/product'
+import { Receipt, ReceiptItem, ReceiptService, ReceiptStatus } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { SaveOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
@@ -12,12 +15,12 @@ import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUps
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
-import { receipt } from './receipt-upsert.store'
-import { DiscountType } from '@/modules/enum'
+import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 
 const modalReceiptUpsertSettingScreen = ref<InstanceType<typeof ModalReceiptUpsertSettingScreen>>()
+const receiptUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 const inputSearchDistributor = ref<InstanceType<typeof InputOptions>>()
@@ -36,11 +39,12 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 const router = useRouter()
 const route = useRoute()
 
+const productStore = useProductStore()
 const distributorStore = useDistributorStore()
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
 
-const mode = ref<'CREATE' | 'UPDATE' | 'COPY'>('CREATE')
+const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 
 const distributor = ref<Distributor>(Distributor.blank())
 const distributorList = ref<Distributor[]>([])
@@ -64,17 +68,24 @@ onBeforeMount(async () => {
     })
 
     receipt.value = receiptResponse
-    distributor.value = Distributor.fromInstance(receiptResponse.distributor)
-    if (mode.value === 'CREATE' || mode.value === 'COPY') {
+    distributor.value = Distributor.fromInstance(receiptResponse.distributor!)
+    if (mode.value === EReceiptUpsertMode.CREATE || mode.value === EReceiptUpsertMode.COPY) {
       time.value = dayjs(new Date())
-    } else if (mode.value === 'UPDATE') {
+    } else if (mode.value === EReceiptUpsertMode.UPDATE) {
       time.value = dayjs(new Date(receipt.value.time))
     }
   } else if (distributorId) {
     const distributorRes = await DistributorService.getOne(distributorId)
     distributor.value = distributorRes
     receipt.value.distributor = distributorRes
-    receipt.value.distributorId = distributorId
+    receipt.value.distributorId = distributorRes.id
+  } else {
+    const distributorRes = Distributor.fromPlain(
+      organizationStore.distributorDefault || Distributor.blank()
+    )
+    distributor.value = distributorRes
+    receipt.value.distributor = distributorRes
+    receipt.value.distributorId = distributorRes.id
   }
 })
 
@@ -97,7 +108,7 @@ const searchingDistributor = async (text: string) => {
 }
 
 const selectDistributor = (data?: Distributor) => {
-  const snapDistributor = Distributor.fromInstance(data || Distributor.blank())
+  const snapDistributor = data ? Distributor.fromInstance(data) : Distributor.blank()
   distributor.value = snapDistributor
   receipt.value.distributorId = snapDistributor.id!
   receipt.value.distributor = snapDistributor
@@ -112,32 +123,61 @@ const handleChangeReceiptDiscountPercent = (data: number) => {
   receipt.value.discountType = DiscountType.Percent
 }
 
-const saveReceipt = async () => {
-  if (!distributor.value.id) {
-    message.error('Lỗi: chưa chọn nhà cung cấp')
-    inputSearchDistributor.value?.focus()
-    return
+const saveReceipt = async (type: EReceiptSave) => {
+  const validForm = receiptUpsertForm.value?.checkValidity()
+  if (!validForm) {
+    return receiptUpsertForm.value?.reportValidity()
   }
-  if (receipt.value.receiptItems.length == 0) {
-    return message.error('Lỗi: cần có ít nhất 1 thuốc trong phiếu')
+  if (receipt.value.receiptItems!.length == 0) {
+    return message.error('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
   }
-  const invalidReceiptItem = receipt.value.receiptItems.find((ri) => ri.quantity === 0)
+  const invalidReceiptItem = receipt.value.receiptItems!.find((ri) => ri.quantity === 0)
   if (invalidReceiptItem) {
-    return message.error(`Lỗi: sản phẩm ${invalidReceiptItem.productBatch.product?.brandName} có số lượng 0`)
+    return message.error(
+      `Lỗi: sản phẩm ${invalidReceiptItem.productBatch!.product!.brandName} có số lượng 0`
+    )
   }
 
   try {
     saveLoading.value = true
     receipt.value.time = time.value.valueOf()
-    let response: { receiptId: number }
-    if (mode.value === 'CREATE') {
-      response = await ReceiptService.createDraft(receipt.value)
-    } else if (mode.value === 'UPDATE') {
-      response = await ReceiptService.updateDraft(receipt.value.id, receipt.value)
-    } else if (mode.value === 'COPY') {
-      response = await ReceiptService.createDraft(receipt.value)
+
+    switch (type) {
+      case EReceiptSave.CREATE_DRAFT: {
+        const response = await ReceiptService.createDraft(receipt.value)
+        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        break
+      }
+      case EReceiptSave.CREATE_BASIC_AND_DETAIL: {
+        const response = await ReceiptService.createBasic(receipt.value)
+        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        break
+      }
+      case EReceiptSave.CREATE_BASIC_AND_NEW: {
+        const response = await ReceiptService.createBasic(receipt.value)
+        receipt.value = Receipt.blank()
+        const distributorRes = Distributor.fromPlain(organizationStore.distributorDefault)
+        distributor.value = distributorRes
+        receipt.value.distributor = distributorRes
+        receipt.value.distributorId = distributorRes.id
+
+        productStore.replaceProductList(response.products || [])
+        AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
+        break
+      }
+      case EReceiptSave.UPDATE_DRAFT: {
+        const response = await ReceiptService.updateDraft(receipt.value.id, receipt.value)
+        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        break
+      }
+      case EReceiptSave.UPDATE_BASIC: {
+        const response = await ReceiptService.updateBasic(receipt.value.id, receipt.value)
+        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        break
+      }
+      default:
+        break
     }
-    router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
   } catch (error) {
     console.log('🚀 ~ saveReceipt ~ error:', error)
   } finally {
@@ -146,8 +186,19 @@ const saveReceipt = async () => {
 }
 
 const handleAddReceiptItem = (ri: ReceiptItem) => {
-  const receiptItem = ReceiptItem.fromObject(ri)
-  receipt.value.receiptItems.push(receiptItem)
+  const receiptItem = ReceiptItem.clone(ri)
+  if (organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
+    receipt.value.receiptItems!.unshift(receiptItem)
+  } else {
+    const exist = receipt.value.receiptItems?.find((i) => {
+      return i.productBatchId === receiptItem.productBatchId
+    })
+    if (exist) {
+      exist.quantity += ri.quantity
+    } else {
+      receipt.value.receiptItems!.unshift(receiptItem)
+    }
+  }
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
@@ -158,18 +209,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalDistributorUpsert
-    ref="modalDistributorUpsert"
-    @success="selectDistributor"
-  />
+  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="selectDistributor" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
-        <ShopOutlined />
-        <span>
-          {{ mode == 'UPDATE' ? ' Cập nhật phiếu nhập hàng' : ' Tạo phiếu nhập hàng mới' }}
-        </span>
+        <ShopOutlined class="mr-2" />
+        <span v-if="mode == EReceiptUpsertMode.CREATE">Tạo phiếu nhập hàng mới</span>
+        <span v-if="mode == EReceiptUpsertMode.UPDATE">Cập nhật phiếu nhập hàng</span>
+        <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
       </div>
     </div>
     <div class="page-header-setting">
@@ -179,9 +227,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">
-              Cài đặt hiển thị
-            </a-menu-item>
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -192,16 +238,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex flex-col md:flex-row gap-4">
       <div class="md:w-2/3">
         <div class="bg-white p-4">
-          <ReceiptItemCreate @add_receipt_item="handleAddReceiptItem" />
+          <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
         </div>
         <div class="mt-4 bg-white p-4">
           <ReceiptItemTable />
         </div>
       </div>
-      <div class="md:w-1/3">
+      <form ref="receiptUpsertForm" class="md:w-1/3">
         <div class="bg-white p-4">
           <div class="flex justify-between">
-            <span>Tên NCC (nợ cũ: <b>{{ formatMoney(distributor.debt) }}</b>)</span>
+            <span>
+              Tên NCC (nợ cũ:
+              <b> {{ formatMoney(distributor.debt) }} </b>
+              )
+            </span>
             <a @click="modalDistributorUpsert?.openModal()">Thêm NCC mới</a>
           </div>
           <div style="height: 40px">
@@ -209,11 +259,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               ref="inputSearchDistributor"
               v-model:searchText="distributor.fullName"
               :options="distributorList"
-              :maxHeight="260"
+              :max-height="260"
               placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-              :disabled="mode !== 'CREATE'"
-              @selectItem="selectDistributor"
-              @update:searchText="searchingDistributor"
+              :disabled="mode === EReceiptUpsertMode.UPDATE"
+              required
+              @select-item="selectDistributor"
+              @update:search-text="searchingDistributor"
             >
               <template #each="{ item: { fullName, phone, address } }">
                 <div>
@@ -227,10 +278,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
         <div class="mt-4 p-4 bg-white">
           <div>Thông tin thanh toán</div>
-          <div
-            class="px-4 pb-4"
-            style="border: 1px solid #cdcdcd"
-          >
+          <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr>
@@ -245,36 +293,26 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     />
                   </td>
                 </tr>
-                <tr>
-                  <td
-                    class="font-bold"
-                    style="width: 120px"
-                  >
-                    Tiền hàng
-                  </td>
-                  <td
-                    class="text-right"
-                    style="padding-right: 11px"
-                  >
+                <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
+                  <td class="font-bold" style="width: 120px">Tiền hàng</td>
+                  <td class="text-right" style="padding-right: 11px">
                     {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
                   <td>Chiết khấu</td>
-                  <td
-                    class="cursor-pointer"
-                    style="font-size: 16px"
-                  >
+                  <td class="cursor-pointer" style="font-size: 16px">
                     <a-popconfirm>
                       <template #cancelButton>
-                        <div />
+                        <div></div>
                       </template>
                       <template #okButton>
-                        <div />
+                        <div></div>
                       </template>
                       <template #title>
                         <div>
-                          Chiết khấu (Tiền hàng: <b>{{ formatMoney(receipt.itemsActualMoney) }}</b>)
+                          Chiết khấu (Tiền hàng: <b>{{ formatMoney(receipt.itemsActualMoney) }}</b
+                          >)
                         </div>
                         <div class="mt-2">
                           <div>
@@ -296,9 +334,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success">
-                            {{ receipt.discountPercent || 0 }}%
-                          </a-tag>
+                          <a-tag color="success"> {{ receipt.discountPercent || 0 }}% </a-tag>
                         </div>
                         <div
                           class="flex-1 text-right"
@@ -313,24 +349,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
                   <td>Phụ phí</td>
                   <td>
-                    <InputMoney
-                      v-model:value="receipt.surcharge"
-                      class="input-payment"
-                    />
+                    <InputMoney v-model:value="receipt.surcharge" class="input-payment" />
                   </td>
                 </tr>
                 <tr>
-                  <td />
-                  <td />
+                  <td></td>
+                  <td></td>
                 </tr>
                 <tr>
-                  <td class="font-bold">
-                    Tổng tiền
-                  </td>
-                  <td
-                    class="text-right font-bold"
-                    style="padding-right: 11px; font-size: 16px"
-                  >
+                  <td class="font-bold">Tổng tiền</td>
+                  <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.revenue) }}
                   </td>
                 </tr>
@@ -339,21 +367,91 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </div>
         </div>
 
-        <div class="mt-4">
-          <a-button
-            type="primary"
-            :loading="saveLoading"
-            size="large"
-            block
-            @click="saveReceipt"
+        <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
+          <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndNew" class="mt-4">
+            <a-button
+              type="primary"
+              :loading="saveLoading"
+              size="large"
+              block
+              @click="saveReceipt(EReceiptSave.CREATE_BASIC_AND_NEW)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Lưu và Tạo phiếu mới
+            </a-button>
+          </div>
+
+          <div
+            v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndDetail"
+            class="mt-4"
           >
-            <template #icon>
-              <SaveOutlined />
-            </template>
-            Lưu lại
-          </a-button>
-        </div>
-      </div>
+            <a-button
+              type="primary"
+              :loading="saveLoading"
+              size="large"
+              block
+              @click="saveReceipt(EReceiptSave.CREATE_BASIC_AND_DETAIL)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Lưu và Xem chi tiết
+            </a-button>
+          </div>
+
+          <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createDraft" class="mt-4">
+            <a-button
+              type="primary"
+              :loading="saveLoading"
+              size="large"
+              block
+              @click="saveReceipt(EReceiptSave.CREATE_DRAFT)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Lưu nháp
+            </a-button>
+          </div>
+        </template>
+
+        <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
+          <div v-if="[ReceiptStatus.Draft].includes(receipt.status)" class="mt-4">
+            <a-button
+              type="primary"
+              :loading="saveLoading"
+              size="large"
+              block
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Cập nhật phiếu nháp
+            </a-button>
+          </div>
+
+          <div
+            v-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
+            class="mt-4"
+          >
+            <a-button
+              type="primary"
+              :loading="saveLoading"
+              size="large"
+              block
+              @click="saveReceipt(EReceiptSave.UPDATE_BASIC)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Cập nhật phiếu
+            </a-button>
+          </div>
+        </template>
+      </form>
     </div>
   </div>
 </template>

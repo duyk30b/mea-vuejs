@@ -44,7 +44,12 @@ export class AuthService {
     return data as { success: boolean }
   }
 
-  static async resetPassword(body: { orgPhone: string; username: string; password: string; token: string }) {
+  static async resetPassword(body: {
+    orgPhone: string
+    username: string
+    password: string
+    token: string
+  }) {
     const { data } = await axios.post(`${CONFIG.API_URL}/auth/reset-password`, body)
     return data as { success: boolean }
   }

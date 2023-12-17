@@ -20,8 +20,8 @@ const openModal = async (p: Product, b: ProductBatch) => {
 }
 
 const refreshModal = () => {
-  productBatch.value = new ProductBatch()
-  productBatch.value.product = new Product()
+  productBatch.value = ProductBatch.blank()
+  productBatch.value.product = Product.blank()
   showModal.value = false
 }
 
@@ -31,6 +31,7 @@ const handleSave = async () => {
     const batch = await ProductBatchService.updateOne(productBatch.value.id!, productBatch.value)
     emit('success', batch, 'UPDATE')
     productStore.updateProductBatch(batch)
+    productStore.timeSync = Date.now() // tạo trigger để màn list reload lại
     showModal.value = false
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -53,38 +54,19 @@ defineExpose({ openModal })
   >
     <div>
       <div class="flex items-center">
-        <div style="width: 100px; flex: none">
-          Tên hàng hóa
-        </div>
-        <a-input
-          v-model:value="productBatch.product!.brandName"
-          disabled
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Tên hàng hóa</div>
+        <a-input v-model:value="productBatch.product!.brandName" disabled class="flex-auto" />
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Hoạt chất
-        </div>
-        <a-input
-          v-model:value="productBatch.product!.substance"
-          disabled
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Hoạt chất</div>
+        <a-input v-model:value="productBatch.product!.substance" disabled class="flex-auto" />
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Số lô
-        </div>
-        <a-input
-          v-model:value="productBatch.batch"
-          class="flex-auto"
-        />
+        <div style="width: 100px; flex: none">Số lô</div>
+        <a-input v-model:value="productBatch.batch" class="flex-auto" />
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Hạn sử dụng
-        </div>
+        <div style="width: 100px; flex: none">Hạn sử dụng</div>
         <div style="flex: 1">
           <InputDate
             v-model:value="productBatch.expiryDate"
@@ -95,37 +77,29 @@ defineExpose({ openModal })
         </div>
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Giá nhập
-        </div>
+        <div style="width: 100px; flex: none">Giá nhập</div>
         <div class="flex-1">
-          <InputMoney
-            :value="productBatch.costPrice"
-            disabled
-          />
+          <InputMoney :value="productBatch.unitCostPrice" disabled />
         </div>
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Giá bán sỉ
-        </div>
+        <div style="width: 100px; flex: none">Giá bán sỉ</div>
         <div class="flex-1">
-          <InputMoney v-model:value="productBatch.wholesalePrice" />
+          <InputMoney v-model:value="productBatch.unitWholesalePrice" />
         </div>
       </div>
       <div class="flex items-center mt-2">
-        <div style="width: 100px; flex: none">
-          Giá bán lẻ
-        </div>
+        <div style="width: 100px; flex: none">Giá bán lẻ</div>
         <div class="flex-1">
-          <InputMoney v-model:value="productBatch.retailPrice" />
+          <InputMoney v-model:value="productBatch.unitRetailPrice" />
         </div>
       </div>
       <div class="flex items-center mt-4">
-        <div class="w-[100px] flex-none">
-          Active
-        </div>
-        <a-switch v-model:checked="productBatch.isActive" />
+        <div class="w-[100px] flex-none">Active</div>
+        <a-switch
+          :checked="Boolean(productBatch.isActive)"
+          @change="(checked: Boolean) => (productBatch.isActive = checked ? 1 : 0)"
+        />
       </div>
     </div>
   </a-modal>

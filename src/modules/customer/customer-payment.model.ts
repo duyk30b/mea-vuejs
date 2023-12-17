@@ -40,7 +40,9 @@ export class CustomerPayment extends BaseModel {
   description: string = ''
 
   static blank(): CustomerPayment {
-    return new CustomerPayment()
+    const instance = new CustomerPayment()
+    instance.id = 0
+    return instance
   }
 
   static fromPlain(plain: Record<string, any>): CustomerPayment {

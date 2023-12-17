@@ -62,18 +62,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         style="width: 150px"
         @change="handleNumberOfDaysToExpiryDate"
       >
-        <a-select-option :value="90">
-          3 tháng
-        </a-select-option>
-        <a-select-option :value="180">
-          6 tháng
-        </a-select-option>
-        <a-select-option :value="365">
-          1 năm
-        </a-select-option>
-        <a-select-option :value="730">
-          2 năm
-        </a-select-option>
+        <a-select-option :value="90"> 3 tháng </a-select-option>
+        <a-select-option :value="180"> 6 tháng </a-select-option>
+        <a-select-option :value="365"> 1 năm </a-select-option>
+        <a-select-option :value="730"> 2 năm </a-select-option>
       </a-select>
     </div>
     <div class="mt-6">
@@ -84,14 +76,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <th>Tên HH</th>
             <th>HSD</th>
             <th>SL</th>
+            <th>ĐV</th>
             <th>Giá</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="productBatchList.length === 0">
-            <td colspan="20" class="text-center">
-              Không có sản phẩm cận date
-            </td>
+            <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
           </tr>
           <tr v-for="(productBatch, index) in productBatchList" :key="index">
             <td class="text-center" style="white-space: nowrap">
@@ -107,10 +98,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               {{ timeToText(productBatch.expiryDate) }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ productBatch.quantity }}
+              {{ productBatch.unitQuantity }}
+            </td>
+            <td class="text-center" style="white-space: nowrap">
+              {{ productBatch.product?.unitName }}
             </td>
             <td class="text-right" style="white-space: nowrap">
-              {{ formatMoney(productBatch.retailPrice) }}
+              {{ formatMoney(productBatch.unitRetailPrice) }}
             </td>
           </tr>
         </tbody>

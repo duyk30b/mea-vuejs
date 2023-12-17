@@ -1,5 +1,16 @@
 // export type ComparisonType = 'LIKE' | 'EQUAL' | 'BETWEEN' | 'IS_NULL' | 'NOT_NULL' | '>' | '<'
-export const ComparisonType = ['LIKE', 'BETWEEN', 'IS_NULL', 'NOT_NULL', '>', '<', '>=', '<=', '==', '!='] as const
+export const ComparisonType = [
+  'LIKE',
+  'BETWEEN',
+  'IS_NULL',
+  'NOT_NULL',
+  '>',
+  '<',
+  '>=',
+  '<=',
+  '==',
+  '!=',
+] as const
 export type ComparisonType = (typeof ComparisonType)[number]
 
 export const UNKNOWN_KEY = '_unknown'
@@ -26,3 +37,5 @@ export enum PaymentType {
   ImmediatePayment = 1, // Thanh toán ngay khi mua hàng
   PayDebt = 2, // Trả nợ (thanh toán sau mua hàng )
 }
+
+export type UnitType = { name: string; rate: number; default?: boolean }

@@ -8,7 +8,9 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), { customer: () => Customer.blank() })
+const props = withDefaults(defineProps<{ customer: Customer }>(), {
+  customer: () => Customer.blank(),
+})
 const router = useRouter()
 
 const organizationStore = useOrganizationStore()
@@ -74,16 +76,15 @@ const openBlankInvoiceUpsert = (customerId: number) => {
   <div>
     <div class="flex justify-between items-center">
       <div class="flex flex-wrap">
-        <span class="mr-2">KH: <b>{{ customer.fullName }}</b></span>
+        <span class="mr-2"
+          >KH: <b>{{ customer.fullName }}</b></span
+        >
         <span>
           <a :href="'tel:' + customer.phone"> {{ formatPhone(customer.phone || '') }} </a>
         </span>
       </div>
       <div>
-        <a-button
-          type="primary"
-          @click="openBlankInvoiceUpsert(customer.id)"
-        >
+        <a-button type="primary" @click="openBlankInvoiceUpsert(customer.id)">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -92,10 +93,7 @@ const openBlankInvoiceUpsert = (customerId: number) => {
       </div>
     </div>
     <div class="mt-4 w-full">
-      <table
-        v-if="isMobile"
-        class="table-mobile"
-      >
+      <table v-if="isMobile" class="table-mobile">
         <thead>
           <tr>
             <th>Đơn hàng</th>
@@ -104,17 +102,9 @@ const openBlankInvoiceUpsert = (customerId: number) => {
         </thead>
         <tbody>
           <tr v-if="invoices.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr
-            v-for="(invoice, index) in invoices"
-            :key="index"
-          >
+          <tr v-for="(invoice, index) in invoices" :key="index">
             <td>
               <div>
                 <a @click="openBlankInvoiceDetail(invoice.id)"> IV{{ invoice.id }} </a>
@@ -130,26 +120,17 @@ const openBlankInvoiceUpsert = (customerId: number) => {
               <div style="font-weight: 500">
                 {{ formatMoney(invoice.revenue) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.Debt"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.AwaitingShipment"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-      <table
-        v-else
-        class="table-mobile"
-      >
+      <table v-else class="table-mobile">
         <thead>
           <tr>
             <th>Đơn hàng</th>
@@ -159,17 +140,9 @@ const openBlankInvoiceUpsert = (customerId: number) => {
         </thead>
         <tbody>
           <tr v-if="invoices.length === 0">
-            <td
-              colspan="20"
-              class="text-center"
-            >
-              Không có dữ liệu
-            </td>
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr
-            v-for="(invoice, index) in invoices"
-            :key="index"
-          >
+          <tr v-for="(invoice, index) in invoices" :key="index">
             <td>
               <div>
                 <a @click="openBlankInvoiceDetail(invoice.id)"> IV{{ invoice.id }} </a>
@@ -185,16 +158,10 @@ const openBlankInvoiceUpsert = (customerId: number) => {
               <div style="font-weight: 500">
                 {{ formatMoney(invoice.revenue) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.Debt"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div
-                v-if="invoice.status === InvoiceStatus.AwaitingShipment"
-                class="text-xs"
-              >
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>

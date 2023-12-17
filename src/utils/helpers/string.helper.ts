@@ -1,4 +1,5 @@
-const _CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' + '!@#$%^&*()_-[]{};\':",./<>?'
+const _CHARSET =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' + '!@#$%^&*()_-[]{};\':",./<>?'
 
 export const randomString = (length = 10, characters = _CHARSET): string => {
   let result = ''
@@ -79,27 +80,15 @@ export const convertViToEn = (root: string): string => {
     .replace(/Đ/g, 'D')
 }
 
-// export const formatNumber = (number: number, fixed = 0, part = 3, sec = ',', dec = '.') => {
-//   const numberStr = (number || 0).toFixed(fixed)
-//   const regex = '\\d(?=(\\d{' + part + '})+' + (fixed > 0 ? '\\D' : '$') + ')'
-//   return numberStr
-//     .replace('.', dec)
-//     .replace(new RegExp(regex, 'g'), '$&' + sec)
-// }
-
-export const formatNumber = (number: number, part = 3, sec = ',', dec = '.') => {
-  const numberStr = (number || 0).toString()
-  const regex = '\\d(?=(\\d{' + part + '})+' + (numberStr.includes('.') ? '\\D' : '$') + ')'
-  return numberStr.replace('.', dec).replace(new RegExp(regex, 'g'), '$&' + sec)
-}
-
 export const formatPhone = (phone: string) => {
   return (phone || '').replace(/(\d{4})(\d{3})(\d{3})/, '$1.$2.$3')
 }
 
-export const snakeCaseToCamelCase = (input: string) => input.replace(/(_\w)/g, (k) => k[1].toUpperCase())
+export const snakeCaseToCamelCase = (input: string) =>
+  input.replace(/(_\w)/g, (k) => k[1].toUpperCase())
 
-export const camelCaseToSnakeCase = (input: string) => input.replace(/[A-Z]/g, (k) => `_${k.toLowerCase()}`)
+export const camelCaseToSnakeCase = (input: string) =>
+  input.replace(/[A-Z]/g, (k) => `_${k.toLowerCase()}`)
 
 export const formatUrlEncode = (text: string) => {
   // remove all symbol, keep: . * - _

@@ -4,7 +4,7 @@ import type { ComparisonType } from '../enum'
 
 export class CustomerFilterQuery {
   @Expose()
-  isActive?: boolean
+  isActive?: 1 | 0
 
   @Expose()
   searchText?: string

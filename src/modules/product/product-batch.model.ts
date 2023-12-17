@@ -1,43 +1,94 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { BaseModel } from '../base.model'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Type,
+} from 'class-transformer'
 import { Product } from './product.model'
 
-export class ProductBatch extends BaseModel {
-  @Expose({ groups: ['ALL', 'CREATE'] })
+export class ProductBatch {
+  @Expose({ groups: ['ALL', 'COPY'] })
+  id: number
+
+  @Expose({ groups: ['ALL', 'COPY', 'CREATE'] })
   productId: number
 
   @Expose()
-  batch: string = '' // Lô sản phẩm
+  batch: string // Lô sản phẩm
 
   @Expose()
   expiryDate?: number
 
-  @Expose({ groups: ['ALL', 'CREATE'] })
-  costPrice: number = 0 // Giá nhập
+  @Expose({ groups: ['ALL', 'COPY', 'CREATE'] })
+  costPrice: number // Giá nhập
 
-  @Expose({ toClassOnly: true })
-  quantity: number = 0
-
-  @Expose()
-  wholesalePrice: number = 0 // Giá bán sỉ
+  @Expose({ groups: ['ALL', 'COPY'] })
+  quantity: number
 
   @Expose()
-  retailPrice: number = 0 // Giá bán lẻ
+  wholesalePrice: number // Giá bán sỉ
 
   @Expose()
-  isActive: boolean = true // Trạng thái
+  retailPrice: number // Giá bán lẻ
 
-  @Expose({ toClassOnly: true })
+  @Expose()
+  isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
   @Type(() => Product)
   product?: Product
 
-  static blank() {
-    const batch = new ProductBatch()
-    batch.id = 0
-    return batch
+  get unitQuantity() {
+    return Number(((this.quantity || 0) / this.product!.unitRate).toFixed(3))
+  }
+  get unitCostPrice() {
+    return this.costPrice * this.product!.unitRate
+  }
+  get unitRetailPrice() {
+    return this.retailPrice * this.product!.unitRate
+  }
+  get unitWholesalePrice() {
+    return this.wholesalePrice * this.product!.unitRate
+  }
+  get totalCostPrice() {
+    return this.costPrice * this.quantity
+  }
+  get totalRetailPrice() {
+    return this.retailPrice * this.quantity
+  }
+  get totalWholesalePrice() {
+    return this.wholesalePrice * this.quantity
+  }
+  set unitCostPrice(data) {
+    this.costPrice = data / this.product!.unitRate
+  }
+  set unitRetailPrice(data) {
+    this.retailPrice = data / this.product!.unitRate
+  }
+  set unitWholesalePrice(data) {
+    this.wholesalePrice = data / this.product!.unitRate
   }
 
-  static fromPlain(plain: Record<string, any>): ProductBatch {
+  static init() {
+    const ins = new ProductBatch()
+    ins.id = 0
+    ins.batch = ''
+    ins.costPrice = 0
+    ins.quantity = 0
+    ins.wholesalePrice = 0
+    ins.retailPrice = 0
+    ins.isActive = 1
+    return ins
+  }
+
+  static blank() {
+    const ins = ProductBatch.init()
+    ins.product = Product.init()
+    return ins
+  }
+
+  static fromPlain(plain: Record<string, any> = {}): ProductBatch {
     return plainToInstance(ProductBatch, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -57,7 +108,15 @@ export class ProductBatch extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      ignoreDecorators: true,
+      groups: ['COPY'],
+    })
+  }
+
+  static fromInstances(instance: ProductBatch[]): ProductBatch[] {
+    return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['COPY'],
     })
   }
 
@@ -67,5 +126,13 @@ export class ProductBatch extends BaseModel {
       excludeExtraneousValues: true,
       groups: [type],
     })
+  }
+
+  static clone(instance: ProductBatch): ProductBatch {
+    const batch = ProductBatch.fromInstance(instance)
+    if (instance.product) {
+      batch.product = Product.fromInstance(instance.product)
+    }
+    return batch
   }
 }

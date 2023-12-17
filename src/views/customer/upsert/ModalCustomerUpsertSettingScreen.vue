@@ -29,7 +29,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_CUSTOMER_UPSERT, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_CUSTOMER_UPSERT,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_CUSTOMER_UPSERT = JSON.parse(settingData)
 
@@ -48,18 +51,9 @@ defineExpose({ openModal })
 <template>
   <VueModal v-model:show="showModal">
     <div class="bg-white">
-      <div
-        class="pl-4 py-4 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
-        <div class="flex-1 text-lg font-medium">
-          Cài đặt hiển thị
-        </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="handleClose"
-        >
+      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
           <CloseOutlined />
         </div>
       </div>
@@ -126,10 +120,7 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button
-            type="primary"
-            @click="handleSave"
-          >
+          <a-button type="primary" @click="handleSave">
             <template #icon>
               <PlusOutlined />
             </template>

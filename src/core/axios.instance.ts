@@ -3,7 +3,13 @@ import { CONFIG } from '@/config'
 import { useUserStore } from '@/store/user.store'
 import axios from 'axios'
 import { reactive } from 'vue'
-import { ACCESS_EXP, ACCESS_TOKEN, LocalStorageService, REFRESH_EXP, REFRESH_TOKEN } from './local-storage.service'
+import {
+  ACCESS_EXP,
+  ACCESS_TOKEN,
+  LocalStorageService,
+  REFRESH_EXP,
+  REFRESH_TOKEN,
+} from './local-storage.service'
 
 const getAccessToken = (() => {
   const start = async () => {
@@ -56,7 +62,10 @@ AxiosInstance.interceptors.request.use(
     config.signal = controller.signal
 
     // nếu refreshToken sắp hết hạn thì logout (cho hết hạn trước 60s)
-    if (!localStorage.getItem(REFRESH_TOKEN) || Number(localStorage.getItem(REFRESH_EXP)) - 60 * 1000 < Date.now()) {
+    if (
+      !localStorage.getItem(REFRESH_TOKEN) ||
+      Number(localStorage.getItem(REFRESH_EXP)) - 60 * 1000 < Date.now()
+    ) {
       LocalStorageService.removeAuth()
       useUserStore().userInfo = null
       controller.abort('Phiên đăng nhập đã hết hạn')

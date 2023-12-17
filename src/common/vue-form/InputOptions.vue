@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-click-outside="handleClickOutside"
-    :class="{ 'input-options': true, disabled }"
-  >
+  <div v-click-outside="handleClickOutside" :class="{ 'input-options': true, disabled }">
     <div class="input-area">
       <input
         ref="inputRef"
@@ -10,17 +7,13 @@
         type="text"
         :placeholder="placeholder"
         :disabled="disabled"
+        :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
         @focusin="showOptions = true"
-      >
-      <div
-        class="clear"
-        @click="handleClear"
-      >
-        <div class="btn-clear">
-          &times;
-        </div>
+      />
+      <div class="clear" @click="handleClear">
+        <div class="btn-clear">&times;</div>
       </div>
     </div>
     <div
@@ -32,17 +25,11 @@
       <div
         v-for="(item, index) in options"
         :key="index"
-        :class="{ 'active': index == indexFocus, 'item-search': true }"
+        :class="{ 'item-search': true, 'active': index == indexFocus }"
         @click="handleSelectItem(index)"
       >
-        <slot
-          name="each"
-          :item="item"
-          :index="index"
-        >
-          <div class="item-json">
-            {{ index }} - {{ JSON.stringify(item) }}
-          </div>
+        <slot name="each" :item="item" :index="index">
+          <div class="item-json">{{ index }} - {{ JSON.stringify(item) }}</div>
         </slot>
       </div>
     </div>
@@ -59,6 +46,7 @@ export default {
     disabled: { type: Boolean, default: () => false },
     placeholder: { type: String, default: () => '' },
     maxHeight: { type: Number, default: () => 300 },
+    required: { type: Boolean, default: () => false },
   },
 
   emits: ['update:searchText', 'selectItem'],
@@ -109,8 +97,10 @@ export default {
     },
 
     handleClear() {
+      if (this.disabled) return
       this.indexFocus = -1
       this.showOptions = false
+      this.$emit('update:searchText', '')
       this.$emit('selectItem', null)
     },
 
@@ -124,7 +114,10 @@ export default {
         const bottomItem = activeItem.offsetTop + activeItem.offsetHeight
 
         // nếu item vẫn đang trong khoảng có thể hiển thị thì không scroll
-        if (topItem > optionsElement.scrollTop && bottomItem < optionsElement.scrollTop + this.maxHeight) {
+        if (
+          topItem > optionsElement.scrollTop &&
+          bottomItem < optionsElement.scrollTop + this.maxHeight
+        ) {
           return
         }
         if (type === 'ArrowUp') optionsElement.scrollTop = topItem - 20
@@ -180,6 +173,10 @@ export default {
 
     .prepend {
       opacity: 0.8;
+    }
+
+    .clear {
+      cursor: not-allowed !important;
     }
   }
 

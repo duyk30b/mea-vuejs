@@ -4,7 +4,7 @@ import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { Procedure } from './procedure.model'
 
 export interface ProcedureFilterQuery {
-  isActive?: 'true' | 'false'
+  isActive?: 1 | 0
   group?: string
   searchText?: string
 }
@@ -53,14 +53,14 @@ export class ProcedureService {
   }
 
   static async createOne(procedure: Procedure) {
-    const procedureDto = Procedure.toPlain(procedure)
+    const procedureDto = Procedure.toPlain(procedure, 'CREATE')
     const { data } = await AxiosInstance.post('/procedure/create', procedureDto)
 
     return Procedure.fromPlain(data)
   }
 
   static async updateOne(id: number, procedure: Procedure) {
-    const procedureDto = Procedure.toPlain(procedure)
+    const procedureDto = Procedure.toPlain(procedure, 'UPDATE')
     const { data } = await AxiosInstance.patch(`/procedure/update/${id}`, procedureDto)
 
     return Procedure.fromPlain(data)

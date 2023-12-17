@@ -5,20 +5,23 @@ import { timeToText } from '@/utils'
 export const invoiceHtmlContent = (invoice: Invoice) => {
   const organizationStore = useOrganizationStore()
   const { formatMoney } = organizationStore
-  const rowInvoiceItem = invoice.invoiceItems
+  const rowInvoiceItem = invoice.invoiceItems!
     .map((item, index) => {
       let invoiceItemName = ''
       if (item.type === InvoiceItemType.ProductBatch) {
-        invoiceItemName = `<div style="font-weight: 500;">${item.productBatch?.product?.brandName}</div>`
+        invoiceItemName = `<div style="font-weight: 500;">${item.productBatch!.product!.brandName}</div>`
         if (organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance) {
           invoiceItemName += `<div>${item.productBatch?.product?.substance}</div>`
         }
       }
       if (item.type === InvoiceItemType.Procedure) {
-        invoiceItemName = `<div style="font-weight: 500;">${item.procedure.name}</div>`
+        invoiceItemName = `<div style="font-weight: 500;">${item.procedure!.name}</div>`
       }
       let expectedPrice = ''
-      if (organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice && item.discountMoney) {
+      if (
+        organizationStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice &&
+        item.discountMoney
+      ) {
         expectedPrice = `<div style="color:red"><del><i><small>
             ${formatMoney(item.expectedPrice * item.unit.rate)}
           </small></i></del></div>`
@@ -27,7 +30,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
       <td style="text-align: center">${index + 1}</td>
       <td>${invoiceItemName}</td>
       <td style="text-align: center">${item.unit.name}</td>
-      <td style="text-align: right">${item.quantity / item.unit.rate}</td>
+      <td style="text-align: center">${item.quantity / item.unit.rate}</td>
       <td style="text-align: right">
         ${expectedPrice}
         <div>${formatMoney(item.actualPrice * item.unit.rate)}</div>

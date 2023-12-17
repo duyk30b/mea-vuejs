@@ -35,58 +35,27 @@ const saveEmployee = async () => {
   <ModalChangePassword ref="modalChangePassword" />
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div
-        class="font-medium"
-        style="font-size: 1.2rem"
-      >
+      <div class="font-medium" style="font-size: 1.2rem">
         <SettingOutlined style="margin-right: 1rem" />Thông tin cá nhân
       </div>
     </div>
   </div>
   <div class="mx-4 p-4 bg-white">
     <div style="max-width: 800px">
-      <div
-        class="flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Họ Tên
-        </div>
-        <a-input
-          v-model:value="employee.fullName"
-          class="flex-auto"
-        />
+      <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Họ Tên</div>
+        <a-input v-model:value="employee.fullName" class="flex-auto" />
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Tên đăng nhập
-        </div>
-        <a-input
-          disabled
-          :value="employee.username"
-          class="flex-auto"
-        />
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Tên đăng nhập</div>
+        <a-input disabled :value="employee.username" class="flex-auto" />
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Mật khẩu
-        </div>
-        <a-input-group
-          class="flex-auto"
-          compact
-        >
-          <a-input
-            value="********************"
-            style="width: calc(100% - 150px)"
-          />
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Mật khẩu</div>
+        <a-input-group class="flex-auto" compact>
+          <a-input value="********************" style="width: calc(100% - 150px)" />
           <a-button
             style="width: 150px"
             type="primary"
@@ -97,13 +66,8 @@ const saveEmployee = async () => {
         </a-input-group>
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Ngày sinh
-        </div>
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Ngày sinh</div>
         <div style="flex: 1">
           <InputDate
             v-model:value="employee.birthday"
@@ -114,30 +78,18 @@ const saveEmployee = async () => {
         </div>
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Giới tính
-        </div>
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Giới tính</div>
         <div style="flex: 1">
           <a-radio-group v-model:value="employee.gender">
-            <a-radio :value="1">
-              Nam
-            </a-radio>
-            <a-radio :value="0">
-              Nữ
-            </a-radio>
+            <a-radio :value="1"> Nam </a-radio>
+            <a-radio :value="0"> Nữ </a-radio>
           </a-radio-group>
         </div>
       </div>
 
       <div class="my-8 text-center">
-        <a-button
-          type="primary"
-          @click="saveEmployee"
-        >
+        <a-button type="primary" @click="saveEmployee">
           <template #icon>
             <SaveOutlined />
           </template>

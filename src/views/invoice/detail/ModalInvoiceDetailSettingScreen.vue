@@ -9,7 +9,9 @@ import { ref } from 'vue'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useOrganizationStore()
-const settingDisplay = ref<typeof store.SCREEN_INVOICE_DETAIL>(JSON.parse(JSON.stringify(store.SCREEN_INVOICE_DETAIL)))
+const settingDisplay = ref<typeof store.SCREEN_INVOICE_DETAIL>(
+  JSON.parse(JSON.stringify(store.SCREEN_INVOICE_DETAIL))
+)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -26,7 +28,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_INVOICE_DETAIL, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_INVOICE_DETAIL,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_DETAIL = JSON.parse(settingData)
 
@@ -168,19 +173,27 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-radio-group v-model:value="settingDisplay.invoiceProcessType">
-                <a-radio
-                  style="display: flex; line-height: 36px"
-                  :value="1"
-                >
+                <a-radio style="display: flex; line-height: 36px" :value="1">
                   Đơn hàng không nợ: Gửi hàng và thanh toán đồng thời
                 </a-radio>
-                <a-radio
-                  style="display: flex; line-height: 36px"
-                  :value="2"
-                >
+                <a-radio style="display: flex; line-height: 36px" :value="2">
                   Đơn hàng có nợ: Gửi hàng riêng, thanh toán riêng
                 </a-radio>
               </a-radio-group>
+            </td>
+          </tr>
+        </tbody>
+        <thead>
+          <tr>
+            <th>Chức năng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.function.forceEdit">
+                Cho phép sửa mọi đơn hàng
+              </a-checkbox>
             </td>
           </tr>
         </tbody>

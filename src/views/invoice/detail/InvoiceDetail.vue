@@ -26,8 +26,9 @@ import InvoiceStatusTag from '../InvoiceStatusTag.vue'
 import InvoiceDetailTable from './InvoiceDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
-import ModalInvoicePreview from './ModalInvoicePreview.vue'
-import { invoiceHtmlContent } from './invoice-html-content'
+import ModalInvoicePreview from './preview/ModalInvoicePreview.vue'
+import { invoiceHtmlContent } from './preview/invoice-html-content'
+import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -69,11 +70,19 @@ onBeforeMount(async () => {
 })
 
 const startEdit = () => {
-  router.push({ name: 'InvoiceUpsert', params: { id: invoice.value.id }, query: { mode: 'UPDATE' } })
+  router.push({
+    name: 'InvoiceUpsert',
+    params: { id: invoice.value.id },
+    query: { mode: EInvoiceUpsertMode.UPDATE },
+  })
 }
 
 const startCopy = () => {
-  router.push({ name: 'InvoiceUpsert', params: { id: invoice.value.id }, query: { mode: 'COPY' } })
+  router.push({
+    name: 'InvoiceUpsert',
+    params: { id: invoice.value.id },
+    query: { mode: EInvoiceUpsertMode.COPY },
+  })
 }
 
 const destroyDraft = async () => {
@@ -137,13 +146,18 @@ const clickRefund = () => {
         ? [h('div', `- Trừ nợ khách hàng: ${formatMoney(invoice.value.debt)}`)]
         : []),
       ...(invoice.value.paid > 0
-        ? [h('div', `- Khách hàng nhận lại số tiền đã thanh toán là: ${formatMoney(invoice.value.paid)}`)]
+        ? [
+            h(
+              'div',
+              `- Khách hàng nhận lại số tiền đã thanh toán là: ${formatMoney(invoice.value.paid)}`
+            ),
+          ]
         : []),
     ]),
     async onOk() {
       await startRefund()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -155,7 +169,7 @@ const clickDestroyDraft = () => {
     async onOk() {
       await destroyDraft()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -167,7 +181,7 @@ const clickSoftDeleteRefund = () => {
     async onOk() {
       await softDeleteRefund()
     },
-    onCancel() { },
+    onCancel() {},
   })
 }
 
@@ -208,14 +222,21 @@ const startOpenImageDemo = () => {
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalInvoicePreview ref="modalInvoicePreview" />
-  <ModalInvoicePayment ref="modalInvoicePayment" :invoice="invoice" @success="startFetchData(invoice.id)" />
+  <ModalInvoicePayment
+    ref="modalInvoicePayment"
+    :invoice="invoice"
+    @success="startFetchData(invoice.id)"
+  />
   <ModalInvoiceDetailSettingScreen ref="modalInvoiceDetailSettingScreen" />
 
   <div class="page-header">
     <div class="page-header-content">
       <ScheduleOutlined /> Thông tin hóa đơn
       <span v-if="invoice.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
-      <a-button type="primary" @click="$router.push({ name: 'InvoiceUpsert', query: { mode: 'CREATE' } })">
+      <a-button
+        type="primary"
+        @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
+      >
         <template #icon>
           <PlusOutlined />
         </template>
@@ -229,9 +250,7 @@ const startOpenImageDemo = () => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">
-              Cài đặt hiển thị
-            </a-menu-item>
+            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -241,9 +260,7 @@ const startOpenImageDemo = () => {
   <div class="md:mx-4 mt-4 p-4 bg-white">
     <table>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Khách hàng
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Khách hàng</td>
         <td class="font-medium px-2 py-1">
           {{ invoice.customer?.fullName }}
           <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customer!)">
@@ -252,49 +269,43 @@ const startOpenImageDemo = () => {
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Mã đơn
-        </td>
-        <td class="px-2 py-1">
-          IV{{ invoice.id }}
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Mã đơn</td>
+        <td class="px-2 py-1">IV{{ invoice.id }}</td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Thời gian tạo
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Thời gian tạo</td>
         <td class="px-2 py-1">
           {{ timeToText(invoice.time, 'hh:mm DD/MM/YY') }}
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap" style="vertical-align: top">
-          Trạng thái
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap" style="vertical-align: top">Trạng thái</td>
         <td class="px-2 py-1">
           <InvoiceStatusTag :status="invoice.status" />
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">
-          Chi phí
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap">Chi phí</td>
         <td class="px-2 py-1">
           {{ formatMoney(invoice.expense) }}
           <span
-            v-if="invoice.invoiceExpenses.length > 1 ||
-              (invoice.invoiceExpenses.length == 1 && invoice.invoiceExpenses[0].key !== '_unknown')
+            v-if="
+              (invoice.invoiceExpenses || []).length > 1 ||
+              ((invoice.invoiceExpenses || []).length == 1 &&
+                (invoice.invoiceExpenses!)[0].key !== '_unknown')
             "
             class="ml-2"
           >
-            ( {{ invoice.invoiceExpenses.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ') }} )
+            (
+            {{
+              invoice.invoiceExpenses!.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ')
+            }}
+            )
           </span>
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap align-top">
-          Ghi chú
-        </td>
+        <td class="px-2 py-1 whitespace-nowrap align-top">Ghi chú</td>
         <td class="px-2 py-1">
           {{ invoice.note }}
         </td>
@@ -304,13 +315,13 @@ const startOpenImageDemo = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
-      <a-button v-if="isMobile" type="default" @click="startOpenImageDemo">
+      <a-button type="default" @click="startOpenImageDemo">
         <template #icon>
           <EyeOutlined />
         </template>
-        Xem ảnh
+        Xem
       </a-button>
-      <a-button v-if="!isMobile" type="default" @click="startPrint">
+      <a-button type="default" @click="startPrint">
         <template #icon>
           <PrinterOutlined />
         </template>
@@ -322,28 +333,44 @@ const startOpenImageDemo = () => {
         </template>
         Copy đơn
       </a-button>
-      <a-button v-if="invoice.status === InvoiceStatus.Draft" type="primary" @click="startEdit">
-        <template #icon>
-          <ExceptionOutlined />
-        </template>
-        Sửa
-      </a-button>
+
+      <template v-if="invoice.status !== InvoiceStatus.Refund">
+        <a-button
+          v-if="
+            invoice.status === InvoiceStatus.Draft ||
+            (organizationStore.SCREEN_INVOICE_DETAIL.function.forceEdit &&
+              [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status))
+          "
+          type="primary"
+          @click="startEdit"
+        >
+          <template #icon>
+            <ExceptionOutlined />
+          </template>
+          Sửa đơn
+        </a-button>
+      </template>
+
       <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
-              v-if="[InvoiceStatus.AwaitingShipment, InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
+              v-if="
+                [
+                  InvoiceStatus.AwaitingShipment,
+                  InvoiceStatus.Debt,
+                  InvoiceStatus.Success,
+                ].includes(invoice.status)
               "
               key="REFUND"
             >
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" /> Hoàn trả
-              </span>
+              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
             </a-menu-item>
-            <a-menu-item v-if="[InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)" key="DELETE">
-              <span class="text-red-500">
-                <DeleteOutlined class="mr-2" /> Xóa đơn
-              </span>
+            <a-menu-item
+              v-if="[InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)"
+              key="DELETE"
+            >
+              <span class="text-red-500"> <DeleteOutlined class="mr-2" /> Xóa đơn </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -356,7 +383,10 @@ const startOpenImageDemo = () => {
     </div>
 
     <div class="mt-2">
-      <InvoiceDetailTable :invoice="invoice" @show-invoice-payment="modalInvoicePayment?.openModal()" />
+      <InvoiceDetailTable
+        :invoice="invoice"
+        @show-invoice-payment="modalInvoicePayment?.openModal()"
+      />
     </div>
 
     <div class="flex justify-center gap-4 my-4">
@@ -396,7 +426,11 @@ const startOpenImageDemo = () => {
       </template>
 
       <template v-if="invoice.status === InvoiceStatus.Debt">
-        <a-button type="primary" :loading="loadingProcess" @click="modalInvoicePayment?.openModal()">
+        <a-button
+          type="primary"
+          :loading="loadingProcess"
+          @click="modalInvoicePayment?.openModal()"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -406,3 +440,4 @@ const startOpenImageDemo = () => {
     </div>
   </div>
 </template>
+./preview/invoice-html-content

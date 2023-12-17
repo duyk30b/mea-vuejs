@@ -54,21 +54,11 @@ defineExpose({ openModal })
     style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
   >
     <div class="bg-white">
-      <div
-        class="pl-4 py-3 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
-        <div
-          class="flex-1 font-medium"
-          style="font-size: 16px"
-        >
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 font-medium" style="font-size: 16px">
           NCC: {{ distributor.fullName }}
         </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="closeModal"
-        >
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>
       </div>
@@ -107,10 +97,7 @@ defineExpose({ openModal })
                 </a-button>
               </div>
             </div>
-            <DistributorPaymentHistory
-              ref="distributorPaymentHistory"
-              :distributor="distributor"
-            />
+            <DistributorPaymentHistory ref="distributorPaymentHistory" :distributor="distributor" />
           </a-tab-pane>
           <a-tab-pane key="receipts-history">
             <template #tab>

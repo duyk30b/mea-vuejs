@@ -1,40 +1,16 @@
 <template>
   <Teleport to="body">
     <div class="wrapper-alert">
-      <div
-        v-for="(alert, key) in AlertStore.data"
-        :key="key"
-        :class="`alert ${alert.type}`"
-      >
+      <div v-for="(alert, key) in AlertStore.data" :key="key" :class="`alert ${alert.type}`">
         <div class="prepend" />
-        <div
-          v-if="alert.type === 'success'"
-          class="icon"
-        >
-          ☑
-        </div>
-        <div
-          v-if="alert.type === 'warning'"
-          class="icon"
-        >
-          ⚠
-        </div>
-        <div
-          v-if="alert.type === 'error'"
-          class="icon"
-        >
-          ☒
-        </div>
+        <div v-if="alert.type === 'success'" class="icon">☑</div>
+        <div v-if="alert.type === 'warning'" class="icon">⚠</div>
+        <div v-if="alert.type === 'error'" class="icon">☒</div>
         <div class="content">
           <div>{{ alert.message }}</div>
         </div>
         <div class="append">
-          <button
-            class="btn-close"
-            @click="AlertStore.remove(key)"
-          >
-            ✕
-          </button>
+          <button class="btn-close" @click="AlertStore.remove(key)">✕</button>
         </div>
         <div
           class="progress-bar"

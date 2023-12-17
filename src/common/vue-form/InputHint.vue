@@ -46,7 +46,10 @@ export default {
       if (index1 === -1) return ''
 
       const index2 = index1 + textEng.length
-      return `${item.slice(0, index1)}<b>${item.slice(index1, index2)}</b>${item.slice(index2, itemEng.length)}`
+      return `${item.slice(0, index1)}<b>${item.slice(index1, index2)}</b>${item.slice(
+        index2,
+        itemEng.length
+      )}`
     },
   },
 }

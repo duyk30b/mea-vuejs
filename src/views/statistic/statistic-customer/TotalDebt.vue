@@ -26,7 +26,9 @@ const startFetchData = async () => {
     loaded.value = false
     const [customerSumDebt, { invoiceSumDebt }] = await Promise.all([
       StatisticService.sumDebt(),
-      InvoiceService.sumDebt({ filter: { time: ['<', Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000] } }),
+      InvoiceService.sumDebt({
+        filter: { time: ['<', Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000] },
+      }),
     ])
     totalCustomerDebt.value = customerSumDebt
     const newDebt = customerSumDebt - invoiceSumDebt
@@ -56,33 +58,23 @@ const handleChangeBadDebtDays = async (value: number) => {
 <template>
   <div>
     <div class="flex justify-between items-center">
-      <span style="font-size: 18px; font-weight: 500"> Tổng nợ: {{ formatMoney(totalCustomerDebt) }} </span>
+      <span style="font-size: 18px; font-weight: 500">
+        Tổng nợ: {{ formatMoney(totalCustomerDebt) }}
+      </span>
       <a-select
         v-model:value="badDebtDays"
         allow-clear
         style="width: 150px"
         @change="handleChangeBadDebtDays"
       >
-        <a-select-option :value="30">
-          > 1 tháng
-        </a-select-option>
-        <a-select-option :value="90">
-          > 3 tháng
-        </a-select-option>
-        <a-select-option :value="180">
-          > 6 tháng
-        </a-select-option>
-        <a-select-option :value="365">
-          > 1 năm
-        </a-select-option>
+        <a-select-option :value="30"> > 1 tháng </a-select-option>
+        <a-select-option :value="90"> > 3 tháng </a-select-option>
+        <a-select-option :value="180"> > 6 tháng </a-select-option>
+        <a-select-option :value="365"> > 1 năm </a-select-option>
       </a-select>
     </div>
     <div class="mt-4 px-10">
-      <Pie
-        v-if="loaded"
-        :data="pieData"
-        :options="options"
-      />
+      <Pie v-if="loaded" :data="pieData" :options="options" />
     </div>
   </div>
 </template>

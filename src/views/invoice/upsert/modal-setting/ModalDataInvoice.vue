@@ -44,7 +44,10 @@ const handleSave = async () => {
         if (!SURCHARGE_DETAIL.value[key]) delete SURCHARGE_DETAIL.value[key]
       })
       const data = JSON.stringify(SURCHARGE_DETAIL.value)
-      await OrganizationService.saveSettings(OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL, data)
+      await OrganizationService.saveSettings(
+        OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
+        data
+      )
       store.INVOICE_SURCHARGE_DETAIL = JSON.parse(data)
     }
     if (activeTab.value === '2') {
@@ -83,14 +86,10 @@ defineExpose({ openModal })
     <template #footer>
       <div class="flex justify-between px-2">
         <div>
-          <a-button @click="handleReload">
-            Tải lại
-          </a-button>
+          <a-button @click="handleReload"> Tải lại </a-button>
         </div>
         <div>
-          <a-button @click="showModal = false">
-            Hủy
-          </a-button>
+          <a-button @click="showModal = false"> Hủy </a-button>
           <a-button
             :disabled="disabledButtonSave"
             type="primary"
@@ -103,27 +102,19 @@ defineExpose({ openModal })
       </div>
     </template>
     <div class="modal-data-product-tabs">
-      <a-tabs
-        v-model:activeKey="activeTab"
-        type="card"
-        :tabBarGutter="10"
-      >
-        <a-tab-pane
-          key="1"
-          tab="Phụ phí"
-        >
+      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
+        <a-tab-pane key="1" tab="Phụ phí">
           <div class="w-full">
             <details class="my-2">
-              <summary style="font-style: italic">
-                Giải thích chi tiết về phụ phí
-              </summary>
+              <summary style="font-style: italic">Giải thích chi tiết về phụ phí</summary>
               <p class="mt-2 italic">
                 - Tiền <b>phụ phí</b> là tiền người mua cần phải trả thêm vào đơn hàng
               </p>
-              <p>- Các phụ phí thường gặp như: <b>tiền vận chuyển</b>, tiền đóng gói, tiền tư vấn, ...</p>
-              <p class="italic">
-                - Công thức tính tổng tiền đơn hàng:
+              <p>
+                - Các phụ phí thường gặp như: <b>tiền vận chuyển</b>, tiền đóng gói, tiền tư vấn,
+                ...
               </p>
+              <p class="italic">- Công thức tính tổng tiền đơn hàng:</p>
               <div class="text-center">
                 <span class="mx-2 font-bold">Tổng tiền</span>
                 = <span class="mx-2">Tiền hàng</span> - <span class="mx-2">Chiết khấu</span> +
@@ -131,28 +122,23 @@ defineExpose({ openModal })
               </div>
             </details>
             <div class="flex mt-4">
-              <div style="width: 90px; font-weight: 600; padding: 0 5px">
-                Mã
-              </div>
-              <div style="flex: 1; font-weight: 600; padding: 0 5px">
-                Tên phụ phí
-              </div>
+              <div style="width: 90px; font-weight: 600; padding: 0 5px">Mã</div>
+              <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên phụ phí</div>
             </div>
-            <div
-              v-for="(r, key, index) in SURCHARGE_DETAIL"
-              :key="key"
-            >
+            <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
               <div class="py-2 flex items-stretch">
                 <div
                   class="flex justify-center items-center px-1"
-                  style="border: 1px solid #d9d9d9; border-right: none; width: 40px; background-color: #f7f7f7"
+                  style="
+                    border: 1px solid #d9d9d9;
+                    border-right: none;
+                    width: 40px;
+                    background-color: #f7f7f7;
+                  "
                 >
                   <span>{{ index }}</span>
                 </div>
-                <a-input
-                  v-model:value="SURCHARGE_DETAIL[key]"
-                  style="flex: 1"
-                />
+                <a-input v-model:value="SURCHARGE_DETAIL[key]" style="flex: 1" />
                 <a-button
                   type="text"
                   danger
@@ -174,22 +160,15 @@ defineExpose({ openModal })
             </a-button>
           </div>
         </a-tab-pane>
-        <a-tab-pane
-          key="2"
-          tab="Chi phí"
-        >
+        <a-tab-pane key="2" tab="Chi phí">
           <div class="w-full">
             <details class="my-2">
-              <summary style="font-style: italic">
-                Giải thích chi tiết về chi phí
-              </summary>
+              <summary style="font-style: italic">Giải thích chi tiết về chi phí</summary>
               <p class="mt-2 italic">
                 - Tiền <b>chi phí</b> là tiền người bán phải chịu khi tạo đơn hàng
               </p>
               <p>- Các chi phí thường gặp như: <b>tiền hoa hồng</b>, ...</p>
-              <div class="italic">
-                - Công thức tính lãi của đơn hàng:
-              </div>
+              <div class="italic">- Công thức tính lãi của đơn hàng:</div>
               <div class="text-center">
                 <span class="mx-2 font-bold">Tổng tiền</span>
                 = <span class="mx-2">Tiền cost</span> + <span class="mx-2">Chi phí</span> +
@@ -197,28 +176,23 @@ defineExpose({ openModal })
               </div>
             </details>
             <div class="flex mt-4">
-              <div style="width: 90px; font-weight: 600; padding: 0 5px">
-                Mã
-              </div>
-              <div style="flex: 1; font-weight: 600; padding: 0 5px">
-                Tên chi phí
-              </div>
+              <div style="width: 90px; font-weight: 600; padding: 0 5px">Mã</div>
+              <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên chi phí</div>
             </div>
-            <div
-              v-for="(r, key, index) in EXPENSE_DETAIL"
-              :key="key"
-            >
+            <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">
               <div class="py-2 flex">
                 <div
                   class="flex justify-center items-center px-1"
-                  style="border: 1px solid #d9d9d9; border-right: none; width: 40px; background-color: #f7f7f7"
+                  style="
+                    border: 1px solid #d9d9d9;
+                    border-right: none;
+                    width: 40px;
+                    background-color: #f7f7f7;
+                  "
                 >
                   <span>{{ index }}</span>
                 </div>
-                <a-input
-                  v-model:value="EXPENSE_DETAIL[key]"
-                  style="flex: 1"
-                />
+                <a-input v-model:value="EXPENSE_DETAIL[key]" style="flex: 1" />
                 <a-button
                   type="text"
                   danger

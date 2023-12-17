@@ -32,7 +32,10 @@ const handleChangeProvince = async (e: string) => {
 
 const handleChangeDistrict = async (e: string) => {
   try {
-    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(organization.value.addressProvince, e)
+    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(
+      organization.value.addressProvince,
+      e
+    )
     wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
@@ -58,64 +61,30 @@ const saveOrganization = async () => {
 <template>
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
-      <div
-        class="font-medium"
-        style="font-size: 1.2rem"
-      >
+      <div class="font-medium" style="font-size: 1.2rem">
         <SettingOutlined style="margin-right: 1rem" />Thông tin cơ sở
       </div>
     </div>
   </div>
   <div class="mx-4 p-4 bg-white">
     <div style="max-width: 800px">
-      <div
-        class="flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Tên Cơ sở
-        </div>
-        <a-input
-          v-model:value="organization.organizationName"
-          class="flex-auto"
-        />
+      <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Tên Cơ sở</div>
+        <a-input v-model:value="organization.organizationName" class="flex-auto" />
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Email
-        </div>
-        <a-input
-          disabled
-          :value="organization.email"
-          class="flex-auto"
-        />
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Email</div>
+        <a-input disabled :value="organization.email" class="flex-auto" />
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          SĐT
-        </div>
-        <a-input
-          disabled
-          :value="organization.phone"
-          class="flex-auto"
-        />
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">SĐT</div>
+        <a-input disabled :value="organization.phone" class="flex-auto" />
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
-        <div style="width: 100px; flex: none">
-          Địa chỉ
-        </div>
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Địa chỉ</div>
         <div class="flex-auto flex gap-4 flex-wrap">
           <a-select
             v-model:value="organization.addressProvince"
@@ -149,10 +118,7 @@ const saveOrganization = async () => {
         </div>
       </div>
 
-      <div
-        class="mt-3 flex"
-        :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-      >
+      <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none" />
         <a-input
           v-model:value="organization.addressStreet"
@@ -162,10 +128,7 @@ const saveOrganization = async () => {
       </div>
 
       <div class="my-8 text-center">
-        <a-button
-          type="primary"
-          @click="saveOrganization"
-        >
+        <a-button type="primary" @click="saveOrganization">
           <template #icon>
             <SaveOutlined />
           </template>

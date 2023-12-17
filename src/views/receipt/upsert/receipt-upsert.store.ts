@@ -5,7 +5,7 @@ import { ref, watchEffect } from 'vue'
 const receipt = ref<Receipt>(Receipt.blank())
 
 watchEffect(() => {
-  const itemsActualMoney = receipt.value.receiptItems.reduce(
+  const itemsActualMoney = receipt.value.receiptItems!.reduce(
     (acc, item) => acc + (item.productBatch?.costPrice || 0) * item.quantity,
     0
   )
@@ -15,7 +15,8 @@ watchEffect(() => {
   let discountType: DiscountType = DiscountType.VND
   if (receipt.value.discountType === DiscountType.VND) {
     discountMoney = receipt.value.discountMoney || 0
-    discountPercent = itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
+    discountPercent =
+      itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
     discountType = DiscountType.VND
   }
   if (receipt.value.discountType === DiscountType.Percent) {
@@ -35,3 +36,17 @@ watchEffect(() => {
 })
 
 export { receipt }
+
+export enum EReceiptUpsertMode {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  COPY = 'COPY',
+}
+
+export enum EReceiptSave {
+  CREATE_DRAFT = 'CREATE_DRAFT',
+  CREATE_BASIC_AND_NEW = 'CREATE_BASIC_AND_NEW',
+  CREATE_BASIC_AND_DETAIL = 'CREATE_BASIC_AND_DETAIL',
+  UPDATE_DRAFT = 'UPDATE_DRAFT',
+  UPDATE_BASIC = 'UPDATE_BASIC',
+}

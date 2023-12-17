@@ -3,44 +3,74 @@ import { defineStore } from 'pinia'
 import type { ProductBatchPaginationQuery } from './product-batch.dto'
 import type { ProductBatch } from './product-batch.model'
 import type { ProductPaginationQuery } from './product.dto'
-import type { Product } from './product.model'
+import { Product } from './product.model'
+import type { ProductListQuery } from './product.dto'
 import { ProductService } from './product.service'
 
 export const useProductStore = defineStore('product-store', {
   state: () => {
     return {
       productList: [] as Product[],
+      timeSync: Date.now(),
     }
   },
 
   actions: {
-    async fetchAll(options: { relation?: { productBatches?: boolean } }) {
+    async fetchAll(query: ProductListQuery) {
       try {
-        this.productList = await ProductService.list({
-          filter: {},
-          relation: { productBatches: options?.relation?.productBatches },
+        const productList = await ProductService.list(query)
+        productList.forEach((p) => {
+          p.productBatches.forEach((b) => (b.product = p))
         })
+        this.productList = productList
       } catch (error) {
         console.log('🚀 ~ file: product.store.ts:16 ~ fetchAll ~ error:', error)
       }
     },
 
-    updateProduct(data: Partial<Product>) {
+    updateProduct(data: Product) {
       const index = this.productList.findIndex((i) => i.id === data.id)
       if (index === -1) return
+
+      const p = Product.fromInstance(data)
+      p.productBatches = this.productList[index].productBatches.map((batch) => {
+        batch.product = p
+        return batch
+      })
       Object.assign(this.productList[index], data)
+      this.productList[index] = p
     },
 
     updateProductBatch(data: ProductBatch) {
       const product = this.productList.find((i) => i.id === data.productId)
       if (!product) return
+      data.product = product
+
       const index = product.productBatches.findIndex((i) => i.id === data.id)
       if (index === -1) return
-      Object.assign(this.productList[index], data)
+      product.productBatches[index] = data
     },
 
     createOne(product: Product) {
       this.productList.unshift(product)
+    },
+
+    addBatch(data: ProductBatch) {
+      const index = this.productList.findIndex((i) => i.id === data.productId)
+      if (index === -1) return
+      this.productList[index].productBatches.unshift(data)
+    },
+
+    replaceProductList(data: Product[]) {
+      const productMap: Record<string, Product> = {}
+      data.forEach((i) => (productMap[i.id] = i))
+      const l = this.productList.length
+      for (let i = 0; i < l; i++) {
+        const pr = this.productList[i]
+        if (productMap[pr.id]) {
+          this.productList[i] = productMap[pr.id]
+        }
+      }
     },
   },
 
@@ -122,8 +152,10 @@ export const useProductStore = defineStore('product-store', {
 
         productBatchList.sort((a, b) => {
           if (sort?.expiryDate) {
-            if (sort?.expiryDate === 'ASC') return (a.expiryDate || 0) < (b.expiryDate || 0) ? -1 : 1
-            if (sort?.expiryDate === 'DESC') return (a.expiryDate || 0) > (b.expiryDate || 0) ? -1 : 1
+            if (sort?.expiryDate === 'ASC')
+              return (a.expiryDate || 0) < (b.expiryDate || 0) ? -1 : 1
+            if (sort?.expiryDate === 'DESC')
+              return (a.expiryDate || 0) > (b.expiryDate || 0) ? -1 : 1
           }
           return a.id > b.id ? -1 : 1
         })
@@ -143,11 +175,38 @@ export const useProductStore = defineStore('product-store', {
       return (text: string) => {
         return state.productList.filter((item) => {
           if (!item.isActive) return false
-          if (!customFilter(item.brandName, text, 2) && !customFilter(item.substance || '', text, 2)) {
+          if (
+            !customFilter(item.brandName, text, 2) &&
+            !customFilter(item.substance || '', text, 2)
+          ) {
             return false
           }
           return true
         })
+      }
+    },
+
+    searchBatch: (state) => {
+      return (text: string) => {
+        const productList = state.productList.filter((item) => {
+          if (!item.isActive) return false
+          if (
+            !customFilter(item.brandName, text, 2) &&
+            !customFilter(item.substance || '', text, 2)
+          ) {
+            return false
+          }
+          return true
+        })
+        const result: ProductBatch[] = []
+        productList.forEach((i) => {
+          i.productBatches.forEach((j) => {
+            j.product = i
+            result.push(j)
+          })
+        })
+
+        return result
       }
     },
   },

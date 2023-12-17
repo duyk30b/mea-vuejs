@@ -1,4 +1,10 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance, Type } from 'class-transformer'
+import {
+  Expose,
+  instanceToInstance,
+  instanceToPlain,
+  plainToInstance,
+  Type,
+} from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { Customer } from '../customer'
 import { Diagnosis } from '../diagnosis/diagnosis.model'
@@ -72,6 +78,7 @@ export class Arrival extends BaseModel {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
       ignoreDecorators: true,
+      groups: ['ALL'],
     })
   }
 

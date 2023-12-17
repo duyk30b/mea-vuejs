@@ -10,17 +10,17 @@ const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
-  invoice.value.invoiceSurcharges[index].money = money
-  invoice.value.surcharge = invoice.value.invoiceSurcharges.reduce((acc, cur) => acc + cur.money, 0)
+  invoice.value.invoiceSurcharges![index].money = money
+  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce((acc, cur) => acc + cur.money, 0)
 }
 
 const handleDeleteSurchargeDetail = (index: number) => {
-  invoice.value.invoiceSurcharges.splice(index, 1)
-  invoice.value.surcharge = invoice.value.invoiceSurcharges.reduce((acc, cur) => acc + cur.money, 0)
+  invoice.value.invoiceSurcharges!.splice(index, 1)
+  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce((acc, cur) => acc + cur.money, 0)
 }
 
 const handleAddSurchargeDetail = () => {
-  const existKey = invoice.value.invoiceSurcharges.map((i) => i.key)
+  const existKey = invoice.value.invoiceSurcharges!.map((i) => i.key)
   existKey.push(UNKNOWN_KEY)
   const allKey = Object.keys(organizationStore.INVOICE_SURCHARGE_DETAIL)
   const key = allKey.find((i) => !existKey.includes(i)) || UNKNOWN_KEY
@@ -29,7 +29,7 @@ const handleAddSurchargeDetail = () => {
   newSurcharge.key = key
   newSurcharge.name = name || ''
   newSurcharge.money = 0
-  invoice.value.invoiceSurcharges.push(newSurcharge)
+  invoice.value.invoiceSurcharges!.push(newSurcharge)
 }
 
 const handleChangeInvoiceSurcharge = (data: number) => {
@@ -37,22 +37,22 @@ const handleChangeInvoiceSurcharge = (data: number) => {
 
   let totalKnownMoney = 0
   let indexOther = -1
-  for (let i = 0; i < invoice.value.invoiceSurcharges.length; i++) {
-    const item = invoice.value.invoiceSurcharges[i]
+  for (let i = 0; i < invoice.value.invoiceSurcharges!.length; i++) {
+    const item = invoice.value.invoiceSurcharges![i]
     if (item.key !== UNKNOWN_KEY) totalKnownMoney += item.money
     else indexOther = i
   }
 
   // nếu có other thì cập nhật money của other
   if (indexOther !== -1) {
-    invoice.value.invoiceSurcharges[indexOther].money = data - totalKnownMoney
+    invoice.value.invoiceSurcharges![indexOther].money = data - totalKnownMoney
   } else {
     // nếu không có other thì thêm mới other
     const other = InvoiceSurcharge.blank()
     other.key = UNKNOWN_KEY
     other.name = organizationStore.INVOICE_SURCHARGE_DETAIL[UNKNOWN_KEY]
     other.money = data - totalKnownMoney
-    invoice.value.invoiceSurcharges.push(other)
+    invoice.value.invoiceSurcharges!.push(other)
   }
 }
 </script>
@@ -69,12 +69,8 @@ const handleChangeInvoiceSurcharge = (data: number) => {
       <template #title>
         <div style="width: 320px">
           <div class="flex">
-            <div style="width: 160px; font-size: 13px">
-              Loại phụ phí
-            </div>
-            <div style="flex: 1; font-size: 13px">
-              Số tiền
-            </div>
+            <div style="width: 160px; font-size: 13px">Loại phụ phí</div>
+            <div style="flex: 1; font-size: 13px">Số tiền</div>
           </div>
           <div class="flex flex-col gap-2 mt-2">
             <div
@@ -83,14 +79,16 @@ const handleChangeInvoiceSurcharge = (data: number) => {
               class="flex items-stretch"
             >
               <VueSelect
-                v-model:value="invoice.invoiceSurcharges[index].key"
+                v-model:value="invoice.invoiceSurcharges![index].key"
                 style="width: 160px"
                 :options="
                   [
-                    ...Object.entries(organizationStore.INVOICE_SURCHARGE_DETAIL).map(([key, text]) => ({
-                      value: key,
-                      text: text,
-                    })),
+                    ...Object.entries(organizationStore.INVOICE_SURCHARGE_DETAIL).map(
+                      ([key, text]) => ({
+                        value: key,
+                        text: text,
+                      })
+                    ),
                     ...(organizationStore.INVOICE_SURCHARGE_DETAIL[surcharge.key]
                       ? []
                       : [{ value: surcharge.key, text: surcharge.name }]),
@@ -104,30 +102,17 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                 />
               </div>
               <div style="width: 60px">
-                <a-button
-                  danger
-                  @click="handleDeleteSurchargeDetail(index)"
-                >
-                  Xóa
-                </a-button>
+                <a-button danger @click="handleDeleteSurchargeDetail(index)"> Xóa </a-button>
               </div>
             </div>
           </div>
-          <div
-            class="text-end mt-1"
-            style="font-size: 13px"
-          >
+          <div class="text-end mt-1" style="font-size: 13px">
             <a @click="handleAddSurchargeDetail">Thêm phụ phí khác</a>
           </div>
           <div class="flex mt-2">
-            <div style="width: 160px">
-              Tổng phụ phí:
-            </div>
+            <div style="width: 160px">Tổng phụ phí:</div>
             <div style="flex: 1">
-              <b
-                class="ml-3"
-                style="font-size: 16px"
-              >
+              <b class="ml-3" style="font-size: 16px">
                 {{ formatMoney(invoice.surcharge) }}
               </b>
             </div>

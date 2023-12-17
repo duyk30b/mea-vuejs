@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 
-const props = withDefaults(defineProps<{ value?: string; format?: string }>(), { value: '', format: 'xxxx.xxx.xxx' })
+const props = withDefaults(defineProps<{ value?: string; format?: string }>(), {
+  value: '',
+  format: 'xxxx.xxx.xxx',
+})
 const emit = defineEmits<{ (e: 'update:value', value: string | undefined): void }>()
 
 const inputPhone = ref<HTMLInputElement>()
@@ -87,11 +90,12 @@ const handleInput = (e: Event) => {
     :placeholder="props.format"
     @input="handleInput"
     @change="handleChange"
-  >
+  />
 </template>
 
 <style lang="scss" scoped>
 input {
+  width: 100%;
   padding: 4px 11px;
   outline: none;
   border: 1px solid #d9d9d9;

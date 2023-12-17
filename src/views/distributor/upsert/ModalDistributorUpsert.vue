@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueModal from '@/common/VueModal.vue'
-import { InputPhone } from '@/common/vue-form'
+import { InputText } from '@/common/vue-form'
 import { AddressInstance } from '@/core/address.instance'
 import { useDistributorStore } from '@/modules/distributor'
 import { Distributor } from '@/modules/distributor/distributor.model'
@@ -8,11 +8,12 @@ import { DistributorService } from '@/modules/distributor/distributor.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
 import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { message, type SelectProps } from 'ant-design-vue'
+import type { SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
 
-const modalDistributorUpsertSettingScreen = ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
+const modalDistributorUpsertSettingScreen =
+  ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
 
 const emit = defineEmits(['success'])
 
@@ -42,9 +43,6 @@ const handleClose = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
-  if (!distributor.value.fullName) {
-    return message.error('Lỗi: Tên khách hàng không được bỏ trống')
-  }
   try {
     if (!distributor.value.id) {
       const response = await DistributorService.createOne(distributor.value)
@@ -74,7 +72,10 @@ const handleChangeProvince = async (e: string) => {
 
 const handleChangeDistrict = async (e: string) => {
   try {
-    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(distributor.value.addressProvince, e)
+    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(
+      distributor.value.addressProvince || '',
+      e
+    )
     wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
     console.log('🚀 ~ file: ModalDistributorUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
@@ -92,11 +93,8 @@ defineExpose({ openModal })
 
 <template>
   <VueModal v-model:show="showModal">
-    <div class="bg-white">
-      <div
-        class="pl-4 py-4 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
+    <form class="bg-white" @submit.prevent="handleSave">
+      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
@@ -107,51 +105,39 @@ defineExpose({ openModal })
         >
           <SettingOutlined />
         </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="handleClose"
-        >
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
           <CloseOutlined />
         </div>
       </div>
 
       <div class="px-6 mt-4">
-        <div
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-        >
-          <div class="w-[100px] flex-none">
-            Tên NCC
+        <div class="mt-4 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+          <div class="w-[100px] flex-none">Tên NCC</div>
+          <div class="flex-auto">
+            <InputText v-model:value="distributor.fullName" required />
           </div>
-          <a-input
-            v-model:value="distributor.fullName"
-            class="flex-auto"
-          />
         </div>
         <div
           v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.phone"
-          class="mt-3 flex"
+          class="mt-4 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div class="w-[100px] flex-none">
-            Số điện thoại
+          <div class="w-[100px] flex-none">Số điện thoại</div>
+          <div class="flex-auto">
+            <InputText
+              v-model:value="distributor.phone"
+              pattern="[0][356789][0-9]{8}"
+              title="Định dạng số điện thoại không đúng"
+            />
           </div>
-          <InputPhone
-            v-model:value="distributor.phone"
-            format="xxxx.xxx.xxx"
-            class="flex-auto"
-          />
         </div>
 
         <div
           v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.address"
-          class="mt-3 flex"
+          class="mt-4 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div class="w-[100px] flex-none">
-            Địa chỉ
-          </div>
+          <div class="w-[100px] flex-none">Địa chỉ</div>
           <div class="flex-auto flex gap-4 flex-wrap">
             <a-select
               v-model:value="distributor.addressProvince"
@@ -182,19 +168,18 @@ defineExpose({ openModal })
               style="flex: 1; flex-basis: 30%"
               placeholder="Phường / Xã"
             />
-            <a-input
-              v-model:value="distributor.addressStreet"
-              style="flex: 1; flex-basis: 100%"
-              placeholder="Số nhà / Đường"
-            />
+            <div style="flex: 1; flex-basis: 100%">
+              <InputText v-model:value="distributor.addressStreet" placeholder="Số nhà / Đường" />
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center mt-3">
-          <div class="w-[100px] flex-none">
-            Active
-          </div>
-          <a-switch v-model:checked="distributor.isActive" />
+        <div class="flex items-center mt-4">
+          <div class="w-[100px] flex-none">Active</div>
+          <a-switch
+            :checked="Boolean(distributor.isActive)"
+            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)"
+          />
         </div>
       </div>
 
@@ -206,11 +191,7 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button
-            type="primary"
-            :loading="saveLoading"
-            @click="handleSave"
-          >
+          <a-button type="primary" htmlType="submit" :loading="saveLoading">
             <template #icon>
               <SaveOutlined />
             </template>
@@ -218,7 +199,7 @@ defineExpose({ openModal })
           </a-button>
         </div>
       </div>
-    </div>
+    </form>
   </VueModal>
   <ModalDistributorUpsertSettingScreen ref="modalDistributorUpsertSettingScreen" />
 </template>

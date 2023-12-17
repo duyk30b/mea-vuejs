@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueModal from '@/common/VueModal.vue'
-import { InputDate, InputPhone } from '@/common/vue-form'
+import { InputDate, InputText } from '@/common/vue-form'
 import { AddressInstance } from '@/core/address.instance'
 import { useCustomerStore } from '@/modules/customer'
 import { Customer } from '@/modules/customer/customer.model'
@@ -12,7 +12,8 @@ import { message, type SelectProps } from 'ant-design-vue'
 import { ref } from 'vue'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
 
-const modalCustomerUpsertSettingScreen = ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
+const modalCustomerUpsertSettingScreen =
+  ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
 
 const emit = defineEmits<{ (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE'): void }>()
 
@@ -74,7 +75,10 @@ const handleChangeProvince = async (e: string) => {
 
 const handleChangeDistrict = async (e: string) => {
   try {
-    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(customer.value.addressProvince, e)
+    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(
+      customer.value.addressProvince,
+      e
+    )
     wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
@@ -92,11 +96,8 @@ defineExpose({ openModal })
 
 <template>
   <VueModal v-model:show="showModal">
-    <div class="bg-white">
-      <div
-        class="pl-4 py-4 flex items-center"
-        style="border-bottom: 1px solid #dedede"
-      >
+    <form class="bg-white" @submit.prevent="handleSave">
+      <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
@@ -107,27 +108,17 @@ defineExpose({ openModal })
         >
           <SettingOutlined />
         </div>
-        <div
-          style="font-size: 1.2rem"
-          class="px-4 cursor-pointer"
-          @click="handleClose"
-        >
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
           <CloseOutlined />
         </div>
       </div>
 
       <div class="px-6 mt-4">
-        <div
-          class="flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
-        >
-          <div style="width: 100px; flex: none">
-            Họ Tên
+        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div style="width: 100px; flex: none">Họ Tên</div>
+          <div class="flex-auto">
+            <InputText v-model:value="customer.fullName" required />
           </div>
-          <a-input
-            v-model:value="customer.fullName"
-            class="flex-auto"
-          />
         </div>
 
         <div
@@ -135,14 +126,14 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none">
-            Số điện thoại
+          <div style="width: 100px; flex: none">Số điện thoại</div>
+          <div class="flex-auto">
+            <InputText
+              v-model:value="customer.phone"
+              pattern="[0][356789][0-9]{8}"
+              title="Định dạng số điện thoại không đúng"
+            />
           </div>
-          <InputPhone
-            v-model:value="customer.phone"
-            format="xxxx.xxx.xxx"
-            class="flex-auto"
-          />
         </div>
 
         <div
@@ -150,9 +141,7 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none">
-            Ngày sinh
-          </div>
+          <div style="width: 100px; flex: none">Ngày sinh</div>
           <div style="flex: 1">
             <InputDate
               v-model:value="customer.birthday"
@@ -163,21 +152,12 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.gender"
-          class="mt-3 flex items-center"
-        >
-          <div style="width: 100px; flex: none">
-            Giới tính
-          </div>
+        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
+          <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="customer.gender">
-              <a-radio :value="1">
-                Nam
-              </a-radio>
-              <a-radio :value="0">
-                Nữ
-              </a-radio>
+              <a-radio :value="1"> Nam </a-radio>
+              <a-radio :value="0"> Nữ </a-radio>
             </a-radio-group>
           </div>
         </div>
@@ -187,14 +167,10 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none">
-            Số CCCD
+          <div style="width: 100px; flex: none">Số CCCD</div>
+          <div class="flex-auto">
+            <InputText v-model:value="customer.identityCard" placeholder="Số căn cước" />
           </div>
-          <a-input
-            v-model:value="customer.identityCard"
-            class="flex-auto"
-            placeholder="Số căn cước công dân / Số chứng minh thư"
-          />
         </div>
 
         <div
@@ -202,9 +178,7 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none">
-            Địa chỉ
-          </div>
+          <div style="width: 100px; flex: none">Địa chỉ</div>
           <div class="flex-auto flex gap-4 flex-wrap">
             <a-select
               v-model:value="customer.addressProvince"
@@ -243,12 +217,13 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none" />
-          <a-input
-            v-model:value="customer.addressStreet"
-            style="flex: 1"
-            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-          />
+          <div style="width: 100px; flex: none"></div>
+          <div style="flex: 1">
+            <InputText
+              v-model:value="customer.addressStreet"
+              placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+            />
+          </div>
         </div>
 
         <div
@@ -256,21 +231,21 @@ defineExpose({ openModal })
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
-          <div style="width: 100px; flex: none">
-            Người thân
+          <div style="width: 100px; flex: none">Người thân</div>
+          <div style="flex: 1">
+            <InputText
+              v-model:value="customer.relative"
+              placeholder="Tên người thân, số điện thoại"
+            />
           </div>
-          <a-input
-            v-model:value="customer.relative"
-            style="flex: 1"
-            placeholder="Tên người thân, số điện thoại"
-          />
         </div>
 
         <div class="flex items-center mt-3">
-          <div class="w-[100px] flex-none">
-            Active
-          </div>
-          <a-switch v-model:checked="customer.isActive" />
+          <div class="w-[100px] flex-none">Active</div>
+          <a-switch
+            :checked="Boolean(customer.isActive)"
+            @change="(checked: Boolean) => (customer.isActive = checked ? 1 : 0)"
+          />
         </div>
       </div>
 
@@ -282,11 +257,7 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button
-            type="primary"
-            :loading="saveLoading"
-            @click="handleSave"
-          >
+          <a-button type="primary" htmlType="submit" :loading="saveLoading">
             <template #icon>
               <SaveOutlined />
             </template>
@@ -294,7 +265,7 @@ defineExpose({ openModal })
           </a-button>
         </div>
       </div>
-    </div>
+    </form>
   </VueModal>
   <ModalCustomerUpsertSettingScreen ref="modalCustomerUpsertSettingScreen" />
 </template>

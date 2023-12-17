@@ -28,7 +28,7 @@ export class CustomerService {
   static search = debounceAsync(async (text: string): Promise<Customer[]> => {
     return CustomerService.list({
       limit: 10,
-      filter: { searchText: text, isActive: true },
+      filter: { searchText: text, isActive: 1 },
     })
   }, 200)
 

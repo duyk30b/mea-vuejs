@@ -27,7 +27,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SCREEN_INVOICE_PREVIEW, settingData)
+    await OrganizationService.saveSettings(
+      OrganizationSettingsType.SCREEN_INVOICE_PREVIEW,
+      settingData
+    )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_PREVIEW = JSON.parse(settingData)
 

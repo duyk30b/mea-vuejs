@@ -102,9 +102,7 @@ const startFetchData = async () => {
       fromTime = DTimer.startOfMonth(timeRanger.value?.[0].toISOString())
       toTime = DTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
-    await Promise.all([
-      startFetchInvoice(fromTime, toTime, timeType.value),
-    ])
+    await Promise.all([startFetchInvoice(fromTime, toTime, timeType.value)])
   } catch (error) {
     console.log('🚀 ~ file: StatisticOrder.vue:84 ~ startFetchData ~ error:', error)
   } finally {
@@ -174,11 +172,7 @@ onBeforeMount(async () => await startFetchData())
         <div>
           <span style="font-size: 18px; font-weight: 500">Số hóa đơn: {{ invoiceCount }} </span>
         </div>
-        <Bar
-          v-if="loaded"
-          :data="invoiceData"
-          :options="options"
-        />
+        <Bar v-if="loaded" :data="invoiceData" :options="options" />
       </div>
     </div>
   </div>

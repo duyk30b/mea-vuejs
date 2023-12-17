@@ -1,16 +1,22 @@
+import { Customer } from '@/modules/customer'
+import { Distributor } from '@/modules/distributor'
+import { OrganizationService } from '@/modules/organization'
+import { formatMoney, objectUpdatePropertyByObject } from '@/utils'
 import { defineStore } from 'pinia'
 import { Organization } from '../modules/organization/organization.model'
-import { formatNumber } from '@/utils'
+import { OrganizationSettingsType } from './store.variable'
 
 export const useOrganizationStore = defineStore('organization-store', {
   state: () => {
-    const systemSettingLocalStorage = localStorage.getItem('SYSTEM_SETTING')
     return {
       // const isMobile = ref(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
       isMobile: window.innerWidth <= 768,
-      organizationInfo: Organization.blank(),
 
-      SYSTEM_SETTING: systemSettingLocalStorage ? JSON.parse(systemSettingLocalStorage) : { moneyDivisionFormat: 1 },
+      organizationInfo: Organization.blank(),
+      distributorDefault: Distributor.blank(),
+      customerDefault: Customer.blank(),
+
+      SYSTEM_SETTING: { moneyDivisionFormat: 1 },
 
       PRODUCT_GROUP: <Record<string, string>>{
         1: 'Kháng sinh - Kháng Virus',
@@ -25,7 +31,19 @@ export const useOrganizationStore = defineStore('organization-store', {
         11: 'Tim Mạch',
         12: 'Da Liễu',
       },
-      PRODUCT_UNIT: <string[]>['Lọ', 'Vỉ', 'Viên', 'Gói', 'Tuýp', 'Túi', 'Chai', 'Ống', 'Chiếc', 'Cái', 'Hộp'],
+      PRODUCT_UNIT: <string[]>[
+        'Lọ',
+        'Vỉ',
+        'Viên',
+        'Gói',
+        'Tuýp',
+        'Túi',
+        'Chai',
+        'Ống',
+        'Chiếc',
+        'Cái',
+        'Hộp',
+      ],
       PRODUCT_ROUTE: <string[]>['Uống', 'Bôi', 'Ngậm', 'Tiêm', 'Xịt'],
       PRODUCT_HINT_USAGE: <string[]>[
         'Uống 2 lần/ngày sau ăn, sáng 1 viên, chiều 1 viên',
@@ -131,99 +149,166 @@ export const useOrganizationStore = defineStore('organization-store', {
           debt: true,
         },
         receiptProcessType: 1,
+        function: {
+          forceEdit: false,
+        },
       },
       SCREEN_RECEIPT_UPSERT: {
         receiptItemInput: {
-          batch: true,
+          batch: false,
+          expiryDate: false,
           expectedPrice: true,
           retailPrice: true,
-          wholesalePrice: true,
+          wholesalePrice: false,
         },
         receiptItemsTable: {
-          substance: true,
-          detail: true,
-          batch: true,
-          expiryDate: true,
+          allowDuplicateItem: true,
+          detail: false,
+          substance: false,
+          batch: false,
+          expiryDate: false,
           unit: true,
         },
-        paymentInfo: {
-          totalActualMoney: true,
-          discount: true,
-          surcharge: true,
+        distributor: {
+          idDefault: 1,
         },
-        other: { expense: true },
+        paymentInfo: {
+          itemsActualMoney: false,
+          discount: false,
+          surcharge: false,
+        },
+        save: {
+          createBasicAndNew: false,
+          createBasicAndDetail: false,
+          createDraft: true,
+        },
       },
 
       SCREEN_INVOICE_LIST: {},
       SCREEN_INVOICE_DETAIL: {
         invoiceItemsTable: {
-          detail: true,
-          substance: true,
-          batch: true,
-          expiryDate: true,
+          detail: false,
+          substance: false,
+          batch: false,
+          expiryDate: false,
           hintUsage: false,
           unit: true,
-          discount: true,
+          discount: false,
           expectedPrice: true,
         },
         paymentInfo: {
-          itemsActualMoney: true,
-          surcharge: true,
-          discount: true,
+          itemsActualMoney: false,
+          surcharge: false,
+          discount: false,
           paid: true,
-          debt: true,
+          debt: false,
         },
-        invoiceProcessType: 2,
+        invoiceProcessType: 1,
+        function: {
+          forceEdit: false,
+        },
       },
       SCREEN_INVOICE_PREVIEW: {
         invoiceItemsTable: {
-          substance: true,
-          batch: true,
-          expiryDate: true,
+          substance: false,
+          batch: false,
+          expiryDate: false,
           unit: true,
           expectedPrice: true,
-          hintUsage: true,
+          hintUsage: false,
         },
         paymentInfo: {
-          itemsActualMoney: true,
-          surcharge: true,
-          discount: true,
+          itemsActualMoney: false,
+          surcharge: false,
+          discount: false,
         },
       },
       SCREEN_INVOICE_UPSERT: {
         invoiceItemInput: {
-          quantity: true,
+          searchType: 'PRODUCT_BATCH',
+          customAfterSearch: true,
+          hintUsage: false,
           expectedPrice: true,
-          costPrice: false,
-          wholesalePrice: true,
           retailPrice: true,
-          discount: true,
+          wholesalePrice: false,
+          costPrice: false,
+          quantity: true,
+          discount: false,
           actualPrice: true,
-          hintUsage: true,
         },
         invoiceItemsTable: {
-          detail: true,
-          substance: true,
-          batch: true,
-          expiryDate: true,
-          hintUsage: false,
+          allowDuplicateItem: true,
+          detail: false,
+          substance: false,
           unit: true,
-          expectedPrice: true,
-          discount: true,
+          batch: false,
+          expiryDate: false,
+          hintUsage: false,
+          discount: false,
+          expectedPrice: false,
+          editActualPrice: false,
+        },
+        customer: {
+          idDefault: 1,
         },
         paymentInfo: {
-          discount: true,
-          surcharge: true,
-          expense: true,
+          itemsActualMoney: false,
+          discount: false,
+          surcharge: false,
+          expense: false,
           profit: false,
+        },
+        other: { expense: false },
+        save: {
+          createBasicAndNew: false,
+          createBasicAndDetail: false,
+          createDraft: true,
         },
       },
     }
   },
+
+  actions: {
+    async initData() {
+      try {
+        const { settings, organization, distributorDefault, customerDefault } =
+          await OrganizationService.info()
+        this.organizationInfo = organization
+        this.distributorDefault = distributorDefault
+        this.customerDefault = customerDefault
+
+        Object.keys(settings || {}).forEach((key) => {
+          if (
+            [
+              OrganizationSettingsType.PRODUCT_GROUP,
+              OrganizationSettingsType.PROCEDURE_GROUP,
+              OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
+              OrganizationSettingsType.INVOICE_EXPENSE_DETAIL,
+            ].includes(key as any)
+          ) {
+            this[key as keyof typeof OrganizationSettingsType] = JSON.parse(settings[key])
+          } else {
+            this[key as keyof typeof OrganizationSettingsType] = objectUpdatePropertyByObject(
+              this[key as keyof typeof OrganizationSettingsType] as any,
+              JSON.parse(settings[key])
+            )
+          }
+        })
+      } catch (error) {
+        console.log('🚀 ~ file: organization.store.ts:19 ~ init ~ error:', error)
+      }
+    },
+  },
+
   getters: {
     formatMoney: (state) => {
       return (money: number) => {
-        return formatNumber(money / state.SYSTEM_SETTING.moneyDivisionFormat)
+        if (state.SYSTEM_SETTING.moneyDivisionFormat === 1) {
+          return formatMoney({ number: money, fixed: 0 })
+        }
+        if (state.SYSTEM_SETTING.moneyDivisionFormat === 1000) {
+          return formatMoney({ number: money / state.SYSTEM_SETTING.moneyDivisionFormat, fixed: 3 })
+        }
       }
     },
   },
