@@ -213,9 +213,8 @@ const startPrint = () => {
   pri.print()
 }
 
-const startOpenImageDemo = () => {
-  const data = Invoice.fromInstance(invoice.value)
-  modalInvoicePreview.value?.openModal(data)
+const openModalInvoicePreview = () => {
+  modalInvoicePreview.value?.openModal(invoice.value)
 }
 </script>
 
@@ -292,7 +291,7 @@ const startOpenImageDemo = () => {
             v-if="
               (invoice.invoiceExpenses || []).length > 1 ||
               ((invoice.invoiceExpenses || []).length == 1 &&
-                (invoice.invoiceExpenses!)[0].key !== '_unknown')
+                invoice.invoiceExpenses![0].key !== '_unknown')
             "
             class="ml-2"
           >
@@ -315,7 +314,7 @@ const startOpenImageDemo = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
-      <a-button type="default" @click="startOpenImageDemo">
+      <a-button type="default" @click="openModalInvoicePreview">
         <template #icon>
           <EyeOutlined />
         </template>

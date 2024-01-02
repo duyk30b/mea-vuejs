@@ -32,7 +32,7 @@ const { timeSync } = storeToRefs(productStore)
 const productList = ref<Product[]>([])
 const productBatchList = ref<ProductBatch[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_PAGINATION_LIMIT')) || 10)
@@ -54,8 +54,8 @@ watch(timeSync, async () => {
 })
 
 const startFetchProduct = async () => {
-  loadingComponent.value = true
   try {
+    dataLoading.value = true
     const data = productStore.pagination({
       page: page.value,
       limit: limit.value,
@@ -77,12 +77,13 @@ const startFetchProduct = async () => {
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:59 ~ error:', error)
   } finally {
-    loadingComponent.value = false
+    dataLoading.value = false
   }
 }
 
 const startFetchProductBatch = async () => {
   try {
+    dataLoading.value = true
     const data = productStore.paginationProductBatch({
       page: page.value,
       limit: limit.value,
@@ -102,14 +103,23 @@ const startFetchProductBatch = async () => {
     total.value = data.total
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:77 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 
 onBeforeMount(async () => {
-  await productStore.fetchAll({
-    relation: { productBatches: true },
-    filter: { productBatch: { quantity: ['!=', 0] } },
-  })
+  try {
+    dataLoading.value = true
+    await productStore.fetchAll({
+      relation: { productBatches: true },
+      filter: { productBatch: { quantity: ['!=', 0] } },
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: ProductList.vue:118 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
   await startFetchData()
 })
 
@@ -309,7 +319,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           />
         </div>
       </div>
-      <div v-if="sortColumn !== 'expiryDate'">
+      <div v-if="dataLoading">
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+      </div>
+      <div v-else>
         <div
           v-if="productList.length === 0"
           class="p-2 text-center"
@@ -492,7 +514,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="organizationStore.SCREEN_PRODUCT_LIST.action">Sửa</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <template v-if="sortColumn !== 'expiryDate'">
             <tr v-if="productList.length === 0">
               <td colspan="20" class="text-center">Không có dữ liệu</td>

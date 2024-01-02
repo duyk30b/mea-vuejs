@@ -1,10 +1,4 @@
-import {
-  Expose,
-  Transform,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 
 export class Distributor {
   @Expose({ groups: ['ALL', 'COPY'] })
@@ -50,6 +44,12 @@ export class Distributor {
     return ins
   }
 
+  static from(data: Partial<Distributor>) {
+    const ins = new Distributor()
+    Object.assign(ins, data)
+    return ins
+  }
+
   static fromPlain(plain: Record<string, any> = {}): Distributor {
     return plainToInstance(Distributor, plain, {
       exposeUnsetFields: false,
@@ -68,6 +68,14 @@ export class Distributor {
 
   static fromInstance(instance: Distributor): Distributor {
     return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['COPY'],
+    })
+  }
+
+  static fromInstances(instances: Distributor[]): Distributor[] {
+    return instanceToInstance(instances, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
       groups: ['COPY'],

@@ -33,6 +33,7 @@ const customerId = ref(0)
 const invoicePayments = ref<{ invoice: Invoice; money: number }[]>([])
 
 const showModal = ref(false)
+const dataLoading = ref(false)
 const saveLoading = ref(false)
 
 const openModal = async (customerIdProp: number, openDebtProp: number) => {
@@ -42,17 +43,25 @@ const openModal = async (customerIdProp: number, openDebtProp: number) => {
   customerId.value = customerIdProp
   showModal.value = true
 
-  const invoiceDebtList = await InvoiceService.list({
-    filter: {
-      customerId: customerIdProp,
-      status: InvoiceStatus.Debt,
-    },
-  })
-  invoicePayments.value = invoiceDebtList.map((i) => ({ invoice: i, money: 0 }))
+  try {
+    dataLoading.value = true
+    const invoiceDebtList = await InvoiceService.list({
+      filter: {
+        customerId: customerIdProp,
+        status: InvoiceStatus.Debt,
+      },
+    })
+    invoicePayments.value = invoiceDebtList.map((i) => ({ invoice: i, money: 0 }))
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:56 ~ openModal ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
 }
 
 const closeModal = () => {
   showModal.value = false
+  invoicePayments.value = []
 }
 
 const handleSave = async () => {
@@ -61,7 +70,7 @@ const handleSave = async () => {
     if (money.value === 0) {
       return message.error('Số tiền trả nợ phải khác 0')
     }
-    const data = await CustomerPaymentService.payDebt({
+    const data = await customerStore.payDebt({
       customerId: customerId.value,
       note: note.value,
       invoicePayments: invoicePayments.value
@@ -71,7 +80,6 @@ const handleSave = async () => {
         }))
         .filter((i) => i.money > 0),
     })
-    customerStore.updateOne(data.customer.id, data.customer)
     emit('success', data)
     showModal.value = false
   } catch (error) {
@@ -145,6 +153,20 @@ defineExpose({ openModal })
                 <th>Số tiền trả</th>
               </tr>
             </thead>
+            <tbody v-if="dataLoading">
+              <tr>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
+              </tr>
+            </tbody>
             <tbody>
               <tr v-for="(invoicePayment, index) in invoicePayments" :key="index">
                 <td>

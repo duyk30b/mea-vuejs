@@ -6,9 +6,16 @@ import { Product } from '@/modules/product/product.model'
 import { ProductService } from '@/modules/product/product.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import {
+  CloseOutlined,
+  SaveOutlined,
+  SettingOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons-vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import { Modal } from 'ant-design-vue'
+import { createVNode, h, onBeforeMount, ref } from 'vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
 
@@ -67,6 +74,30 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  await ProductService.deleteOne(product.value.id)
+  productStore.removeProduct(product.value.id)
+}
+
+const clickDelete = () => {
+  if (product.value.quantity != 0) {
+    return AlertStore.add({
+      type: 'error',
+      message: 'Không thể xóa sản phẩm có số lượng > 0',
+      time: 2000,
+    })
+  }
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa sản phẩm này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Sản phẩm đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const filterOption = (input: string, option: any) => {
@@ -264,12 +295,16 @@ defineExpose({ openModal })
             :checked="Boolean(product.isActive)"
             @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
           />
+          <div v-if="!product.isActive" class="ml-4">
+            Sản phẩm này tạm thời không thể nhập hàng và xuất hàng
+          </div>
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
+      <div class="p-6">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="handleClose">
             <template #icon>
               <CloseOutlined />
             </template>

@@ -113,7 +113,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalProcedureUpsertSuccess = async (
   newProcedure: Procedure,
-  type: 'CREATE' | 'UPDATE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
 ) => {
   await startFetchData()
 }

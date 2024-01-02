@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Customer, CustomerService, useCustomerStore } from '@/modules/customer'
-import { DiscountType } from '@/modules/enum'
+import { NodeIndexOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
+import dayjs, { Dayjs } from 'dayjs'
+import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
+import { DiscountType } from '../../../modules/enum'
 import {
   Invoice,
   InvoiceExpense,
@@ -10,15 +15,10 @@ import {
   InvoiceService,
   InvoiceStatus,
   InvoiceSurcharge,
-} from '@/modules/invoice'
-import { useProductStore } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import { NodeIndexOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import dayjs, { Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+} from '../../../modules/invoice'
+import { useProductStore } from '../../../modules/product'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceExpenses from './InvoiceExpenses.vue'
 import InvoiceItemTable from './InvoiceItemTable.vue'
@@ -82,7 +82,7 @@ onBeforeMount(async () => {
         time.value = dayjs(new Date(invoice.value.time))
       }
     } else if (customerId) {
-      const customerRes = await CustomerService.detail(customerId)
+      const customerRes = await CustomerApi.detail(customerId)
       customer.value = customerRes
       invoice.value.customer = customerRes
       invoice.value.customerId = customerId
@@ -105,7 +105,7 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 }
 onMounted(async () => {
   window.addEventListener('keydown', handleDocumentKeyup)
-  await customerStore.fetchAll()
+  await customerStore.refreshDB()
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -115,7 +115,7 @@ onUnmounted(() => {
 const searchingCustomer = async (text: string) => {
   customer.value.id = 0
   if (text) {
-    customerList.value = customerStore.search(text)
+    customerList.value = await customerStore.search(text)
   } else {
     customerList.value = []
   }

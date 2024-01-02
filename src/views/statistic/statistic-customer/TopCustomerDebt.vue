@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Customer, CustomerService } from '@/modules/customer'
-import { StatisticService } from '@/modules/statistics'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
+import { Customer, CustomerApi } from '../../../modules/customer'
+import { StatisticService } from '../../../modules/statistics'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { formatPhone } from '../../../utils'
 
 const organizationStore = useOrganizationStore()
 const { formatMoney, isMobile } = organizationStore
@@ -20,10 +20,10 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const [customerPagination, customerSumDebt] = await Promise.all([
-      CustomerService.pagination({
+      CustomerApi.pagination({
         page: page.value,
         limit: limit.value,
-        filter: { debt: ['!=', 0] },
+        filter: { debt: { NOT: 0 } },
         sort: { debt: 'DESC' },
       }),
       StatisticService.sumDebt(),
@@ -68,7 +68,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         </thead>
         <tbody>
           <tr v-if="customerList.length === 0">
-            <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
+            <td colspan="20" class="text-center">Không có khách hàng nợ</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
             <td class="text-center" style="white-space: nowrap">

@@ -1,3 +1,13 @@
+export const OmitClass = <T, K extends keyof T>(
+  Class: new () => T,
+  keys: K[]
+): new () => Omit<T, (typeof keys)[number]> => Class
+
+export const PickClass = <T, K extends keyof T>(
+  Class: new () => T,
+  keys: K[]
+): new () => Pick<T, (typeof keys)[number]> => Class
+
 export const keysEnum = (e: Record<string, any>) => {
   return Object.keys(e).filter((key) => isNaN(parseInt(key)))
 }

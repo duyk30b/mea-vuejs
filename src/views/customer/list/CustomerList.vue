@@ -11,7 +11,7 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
@@ -29,7 +29,7 @@ const { formatMoney, isMobile } = organizationStore
 
 const customerList = ref<Customer[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 10)
@@ -43,9 +43,9 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
+    // dataLoading.value = true
 
-    const response = customerStore.pagination({
+    const response = await customerStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -64,14 +64,20 @@ const startFetchData = async () => {
     customerList.value = response.data
     total.value = response.total
 
-    loadingComponent.value = false
+    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: CustomerList.vue:59 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  await customerStore.fetchAll()
+  try {
+    await customerStore.refreshDB()
+  } catch (error) {
+    console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
   await startFetchData()
 })
 
@@ -116,7 +122,10 @@ const updateCustomer = async (data: Customer) => {
   await startFetchData()
 }
 
-const handleModalCustomerUpsertSuccess = async (data: Customer, type: 'CREATE' | 'UPDATE') => {
+const handleModalCustomerUpsertSuccess = async (
+  data: Customer,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+) => {
   await startFetchData()
 }
 
@@ -219,7 +228,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
@@ -351,7 +374,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.action">Sửa</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>

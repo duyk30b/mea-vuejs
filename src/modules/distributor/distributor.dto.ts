@@ -1,12 +1,10 @@
 import { OmitClass } from '../../utils'
 import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
-export class CustomerGetQuery {
+export class DistributorGetQuery {
   page?: number
   limit?: number
-  relation?: {
-    customerPayments?: boolean
-  }
+  relation?: {}
   filter?: {
     isActive?: 1 | 0
     searchText?: string
@@ -19,7 +17,7 @@ export class CustomerGetQuery {
     fullName?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<CustomerGetQuery>) {
+  static toQuery(instance: Partial<DistributorGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -30,5 +28,5 @@ export class CustomerGetQuery {
   }
 }
 
-export class CustomerPaginationQuery extends CustomerGetQuery {}
-export class CustomerListQuery extends OmitClass(CustomerGetQuery, ['page']) {}
+export class DistributorPaginationQuery extends DistributorGetQuery {}
+export class DistributorListQuery extends OmitClass(DistributorGetQuery, ['page']) {}

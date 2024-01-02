@@ -1,4 +1,6 @@
 export const CONFIG = {
-  // API_URL: 'https://api.mea.vn',
-  API_URL: `http://${location.hostname}:20000`, // for DEV
+  API_URL:
+    import.meta.env.MODE === 'production'
+      ? 'https://api.mea.vn'
+      : `http://${location.hostname}:20000`,
 }

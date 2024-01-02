@@ -45,27 +45,21 @@ export class InvoiceItem extends BaseModel {
   unit: UnitType
 
   @Expose()
-  @Transform(({ value }) => value || 0)
   costPrice: number // Giá cost
 
   @Expose()
-  @Transform(({ value }) => value || 0)
   expectedPrice: number // Giá dự kiến
 
   @Expose()
-  @Transform(({ value }) => value || 0)
   discountMoney: number // tiền giảm giá
 
   @Expose()
-  @Transform(({ value }) => value || 0)
   discountPercent: number // % giảm giá
 
   @Expose()
-  @Transform(({ value }) => value || DiscountType.Percent)
   discountType: DiscountType // Loại giảm giá
 
   @Expose()
-  @Transform(({ value }) => value || 0)
   actualPrice: number // Giá thực tế
 
   @Expose()
@@ -130,9 +124,23 @@ export class InvoiceItem extends BaseModel {
     this.actualPrice = data / this.unit.rate
   }
 
+  static init() {
+    const ins = new InvoiceItem()
+    ins.id = 0
+    ins.unit = { name: '', rate: 1 }
+    ins.costPrice = 0
+    ins.expectedPrice = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.discountType = DiscountType.Percent
+    ins.actualPrice = 0
+    ins.quantity = 0
+    return ins
+  }
+
   static blank(): InvoiceItem {
-    const instance = InvoiceItem.fromInstance(new InvoiceItem())
-    return instance
+    const ins = InvoiceItem.init()
+    return ins
   }
 
   static fromPlain(plain: Record<string, any>): InvoiceItem {

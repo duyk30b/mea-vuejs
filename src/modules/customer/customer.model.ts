@@ -1,11 +1,4 @@
-import {
-  Expose,
-  Transform,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
-import { BaseModel } from '../base.model'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import type { EGender } from '../enum'
 
 export class Customer {
@@ -67,6 +60,12 @@ export class Customer {
     return ins
   }
 
+  static from(data: Partial<Customer>) {
+    const ins = new Customer()
+    Object.assign(ins, data)
+    return ins
+  }
+
   static fromPlain(plain: Record<string, any> = {}): Customer {
     return plainToInstance(Customer, plain, {
       exposeUnsetFields: false,
@@ -85,6 +84,14 @@ export class Customer {
 
   static fromInstance(instance: Customer): Customer {
     return instanceToInstance(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: ['COPY'],
+    })
+  }
+
+  static fromInstances(instances: Customer[]): Customer[] {
+    return instanceToInstance(instances, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
       groups: ['COPY'],

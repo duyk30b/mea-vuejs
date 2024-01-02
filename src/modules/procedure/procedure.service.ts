@@ -65,4 +65,9 @@ export class ProcedureService {
 
     return Procedure.fromPlain(data)
   }
+
+  static async deleteOne(id: number) {
+    const { data } = await AxiosInstance.delete(`/procedure/delete/${id}`)
+    return data as { success: boolean }
+  }
 }

@@ -53,7 +53,6 @@ export class Product {
   hintUsage: string // Gợi ý cách sử dụng
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: ['ALL'] })

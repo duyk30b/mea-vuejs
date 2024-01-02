@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import VueModal from '@/common/VueModal.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '@/common/vue-form'
 import { useProcedureStore } from '@/modules/procedure'
 import { Procedure } from '@/modules/procedure/procedure.model'
 import { ProcedureService } from '@/modules/procedure/procedure.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { CloseOutlined, SaveOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
+import { ref, createVNode } from 'vue'
 
-const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
+const emit = defineEmits<{
+  (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+}>()
 
 const procedureStore = useProcedureStore()
 const organizationStore = useOrganizationStore()
@@ -63,12 +67,31 @@ const handleSave = async () => {
       procedureStore.updateOne(response.id, response)
       emit('success', response, 'UPDATE')
     }
-    showModal.value = false
+    saveLoading.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:42 ~ handleSave ~ error:', error)
-  } finally {
+    console.log('🚀 ~ file: ModalProcedureUpsert.vue:73 ~ handleSave ~ error:', error)
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  await ProcedureService.deleteOne(procedure.value.id)
+  procedureStore.removeOne(procedure.value.id)
+  emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
+  closeModal()
+}
+
+const clickDelete = () => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa dịch vụ này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Dịch vụ đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const filterOption = (input: string, option: any) => {
@@ -196,9 +219,10 @@ defineExpose({ openModal })
       </div> -->
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="closeModal">
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

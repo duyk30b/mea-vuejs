@@ -52,8 +52,8 @@ export class ProductService {
     return Product.fromPlain(data)
   }
 
-  static async removeOne(id: number) {
-    const { data } = await AxiosInstance.patch(`/product/remove/${id}`)
+  static async deleteOne(id: number) {
+    const { data } = await AxiosInstance.delete(`/product/delete/${id}`)
     return data as { success: boolean }
   }
 }

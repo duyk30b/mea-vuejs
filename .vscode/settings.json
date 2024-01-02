@@ -3,7 +3,11 @@
   "files.eol": "\n",
   "workbench.tree.indent": 16,
   "editor.tabSize": 2,
-  "eslint.validate": ["javascript", "javascriptreact", "vue"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "vue"
+  ],
   "window.title": "${rootName}",
   "typescript.inlayHints.parameterNames.enabled": "literals",
   "editor.inlayHints.fontSize": 10,
@@ -12,7 +16,10 @@
     "editorInlayHint.foreground": "#ffffffcc"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
   },
   "search.smartCase": true,
   "typescript.preferences.quoteStyle": "single",
@@ -44,6 +51,7 @@
     "vuejs",
     "vuetify"
   ],
+  "liveServer.settings.host": "172.17.0.1",
   "liveServer.settings.port": 5501,
   "liveServer.settings.root": "/dist/",
   "liveServer.settings.CustomBrowser": "chrome",

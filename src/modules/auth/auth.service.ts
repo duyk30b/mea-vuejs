@@ -1,7 +1,8 @@
-import { CONFIG } from '@/config'
-import { LocalStorageService } from '@/core/local-storage.service'
-import { useUserStore } from '@/store/user.store'
 import axios from 'axios'
+import { CONFIG } from '../../config'
+import { MeaDatabase } from '../../core/indexed-db/database'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { useUserStore } from '../../store/user.store'
 import { Employee } from '../employee'
 
 export type LoginDto = {
@@ -57,5 +58,6 @@ export class AuthService {
   static async logout() {
     LocalStorageService.removeAuth()
     userStore.userInfo = null
+    MeaDatabase.destroy()
   }
 }

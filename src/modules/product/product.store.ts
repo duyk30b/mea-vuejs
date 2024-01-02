@@ -41,6 +41,12 @@ export const useProductStore = defineStore('product-store', {
       this.productList[index] = p
     },
 
+    removeProduct(id: number) {
+      const index = this.productList.findIndex((i) => i.id === id)
+      if (index === -1) return
+      this.productList.splice(index, 1)
+    },
+
     updateProductBatch(data: ProductBatch) {
       const product = this.productList.find((i) => i.id === data.productId)
       if (!product) return

@@ -21,12 +21,19 @@ export class Procedure extends BaseModel {
   consumableHint: string // Gợi ý vậy tư tiêu hao
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
 
-  static blank(): Procedure {
-    const instance = Procedure.fromInstance(new Procedure())
-    return instance
+  static init() {
+    const ins = new Procedure()
+    ins.id = 0
+    ins.price = 0
+    ins.isActive = 1
+    return ins
+  }
+
+  static blank() {
+    const ins = Procedure.init()
+    return ins
   }
 
   static fromPlain(plain: Record<string, any>): Procedure {

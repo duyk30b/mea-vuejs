@@ -62,11 +62,9 @@ export class Receipt {
   revenue: number // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
 
   @Expose({ groups: ['ALL'] })
-  @Transform(({ value }) => value || 0)
   paid: number
 
   @Expose({ groups: ['ALL'] })
-  @Transform(({ value }) => value || 0)
   debt: number // tiền nợ
 
   @Expose()

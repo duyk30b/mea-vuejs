@@ -16,14 +16,21 @@ export const useProcedureStore = defineStore('procedure-store', {
         console.log('🚀 ~ file: procedure.store.ts:16 ~ fetchAll ~ error:', error)
       }
     },
+    createOne(procedure: Procedure) {
+      this.procedureList.unshift(procedure)
+    },
     updateOne(id: number, data: Procedure) {
       const index = this.procedureList.findIndex((i) => i.id === id)
       if (index !== -1) {
         this.procedureList[index] = data
       }
     },
-    createOne(procedure: Procedure) {
-      this.procedureList.unshift(procedure)
+    removeOne(id: number) {
+      const index = this.procedureList.findIndex((i) => i.id === id)
+      if (index === -1) return
+      console.log("🚀 ~ file: procedure.store.ts:32 ~ removeOne ~ this.procedureList:", this.procedureList.length)
+      this.procedureList.splice(index, 1)
+      console.log("🚀 ~ file: procedure.store.ts:34 ~ removeOne ~ this.procedureList:", this.procedureList.length)
     },
   },
 

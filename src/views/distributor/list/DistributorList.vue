@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { DistributorPayment, useDistributorStore, type Distributor } from '@/modules/distributor'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone } from '@/utils'
 import {
   ApartmentOutlined,
   CheckCircleOutlined,
@@ -12,11 +9,14 @@ import {
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import { VueSelect } from '../../../common/vue-form'
+import { useDistributorStore, type Distributor } from '../../../modules/distributor'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { formatPhone } from '../../../utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
-import { VueSelect } from '@/common/vue-form'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -30,7 +30,7 @@ const { formatMoney, isMobile } = organizationStore
 
 const distributorList = ref<Distributor[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) || 10)
@@ -44,9 +44,8 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
-
-    const response = distributorStore.pagination({
+    // dataLoading.value = true
+    const response = await distributorStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -65,14 +64,21 @@ const startFetchData = async () => {
     distributorList.value = response.data
     total.value = response.total
 
-    loadingComponent.value = false
+    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: DistributorList.vue:65 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  await distributorStore.fetchAll()
+  try {
+    dataLoading.value = true
+    await distributorStore.refreshDB()
+  } catch (error) {
+    console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
   await startFetchData()
 })
 
@@ -120,7 +126,7 @@ const updateDistributor = async (data: Distributor) => {
 
 const handleModalDistributorUpsertSuccess = async (
   data: Distributor,
-  type: 'CREATE' | 'UPDATE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
 ) => {
   await startFetchData()
 }

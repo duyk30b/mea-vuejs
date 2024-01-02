@@ -1,21 +1,28 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputText } from '@/common/vue-form'
-import { AddressInstance } from '@/core/address.instance'
-import { useDistributorStore } from '@/modules/distributor'
-import { Distributor } from '@/modules/distributor/distributor.model'
-import { DistributorService } from '@/modules/distributor/distributor.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import type { SelectProps } from 'ant-design-vue'
-import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputText } from '../../../common/vue-form'
+import { AddressInstance } from '../../../core/address.instance'
+import { DistributorApi, useDistributorStore } from '../../../modules/distributor'
+import { Distributor } from '../../../modules/distributor/distributor.model'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { Modal, type SelectProps } from 'ant-design-vue'
+import { convertViToEn } from '../../../utils'
+import {
+  CloseOutlined,
+  SaveOutlined,
+  SettingOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons-vue'
+import { createVNode, h, onBeforeMount, ref } from 'vue'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 
 const modalDistributorUpsertSettingScreen =
   ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
 
-const emit = defineEmits(['success'])
+const emit = defineEmits<{
+  (e: 'success', value: Distributor, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+}>()
 
 const distributorStore = useDistributorStore()
 const organizationStore = useOrganizationStore()
@@ -44,13 +51,13 @@ const handleClose = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
+    const data = Distributor.from(distributor.value)
+
     if (!distributor.value.id) {
-      const response = await DistributorService.createOne(distributor.value)
-      distributorStore.createOne(response)
+      const response = await distributorStore.createOne(data)
       emit('success', response, 'CREATE')
     } else {
-      const response = await DistributorService.updateOne(distributor.value.id, distributor.value)
-      distributorStore.updateOne(response.id, response)
+      const response = await distributorStore.updateOne(distributor.value.id, data)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -59,6 +66,35 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  try {
+    await distributorStore.deleteOne(distributor.value.id)
+    emit('success', distributor.value, 'DELETE')
+    showModal.value = false
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+  }
+}
+
+const clickDelete = () => {
+  if (distributor.value.debt != 0) {
+    return AlertStore.add({
+      type: 'error',
+      message: 'Không thể xóa nhà cung cấp đang có nợ',
+      time: 2000,
+    })
+  }
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa nhà cung cấp này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Nhà cung cấp đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const handleChangeProvince = async (e: string) => {
@@ -110,7 +146,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-6 mt-4">
+      <div class="px-4 mt-4">
         <div class="mt-4 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
           <div class="w-[100px] flex-none">Tên NCC</div>
           <div class="flex-auto">
@@ -128,6 +164,7 @@ defineExpose({ openModal })
               v-model:value="distributor.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
+              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))"
             />
           </div>
         </div>
@@ -180,12 +217,16 @@ defineExpose({ openModal })
             :checked="Boolean(distributor.isActive)"
             @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)"
           />
+          <div v-if="!distributor.isActive" class="ml-4">
+            Tạm thời không thể nhập hàng từ nhà cung cấp này
+          </div>
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="handleClose">
             <template #icon>
               <CloseOutlined />
             </template>

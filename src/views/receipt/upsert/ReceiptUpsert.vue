@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Distributor, DistributorService, useDistributorStore } from '@/modules/distributor'
+import { Distributor, DistributorApi, useDistributorStore } from '@/modules/distributor'
 import { DiscountType } from '@/modules/enum'
 import { useProductStore } from '@/modules/product'
 import { Receipt, ReceiptItem, ReceiptService, ReceiptStatus } from '@/modules/receipt'
@@ -75,7 +75,7 @@ onBeforeMount(async () => {
       time.value = dayjs(new Date(receipt.value.time))
     }
   } else if (distributorId) {
-    const distributorRes = await DistributorService.getOne(distributorId)
+    const distributorRes = await DistributorApi.detail(distributorId)
     distributor.value = distributorRes
     receipt.value.distributor = distributorRes
     receipt.value.distributorId = distributorRes.id
@@ -91,7 +91,7 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleDocumentKeyup)
-  await distributorStore.fetchAll()
+  await distributorStore.refreshDB()
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -101,7 +101,7 @@ onUnmounted(() => {
 const searchingDistributor = async (text: string) => {
   distributor.value.id = 0
   if (text) {
-    distributorList.value = distributorStore.search(text)
+    distributorList.value = await distributorStore.search(text)
   } else {
     distributorList.value = []
   }

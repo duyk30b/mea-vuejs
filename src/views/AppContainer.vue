@@ -5,6 +5,7 @@ import { useUserStore } from '@/store/user.store'
 import { onBeforeMount, ref } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import VueLayout from './layout/VueLayout.vue'
+import { MeaDatabase } from '@/core/indexed-db/database'
 
 const organizationStore = useOrganizationStore()
 const loaded = ref(false)
@@ -19,6 +20,7 @@ onBeforeMount(async () => {
     useRouter().push({ name: 'Login' })
   } else {
     await organizationStore.initData()
+    await MeaDatabase.openConnection()
     loaded.value = true
   }
 })

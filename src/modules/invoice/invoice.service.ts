@@ -2,6 +2,7 @@ import { AxiosInstance } from '@/core/axios.instance'
 import type { ApiPaginationResponse } from '../pagination'
 import {
   InvoiceDetailQuery,
+  InvoiceGetQuery,
   InvoiceListQuery,
   InvoicePaginationQuery,
   InvoiceSumDebtQuery,
@@ -11,7 +12,7 @@ import { Product } from '../product'
 
 export class InvoiceService {
   static async pagination(options: InvoicePaginationQuery) {
-    const params = InvoicePaginationQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/invoice/pagination', { params })
     const data = response.data as ApiPaginationResponse
@@ -24,14 +25,14 @@ export class InvoiceService {
   }
 
   static async list(options: InvoiceListQuery) {
-    const params = InvoiceListQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/invoice/list', { params })
     return Invoice.fromPlains(data)
   }
 
   static async detail(id: number, options: InvoiceDetailQuery): Promise<Invoice> {
-    const params = InvoiceDetailQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get(`/invoice/detail/${id}`, { params })
     return Invoice.fromPlain(data)
@@ -97,7 +98,7 @@ export class InvoiceService {
   }
 
   static async sumDebt(options: InvoiceSumDebtQuery) {
-    const params = InvoiceSumDebtQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/invoice/sum-debt', { params })
     return data as { invoiceSumDebt: number }
