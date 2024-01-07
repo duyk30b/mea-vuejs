@@ -1,7 +1,7 @@
+import { BaseCondition, type ConditionType } from './_base.condition'
 import type { BaseIndexedDB } from './_base.indexed-db'
-import { ProcessCondition, type BaseCondition } from './process.condition'
 
-export class BaseRepository<T> extends ProcessCondition<T> {
+export class BaseRepository<T> extends BaseCondition<T> {
   public storeName: string
   public baseDB: BaseIndexedDB
 
@@ -11,7 +11,7 @@ export class BaseRepository<T> extends ProcessCondition<T> {
     this.storeName = options.storeName
   }
 
-  async getManyBy(condition: BaseCondition<T>): Promise<T[]> {
+  async getManyBy(condition: ConditionType<T>): Promise<T[]> {
     return new Promise((resolve, reject) => {
       const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)
@@ -69,7 +69,7 @@ export class BaseRepository<T> extends ProcessCondition<T> {
     return data
   }
 
-  async getOneBy(condition: BaseCondition<T>): Promise<T | null> {
+  async getOneBy(condition: ConditionType<T>): Promise<T | null> {
     return new Promise((resolve, reject) => {
       const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)

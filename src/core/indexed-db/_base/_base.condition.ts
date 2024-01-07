@@ -1,4 +1,3 @@
-import type { BaseIndexedDB } from './_base.indexed-db'
 
 export type ConditionAnd<T> = {
   [P in keyof T]?:
@@ -48,9 +47,9 @@ export type ConditionAnd<T> = {
         RAW_QUERY?: string
       })[]
 }
-export type BaseCondition<T> = ConditionAnd<T> | ConditionAnd<T>[]
+export type ConditionType<T> = ConditionAnd<T> | ConditionAnd<T>[]
 
-export class ProcessCondition<T> {
+export class BaseCondition<T> {
   handleRuleTargetAnd(record: any, column: string, target: Record<string, any>) {
     return Object.entries(target).every(([rule, value]: [string, any]) => {
       if (rule === '>' || rule === 'GT') {
@@ -106,7 +105,7 @@ export class ProcessCondition<T> {
     })
   }
 
-  processCondition(record: any, conditions: BaseCondition<T> = {}) {
+  processCondition(record: any, conditions: ConditionType<T> = {}) {
     if (Array.isArray(conditions)) {
       return conditions.some((c) => this.handleConditionAnd(record, c))
     }
