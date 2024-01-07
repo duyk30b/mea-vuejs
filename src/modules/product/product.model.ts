@@ -8,7 +8,7 @@ import {
   Type,
 } from 'class-transformer'
 import type { UnitType } from '../enum'
-import { ProductBatch } from './product-batch.model'
+import { ProductBatch } from '../product-batch/product-batch.model'
 import { ProductMovement } from './product-movement.model'
 
 export class Product {
@@ -54,6 +54,15 @@ export class Product {
 
   @Expose()
   isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
 
   @Expose({ groups: ['ALL'] })
   @Type(() => ProductBatch)

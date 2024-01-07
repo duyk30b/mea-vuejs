@@ -47,6 +47,15 @@ export class Customer {
   @Expose()
   isActive: 1 | 0 // Trạng thái
 
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
+
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0

@@ -6,9 +6,9 @@ import {
   RefreshTimeDB,
   type RefreshTime,
 } from '../../core/indexed-db/repository/refresh-time.repository'
-import { ProductBatchApi } from '../product-batch/product-batch.api'
-import type { ProductBatchPaginationQuery } from '../product-batch/product-batch.dto'
-import type { ProductBatch } from '../product-batch/product-batch.model'
+import { ProductBatchApi } from './product-batch.api'
+import type { ProductBatchPaginationQuery } from './product-batch.dto'
+import type { ProductBatch } from './product-batch.model'
 import { ProductApi } from './product.api'
 import type { ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'

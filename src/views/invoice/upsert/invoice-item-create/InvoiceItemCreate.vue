@@ -129,7 +129,7 @@ const addInvoiceItem = (ii: InvoiceItem) => {
 // const autoAddConsumableByHint = async (hintText: string, quantity: number) => {
 //   const consumableHint = JSON.parse(hintText) as { productId: number, quantity: number }[]
 //   const productIds = consumableHint.map((i) => i.productId)
-//   const productList = await ProductService.getManyByIds(productIds, { productBatches: true })
+//   const productList = await ProductApi.getManyByIds(productIds, { productBatches: true })
 //   consumableHint.forEach((i) => {
 //     const pr = productList.find((j) => j.id === i.productId)
 //     if (!pr) {

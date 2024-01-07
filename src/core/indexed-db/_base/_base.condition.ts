@@ -1,3 +1,4 @@
+import { customFilter } from '../../../utils'
 
 export type ConditionAnd<T> = {
   [P in keyof T]?:
@@ -52,6 +53,7 @@ export type ConditionType<T> = ConditionAnd<T> | ConditionAnd<T>[]
 export class BaseCondition<T> {
   handleRuleTargetAnd(record: any, column: string, target: Record<string, any>) {
     return Object.entries(target).every(([rule, value]: [string, any]) => {
+      if (value === undefined) return true
       if (rule === '>' || rule === 'GT') {
         return record[column] > value
       }
@@ -85,16 +87,20 @@ export class BaseCondition<T> {
         if (value.length === 0) return record[column] == null
         return value.includes(record[column])
       }
+      if (rule === 'LIKE') {
+        return customFilter(record[column] || '', value, 2)
+      }
     })
   }
 
   handleConditionAnd(record: any, conditions: ConditionAnd<T> = {}) {
     return Object.entries(conditions).every(([column, target]: [string, any]) => {
+      if (target === undefined) return true
       if (['number', 'string', 'boolean', null].includes(typeof target)) {
         return record[column] === target
       }
       if (typeof target === 'object') {
-        if (Object.keys(target).length === 0) return
+        if (Object.keys(target).length === 0) return true
         if (Array.isArray(target)) {
           return target.some((t) => this.handleRuleTargetAnd(record, column, t))
         }

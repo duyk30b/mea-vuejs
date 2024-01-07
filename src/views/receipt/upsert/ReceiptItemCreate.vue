@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { InputDate, InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService, useProductStore } from '@/modules/product'
+import { Product, ProductBatch, ProductBatchApi, useProductStore } from '@/modules/product'
 import { ReceiptItem } from '@/modules/receipt'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
@@ -66,7 +66,7 @@ const selectProduct = async (data?: Product) => {
       b.product = p
       return b
     })
-    // p.productBatches = await ProductBatchService.list({
+    // p.productBatches = await ProductBatchApi.list({
     //   filter: {
     //     productId: p.id,
     //     isActive: 1,
@@ -117,7 +117,7 @@ const addReceiptItem = async () => {
   }
 
   if (!productBatch.value.id) {
-    const batch = await ProductBatchService.createOne(productBatch.value)
+    const batch = await ProductBatchApi.createOne(productBatch.value)
     productStore.addBatch(ProductBatch.fromPlain(batch))
     batch.product = product.value
     productBatch.value = batch

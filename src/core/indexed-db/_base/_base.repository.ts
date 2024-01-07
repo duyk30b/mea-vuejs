@@ -1,7 +1,11 @@
+import type { NoExtra } from '../../../utils'
 import { BaseCondition, type ConditionType } from './_base.condition'
 import type { BaseIndexedDB } from './_base.indexed-db'
 
-export class BaseRepository<T> extends BaseCondition<T> {
+export class BaseRepository<
+  _ENTITY,
+  _SORT = { [P in keyof _ENTITY]?: 'ASC' | 'DESC' },
+> extends BaseCondition<_ENTITY> {
   public storeName: string
   public baseDB: BaseIndexedDB
 
@@ -11,13 +15,90 @@ export class BaseRepository<T> extends BaseCondition<T> {
     this.storeName = options.storeName
   }
 
-  async getManyBy(condition: ConditionType<T>): Promise<T[]> {
+  async findAll(condition: ConditionType<_ENTITY> = {}): Promise<_ENTITY[]> {
+    return await new Promise<_ENTITY[]>((resolve, reject) => {
+      const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
+      const objectStore = transaction.objectStore(this.storeName)
+
+      const request = objectStore.openCursor()
+      const result: _ENTITY[] = []
+
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result
+        if (cursor) {
+          if (this.processCondition(cursor.value, condition)) {
+            result.push(cursor.value)
+          }
+          cursor.continue()
+        } else {
+          resolve(result)
+        }
+      }
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error)
+      }
+    })
+  }
+
+  async pagination<S extends _SORT>(options: {
+    page: number
+    limit: number
+    condition?: ConditionType<_ENTITY>
+    sort?: NoExtra<_SORT, S>
+  }) {
+    const { condition, page, limit, sort } = options
+
+    const data = await this.findAll(condition)
+    if (sort) {
+      const entries = Object.entries(sort)
+      if (entries.length > 0) {
+        const [key, value] = entries[0] // chỉ cho sắp xếp theo 1 trường
+        data.sort((a: any, b: any) => {
+          if (value === 'ASC') return a[key] < b[key] ? -1 : 1
+          if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
+    const start = (page - 1) * limit
+    const end = page * limit
+    return {
+      total: data.length,
+      page,
+      limit,
+      data: data.slice(start, end),
+    }
+  }
+
+  async findMany<S extends _SORT>(options: {
+    condition: ConditionType<_ENTITY>
+    limit?: number
+    sort?: NoExtra<_SORT, S>
+  }): Promise<_ENTITY[]> {
+    const { condition, limit, sort } = options
+    const data = await this.findAll(condition)
+    if (sort) {
+      const entries = Object.entries(sort)
+      if (entries.length > 0) {
+        const [key, value] = entries[0] // chỉ cho sắp xếp theo 1 trường
+        data.sort((a: any, b: any) => {
+          if (value === 'ASC') return a[key] < b[key] ? -1 : 1
+          if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
+    if (limit) return data.slice(0, limit)
+    return data
+  }
+
+  async findManyBy(condition: ConditionType<_ENTITY>): Promise<_ENTITY[]> {
     return new Promise((resolve, reject) => {
       const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)
 
       const request = objectStore.openCursor()
-      const result: T[] = []
+      const result: _ENTITY[] = []
 
       request.onsuccess = (event) => {
         const cursor = (event.target as IDBRequest).result
@@ -37,18 +118,18 @@ export class BaseRepository<T> extends BaseCondition<T> {
     })
   }
 
-  async getManyByIds(ids: number[]): Promise<T[]> {
+  async findManyByIds(ids: number[]): Promise<_ENTITY[]> {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
     const objectStore = transaction.objectStore(this.storeName)
 
-    const getPromises: Promise<T | undefined>[] = []
+    const getPromises: Promise<_ENTITY | undefined>[] = []
 
     for (const id of ids) {
-      const getPromise = new Promise<T | undefined>((resolve, reject) => {
+      const getPromise = new Promise<_ENTITY | undefined>((resolve, reject) => {
         const getRequest = objectStore.get(id)
 
         getRequest.onsuccess = (event) => {
-          resolve((event.target as IDBRequest).result as T | undefined)
+          resolve((event.target as IDBRequest).result as _ENTITY | undefined)
         }
 
         getRequest.onerror = (event) => {
@@ -59,7 +140,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
       getPromises.push(getPromise)
     }
 
-    const data: T[] = []
+    const data: _ENTITY[] = []
     const resultPromise = await Promise.allSettled(getPromises)
     resultPromise.forEach((i) => {
       if (i.status === 'fulfilled' && i.value) {
@@ -69,7 +150,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     return data
   }
 
-  async getOneBy(condition: ConditionType<T>): Promise<T | null> {
+  async findOneBy(condition: ConditionType<_ENTITY>): Promise<_ENTITY | null> {
     return new Promise((resolve, reject) => {
       const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)
@@ -94,7 +175,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     })
   }
 
-  async getOneById(id: number): Promise<T | undefined> {
+  async findOneById(id: number): Promise<_ENTITY | undefined> {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -102,7 +183,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
       const getRequest = objectStore.get(id)
 
       getRequest.onsuccess = (event) => {
-        resolve((event.target as IDBRequest).result as T | undefined)
+        resolve((event.target as IDBRequest).result as _ENTITY | undefined)
       }
 
       getRequest.onerror = (event) => {
@@ -111,7 +192,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     })
   }
 
-  async insertMany(data: T[]) {
+  async insertMany(data: _ENTITY[]) {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -148,7 +229,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     return result
   }
 
-  async insertOne(data: T): Promise<number> {
+  async insertOne(data: _ENTITY): Promise<number> {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -165,7 +246,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     })
   }
 
-  async updateMany(data: T[]) {
+  async updateMany(data: _ENTITY[]) {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -176,7 +257,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
         const getRequest = objectStore.get((item as any).id)
 
         getRequest.onsuccess = (event) => {
-          const existingData = (event.target as IDBRequest).result as T
+          const existingData = (event.target as IDBRequest).result as _ENTITY
 
           if (existingData) {
             const putRequest = objectStore.put(item)
@@ -216,7 +297,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     return result
   }
 
-  async updateOne(data: T): Promise<void> {
+  async updateOne(data: _ENTITY): Promise<void> {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -224,7 +305,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
       const getRequest = objectStore.get((data as any).id)
 
       getRequest.onsuccess = (event) => {
-        const existingData = (event.target as IDBRequest).result as T
+        const existingData = (event.target as IDBRequest).result as _ENTITY
 
         if (existingData) {
           const putRequest = objectStore.put(data)
@@ -243,7 +324,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     })
   }
 
-  async upsertMany(data: T[]) {
+  async upsertMany(data: _ENTITY[]) {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
@@ -278,7 +359,7 @@ export class BaseRepository<T> extends BaseCondition<T> {
     return result
   }
 
-  async upsertOne(data: T) {
+  async upsertOne(data: _ENTITY) {
     const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 

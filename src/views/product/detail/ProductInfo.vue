@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Product, ProductBatch, ProductBatchService } from '@/modules/product'
+import { Product, ProductBatch, ProductBatchApi } from '@/modules/product'
 import { useOrganizationStore } from '@/store/organization.store'
 import { timeToText } from '@/utils'
 import {
@@ -29,7 +29,7 @@ const isActive = ref<1 | 0 | ''>('')
 
 const startFetchData = async () => {
   try {
-    const data = await ProductBatchService.pagination({
+    const data = await ProductBatchApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -71,7 +71,7 @@ const startDeleteProductBatch = (id: number) => {
     content: 'Chỉ có thể xóa những lô hàng chưa có giao dịch, chưa từng nhập hàng hoặc xuất hàng',
     async onOk() {
       try {
-        await ProductBatchService.deleteOne(id)
+        await ProductBatchApi.deleteOne(id)
         message.success('Xóa lô hàng thành công')
         const index = productBatches.value.findIndex((i) => i.id === id)
         productBatches.value.splice(index, 1)

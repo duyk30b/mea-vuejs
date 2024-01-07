@@ -1,12 +1,17 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import { debounceAsync } from '@/utils/helpers'
 import type { ApiPaginationResponse } from '../pagination'
-import { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
+import {
+  ProductDetailQuery,
+  ProductGetQuery,
+  ProductListQuery,
+  ProductPaginationQuery,
+} from './product.dto'
 import { Product } from './product.model'
 
-export class ProductService {
+export class ProductApi {
   static async pagination(options: ProductPaginationQuery) {
-    const params = ProductPaginationQuery.plainFromPlain(options)
+    const params = ProductGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product/pagination', { params })
     const data = response.data as ApiPaginationResponse
@@ -19,7 +24,7 @@ export class ProductService {
   }
 
   static async list(options: ProductListQuery): Promise<Product[]> {
-    const params = ProductListQuery.plainFromPlain(options)
+    const params = ProductGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/product/list', { params })
     return Product.fromPlains(data)
@@ -27,13 +32,13 @@ export class ProductService {
 
   static search: (options: ProductListQuery) => Promise<Product[]> = debounceAsync(
     async (options: ProductListQuery): Promise<Product[]> => {
-      return ProductService.list(options)
+      return ProductApi.list(options)
     },
     200
   )
 
   static async detail(id: number, options: ProductDetailQuery = {}): Promise<Product> {
-    const params = ProductDetailQuery.plainFromPlain(options)
+    const params = ProductGetQuery.toQuery(options)
     const { data } = await AxiosInstance.get(`/product/detail/${id}`, { params })
     return Product.fromPlain(data)
   }

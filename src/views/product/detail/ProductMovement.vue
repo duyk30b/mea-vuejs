@@ -3,9 +3,9 @@ import { InputOptions, VueSelect } from '@/common/vue-form'
 import {
   Product,
   ProductBatch,
-  ProductBatchService,
+  ProductBatchApi,
   ProductMovement,
-  ProductMovementService,
+  ProductMovementApi,
   ProductMovementType,
 } from '@/modules/product'
 import { useOrganizationStore } from '@/store/organization.store'
@@ -34,7 +34,7 @@ const total = ref(0)
 
 const startFetchProductMovements = async () => {
   try {
-    const movPagination = await ProductMovementService.pagination({
+    const movPagination = await ProductMovementApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -54,7 +54,7 @@ const startFetchProductMovements = async () => {
 
 const startFetchProductBatches = async () => {
   try {
-    const productBatches = await ProductBatchService.list({
+    const productBatches = await ProductBatchApi.list({
       filter: { productId: props.product.id },
     })
     productBatchAll.value = productBatches

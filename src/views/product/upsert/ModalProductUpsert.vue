@@ -3,7 +3,7 @@ import VueModal from '@/common/VueModal.vue'
 import { InputNumber, InputText } from '@/common/vue-form'
 import { useProductStore } from '@/modules/product'
 import { Product } from '@/modules/product/product.model'
-import { ProductService } from '@/modules/product/product.service'
+import { ProductApi } from '@/modules/product/product.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
 import {
@@ -57,12 +57,12 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (!product.value.id) {
-      const data = await ProductService.createOne(product.value)
+      const data = await ProductApi.createOne(product.value)
       data.productBatches = []
       productStore.createOne(data)
       emit('success', data, 'CREATE')
     } else {
-      const data = await ProductService.updateOne(product.value.id, product.value)
+      const data = await ProductApi.updateOne(product.value.id, product.value)
       productStore.updateProduct(Product.fromInstance(data)) // response trả về không có productBatches vì vậy không update productBatches
       emit('success', data, 'UPDATE')
     }
@@ -77,7 +77,7 @@ const handleSave = async () => {
 }
 
 const handleDelete = async () => {
-  await ProductService.deleteOne(product.value.id)
+  await ProductApi.deleteOne(product.value.id)
   productStore.removeProduct(product.value.id)
 }
 
@@ -322,3 +322,4 @@ defineExpose({ openModal })
   </VueModal>
   <ModalProductUpsertSettingScreen ref="modalProductUpsertSettingScreen" />
 </template>
+@/modules/product/product.api

@@ -5,7 +5,7 @@ import {
   plainToInstance,
   Type,
 } from 'class-transformer'
-import { Product } from './product.model'
+import { Product } from '../product/product.model'
 
 export class ProductBatch {
   @Expose({ groups: ['ALL', 'COPY'] })
@@ -34,6 +34,15 @@ export class ProductBatch {
 
   @Expose()
   isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
 
   @Expose({ groups: ['ALL'] })
   @Type(() => Product)

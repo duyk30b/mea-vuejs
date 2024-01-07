@@ -1,14 +1,15 @@
 import { AxiosInstance } from '@/core/axios.instance'
 import {
   ProductBatchDetailQuery,
+  ProductBatchGetQuery,
   ProductBatchListQuery,
   ProductBatchPaginationQuery,
 } from './product-batch.dto'
 import { ProductBatch } from './product-batch.model'
 
-export class ProductBatchService {
+export class ProductBatchApi {
   static async pagination(options: ProductBatchPaginationQuery) {
-    const params = ProductBatchPaginationQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-batch/pagination', { params })
     return {
@@ -20,14 +21,14 @@ export class ProductBatchService {
   }
 
   static async list(options: ProductBatchListQuery): Promise<ProductBatch[]> {
-    const params = ProductBatchListQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/product-batch/list', { params })
     return ProductBatch.fromPlains(data)
   }
 
   static async detail(id: number, options: ProductBatchDetailQuery) {
-    const params = ProductBatchDetailQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get(`/product-batch/detail/${id}`, { params })
     return ProductBatch.fromPlain(data)

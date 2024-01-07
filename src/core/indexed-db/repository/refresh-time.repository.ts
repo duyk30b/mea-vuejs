@@ -15,7 +15,7 @@ export class RefreshTimeRepository extends BaseRepository<RefreshTime> {
   }
 
   getOneByCode(code: RefreshTimeCode) {
-    return this.getOneBy({ code })
+    return this.findOneBy({ code })
   }
 }
 

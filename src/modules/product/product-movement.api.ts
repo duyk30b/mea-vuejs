@@ -14,7 +14,7 @@ export interface ProductMovementPaginationQuery extends ApiPaginationRequest {
     receipt?: boolean
   }
 }
-export class ProductMovementService {
+export class ProductMovementApi {
   static async pagination(params: ProductMovementPaginationQuery) {
     const response = await AxiosInstance.get('/product-movement/pagination', { params })
     const data = response.data as ApiPaginationResponse

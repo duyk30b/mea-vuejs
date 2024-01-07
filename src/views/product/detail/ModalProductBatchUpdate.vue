@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { InputDate, InputMoney, InputNumber } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService } from '@/modules/product'
+import { Product, ProductBatch, ProductBatchApi } from '@/modules/product'
 import { useProductStore } from '@/modules/product/product.store'
 import { ref } from 'vue'
 
@@ -28,7 +28,7 @@ const refreshModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    const batch = await ProductBatchService.updateOne(productBatch.value.id!, productBatch.value)
+    const batch = await ProductBatchApi.updateOne(productBatch.value.id!, productBatch.value)
     emit('success', batch, 'UPDATE')
     productStore.updateProductBatch(batch)
     productStore.timeSync = Date.now() // tạo trigger để màn list reload lại

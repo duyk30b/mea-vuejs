@@ -26,10 +26,19 @@ export class Distributor {
   debt: number
 
   @Expose()
-  isActive: 1 | 0 // Trạng thái
+  note?: string
 
   @Expose()
-  note?: string
+  isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
 
   static init(): Distributor {
     const ins = new Distributor()

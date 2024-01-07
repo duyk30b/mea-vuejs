@@ -1,32 +1,32 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
-export class ProductGetQuery {
+export class ProductBatchGetQuery {
   page?: number
   limit?: number
   relation?: {
-    productBatches?: boolean
+    product?: boolean
   }
   filter?: {
     isActive?: 1 | 0
-    group?: string
-    searchText?: string
     quantity?: ConditionNumber
+    expiryDate?: ConditionDate
+    productId?: number
     updatedAt?: ConditionDate
-    productBatch?: {
+    product?: {
+      searchText?: string
+      group?: string
       isActive?: 1 | 0
       quantity?: ConditionNumber
-      expiryDate?: ConditionDate
       updatedAt?: ConditionDate
     }
   }
   sort?: {
     id?: 'ASC' | 'DESC'
-    quantity?: 'ASC' | 'DESC'
-    brandName?: 'ASC' | 'DESC'
+    expiryDate?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<ProductGetQuery>) {
+  static toQuery(instance: Partial<ProductBatchGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -37,6 +37,6 @@ export class ProductGetQuery {
   }
 }
 
-export class ProductPaginationQuery extends ProductGetQuery {}
-export class ProductListQuery extends OmitClass(ProductGetQuery, ['page']) {}
-export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation']) {}
+export class ProductBatchPaginationQuery extends ProductBatchGetQuery {}
+export class ProductBatchListQuery extends OmitClass(ProductBatchGetQuery, ['page']) {}
+export class ProductBatchDetailQuery extends PickClass(ProductBatchGetQuery, ['relation']) {}

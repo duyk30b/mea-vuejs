@@ -34,7 +34,7 @@ const openModal = async (p?: Procedure) => {
   // if (procedure.value.consumableHint) {
   //   const consumableHint = JSON.parse(procedure.value.consumableHint) as { productId: number, quantity: number }[]
   //   if (Array.isArray(consumableHint)) {
-  //     const productListResponse = await ProductService.getManyByIds(consumableHint.map((i) => i.productId))
+  //     const productListResponse = await ProductApi.getManyByIds(consumableHint.map((i) => i.productId))
   //     consumableList.value = consumableHint.map((i) => {
   //       const productFind = productListResponse.find((j) => j.id === i.productId)
   //       return {
@@ -104,7 +104,7 @@ const filterOption = (input: string, option: any) => {
 // const searchingProduct = async (text: string) => {
 //   productList.value = []
 //   if (text) {
-//     productList.value = await ProductService.search(
+//     productList.value = await ProductApi.search(
 //       text,
 //       { productBatches: true },
 //       { overdue: true, quantityZero: true }

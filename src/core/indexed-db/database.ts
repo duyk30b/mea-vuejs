@@ -7,6 +7,7 @@ export const MeaDatabase = new BaseIndexedDB({
     { storeName: 'Customer', keyPath: 'id' },
     { storeName: 'Distributor', keyPath: 'id' },
     { storeName: 'Product', keyPath: 'id' },
+    { storeName: 'ProductBatch', keyPath: 'id' },
     { storeName: 'RefreshTime', keyPath: 'code' },
   ],
 })
