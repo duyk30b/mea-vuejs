@@ -11,7 +11,7 @@ import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
-import { CustomerApi, useCustomerStore } from '../../../modules/customer'
+import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
 import { useOrganizationStore } from '../../../store/organization.store'
 import { convertViToEn } from '../../../utils'
@@ -43,7 +43,7 @@ const openModal = async (c?: Customer) => {
   provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
 }
 
-const handleClose = () => {
+const closeModal = () => {
   customer.value = Customer.blank()
   showModal.value = false
 }
@@ -74,7 +74,7 @@ const handleDelete = async () => {
   try {
     await customerStore.deleteOne(customer.value.id)
     emit('success', customer.value, 'DELETE')
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
   }
@@ -143,7 +143,7 @@ defineExpose({ openModal })
         >
           <SettingOutlined />
         </div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>
       </div>
@@ -291,7 +291,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <a-button danger @click="clickDelete">Xóa</a-button>
-          <a-button class="ml-auto" @click="handleClose">
+          <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

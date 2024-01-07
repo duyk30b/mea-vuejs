@@ -36,6 +36,12 @@ export class Procedure extends BaseModel {
     return ins
   }
 
+  static from(data: Partial<Procedure>) {
+    const ins = new Procedure()
+    Object.assign(ins, data)
+    return ins
+  }
+
   static fromPlain(plain: Record<string, any>): Procedure {
     return plainToInstance(Procedure, plain, {
       exposeUnsetFields: false,

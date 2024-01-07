@@ -1,29 +1,17 @@
 import { AxiosInstance } from '@/core/axios.instance'
-import { convertViToEn, customFilter, debounceAsync } from '@/utils/helpers'
-import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
+import { debounceAsync } from '@/utils/helpers'
+import type { ApiPaginationResponse } from '../pagination'
+import {
+  ProcedureGetQuery,
+  ProcedureListQuery,
+  type ProcedurePaginationQuery,
+} from './procedure.dto'
 import { Procedure } from './procedure.model'
 
-export interface ProcedureFilterQuery {
-  isActive?: 1 | 0
-  group?: string
-  searchText?: string
-}
+export class ProcedureApi {
+  static async pagination(options: ProcedurePaginationQuery) {
+    const params = ProcedureGetQuery.toQuery(options)
 
-export type ProcedureListQuery = {
-  limit?: number
-  filter?: ProcedureFilterQuery
-}
-export interface ProcedurePaginationQuery extends ApiPaginationRequest {
-  filter?: ProcedureFilterQuery
-  sort?: {
-    id?: 'ASC' | 'DESC'
-    name?: 'ASC' | 'DESC'
-    price?: 'ASC' | 'DESC'
-  }
-}
-
-export class ProcedureService {
-  static async pagination(params: ProcedurePaginationQuery) {
     const response = await AxiosInstance.get('/procedure/pagination', { params })
     const data = response.data as ApiPaginationResponse
     return {
@@ -34,7 +22,9 @@ export class ProcedureService {
     }
   }
 
-  static async list(params: ProcedureListQuery): Promise<Procedure[]> {
+  static async list(options: ProcedureListQuery): Promise<Procedure[]> {
+    const params = ProcedureGetQuery.toQuery(options)
+
     const { data } = await AxiosInstance.get('/procedure/list', { params })
     return Procedure.fromPlains(data)
   }
@@ -47,7 +37,7 @@ export class ProcedureService {
     200
   )
 
-  static async getOne(id: number): Promise<Procedure> {
+  static async detail(id: number): Promise<Procedure> {
     const { data } = await AxiosInstance.get(`/procedure/detail/${id}`)
     return Procedure.fromPlain(data)
   }

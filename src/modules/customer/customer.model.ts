@@ -98,11 +98,11 @@ export class Customer {
     })
   }
 
-  static toPlain(instance: Partial<Customer>): Record<string, any> {
+  static toPlain(instance: Partial<Customer>, type: 'CREATE' | 'UPDATE'): Record<string, any> {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['CREATE'],
+      groups: [type],
     })
   }
 }

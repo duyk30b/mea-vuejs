@@ -7,7 +7,7 @@ import { MeaDatabase } from '../database'
 
 export class CustomerRepository extends BaseRepository<Customer> {
   constructor(baseDB: BaseIndexedDB) {
-    super({ baseDB, storeName: 'Customers' })
+    super({ baseDB, storeName: 'Customer' })
   }
 
   async pagination(params: CustomerPaginationQuery) {

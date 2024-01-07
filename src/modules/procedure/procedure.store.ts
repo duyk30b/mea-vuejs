@@ -1,7 +1,9 @@
-import { customFilter } from '@/utils'
 import { defineStore } from 'pinia'
+import { ProcedureDB } from '../../core/indexed-db/repository/procedure.repository'
+import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { ProcedureApi } from './procedure.api'
+import type { ProcedurePaginationQuery } from './procedure.dto'
 import type { Procedure } from './procedure.model'
-import { ProcedureService, type ProcedurePaginationQuery } from './procedure.service'
 
 export const useProcedureStore = defineStore('procedure-store', {
   state: () => {
@@ -9,83 +11,51 @@ export const useProcedureStore = defineStore('procedure-store', {
   },
 
   actions: {
-    async fetchAll() {
+    async refreshDB() {
       try {
-        this.procedureList = await ProcedureService.list({})
-      } catch (error) {
-        console.log('🚀 ~ file: procedure.store.ts:16 ~ fetchAll ~ error:', error)
-      }
-    },
-    createOne(procedure: Procedure) {
-      this.procedureList.unshift(procedure)
-    },
-    updateOne(id: number, data: Procedure) {
-      const index = this.procedureList.findIndex((i) => i.id === id)
-      if (index !== -1) {
-        this.procedureList[index] = data
-      }
-    },
-    removeOne(id: number) {
-      const index = this.procedureList.findIndex((i) => i.id === id)
-      if (index === -1) return
-      console.log("🚀 ~ file: procedure.store.ts:32 ~ removeOne ~ this.procedureList:", this.procedureList.length)
-      this.procedureList.splice(index, 1)
-      console.log("🚀 ~ file: procedure.store.ts:34 ~ removeOne ~ this.procedureList:", this.procedureList.length)
-    },
-  },
-
-  getters: {
-    pagination: (state) => {
-      return (params: ProcedurePaginationQuery) => {
-        const { filter, sort, page, limit } = params
-        const response = state.procedureList.filter((procedure) => {
-          if (filter?.isActive != null && procedure.isActive !== filter?.isActive) {
-            return false
-          }
-          if (filter?.group && procedure.group !== filter?.group) {
-            return false
-          }
-          if (filter?.searchText) {
-            if (!customFilter(procedure.name, filter?.searchText, 2)) {
-              return false
-            }
-          }
-          return true
-        })
-        response.sort((a, b) => {
-          if (sort?.id) {
-            if (sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-            if (sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          }
-          if (sort?.name) {
-            if (sort?.name === 'ASC') return a.name < b.name ? -1 : 1
-            if (sort?.name === 'DESC') return a.name > b.name ? -1 : 1
-          }
-          if (sort?.price) {
-            if (sort?.price === 'ASC') return a.price < b.price ? -1 : 1
-            if (sort?.price === 'DESC') return a.price > b.price ? -1 : 1
-          }
-          return a.id > b.id ? -1 : 1
-        })
-
-        const start = (page - 1) * limit
-        const end = page * limit
-        return {
-          total: response.length,
-          page: params.page,
-          limit: params.limit,
-          data: response.slice(start, end),
+        let refreshTime = await RefreshTimeDB.getOneByCode('PROCEDURE')
+        if (!refreshTime) {
+          refreshTime = { code: 'PROCEDURE', time: new Date(0).toISOString() }
         }
+        const lastTime = new Date(refreshTime.time)
+        const currentTime = new Date()
+        const customerList = await ProcedureApi.list({
+          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+        })
+        if (customerList.length) {
+          await ProcedureDB.upsertMany(customerList)
+        }
+
+        refreshTime.time = currentTime.toISOString()
+        await RefreshTimeDB.upsertOne(refreshTime)
+      } catch (error) {
+        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
     },
-    search: (state) => {
-      return (text: string) => {
-        return state.procedureList.filter((item) => {
-          if (!item.isActive) return false
-          if (!customFilter(item.name, text, 2)) return false
-          return true
-        })
-      }
+
+    async pagination(params: ProcedurePaginationQuery) {
+      return await ProcedureDB.pagination(params)
+    },
+
+    async createOne(customer: Procedure) {
+      const response = await ProcedureApi.createOne(customer)
+      await ProcedureDB.insertOne(response)
+      return response
+    },
+
+    async updateOne(id: number, data: Procedure) {
+      const response = await ProcedureApi.updateOne(id, data)
+      await ProcedureDB.updateOne(response)
+      return response
+    },
+
+    async deleteOne(id: number) {
+      await ProcedureApi.deleteOne(id)
+      await ProcedureDB.deleteOneById(id)
+    },
+
+    async search(text: string) {
+      return await ProcedureDB.search(text)
     },
   },
 })

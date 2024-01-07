@@ -38,14 +38,14 @@ export class CustomerApi {
   }
 
   static async createOne(customer: Customer) {
-    const customerDto = Customer.toPlain(customer)
+    const customerDto = Customer.toPlain(customer, 'CREATE')
     const { data } = await AxiosInstance.post('/customer/create', customerDto)
 
     return Customer.fromPlain(data)
   }
 
   static async updateOne(id: number, customer: Partial<Customer>) {
-    const customerDto = Customer.toPlain(customer)
+    const customerDto = Customer.toPlain(customer, 'UPDATE')
     const response = await AxiosInstance.patch(`/customer/update/${id}`, customerDto)
 
     return Customer.fromPlain(response.data)

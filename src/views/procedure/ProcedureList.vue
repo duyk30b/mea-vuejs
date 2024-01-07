@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Procedure, ProcedureService, useProcedureStore } from '@/modules/procedure'
+import { Procedure, ProcedureApi, useProcedureStore } from '@/modules/procedure'
 import { useOrganizationStore } from '@/store/organization.store'
 import {
   CheckCircleOutlined,
@@ -27,7 +27,7 @@ const { formatMoney, isMobile } = organizationStore
 
 const procedureList = ref<Procedure[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PROCEDURE_PAGINATION_LIMIT')) || 10)
@@ -42,9 +42,9 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
+    // dataLoading.value = true
 
-    const response = procedureStore.pagination({
+    const response = await procedureStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -63,14 +63,21 @@ const startFetchData = async () => {
     procedureList.value = response.data
     total.value = response.total
 
-    loadingComponent.value = false
+    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  await procedureStore.fetchAll()
+  try {
+    dataLoading.value = true
+    await procedureStore.refreshDB()
+  } catch (error) {
+    console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
   await startFetchData()
 })
 

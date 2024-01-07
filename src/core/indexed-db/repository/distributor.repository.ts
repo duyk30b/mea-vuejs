@@ -7,7 +7,7 @@ import { MeaDatabase } from '../database'
 
 export class DistributorRepository extends BaseRepository<Distributor> {
   constructor(baseDB: BaseIndexedDB) {
-    super({ baseDB, storeName: 'Distributors' })
+    super({ baseDB, storeName: 'Distributor' })
   }
 
   async pagination(params: DistributorPaginationQuery) {

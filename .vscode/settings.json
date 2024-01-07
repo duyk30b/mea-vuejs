@@ -9,7 +9,6 @@
     "vue"
   ],
   "window.title": "${rootName}",
-  "typescript.inlayHints.parameterNames.enabled": "literals",
   "editor.inlayHints.fontSize": 10,
   "workbench.colorCustomizations": {
     "editorInlayHint.background": "#4d4d4d99",
@@ -22,10 +21,15 @@
     }
   },
   "search.smartCase": true,
-  "typescript.preferences.quoteStyle": "single",
   "javascript.preferences.quoteStyle": "single",
-  "typescript.format.semicolons": "remove",
   "javascript.format.semicolons": "remove",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.quoteStyle": "single",
+  "typescript.format.semicolons": "remove",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.inlayHints.parameterNames.enabled": "literals",
   "git.allowForcePush": true,
   "cSpell.language": "en,vi",
   "cSpell.words": [

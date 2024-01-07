@@ -2,9 +2,8 @@
 import VueModal from '@/common/VueModal.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '@/common/vue-form'
-import { useProcedureStore } from '@/modules/procedure'
+import { ProcedureApi, useProcedureStore } from '@/modules/procedure'
 import { Procedure } from '@/modules/procedure/procedure.model'
-import { ProcedureService } from '@/modules/procedure/procedure.service'
 import { useOrganizationStore } from '@/store/organization.store'
 import { convertViToEn } from '@/utils'
 import { CloseOutlined, SaveOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
@@ -58,13 +57,12 @@ const handleSave = async () => {
   // const consumableHint = consumableList.value.map((i) => ({ productId: i.product!.id, quantity: i.quantity }))
   // procedure.value.consumableHint = JSON.stringify(consumableHint)
   try {
+    const data = Procedure.from(procedure.value)
     if (!procedure.value.id) {
-      const response = await ProcedureService.createOne(procedure.value)
-      procedureStore.createOne(response)
+      const response = await procedureStore.createOne(data)
       emit('success', response, 'CREATE')
     } else {
-      const response = await ProcedureService.updateOne(procedure.value.id, procedure.value)
-      procedureStore.updateOne(response.id, response)
+      const response = await procedureStore.updateOne(procedure.value.id, data)
       emit('success', response, 'UPDATE')
     }
     saveLoading.value = false
@@ -76,10 +74,13 @@ const handleSave = async () => {
 }
 
 const handleDelete = async () => {
-  await ProcedureService.deleteOne(procedure.value.id)
-  procedureStore.removeOne(procedure.value.id)
-  emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
-  closeModal()
+  try {
+    await procedureStore.deleteOne(procedure.value.id)
+    emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+  }
 }
 
 const clickDelete = () => {
@@ -239,3 +240,4 @@ defineExpose({ openModal })
     </form>
   </VueModal>
 </template>
+@/modules/procedure/procedure.api

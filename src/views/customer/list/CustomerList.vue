@@ -72,6 +72,7 @@ const startFetchData = async () => {
 
 onBeforeMount(async () => {
   try {
+    dataLoading.value = true
     await customerStore.refreshDB()
   } catch (error) {
     console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)

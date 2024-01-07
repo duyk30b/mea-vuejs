@@ -2,7 +2,7 @@ import type { BaseIndexedDB } from '../_base/_base.indexed-db'
 import { BaseRepository } from '../_base/_base.repository'
 import { MeaDatabase } from '../database'
 
-export type RefreshTimeCode = 'PRODUCT' | 'CUSTOMER' | 'DISTRIBUTOR'
+export type RefreshTimeCode = 'PROCEDURE' | 'PRODUCT' | 'CUSTOMER' | 'DISTRIBUTOR'
 
 export type RefreshTime = {
   code: RefreshTimeCode
@@ -11,7 +11,7 @@ export type RefreshTime = {
 
 export class RefreshTimeRepository extends BaseRepository<RefreshTime> {
   constructor(baseDB: BaseIndexedDB) {
-    super({ baseDB, storeName: 'RefreshTimes' })
+    super({ baseDB, storeName: 'RefreshTime' })
   }
 
   getOneByCode(code: RefreshTimeCode) {
