@@ -1,6 +1,6 @@
-import { AxiosInstance } from '@/core/axios.instance'
-import { Product } from '../product'
+import { AxiosInstance } from '../../core/axios.instance'
 import { Customer } from '../customer'
+import { Product } from '../product'
 
 export class StatisticService {
   static async sumWarehouse() {

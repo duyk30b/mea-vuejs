@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { InputMoney, InputNumber } from '@/common/vue-form'
-import { DiscountType } from '@/modules/enum'
-import { InvoiceItemType } from '@/modules/invoice'
-import type { Product } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { InputMoney, InputNumber } from '../../../common/vue-form'
+import { DiscountType } from '../../../modules/enum'
+import { InvoiceItemType } from '../../../modules/invoice'
+import type { Procedure } from '../../../modules/procedure'
+import type { Product } from '../../../modules/product'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { invoice } from './invoice-upsert.store'
-import type { Procedure } from '@/modules/procedure'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()

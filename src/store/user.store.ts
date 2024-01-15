@@ -1,6 +1,6 @@
-import { USER } from '@/core/local-storage.service'
-import { Employee } from '@/modules/employee'
 import { defineStore } from 'pinia'
+import { USER } from '../core/local-storage.service'
+import { Employee } from '../modules/employee'
 
 export const useUserStore = defineStore('user-store', {
   state: () => {

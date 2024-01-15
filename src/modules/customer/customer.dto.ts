@@ -1,61 +1,35 @@
-import { Expose, Transform, Type, instanceToPlain, plainToInstance } from 'class-transformer'
-import { PaginationQuery } from '../pagination'
-import type { ComparisonType } from '../enum'
+import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
-export class CustomerFilterQuery {
-  @Expose()
-  isActive?: 1 | 0
-
-  @Expose()
-  searchText?: string
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  debt?: [ComparisonType, number]
-}
-
-export class CustomerSortQuery {
-  @Expose()
-  id?: 'ASC' | 'DESC'
-
-  @Expose()
-  debt?: 'ASC' | 'DESC'
-
-  @Expose()
-  fullName?: 'ASC' | 'DESC'
-}
-
-export class CustomerPaginationQuery extends PaginationQuery {
-  @Expose()
-  @Type(() => CustomerFilterQuery)
-  filter?: CustomerFilterQuery
-
-  @Expose()
-  @Type(() => CustomerSortQuery)
-  sort?: CustomerSortQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(CustomerPaginationQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
-
-export class CustomerListQuery {
-  @Expose()
+export class CustomerGetQuery {
+  page?: number
   limit?: number
+  relation?: {
+    customerPayments?: boolean
+  }
+  filter?: {
+    isActive?: 1 | 0
+    searchText?: string
+    debt?: ConditionNumber
+    updatedAt?: ConditionDate
+  }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    debt?: 'ASC' | 'DESC'
+    fullName?: 'ASC' | 'DESC'
+  }
 
-  @Expose()
-  @Type(() => CustomerFilterQuery)
-  filter?: CustomerFilterQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(CustomerListQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static toQuery(instance: Partial<CustomerGetQuery>) {
+    return {
+      page: instance?.page,
+      limit: instance?.limit,
+      relation: instance.relation ? JSON.stringify(instance.relation) : undefined,
+      filter: instance.filter ? JSON.stringify(instance.filter) : undefined,
+      sort: instance.sort ? JSON.stringify(instance.sort) : undefined,
+    }
   }
 }
+
+export class CustomerPaginationQuery extends CustomerGetQuery {}
+export class CustomerListQuery extends OmitClass(CustomerGetQuery, ['page']) {}
+export class CustomerDetailQuery extends PickClass(CustomerGetQuery, ['relation']) {}

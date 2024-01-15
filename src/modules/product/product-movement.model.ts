@@ -7,10 +7,10 @@ import {
   Type,
 } from 'class-transformer'
 import { BaseModel } from '../base.model'
-import { Invoice } from '../invoice'
-import { Receipt } from '../receipt'
-import { ProductBatch } from './product-batch.model'
 import type { UnitType } from '../enum'
+import { Invoice } from '../invoice'
+import { ProductBatch } from '../product-batch/product-batch.model'
+import { Receipt } from '../receipt'
 
 export enum ProductMovementType {
   Receipt = 1,

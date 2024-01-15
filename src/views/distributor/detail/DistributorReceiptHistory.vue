@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Distributor } from '@/modules/distributor'
-import { ReceiptService, type Receipt } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import ReceiptStatusTag from '@/views/receipt/ReceiptStatusTag.vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Distributor } from '../../../modules/distributor'
+import { ReceiptApi, type Receipt } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import ReceiptStatusTag from '../../../views/receipt/ReceiptStatusTag.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -25,7 +25,7 @@ const limit = ref(
 const total = ref(0)
 
 const startFetchData = async () => {
-  const data = await ReceiptService.pagination({
+  const data = await ReceiptApi.pagination({
     page: page.value,
     limit: limit.value,
     filter: { distributorId: props.distributor.id! },

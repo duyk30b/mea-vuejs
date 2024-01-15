@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { InvoiceService } from '@/modules/invoice'
-import { StatisticService } from '@/modules/statistics'
-import { useOrganizationStore } from '@/store/organization.store'
 import type { ChartData } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
+import { InvoiceService } from '../../../modules/invoice'
+import { StatisticService } from '../../../modules/statistics'
+import { useOrganizationStore } from '../../../store/organization.store'
 
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
@@ -27,7 +27,7 @@ const startFetchData = async () => {
     const [customerSumDebt, { invoiceSumDebt }] = await Promise.all([
       StatisticService.sumDebt(),
       InvoiceService.sumDebt({
-        filter: { time: ['<', Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000] },
+        filter: { time: { LT: Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000 } },
       }),
     ])
     totalCustomerDebt.value = customerSumDebt

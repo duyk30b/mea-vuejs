@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { InputMoney, VueSelect } from '@/common/vue-form'
-import { UNKNOWN_KEY } from '@/modules/enum'
-import { InvoiceExpense } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { InputMoney, VueSelect } from '../../../common/vue-form'
+import { UNKNOWN_KEY } from '../../../modules/enum'
+import { InvoiceExpense } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
 import { invoice } from './invoice-upsert.store'
 
 const organizationStore = useOrganizationStore()
@@ -61,10 +61,10 @@ const handleChangeInvoiceExpense = (data: number) => {
   <td class="cursor-pointer whitespace-nowrap">
     <a-popconfirm>
       <template #cancelButton>
-        <div />
+        <div></div>
       </template>
       <template #okButton>
-        <div />
+        <div></div>
       </template>
       <template #title>
         <div style="width: 320px">

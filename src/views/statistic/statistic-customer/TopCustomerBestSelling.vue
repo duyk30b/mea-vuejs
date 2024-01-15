@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { VueSelect } from '@/common/vue-form'
-import { StatisticService } from '@/modules/statistics'
-import { useOrganizationStore } from '@/store/organization.store'
-import { DTimer } from '@/utils'
 import type { ChartData, ChartOptions } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { VueSelect } from '../../../common/vue-form'
+import { StatisticService } from '../../../modules/statistics'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { DTimer } from '../../../utils'
 
 const organizationStore = useOrganizationStore()
 const moneyDivision = organizationStore.SYSTEM_SETTING.moneyDivisionFormat

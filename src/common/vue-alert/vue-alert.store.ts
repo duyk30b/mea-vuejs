@@ -1,5 +1,5 @@
-import { randomId } from '@/utils'
 import { reactive } from 'vue'
+import { randomId } from '../../utils'
 
 export interface IAlert {
   type: 'success' | 'warning' | 'error'

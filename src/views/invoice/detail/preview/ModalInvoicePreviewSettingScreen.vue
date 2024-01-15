@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { OrganizationService } from '../../../../modules/organization'
+import { useOrganizationStore } from '../../../../store/organization.store'
+import { OrganizationSettingsType } from '../../../../store/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 

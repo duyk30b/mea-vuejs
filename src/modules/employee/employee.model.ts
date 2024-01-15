@@ -1,11 +1,4 @@
-import {
-  Exclude,
-  Expose,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-  Type,
-} from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import type { EGender } from '../enum'
 

@@ -1,4 +1,4 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import { Diagnosis } from './diagnosis.model'
 
 export class DiagnosisService {

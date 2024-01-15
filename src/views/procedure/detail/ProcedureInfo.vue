@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Procedure } from '@/modules/procedure'
-import { useOrganizationStore } from '@/store/organization.store'
+import { Procedure } from '../../../modules/procedure'
+import { useOrganizationStore } from '../../../store/organization.store'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),

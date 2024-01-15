@@ -1,14 +1,15 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import {
   ProductBatchDetailQuery,
+  ProductBatchGetQuery,
   ProductBatchListQuery,
   ProductBatchPaginationQuery,
 } from './product-batch.dto'
 import { ProductBatch } from './product-batch.model'
 
-export class ProductBatchService {
+export class ProductBatchApi {
   static async pagination(options: ProductBatchPaginationQuery) {
-    const params = ProductBatchPaginationQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-batch/pagination', { params })
     return {
@@ -20,35 +21,36 @@ export class ProductBatchService {
   }
 
   static async list(options: ProductBatchListQuery): Promise<ProductBatch[]> {
-    const params = ProductBatchListQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/product-batch/list', { params })
     return ProductBatch.fromPlains(data)
   }
 
   static async detail(id: number, options: ProductBatchDetailQuery) {
-    const params = ProductBatchDetailQuery.plainFromPlain(options)
+    const params = ProductBatchGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get(`/product-batch/detail/${id}`, { params })
     return ProductBatch.fromPlain(data)
   }
 
-  static async createOne(productBatch: ProductBatch) {
-    const productBatchDto = ProductBatch.toPlain(productBatch, 'CREATE')
-    const { data } = await AxiosInstance.post('/product-batch/create', productBatchDto)
+  static async createOne(instance: ProductBatch) {
+    const plain = ProductBatch.toPlain(instance, 'CREATE')
+    const { data } = await AxiosInstance.post('/product-batch/create', plain)
 
     return ProductBatch.fromPlain(data)
   }
 
-  static async updateOne(id: number, productBatch: ProductBatch) {
-    const productBatchDto = ProductBatch.toPlain(productBatch, 'UPDATE')
-    const { data } = await AxiosInstance.patch(`/product-batch/update/${id}`, productBatchDto)
+  static async updateOne(id: number, instance: ProductBatch) {
+    const plain = ProductBatch.toPlain(instance, 'UPDATE')
+    const { data } = await AxiosInstance.patch(`/product-batch/update/${id}`, plain)
 
     return ProductBatch.fromPlain(data)
   }
 
   static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/product-batch/delete/${id}`)
-    return response.data as { success: 'true' | 'false'; message?: string }
+    const { data } = await AxiosInstance.delete(`/product-batch/delete/${id}`)
+
+    return ProductBatch.fromPlain(data)
   }
 }

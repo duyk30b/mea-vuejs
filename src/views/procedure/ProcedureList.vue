@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { Procedure, ProcedureService, useProcedureStore } from '@/modules/procedure'
-import { useOrganizationStore } from '@/store/organization.store'
 import {
   CheckCircleOutlined,
   FileSearchOutlined,
@@ -10,7 +8,9 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
+import { Procedure, useProcedureStore } from '../../modules/procedure'
+import { useOrganizationStore } from '../../store/organization.store'
 import ModalSettingDataProcedure from './components/ModalDataProcedure.vue'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
@@ -27,7 +27,7 @@ const { formatMoney, isMobile } = organizationStore
 
 const procedureList = ref<Procedure[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PROCEDURE_PAGINATION_LIMIT')) || 10)
@@ -42,13 +42,11 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
-
-    const response = procedureStore.pagination({
+    const response = await procedureStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
-        isActive: isActive.value ? isActive.value : undefined,
+        isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value ? searchText.value : undefined,
         group: group.value ? group.value : undefined,
       },
@@ -63,15 +61,32 @@ const startFetchData = async () => {
     procedureList.value = response.data
     total.value = response.total
 
-    loadingComponent.value = false
+    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  await procedureStore.fetchAll()
-  await startFetchData()
+  try {
+    dataLoading.value = true
+    await startFetchData()
+  } catch (error) {
+    console.log('🚀 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
+})
+
+onMounted(async () => {
+  try {
+    const procedureList = await procedureStore.refreshDB() // reload nếu có dữ liệu mới nhất
+    if (procedureList?.length) {
+      await startFetchData()
+    }
+  } catch (error) {
+    console.log('🚀 ~ onMounted ~ error:', error)
+  }
 })
 
 const startSearch = async () => {
@@ -112,8 +127,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 const handleModalProcedureUpsertSuccess = async (
-  newProcedure: Procedure,
-  type: 'CREATE' | 'UPDATE'
+  data: Procedure,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
 ) => {
   await startFetchData()
 }

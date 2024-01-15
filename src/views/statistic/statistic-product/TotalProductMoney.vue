@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { StatisticService } from '@/modules/statistics'
-import { useOrganizationStore } from '@/store/organization.store'
 import type { ChartData } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
+import { StatisticService } from '../../../modules/statistics'
+import { useOrganizationStore } from '../../../store/organization.store'
 
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore

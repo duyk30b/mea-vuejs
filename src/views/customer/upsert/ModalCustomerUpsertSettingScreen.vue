@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { OrganizationService } from '../../../modules/organization'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { OrganizationSettingsType } from '../../../store/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 

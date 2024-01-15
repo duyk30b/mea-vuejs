@@ -8,7 +8,7 @@ import {
   Type,
 } from 'class-transformer'
 import type { UnitType } from '../enum'
-import { ProductBatch } from './product-batch.model'
+import { ProductBatch } from '../product-batch/product-batch.model'
 import { ProductMovement } from './product-movement.model'
 
 export class Product {
@@ -53,8 +53,16 @@ export class Product {
   hintUsage: string // Gợi ý cách sử dụng
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
 
   @Expose({ groups: ['ALL'] })
   @Type(() => ProductBatch)
@@ -101,6 +109,16 @@ export class Product {
     return ins
   }
 
+  static fromObject(object: Partial<Product>) {
+    const ins = new Product()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Product>[]): Product[] {
+    return objects.map((i) => Product.fromObject(i))
+  }
+
   static fromPlain(plain: Record<string, any>): Product {
     return plainToInstance(Product, plain, {
       exposeUnsetFields: false,
@@ -118,6 +136,9 @@ export class Product {
   }
 
   static fromInstance(instance: Product): Product {
+    if (instance?.constructor.name !== '_Product') {
+      throw new Error('Product.fromInstance error: Instance must be from class Product')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -126,6 +147,9 @@ export class Product {
   }
 
   static toPlain(instance: Product, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    if (instance?.constructor.name !== '_Product') {
+      throw new Error('Product.fromInstance error: Instance must be from class Product')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

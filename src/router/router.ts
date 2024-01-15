@@ -1,5 +1,5 @@
-import { useUserStore } from '@/store/user.store'
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
+import { useUserStore } from '../store/user.store'
 
 enum AuthLevel {
   GUEST = 'guest',

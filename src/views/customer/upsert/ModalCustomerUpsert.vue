@@ -1,42 +1,49 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputDate, InputText } from '@/common/vue-form'
-import { AddressInstance } from '@/core/address.instance'
-import { useCustomerStore } from '@/modules/customer'
-import { Customer } from '@/modules/customer/customer.model'
-import { CustomerService } from '@/modules/customer/customer.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { message, type SelectProps } from 'ant-design-vue'
-import { ref } from 'vue'
+import {
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  SaveOutlined,
+  SettingOutlined,
+} from '@ant-design/icons-vue'
+import { Modal, message, type SelectProps } from 'ant-design-vue'
+import { createVNode, ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputDate, InputText } from '../../../common/vue-form'
+import { AddressInstance } from '../../../core/address.instance'
+import { useCustomerStore } from '../../../modules/customer'
+import { Customer } from '../../../modules/customer/customer.model'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { convertViToEn } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
 
-const emit = defineEmits<{ (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE'): void }>()
+const emit = defineEmits<{
+  (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+}>()
 
 const customerStore = useCustomerStore()
 const organizationStore = useOrganizationStore()
 const { isMobile } = organizationStore
 
 const showModal = ref(false)
-const customer = ref(Customer.blank())
+const customer = ref<Customer>(Customer.blank())
 const saveLoading = ref(false)
 
 const provinceOptions = ref<SelectProps['options']>([])
 const districtOptions = ref<SelectProps['options']>([])
 const wardOptions = ref<SelectProps['options']>([])
 
-const openModal = async (c?: Customer) => {
+const openModal = async (instance?: Customer) => {
   showModal.value = true
-  customer.value = c ? Customer.fromInstance(c) : Customer.blank()
+  customer.value = instance ? Customer.fromInstance(instance) : Customer.blank()
   const provinceList = await AddressInstance.getAllProvinces()
   provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
 }
 
-const handleClose = () => {
+const closeModal = () => {
   customer.value = Customer.blank()
   showModal.value = false
 }
@@ -48,12 +55,10 @@ const handleSave = async () => {
   }
   try {
     if (!customer.value.id) {
-      const response = await CustomerService.createOne(customer.value)
-      customerStore.createOne(response)
+      const response = await customerStore.createOne(customer.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await CustomerService.updateOne(customer.value.id, customer.value)
-      customerStore.updateOne(response.id, response)
+      const response = await customerStore.updateOne(customer.value.id, customer.value)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -62,6 +67,35 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  try {
+    await customerStore.deleteOne(customer.value.id)
+    emit('success', customer.value, 'DELETE')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+  }
+}
+
+const clickDelete = () => {
+  if (customer.value.debt != 0) {
+    return AlertStore.add({
+      type: 'error',
+      message: 'Không thể xóa khách hàng đang có nợ',
+      time: 2000,
+    })
+  }
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa khách hàng này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Khách hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const handleChangeProvince = async (e: string) => {
@@ -108,12 +142,12 @@ defineExpose({ openModal })
         >
           <SettingOutlined />
         </div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>
       </div>
 
-      <div class="px-6 mt-4">
+      <div class="px-4 mt-4">
         <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Họ Tên</div>
           <div class="flex-auto">
@@ -132,6 +166,7 @@ defineExpose({ openModal })
               v-model:value="customer.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
+              @update:value="(e) => (customer.phone = e.replace(/ /g, ''))"
             />
           </div>
         </div>
@@ -246,12 +281,16 @@ defineExpose({ openModal })
             :checked="Boolean(customer.isActive)"
             @change="(checked: Boolean) => (customer.isActive = checked ? 1 : 0)"
           />
+          <div v-if="!customer.isActive" class="ml-4">
+            Khách hàng này tạm thời không thể mua hàng
+          </div>
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Customer, CustomerPayment, CustomerPaymentService } from '@/modules/customer'
-import { PaymentType } from '@/modules/enum'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Customer, CustomerPayment, CustomerPaymentService } from '../../../modules/customer'
+import { PaymentType } from '../../../modules/enum'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {

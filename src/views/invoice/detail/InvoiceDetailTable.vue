@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Invoice, InvoiceItemType } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import ModalProcedureDetail from '@/views/procedure/detail/ModalProcedureDetail.vue'
-import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { Invoice, InvoiceItemType } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import ModalProcedureDetail from '../../../views/procedure/detail/ModalProcedureDetail.vue'
+import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()

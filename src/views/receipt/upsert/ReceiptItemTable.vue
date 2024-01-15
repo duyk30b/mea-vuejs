@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Product } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { InputNumber } from '../../../common/vue-form'
+import type { Product } from '../../../modules/product'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
-import { InputNumber } from '@/common/vue-form'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const organizationStore = useOrganizationStore()

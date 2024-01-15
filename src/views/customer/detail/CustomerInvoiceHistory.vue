@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Customer } from '@/modules/customer'
-import { InvoiceService, InvoiceStatus, type Invoice } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone, timeToText } from '@/utils'
-import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Customer } from '../../../modules/customer'
+import { InvoiceService, InvoiceStatus, type Invoice } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { formatPhone, timeToText } from '../../../utils'
+import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),

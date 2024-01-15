@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney } from '@/common/vue-form'
-import { PaymentType } from '@/modules/enum'
-import { Invoice, InvoiceService, InvoiceStatus } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import CustomerPaymentTypeTag from '@/views/customer/CustomerPaymentTypeTag.vue'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney } from '../../../common/vue-form'
+import { PaymentType } from '../../../modules/enum'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import CustomerPaymentTypeTag from '../../../views/customer/CustomerPaymentTypeTag.vue'
 
 const props = withDefaults(defineProps<{ invoice: Invoice }>(), { invoice: () => Invoice.blank() })
 const emit = defineEmits<{ (e: 'success'): void }>()

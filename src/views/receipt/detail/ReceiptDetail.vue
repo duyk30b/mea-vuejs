@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import type { Distributor } from '@/modules/distributor'
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   AuditOutlined,
+  CopyOutlined,
   ExceptionOutlined,
   ExclamationCircleOutlined,
   FileDoneOutlined,
@@ -14,17 +10,21 @@ import {
   MoreOutlined,
   PlusOutlined,
   SettingOutlined,
-  CopyOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import type { Distributor } from '../../../modules/distributor'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
+import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.vue'
 import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
-import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -41,7 +41,7 @@ const receipt = ref<Receipt>(Receipt.blank())
 const loadingProcess = ref(false)
 
 const startFetchData = async (receiptId: number) => {
-  receipt.value = await ReceiptService.detail(receiptId, {
+  receipt.value = await ReceiptApi.detail(receiptId, {
     relation: {
       distributor: true,
       receiptItems: true,
@@ -76,7 +76,7 @@ const startCopy = () => {
 const destroyDraft = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptService.destroyDraft(receipt.value.id!)
+    await ReceiptApi.destroyDraft(receipt.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'ReceiptList' })
   } catch (error) {
@@ -89,7 +89,7 @@ const destroyDraft = async () => {
 const startRefund = async () => {
   try {
     loadingProcess.value = true
-    const { receiptId } = await ReceiptService.startRefund(receipt.value.id!)
+    const { receiptId } = await ReceiptApi.startRefund(receipt.value.id!)
     await startFetchData(receiptId)
     AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {
@@ -102,7 +102,7 @@ const startRefund = async () => {
 const softDeleteRefund = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptService.softDeleteRefund(receipt.value.id!)
+    await ReceiptApi.softDeleteRefund(receipt.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'ReceiptList' })
   } catch (error) {
@@ -115,7 +115,7 @@ const softDeleteRefund = async () => {
 const startShipAndPayment = async (money: number) => {
   try {
     loadingProcess.value = true
-    await ReceiptService.startShipAndPayment(receipt.value.id!, money)
+    await ReceiptApi.startShipAndPayment(receipt.value.id!, money)
     await startFetchData(receipt.value.id)
     AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {

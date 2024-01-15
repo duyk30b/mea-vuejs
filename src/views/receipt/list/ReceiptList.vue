@@ -1,23 +1,17 @@
 <script setup lang="ts">
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import {
-  AuditOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  FileSearchOutlined,
-  PlusOutlined,
-  StopOutlined,
-} from '@ant-design/icons-vue'
+import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
+import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
+const receiptStore = useReceiptStore()
 const organizationStore = useOrganizationStore()
 const { formatMoney, isMobile } = organizationStore
 
@@ -41,19 +35,17 @@ const startFetchData = async () => {
     const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
     const toTime = timeRanger.value?.[1].startOf('day').toISOString()
 
-    const response = await ReceiptService.pagination({
+    const response = await receiptStore.pagination({
       relation: { distributor: true },
       filter: {
-        time: fromTime && toTime ? ['BETWEEN', fromTime, toTime] : undefined,
-        deleteTime: ['IS_NULL'],
+        time: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
+        deleteTime: { IS_NULL: true },
         status: receiptStatus.value ?? undefined,
       },
       page: page.value,
       limit: limit.value,
       sort: sortValue.value
-        ? {
-            id: sortColumn.value === 'id' ? sortValue.value : undefined,
-          }
+        ? { id: sortColumn.value === 'id' ? sortValue.value : undefined }
         : { id: 'DESC' },
     })
 

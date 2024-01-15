@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { Product } from '@/modules/product'
-import { Receipt } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import ModalProductDetail from '@/views/product/detail/ModalProductDetail.vue'
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import type { Product } from '../../../modules/product'
+import { Receipt } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 

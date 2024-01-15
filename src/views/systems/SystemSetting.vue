@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
+import { OrganizationService } from '../../modules/organization'
+import { useOrganizationStore } from '../../store/organization.store'
+import { OrganizationSettingsType } from '../../store/store.variable'
 
 const organizationStore = useOrganizationStore()
 

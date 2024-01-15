@@ -1,8 +1,8 @@
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { CONFIG } from '@/config'
-import { useUserStore } from '@/store/user.store'
 import axios from 'axios'
 import { reactive } from 'vue'
+import { AlertStore } from '../common/vue-alert/vue-alert.store'
+import { CONFIG } from '../config'
+import { useUserStore } from '../store/user.store'
 import {
   ACCESS_EXP,
   ACCESS_TOKEN,

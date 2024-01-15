@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney } from '@/common/vue-form'
-import { Distributor, DistributorPaymentService, useDistributorStore } from '@/modules/distributor'
-import { ReceiptService, ReceiptStatus, type Receipt } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import VueModal from '../../common/VueModal.vue'
+import { InputMoney } from '../../common/vue-form'
+import { Distributor, useDistributorStore } from '../../modules/distributor'
+import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
+import { useOrganizationStore } from '../../store/organization.store'
+import { timeToText } from '../../utils'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -37,7 +37,7 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
   distributorId.value = distributorIdProp
   showModal.value = true
 
-  const receiptDebtList = await ReceiptService.list({
+  const receiptDebtList = await ReceiptApi.list({
     filter: {
       distributorId: distributorIdProp,
       status: ReceiptStatus.Debt,
@@ -56,7 +56,7 @@ const handleSave = async () => {
     if (money.value === 0) {
       return message.error('Số tiền trả nợ phải khác 0')
     }
-    const data = await DistributorPaymentService.payDebt({
+    const data = await distributorStore.payDebt({
       distributorId: distributorId.value,
       note: note.value,
       receiptPayments: receiptPayments.value
@@ -66,7 +66,6 @@ const handleSave = async () => {
         }))
         .filter((i) => i.money > 0),
     })
-    distributorStore.updateOne(data.distributor.id, data.distributor)
     emit('success', data)
     showModal.value = false
   } catch (error) {

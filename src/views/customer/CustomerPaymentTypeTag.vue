@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { PaymentType } from '@/modules/enum'
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
+import { PaymentType } from '../../modules/enum'
 
 defineProps<{ type: PaymentType }>()
 </script>

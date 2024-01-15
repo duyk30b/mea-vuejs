@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputOptions } from '@/common/vue-form'
-import { Distributor, useDistributorStore } from '@/modules/distributor'
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
-import { DTimer } from '@/utils'
-import { FileSearchOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputOptions } from '../../../common/vue-form'
+import { Distributor, useDistributorStore } from '../../../modules/distributor'
+import { OrganizationService } from '../../../modules/organization'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { OrganizationSettingsType } from '../../../store/store.variable'
+import { DTimer } from '../../../utils'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -36,7 +35,7 @@ const selectDistributor = async (data?: Distributor) => {
 
 const searchingDistributor = async (text: string) => {
   if (text) {
-    distributorList.value = distributorStore.search(text)
+    distributorList.value = await distributorStore.search(text)
   } else {
     distributorList.value = []
     settingDisplay.value.distributor.idDefault = 0

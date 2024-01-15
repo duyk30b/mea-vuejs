@@ -5,7 +5,7 @@ import {
   plainToInstance,
   Type,
 } from 'class-transformer'
-import { Product } from './product.model'
+import { Product } from '../product/product.model'
 
 export class ProductBatch {
   @Expose({ groups: ['ALL', 'COPY'] })
@@ -34,6 +34,15 @@ export class ProductBatch {
 
   @Expose()
   isActive: 1 | 0 // Trạng thái
+
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
 
   @Expose({ groups: ['ALL'] })
   @Type(() => Product)
@@ -88,6 +97,18 @@ export class ProductBatch {
     return ins
   }
 
+  // lấy từ 1 object có cấu trúc giống 100%, nhưng nó chỉ là object, ko phải class như object lấy từ indexedDB
+  static fromObject(object: Partial<ProductBatch>) {
+    const ins = new ProductBatch()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<ProductBatch>[]) {
+    return objects.map((i) => ProductBatch.fromObject(i))
+  }
+
+  // lấy từ giá trị cơ bản từ API
   static fromPlain(plain: Record<string, any> = {}): ProductBatch {
     return plainToInstance(ProductBatch, plain, {
       exposeUnsetFields: false,
@@ -104,7 +125,11 @@ export class ProductBatch {
     })
   }
 
+  // lấy từ 1 instance khác
   static fromInstance(instance: ProductBatch): ProductBatch {
+    if (instance?.constructor.name !== '_ProductBatch') {
+      throw new Error('ProductBatch.fromInstance error: Instance must be from class ProductBatch')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -112,15 +137,14 @@ export class ProductBatch {
     })
   }
 
-  static fromInstances(instance: ProductBatch[]): ProductBatch[] {
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: ['COPY'],
-    })
+  static fromInstances(instances: ProductBatch[]): ProductBatch[] {
+    return instances.map((i) => ProductBatch.fromInstance(i))
   }
 
   static toPlain(instance: ProductBatch, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    if (instance?.constructor.name !== '_ProductBatch') {
+      throw new Error('ProductBatch.fromInstance error: Instance must be from class ProductBatch')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

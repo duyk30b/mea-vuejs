@@ -1,5 +1,5 @@
-import { CONFIG } from '@/config'
 import io, { Socket } from 'socket.io-client'
+import { CONFIG } from '../../config'
 import { REFRESH_TOKEN } from '../local-storage.service'
 import { SOCKET_EVENT } from './socket.variable'
 

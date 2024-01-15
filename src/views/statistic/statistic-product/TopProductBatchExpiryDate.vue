@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ProductBatchService, type ProductBatch } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
+import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 
 const organizationStore = useOrganizationStore()
 const { formatMoney, isMobile } = organizationStore
@@ -19,13 +19,13 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const timeIsExpire = Date.now() + numberOfDaysToExpire.value * 24 * 60 * 60 * 1000
-    const productBatchPagination = await ProductBatchService.pagination({
+    const productBatchPagination = await ProductBatchApi.pagination({
       page: page.value,
       limit: limit.value,
       sort: { expiryDate: 'ASC' },
       filter: {
-        expiryDate: ['<', new Date(timeIsExpire).toISOString()],
-        quantity: ['!=', 0],
+        expiryDate: { LT: new Date(timeIsExpire).getTime() },
+        quantity: { NOT: 0 },
       },
       relation: { product: true },
     })

@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Distributor, DistributorService, useDistributorStore } from '@/modules/distributor'
-import { DiscountType } from '@/modules/enum'
-import { useProductStore } from '@/modules/product'
-import { Receipt, ReceiptItem, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
 import { SaveOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { Distributor, DistributorApi, useDistributorStore } from '../../../modules/distributor'
+import { DiscountType } from '../../../modules/enum'
+import { useProductStore } from '../../../modules/product'
+import {
+  Receipt,
+  ReceiptApi,
+  ReceiptItem,
+  ReceiptStatus,
+  useReceiptStore,
+} from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
 import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
@@ -40,6 +46,7 @@ const router = useRouter()
 const route = useRoute()
 
 const productStore = useProductStore()
+const receiptStore = useReceiptStore()
 const distributorStore = useDistributorStore()
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
@@ -60,7 +67,7 @@ onBeforeMount(async () => {
     mode.value = route.query.mode as any
   }
   if (receiptId) {
-    const receiptResponse = await ReceiptService.detail(receiptId, {
+    const receiptResponse = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
         receiptItems: true,
@@ -75,7 +82,7 @@ onBeforeMount(async () => {
       time.value = dayjs(new Date(receipt.value.time))
     }
   } else if (distributorId) {
-    const distributorRes = await DistributorService.getOne(distributorId)
+    const distributorRes = await DistributorApi.detail(distributorId)
     distributor.value = distributorRes
     receipt.value.distributor = distributorRes
     receipt.value.distributorId = distributorRes.id
@@ -91,7 +98,7 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleDocumentKeyup)
-  await distributorStore.fetchAll()
+  await distributorStore.refreshDB()
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -101,7 +108,7 @@ onUnmounted(() => {
 const searchingDistributor = async (text: string) => {
   distributor.value.id = 0
   if (text) {
-    distributorList.value = distributorStore.search(text)
+    distributorList.value = await distributorStore.search(text)
   } else {
     distributorList.value = []
   }
@@ -144,34 +151,35 @@ const saveReceipt = async (type: EReceiptSave) => {
 
     switch (type) {
       case EReceiptSave.CREATE_DRAFT: {
-        const response = await ReceiptService.createDraft(receipt.value)
+        const response = await ReceiptApi.createDraft(receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.CREATE_BASIC_AND_DETAIL: {
-        const response = await ReceiptService.createBasic(receipt.value)
+        const response = await ReceiptApi.createBasic(receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.CREATE_BASIC_AND_NEW: {
-        const response = await ReceiptService.createBasic(receipt.value)
+        const response = await ReceiptApi.createBasic(receipt.value)
+
         receipt.value = Receipt.blank()
         const distributorRes = Distributor.fromPlain(organizationStore.distributorDefault)
         distributor.value = distributorRes
         receipt.value.distributor = distributorRes
         receipt.value.distributorId = distributorRes.id
 
-        productStore.replaceProductList(response.products || [])
         AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
+        productStore.refreshDB() //update product mới nhất luôn
         break
       }
       case EReceiptSave.UPDATE_DRAFT: {
-        const response = await ReceiptService.updateDraft(receipt.value.id, receipt.value)
+        const response = await ReceiptApi.updateDraft(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.UPDATE_BASIC: {
-        const response = await ReceiptService.updateBasic(receipt.value.id, receipt.value)
+        const response = await ReceiptApi.updateBasic(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -295,7 +303,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </tr>
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="width: 120px">Tiền hàng</td>
-                  <td class="text-right" style="padding-right: 11px">
+                  <td class="text-right" style="padding-right: 11px; font-size: 16px;">
                     {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>

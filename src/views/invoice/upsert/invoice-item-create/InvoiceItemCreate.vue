@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { DiscountType } from '@/modules/enum'
-import { Invoice, InvoiceItem, InvoiceItemType } from '@/modules/invoice'
-import type { Procedure } from '@/modules/procedure'
-import type { ProductBatch } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
 import { message } from 'ant-design-vue'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { DiscountType } from '../../../../modules/enum'
+import { Invoice, InvoiceItem, InvoiceItemType } from '../../../../modules/invoice'
+import type { Procedure } from '../../../../modules/procedure'
+import type { ProductBatch } from '../../../../modules/product-batch'
+import { useOrganizationStore } from '../../../../store/organization.store'
 import InvoiceItemCustom from './InvoiceItemCustom.vue'
 import InvoiceSearchProcedure from './InvoiceSearchProcedure.vue'
 import InvoiceSearchProduct from './InvoiceSearchProduct.vue'
@@ -129,7 +129,7 @@ const addInvoiceItem = (ii: InvoiceItem) => {
 // const autoAddConsumableByHint = async (hintText: string, quantity: number) => {
 //   const consumableHint = JSON.parse(hintText) as { productId: number, quantity: number }[]
 //   const productIds = consumableHint.map((i) => i.productId)
-//   const productList = await ProductService.getManyByIds(productIds, { productBatches: true })
+//   const productList = await ProductApi.getManyByIds(productIds, { productBatches: true })
 //   consumableHint.forEach((i) => {
 //     const pr = productList.find((j) => j.id === i.productId)
 //     if (!pr) {

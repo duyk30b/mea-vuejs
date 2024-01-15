@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Distributor } from '@/modules/distributor'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone } from '@/utils'
+import { Distributor } from '../../../modules/distributor'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { formatPhone } from '../../../utils'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { InvoiceStatus } from '@/modules/invoice'
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
+import { InvoiceStatus } from '../../modules/invoice'
 
 defineProps<{ status: InvoiceStatus }>()
 </script>

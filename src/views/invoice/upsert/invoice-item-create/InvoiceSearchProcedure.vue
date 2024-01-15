@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { InputOptions } from '@/common/vue-form'
-import { Procedure, useProcedureStore } from '@/modules/procedure'
-import { useOrganizationStore } from '@/store/organization.store'
 import { onMounted, ref } from 'vue'
+import { InputOptions } from '../../../../common/vue-form'
+import { Procedure, useProcedureStore } from '../../../../modules/procedure'
+import { useOrganizationStore } from '../../../../store/organization.store'
 import ModalProcedureUpsert from '../../../procedure/components/ModalProcedureUpsert.vue'
 
 const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure): void }>()
@@ -19,26 +19,23 @@ const procedure = ref(Procedure.blank())
 const procedureList = ref<Procedure[]>([])
 
 onMounted(async () => {
-  await procedureStore.fetchAll()
+  await procedureStore.refreshDB()
 })
 
 const searchingProcedure = async (text: string) => {
-  if (text) {
-    procedureList.value = procedureStore.search(text)
-  } else {
-    procedureList.value = []
-  }
+  procedureList.value = await procedureStore.search(text)
 }
 
-const selectProcedure = (data?: Procedure) => {
-  if (data) {
-    searchText.value = data.name
-    procedure.value = data
+const selectProcedure = (instance?: Procedure) => {
+  if (instance) {
+    searchText.value = instance.name
+    procedure.value = instance
 
-    const dataEmit = Procedure.fromInstance(data)
+    const dataEmit = Procedure.fromInstance(instance)
     emit('selectProcedure', dataEmit)
   } else {
     procedure.value = Procedure.blank()
+    searchText.value = ''
     // emit('selectProcedure', Procedure.blank())
   }
 }

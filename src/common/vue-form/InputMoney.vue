@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useOrganizationStore } from '@/store/organization.store'
+import { useOrganizationStore } from '../../store/organization.store'
 
 const props = withDefaults(
   defineProps<{

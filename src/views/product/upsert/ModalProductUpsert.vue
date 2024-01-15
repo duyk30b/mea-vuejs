@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputNumber, InputText } from '@/common/vue-form'
-import { useProductStore } from '@/modules/product'
-import { Product } from '@/modules/product/product.model'
-import { ProductService } from '@/modules/product/product.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import {
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  SaveOutlined,
+  SettingOutlined,
+} from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
+import { createVNode, ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputNumber, InputText } from '../../../common/vue-form'
+import { useProductStore } from '../../../modules/product'
+import { Product } from '../../../modules/product/product.model'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { convertViToEn } from '../../../utils'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
@@ -22,10 +28,10 @@ const showModal = ref(false)
 const product = ref(Product.blank())
 const saveLoading = ref(false)
 
-const openModal = async (data?: Product) => {
+const openModal = async (instance?: Product) => {
   showModal.value = true
-  if (data) {
-    product.value = Product.fromInstance(data)
+  if (instance) {
+    product.value = Product.fromInstance(instance)
   }
 }
 
@@ -50,16 +56,12 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (!product.value.id) {
-      const data = await ProductService.createOne(product.value)
-      data.productBatches = []
-      productStore.createOne(data)
+      const data = await productStore.createOne(product.value)
       emit('success', data, 'CREATE')
     } else {
-      const data = await ProductService.updateOne(product.value.id, product.value)
-      productStore.updateProduct(Product.fromInstance(data)) // response trả về không có productBatches vì vậy không update productBatches
+      const data = await productStore.updateOne(product.value.id, product.value)
       emit('success', data, 'UPDATE')
     }
-    productStore.timeSync = Date.now() // tạo trigger để màn list reload lại
     product.value = Product.blank()
     showModal.value = false
   } catch (error) {
@@ -67,6 +69,34 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  try {
+    await productStore.deleteOne(product.value.id)
+    showModal.value = false
+  } catch (error) {
+    console.log('🚀 ~ handleDelete ~ error:', error)
+  }
+}
+
+const clickDelete = () => {
+  if (product.value.quantity != 0) {
+    return AlertStore.add({
+      type: 'error',
+      message: 'Không thể xóa sản phẩm có số lượng > 0',
+      time: 2000,
+    })
+  }
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa sản phẩm này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Sản phẩm đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const filterOption = (input: string, option: any) => {
@@ -264,12 +294,16 @@ defineExpose({ openModal })
             :checked="Boolean(product.isActive)"
             @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
           />
+          <div v-if="!product.isActive" class="ml-4">
+            Sản phẩm này tạm thời không thể nhập hàng và xuất hàng
+          </div>
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
+      <div class="p-6">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="handleClose">
             <template #icon>
               <CloseOutlined />
             </template>

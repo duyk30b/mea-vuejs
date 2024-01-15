@@ -1,4 +1,4 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import { Employee } from './employee.model'
 
 export class UserService {

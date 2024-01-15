@@ -1,12 +1,17 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import type { ApiPaginationResponse } from '../pagination'
-import { ReceiptDetailQuery, ReceiptListQuery, ReceiptPaginationQuery } from './receipt.dto'
-import { Receipt } from './receipt.model'
 import { Product } from '../product'
+import {
+  ReceiptDetailQuery,
+  ReceiptGetQuery,
+  ReceiptListQuery,
+  ReceiptPaginationQuery,
+} from './receipt.dto'
+import { Receipt } from './receipt.model'
 
-export class ReceiptService {
+export class ReceiptApi {
   static async pagination(options: ReceiptPaginationQuery) {
-    const params = ReceiptPaginationQuery.plainFromPlain(options)
+    const params = ReceiptGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/receipt/pagination', { params })
     const data = response.data as ApiPaginationResponse
@@ -19,14 +24,14 @@ export class ReceiptService {
   }
 
   static async list(options: ReceiptListQuery) {
-    const params = ReceiptListQuery.plainFromPlain(options)
+    const params = ReceiptGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/receipt/list', { params })
     return Receipt.fromPlains(data)
   }
 
   static async detail(id: number, options: ReceiptDetailQuery): Promise<Receipt> {
-    const params = ReceiptDetailQuery.plainFromPlain(options)
+    const params = ReceiptGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get(`/receipt/detail/${id}`, { params })
     return Receipt.fromPlain(data)
@@ -35,10 +40,7 @@ export class ReceiptService {
   static async createBasic(receipt: Receipt) {
     const receiptDto = Receipt.toPlain(receipt, 'CREATE')
     const { data } = await AxiosInstance.post('/receipt/create-basic', receiptDto)
-    return {
-      receiptId: data.receiptId,
-      products: Product.fromPlains(data.products),
-    }
+    return data as { receiptId: number }
   }
 
   static async updateBasic(oldReceiptId: number, receipt: Receipt) {

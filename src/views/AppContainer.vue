@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { LocalStorageService, REFRESH_EXP, REFRESH_TOKEN } from '@/core/local-storage.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { useUserStore } from '@/store/user.store'
 import { onBeforeMount, ref } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
+import { MeaDatabase } from '../core/indexed-db/database'
+import { LocalStorageService, REFRESH_EXP, REFRESH_TOKEN } from '../core/local-storage.service'
+import { useOrganizationStore } from '../store/organization.store'
+import { useUserStore } from '../store/user.store'
 import VueLayout from './layout/VueLayout.vue'
 
 const organizationStore = useOrganizationStore()
@@ -19,6 +20,7 @@ onBeforeMount(async () => {
     useRouter().push({ name: 'Login' })
   } else {
     await organizationStore.initData()
+    await MeaDatabase.openConnection()
     loaded.value = true
   }
 })

@@ -3,21 +3,29 @@ import { BaseModel } from '../base.model'
 import { UNKNOWN_KEY } from '../enum'
 
 export class InvoiceExpense extends BaseModel {
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: ['ALL'] })
   invoiceId: number
 
   @Expose()
-  key: string = UNKNOWN_KEY
+  key: string
 
   @Expose()
-  name: string = ''
+  name: string
 
   @Expose()
-  money: number = 0
+  money: number
+
+  static init() {
+    const ins = new InvoiceExpense()
+    ins.id = 0
+    ins.name = ''
+    ins.key = UNKNOWN_KEY
+    ins.money = 0
+    return ins
+  }
 
   static blank(): InvoiceExpense {
-    const instance = new InvoiceExpense()
-    instance.id = 0
-    return instance
+    const ins = InvoiceExpense.init()
+    return ins
   }
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { AxiosLoading } from '@/core/axios.instance'
-import { AuthService } from '@/modules/auth'
-import { useUserStore } from '@/store/user.store'
 import { LogoutOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
+import { AxiosLoading } from '../../core/axios.instance'
+import { AuthService } from '../../modules/auth'
+import { useUserStore } from '../../store/user.store'
 
 const emit = defineEmits(['handleShowDrawer'])
 const emitShowDrawer = () => emit('handleShowDrawer', true)

@@ -1,93 +1,36 @@
-import { Expose, Transform, Type, instanceToPlain, plainToInstance } from 'class-transformer'
-import type { ComparisonType } from '../enum'
+import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate } from '../_base/base-condition'
 import type { ReceiptStatus } from './receipt.model'
-import { PaginationQuery } from '../pagination'
 
-export class ReceiptFilterQuery {
-  @Expose()
-  distributorId?: number
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  time?: [ComparisonType, (string | number)?, (string | number)?]
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  deleteTime?: [ComparisonType, (string | number)?, (string | number)?]
-
-  @Expose()
-  status?: ReceiptStatus
-}
-
-export class ReceiptRelationQuery {
-  @Expose()
-  distributor?: boolean
-
-  @Expose()
-  distributorPayments?: boolean
-
-  @Expose()
-  receiptItems?: boolean
-}
-
-export class ReceiptSortQuery {
-  @Expose()
-  id?: 'ASC' | 'DESC'
-}
-
-export class ReceiptPaginationQuery extends PaginationQuery {
-  @Expose()
-  @Type(() => ReceiptFilterQuery)
-  filter?: ReceiptFilterQuery
-
-  @Expose()
-  @Type(() => ReceiptRelationQuery)
-  relation?: ReceiptRelationQuery
-
-  @Expose()
-  @Type(() => ReceiptSortQuery)
-  sort?: ReceiptSortQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ReceiptPaginationQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
-
-export class ReceiptListQuery {
-  @Expose()
+export class ReceiptGetQuery {
+  page?: number
   limit?: number
+  relation?: {
+    distributor?: boolean
+    distributorPayments?: boolean
+    receiptItems?: boolean
+  }
+  filter?: {
+    distributorId?: number
+    time?: ConditionDate
+    deleteTime?: ConditionDate
+    status?: ReceiptStatus
+  }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+  }
 
-  @Expose()
-  @Type(() => ReceiptFilterQuery)
-  filter?: ReceiptFilterQuery
-
-  @Expose()
-  @Type(() => ReceiptRelationQuery)
-  relation?: ReceiptRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ReceiptListQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static toQuery(instance: Partial<ReceiptGetQuery>) {
+    return {
+      page: instance?.page,
+      limit: instance?.limit,
+      relation: instance.relation ? JSON.stringify(instance.relation) : undefined,
+      filter: instance.filter ? JSON.stringify(instance.filter) : undefined,
+      sort: instance.sort ? JSON.stringify(instance.sort) : undefined,
+    }
   }
 }
 
-export class ReceiptDetailQuery {
-  @Expose()
-  @Type(() => ReceiptRelationQuery)
-  relation?: ReceiptRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ReceiptDetailQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
+export class ReceiptPaginationQuery extends ReceiptGetQuery {}
+export class ReceiptListQuery extends OmitClass(ReceiptGetQuery, ['page']) {}
+export class ReceiptDetailQuery extends PickClass(ReceiptGetQuery, ['relation']) {}

@@ -1,113 +1,37 @@
-import { Expose, Transform, Type, instanceToPlain, plainToInstance } from 'class-transformer'
-import type { ComparisonType } from '../enum'
+import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate } from '../_base/base-condition'
 import type { InvoiceStatus } from './invoice.model'
-import { PaginationQuery } from '../pagination'
 
-export class InvoiceFilterQuery {
-  @Expose()
-  customerId?: number
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  time?: [ComparisonType, (string | number)?, (string | number)?]
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  deleteTime?: [ComparisonType, (string | number)?, (string | number)?]
-
-  @Expose()
-  status?: InvoiceStatus
-}
-
-export class InvoiceRelationQuery {
-  @Expose()
-  customer?: boolean
-
-  @Expose()
-  customerPayments?: boolean
-
-  @Expose()
-  invoiceItems?: boolean
-
-  @Expose()
-  invoiceSurcharges?: boolean
-
-  @Expose()
-  invoiceExpenses?: boolean
-}
-
-export class InvoiceSortQuery {
-  @Expose()
-  id?: 'ASC' | 'DESC'
-}
-
-export class InvoicePaginationQuery extends PaginationQuery {
-  @Expose()
-  @Type(() => InvoiceFilterQuery)
-  filter?: InvoiceFilterQuery
-
-  @Expose()
-  @Type(() => InvoiceRelationQuery)
-  relation?: InvoiceRelationQuery
-
-  @Expose()
-  @Type(() => InvoiceSortQuery)
-  sort?: InvoiceSortQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(InvoicePaginationQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
-
-export class InvoiceListQuery {
-  @Expose()
+export class InvoiceGetQuery {
+  page: number
   limit?: number
+  relation?: {
+    customer?: boolean
+    customerPayments?: boolean
+    invoiceItems?: boolean
+    invoiceSurcharges?: boolean
+    invoiceExpenses?: boolean
+  }
+  filter?: {
+    customerId?: number
+    time?: ConditionDate
+    deleteTime?: ConditionDate
+    status?: InvoiceStatus
+  }
+  sort?: { id?: 'ASC' | 'DESC' }
 
-  @Expose()
-  @Type(() => InvoiceFilterQuery)
-  filter?: InvoiceFilterQuery
-
-  @Expose()
-  @Type(() => InvoiceRelationQuery)
-  relation?: InvoiceRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(InvoiceListQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static toQuery(instance: Partial<InvoiceGetQuery>) {
+    return {
+      page: instance?.page,
+      limit: instance?.limit,
+      relation: instance.relation ? JSON.stringify(instance.relation) : undefined,
+      filter: instance.filter ? JSON.stringify(instance.filter) : undefined,
+      sort: instance.sort ? JSON.stringify(instance.sort) : undefined,
+    }
   }
 }
 
-export class InvoiceDetailQuery {
-  @Expose()
-  @Type(() => InvoiceRelationQuery)
-  relation?: InvoiceRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(InvoiceDetailQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
-
-export class InvoiceSumDebtQuery {
-  @Expose()
-  @Type(() => InvoiceFilterQuery)
-  filter?: InvoiceFilterQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(InvoiceListQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
+export class InvoicePaginationQuery extends InvoiceGetQuery {}
+export class InvoiceListQuery extends OmitClass(InvoiceGetQuery, ['page']) {}
+export class InvoiceDetailQuery extends PickClass(InvoiceGetQuery, ['relation']) {}
+export class InvoiceSumDebtQuery extends PickClass(InvoiceGetQuery, ['filter']) {}

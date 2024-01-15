@@ -1,87 +1,103 @@
-import { customFilter } from '@/utils'
 import { defineStore } from 'pinia'
-import type { Customer } from './customer.model'
-import { CustomerService } from './customer.service'
+import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
+import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { CustomerPaymentService, type CustomerPaymentPayDebtBody } from './customer-payment.service'
+import { CustomerApi } from './customer.api'
 import type { CustomerPaginationQuery } from './customer.dto'
+import { Customer } from './customer.model'
 
 export const useCustomerStore = defineStore('customer-store', {
   state: () => {
-    return { customerList: [] as Customer[] }
+    return {
+      timeSync: Date.now(),
+      customerList: [] as Customer[],
+    }
   },
 
   actions: {
-    async fetchAll() {
+    async refreshDB() {
       try {
-        this.customerList = await CustomerService.list({})
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:16 ~ fetchAll ~ error:', error)
-      }
-    },
-    updateOne(id: number, data: Customer) {
-      const index = this.customerList.findIndex((i) => i.id === id)
-      if (index !== -1) {
-        this.customerList[index] = data
-      }
-    },
-    createOne(customer: Customer) {
-      this.customerList.unshift(customer)
-    },
-  },
-
-  getters: {
-    pagination: (state) => {
-      return (params: CustomerPaginationQuery) => {
-        const { filter, sort, page, limit } = params
-        const response = state.customerList.filter((customer) => {
-          if (filter?.isActive != null && customer.isActive !== filter?.isActive) {
-            return false
-          }
-          if (filter?.searchText) {
-            if (
-              !customFilter(customer.fullName, filter?.searchText, 2) &&
-              !customFilter(customer.phone || '', filter?.searchText, 2)
-            ) {
-              return false
-            }
-          }
-          return true
-        })
-        response.sort((a, b) => {
-          if (sort?.id) {
-            if (sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-            if (sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          }
-          if (sort?.debt) {
-            if (sort?.debt === 'ASC') return a.debt < b.debt ? -1 : 1
-            if (sort?.debt === 'DESC') return a.debt > b.debt ? -1 : 1
-          }
-          if (sort?.fullName) {
-            if (sort?.fullName === 'ASC') return a.fullName < b.fullName ? -1 : 1
-            if (sort?.fullName === 'DESC') return a.fullName > b.fullName ? -1 : 1
-          }
-          return a.id > b.id ? -1 : 1
-        })
-
-        const start = (page - 1) * limit
-        const end = page * limit
-        return {
-          total: response.length,
-          page: params.page,
-          limit: params.limit,
-          data: response.slice(start, end),
+        let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER')
+        if (!refreshTime) {
+          refreshTime = { code: 'CUSTOMER', time: new Date(0).toISOString() }
         }
+        const lastTime = new Date(refreshTime.time)
+        const currentTime = new Date()
+        const customerList = await CustomerApi.list({
+          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+        })
+        if (customerList.length) {
+          await CustomerDB.upsertMany(customerList)
+        }
+
+        refreshTime.time = currentTime.toISOString()
+        await RefreshTimeDB.upsertOne(refreshTime)
+
+        return customerList
+      } catch (error) {
+        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
     },
-    search: (state) => {
-      return (text: string) => {
-        return state.customerList.filter((item) => {
-          if (!item.isActive) return false
-          if (!customFilter(item.fullName, text, 2) && !customFilter(item.phone || '', text, 2)) {
-            return false
-          }
-          return true
-        })
+
+    async pagination(params: CustomerPaginationQuery) {
+      const { page, limit, filter, sort } = params
+      const result = await CustomerDB.pagination({
+        page: page || 1,
+        limit: limit || 10,
+        condition: {
+          isActive: filter?.isActive,
+          debt: filter?.debt,
+          $OR: filter?.searchText
+            ? [{ phone: { LIKE: filter?.searchText } }, { fullName: { LIKE: filter?.searchText } }]
+            : undefined,
+          deletedAt: { IS_NULL: true },
+        },
+        sort: sort || { id: 'DESC' },
+      })
+      return {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        data: Customer.fromObjects(result.data),
       }
+    },
+
+    async createOne(instance: Customer) {
+      const response = await CustomerApi.createOne(instance)
+      await CustomerDB.insertOne(response)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async updateOne(id: number, instance: Customer) {
+      const response = await CustomerApi.updateOne(id, instance)
+      await CustomerDB.replaceOne(id, response)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async payDebt(body: CustomerPaymentPayDebtBody) {
+      const data = await CustomerPaymentService.payDebt(body)
+      await CustomerDB.replaceOne(data.customer.id, data.customer)
+      this.timeSync = Date.now()
+      return data
+    },
+
+    async deleteOne(id: number) {
+      const response = await CustomerApi.deleteOne(id)
+      this.timeSync = Date.now()
+      await CustomerDB.replaceOne(id, response)
+      return response
+    },
+
+    async search(text: string) {
+      if (!text) return []
+      const objects = await CustomerDB.findManyBy({
+        isActive: 1,
+        $OR: [{ phone: { LIKE: text } }, { fullName: { LIKE: text } }],
+        deletedAt: { IS_NULL: true },
+      })
+      return Customer.fromObjects(objects)
     },
   },
 })

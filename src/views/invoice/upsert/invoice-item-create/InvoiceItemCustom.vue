@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { InputMoney, InputNumber, VueSelect } from '@/common/vue-form'
-import { DiscountType } from '@/modules/enum'
-import { InvoiceItem } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
+import { DiscountType } from '../../../../modules/enum'
+import { InvoiceItem } from '../../../../modules/invoice'
+import { useOrganizationStore } from '../../../../store/organization.store'
+import { convertViToEn } from '../../../../utils'
 
 const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
 

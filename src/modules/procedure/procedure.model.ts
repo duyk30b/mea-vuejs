@@ -1,10 +1,4 @@
-import {
-  Expose,
-  Transform,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
 
 export class Procedure extends BaseModel {
@@ -21,12 +15,38 @@ export class Procedure extends BaseModel {
   consumableHint: string // Gợi ý vậy tư tiêu hao
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
 
-  static blank(): Procedure {
-    const instance = Procedure.fromInstance(new Procedure())
-    return instance
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
+
+  static init() {
+    const ins = new Procedure()
+    ins.id = 0
+    ins.price = 0
+    ins.isActive = 1
+    return ins
+  }
+
+  static blank() {
+    const ins = Procedure.init()
+    return ins
+  }
+
+  static fromObject(object: Partial<Procedure>) {
+    const ins = new Procedure()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Procedure>[]): Procedure[] {
+    return objects.map((i) => Procedure.fromObject(i))
   }
 
   static fromPlain(plain: Record<string, any>): Procedure {
@@ -46,6 +66,9 @@ export class Procedure extends BaseModel {
   }
 
   static fromInstance(instance: Procedure): Procedure {
+    if (instance?.constructor.name !== '_Procedure') {
+      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -54,6 +77,9 @@ export class Procedure extends BaseModel {
   }
 
   static toPlain(instance: Procedure, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    if (instance?.constructor.name !== '_Procedure') {
+      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

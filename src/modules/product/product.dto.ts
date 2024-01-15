@@ -1,108 +1,42 @@
-import { Expose, Transform, Type, instanceToPlain, plainToInstance } from 'class-transformer'
-import type { ComparisonType } from '../enum'
-import { PaginationQuery } from '../pagination'
+import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
-export class ProductFilterProductBatchQuery {
-  @Expose()
-  isActive?: 1 | 0
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  quantity?: [ComparisonType, number]
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  expiryDate?: [ComparisonType, string | number]
-}
-
-export class ProductFilterQuery {
-  @Expose()
-  @Type(() => ProductFilterProductBatchQuery)
-  productBatch?: ProductFilterProductBatchQuery
-
-  @Expose()
-  isActive?: 1 | 0
-
-  @Expose()
-  group?: string
-
-  @Expose()
-  searchText?: string
-
-  @Expose()
-  @Transform(({ value }) => JSON.stringify(value), { toPlainOnly: true })
-  quantity?: [ComparisonType, number]
-}
-
-export class ProductRelationQuery {
-  @Expose()
-  productBatches?: boolean
-}
-
-export class ProductSortQuery {
-  @Expose()
-  id?: 'ASC' | 'DESC'
-
-  @Expose()
-  quantity?: 'ASC' | 'DESC'
-
-  @Expose()
-  brandName?: 'ASC' | 'DESC'
-}
-
-export class ProductPaginationQuery extends PaginationQuery {
-  @Expose()
-  @Type(() => ProductFilterQuery)
-  filter?: ProductFilterQuery
-
-  @Expose()
-  @Type(() => ProductRelationQuery)
-  relation?: ProductRelationQuery
-
-  @Expose()
-  @Type(() => ProductSortQuery)
-  sort?: ProductSortQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ProductPaginationQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
-
-export class ProductListQuery {
-  @Expose({ name: 'limit' })
+export class ProductGetQuery {
+  page?: number
   limit?: number
+  relation?: {
+    productBatches?: boolean
+  }
+  filter?: {
+    isActive?: 1 | 0
+    group?: string
+    searchText?: string
+    quantity?: ConditionNumber
+    updatedAt?: ConditionDate
+    productBatch?: {
+      isActive?: 1 | 0
+      quantity?: ConditionNumber
+      expiryDate?: ConditionNumber
+      updatedAt?: ConditionDate
+    }
+  }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    quantity?: 'ASC' | 'DESC'
+    brandName?: 'ASC' | 'DESC'
+  }
 
-  @Expose({ name: 'filter' })
-  @Type(() => ProductFilterQuery)
-  filter?: ProductFilterQuery
-
-  @Expose({ name: 'relation' })
-  @Type(() => ProductRelationQuery)
-  relation?: ProductRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ProductListQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static toQuery(instance: Partial<ProductGetQuery>) {
+    return {
+      page: instance?.page,
+      limit: instance?.limit,
+      relation: instance.relation ? JSON.stringify(instance.relation) : undefined,
+      filter: instance.filter ? JSON.stringify(instance.filter) : undefined,
+      sort: instance.sort ? JSON.stringify(instance.sort) : undefined,
+    }
   }
 }
 
-export class ProductDetailQuery {
-  @Expose({ name: 'relation' })
-  @Type(() => ProductRelationQuery)
-  relation?: ProductRelationQuery
-
-  static plainFromPlain(plain: Record<string, any>): Record<string, any> {
-    const instance = plainToInstance(ProductDetailQuery, plain, { ignoreDecorators: true })
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
-  }
-}
+export class ProductPaginationQuery extends ProductGetQuery {}
+export class ProductListQuery extends OmitClass(ProductGetQuery, ['page']) {}
+export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation']) {}

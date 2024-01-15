@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Customer } from '@/modules/customer'
-import { useOrganizationStore } from '@/store/organization.store'
 import {
   CloseOutlined,
   ContainerOutlined,
@@ -12,6 +9,9 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { Customer } from '../../../modules/customer'
+import { useOrganizationStore } from '../../../store/organization.store'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerInvoiceHistory from './CustomerInvoiceHistory.vue'

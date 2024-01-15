@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import VueAlert from '@/common/vue-alert/VueAlert.vue'
 import { RouterView, useRouter } from 'vue-router'
+import VueAlert from './common/vue-alert/VueAlert.vue'
 import { useUserStore } from './store/user.store'
 
 const userStore = useUserStore()

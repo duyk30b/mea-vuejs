@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { Invoice, InvoiceService, InvoiceStatus } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   CopyOutlined,
   DeleteOutlined,
@@ -21,14 +17,18 @@ import {
 import { Modal } from 'ant-design-vue'
 import { createVNode, h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
+import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 import InvoiceDetailTable from './InvoiceDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
 import ModalInvoicePreview from './preview/ModalInvoicePreview.vue'
 import { invoiceHtmlContent } from './preview/invoice-html-content'
-import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -213,9 +213,8 @@ const startPrint = () => {
   pri.print()
 }
 
-const startOpenImageDemo = () => {
-  const data = Invoice.fromInstance(invoice.value)
-  modalInvoicePreview.value?.openModal(data)
+const openModalInvoicePreview = () => {
+  modalInvoicePreview.value?.openModal(invoice.value)
 }
 </script>
 
@@ -292,7 +291,7 @@ const startOpenImageDemo = () => {
             v-if="
               (invoice.invoiceExpenses || []).length > 1 ||
               ((invoice.invoiceExpenses || []).length == 1 &&
-                (invoice.invoiceExpenses!)[0].key !== '_unknown')
+                invoice.invoiceExpenses![0].key !== '_unknown')
             "
             class="ml-2"
           >
@@ -315,7 +314,7 @@ const startOpenImageDemo = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
-      <a-button type="default" @click="startOpenImageDemo">
+      <a-button type="default" @click="openModalInvoicePreview">
         <template #icon>
           <EyeOutlined />
         </template>

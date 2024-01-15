@@ -1,17 +1,18 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import type { ApiPaginationResponse } from '../pagination'
+import { Product } from '../product'
 import {
   InvoiceDetailQuery,
+  InvoiceGetQuery,
   InvoiceListQuery,
   InvoicePaginationQuery,
   InvoiceSumDebtQuery,
 } from './invoice.dto'
 import { Invoice } from './invoice.model'
-import { Product } from '../product'
 
 export class InvoiceService {
   static async pagination(options: InvoicePaginationQuery) {
-    const params = InvoicePaginationQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/invoice/pagination', { params })
     const data = response.data as ApiPaginationResponse
@@ -24,43 +25,40 @@ export class InvoiceService {
   }
 
   static async list(options: InvoiceListQuery) {
-    const params = InvoiceListQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/invoice/list', { params })
     return Invoice.fromPlains(data)
   }
 
   static async detail(id: number, options: InvoiceDetailQuery): Promise<Invoice> {
-    const params = InvoiceDetailQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get(`/invoice/detail/${id}`, { params })
     return Invoice.fromPlain(data)
   }
 
-  static async createBasic(invoice: Invoice) {
-    const invoiceDto = Invoice.toPlain(invoice, 'CREATE')
-    const { data } = await AxiosInstance.post('/invoice/create-basic', invoiceDto)
-    return {
-      invoiceId: data.invoiceId,
-      products: Product.fromPlains(data.products),
-    }
-  }
-
-  static async updateBasic(oldInvoiceId: number, invoice: Invoice) {
-    const invoiceDto = Invoice.toPlain(invoice, 'CREATE') // tạo đơn mới đè lên đơn cũ
-    const { data } = await AxiosInstance.patch(`/invoice/update-basic/${oldInvoiceId}`, invoiceDto)
+  static async createBasic(instance: Invoice) {
+    const plain = Invoice.toPlain(instance, 'CREATE')
+    const { data } = await AxiosInstance.post('/invoice/create-basic', plain)
     return data as { invoiceId: number }
   }
 
-  static async createDraft(invoice: Invoice) {
-    const invoiceDto = Invoice.toPlain(invoice, 'CREATE')
-    const { data } = await AxiosInstance.post('/invoice/create-draft', invoiceDto)
+  static async updateBasic(oldInvoiceId: number, instance: Invoice) {
+    const plain = Invoice.toPlain(instance, 'CREATE') // tạo đơn mới đè lên đơn cũ
+    const { data } = await AxiosInstance.patch(`/invoice/update-basic/${oldInvoiceId}`, plain)
     return data as { invoiceId: number }
   }
 
-  static async updateDraft(invoiceId: number, invoice: Invoice) {
-    const invoiceDto = Invoice.toPlain(invoice, 'UPDATE')
-    const { data } = await AxiosInstance.patch(`/invoice/update-draft/${invoiceId}`, invoiceDto)
+  static async createDraft(instance: Invoice) {
+    const plain = Invoice.toPlain(instance, 'CREATE')
+    const { data } = await AxiosInstance.post('/invoice/create-draft', plain)
+    return data as { invoiceId: number }
+  }
+
+  static async updateDraft(invoiceId: number, instance: Invoice) {
+    const plain = Invoice.toPlain(instance, 'UPDATE')
+    const { data } = await AxiosInstance.patch(`/invoice/update-draft/${invoiceId}`, plain)
     return data as { invoiceId: number }
   }
 
@@ -97,7 +95,7 @@ export class InvoiceService {
   }
 
   static async sumDebt(options: InvoiceSumDebtQuery) {
-    const params = InvoiceSumDebtQuery.plainFromPlain(options)
+    const params = InvoiceGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/invoice/sum-debt', { params })
     return data as { invoiceSumDebt: number }

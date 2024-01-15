@@ -1,6 +1,6 @@
-import { DiscountType } from '@/modules/enum'
-import { Receipt } from '@/modules/receipt'
 import { ref, watchEffect } from 'vue'
+import { DiscountType } from '../../../modules/enum'
+import { Receipt } from '../../../modules/receipt'
 
 const receipt = ref<Receipt>(Receipt.blank())
 

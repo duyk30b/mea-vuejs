@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '@/core/local-storage.service'
-import { AuthService } from '@/modules/auth'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { ORG_PHONE } from '../../core/local-storage.service'
+import { AuthService } from '../../modules/auth'
 
 const router = useRouter()
 

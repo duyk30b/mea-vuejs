@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Invoice, InvoiceItemType } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { CloseOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../../common/VueModal.vue'
+import { Invoice, InvoiceItemType } from '../../../../modules/invoice'
+import { useOrganizationStore } from '../../../../store/organization.store'
+import { timeToText } from '../../../../utils'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
 
 const modalInvoicePreviewSettingScreen =
@@ -120,7 +120,7 @@ defineExpose({ openModal })
                     </div>
                     <div
                       v-if="organizationStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
-                      style="font-size: 0.8rem; font-style: italic;"
+                      style="font-size: 0.8rem; font-style: italic"
                     >
                       {{ invoiceItem.hintUsage }}
                     </div>

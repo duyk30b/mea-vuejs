@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { AddressInstance } from '@/core/address.instance'
-import { Organization, OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message, type SelectProps } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
+import { AddressInstance } from '../../core/address.instance'
+import { Organization, OrganizationService } from '../../modules/organization'
+import { useOrganizationStore } from '../../store/organization.store'
+import { convertViToEn } from '../../utils'
 
 const orgStore = useOrganizationStore()
 const { isMobile } = orgStore

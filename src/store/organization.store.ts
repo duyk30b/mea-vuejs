@@ -1,9 +1,9 @@
-import { Customer } from '@/modules/customer'
-import { Distributor } from '@/modules/distributor'
-import { OrganizationService } from '@/modules/organization'
-import { formatMoney, objectUpdatePropertyByObject } from '@/utils'
 import { defineStore } from 'pinia'
+import { Customer } from '../modules/customer'
+import { Distributor } from '../modules/distributor'
+import { OrganizationService } from '../modules/organization'
 import { Organization } from '../modules/organization/organization.model'
+import { formatMoney, objectUpdatePropertyByObject } from '../utils'
 import { OrganizationSettingsType } from './store.variable'
 
 export const useOrganizationStore = defineStore('organization-store', {
@@ -237,6 +237,7 @@ export const useOrganizationStore = defineStore('organization-store', {
           actualPrice: true,
         },
         invoiceItemsTable: {
+          allowOverQuantity: false,
           allowDuplicateItem: true,
           detail: false,
           substance: false,

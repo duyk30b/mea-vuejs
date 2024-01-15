@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney, InputText } from '@/common/vue-form'
-import { useProcedureStore } from '@/modules/procedure'
-import { Procedure } from '@/modules/procedure/procedure.model'
-import { ProcedureService } from '@/modules/procedure/procedure.service'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { Modal } from 'ant-design-vue'
+import { createVNode, ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney, InputText } from '../../../common/vue-form'
+import { useProcedureStore } from '../../../modules/procedure'
+import { Procedure } from '../../../modules/procedure/procedure.model'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { convertViToEn } from '../../../utils'
 
-const emit = defineEmits<{ (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE'): void }>()
+const emit = defineEmits<{
+  (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+}>()
 
 const procedureStore = useProcedureStore()
 const organizationStore = useOrganizationStore()
@@ -24,14 +26,14 @@ const saveLoading = ref(false)
 
 // const consumableList = ref<{ product?: Product, quantity: number }[]>([])
 
-const openModal = async (p?: Procedure) => {
+const openModal = async (instance?: Procedure) => {
   showModal.value = true
-  procedure.value = p ? Procedure.fromInstance(p) : Procedure.blank()
+  procedure.value = instance ? Procedure.fromInstance(instance) : Procedure.blank()
 
   // if (procedure.value.consumableHint) {
   //   const consumableHint = JSON.parse(procedure.value.consumableHint) as { productId: number, quantity: number }[]
   //   if (Array.isArray(consumableHint)) {
-  //     const productListResponse = await ProductService.getManyByIds(consumableHint.map((i) => i.productId))
+  //     const productListResponse = await ProductApi.getManyByIds(consumableHint.map((i) => i.productId))
   //     consumableList.value = consumableHint.map((i) => {
   //       const productFind = productListResponse.find((j) => j.id === i.productId)
   //       return {
@@ -55,20 +57,40 @@ const handleSave = async () => {
   // procedure.value.consumableHint = JSON.stringify(consumableHint)
   try {
     if (!procedure.value.id) {
-      const response = await ProcedureService.createOne(procedure.value)
-      procedureStore.createOne(response)
+      const response = await procedureStore.createOne(procedure.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await ProcedureService.updateOne(procedure.value.id, procedure.value)
-      procedureStore.updateOne(response.id, response)
+      const response = await procedureStore.updateOne(procedure.value.id, procedure.value)
       emit('success', response, 'UPDATE')
     }
-    showModal.value = false
+    saveLoading.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:42 ~ handleSave ~ error:', error)
-  } finally {
+    console.log('🚀 ~ file: ModalProcedureUpsert.vue:73 ~ handleSave ~ error:', error)
     saveLoading.value = false
   }
+}
+
+const handleDelete = async () => {
+  try {
+    await procedureStore.deleteOne(procedure.value.id)
+    emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+  }
+}
+
+const clickDelete = () => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa dịch vụ này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'Dịch vụ đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      await handleDelete()
+    },
+    onCancel() {},
+  })
 }
 
 const filterOption = (input: string, option: any) => {
@@ -80,7 +102,7 @@ const filterOption = (input: string, option: any) => {
 // const searchingProduct = async (text: string) => {
 //   productList.value = []
 //   if (text) {
-//     productList.value = await ProductService.search(
+//     productList.value = await ProductApi.search(
 //       text,
 //       { productBatches: true },
 //       { overdue: true, quantityZero: true }
@@ -142,6 +164,9 @@ defineExpose({ openModal })
             :checked="Boolean(procedure.isActive)"
             @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)"
           />
+          <div v-if="!procedure.isActive" class="ml-4">
+            Dịch vụ này tạm thời không thể sử dụng
+          </div>
         </div>
 
         <!-- <div class="mt-10 font-bold">
@@ -196,9 +221,10 @@ defineExpose({ openModal })
       </div> -->
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="closeModal">
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

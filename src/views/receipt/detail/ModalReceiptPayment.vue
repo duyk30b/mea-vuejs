@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney } from '@/common/vue-form'
-import { PaymentType } from '@/modules/enum'
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import DistributorPaymentTypeTag from '@/views/distributor/DistributorPaymentTypeTag.vue'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney } from '../../../common/vue-form'
+import { PaymentType } from '../../../modules/enum'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import DistributorPaymentTypeTag from '../../../views/distributor/DistributorPaymentTypeTag.vue'
 
 const props = withDefaults(defineProps<{ receipt: Receipt }>(), { receipt: () => Receipt.blank() })
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -44,10 +44,10 @@ const handlePayment = async () => {
     }
 
     if ([ReceiptStatus.Draft, ReceiptStatus.AwaitingShipment].includes(props.receipt.status)) {
-      await ReceiptService.prepayment(props.receipt.id, money.value)
+      await ReceiptApi.prepayment(props.receipt.id, money.value)
     }
     if ([ReceiptStatus.Debt].includes(props.receipt.status)) {
-      await ReceiptService.payDebt(props.receipt.id, money.value)
+      await ReceiptApi.payDebt(props.receipt.id, money.value)
     }
     emit('success')
     showModal.value = false

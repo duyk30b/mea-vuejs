@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { Product, ProductBatch, ProductBatchService } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   DeleteOutlined,
   ExclamationCircleOutlined,
@@ -10,14 +7,19 @@ import {
 } from '@ant-design/icons-vue'
 import { Modal, message } from 'ant-design-vue'
 import { createVNode, ref, watch } from 'vue'
+import { VueSelect } from '../../../common/vue-form'
+import { Product } from '../../../modules/product'
+import { ProductBatch, ProductBatchApi, useProductBatchStore } from '../../../modules/product-batch'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalProductBatchUpdate from './ModalProductBatchUpdate.vue'
-import { VueSelect } from '@/common/vue-form'
 
 const modalProductBatchUpdate = ref<InstanceType<typeof ModalProductBatchUpdate>>()
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
 const organizationStore = useOrganizationStore()
+const productBatchStore = useProductBatchStore()
 const { formatMoney, isMobile } = organizationStore
 
 const page = ref(1)
@@ -25,11 +27,11 @@ const limit = ref(Number(localStorage.getItem('PRODUCT_BATCH_PAGINATION_LIMIT'))
 const total = ref(0)
 const productBatches = ref<ProductBatch[]>([])
 
-const isActive = ref<1 | 0 | ''>('')
+const isActive = ref<1 | 0 | ''>(1)
 
 const startFetchData = async () => {
   try {
-    const data = await ProductBatchService.pagination({
+    const pagination = await productBatchStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -37,10 +39,11 @@ const startFetchData = async () => {
         isActive: isActive.value !== '' ? isActive.value : undefined,
       },
       sort: { id: 'DESC' },
+      relation: { product: true },
     })
-    data.data.forEach((i) => (i.product = props.product))
-    productBatches.value = data.data
-    total.value = data.total
+
+    productBatches.value = pagination.data
+    total.value = pagination.total
   } catch (error) {
     console.log('🚀 ~ file: ProductBatch.vue:41 ~ error:', error)
   }
@@ -71,10 +74,9 @@ const startDeleteProductBatch = (id: number) => {
     content: 'Chỉ có thể xóa những lô hàng chưa có giao dịch, chưa từng nhập hàng hoặc xuất hàng',
     async onOk() {
       try {
-        await ProductBatchService.deleteOne(id)
+        await productBatchStore.deleteOne(id)
         message.success('Xóa lô hàng thành công')
-        const index = productBatches.value.findIndex((i) => i.id === id)
-        productBatches.value.splice(index, 1)
+        await startFetchData()
       } catch (error) {
         console.log('🚀 ~ file: ProductBatch.vue:73 ~ onOk ~ error:', error)
       }
@@ -192,7 +194,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             <th>Lô</th>
             <th>Giá</th>
             <th>SL</th>
-            <th />
+            <th></th>
           </tr>
         </thead>
         <tbody>

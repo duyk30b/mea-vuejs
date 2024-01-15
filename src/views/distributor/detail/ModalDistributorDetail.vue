@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Distributor } from '@/modules/distributor'
-import { useOrganizationStore } from '@/store/organization.store'
 import {
   CloseOutlined,
   DeploymentUnitOutlined,
@@ -10,6 +7,9 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { Distributor } from '../../../modules/distributor'
+import { useOrganizationStore } from '../../../store/organization.store'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'

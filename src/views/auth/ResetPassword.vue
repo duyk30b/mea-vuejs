@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { AuthService } from '@/modules/auth'
 import { message } from 'ant-design-vue'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AuthService } from '../../modules/auth'
 
 const router = useRouter()
 const route = useRoute()

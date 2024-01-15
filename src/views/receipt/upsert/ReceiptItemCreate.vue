@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { InputDate, InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService, useProductStore } from '@/modules/product'
-import { ReceiptItem } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { Product, ProductPaginationQuery, useProductStore } from '../../../modules/product'
+import { ProductBatch, ProductBatchApi, useProductBatchStore } from '../../../modules/product-batch'
+import { ReceiptItem } from '../../../modules/receipt'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
@@ -22,6 +23,7 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
 const productStore = useProductStore()
+const productBatchStore = useProductBatchStore()
 const organizationStore = useOrganizationStore()
 const { formatMoney } = organizationStore
 
@@ -33,15 +35,7 @@ const receiptItem = ref<ReceiptItem>(ReceiptItem.blank())
 
 onMounted(async () => {
   window.addEventListener('keydown', handleDocumentKeyup)
-  await productStore.fetchAll({
-    relation: { productBatches: true },
-    filter: {
-      productBatch: {
-        isActive: 1,
-        // quantity: ['!=', 0]
-      },
-    },
-  })
+  await Promise.all([productStore.refreshDB(), productBatchStore.refreshDB()])
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -51,39 +45,33 @@ const searchingProduct = async (text: string) => {
   product.value.id = 0
   product.value.brandName = text
   receiptItem.value = ReceiptItem.blank()
-  if (text) {
-    productList.value = productStore.search(text)
-  } else {
-    productList.value = []
-  }
+  productList.value = await productStore.search(text)
 }
 
-const selectProduct = async (data?: Product) => {
-  if (data) {
-    const p = Product.fromInstance(data)
-    p.productBatches = data.productBatches.map((i) => {
-      const b = ProductBatch.fromInstance(i)
-      b.product = p
-      return b
-    })
-    // p.productBatches = await ProductBatchService.list({
-    //   filter: {
-    //     productId: p.id,
-    //     isActive: 1,
-    //     // quantity: ['!=', 0],
-    //     // expiryDate: ['>', new Date().toISOString()],
-    //   },
-    // })
+const selectProduct = async (instance?: Product) => {
+  if (instance) {
+    const productIns = Product.fromInstance(instance)
 
-    product.value = p
+    productIns.productBatches = await productBatchStore.list({
+      filter: {
+        productId: productIns.id,
+        isActive: 1,
+        // quantity: ['!=', 0],
+        // expiryDate: ['>', new Date().toISOString()],
+      },
+      sort: { expiryDate: 'DESC' },
+    })
+    productIns.productBatches.forEach((i) => (i.product = productIns))
+
+    product.value = productIns
 
     const newBatch = ProductBatch.blank()
-    newBatch.productId = p.id
-    newBatch.product = p
+    newBatch.productId = productIns.id
+    newBatch.product = productIns
     product.value.productBatches.push(newBatch)
 
     // const defaultBatch = p.productBatches.find((i) => !i.batch && !i.expiryDate)
-    const defaultBatch = p.productBatches[0]
+    const defaultBatch = productIns.productBatches[0]
     selectProductBatch(defaultBatch!)
 
     productList.value = []
@@ -117,8 +105,7 @@ const addReceiptItem = async () => {
   }
 
   if (!productBatch.value.id) {
-    const batch = await ProductBatchService.createOne(productBatch.value)
-    productStore.addBatch(ProductBatch.fromPlain(batch))
+    const batch = await productBatchStore.createOne(productBatch.value)
     batch.product = product.value
     productBatch.value = batch
     receiptItem.value.productBatchId = batch.id

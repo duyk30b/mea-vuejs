@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Product } from '@/modules/product'
 import { CloseOutlined, DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { Product } from '../../../modules/product'
 import ProductInfo from './ProductInfo.vue'
 import ProductMovement from './ProductMovement.vue'
 

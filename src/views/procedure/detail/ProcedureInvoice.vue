@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { InvoiceItem, InvoiceItemService, InvoiceItemType, InvoiceStatus } from '@/modules/invoice'
-import { Procedure } from '@/modules/procedure'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
-import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { InvoiceItem, InvoiceItemService, InvoiceItemType } from '../../../modules/invoice'
+import { Procedure } from '../../../modules/procedure'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
+import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),

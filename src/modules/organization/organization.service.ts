@@ -1,4 +1,4 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import type { OrganizationSettingsType } from '../../store/store.variable'
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'

@@ -1,4 +1,4 @@
-import { AxiosInstance } from '@/core/axios.instance'
+import { AxiosInstance } from '../../core/axios.instance'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { InvoiceItem, InvoiceItemType } from './invoice-item.model'
 

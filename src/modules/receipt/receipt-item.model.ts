@@ -7,8 +7,9 @@ import {
   Type,
 } from 'class-transformer'
 import type { UnitType } from '../enum'
-import { Product, ProductBatch } from '../product'
+import { Product } from '../product'
 import { Receipt } from './receipt.model'
+import { ProductBatch } from '../product-batch'
 
 export class ReceiptItem {
   @Expose({ groups: ['ALL', 'COPY'] })

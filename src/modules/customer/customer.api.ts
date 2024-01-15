@@ -1,12 +1,12 @@
-import { AxiosInstance } from '@/core/axios.instance'
-import { debounceAsync } from '@/utils/helpers'
+import { AxiosInstance } from '../../core/axios.instance'
+import { debounceAsync } from '../../utils/helpers'
 import type { ApiPaginationResponse } from '../pagination'
-import { CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
+import { CustomerGetQuery, CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
 
-export class CustomerService {
+export class CustomerApi {
   static async pagination(options: CustomerPaginationQuery) {
-    const params = CustomerPaginationQuery.plainFromPlain(options)
+    const params = CustomerGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/customer/pagination', { params })
     const data = response.data as ApiPaginationResponse
@@ -19,14 +19,14 @@ export class CustomerService {
   }
 
   static async list(options: CustomerListQuery): Promise<Customer[]> {
-    const params = CustomerListQuery.plainFromPlain(options)
+    const params = CustomerGetQuery.toQuery(options)
 
     const { data } = await AxiosInstance.get('/customer/list', { params })
     return Customer.fromPlains(data)
   }
 
   static search = debounceAsync(async (text: string): Promise<Customer[]> => {
-    return CustomerService.list({
+    return await CustomerApi.list({
       limit: 10,
       filter: { searchText: text, isActive: 1 },
     })
@@ -37,16 +37,22 @@ export class CustomerService {
     return Customer.fromPlain(data)
   }
 
-  static async createOne(customer: Customer) {
-    const customerDto = Customer.toPlain(customer)
-    const { data } = await AxiosInstance.post('/customer/create', customerDto)
+  static async createOne(instance: Customer) {
+    const plain = Customer.toPlain(instance, 'CREATE')
+    const { data } = await AxiosInstance.post('/customer/create', plain)
 
     return Customer.fromPlain(data)
   }
 
-  static async updateOne(id: number, customer: Partial<Customer>) {
-    const customerDto = Customer.toPlain(customer)
-    const response = await AxiosInstance.patch(`/customer/update/${id}`, customerDto)
+  static async updateOne(id: number, instance: Customer) {
+    const plain = Customer.toPlain(instance, 'UPDATE')
+    const response = await AxiosInstance.patch(`/customer/update/${id}`, plain)
+
+    return Customer.fromPlain(response.data)
+  }
+
+  static async deleteOne(id: number) {
+    const response = await AxiosInstance.delete(`/customer/delete/${id}`)
 
     return Customer.fromPlain(response.data)
   }

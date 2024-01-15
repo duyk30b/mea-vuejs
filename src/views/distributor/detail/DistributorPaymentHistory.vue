@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { Distributor, DistributorPayment, DistributorPaymentService } from '@/modules/distributor'
-import { PaymentType } from '@/modules/enum'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import {
+  Distributor,
+  DistributorPayment,
+  DistributorPaymentService,
+} from '../../../modules/distributor'
+import { PaymentType } from '../../../modules/enum'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import DistributorPaymentTypeTag from '../DistributorPaymentTypeTag.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {

@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { VueSelect } from '@/common/vue-form'
-import { useProductStore, type Product, type ProductBatch } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   CheckCircleOutlined,
   FileSearchOutlined,
@@ -14,6 +10,12 @@ import {
 } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeMount, onMounted, ref, watch } from 'vue'
+import { VueSelect } from '../../../common/vue-form'
+import { useProductStore, type Product } from '../../../modules/product'
+import type { ProductBatch } from '../../../modules/product-batch'
+import { useProductBatchStore } from '../../../modules/product-batch/product-batch.store'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { timeToText } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
@@ -24,15 +26,17 @@ const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSe
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
-const productStore = useProductStore()
 const organizationStore = useOrganizationStore()
+const productStore = useProductStore()
+const productBatchStore = useProductBatchStore()
 const { formatMoney, isMobile } = organizationStore
-const { timeSync } = storeToRefs(productStore)
+const { timeSync: productTimeSync } = storeToRefs(productStore)
+const { timeSync: productBatchTimeSync } = storeToRefs(productBatchStore)
 
 const productList = ref<Product[]>([])
 const productBatchList = ref<ProductBatch[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_PAGINATION_LIMIT')) || 10)
@@ -45,24 +49,26 @@ const isActive = ref<1 | 0 | ''>(1)
 const sortColumn = ref<'expiryDate' | 'id' | 'brandName' | 'quantity' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-watch(timeSync, async () => {
-  // await productStore.fetchAll({
-  //   relation: { productBatches: true },
-  //   filter: { productBatch: { quantity: ['!=', 0] } },
-  // })
+watch(productTimeSync, async () => {
+  startFetchData()
+})
+watch(productBatchTimeSync, async () => {
   startFetchData()
 })
 
 const startFetchProduct = async () => {
-  loadingComponent.value = true
   try {
-    const data = productStore.pagination({
+    const data = await productStore.pagination({
       page: page.value,
       limit: limit.value,
+      relation: { productBatches: true },
       filter: {
         group: group.value ? group.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
+        productBatch: {
+          isActive: isActive.value !== '' ? isActive.value : undefined,
+        },
       },
       sort: sortValue.value
         ? {
@@ -76,24 +82,23 @@ const startFetchProduct = async () => {
     total.value = data.total
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:59 ~ error:', error)
-  } finally {
-    loadingComponent.value = false
   }
 }
 
 const startFetchProductBatch = async () => {
   try {
-    const data = productStore.paginationProductBatch({
+    const data = await productBatchStore.pagination({
       page: page.value,
       limit: limit.value,
+      relation: { product: true },
       filter: {
         product: {
+          isActive: isActive.value !== '' ? isActive.value : undefined,
           searchText: searchText.value || undefined,
           group: group.value || undefined,
         },
         isActive: isActive.value !== '' ? isActive.value : undefined,
       },
-      relation: { product: true },
       sort: sortValue.value
         ? { expiryDate: sortColumn.value === 'expiryDate' ? sortValue.value : undefined }
         : undefined,
@@ -106,14 +111,29 @@ const startFetchProductBatch = async () => {
 }
 
 onBeforeMount(async () => {
-  await productStore.fetchAll({
-    relation: { productBatches: true },
-    filter: { productBatch: { quantity: ['!=', 0] } },
-  })
-  await startFetchData()
+  try {
+    dataLoading.value = true
+    await startFetchData()
+  } catch (error) {
+    console.log('🚀 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
 })
 
-onMounted(async () => {})
+onMounted(async () => {
+  try {
+    const [productList, productBatchList] = await Promise.all([
+      productStore.refreshDB(),
+      productBatchStore.refreshDB(),
+    ])
+    if (productList?.length || productBatchList?.length) {
+      await startFetchData()
+    }
+  } catch (error) {
+    console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)
+  }
+})
 
 const startFetchData = async () => {
   if (sortColumn.value === 'expiryDate') {
@@ -166,14 +186,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalProductUpsertSuccess = async (data: Product, type: 'CREATE' | 'UPDATE') => {
-  // if (type === 'CREATE') {
-  //   productStore.createOne(data)
-  // } else if (type === 'UPDATE') {
-  //   const { productBatches, ...productSnap } = data
-  //   productStore.updateOne(data.id, productSnap)
-  //   productBatchStore.updateProduct(data)
-  // }
+const handleModalProductUpsertSuccess = async (
+  data: Product,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+) => {
   // await startFetchData()
 }
 
@@ -309,7 +325,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           />
         </div>
       </div>
-      <div v-if="sortColumn !== 'expiryDate'">
+      <div v-if="dataLoading">
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+        <div class="vue-skeleton-loading mt-2"></div>
+      </div>
+      <div v-else>
         <div
           v-if="productList.length === 0"
           class="p-2 text-center"
@@ -492,7 +520,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="organizationStore.SCREEN_PRODUCT_LIST.action">Sửa</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <template v-if="sortColumn !== 'expiryDate'">
             <tr v-if="productList.length === 0">
               <td colspan="20" class="text-center">Không có dữ liệu</td>

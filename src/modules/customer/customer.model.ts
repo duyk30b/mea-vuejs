@@ -1,11 +1,4 @@
-import {
-  Expose,
-  Transform,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
-import { BaseModel } from '../base.model'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import type { EGender } from '../enum'
 
 export class Customer {
@@ -54,6 +47,15 @@ export class Customer {
   @Expose()
   isActive: 1 | 0 // Trạng thái
 
+  @Expose({ groups: ['ALL'] })
+  createdAt: number
+
+  @Expose({ groups: ['ALL'] })
+  updatedAt: number
+
+  @Expose({ groups: ['ALL'] })
+  deletedAt: number
+
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0
@@ -65,6 +67,16 @@ export class Customer {
   static blank(): Customer {
     const ins = Customer.init()
     return ins
+  }
+
+  static fromObject(object: Partial<Customer>) {
+    const ins = new Customer()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Customer>[]): Customer[] {
+    return objects.map((i) => Customer.fromObject(i))
   }
 
   static fromPlain(plain: Record<string, any> = {}): Customer {
@@ -84,6 +96,9 @@ export class Customer {
   }
 
   static fromInstance(instance: Customer): Customer {
+    if (instance?.constructor.name !== '_Customer') {
+      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
@@ -91,11 +106,18 @@ export class Customer {
     })
   }
 
-  static toPlain(instance: Partial<Customer>): Record<string, any> {
+  static fromInstances(instances: Customer[]): Customer[] {
+    return instances.map((i) => Customer.fromInstance(i))
+  }
+
+  static toPlain(instance: Customer, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+    if (instance?.constructor.name !== '_Customer') {
+      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['CREATE'],
+      groups: [type],
     })
   }
 }

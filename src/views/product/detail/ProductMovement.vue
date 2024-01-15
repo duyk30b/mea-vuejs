@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { InputOptions, VueSelect } from '@/common/vue-form'
-import {
-  Product,
-  ProductBatch,
-  ProductBatchService,
-  ProductMovement,
-  ProductMovementService,
-  ProductMovementType,
-} from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { customFilter, timeToText } from '@/utils'
 import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { InputOptions } from '../../../common/vue-form'
+import {
+  Product,
+  ProductMovement,
+  ProductMovementApi,
+  ProductMovementType,
+} from '../../../modules/product'
+import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
+import { useOrganizationStore } from '../../../store/organization.store'
+import { customFilter, timeToText } from '../../../utils'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -34,7 +33,7 @@ const total = ref(0)
 
 const startFetchProductMovements = async () => {
   try {
-    const movPagination = await ProductMovementService.pagination({
+    const movPagination = await ProductMovementApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -54,7 +53,7 @@ const startFetchProductMovements = async () => {
 
 const startFetchProductBatches = async () => {
   try {
-    const productBatches = await ProductBatchService.list({
+    const productBatches = await ProductBatchApi.list({
       filter: { productId: props.product.id },
     })
     productBatchAll.value = productBatches

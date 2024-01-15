@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { InputDate } from '@/common/vue-form'
-import { Employee, UserService } from '@/modules/employee'
-import { useUserStore } from '@/store/user.store'
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
+import { InputDate } from '../../common/vue-form'
+import { Employee, UserService } from '../../modules/employee'
+import { useOrganizationStore } from '../../store/organization.store'
+import { useUserStore } from '../../store/user.store'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
-import { useOrganizationStore } from '@/store/organization.store'
 
 const organizationStore = useOrganizationStore()
 const { isMobile } = organizationStore

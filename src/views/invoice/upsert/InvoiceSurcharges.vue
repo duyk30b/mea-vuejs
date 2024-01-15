@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { InputMoney, VueSelect } from '@/common/vue-form'
-import { UNKNOWN_KEY } from '@/modules/enum'
-import { InvoiceSurcharge } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { InputMoney, VueSelect } from '../../../common/vue-form'
+import { UNKNOWN_KEY } from '../../../modules/enum'
+import { InvoiceSurcharge } from '../../../modules/invoice'
+import { useOrganizationStore } from '../../../store/organization.store'
 import { invoice } from './invoice-upsert.store'
 
 const organizationStore = useOrganizationStore()
@@ -11,12 +11,18 @@ const { formatMoney } = organizationStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
   invoice.value.invoiceSurcharges![index].money = money
-  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce((acc, cur) => acc + cur.money, 0)
+  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce(
+    (acc, cur) => acc + cur.money,
+    0
+  )
 }
 
 const handleDeleteSurchargeDetail = (index: number) => {
   invoice.value.invoiceSurcharges!.splice(index, 1)
-  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce((acc, cur) => acc + cur.money, 0)
+  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce(
+    (acc, cur) => acc + cur.money,
+    0
+  )
 }
 
 const handleAddSurchargeDetail = () => {
@@ -61,10 +67,10 @@ const handleChangeInvoiceSurcharge = (data: number) => {
   <td class="cursor-pointer whitespace-nowrap">
     <a-popconfirm>
       <template #cancelButton>
-        <div />
+        <div></div>
       </template>
       <template #okButton>
-        <div />
+        <div></div>
       </template>
       <template #title>
         <div style="width: 320px">

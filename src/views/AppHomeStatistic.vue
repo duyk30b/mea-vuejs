@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { StatisticService } from '@/modules/statistics'
-import { DTimer } from '@/utils'
 import type { ChartData } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, reactive, ref } from 'vue'
+import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { StatisticService } from '../modules/statistics'
+import { DTimer } from '../utils'
 // 2 màu khác trông cũng đẹp:  9dc183 ff6761 ff6f61 daa520 708090 ff7f50
 import {
   ArcElement,
@@ -19,7 +19,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { useOrganizationStore } from '@/store/organization.store'
+import { useOrganizationStore } from '../store/organization.store'
 
 const organizationStore = useOrganizationStore()
 const moneyDivision = organizationStore.SYSTEM_SETTING.moneyDivisionFormat

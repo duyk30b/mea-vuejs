@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { InputDate, InputMoney, InputNumber } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService } from '@/modules/product'
-import { useProductStore } from '@/modules/product/product.store'
 import { ref } from 'vue'
+import { InputDate, InputMoney } from '../../../common/vue-form'
+import { Product } from '../../../modules/product'
+import { ProductBatch, useProductBatchStore } from '../../../modules/product-batch'
 
 const emit = defineEmits<{ (e: 'success', value: ProductBatch, type: 'UPDATE'): void }>()
 
-const productStore = useProductStore()
+const productBatchStore = useProductBatchStore()
 
 const showModal = ref(false)
 const productBatch = ref(ProductBatch.blank())
@@ -28,10 +28,8 @@ const refreshModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    const batch = await ProductBatchService.updateOne(productBatch.value.id!, productBatch.value)
+    const batch = await productBatchStore.updateOne(productBatch.value.id, productBatch.value)
     emit('success', batch, 'UPDATE')
-    productStore.updateProductBatch(batch)
-    productStore.timeSync = Date.now() // tạo trigger để màn list reload lại
     showModal.value = false
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -100,6 +98,9 @@ defineExpose({ openModal })
           :checked="Boolean(productBatch.isActive)"
           @change="(checked: Boolean) => (productBatch.isActive = checked ? 1 : 0)"
         />
+        <div v-if="!productBatch.isActive" class="ml-4">
+          Lô hàng này tạm thời không thể nhập hàng và xuất hàng
+        </div>
       </div>
     </div>
   </a-modal>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { AuthService } from '@/modules/auth'
-import { Employee, UserService } from '@/modules/employee'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { AuthService } from '../../../modules/auth'
+import { Employee, UserService } from '../../../modules/employee'
 
 const showModal = ref(false)
 const user = ref(Employee.blank())
