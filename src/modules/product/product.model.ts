@@ -136,7 +136,7 @@ export class Product {
   }
 
   static fromInstance(instance: Product): Product {
-    if (instance?.constructor.name !== '_Product') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
       throw new Error('Product.fromInstance error: Instance must be from class Product')
     }
     return instanceToInstance(instance, {
@@ -147,7 +147,7 @@ export class Product {
   }
 
   static toPlain(instance: Product, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-    if (instance?.constructor.name !== '_Product') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
       throw new Error('Product.fromInstance error: Instance must be from class Product')
     }
     return instanceToPlain(instance, {

@@ -66,7 +66,7 @@ export class Procedure extends BaseModel {
   }
 
   static fromInstance(instance: Procedure): Procedure {
-    if (instance?.constructor.name !== '_Procedure') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
       throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
     }
     return instanceToInstance(instance, {
@@ -77,7 +77,7 @@ export class Procedure extends BaseModel {
   }
 
   static toPlain(instance: Procedure, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-    if (instance?.constructor.name !== '_Procedure') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
       throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
     }
     return instanceToPlain(instance, {

@@ -97,8 +97,12 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  window.addEventListener('keydown', handleDocumentKeyup)
-  await distributorStore.refreshDB()
+  try {
+    window.addEventListener('keydown', handleDocumentKeyup)
+    await distributorStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -170,7 +174,7 @@ const saveReceipt = async (type: EReceiptSave) => {
         receipt.value.distributorId = distributorRes.id
 
         AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
-        productStore.refreshDB() //update product mới nhất luôn
+        await productStore.refreshDB() //update product mới nhất luôn
         break
       }
       case EReceiptSave.UPDATE_DRAFT: {
@@ -186,8 +190,8 @@ const saveReceipt = async (type: EReceiptSave) => {
       default:
         break
     }
-  } catch (error) {
-    console.log('🚀 ~ saveReceipt ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   } finally {
     saveLoading.value = false
   }
@@ -303,7 +307,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </tr>
                 <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="width: 120px">Tiền hàng</td>
-                  <td class="text-right" style="padding-right: 11px; font-size: 16px;">
+                  <td class="text-right" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>

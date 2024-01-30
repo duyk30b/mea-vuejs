@@ -111,6 +111,15 @@ defineExpose({ openModal })
                 </tr>
                 <tr>
                   <td>
+                    <a-checkbox
+                      v-model:checked="settingDisplay.invoiceItemInput.searchHasZeroQuantity"
+                    >
+                      Kết quả tìm kiếm có chứa lô hàng số lượng = 0
+                    </a-checkbox>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
                     <div>
                       <a-checkbox
                         v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"

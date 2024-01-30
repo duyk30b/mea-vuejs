@@ -49,7 +49,7 @@ defineExpose({ openModal })
       <div class="p-4">
         <div class="flex justify-between">
           <div class="flex flex-col items-center">
-            <div>{{ organizationStore.organizationInfo.organizationName }}</div>
+            <div>{{ organizationStore.organizationInfo.name }}</div>
             <div>{{ organizationStore.organizationInfo.phone }}</div>
           </div>
           <div class="flex flex-col items-center">

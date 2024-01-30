@@ -11,17 +11,19 @@ export type CollectionType = {
 export class BaseIndexedDB {
   public databaseName: string
   public version: number
-  public db: IDBDatabase | null
   public collections: CollectionType[]
 
   constructor(options: { databaseName: string; version: number; collections: CollectionType[] }) {
-    this.db = null
     this.databaseName = options.databaseName
     this.version = options.version
     this.collections = options.collections
   }
 
-  async openConnection() {
+  async runMigration() {
+    if (!window.indexedDB) {
+      alert('Vui lòng sử dụng trình duyệt Chrome mới nhất.')
+      throw new Error('Trình duyệt không hỗ trợ IndexedDB')
+    }
     return new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(this.databaseName, this.version)
 
@@ -29,17 +31,18 @@ export class BaseIndexedDB {
         const db = (event.target as IDBOpenDBRequest).result
 
         this.collections.forEach(({ storeName, keyPath, index }) => {
-          if (!db.objectStoreNames.contains(storeName)) {
-            const objectStore = db.createObjectStore(storeName, { keyPath })
+          if (!db?.objectStoreNames.contains(storeName)) {
+            const objectStore = db?.createObjectStore(storeName, { keyPath })
             if (index) {
-              objectStore.createIndex(index.indexName, index.property, { unique: index.unique })
+              objectStore?.createIndex(index.indexName, index.property, { unique: index.unique })
             }
           }
         })
       }
 
       request.onsuccess = (event) => {
-        this.db = (event?.target as any)?.result
+        const db = (event?.target as IDBOpenDBRequest)?.result
+        db.close()
         resolve()
       }
 
@@ -49,15 +52,22 @@ export class BaseIndexedDB {
     })
   }
 
-  public closeConnection() {
-    if (this.db) {
-      this.db.close()
-      this.db = null
-    }
+  async createConnection(): Promise<IDBDatabase> {
+    return new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(this.databaseName, this.version)
+
+      request.onsuccess = (event) => {
+        const db = (event?.target as IDBOpenDBRequest)?.result
+        resolve(db)
+      }
+
+      request.onerror = (event) => {
+        reject((event?.target as any)?.error)
+      }
+    })
   }
 
   async destroy() {
-    this.closeConnection()
     return new Promise<void>((resolve, reject) => {
       const deleteRequest = indexedDB.deleteDatabase(this.databaseName)
       deleteRequest.onsuccess = function (event) {

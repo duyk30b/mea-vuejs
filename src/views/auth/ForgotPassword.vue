@@ -2,8 +2,8 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '../../core/local-storage.service'
-import { AuthService } from '../../modules/auth'
+import { LocalStorageService, ORG_PHONE } from '../../core/local-storage.service'
+import { AuthApi } from '../../modules/auth'
 
 const router = useRouter()
 
@@ -11,7 +11,7 @@ const result = ref<string>('')
 const btnDisable = ref<boolean>(false)
 
 const formState = reactive({
-  orgPhone: localStorage.getItem(ORG_PHONE) || '',
+  orgPhone: LocalStorageService.getOrgPhone(),
   email: '',
   username: '',
 })
@@ -25,7 +25,7 @@ const loading = ref(false)
 const startSendEmail = async () => {
   try {
     loading.value = true
-    const data = await AuthService.forgotPassword({
+    const data = await AuthApi.forgotPassword({
       orgPhone: formState.orgPhone,
       email: formState.email,
       username: formState.username,

@@ -2,13 +2,13 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '../../core/local-storage.service'
-import { AuthService } from '../../modules/auth'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { AuthApi } from '../../modules/auth'
 
 const router = useRouter()
 
 const formState = reactive({
-  phone: localStorage.getItem(ORG_PHONE) || '',
+  phone: LocalStorageService.getOrgPhone(),
   username: '',
   password: '',
   email: '',
@@ -23,7 +23,7 @@ const loading = ref(false)
 const startLogin = async () => {
   try {
     loading.value = true
-    await AuthService.register({
+    await AuthApi.register({
       phone: formState.phone,
       email: formState.email,
       username: formState.username,

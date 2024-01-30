@@ -2,8 +2,8 @@ import axios from 'axios'
 import { CONFIG } from '../../config'
 import { MeaDatabase } from '../../core/indexed-db/database'
 import { LocalStorageService } from '../../core/local-storage.service'
-import { useUserStore } from '../../store/user.store'
-import { Employee } from '../employee'
+import { User } from '../user'
+import { useUserStore } from '../user/user.store'
 
 export type LoginDto = {
   orgPhone: string
@@ -18,25 +18,45 @@ export type RegisterDto = {
   password: string
 }
 
-const userStore = useUserStore()
-
-export class AuthService {
+export class AuthApi {
   static async register(body: RegisterDto) {
-    const { data } = await axios.post(`${CONFIG.API_URL}/auth/register`, body)
+    const response = await axios.post(`${CONFIG.API_URL}/auth/register`, body)
+    const data = response.data as {
+      user: User
+      accessToken: string
+      accessExp: number
+      refreshToken: string
+      refreshExp: number
+    }
+
     LocalStorageService.setAuth(data)
-    userStore.userInfo = Employee.fromPlain(data.user)
+    useUserStore().userInfo = User.fromPlain(data.user)
   }
 
   static async login(body: LoginDto) {
-    const { data } = await axios.post(`${CONFIG.API_URL}/auth/login`, body)
+    const response = await axios.post(`${CONFIG.API_URL}/auth/login`, body)
+    const data = response.data as {
+      user: User
+      accessToken: string
+      accessExp: number
+      refreshToken: string
+      refreshExp: number
+    }
     LocalStorageService.setAuth(data)
-    userStore.userInfo = Employee.fromPlain(data.user)
+    useUserStore().userInfo = User.fromPlain(data.user)
   }
 
   static async loginDemo() {
-    const { data } = await axios.post(`${CONFIG.API_URL}/auth/login-demo`)
+    const response = await axios.post(`${CONFIG.API_URL}/auth/login-demo`)
+    const data = response.data as {
+      user: User
+      accessToken: string
+      accessExp: number
+      refreshToken: string
+      refreshExp: number
+    }
     LocalStorageService.setAuth(data)
-    userStore.userInfo = Employee.fromPlain(data.user)
+    useUserStore().userInfo = User.fromPlain(data.user)
     // reconnectSocket()
   }
 
@@ -55,9 +75,14 @@ export class AuthService {
     return data as { success: boolean }
   }
 
+  static async refreshToken(refreshToken: string) {
+    const response = await axios.post(`${CONFIG.API_URL}/auth/refresh-password`, { refreshToken })
+    return response.data as { accessToken: string; accessExp: number }
+  }
+
   static async logout() {
+    await MeaDatabase.destroy()
     LocalStorageService.removeAuth()
-    userStore.userInfo = null
-    MeaDatabase.destroy()
+    useUserStore().userInfo = null
   }
 }

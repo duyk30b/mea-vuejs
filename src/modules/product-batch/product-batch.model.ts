@@ -127,7 +127,7 @@ export class ProductBatch {
 
   // lấy từ 1 instance khác
   static fromInstance(instance: ProductBatch): ProductBatch {
-    if (instance?.constructor.name !== '_ProductBatch') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_ProductBatch') {
       throw new Error('ProductBatch.fromInstance error: Instance must be from class ProductBatch')
     }
     return instanceToInstance(instance, {
@@ -142,7 +142,7 @@ export class ProductBatch {
   }
 
   static toPlain(instance: ProductBatch, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-    if (instance?.constructor.name !== '_ProductBatch') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_ProductBatch') {
       throw new Error('ProductBatch.fromInstance error: Instance must be from class ProductBatch')
     }
     return instanceToPlain(instance, {

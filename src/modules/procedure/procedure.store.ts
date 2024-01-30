@@ -15,26 +15,22 @@ export const useProcedureStore = defineStore('procedure-store', {
 
   actions: {
     async refreshDB() {
-      try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('PROCEDURE')
-        if (!refreshTime) {
-          refreshTime = { code: 'PROCEDURE', time: new Date(0).toISOString() }
-        }
-        const lastTime = new Date(refreshTime.time)
-        const currentTime = new Date()
-        const procedureList = await ProcedureApi.list({
-          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
-        })
-        if (procedureList.length) {
-          await ProcedureDB.upsertMany(procedureList)
-        }
+      let refreshTime = await RefreshTimeDB.findOneByCode('PROCEDURE')
+      if (!refreshTime) {
+        refreshTime = { code: 'PROCEDURE', time: new Date(0).toISOString() }
+      }
+      const lastTime = new Date(refreshTime.time)
+      const currentTime = new Date()
+      const procedureList = await ProcedureApi.list({
+        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      })
+      if (procedureList.length) {
+        await ProcedureDB.upsertMany(procedureList)
         refreshTime.time = currentTime.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
-
-        return procedureList
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
+
+      return procedureList
     },
 
     async pagination(params: ProcedurePaginationQuery) {

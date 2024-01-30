@@ -11,6 +11,7 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
 import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -78,8 +79,8 @@ onBeforeMount(async () => {
 onMounted(async () => {
   try {
     await customerStore.refreshDB()
-  } catch (error) {
-    console.log('🚀 ~ file: InvoiceList.vue:82 ~ onMounted ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 

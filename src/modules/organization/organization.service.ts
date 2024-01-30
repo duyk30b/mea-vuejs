@@ -16,7 +16,7 @@ export class OrganizationService {
   }
 
   static async updateInfo(organization: Partial<Organization>) {
-    const organizationDto = Organization.toPlain(organization)
+    const organizationDto = Organization.toPlain(organization, 'USER_UPDATE')
     const response = await AxiosInstance.patch('/organization/update', organizationDto)
 
     return Organization.fromPlain(response.data)

@@ -70,7 +70,7 @@ const saveOrganization = async () => {
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Tên Cơ sở</div>
-        <a-input v-model:value="organization.organizationName" class="flex-auto" />
+        <a-input v-model:value="organization.name" class="flex-auto" />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">

@@ -7,6 +7,7 @@ import { Product } from '../product/product.model'
 import { ProductBatchApi } from './product-batch.api'
 import type { ProductBatchListQuery, ProductBatchPaginationQuery } from './product-batch.dto'
 import { ProductBatch } from './product-batch.model'
+import type { ConditionNumber } from '../_base/base-condition'
 
 export const useProductBatchStore = defineStore('product-batch-store', {
   state: () => {
@@ -17,27 +18,22 @@ export const useProductBatchStore = defineStore('product-batch-store', {
 
   actions: {
     async refreshDB() {
-      try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_BATCH')
-        if (!refreshTime) {
-          refreshTime = { code: 'PRODUCT_BATCH', time: new Date(0).toISOString() }
-        }
-        const lastTime = new Date(refreshTime.time)
-        const currentTime = new Date()
-        const productBatchList = await ProductBatchApi.list({
-          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
-        })
-        if (productBatchList.length) {
-          await ProductBatchDB.upsertMany(productBatchList)
-        }
-
+      let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_BATCH')
+      if (!refreshTime) {
+        refreshTime = { code: 'PRODUCT_BATCH', time: new Date(0).toISOString() }
+      }
+      const lastTime = new Date(refreshTime.time)
+      const currentTime = new Date()
+      const productBatchList = await ProductBatchApi.list({
+        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      })
+      if (productBatchList.length) {
+        await ProductBatchDB.upsertMany(productBatchList)
         refreshTime.time = currentTime.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
-
-        return productBatchList
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
+
+      return productBatchList
     },
 
     async pagination(params: ProductBatchPaginationQuery) {
@@ -130,7 +126,7 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       return response
     },
 
-    async search(text: string) {
+    async search(text: string, options?: { quantity?: ConditionNumber }) {
       if (!text) return []
       const productObjects = await ProductDB.findManyBy({
         $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
@@ -144,6 +140,7 @@ export const useProductBatchStore = defineStore('product-batch-store', {
         isActive: 1,
         productId: { IN: productIdList },
         deletedAt: { IS_NULL: true },
+        quantity: options?.quantity || undefined,
       })
       const productBatchList = ProductBatch.fromObjects(productBatchObjects)
       const productMap = objectKeyByArray(productList, 'id')

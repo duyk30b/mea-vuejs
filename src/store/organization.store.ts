@@ -226,6 +226,7 @@ export const useOrganizationStore = defineStore('organization-store', {
       SCREEN_INVOICE_UPSERT: {
         invoiceItemInput: {
           searchType: 'PRODUCT_BATCH',
+          searchHasZeroQuantity: false,
           customAfterSearch: true,
           hintUsage: false,
           expectedPrice: true,

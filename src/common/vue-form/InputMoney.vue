@@ -55,10 +55,10 @@ const handleFocus = (e: Event) => {
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
             : ''
         "
-        type="tel"
         :placeholder="placeholder || '0'"
         :disabled="disabled"
         :required="required"
+        inputmode="decimal"
         @focus="handleFocus"
         @input="handleInput"
       />

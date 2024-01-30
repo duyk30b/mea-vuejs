@@ -16,8 +16,10 @@ export class BaseRepository<
   }
 
   async findAll(condition: BaseCondition<_ENTITY> = {}): Promise<_ENTITY[]> {
-    return await new Promise<_ENTITY[]>((resolve, reject) => {
-      const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
+    const db = await this.baseDB.createConnection()
+
+    const data = await new Promise<_ENTITY[]>((resolve, reject) => {
+      const transaction = db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)
 
       const request = objectStore.openCursor()
@@ -38,6 +40,9 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return data
   }
 
   async pagination<S extends _SORT>(options: {
@@ -47,7 +52,6 @@ export class BaseRepository<
     sort: NoExtra<_SORT, S>
   }) {
     const { condition, sort, page, limit } = options
-    console.log('🚀 ~ sort:', sort)
 
     const data = await this.findAll(condition)
     if (sort) {
@@ -62,6 +66,7 @@ export class BaseRepository<
     }
     const start = (page - 1) * limit
     const end = page * limit
+
     return {
       total: data.length,
       page,
@@ -88,15 +93,19 @@ export class BaseRepository<
       })
     }
     if (limit) return data.slice(0, limit)
+
     return data
   }
 
   async findManyBy(condition: BaseCondition<_ENTITY>): Promise<_ENTITY[]> {
-    return await this.findAll(condition)
+    const data = await this.findAll(condition)
+    return data
   }
 
   async findManyByKeys(keys: number[] | string[]): Promise<_ENTITY[]> {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
+    const db = await this.baseDB.createConnection()
+
+    const transaction = db.transaction([this.storeName], 'readonly')
     const objectStore = transaction.objectStore(this.storeName)
 
     const getPromises: Promise<_ENTITY | undefined>[] = []
@@ -124,12 +133,16 @@ export class BaseRepository<
         data.push(i.value)
       }
     })
+
+    db.close()
     return data
   }
 
   async findOneBy(condition: BaseCondition<_ENTITY>): Promise<_ENTITY | null> {
-    return new Promise((resolve, reject) => {
-      const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
+    const db = await this.baseDB.createConnection()
+
+    const data = await new Promise<_ENTITY | null>((resolve, reject) => {
+      const transaction = db!.transaction([this.storeName], 'readonly')
       const objectStore = transaction.objectStore(this.storeName)
 
       const request = objectStore.openCursor()
@@ -150,13 +163,18 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return data
   }
 
   async findOneByKey(key: number | string): Promise<_ENTITY | undefined> {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readonly')
+    const db = await this.baseDB.createConnection()
+
+    const transaction = db!.transaction([this.storeName], 'readonly')
     const objectStore = transaction.objectStore(this.storeName)
 
-    return new Promise((resolve, reject) => {
+    const data = await new Promise<_ENTITY | undefined>((resolve, reject) => {
       const getRequest = objectStore.get(key)
 
       getRequest.onsuccess = (event) => {
@@ -168,10 +186,14 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return data
   }
 
   async insertMany(data: _ENTITY[]) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
     const addPromises: Promise<number>[] = []
@@ -204,14 +226,18 @@ export class BaseRepository<
         result.errors.push({ message: i.reason })
       }
     })
+
+    db.close()
     return result
   }
 
   async insertOne(data: _ENTITY): Promise<number> {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
-    return new Promise((resolve, reject) => {
+    const result = await new Promise<number>((resolve, reject) => {
       const addRequest = objectStore.add(data)
 
       addRequest.onsuccess = (event) => {
@@ -222,10 +248,15 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return result
   }
 
   async replaceMany(data: { key: string | number; item: _ENTITY }[]) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
     const updatePromises: Promise<any>[] = []
@@ -270,14 +301,17 @@ export class BaseRepository<
         result.errors.push({ message: i.reason })
       }
     })
+
+    db.close()
     return result
   }
 
   async replaceOne(key: string | number, data: _ENTITY) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
-    return new Promise((resolve, reject) => {
+    const result = await new Promise((resolve, reject) => {
       const getRequest = objectStore.get(key)
 
       getRequest.onsuccess = (event) => {
@@ -296,50 +330,70 @@ export class BaseRepository<
         }
       }
     })
-  }
 
-  async upsertMany(data: _ENTITY[]) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
-    const objectStore = transaction.objectStore(this.storeName)
-    const key = Array.isArray(objectStore.keyPath) ? objectStore.keyPath[0] : objectStore.keyPath
-
-    const upsertPromises: Promise<any>[] = []
-
-    for (const item of data) {
-      const upsertPromise = new Promise<any>((resolve, reject) => {
-        const putRequest = objectStore.put(item)
-        putRequest.onsuccess = () => {
-          resolve((item as any)[key])
-        }
-        putRequest.onerror = (event) => {
-          reject((event.target as IDBRequest).error)
-        }
-      })
-
-      upsertPromises.push(upsertPromise)
-    }
-
-    const result: { upsert: any[]; errors: { message: string }[] } = {
-      upsert: [],
-      errors: [],
-    }
-    const resultPromise = await Promise.allSettled(upsertPromises)
-    resultPromise.forEach((i) => {
-      if (i.status === 'fulfilled') {
-        result.upsert.push(i.value)
-      } else {
-        result.errors.push({ message: i.reason })
-      }
-    })
+    db.close()
     return result
   }
 
-  async upsertOne(data: _ENTITY) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+  async upsertMany(data: _ENTITY[]) {
+    const result: any[] = []
+    const errors: any[] = []
+
+    const db = await this.baseDB.createConnection()
+    try {
+      const transaction = db.transaction([this.storeName], 'readwrite')
+      const objectStore = transaction.objectStore(this.storeName)
+      const key = Array.isArray(objectStore.keyPath) ? objectStore.keyPath[0] : objectStore.keyPath
+
+      const upsertPromises: Promise<any>[] = []
+
+      for (const item of data) {
+        const upsertPromise = new Promise<any>((resolve, reject) => {
+          const putRequest = objectStore.put(item)
+          putRequest.onsuccess = () => {
+            resolve((item as any)[key])
+          }
+          putRequest.onerror = (event) => {
+            reject((event.target as IDBRequest).error)
+          }
+        })
+
+        upsertPromises.push(upsertPromise)
+      }
+
+      const resultPromise = await Promise.allSettled(upsertPromises)
+      resultPromise.forEach((i) => {
+        if (i.status === 'fulfilled') {
+          result.push(i.value)
+        } else {
+          errors.push(i.reason)
+        }
+      })
+      await transaction.commit()
+      await new Promise((resolve, reject) => {
+        transaction.oncomplete = (event) => {
+          resolve(event)
+        }
+        transaction.onerror = (event) => {
+          reject(event)
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ upsertMany ~ error:', error)
+      throw error
+    } finally {
+      await db.close()
+    }
+    return result
+  }
+
+  async upsertOne(data: _ENTITY): Promise<string | number> {
+    const db = await this.baseDB.createConnection()
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
     const key = Array.isArray(objectStore.keyPath) ? objectStore.keyPath[0] : objectStore.keyPath
 
-    return new Promise((resolve, reject) => {
+    const result = await new Promise<string | number>((resolve, reject) => {
       const putRequest = objectStore.put(data)
       putRequest.onsuccess = () => {
         resolve(key)
@@ -348,10 +402,14 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return result
   }
 
   async deleteMany(keys: number[]) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
     const deletePromises = []
@@ -384,14 +442,17 @@ export class BaseRepository<
         result.errors.push({ message: i.reason })
       }
     })
+
+    db.close()
     return result
   }
 
   async deleteOneByKey(key: number) {
-    const transaction = this.baseDB.db!.transaction([this.storeName], 'readwrite')
+    const db = await this.baseDB.createConnection()
+    const transaction = db.transaction([this.storeName], 'readwrite')
     const objectStore = transaction.objectStore(this.storeName)
 
-    return new Promise((resolve, reject) => {
+    const result = await new Promise((resolve, reject) => {
       const deleteRequest = objectStore.delete(key)
 
       deleteRequest.onsuccess = () => {
@@ -402,5 +463,8 @@ export class BaseRepository<
         reject((event.target as IDBRequest).error)
       }
     })
+
+    db.close()
+    return result
   }
 }

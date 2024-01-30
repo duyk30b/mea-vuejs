@@ -32,5 +32,15 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 0,
     'vue/multi-word-component-names': 0,
     'vue/no-v-html': 0,
+
+    'padding-line-between-statements': [
+      // quy tắc cách 1 dòng
+      1,
+      { blankLine: 'always', prev: '*', next: ['class', 'function', 'export'] },
+      { blankLine: 'always', prev: ['import'], next: '*' },
+      { blankLine: 'never', prev: ['import'], next: ['import'] },
+      { blankLine: 'any', prev: ['export'], next: ['export'] },
+    ],
+    'lines-between-class-members': [1, 'always', { exceptAfterSingleLine: true }], // Dòng trống giữa các properties trong Class
   },
 }

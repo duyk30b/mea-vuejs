@@ -19,27 +19,22 @@ export const useDistributorStore = defineStore('distributor-store', {
 
   actions: {
     async refreshDB() {
-      try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('DISTRIBUTOR')
-        if (!refreshTime) {
-          refreshTime = { code: 'DISTRIBUTOR', time: new Date(0).toISOString() }
-        }
-        const lastTime = new Date(refreshTime.time)
-        const currentTime = new Date()
-        const distributorList = await DistributorApi.list({
-          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
-        })
-        if (distributorList.length) {
-          await DistributorDB.upsertMany(distributorList)
-        }
-
+      let refreshTime = await RefreshTimeDB.findOneByCode('DISTRIBUTOR')
+      if (!refreshTime) {
+        refreshTime = { code: 'DISTRIBUTOR', time: new Date(0).toISOString() }
+      }
+      const lastTime = new Date(refreshTime.time)
+      const currentTime = new Date()
+      const distributorList = await DistributorApi.list({
+        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      })
+      if (distributorList.length) {
+        await DistributorDB.upsertMany(distributorList)
         refreshTime.time = currentTime.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
-
-        return distributorList
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
+
+      return distributorList
     },
 
     async pagination(params: DistributorPaginationQuery) {

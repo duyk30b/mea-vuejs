@@ -68,7 +68,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <a-select-option :value="730"> 2 năm </a-select-option>
       </a-select>
     </div>
-    <div class="mt-6">
+    <div class="mt-3">
       <table class="table-mobile">
         <thead>
           <tr>

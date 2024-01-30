@@ -10,7 +10,7 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
 </script>
 
 <template>
-  <div class="mx-4 mt-4">
+  <div class="mt-2">
     <div class="">
       <div class="flex flex-wrap justify-between">
         <div class="w-[100%] md:w-[50%] xl:w-[25%] p-4">

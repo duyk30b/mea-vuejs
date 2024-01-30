@@ -9,6 +9,7 @@ import { ReceiptItem } from '../../../modules/receipt'
 import { useOrganizationStore } from '../../../store/organization.store'
 import { timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
@@ -34,8 +35,13 @@ const productBatch = ref<ProductBatch>(ProductBatch.blank())
 const receiptItem = ref<ReceiptItem>(ReceiptItem.blank())
 
 onMounted(async () => {
-  window.addEventListener('keydown', handleDocumentKeyup)
-  await Promise.all([productStore.refreshDB(), productBatchStore.refreshDB()])
+  try {
+    window.addEventListener('keydown', handleDocumentKeyup)
+    await productStore.refreshDB()
+    await productBatchStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)

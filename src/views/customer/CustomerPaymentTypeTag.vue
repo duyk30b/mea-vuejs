@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
+import { CheckCircleOutlined } from '@ant-design/icons-vue'
 import { PaymentType } from '../../modules/enum'
 
 defineProps<{ type: PaymentType }>()
@@ -8,13 +8,13 @@ defineProps<{ type: PaymentType }>()
 <template>
   <a-tag v-if="type === PaymentType.Prepayment" color="processing">
     <template #icon>
-      <ExclamationCircleOutlined />
+      <CheckCircleOutlined />
     </template>
     Thanh toán trước
   </a-tag>
-  <a-tag v-if="type === PaymentType.PayDebt" color="warning">
+  <a-tag v-if="type === PaymentType.PayDebt" color="cyan">
     <template #icon>
-      <ExclamationCircleOutlined />
+      <CheckCircleOutlined />
     </template>
     Trả nợ
   </a-tag>
@@ -27,7 +27,7 @@ defineProps<{ type: PaymentType }>()
 
   <a-tag v-if="type === PaymentType.ReceiveRefund" color="default">
     <template #icon>
-      <StopOutlined />
+      <CheckCircleOutlined />
     </template>
     Nhận hoàn trả
   </a-tag>

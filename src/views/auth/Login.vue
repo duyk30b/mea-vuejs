@@ -2,13 +2,13 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '../../core/local-storage.service'
-import { AuthService } from '../../modules/auth'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { AuthApi } from '../../modules/auth'
 
 const router = useRouter()
 
 const formState = reactive({
-  orgPhone: localStorage.getItem(ORG_PHONE) || '',
+  orgPhone: LocalStorageService.getOrgPhone(),
   username: '',
   password: '',
 })
@@ -22,7 +22,7 @@ const loading = ref(false)
 const startLogin = async () => {
   try {
     loading.value = true
-    await AuthService.login({
+    await AuthApi.login({
       orgPhone: formState.orgPhone,
       username: formState.username,
       password: formState.password,
@@ -39,7 +39,7 @@ const startLogin = async () => {
 const startLoginDemo = async () => {
   try {
     loading.value = true
-    await AuthService.loginDemo()
+    await AuthApi.loginDemo()
     router.push({ name: 'AppHome' })
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: 'Đăng nhập thất bại' })

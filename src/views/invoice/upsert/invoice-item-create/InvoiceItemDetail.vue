@@ -22,6 +22,7 @@ const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('
 
 const setInvoiceItem = (data: InvoiceItem) => {
   invoiceItem.value = data
+  productOutSellType.value = 'retailPrice'
 }
 
 const handleChangeSelectUnit = (rate: number) => {

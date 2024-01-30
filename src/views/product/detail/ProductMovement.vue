@@ -243,9 +243,9 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         <tr>
           <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
           <th>Lô</th>
-          <th>SL trước</th>
+          <th>Đầu kỳ</th>
           <th>Nhập/Xuất</th>
-          <th>SL sau</th>
+          <th>Cuối kỳ</th>
           <th>Giá</th>
           <th>T.Tiền</th>
         </tr>

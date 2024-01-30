@@ -8,16 +8,19 @@ import {
   AreaChartOutlined,
   ScheduleOutlined,
   SettingOutlined,
+  ApartmentOutlined,
   ShopOutlined,
   TeamOutlined,
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../../modules/user'
 
 const props = defineProps<{ collapsed?: boolean }>()
 
 const emit = defineEmits(['handleShowDrawer'])
 const router = useRouter()
+const userStore = useUserStore()
 
 const openKeys = ref<string[]>([])
 const selectedKeys = ref<string[]>([])
@@ -120,6 +123,18 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'StatisticOrder' }"> Báo cáo đơn hàng </router-link>
       </a-menu-item>
     </a-sub-menu>
+    <a-sub-menu key="Account">
+      <template #icon>
+        <TeamOutlined />
+      </template>
+      <template #title> Tài khoản </template>
+      <a-menu-item key="Role">
+        <router-link :to="{ name: 'Role' }"> Vai trò </router-link>
+      </a-menu-item>
+      <a-menu-item key="User">
+        <router-link :to="{ name: 'User' }"> Nhân viên </router-link>
+      </a-menu-item>
+    </a-sub-menu>
     <a-sub-menu key="Systems">
       <template #icon>
         <SettingOutlined />
@@ -128,11 +143,23 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item key="OrganizationInfo">
         <router-link :to="{ name: 'OrganizationInfo' }"> Thông tin cơ sở </router-link>
       </a-menu-item>
-      <a-menu-item key="EmployeeInfo">
-        <router-link :to="{ name: 'EmployeeInfo' }"> Thông tin cá nhân </router-link>
+      <a-menu-item key="UserInfo">
+        <router-link :to="{ name: 'UserInfo' }"> Thông tin cá nhân </router-link>
       </a-menu-item>
       <a-menu-item key="SystemSetting">
         <router-link :to="{ name: 'SystemSetting' }"> Cài đặt </router-link>
+      </a-menu-item>
+    </a-sub-menu>
+    <a-sub-menu v-if="userStore.userInfo?.oid === 0" key="ROOT">
+      <template #icon>
+        <ApartmentOutlined />
+      </template>
+      <template #title> ROOT </template>
+      <a-menu-item key="RootOrganizationList">
+        <router-link :to="{ name: 'RootOrganizationList' }"> Organization </router-link>
+      </a-menu-item>
+      <a-menu-item key="RootUserList">
+        <router-link :to="{ name: 'RootUserList' }"> User </router-link>
       </a-menu-item>
     </a-sub-menu>
   </a-menu>

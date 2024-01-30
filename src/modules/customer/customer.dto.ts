@@ -7,12 +7,14 @@ export class CustomerGetQuery {
   relation?: {
     customerPayments?: boolean
   }
+
   filter?: {
     isActive?: 1 | 0
     searchText?: string
     debt?: ConditionNumber
     updatedAt?: ConditionDate
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
     debt?: 'ASC' | 'DESC'

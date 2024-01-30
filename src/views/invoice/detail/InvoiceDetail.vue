@@ -439,4 +439,3 @@ const openModalInvoicePreview = () => {
     </div>
   </div>
 </template>
-./preview/invoice-html-content

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterView, useRouter } from 'vue-router'
 import VueAlert from './common/vue-alert/VueAlert.vue'
-import { useUserStore } from './store/user.store'
+import { useUserStore } from './modules/user/user.store'
 
 const userStore = useUserStore()
 const router = useRouter()

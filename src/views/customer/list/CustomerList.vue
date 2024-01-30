@@ -17,6 +17,7 @@ import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -83,8 +84,8 @@ onMounted(async () => {
     if (refreshDB?.length) {
       await startFetchData()
     }
-  } catch (error) {
-    console.log('🚀 ~ onMounted ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 

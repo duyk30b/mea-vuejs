@@ -100,7 +100,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
         <table style="width: 100%">
           <tr>
             <td style="width: 50%">
-              <p>${organizationStore.organizationInfo.organizationName} </p>
+              <p>${organizationStore.organizationInfo.name} </p>
               <p>${organizationStore.organizationInfo.phone} </p>
             </td>
             <td style="width: 50%; text-align:right">Mã hóa đơn: HĐ${invoice.id} </td>

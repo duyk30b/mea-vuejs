@@ -8,7 +8,8 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { VueSelect } from '../../../common/vue-form'
 import { useDistributorStore, type Distributor } from '../../../modules/distributor'
 import { useOrganizationStore } from '../../../store/organization.store'
@@ -78,14 +79,14 @@ onBeforeMount(async () => {
   }
 })
 
-onBeforeMount(async () => {
+onMounted(async () => {
   try {
     const distributorList = await distributorStore.refreshDB()
     if (distributorList?.length) {
       await startFetchData()
     }
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 

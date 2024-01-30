@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeMount, onMounted, ref, watch } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { VueSelect } from '../../../common/vue-form'
 import { useProductStore, type Product } from '../../../modules/product'
 import type { ProductBatch } from '../../../modules/product-batch'
@@ -123,15 +124,13 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    const [productList, productBatchList] = await Promise.all([
-      productStore.refreshDB(),
-      productBatchStore.refreshDB(),
-    ])
+    const productList = await productStore.refreshDB()
+    const productBatchList = await productBatchStore.refreshDB()
     if (productList?.length || productBatchList?.length) {
       await startFetchData()
     }
-  } catch (error) {
-    console.log('🚀 ~ file: CustomerList.vue:78 ~ onBeforeMount ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 

@@ -15,6 +15,7 @@ import ModalSettingDataProcedure from './components/ModalDataProcedure.vue'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
 import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalSettingDataProcedure = ref<InstanceType<typeof ModalSettingDataProcedure>>()
@@ -84,8 +85,8 @@ onMounted(async () => {
     if (procedureList?.length) {
       await startFetchData()
     }
-  } catch (error) {
-    console.log('🚀 ~ onMounted ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 

@@ -17,27 +17,22 @@ export const useProductStore = defineStore('product-store', {
 
   actions: {
     async refreshDB() {
-      try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
-        if (!refreshTime) {
-          refreshTime = { code: 'PRODUCT', time: new Date(0).toISOString() }
-        }
-        const lastTime = new Date(refreshTime.time)
-        const currentTime = new Date()
-        const productList = await ProductApi.list({
-          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
-        })
-        if (productList.length) {
-          await ProductDB.upsertMany(productList)
-        }
-
+      let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
+      if (!refreshTime) {
+        refreshTime = { code: 'PRODUCT', time: new Date(0).toISOString() }
+      }
+      const lastTime = new Date(refreshTime.time)
+      const currentTime = new Date()
+      const productList = await ProductApi.list({
+        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      })
+      if (productList.length) {
+        await ProductDB.upsertMany(productList)
         refreshTime.time = currentTime.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
-
-        return productList
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
+
+      return productList
     },
 
     async pagination(params: ProductPaginationQuery) {

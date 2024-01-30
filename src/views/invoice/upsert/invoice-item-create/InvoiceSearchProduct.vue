@@ -5,6 +5,7 @@ import { Product, useProductStore } from '../../../../modules/product'
 import { ProductBatch, useProductBatchStore } from '../../../../modules/product-batch'
 import { useOrganizationStore } from '../../../../store/organization.store'
 import { timeToText } from '../../../../utils'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{ (e: 'selectProductBatch', value: ProductBatch): void }>()
 
@@ -21,7 +22,12 @@ const product = ref(Product.blank())
 const productBatch = ref(ProductBatch.blank())
 
 onMounted(async () => {
-  await productStore.refreshDB()
+  try {
+    await productStore.refreshDB()
+    await productBatchStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 
 const searchingProduct = async (text: string) => {
@@ -35,6 +41,9 @@ const selectProduct = async (instance?: Product) => {
       filter: {
         productId: p.id,
         isActive: 1,
+        quantity: organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
+          ? undefined
+          : { NOT: 0 },
       },
     })
     p.productBatches.forEach((b) => (b.product = p))

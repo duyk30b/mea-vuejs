@@ -96,7 +96,7 @@ export class Customer {
   }
 
   static fromInstance(instance: Customer): Customer {
-    if (instance?.constructor.name !== '_Customer') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
       throw new Error('Customer.fromInstance error: Instance must be from class Customer')
     }
     return instanceToInstance(instance, {
@@ -111,7 +111,7 @@ export class Customer {
   }
 
   static toPlain(instance: Customer, type: 'CREATE' | 'UPDATE'): Record<string, any> {
-    if (instance?.constructor.name !== '_Customer') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
       throw new Error('Customer.fromInstance error: Instance must be from class Customer')
     }
     return instanceToPlain(instance, {

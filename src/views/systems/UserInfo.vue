@@ -3,27 +3,27 @@ import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
 import { InputDate } from '../../common/vue-form'
-import { Employee, UserService } from '../../modules/employee'
 import { useOrganizationStore } from '../../store/organization.store'
-import { useUserStore } from '../../store/user.store'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
+import { useUserStore } from '../../modules/user/user.store'
+import { MeApi, User } from '../../modules/user'
 
 const organizationStore = useOrganizationStore()
 const { isMobile } = organizationStore
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 const userStore = useUserStore()
-const employee = ref<Employee>(Employee.fromInstance(userStore.userInfo || Employee.blank()))
+const user = ref<User>(User.fromInstance(userStore.userInfo || User.blank()))
 
 onBeforeMount(async () => {
-  employee.value = await UserService.me()
+  user.value = await MeApi.info()
 })
 
-const saveEmployee = async () => {
+const saveUser = async () => {
   try {
-    const employeeData = await UserService.updateInfo(employee.value)
-    employee.value = employeeData
-    userStore.userInfo = Employee.fromInstance(employeeData)
+    const userData = await MeApi.updateInfo(user.value)
+    user.value = userData
+    userStore.userInfo = User.fromInstance(userData)
     message.success('Cập nhật thông tin cá nhân thành công')
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -44,12 +44,12 @@ const saveEmployee = async () => {
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Họ Tên</div>
-        <a-input v-model:value="employee.fullName" class="flex-auto" />
+        <a-input v-model:value="user.fullName" class="flex-auto" />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Tên đăng nhập</div>
-        <a-input disabled :value="employee.username" class="flex-auto" />
+        <a-input disabled :value="user.username" class="flex-auto" />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
@@ -59,7 +59,7 @@ const saveEmployee = async () => {
           <a-button
             style="width: 150px"
             type="primary"
-            @click="modalChangePassword?.openModal(employee)"
+            @click="modalChangePassword?.openModal(user)"
           >
             Đổi mật khẩu
           </a-button>
@@ -70,7 +70,7 @@ const saveEmployee = async () => {
         <div style="width: 100px; flex: none">Ngày sinh</div>
         <div style="flex: 1">
           <InputDate
-            v-model:value="employee.birthday"
+            v-model:value="user.birthday"
             format="DD/MM/YYYY"
             type-parser="number"
             class="w-full"
@@ -81,7 +81,7 @@ const saveEmployee = async () => {
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Giới tính</div>
         <div style="flex: 1">
-          <a-radio-group v-model:value="employee.gender">
+          <a-radio-group v-model:value="user.gender">
             <a-radio :value="1"> Nam </a-radio>
             <a-radio :value="0"> Nữ </a-radio>
           </a-radio-group>
@@ -89,7 +89,7 @@ const saveEmployee = async () => {
       </div>
 
       <div class="my-8 text-center">
-        <a-button type="primary" @click="saveEmployee">
+        <a-button type="primary" @click="saveUser">
           <template #icon>
             <SaveOutlined />
           </template>

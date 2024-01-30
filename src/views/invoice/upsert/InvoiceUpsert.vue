@@ -23,7 +23,7 @@ import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceExpenses from './InvoiceExpenses.vue'
 import InvoiceItemTable from './InvoiceItemTable.vue'
 import InvoiceSurcharges from './InvoiceSurcharges.vue'
-import InvoiceItemCreate from './invoice-item-create/InvoiceItemCreate.vue'
+import InvoiceItemContainer from './invoice-item-create/InvoiceItemContainer.vue'
 import { EInvoiceSave, EInvoiceUpsertMode, invoice } from './invoice-upsert.store'
 import ModalDataInvoice from './modal-setting/ModalDataInvoice.vue'
 import ModalInvoiceUpsertSettingScreen from './modal-setting/ModalInvoiceUpsertSettingScreen.vue'
@@ -104,8 +104,12 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
   }
 }
 onMounted(async () => {
-  window.addEventListener('keydown', handleDocumentKeyup)
-  await customerStore.refreshDB()
+  try {
+    window.addEventListener('keydown', handleDocumentKeyup)
+    await customerStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -183,7 +187,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
         invoice.value.customerId = customerRes.id
 
         AlertStore.add({ type: 'success', message: 'Tạo đơn thành công', time: 500 })
-        productStore.refreshDB() //update product mới nhất luôn
+        await productStore.refreshDB() //update product mới nhất luôn
         break
       }
       case EInvoiceSave.UPDATE_DRAFT: {
@@ -199,8 +203,8 @@ const saveInvoice = async (type: EInvoiceSave) => {
       default:
         break
     }
-  } catch (error) {
-    console.log('🚀 ~ file: InvoiceUpsert.vue:170 ~ saveInvoice ~ error:', error)
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   } finally {
     saveLoading.value = false
   }
@@ -264,7 +268,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex flex-col md:flex-row gap-4">
       <div class="md:w-2/3">
         <div class="bg-white p-4">
-          <InvoiceItemCreate :invoice="invoice" @addInvoiceItem="handleAddInvoiceItem" />
+          <InvoiceItemContainer :invoice="invoice" @addInvoiceItem="handleAddInvoiceItem" />
         </div>
         <div class="bg-white mt-4">
           <InvoiceItemTable />
@@ -340,10 +344,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <td class="cursor-pointer" style="font-size: 16px">
                     <a-popconfirm>
                       <template #cancelButton>
-                        <div />
+                        <div></div>
                       </template>
                       <template #okButton>
-                        <div />
+                        <div></div>
                       </template>
                       <template #title>
                         <div>

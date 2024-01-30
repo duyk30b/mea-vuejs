@@ -80,7 +80,7 @@ export class Distributor {
   }
 
   static fromInstance(instance: Distributor): Distributor {
-    if (instance?.constructor.name !== '_Distributor') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
       throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
     }
     return instanceToInstance(instance, {
@@ -95,7 +95,7 @@ export class Distributor {
   }
 
   static toPlain(instance: Distributor): Record<string, any> {
-    if (instance?.constructor.name !== '_Distributor') {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
       throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
     }
     return instanceToPlain(instance, {

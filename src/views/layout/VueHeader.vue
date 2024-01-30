@@ -3,8 +3,8 @@ import { LogoutOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/ic
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { AxiosLoading } from '../../core/axios.instance'
-import { AuthService } from '../../modules/auth'
-import { useUserStore } from '../../store/user.store'
+import { AuthApi } from '../../modules/auth'
+import { useUserStore } from '../../modules/user/user.store'
 
 const emit = defineEmits(['handleShowDrawer'])
 const emitShowDrawer = () => emit('handleShowDrawer', true)
@@ -24,7 +24,7 @@ watchEffect(() => {
 
 const handleUserAction = async (e: any) => {
   if (e.key === 'logout') {
-    await AuthService.logout()
+    await AuthApi.logout()
   }
 }
 </script>
@@ -128,3 +128,4 @@ const handleUserAction = async (e: any) => {
   }
 }
 </style>
+../../modules/user/user.store

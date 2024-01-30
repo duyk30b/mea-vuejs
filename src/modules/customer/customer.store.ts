@@ -16,27 +16,22 @@ export const useCustomerStore = defineStore('customer-store', {
 
   actions: {
     async refreshDB() {
-      try {
-        let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER')
-        if (!refreshTime) {
-          refreshTime = { code: 'CUSTOMER', time: new Date(0).toISOString() }
-        }
-        const lastTime = new Date(refreshTime.time)
-        const currentTime = new Date()
-        const customerList = await CustomerApi.list({
-          filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
-        })
-        if (customerList.length) {
-          await CustomerDB.upsertMany(customerList)
-        }
-
+      let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER')
+      if (!refreshTime) {
+        refreshTime = { code: 'CUSTOMER', time: new Date(0).toISOString() }
+      }
+      const lastTime = new Date(refreshTime.time)
+      const currentTime = new Date()
+      const customerList = await CustomerApi.list({
+        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      })
+      if (customerList.length) {
+        await CustomerDB.upsertMany(customerList)
         refreshTime.time = currentTime.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
-
-        return customerList
-      } catch (error) {
-        console.log('🚀 ~ file: customer.store.ts:33 ~ refreshDB ~ error:', error)
       }
+
+      return customerList
     },
 
     async pagination(params: CustomerPaginationQuery) {

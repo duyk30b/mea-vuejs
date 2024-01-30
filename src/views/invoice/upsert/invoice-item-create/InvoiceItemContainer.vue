@@ -6,7 +6,7 @@ import { Invoice, InvoiceItem, InvoiceItemType } from '../../../../modules/invoi
 import type { Procedure } from '../../../../modules/procedure'
 import type { ProductBatch } from '../../../../modules/product-batch'
 import { useOrganizationStore } from '../../../../store/organization.store'
-import InvoiceItemCustom from './InvoiceItemCustom.vue'
+import InvoiceItemDetail from './InvoiceItemDetail.vue'
 import InvoiceSearchProcedure from './InvoiceSearchProcedure.vue'
 import InvoiceSearchProduct from './InvoiceSearchProduct.vue'
 import InvoiceSearchProductBatch from './InvoiceSearchProductBatch.vue'
@@ -14,7 +14,7 @@ import InvoiceSearchProductBatch from './InvoiceSearchProductBatch.vue'
 const invoiceSearchProduct = ref<InstanceType<typeof InvoiceSearchProduct>>()
 const invoiceSearchProductBatch = ref<InstanceType<typeof InvoiceSearchProductBatch>>()
 const invoiceSearchProcedure = ref<InstanceType<typeof InvoiceSearchProcedure>>()
-const invoiceItemCustom = ref<InstanceType<typeof InvoiceItemCustom>>()
+const invoiceItemDetail = ref<InstanceType<typeof InvoiceItemDetail>>()
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
@@ -94,7 +94,7 @@ const nextProcessInvoiceItem = (ii: InvoiceItem) => {
   if (!organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
     addInvoiceItem(ii)
   } else {
-    invoiceItemCustom.value?.setInvoiceItem(ii)
+    invoiceItemDetail.value?.setInvoiceItem(ii)
   }
 }
 
@@ -113,7 +113,7 @@ const addInvoiceItem = (ii: InvoiceItem) => {
 
   emit('addInvoiceItem', ii)
 
-  invoiceItemCustom.value?.setInvoiceItem(InvoiceItem.blank())
+  invoiceItemDetail.value?.setInvoiceItem(InvoiceItem.blank())
 
   if (!isMobile) {
     if (tabsKey.value === 'product')
@@ -221,8 +221,8 @@ const handleChangeTabs = (activeKey: any) => {
     v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch"
     class="mt-4"
   >
-    <InvoiceItemCustom
-      ref="invoiceItemCustom"
+    <InvoiceItemDetail
+      ref="invoiceItemDetail"
       :tabsKey="tabsKey"
       @addInvoiceItem="addInvoiceItem"
     />

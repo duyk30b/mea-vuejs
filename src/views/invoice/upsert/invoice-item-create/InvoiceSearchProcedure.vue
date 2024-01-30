@@ -4,6 +4,7 @@ import { InputOptions } from '../../../../common/vue-form'
 import { Procedure, useProcedureStore } from '../../../../modules/procedure'
 import { useOrganizationStore } from '../../../../store/organization.store'
 import ModalProcedureUpsert from '../../../procedure/components/ModalProcedureUpsert.vue'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure): void }>()
 
@@ -19,7 +20,11 @@ const procedure = ref(Procedure.blank())
 const procedureList = ref<Procedure[]>([])
 
 onMounted(async () => {
-  await procedureStore.refreshDB()
+  try {
+    await procedureStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 
 const searchingProcedure = async (text: string) => {
