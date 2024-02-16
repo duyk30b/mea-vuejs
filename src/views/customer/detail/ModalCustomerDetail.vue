@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Customer } from '@/modules/customer'
-import { useOrganizationStore } from '@/store/organization.store'
 import {
   CloseOutlined,
   ContainerOutlined,
@@ -12,20 +9,27 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { Customer } from '../../../modules/customer'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerInvoiceHistory from './CustomerInvoiceHistory.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
 import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -80,21 +84,25 @@ defineExpose({ openModal })
             </template>
             <CustomerInfo :customer="customer" />
           </a-tab-pane>
-          <a-tab-pane key="debts-history">
+          <a-tab-pane
+            v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_READ]"
+            key="debts-history"
+          >
             <template #tab>
               <span> <DollarOutlined />Thanh toán </span>
             </template>
             <div class="flex justify-between items-center">
               <div class="flex flex-wrap">
-                <span class="mr-4"
-                  >Khách hàng: <b>{{ customer.fullName }}</b></span
-                >
-                <span
-                  >Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b></span
-                >
+                <span class="mr-4">
+                  KH: <b>{{ customer.fullName }} </b>
+                </span>
+                <span>
+                  Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b>
+                </span>
               </div>
               <div>
                 <a-button
+                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
                   type="primary"
                   @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
                 >
@@ -107,19 +115,53 @@ defineExpose({ openModal })
             </div>
             <CustomerPaymentHistory ref="customerPaymentHistory" :customer="customer" />
           </a-tab-pane>
-          <a-tab-pane key="invoices-history">
+          <a-tab-pane v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="invoices-history">
             <template #tab>
               <span> <DeploymentUnitOutlined />Hóa Đơn </span>
             </template>
+            <div class="flex justify-between items-center">
+              <div class="flex flex-wrap">
+                <span class="mr-4">
+                  KH: <b>{{ customer.fullName }} </b>
+                </span>
+                <span>
+                  Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b>
+                </span>
+              </div>
+              <div>
+                <a-button
+                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
+                  type="primary"
+                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
+                >
+                  <template #icon>
+                    <PlusOutlined />
+                  </template>
+                  Trả nợ
+                </a-button>
+              </div>
+            </div>
             <CustomerInvoiceHistory :customer="customer" />
           </a-tab-pane>
-          <a-tab-pane key="products-history">
+          <a-tab-pane
+            v-if="
+              permissionIdMap[PermissionId.INVOICE_READ] &&
+              permissionIdMap[PermissionId.PRODUCT_READ]
+            "
+            key="products-history"
+          >
             <template #tab>
               <span> <OneToOneOutlined />Sản phẩm </span>
             </template>
             <CustomerProductHistory :customer="customer" />
           </a-tab-pane>
-          <a-tab-pane key="procedures-history">
+          <a-tab-pane
+            v-if="
+              permissionIdMap[PermissionId.INVOICE_READ] &&
+              permissionIdMap[PermissionId.PROCEDURE_READ]
+            "
+            key="procedures-history"
+          >
             <template #tab>
               <span> <ContainerOutlined />Dịch vụ </span>
             </template>
@@ -154,3 +196,4 @@ defineExpose({ openModal })
   }
 }
 </style>
+

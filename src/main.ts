@@ -1,10 +1,10 @@
-import '@/assets/main.scss'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import { createPinia } from 'pinia'
 import 'reflect-metadata'
 import { createApp } from 'vue'
 import App from './App.vue'
+import './assets/main.scss'
 import { Router } from './router/router'
 import { registerDirective } from './utils/vue-config/directive'
 /* import the fontawesome core */
@@ -20,9 +20,21 @@ import {
   faSort,
   faSortDown,
   faSortUp,
+  faMobileScreenButton,
+  faDesktop,
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faSort, faSortDown, faSortUp, faHospitalUser, faAddressCard, faPlus, faMinus)
+library.add(
+  faSort,
+  faSortDown,
+  faSortUp,
+  faHospitalUser,
+  faAddressCard,
+  faPlus,
+  faMinus,
+  faMobileScreenButton,
+  faDesktop
+)
 
 const start = async () => {
   const app = createApp(App)

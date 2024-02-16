@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ArrivalService, type Arrival } from '@/modules/arrival'
 import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref, watch } from 'vue'
+import { ArrivalService, type Arrival } from '../../modules/arrival'
 import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()

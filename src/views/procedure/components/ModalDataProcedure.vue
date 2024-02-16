@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { OrganizationService } from '../../../modules/organization'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
 const GROUP = ref<typeof store.PROCEDURE_GROUP>(JSON.parse(JSON.stringify(store.PROCEDURE_GROUP)))
 
 const showModal = ref(false)
@@ -31,7 +31,7 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PROCEDURE_GROUP, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PROCEDURE_GROUP, data)
       store.PROCEDURE_GROUP = JSON.parse(data)
     }
 

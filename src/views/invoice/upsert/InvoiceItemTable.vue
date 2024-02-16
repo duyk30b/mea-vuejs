@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { InputMoney, InputNumber } from '@/common/vue-form'
-import { DiscountType } from '@/modules/enum'
-import { InvoiceItemType } from '@/modules/invoice'
-import type { Product } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { InputMoney, InputNumber } from '../../../common/vue-form'
+import { DiscountType } from '../../../modules/enum'
+import { InvoiceItemType } from '../../../modules/invoice-item/invoice-item.model'
+import type { Procedure } from '../../../modules/procedure'
+import type { Product } from '../../../modules/product'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { invoice } from './invoice-upsert.store'
-import type { Procedure } from '@/modules/procedure'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const handleChangeUnitDiscountMoney = (data: number, index: number) => {
   const discountMoney = data / invoice.value.invoiceItems![index].unit.rate
@@ -92,7 +92,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.productBatch!.product!.brandName }}
                   <a
-                    v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProductDetail(invoiceItem.productBatch?.product)"
                   >
@@ -100,22 +100,22 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   </a>
                 </div>
                 <div
-                  v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
                   style="font-size: 0.8rem"
                   class="text-justify"
                 >
                   {{ invoiceItem.productBatch!.product!.substance }}
                 </div>
                 <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-                  <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
+                  <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
                     Lô: {{ invoiceItem.productBatch!.batch }}
                   </div>
-                  <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
+                  <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
                     HSD: {{ timeToText(invoiceItem.productBatch!.expiryDate, 'DD/MM/YY') }}
                   </div>
                 </div>
                 <div
-                  v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
                   style="font-size: 0.8rem"
                   class="flex gap-2"
                   contenteditable="true"
@@ -128,7 +128,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.procedure!.name }}
                   <a
-                    v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProcedureDetail(invoiceItem.procedure)"
                   >
@@ -137,16 +137,16 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 </div>
               </div>
               <div class="flex gap-2" style="font-size: 0.8rem">
-                <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
+                <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
                   NY:
                   <span class="font-medium">
                     {{ formatMoney(invoiceItem.unitExpectedPrice) }}
                   </span>
-                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">
+                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">
                     /{{ invoiceItem.unit.name }}
                   </span>
                 </div>
-                <div v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
+                <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
                   - CK:
                   <a-popconfirm>
                     <template #cancelButton>
@@ -199,7 +199,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   <span class="font-medium">
                     {{ formatMoney(invoiceItem.unitActualPrice) }}
                   </span>
-                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">
+                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">
                     /{{ invoiceItem.unit.name }}
                   </span>
                 </div>
@@ -278,8 +278,8 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <th>#</th>
             <th>Tên</th>
             <th style="width: 120px">Số lượng</th>
-            <th v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đơn vị</th>
-            <th v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
+            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đơn vị</th>
+            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
               Chiết khấu
             </th>
             <th>Đơn giá</th>
@@ -300,7 +300,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 <div style="font-weight: 500" class="text-justify">
                   {{ invoiceItem.productBatch!.product!.brandName }}
                   <a
-                    v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProductDetail(invoiceItem.productBatch?.product)"
                   >
@@ -308,22 +308,22 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   </a>
                 </div>
                 <div
-                  v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
                   class="text-justify"
                   style="font-size: 0.8rem"
                 >
                   {{ invoiceItem.productBatch!.product!.substance }}
                 </div>
                 <div style="font-size: 0.8rem" class="flex gap-2">
-                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
+                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
                     Lô {{ invoiceItem.productBatch!.batch }}
                   </span>
-                  <span v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
+                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
                     - HSD {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
                   </span>
                 </div>
                 <div
-                  v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
                   contenteditable="true"
                   style="font-size: 0.8rem"
                   @input="(e) => handleChangeHintUsage((e.target as HTMLElement)?.innerText, index)"
@@ -335,7 +335,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 <div style="font-weight: 500">
                   {{ invoiceItem.procedure!.name }}
                   <a
-                    v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProcedureDetail(invoiceItem.procedure)"
                   >
@@ -366,13 +366,13 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
               </div>
             </td>
             <td
-              v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
+              v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
               class="text-center"
             >
               {{ invoiceItem.unit.name || 'Lần' }}
             </td>
             <td
-              v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
+              v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
               class="text-center"
             >
               <a-popconfirm>
@@ -425,7 +425,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
             <td style="width: 120px" class="text-center">
               <div
-                v-if="!organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice"
+                v-if="!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice"
               >
                 <div v-if="invoiceItem.discountMoney" class="text-xs italic text-red-500">
                   <del>{{ formatMoney(invoiceItem.unitExpectedPrice) }}</del>

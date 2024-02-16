@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { OrganizationService } from '../../../modules/organization'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
 const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_LIST>(
   JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_LIST))
 )
@@ -28,10 +28,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      OrganizationSettingsType.SCREEN_DISTRIBUTOR_LIST,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_DISTRIBUTOR_LIST, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_DISTRIBUTOR_LIST = JSON.parse(settingData)
 

@@ -13,7 +13,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { convertViToEn } from '@/utils/helpers/string.helper'
+import { convertViToEn } from '../../utils/helpers/string.helper'
 import InputOptions from './InputOptions.vue'
 
 export default {

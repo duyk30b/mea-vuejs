@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { DTimer } from '@/utils'
 import { onMounted, ref, watch } from 'vue'
+import { DTimer } from '../../utils'
 
 const props = withDefaults(
   defineProps<{ value?: string | number | Date; format?: string; typeParser?: string }>(),

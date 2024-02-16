@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Distributor } from '@/modules/distributor'
-import { useOrganizationStore } from '@/store/organization.store'
 import {
   CloseOutlined,
   DeploymentUnitOutlined,
@@ -10,18 +7,25 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { Distributor } from '../../../modules/distributor'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
 import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }>()
 
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
 const distributorPaymentHistory = ref<InstanceType<typeof DistributorPaymentHistory>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -76,7 +80,10 @@ defineExpose({ openModal })
             </template>
             <DistributorInfo :distributor="distributor" />
           </a-tab-pane>
-          <a-tab-pane key="debts-history">
+          <a-tab-pane
+            v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
+            key="debts-history"
+          >
             <template #tab>
               <span> <DollarOutlined />Thanh toán </span>
             </template>
@@ -87,6 +94,10 @@ defineExpose({ openModal })
               </div>
               <div>
                 <a-button
+                  v-if="
+                    permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                    distributor.debt != 0
+                  "
                   type="primary"
                   @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
                 >
@@ -99,7 +110,7 @@ defineExpose({ openModal })
             </div>
             <DistributorPaymentHistory ref="distributorPaymentHistory" :distributor="distributor" />
           </a-tab-pane>
-          <a-tab-pane key="receipts-history">
+          <a-tab-pane v-if="permissionIdMap[PermissionId.RECEIPT_READ]" key="receipts-history">
             <template #tab>
               <span> <DeploymentUnitOutlined />Lịch sử nhập hàng </span>
             </template>

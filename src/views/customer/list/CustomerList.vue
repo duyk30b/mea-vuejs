@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { CustomerPayment, useCustomerStore, type Customer } from '@/modules/customer'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone, timeToText } from '@/utils'
 import {
   CheckCircleOutlined,
   ContactsOutlined,
@@ -11,12 +8,18 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
+import { VueSelect } from '../../../common/vue-form'
+import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { formatPhone, timeToText } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
-import { VueSelect } from '@/common/vue-form'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -24,12 +27,14 @@ const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerList
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+const { formatMoney, isMobile } = screenStore
 
 const customerList = ref<Customer[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 10)
@@ -43,9 +48,7 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
-
-    const response = customerStore.pagination({
+    const response = await customerStore.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -63,16 +66,31 @@ const startFetchData = async () => {
 
     customerList.value = response.data
     total.value = response.total
-
-    loadingComponent.value = false
   } catch (error) {
     console.log('🚀 ~ file: CustomerList.vue:59 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  await customerStore.fetchAll()
-  await startFetchData()
+  try {
+    dataLoading.value = true
+    await startFetchData()
+  } catch (error) {
+    console.log('🚀 ~ onBeforeMount ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
+})
+
+onMounted(async () => {
+  try {
+    const refreshDB = await customerStore.refreshDB() // reload nếu có dữ liệu mới nhất
+    if (refreshDB?.length) {
+      await startFetchData()
+    }
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 
 const startSearch = async () => {
@@ -116,7 +134,10 @@ const updateCustomer = async (data: Customer) => {
   await startFetchData()
 }
 
-const handleModalCustomerUpsertSuccess = async (data: Customer, type: 'CREATE' | 'UPDATE') => {
+const handleModalCustomerUpsertSuccess = async (
+  data: Customer,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+) => {
   await startFetchData()
 }
 
@@ -138,12 +159,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     ref="modalCustomerPayDebt"
     @success="handleModalDistributorPayDebtSuccess"
   />
-  <ModalCustomerListSettingScreen ref="modalCustomerListSettingScreen" />
+  <ModalCustomerListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalCustomerListSettingScreen"
+  />
 
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block"><ContactsOutlined /> Danh sách khách hàng</div>
-      <a-button type="primary" @click="modalCustomerUpsert?.openModal()">
+      <a-button
+        v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+        type="primary"
+        @click="modalCustomerUpsert?.openModal()"
+      >
         <template #icon>
           <PlusOutlined />
         </template>
@@ -151,7 +179,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -200,7 +228,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <thead>
           <tr>
             <th>Tên KH</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -219,54 +247,70 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr
             v-for="(customer, index) in customerList"
             :key="index"
-            @dblclick="modalCustomerUpsert?.openModal(customer)"
+            @dblclick="
+              permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+                modalCustomerUpsert?.openModal(customer)
+            "
           >
             <td style="border-right: none">
               <div class="font-medium text-justify">
                 {{ customer.fullName }}
                 <a
-                  v-if="organizationStore.SCREEN_CUSTOMER_LIST.detail"
+                  v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
                   @click="modalCustomerDetail?.openModal(customer)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div
-                v-if="organizationStore.SCREEN_CUSTOMER_LIST.address"
-                class="text-xs text-justify"
-              >
+              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
                 {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
                 {{ customer.addressWard }}
               </div>
               <div class="flex gap-4 text-xs">
-                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
+                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
                   {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
+                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
                   <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
                 </div>
               </div>
-              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
+              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
                 {{ customer.note }}
               </div>
             </td>
             <td
-              v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone"
+              v-if="screenStore.SCREEN_CUSTOMER_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none"
             >
               <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
               <div>{{ formatMoney(customer.debt) }}</div>
-              <div v-if="customer.debt != 0">
+              <div
+                v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0"
+              >
                 <a-button
                   type="default"
                   size="small"
@@ -327,10 +371,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -347,11 +391,32 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
-            <th v-if="organizationStore.SCREEN_CUSTOMER_LIST.action">Sửa</th>
+            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
+            <th
+              v-if="
+                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+                screenStore.SCREEN_CUSTOMER_LIST.action
+              "
+            >
+              Sửa
+            </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
@@ -361,36 +426,38 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ customer.fullName }}
                 <a
-                  v-if="organizationStore.SCREEN_CUSTOMER_LIST.detail"
+                  v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
                   @click="modalCustomerDetail?.openModal(customer)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="organizationStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
+              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
                 {{ customer.note }}
               </div>
             </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
+            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
             </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
+            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
+            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
               {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
             </td>
 
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.address">
+            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.address">
               {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
               {{ customer.addressWard }}
             </td>
             <td class="text-right">
-              <div class="flex justify-between">
+              <div class="flex justify-between gap-1 items-center">
                 <div>
                   <a-button
-                    v-if="customer.debt != 0"
+                    v-if="
+                      permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0
+                    "
                     type="default"
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
@@ -403,7 +470,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
               </div>
             </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
+            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
               <a-tag v-if="customer.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -417,7 +484,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 Inactive
               </a-tag>
             </td>
-            <td v-if="organizationStore.SCREEN_CUSTOMER_LIST.action" class="text-center">
+            <td
+              v-if="
+                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+                screenStore.SCREEN_CUSTOMER_LIST.action
+              "
+              class="text-center"
+            >
               <a
                 style="color: #eca52b"
                 class="text-xl"

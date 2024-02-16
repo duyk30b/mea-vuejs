@@ -53,10 +53,10 @@ const setSideCollapsed = (value: boolean) => {
           </a-breadcrumb-item>
           <a-breadcrumb-item>{{ matchedRouter.slice(-1)[0]?.meta.breadcrumb }}</a-breadcrumb-item>
         </a-breadcrumb> -->
-          <slot></slot>>
+          <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333"><strong>MEA-v3.0</strong>©2023 - Hotline: 0376.899.866</span>
+          <span style="color: #333"><strong>MEA-v3.1</strong>©2023 - Hotline: 0376.899.866</span>
         </a-layout-footer>
       </a-layout>
     </a-layout>

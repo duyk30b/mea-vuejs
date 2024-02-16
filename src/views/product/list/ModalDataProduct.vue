@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import { OrganizationService } from '../../../modules/organization'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
 const GROUP = ref<typeof store.PRODUCT_GROUP>(JSON.parse(JSON.stringify(store.PRODUCT_GROUP)))
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
@@ -39,25 +39,25 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PRODUCT_GROUP, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_GROUP, data)
       store.PRODUCT_GROUP = JSON.parse(data)
     }
     if (activeTab.value === '2') {
       const data = JSON.stringify(UNIT.value.filter((i) => !!i))
       UNIT.value = JSON.parse(data)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PRODUCT_UNIT, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_UNIT, data)
       store.PRODUCT_UNIT = JSON.parse(data)
     }
     if (activeTab.value === '3') {
       const data = JSON.stringify(ROUTE.value.filter((i) => !!i))
       ROUTE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PRODUCT_ROUTE, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_ROUTE, data)
       store.PRODUCT_ROUTE = JSON.parse(data)
     }
     if (activeTab.value === '4') {
       const data = JSON.stringify(HINT_USAGE.value.filter((i) => !!i))
       HINT_USAGE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(OrganizationSettingsType.PRODUCT_HINT_USAGE, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_HINT_USAGE, data)
       store.PRODUCT_HINT_USAGE = JSON.parse(data)
     }
 

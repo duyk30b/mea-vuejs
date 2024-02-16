@@ -1,11 +1,6 @@
-import {
-  Expose,
-  Transform,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 
 export class Procedure extends BaseModel {
   @Expose()
@@ -21,19 +16,45 @@ export class Procedure extends BaseModel {
   consumableHint: string // Gợi ý vậy tư tiêu hao
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
 
-  static blank(): Procedure {
-    const instance = Procedure.fromInstance(new Procedure())
-    return instance
+  @Expose({ groups: [FROM_PLAIN] })
+  createdAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
+
+  static init() {
+    const ins = new Procedure()
+    ins.id = 0
+    ins.price = 0
+    ins.isActive = 1
+    return ins
+  }
+
+  static blank() {
+    const ins = Procedure.init()
+    return ins
+  }
+
+  static fromObject(object: Partial<Procedure>) {
+    const ins = new Procedure()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Procedure>[]): Procedure[] {
+    return objects.map((i) => Procedure.fromObject(i))
   }
 
   static fromPlain(plain: Record<string, any>): Procedure {
     return plainToInstance(Procedure, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -41,19 +62,28 @@ export class Procedure extends BaseModel {
     return plainToInstance(Procedure, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
   static fromInstance(instance: Procedure): Procedure {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
+      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
-  static toPlain(instance: Procedure, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: Procedure,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
+      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

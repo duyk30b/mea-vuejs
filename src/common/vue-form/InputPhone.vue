@@ -88,6 +88,7 @@ const handleInput = (e: Event) => {
     ref="inputPhone"
     type="text"
     :placeholder="props.format"
+    inputmode="tel"
     @input="handleInput"
     @change="handleChange"
   />

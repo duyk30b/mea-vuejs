@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Customer } from '@/modules/customer'
-import { InvoiceItem, InvoiceItemService, InvoiceItemType } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone, timeToText } from '@/utils'
-import InvoiceStatusTag from '@/views/invoice/InvoiceStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Customer } from '../../../modules/customer'
+import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
+import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { formatPhone, timeToText } from '../../../utils'
+import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -13,8 +14,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const invoiceItems = ref<InvoiceItem[]>([])
 const page = ref(1)
@@ -23,7 +24,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const data = await InvoiceItemService.pagination({
+    const { data, meta } = await InvoiceItemApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -36,8 +37,8 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    invoiceItems.value = data.data
-    total.value = data.total
+    invoiceItems.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
   }

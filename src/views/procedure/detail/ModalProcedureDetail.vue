@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Procedure } from '@/modules/procedure'
-import { DeploymentUnitOutlined, DiffOutlined, CloseOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { Procedure } from '../../../modules/procedure'
 import ProcedureInfo from './ProcedureInfo.vue'
 import ProcedureInvoice from './ProcedureInvoice.vue'
-import VueModal from '@/common/VueModal.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 

@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { InputDate, InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, ProductBatchService, useProductStore } from '@/modules/product'
-import { ReceiptItem } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { Product, useProductStore } from '../../../modules/product'
+import { ProductBatch, useProductBatchStore } from '../../../modules/product-batch'
+import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
@@ -22,8 +26,11 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
 const productStore = useProductStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const productBatchStore = useProductBatchStore()
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const product = ref<Product>(Product.blank())
 const productList = ref<Product[]>([])
@@ -32,16 +39,13 @@ const productBatch = ref<ProductBatch>(ProductBatch.blank())
 const receiptItem = ref<ReceiptItem>(ReceiptItem.blank())
 
 onMounted(async () => {
-  window.addEventListener('keydown', handleDocumentKeyup)
-  await productStore.fetchAll({
-    relation: { productBatches: true },
-    filter: {
-      productBatch: {
-        isActive: 1,
-        // quantity: ['!=', 0]
-      },
-    },
-  })
+  try {
+    window.addEventListener('keydown', handleDocumentKeyup)
+    await productStore.refreshDB()
+    await productBatchStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
@@ -51,39 +55,33 @@ const searchingProduct = async (text: string) => {
   product.value.id = 0
   product.value.brandName = text
   receiptItem.value = ReceiptItem.blank()
-  if (text) {
-    productList.value = productStore.search(text)
-  } else {
-    productList.value = []
-  }
+  productList.value = await productStore.search(text)
 }
 
-const selectProduct = async (data?: Product) => {
-  if (data) {
-    const p = Product.fromInstance(data)
-    p.productBatches = data.productBatches.map((i) => {
-      const b = ProductBatch.fromInstance(i)
-      b.product = p
-      return b
-    })
-    // p.productBatches = await ProductBatchService.list({
-    //   filter: {
-    //     productId: p.id,
-    //     isActive: 1,
-    //     // quantity: ['!=', 0],
-    //     // expiryDate: ['>', new Date().toISOString()],
-    //   },
-    // })
+const selectProduct = async (instance?: Product) => {
+  if (instance) {
+    const productIns = Product.fromInstance(instance)
 
-    product.value = p
+    productIns.productBatches = await productBatchStore.list({
+      filter: {
+        productId: productIns.id,
+        isActive: 1,
+        // quantity: ['!=', 0],
+        // expiryDate: ['>', new Date().toISOString()],
+      },
+      sort: { expiryDate: 'DESC' },
+    })
+    productIns.productBatches.forEach((i) => (i.product = productIns))
+
+    product.value = productIns
 
     const newBatch = ProductBatch.blank()
-    newBatch.productId = p.id
-    newBatch.product = p
+    newBatch.productId = productIns.id
+    newBatch.product = productIns
     product.value.productBatches.push(newBatch)
 
     // const defaultBatch = p.productBatches.find((i) => !i.batch && !i.expiryDate)
-    const defaultBatch = p.productBatches[0]
+    const defaultBatch = productIns.productBatches[0]
     selectProductBatch(defaultBatch!)
 
     productList.value = []
@@ -117,8 +115,7 @@ const addReceiptItem = async () => {
   }
 
   if (!productBatch.value.id) {
-    const batch = await ProductBatchService.createOne(productBatch.value)
-    productStore.addBatch(ProductBatch.fromPlain(batch))
+    const batch = await productBatchStore.createOne(productBatch.value)
     batch.product = product.value
     productBatch.value = batch
     receiptItem.value.productBatchId = batch.id
@@ -143,7 +140,14 @@ const addReceiptItem = async () => {
     <div>
       <div class="flex justify-between">
         <span>Tên sản phẩm</span>
-        <a @click="modalProductUpsert?.openModal()">Thêm sản phẩm mới</a>
+        <span>
+          <a
+            v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
+            @click="modalProductUpsert?.openModal()"
+          >
+            Thêm sản phẩm mới
+          </a>
+        </span>
       </div>
       <div style="height: 40px">
         <InputOptions
@@ -180,7 +184,7 @@ const addReceiptItem = async () => {
                 : `Lô: ${i.batch} ${timeToText(i.expiryDate, 'DD/MM/YYYY')}` +
                   ` - Tồn: ${i.unitQuantity} ${product.unitName}` +
                   ` - Nhập: ${formatMoney(i.unitCostPrice)}` +
-                  (organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice
+                  (screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice
                     ? ` - Sỉ: ${formatMoney(i.unitWholesalePrice)}`
                     : '') +
                   ` - Lẻ: ${formatMoney(i.unitRetailPrice)}`,
@@ -196,7 +200,7 @@ const addReceiptItem = async () => {
 
     <div class="mt-2 flex flex-wrap gap-4">
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -204,7 +208,7 @@ const addReceiptItem = async () => {
         <a-input v-model:value="productBatch.batch" class="w-full" :disabled="!!productBatch.id" />
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.expiryDate"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.expiryDate"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -265,7 +269,7 @@ const addReceiptItem = async () => {
         </div>
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -288,7 +292,7 @@ const addReceiptItem = async () => {
         </div>
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -325,3 +329,4 @@ const addReceiptItem = async () => {
 </template>
 
 <style lang="scss"></style>
+

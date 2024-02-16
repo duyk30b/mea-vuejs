@@ -1,5 +1,5 @@
-import { randomId } from '@/utils'
 import { reactive } from 'vue'
+import { randomId } from '../../utils'
 
 export interface IAlert {
   type: 'success' | 'warning' | 'error'
@@ -39,4 +39,12 @@ const remove = (key: string) => {
   delete data[key]
 }
 
-export const AlertStore = { data, add, remove }
+const addError = (message: string, time?: number) => {
+  add({ type: 'error', message, time })
+}
+
+const addSuccess = (message: string, time?: number) => {
+  add({ type: 'success', message, time })
+}
+
+export const AlertStore = { data, add, addError, addSuccess, remove }

@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
+import { useScreenStore } from '../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../modules/_me/store.variable'
+import { OrganizationService } from '../../modules/organization'
 
-const organizationStore = useOrganizationStore()
+const screenStore = useScreenStore()
 
-const settingDisplay = ref<typeof organizationStore.SYSTEM_SETTING>(
-  JSON.parse(JSON.stringify(organizationStore.SYSTEM_SETTING))
+const settingDisplay = ref<typeof screenStore.SYSTEM_SETTING>(
+  JSON.parse(JSON.stringify(screenStore.SYSTEM_SETTING))
 )
 
-const unsubscribe = organizationStore.$subscribe((mutation, state) => {
-  settingDisplay.value = JSON.parse(JSON.stringify(organizationStore.SYSTEM_SETTING))
+const unsubscribe = screenStore.$subscribe((mutation, state) => {
+  settingDisplay.value = JSON.parse(JSON.stringify(screenStore.SYSTEM_SETTING))
 })
 
 onUnmounted(() => unsubscribe())
@@ -24,9 +24,9 @@ const saveSystemSetting = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(OrganizationSettingsType.SYSTEM_SETTING, settingData)
+    await OrganizationService.saveSettings(ScreenSettingKey.SYSTEM_SETTING, settingData)
     message.success('Cập nhật cài đặt thành công')
-    organizationStore.SYSTEM_SETTING = JSON.parse(settingData)
+    screenStore.SYSTEM_SETTING = JSON.parse(settingData)
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
   } finally {
@@ -80,3 +80,4 @@ const saveSystemSetting = async () => {
     </div>
   </div>
 </template>
+../../modules/_me/organization.store../../store/store.variable

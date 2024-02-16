@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { AxiosLoading } from '@/core/axios.instance'
-import { AuthService } from '@/modules/auth'
-import { useUserStore } from '@/store/user.store'
 import { LogoutOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
+import { AxiosLoading } from '../../core/axios.instance'
+import { useMeStore } from '../../modules/_me/me.store'
+import { AuthService } from '../../modules/auth/auth.service'
 
 const emit = defineEmits(['handleShowDrawer'])
 const emitShowDrawer = () => emit('handleShowDrawer', true)
 
-const userStore = useUserStore()
+const meStore = useMeStore()
 const route = useRoute()
 
 const routeTitle = ref<string>('')
@@ -48,7 +48,7 @@ const handleUserAction = async (e: any) => {
       <a-dropdown trigger="click">
         <a-button>
           <UserOutlined />
-          {{ userStore?.userInfo?.fullName }}
+          {{ meStore?.user?.fullName }}
         </a-button>
         <template #overlay>
           <a-menu @click="handleUserAction">
@@ -128,3 +128,4 @@ const handleUserAction = async (e: any) => {
   }
 }
 </style>
+

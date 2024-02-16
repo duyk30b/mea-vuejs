@@ -1,9 +1,11 @@
-import { useUserStore } from '@/store/user.store'
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
+import { useMeStore } from '../modules/_me/me.store'
+import { AuthService } from '../modules/auth/auth.service'
 
 enum AuthLevel {
-  GUEST = 'guest',
-  USER = 'user',
+  GUEST = 'GUEST',
+  USER = 'USER',
+  ROOT = 'ROOT',
 }
 
 const Router = createRouter({
@@ -179,6 +181,42 @@ const Router = createRouter({
           ],
         },
         {
+          path: 'account',
+          name: 'Account',
+          children: [
+            {
+              path: 'user',
+              meta: { title: 'Nhân viên' },
+              name: 'User',
+              component: () => import('../views/user/UserList.vue'),
+            },
+            {
+              path: 'role',
+              name: 'Role',
+              redirect: () => ({ name: 'RoleList' }),
+              children: [
+                {
+                  path: 'list',
+                  name: 'RoleList',
+                  component: () => import('../views/role/RoleList.vue'),
+                  meta: { title: 'Vai trò' },
+                },
+                {
+                  path: 'upsert/:id?',
+                  name: 'RoleUpsert',
+                  component: () => import('../views/role/RoleUpsert.vue'),
+                  meta: {
+                    title: (route: RouteLocationNormalizedLoaded) => {
+                      if (route.query?.mode === 'UPDATE') return 'Cập nhật vai trò'
+                      return 'Tạo mới vai trò'
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
           path: 'systems',
           name: 'Systems',
           children: [
@@ -189,9 +227,9 @@ const Router = createRouter({
               meta: { title: 'Hệ thống' },
             },
             {
-              path: 'employee-info',
-              name: 'EmployeeInfo',
-              component: () => import('../views/systems/EmployeeInfo.vue'),
+              path: 'user-info',
+              name: 'UserInfo',
+              component: () => import('../views/systems/UserInfo.vue'),
               meta: { title: 'Hệ thống' },
             },
             {
@@ -199,6 +237,52 @@ const Router = createRouter({
               name: 'SystemSetting',
               component: () => import('../views/systems/SystemSetting.vue'),
               meta: { title: 'Hệ thống' },
+            },
+          ],
+        },
+        {
+          path: '/root',
+          name: 'ROOT',
+          meta: { auth: AuthLevel.ROOT },
+          children: [
+            {
+              path: 'organization',
+              name: 'RootOrganization',
+              redirect: () => ({ name: 'RootOrganizationList' }),
+              children: [
+                {
+                  path: 'list',
+                  name: 'RootOrganizationList',
+                  component: () => import('../views/root/RootOrganizationList.vue'),
+                  meta: { title: 'Organization' },
+                },
+              ],
+            },
+            {
+              path: 'user',
+              name: 'RootUser',
+              redirect: () => ({ name: 'RootUserList' }),
+              children: [
+                {
+                  path: 'list',
+                  name: 'RootUserList',
+                  component: () => import('../views/root/RootUserList.vue'),
+                  meta: { title: 'User' },
+                },
+              ],
+            },
+            {
+              path: 'permission',
+              name: 'RootPermission',
+              redirect: () => ({ name: 'RootPermissionList' }),
+              children: [
+                {
+                  path: 'list',
+                  name: 'RootPermissionList',
+                  component: () => import('../views/root/RootPermissionList.vue'),
+                  meta: { title: 'Permission' },
+                },
+              ],
             },
           ],
         },
@@ -235,13 +319,19 @@ const Router = createRouter({
 })
 
 Router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
+  const meStore = useMeStore()
 
-  if (to.meta.auth === AuthLevel.USER && !userStore.userInfo) {
+  // if (to.meta.auth === AuthLevel.ROOT && meStore.user?.oid !== 0) {
+  //   AuthService.logout()
+  //   return next({ name: 'Login' })
+  // }
+
+  if (to.meta.auth === AuthLevel.USER && !meStore.user) {
+    AuthService.logout()
     return next({ name: 'Login' })
   }
 
-  if (to.meta.auth === AuthLevel.GUEST && userStore.userInfo) {
+  if (to.meta.auth === AuthLevel.GUEST && meStore.user) {
     return next({ name: 'AppHome' })
   }
 

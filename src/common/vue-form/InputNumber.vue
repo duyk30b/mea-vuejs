@@ -45,10 +45,10 @@ const handleFocus = (e: Event) => {
         ref="inputMoney"
         :style="{ textAlign }"
         :value="value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''"
-        type="tel"
         :placeholder="placeholder || '0'"
         :disabled="disabled"
         :required="required"
+        inputmode="decimal"
         @input="handleInput"
         @focus="handleFocus"
       />

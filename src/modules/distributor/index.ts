@@ -1,5 +1,4 @@
-export * from './distributor-payment.model'
-export * from './distributor-payment.service'
+export * from './distributor.api'
+export * from './distributor.dto'
 export * from './distributor.model'
-export * from './distributor.service'
 export * from './distributor.store'

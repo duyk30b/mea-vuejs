@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Invoice } from '@/modules/invoice'
 import { DownloadOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
+import type { Invoice } from '../../../../modules/invoice'
 import { invoiceHtmlContent } from './invoice-html-content'
 
 const showModal = ref(false)

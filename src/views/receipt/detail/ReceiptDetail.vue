@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import type { Distributor } from '@/modules/distributor'
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   AuditOutlined,
+  CopyOutlined,
   ExceptionOutlined,
   ExclamationCircleOutlined,
   FileDoneOutlined,
@@ -14,17 +10,23 @@ import {
   MoreOutlined,
   PlusOutlined,
   SettingOutlined,
-  CopyOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import type { Distributor } from '../../../modules/distributor'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
+import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.vue'
 import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
-import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -33,15 +35,18 @@ const modalReceiptPayment = ref<InstanceType<typeof ModalReceiptPayment>>()
 const route = useRoute()
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+
 const saveLoading = ref(false)
 const receipt = ref<Receipt>(Receipt.blank())
 
 const loadingProcess = ref(false)
 
 const startFetchData = async (receiptId: number) => {
-  receipt.value = await ReceiptService.detail(receiptId, {
+  receipt.value = await ReceiptApi.detail(receiptId, {
     relation: {
       distributor: true,
       receiptItems: true,
@@ -76,7 +81,7 @@ const startCopy = () => {
 const destroyDraft = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptService.destroyDraft(receipt.value.id!)
+    await ReceiptApi.destroyDraft(receipt.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'ReceiptList' })
   } catch (error) {
@@ -89,7 +94,7 @@ const destroyDraft = async () => {
 const startRefund = async () => {
   try {
     loadingProcess.value = true
-    const { receiptId } = await ReceiptService.startRefund(receipt.value.id!)
+    const { receiptId } = await ReceiptApi.startRefund(receipt.value.id!)
     await startFetchData(receiptId)
     AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {
@@ -102,7 +107,7 @@ const startRefund = async () => {
 const softDeleteRefund = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptService.softDeleteRefund(receipt.value.id!)
+    await ReceiptApi.softDeleteRefund(receipt.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'ReceiptList' })
   } catch (error) {
@@ -115,7 +120,7 @@ const softDeleteRefund = async () => {
 const startShipAndPayment = async (money: number) => {
   try {
     loadingProcess.value = true
-    await ReceiptService.startShipAndPayment(receipt.value.id!, money)
+    await ReceiptApi.startShipAndPayment(receipt.value.id!, money)
     await startFetchData(receipt.value.id)
     AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
   } catch (error: any) {
@@ -197,7 +202,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
 </script>
 
 <template>
-  <ModalReceiptDetailSettingScreen ref="modalReceiptDetailSettingScreen" />
+  <ModalReceiptDetailSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalReceiptDetailSettingScreen"
+  />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptPayment
     ref="modalReceiptPayment"
@@ -210,6 +218,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <AuditOutlined /> Thông tin phiếu nhập hàng
       <span v-if="receipt.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
       <a-button
+        v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="primary"
         @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
       >
@@ -220,7 +229,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -271,18 +280,28 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
   <div class="page-main">
     <div class="px-4 pt-2 flex justify-end gap-2">
-      <a-button class="ml-auto" type="default" @click="startCopy">
+      <a-button
+        v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
+        class="ml-auto"
+        type="default"
+        @click="startCopy"
+      >
         <template #icon>
           <CopyOutlined />
         </template>
         Copy phiếu
       </a-button>
 
-      <template v-if="receipt.status !== ReceiptStatus.Refund">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT] &&
+          receipt.status !== ReceiptStatus.Refund
+        "
+      >
         <a-button
           v-if="
             receipt.status === ReceiptStatus.Draft ||
-            (organizationStore.SCREEN_RECEIPT_DETAIL.function.forceEdit &&
+            (screenStore.SCREEN_RECEIPT_DETAIL.function.forceEdit &&
               [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status))
           "
           type="primary"
@@ -300,6 +319,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
+                permissionIdMap[PermissionId.RECEIPT_REFUND] &&
                 [
                   ReceiptStatus.Success,
                   ReceiptStatus.Debt,
@@ -311,7 +331,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
               <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
             </a-menu-item>
             <a-menu-item
-              v-if="[ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)"
+              v-if="
+                permissionIdMap[PermissionId.RECEIPT_DELETE] &&
+                [ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)
+              "
               key="DELETE"
             >
               <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Xóa phiếu </span>
@@ -334,9 +357,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
     </div>
 
     <div class="flex justify-center gap-4 my-4">
-      <template v-if="receipt.status === ReceiptStatus.Draft">
+      <template
+        v-if="permissionIdMap[PermissionId.RECEIPT] && receipt.status === ReceiptStatus.Draft"
+      >
         <a-button
-          v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1"
+          v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1"
           type="primary"
           :loading="loadingProcess"
           @click="startShipAndPayment(receipt.revenue)"
@@ -348,7 +373,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </a-button>
 
         <a-button
-          v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2"
+          v-if="
+            permissionIdMap[PermissionId.RECEIPT_PREPAYMENT] &&
+            screenStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2
+          "
           type="primary"
           :loading="loadingProcess"
           @click="modalReceiptPayment?.openModal()"
@@ -360,7 +388,12 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </a-button>
       </template>
 
-      <template v-if="receipt.status === ReceiptStatus.AwaitingShipment">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.RECEIPT_SHIP] &&
+          receipt.status === ReceiptStatus.AwaitingShipment
+        "
+      >
         <a-button type="primary" :loading="loadingProcess" @click="startShipAndPayment(0)">
           <template #icon>
             <FileDoneOutlined />
@@ -369,7 +402,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </a-button>
       </template>
 
-      <template v-if="receipt.status === ReceiptStatus.Debt">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.RECEIPT_PAY_DEBT] && receipt.status === ReceiptStatus.Debt
+        "
+      >
         <a-button
           type="primary"
           :loading="loadingProcess"

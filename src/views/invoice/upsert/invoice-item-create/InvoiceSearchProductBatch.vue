@@ -1,45 +1,48 @@
 <script setup lang="ts">
-import { InputOptions } from '@/common/vue-form'
-import { Product, ProductBatch, useProductStore } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
 import { onMounted, ref } from 'vue'
+import { InputOptions } from '../../../../common/vue-form'
+import { Product, useProductStore } from '../../../../modules/product'
+import { ProductBatch, useProductBatchStore } from '../../../../modules/product-batch'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{ (e: 'selectProductBatch', value: ProductBatch): void }>()
 
 const inputSearchProductBatch = ref<InstanceType<typeof InputOptions>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 const productStore = useProductStore()
+const productBatchStore = useProductBatchStore()
 
 const searchText = ref('')
 const productBatchList = ref<ProductBatch[]>([])
 const productBatch = ref<ProductBatch>(ProductBatch.blank())
 
 onMounted(async () => {
-  Promise.all([
-    productStore.fetchAll({
-      relation: { productBatches: true },
-      filter: { productBatch: { isActive: 1, quantity: ['!=', 0] } },
-    }),
-  ])
+  try {
+    await productStore.refreshDB()
+    await productBatchStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
 })
 
 const searchingProductBatch = async (text: string) => {
-  if (text) {
-    productBatchList.value = productStore.searchBatch(text)
-  } else {
-    productBatchList.value = []
-  }
+  productBatchList.value = await productBatchStore.search(text, {
+    quantity: screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
+      ? undefined
+      : { NOT: 0 },
+  })
 }
 
-const selectProductBatch = (data?: ProductBatch) => {
-  if (data) {
-    searchText.value = data.product!.brandName
-    productBatch.value = data
+const selectProductBatch = (instance?: ProductBatch) => {
+  if (instance) {
+    searchText.value = instance.product!.brandName
+    productBatch.value = instance
 
-    const dataEmit = ProductBatch.fromInstance(data)
-    dataEmit.product = Product.fromInstance(data.product || Product.blank())
+    const dataEmit = ProductBatch.fromInstance(instance)
+    dataEmit.product = Product.fromInstance(instance.product || Product.blank())
     emit('selectProductBatch', dataEmit)
   } else {
     productBatch.value = ProductBatch.blank()

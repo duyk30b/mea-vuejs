@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useOrganizationStore } from '@/store/organization.store'
+import { useScreenStore } from '../../modules/_me/screen.store'
 
 const props = withDefaults(
   defineProps<{
@@ -23,12 +23,12 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
-const organizationStore = useOrganizationStore()
+const screenStore = useScreenStore()
 
 const handleInput = (e: Event) => {
   const target = e.target as HTMLInputElement
   const number = Number(target.value.replace(/,/g, '')) || 0
-  emit('update:value', number * organizationStore.SYSTEM_SETTING.moneyDivisionFormat)
+  emit('update:value', number * screenStore.SYSTEM_SETTING.moneyDivisionFormat)
 }
 
 const handleFocus = (e: Event) => {
@@ -50,15 +50,15 @@ const handleFocus = (e: Event) => {
         :style="{ textAlign }"
         :value="
           value
-            ? (value / organizationStore.SYSTEM_SETTING.moneyDivisionFormat)
+            ? (value / screenStore.SYSTEM_SETTING.moneyDivisionFormat)
                 .toString()
                 .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
             : ''
         "
-        type="tel"
         :placeholder="placeholder || '0'"
         :disabled="disabled"
         :required="required"
+        inputmode="decimal"
         @focus="handleFocus"
         @input="handleInput"
       />
@@ -148,3 +148,4 @@ const handleFocus = (e: Event) => {
   }
 }
 </style>
+

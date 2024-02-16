@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { Invoice, InvoiceService, InvoiceStatus } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import {
   CopyOutlined,
   DeleteOutlined,
@@ -21,22 +17,30 @@ import {
 import { Modal } from 'ant-design-vue'
 import { createVNode, h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
+import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 import InvoiceDetailTable from './InvoiceDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
 import ModalInvoicePreview from './preview/ModalInvoicePreview.vue'
 import { invoiceHtmlContent } from './preview/invoice-html-content'
-import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalInvoicePreview = ref<InstanceType<typeof ModalInvoicePreview>>()
 const modalInvoicePayment = ref<InstanceType<typeof ModalInvoicePayment>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+const { formatMoney, isMobile } = screenStore
 
 const route = useRoute()
 const router = useRouter()
@@ -213,9 +217,8 @@ const startPrint = () => {
   pri.print()
 }
 
-const startOpenImageDemo = () => {
-  const data = Invoice.fromInstance(invoice.value)
-  modalInvoicePreview.value?.openModal(data)
+const openModalInvoicePreview = () => {
+  modalInvoicePreview.value?.openModal(invoice.value)
 }
 </script>
 
@@ -234,6 +237,7 @@ const startOpenImageDemo = () => {
       <ScheduleOutlined /> Thông tin hóa đơn
       <span v-if="invoice.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
       <a-button
+        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
         type="primary"
         @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
       >
@@ -244,7 +248,7 @@ const startOpenImageDemo = () => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -292,7 +296,7 @@ const startOpenImageDemo = () => {
             v-if="
               (invoice.invoiceExpenses || []).length > 1 ||
               ((invoice.invoiceExpenses || []).length == 1 &&
-                (invoice.invoiceExpenses!)[0].key !== '_unknown')
+                invoice.invoiceExpenses![0].key !== '_unknown')
             "
             class="ml-2"
           >
@@ -315,7 +319,7 @@ const startOpenImageDemo = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
-      <a-button type="default" @click="startOpenImageDemo">
+      <a-button type="default" @click="openModalInvoicePreview">
         <template #icon>
           <EyeOutlined />
         </template>
@@ -327,18 +331,28 @@ const startOpenImageDemo = () => {
         </template>
         In
       </a-button>
-      <a-button class="ml-auto" type="default" @click="startCopy">
+      <a-button
+        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
+        class="ml-auto"
+        type="default"
+        @click="startCopy"
+      >
         <template #icon>
           <CopyOutlined />
         </template>
         Copy đơn
       </a-button>
 
-      <template v-if="invoice.status !== InvoiceStatus.Refund">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.INVOICE_UPDATE_DRAFT] &&
+          invoice.status !== InvoiceStatus.Refund
+        "
+      >
         <a-button
           v-if="
             invoice.status === InvoiceStatus.Draft ||
-            (organizationStore.SCREEN_INVOICE_DETAIL.function.forceEdit &&
+            (screenStore.SCREEN_INVOICE_DETAIL.function.forceEdit &&
               [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status))
           "
           type="primary"
@@ -356,6 +370,7 @@ const startOpenImageDemo = () => {
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
+                permissionIdMap[PermissionId.INVOICE_REFUND] &&
                 [
                   InvoiceStatus.AwaitingShipment,
                   InvoiceStatus.Debt,
@@ -367,7 +382,10 @@ const startOpenImageDemo = () => {
               <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
             </a-menu-item>
             <a-menu-item
-              v-if="[InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)"
+              v-if="
+                permissionIdMap[PermissionId.INVOICE_DELETE] &&
+                [InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)
+              "
               key="DELETE"
             >
               <span class="text-red-500"> <DeleteOutlined class="mr-2" /> Xóa đơn </span>
@@ -392,7 +410,10 @@ const startOpenImageDemo = () => {
     <div class="flex justify-center gap-4 my-4">
       <template v-if="invoice.status === InvoiceStatus.Draft">
         <a-button
-          v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceProcessType === 1"
+          v-if="
+            permissionIdMap[PermissionId.INVOICE] &&
+            screenStore.SCREEN_INVOICE_DETAIL.invoiceProcessType === 1
+          "
           type="primary"
           :loading="loadingProcess"
           @click="startShipAndPayment(invoice.revenue)"
@@ -404,7 +425,10 @@ const startOpenImageDemo = () => {
         </a-button>
 
         <a-button
-          v-if="organizationStore.SCREEN_INVOICE_DETAIL.invoiceProcessType === 2"
+          v-if="
+            permissionIdMap[PermissionId.INVOICE_PREPAYMENT] &&
+            screenStore.SCREEN_INVOICE_DETAIL.invoiceProcessType === 2
+          "
           type="primary"
           :loading="loadingProcess"
           @click="modalInvoicePayment?.openModal()"
@@ -416,7 +440,12 @@ const startOpenImageDemo = () => {
         </a-button>
       </template>
 
-      <template v-if="invoice.status === InvoiceStatus.AwaitingShipment">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.INVOICE_SHIP] &&
+          invoice.status === InvoiceStatus.AwaitingShipment
+        "
+      >
         <a-button type="primary" :loading="loadingProcess" @click="startShipAndPayment(0)">
           <template #icon>
             <FileDoneOutlined />
@@ -425,7 +454,11 @@ const startOpenImageDemo = () => {
         </a-button>
       </template>
 
-      <template v-if="invoice.status === InvoiceStatus.Debt">
+      <template
+        v-if="
+          permissionIdMap[PermissionId.INVOICE_PAY_DEBT] && invoice.status === InvoiceStatus.Debt
+        "
+      >
         <a-button
           type="primary"
           :loading="loadingProcess"
@@ -440,4 +473,3 @@ const startOpenImageDemo = () => {
     </div>
   </div>
 </template>
-./preview/invoice-html-content

@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { ORG_PHONE } from '@/core/local-storage.service'
-import { AuthService } from '@/modules/auth'
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { LocalStorageService } from '../../core/local-storage.service'
+import { AuthService } from '../../modules/auth/auth.service'
 
-const router = useRouter()
-
-const result = ref<string>('')
+const message = ref<string>('')
 const btnDisable = ref<boolean>(false)
 
 const formState = reactive({
-  orgPhone: localStorage.getItem(ORG_PHONE) || '',
+  orgPhone: LocalStorageService.getOrgPhone(),
   email: '',
   username: '',
 })
@@ -23,23 +19,15 @@ const onFinishFailed = (errorInfo: any) => {
 const loading = ref(false)
 
 const startSendEmail = async () => {
-  try {
-    loading.value = true
-    const data = await AuthService.forgotPassword({
-      orgPhone: formState.orgPhone,
-      email: formState.email,
-      username: formState.username,
-    })
-    if (data.success) {
-      result.value = 'Gửi email thành công, vui lòng kiểm tra email'
-      btnDisable.value = true
-    }
-    AlertStore.add({ type: 'success', message: 'Thông tin tài khoản đã được gửi về email.' })
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: 'Thông tin tài khoản không đúng' })
-    console.log('🚀 ~ file: ForgotPassword.vue:34 ~ startSendEmail ~ error:', error)
-    result.value = error.message
-  } finally {
+  loading.value = true
+  const response = await AuthService.forgotPassword({
+    orgPhone: formState.orgPhone,
+    email: formState.email,
+    username: formState.username,
+  })
+  if (response?.data) {
+    message.value = response.message
+    btnDisable.value = true
     loading.value = false
   }
 }
@@ -87,7 +75,7 @@ const startSendEmail = async () => {
           <a @click="$router.push({ name: 'Login' })">Đăng nhập</a>
         </div>
 
-        <div>{{ result }}</div>
+        <div>{{ message }}</div>
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
           <a-button type="primary" html-type="submit" :loading="loading" :disabled="btnDisable">
             Gửi Email

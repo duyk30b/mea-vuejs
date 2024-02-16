@@ -1,29 +1,34 @@
 <script setup lang="ts">
-import { Invoice, InvoiceService, InvoiceStatus } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { FileSearchOutlined, PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
-import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
-import { InputOptions } from '@/common/vue-form'
-import { useCustomerStore, type Customer } from '@/modules/customer'
 import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
+import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
 
 const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const invoiceList = ref<Invoice[]>([])
 const customerList = ref<Customer[]>([])
 const customerSearchText = ref('')
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('INVOICE_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
@@ -37,19 +42,22 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
+    dataLoading.value = true
 
-    const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
-    const toTime = timeRanger.value?.[1].startOf('day').toISOString()
+    const fromTime = timeRanger.value?.[0].startOf('day').toDate()
+    const toTime = timeRanger.value?.[1].endOf('day').toDate()
 
-    const response = await InvoiceService.pagination({
+    const { data, meta } = await InvoiceService.pagination({
       page: page.value,
       limit: limit.value,
       relation: { customer: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
-        time: fromTime && toTime ? ['BETWEEN', fromTime, toTime] : undefined,
-        deleteTime: ['IS_NULL'],
+        time: {
+          GTE: fromTime ? fromTime : undefined,
+          LTE: toTime ? toTime : undefined,
+        },
+        deleteTime: { IS_NULL: true },
         status: invoiceStatus.value ?? undefined, // Refund = 0 nhé
       },
       sort: sortValue.value
@@ -59,11 +67,12 @@ const startFetchData = async () => {
         : { id: 'DESC' },
     })
 
-    invoiceList.value = response.data
-    total.value = response.total
-    loadingComponent.value = false
+    invoiceList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 
@@ -73,15 +82,15 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    await customerStore.fetchAll()
-  } catch (error) {
-    console.log('🚀 ~ file: InvoiceList.vue:66 ~ onMounted ~ error:', error)
+    await customerStore.refreshDB()
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
   }
 })
 
 const searchingCustomer = async (text: string) => {
   if (text) {
-    customerList.value = customerStore.search(text)
+    customerList.value = await customerStore.search(text)
   } else {
     customerList.value = []
     if (customerId.value) {
@@ -141,12 +150,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalInvoiceListSettingScreen ref="modalInvoiceListSettingScreen" />
+  <ModalInvoiceListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalInvoiceListSettingScreen"
+  />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ScheduleOutlined /> Danh sách hóa đơn</div>
+      <div class="hidden md:block"><ScheduleOutlined class="mr-1" /> Danh sách hóa đơn</div>
       <a-button
+        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
         type="primary"
         @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
       >
@@ -239,7 +252,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Trạng thái</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="invoiceList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
@@ -312,7 +339,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Thanh toán</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="invoiceList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>

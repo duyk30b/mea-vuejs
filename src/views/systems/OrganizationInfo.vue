@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { AddressInstance } from '@/core/address.instance'
-import { Organization, OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { convertViToEn } from '@/utils'
 import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message, type SelectProps } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
+import { AddressInstance } from '../../core/address.instance'
+import { useScreenStore } from '../../modules/_me/screen.store'
+import { Organization, OrganizationService } from '../../modules/organization'
+import { convertViToEn } from '../../utils'
 
-const orgStore = useOrganizationStore()
+const orgStore = useScreenStore()
 const { isMobile } = orgStore
 
 const provinceOptions = ref<SelectProps['options']>([])
 const districtOptions = ref<SelectProps['options']>([])
 const wardOptions = ref<SelectProps['options']>([])
 
-const organization = ref<Organization>(Organization.fromInstance(orgStore.organizationInfo))
+const organization = ref<Organization>(Organization.blank())
 
 onBeforeMount(async () => {
+  organization.value = await OrganizationService.info()
   const provinceList = await AddressInstance.getAllProvinces()
   provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
 })
@@ -26,7 +27,7 @@ const handleChangeProvince = async (e: string) => {
     const districtList = await AddressInstance.getDistrictsByProvince(e)
     districtOptions.value = districtList.map((i) => ({ value: i, label: i }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:54 ~ handleChangeProvince ~ error:', error)
+    console.log('🚀 ~ handleChangeProvince ~ error:', error)
   }
 }
 
@@ -38,7 +39,7 @@ const handleChangeDistrict = async (e: string) => {
     )
     wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
+    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
   }
 }
 
@@ -49,12 +50,8 @@ const filterOption = (input: string, option: any) => {
 }
 
 const saveOrganization = async () => {
-  try {
-    orgStore.organizationInfo = await OrganizationService.updateInfo(organization.value)
-    message.success('Cập nhật thông tin cơ sở thành công')
-  } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
-  }
+  await OrganizationService.updateInfo(organization.value)
+  message.success('Cập nhật thông tin cơ sở thành công')
 }
 </script>
 
@@ -70,7 +67,7 @@ const saveOrganization = async () => {
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Tên Cơ sở</div>
-        <a-input v-model:value="organization.organizationName" class="flex-auto" />
+        <a-input v-model:value="organization.name" class="flex-auto" />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">

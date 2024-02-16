@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputOptions } from '@/common/vue-form'
-import { Customer, useCustomerStore } from '@/modules/customer'
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
-import { DTimer } from '@/utils'
-import { CloseOutlined, SaveOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../../common/VueModal.vue'
+import { InputOptions } from '../../../../common/vue-form'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../../modules/_me/store.variable'
+import { Customer, useCustomerStore } from '../../../../modules/customer'
+import { OrganizationService } from '../../../../modules/organization'
+import { DTimer } from '../../../../utils'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const customerStore = useCustomerStore()
-const store = useOrganizationStore()
+const store = useScreenStore()
+const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
@@ -22,7 +24,7 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const activeTab = ref('1')
-const customerSearchText = ref(store.customerDefault?.fullName || '')
+const customerSearchText = ref(meStore.customerDefault?.fullName || '')
 
 const customerList = ref<Customer[]>([])
 const customerDefault = ref<Customer>()
@@ -35,7 +37,7 @@ const selectCustomer = async (data?: Customer) => {
 
 const searchingCustomer = async (text: string) => {
   if (text) {
-    customerList.value = customerStore.search(text)
+    customerList.value = await customerStore.search(text)
   } else {
     customerList.value = []
     settingDisplay.value.customer.idDefault = 0
@@ -55,13 +57,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      OrganizationSettingsType.SCREEN_INVOICE_UPSERT,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_INVOICE_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
-    store.customerDefault = Customer.fromPlain(customerDefault.value)
+    meStore.customerDefault = Customer.fromPlain(customerDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -107,6 +106,15 @@ defineExpose({ openModal })
                         </a-radio>
                       </a-radio-group>
                     </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <a-checkbox
+                      v-model:checked="settingDisplay.invoiceItemInput.searchHasZeroQuantity"
+                    >
+                      Kết quả tìm kiếm có chứa lô hàng số lượng = 0
+                    </a-checkbox>
                   </td>
                 </tr>
                 <tr>
@@ -216,6 +224,23 @@ defineExpose({ openModal })
                     </div>
                   </td>
                 </tr>
+                <!-- <tr>
+                  <td>
+                    <div>Khi thêm sản phẩm vượt quá số lượng tồn kho</div>
+                    <div class="pl-7">
+                      <a-radio-group
+                        v-model:value="settingDisplay.invoiceItemsTable.allowOverQuantity"
+                      >
+                        <a-radio style="display: flex; line-height: 36px" :value="0">
+                          Không được phép bán quá số lượng tồn kho
+                        </a-radio>
+                        <a-radio style="display: flex; line-height: 36px" :value="-1">
+                          Được phép bán quá số lượng (số lượng tồn kho có thể là số âm)
+                        </a-radio>
+                      </a-radio-group>
+                    </div>
+                  </td>
+                </tr> -->
                 <tr>
                   <td>
                     <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.detail">
@@ -326,6 +351,13 @@ defineExpose({ openModal })
                         </template>
                       </InputOptions>
                     </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                      Hiển thị tiền hàng
+                    </a-checkbox>
                   </td>
                 </tr>
                 <tr>

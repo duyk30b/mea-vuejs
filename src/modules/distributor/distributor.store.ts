@@ -1,86 +1,98 @@
-import { customFilter } from '@/utils'
 import { defineStore } from 'pinia'
-import type { Distributor } from './distributor.model'
-import { DistributorService, type DistributorPaginationQuery } from './distributor.service'
+import { DistributorDB } from '../../core/indexed-db/repository/distributor.repository'
+import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { DistributorPaymentApi } from '../distributor-payment/distributor-payment.api'
+import type { DistributorPaymentPayDebtBody } from '../distributor-payment/distributor-payment.dto'
+import { DistributorApi } from './distributor.api'
+import type { DistributorPaginationQuery } from './distributor.dto'
+import { Distributor } from './distributor.model'
 
 export const useDistributorStore = defineStore('distributor-store', {
   state: () => {
-    return { distributorList: [] as Distributor[] }
+    return {
+      timeSync: Date.now(),
+      distributorList: [] as Distributor[],
+    }
   },
 
   actions: {
-    async fetchAll() {
-      try {
-        this.distributorList = await DistributorService.list({})
-      } catch (error) {
-        console.log('🚀 ~ file: distributor.store.ts:16 ~ fetchAll ~ error:', error)
+    async refreshDB() {
+      let refreshTime = await RefreshTimeDB.findOneByCode('DISTRIBUTOR')
+      if (!refreshTime) {
+        refreshTime = { code: 'DISTRIBUTOR', time: new Date(0).toISOString() }
       }
-    },
-    updateOne(id: number, data: Distributor) {
-      const index = this.distributorList.findIndex((i) => i.id === id)
-      if (index !== -1) {
-        this.distributorList[index] = data
+      const lastTime = new Date(refreshTime.time)
+      const { data, time } = await DistributorApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
+      })
+      if (data.length) {
+        await DistributorDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
+        await RefreshTimeDB.upsertOne(refreshTime)
       }
-    },
-    createOne(distributor: Distributor) {
-      this.distributorList.unshift(distributor)
-    },
-  },
 
-  getters: {
-    pagination: (state) => {
-      return (params: DistributorPaginationQuery) => {
-        const { filter, sort, page, limit } = params
-        const response = state.distributorList.filter((distributor) => {
-          if (filter?.isActive != null && distributor.isActive !== filter?.isActive) {
-            return false
-          }
-          if (filter?.searchText) {
-            if (
-              !customFilter(distributor.fullName, filter?.searchText, 2) &&
-              !customFilter(distributor.phone || '', filter?.searchText, 2)
-            ) {
-              return false
-            }
-          }
-          return true
-        })
-        response.sort((a, b) => {
-          if (sort?.id) {
-            if (sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-            if (sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          }
-          if (sort?.debt) {
-            if (sort?.debt === 'ASC') return a.debt < b.debt ? -1 : 1
-            if (sort?.debt === 'DESC') return a.debt > b.debt ? -1 : 1
-          }
-          if (sort?.fullName) {
-            if (sort?.fullName === 'ASC') return a.fullName < b.fullName ? -1 : 1
-            if (sort?.fullName === 'DESC') return a.fullName > b.fullName ? -1 : 1
-          }
-          return a.id > b.id ? -1 : 1
-        })
+      return data
+    },
 
-        const start = (page - 1) * limit
-        const end = page * limit
-        return {
-          total: response.length,
-          page: params.page,
-          limit: params.limit,
-          data: response.slice(start, end),
-        }
+    async pagination(params: DistributorPaginationQuery) {
+      const { page, limit, relation, filter, sort } = params
+      const result = await DistributorDB.pagination({
+        page: page || 1,
+        limit: limit || 10,
+        condition: {
+          isActive: filter?.isActive,
+          debt: filter?.debt,
+          $OR: filter?.searchText
+            ? [{ fullName: { LIKE: filter?.searchText } }, { phone: { LIKE: filter?.searchText } }]
+            : undefined,
+          deletedAt: { IS_NULL: true },
+        },
+        sort: sort || { id: 'DESC' },
+      })
+      return {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        data: Distributor.fromObjects(result.data),
       }
     },
-    search: (state) => {
-      return (text: string) => {
-        return state.distributorList.filter((item) => {
-          if (!item.isActive) return false
-          if (!customFilter(item.fullName, text, 2) && !customFilter(item.phone || '', text, 2)) {
-            return false
-          }
-          return true
-        })
-      }
+
+    async createOne(instance: Distributor) {
+      const response = await DistributorApi.createOne(instance)
+      await DistributorDB.insertOne(response)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async updateOne(id: number, instance: Distributor) {
+      const response = await DistributorApi.updateOne(id, instance)
+      await DistributorDB.replaceOne(id, response)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async payDebt(body: DistributorPaymentPayDebtBody) {
+      const response = await DistributorPaymentApi.payDebt(body)
+      await DistributorDB.replaceOne(response.distributor.id, response.distributor)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async deleteOne(id: number) {
+      const response = await DistributorApi.deleteOne(id)
+      await DistributorDB.replaceOne(id, response)
+      this.timeSync = Date.now()
+      return response
+    },
+
+    async search(text: string) {
+      if (!text) return []
+      const objects = await DistributorDB.findManyBy({
+        isActive: 1,
+        $OR: [{ fullName: { LIKE: text } }, { phone: { LIKE: text } }],
+        deletedAt: { IS_NULL: true },
+      })
+      return Distributor.fromObjects(objects)
     },
   },
 })

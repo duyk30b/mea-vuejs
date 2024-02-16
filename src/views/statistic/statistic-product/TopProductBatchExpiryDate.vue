@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ProductBatchService, type ProductBatch } from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { onBeforeMount, ref } from 'vue'
+import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const loaded = ref(false)
 const productBatchList = ref<ProductBatch[]>([])
@@ -19,18 +19,18 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const timeIsExpire = Date.now() + numberOfDaysToExpire.value * 24 * 60 * 60 * 1000
-    const productBatchPagination = await ProductBatchService.pagination({
+    const { data, meta } = await ProductBatchApi.pagination({
       page: page.value,
       limit: limit.value,
       sort: { expiryDate: 'ASC' },
       filter: {
-        expiryDate: ['<', new Date(timeIsExpire).toISOString()],
-        quantity: ['!=', 0],
+        expiryDate: { LT: new Date(timeIsExpire).getTime() },
+        quantity: { NOT: 0 },
       },
       relation: { product: true },
     })
-    productBatchList.value = productBatchPagination.data
-    total.value = productBatchPagination.total
+    productBatchList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
   } finally {
@@ -68,7 +68,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <a-select-option :value="730"> 2 năm </a-select-option>
       </a-select>
     </div>
-    <div class="mt-6">
+    <div class="mt-3">
       <table class="table-mobile">
         <thead>
           <tr>

@@ -1,5 +1,4 @@
-export * from './customer-payment.model'
-export * from './customer-payment.service'
+export * from './customer.api'
+export * from './customer.dto'
 export * from './customer.model'
-export * from './customer.service'
 export * from './customer.store'

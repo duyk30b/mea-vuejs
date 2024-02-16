@@ -1,23 +1,32 @@
 import { Expose } from 'class-transformer'
+import { FROM_PLAIN } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
 import { UNKNOWN_KEY } from '../enum'
 
 export class InvoiceSurcharge extends BaseModel {
-  @Expose({ toClassOnly: true })
+  @Expose({ groups: [FROM_PLAIN] })
   invoiceId: number
 
   @Expose()
-  key: string = UNKNOWN_KEY
+  key: string
 
   @Expose()
-  name: string = ''
+  name: string
 
   @Expose()
-  money: number = 0
+  money: number
+
+  static init() {
+    const ins = new InvoiceSurcharge()
+    ins.id = 0
+    ins.key = UNKNOWN_KEY
+    ins.name = ''
+    ins.money = 0
+    return ins
+  }
 
   static blank(): InvoiceSurcharge {
-    const instance = new InvoiceSurcharge()
-    instance.id = 0
-    return instance
+    const ins = InvoiceSurcharge.init()
+    return ins
   }
 }

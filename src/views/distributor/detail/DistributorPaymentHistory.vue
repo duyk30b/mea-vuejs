@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { Distributor, DistributorPayment, DistributorPaymentService } from '@/modules/distributor'
-import { PaymentType } from '@/modules/enum'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { Distributor } from '../../../modules/distributor'
+import { DistributorPaymentApi } from '../../../modules/distributor-payment/distributor-payment.api'
+import type { DistributorPayment } from '../../../modules/distributor-payment/distributor-payment.model'
+import { PaymentType } from '../../../modules/enum'
+import { timeToText } from '../../../utils'
 import DistributorPaymentTypeTag from '../DistributorPaymentTypeTag.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
@@ -13,8 +16,10 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const distributorPaymentList = ref<DistributorPayment[]>([])
 const page = ref(1)
@@ -23,14 +28,14 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const data = await DistributorPaymentService.pagination({
+    const { data, meta } = await DistributorPaymentApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { distributorId: props.distributor.id! },
       sort: { id: 'DESC' },
     })
-    distributorPaymentList.value = data.data
-    total.value = data.total
+    distributorPaymentList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: DistributorPaymentsHistory.vue:33 ~ error:', error)
   }

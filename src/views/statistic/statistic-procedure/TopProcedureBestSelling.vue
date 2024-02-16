@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { VueSelect } from '@/common/vue-form'
-import { StatisticService } from '@/modules/statistics'
-import { useOrganizationStore } from '@/store/organization.store'
-import { DTimer } from '@/utils'
 import type { ChartData, ChartOptions } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { VueSelect } from '../../../common/vue-form'
+import { StatisticService } from '../../../modules/statistics'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { DTimer } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const moneyDivision = organizationStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = screenStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
@@ -154,7 +154,7 @@ onBeforeMount(async () => await startFetchData())
       />
     </div>
     <div class="flex-1">
-      <Bar v-if="loaded" :data="barData" :options="options as any" />
+      <Bar v-if="loaded" :data="barData" :options="(options as any)" />
     </div>
   </div>
 </template>

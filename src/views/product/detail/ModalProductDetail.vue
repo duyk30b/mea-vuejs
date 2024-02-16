@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { Product } from '@/modules/product'
 import { CloseOutlined, DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Product } from '../../../modules/product'
 import ProductInfo from './ProductInfo.vue'
 import ProductMovement from './ProductMovement.vue'
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -53,7 +58,10 @@ defineExpose({ openModal })
             </template>
             <ProductInfo :product="product" />
           </a-tab-pane>
-          <a-tab-pane key="product-movement">
+          <a-tab-pane
+            v-if="permissionIdMap[PermissionId.PRODUCT_MOVEMENT_READ]"
+            key="product-movement"
+          >
             <template #tab>
               <span> <DiffOutlined />Nhập/Xuất </span>
             </template>

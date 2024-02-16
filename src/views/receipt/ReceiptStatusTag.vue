@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ReceiptStatus } from '@/modules/receipt'
+import { ReceiptStatus } from '../../modules/receipt'
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 
 defineProps<{ status: ReceiptStatus }>()

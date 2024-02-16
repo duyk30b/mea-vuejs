@@ -7,15 +7,16 @@ import {
   TransformationType,
   Type,
 } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { UnitType } from '../enum'
-import { ProductBatch } from './product-batch.model'
+import { ProductBatch } from '../product-batch/product-batch.model'
 import { ProductMovement } from './product-movement.model'
 
 export class Product {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   quantity: number
 
   @Expose()
@@ -53,14 +54,22 @@ export class Product {
   hintUsage: string // Gợi ý cách sử dụng
 
   @Expose()
-  @Transform(({ value, type }) => (value != null ? value : 1))
   isActive: 1 | 0 // Trạng thái
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
+  createdAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ProductBatch)
   productBatches: ProductBatch[]
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ProductMovement)
   productMovements: ProductMovement[]
 
@@ -101,11 +110,21 @@ export class Product {
     return ins
   }
 
+  static fromObject(object: Partial<Product>) {
+    const ins = new Product()
+    Object.assign(ins, object)
+    return ins
+  }
+
+  static fromObjects(objects: Partial<Product>[]): Product[] {
+    return objects.map((i) => Product.fromObject(i))
+  }
+
   static fromPlain(plain: Record<string, any>): Product {
     return plainToInstance(Product, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -113,19 +132,28 @@ export class Product {
     return plainToInstance(Product, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
   static fromInstance(instance: Product): Product {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
+      throw new Error('Product.fromInstance error: Instance must be from class Product')
+    }
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
-  static toPlain(instance: Product, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: Product,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
+      throw new Error('Product.fromInstance error: Instance must be from class Product')
+    }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

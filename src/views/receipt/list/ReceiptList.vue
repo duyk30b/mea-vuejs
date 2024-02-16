@@ -1,25 +1,23 @@
 <script setup lang="ts">
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import {
-  AuditOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
-  FileSearchOutlined,
-  PlusOutlined,
-  StopOutlined,
-} from '@ant-design/icons-vue'
+import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
+import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const receiptStore = useReceiptStore()
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const receipts = ref<Receipt[]>([])
 
@@ -41,24 +39,22 @@ const startFetchData = async () => {
     const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
     const toTime = timeRanger.value?.[1].startOf('day').toISOString()
 
-    const response = await ReceiptService.pagination({
+    const { data, meta } = await receiptStore.pagination({
       relation: { distributor: true },
       filter: {
-        time: fromTime && toTime ? ['BETWEEN', fromTime, toTime] : undefined,
-        deleteTime: ['IS_NULL'],
+        time: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
+        deleteTime: { IS_NULL: true },
         status: receiptStatus.value ?? undefined,
       },
       page: page.value,
       limit: limit.value,
       sort: sortValue.value
-        ? {
-            id: sortColumn.value === 'id' ? sortValue.value : undefined,
-          }
+        ? { id: sortColumn.value === 'id' ? sortValue.value : undefined }
         : { id: 'DESC' },
     })
 
-    receipts.value = response.data
-    total.value = response.total
+    receipts.value = data
+    total.value = meta.total
     loadingComponent.value = false
   } catch (error) {
     console.log('🚀 ~ file: ReceiptList.vue:52 ~ error:', error)
@@ -118,6 +114,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-header-content">
       <div class="hidden md:block"><AuditOutlined /> Danh sách phiếu nhập hàng</div>
       <a-button
+        v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="primary"
         @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
       >

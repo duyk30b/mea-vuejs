@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney } from '@/common/vue-form'
-import { PaymentType } from '@/modules/enum'
-import { Receipt, ReceiptService, ReceiptStatus } from '@/modules/receipt'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import DistributorPaymentTypeTag from '@/views/distributor/DistributorPaymentTypeTag.vue'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney } from '../../../common/vue-form'
+import { PaymentType } from '../../../modules/enum'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
+import DistributorPaymentTypeTag from '../../../views/distributor/DistributorPaymentTypeTag.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const props = withDefaults(defineProps<{ receipt: Receipt }>(), { receipt: () => Receipt.blank() })
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -44,10 +48,10 @@ const handlePayment = async () => {
     }
 
     if ([ReceiptStatus.Draft, ReceiptStatus.AwaitingShipment].includes(props.receipt.status)) {
-      await ReceiptService.prepayment(props.receipt.id, money.value)
+      await ReceiptApi.prepayment(props.receipt.id, money.value)
     }
     if ([ReceiptStatus.Debt].includes(props.receipt.status)) {
-      await ReceiptService.payDebt(props.receipt.id, money.value)
+      await ReceiptApi.payDebt(props.receipt.id, money.value)
     }
     emit('success')
     showModal.value = false
@@ -203,21 +207,28 @@ defineExpose({ openModal })
       <div class="pb-4 flex justify-center gap-4">
         <div
           v-if="
-            [ReceiptStatus.Draft, ReceiptStatus.AwaitingShipment, ReceiptStatus.Debt].includes(
-              receipt.status
-            )
+            permissionIdMap[PermissionId.RECEIPT_PREPAYMENT] &&
+            [ReceiptStatus.Draft, ReceiptStatus.AwaitingShipment].includes(receipt.status)
           "
         >
           <a-button type="primary" :loading="paymentLoading" @click="handlePayment">
             <template #icon>
               <SaveOutlined />
             </template>
-            <span
-              v-if="[ReceiptStatus.Draft, ReceiptStatus.AwaitingShipment].includes(receipt.status)"
-            >
-              Thanh toán
-            </span>
-            <span v-if="[ReceiptStatus.Debt].includes(receipt.status)"> Trả nợ </span>
+            Thanh toán
+          </a-button>
+        </div>
+        <div
+          v-else-if="
+            permissionIdMap[PermissionId.RECEIPT_PAY_DEBT] &&
+            [ReceiptStatus.Debt].includes(receipt.status)
+          "
+        >
+          <a-button type="primary" :loading="paymentLoading" @click="handlePayment">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            Trả nợ
           </a-button>
         </div>
         <div v-else>

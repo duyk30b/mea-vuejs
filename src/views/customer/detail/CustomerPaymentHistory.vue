@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Customer, CustomerPayment, CustomerPaymentService } from '@/modules/customer'
-import { PaymentType } from '@/modules/enum'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Customer } from '../../../modules/customer'
+import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
+import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
+import { PaymentType } from '../../../modules/enum'
+import { timeToText } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -13,8 +15,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const customerPaymentList = ref<CustomerPayment[]>([])
 const page = ref(1)
@@ -23,14 +25,14 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const data = await CustomerPaymentService.pagination({
+    const { data, meta } = await CustomerPaymentApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { customerId: props.customer.id! },
       sort: { id: 'DESC' },
     })
-    customerPaymentList.value = data.data
-    total.value = data.total
+    customerPaymentList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerPaymentsHistory.vue:33 ~ error:', error)
   }

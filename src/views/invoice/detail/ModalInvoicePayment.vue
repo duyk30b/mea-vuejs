@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import VueModal from '@/common/VueModal.vue'
-import { InputMoney } from '@/common/vue-form'
-import { PaymentType } from '@/modules/enum'
-import { Invoice, InvoiceService, InvoiceStatus } from '@/modules/invoice'
-import { useOrganizationStore } from '@/store/organization.store'
-import { timeToText } from '@/utils'
-import CustomerPaymentTypeTag from '@/views/customer/CustomerPaymentTypeTag.vue'
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputMoney } from '../../../common/vue-form'
+import { PaymentType } from '../../../modules/enum'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { timeToText } from '../../../utils'
+import CustomerPaymentTypeTag from '../../../views/customer/CustomerPaymentTypeTag.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const props = withDefaults(defineProps<{ invoice: Invoice }>(), { invoice: () => Invoice.blank() })
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -203,24 +207,32 @@ defineExpose({ openModal })
       <div class="pb-4 flex justify-center gap-4">
         <div
           v-if="
-            [InvoiceStatus.Draft, InvoiceStatus.AwaitingShipment, InvoiceStatus.Debt].includes(
-              invoice.status
-            )
+            permissionIdMap[PermissionId.INVOICE_PREPAYMENT] &&
+            [InvoiceStatus.Draft, InvoiceStatus.AwaitingShipment].includes(invoice.status)
           "
         >
           <a-button type="primary" :loading="paymentLoading" @click="handlePayment">
             <template #icon>
               <SaveOutlined />
             </template>
-            <span
-              v-if="[InvoiceStatus.Draft, InvoiceStatus.AwaitingShipment].includes(invoice.status)"
-            >
-              Thanh toán
-            </span>
-            <span v-if="[InvoiceStatus.Debt].includes(invoice.status)"> Trả nợ </span>
+            Thanh toán
           </a-button>
         </div>
-        <div v-if="[InvoiceStatus.Success, InvoiceStatus.Refund].includes(invoice.status)">
+
+        <div
+          v-else-if="
+            permissionIdMap[PermissionId.INVOICE_PREPAYMENT] &&
+            [InvoiceStatus.Debt].includes(invoice.status)
+          "
+        >
+          <a-button type="primary" :loading="paymentLoading" @click="handlePayment">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            Trả nợ
+          </a-button>
+        </div>
+        <div v-else>
           <a-button @click="closeModal">
             <template #icon>
               <CloseOutlined />

@@ -15,7 +15,7 @@
         <div
           class="progress-bar"
           :style="{ width: `${alert.progress}%`, transitionDuration: `${alert.time / 10000}s` }"
-        />
+        ></div>
       </div>
     </div>
   </Teleport>

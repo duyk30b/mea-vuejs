@@ -1,3 +1,4 @@
-export * from './receipt-item.model'
+export * from './receipt.api'
+export * from './receipt.dto'
 export * from './receipt.model'
-export * from './receipt.service'
+export * from './receipt.store'

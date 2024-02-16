@@ -1,25 +1,24 @@
 <script setup lang="ts">
-import { InputOptions, VueSelect } from '@/common/vue-form'
-import {
-  Product,
-  ProductBatch,
-  ProductBatchService,
-  ProductMovement,
-  ProductMovementService,
-  ProductMovementType,
-} from '@/modules/product'
-import { useOrganizationStore } from '@/store/organization.store'
-import { customFilter, timeToText } from '@/utils'
 import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { InputOptions } from '../../../common/vue-form'
+import {
+  Product,
+  ProductMovement,
+  ProductMovementApi,
+  ProductMovementType,
+} from '../../../modules/product'
+import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { customFilter, timeToText } from '../../../utils'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const productMovements = ref<ProductMovement[]>([])
 const productBatchAll = ref<ProductBatch[]>([])
@@ -34,7 +33,7 @@ const total = ref(0)
 
 const startFetchProductMovements = async () => {
   try {
-    const movPagination = await ProductMovementService.pagination({
+    const { data, meta } = await ProductMovementApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -45,8 +44,8 @@ const startFetchProductMovements = async () => {
       relation: { productBatch: true, invoice: true, receipt: true },
       sort: { id: 'DESC' },
     })
-    productMovements.value = movPagination.data
-    total.value = movPagination.total
+    productMovements.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: ProductMovement.vue:35 ~ error:', error)
   }
@@ -54,11 +53,11 @@ const startFetchProductMovements = async () => {
 
 const startFetchProductBatches = async () => {
   try {
-    const productBatches = await ProductBatchService.list({
+    const { data } = await ProductBatchApi.list({
       filter: { productId: props.product.id },
     })
-    productBatchAll.value = productBatches
-    productBatchList.value = productBatches
+    productBatchAll.value = data
+    productBatchList.value = data
   } catch (error) {
     console.log('🚀 ~ file: ProductMovement.vue:47 ~ error:', error)
   }
@@ -244,9 +243,9 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         <tr>
           <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
           <th>Lô</th>
-          <th>SL trước</th>
+          <th>Đầu kỳ</th>
           <th>Nhập/Xuất</th>
-          <th>SL sau</th>
+          <th>Cuối kỳ</th>
           <th>Giá</th>
           <th>T.Tiền</th>
         </tr>

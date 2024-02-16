@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Customer } from '@/modules/customer'
-import { useOrganizationStore } from '@/store/organization.store'
-import { formatPhone, timeToText } from '@/utils'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { Customer } from '../../../modules/customer'
+import { formatPhone, timeToText } from '../../../utils'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
 })
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 </script>
 
 <template>

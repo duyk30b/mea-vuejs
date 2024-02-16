@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { OrganizationService } from '@/modules/organization'
-import { useOrganizationStore } from '@/store/organization.store'
-import { OrganizationSettingsType } from '@/store/store.variable'
 import { message } from 'ant-design-vue'
 import { computed, ref } from 'vue'
+import { OrganizationService } from '../../../../modules/organization'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
 const SURCHARGE_DETAIL = ref<typeof store.INVOICE_SURCHARGE_DETAIL>(
   JSON.parse(JSON.stringify(store.INVOICE_SURCHARGE_DETAIL))
 )
@@ -45,7 +45,7 @@ const handleSave = async () => {
       })
       const data = JSON.stringify(SURCHARGE_DETAIL.value)
       await OrganizationService.saveSettings(
-        OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
+        ScreenSettingKey.INVOICE_SURCHARGE_DETAIL,
         data
       )
       store.INVOICE_SURCHARGE_DETAIL = JSON.parse(data)
@@ -55,7 +55,7 @@ const handleSave = async () => {
         if (!EXPENSE_DETAIL.value[key]) delete EXPENSE_DETAIL.value[key]
       })
       const data = JSON.stringify(EXPENSE_DETAIL.value)
-      await OrganizationService.saveSettings(OrganizationSettingsType.INVOICE_EXPENSE_DETAIL, data)
+      await OrganizationService.saveSettings(ScreenSettingKey.INVOICE_EXPENSE_DETAIL, data)
       store.INVOICE_EXPENSE_DETAIL = JSON.parse(data)
     }
 
