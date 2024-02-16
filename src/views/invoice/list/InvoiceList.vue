@@ -2,23 +2,27 @@
 import { FileSearchOutlined, PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
 import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
 import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const invoiceList = ref<Invoice[]>([])
 const customerList = ref<Customer[]>([])
@@ -43,7 +47,7 @@ const startFetchData = async () => {
     const fromTime = timeRanger.value?.[0].startOf('day').toDate()
     const toTime = timeRanger.value?.[1].endOf('day').toDate()
 
-    const response = await InvoiceService.pagination({
+    const { data, meta } = await InvoiceService.pagination({
       page: page.value,
       limit: limit.value,
       relation: { customer: true },
@@ -63,8 +67,8 @@ const startFetchData = async () => {
         : { id: 'DESC' },
     })
 
-    invoiceList.value = response.data
-    total.value = response.total
+    invoiceList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
   } finally {
@@ -146,12 +150,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalInvoiceListSettingScreen ref="modalInvoiceListSettingScreen" />
+  <ModalInvoiceListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalInvoiceListSettingScreen"
+  />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ScheduleOutlined /> Danh sách hóa đơn</div>
+      <div class="hidden md:block"><ScheduleOutlined class="mr-1" /> Danh sách hóa đơn</div>
       <a-button
+        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
         type="primary"
         @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
       >

@@ -2,14 +2,16 @@
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
-import { Product, ProductPaginationQuery, useProductStore } from '../../../modules/product'
-import { ProductBatch, ProductBatchApi, useProductBatchStore } from '../../../modules/product-batch'
-import { ReceiptItem } from '../../../modules/receipt'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { Product, useProductStore } from '../../../modules/product'
+import { ProductBatch, useProductBatchStore } from '../../../modules/product-batch'
+import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
@@ -25,8 +27,10 @@ const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
 const productStore = useProductStore()
 const productBatchStore = useProductBatchStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const product = ref<Product>(Product.blank())
 const productList = ref<Product[]>([])
@@ -136,7 +140,14 @@ const addReceiptItem = async () => {
     <div>
       <div class="flex justify-between">
         <span>Tên sản phẩm</span>
-        <a @click="modalProductUpsert?.openModal()">Thêm sản phẩm mới</a>
+        <span>
+          <a
+            v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
+            @click="modalProductUpsert?.openModal()"
+          >
+            Thêm sản phẩm mới
+          </a>
+        </span>
       </div>
       <div style="height: 40px">
         <InputOptions
@@ -173,7 +184,7 @@ const addReceiptItem = async () => {
                 : `Lô: ${i.batch} ${timeToText(i.expiryDate, 'DD/MM/YYYY')}` +
                   ` - Tồn: ${i.unitQuantity} ${product.unitName}` +
                   ` - Nhập: ${formatMoney(i.unitCostPrice)}` +
-                  (organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice
+                  (screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice
                     ? ` - Sỉ: ${formatMoney(i.unitWholesalePrice)}`
                     : '') +
                   ` - Lẻ: ${formatMoney(i.unitRetailPrice)}`,
@@ -189,7 +200,7 @@ const addReceiptItem = async () => {
 
     <div class="mt-2 flex flex-wrap gap-4">
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.batch"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -197,7 +208,7 @@ const addReceiptItem = async () => {
         <a-input v-model:value="productBatch.batch" class="w-full" :disabled="!!productBatch.id" />
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.expiryDate"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.expiryDate"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -258,7 +269,7 @@ const addReceiptItem = async () => {
         </div>
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.wholesalePrice"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -281,7 +292,7 @@ const addReceiptItem = async () => {
         </div>
       </div>
       <div
-        v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice"
+        v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.retailPrice"
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
       >
@@ -318,3 +329,4 @@ const addReceiptItem = async () => {
 </template>
 
 <style lang="scss"></style>
+

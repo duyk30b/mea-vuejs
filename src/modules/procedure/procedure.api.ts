@@ -1,5 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
+import type { BaseResponse } from '../_base/base-dto'
+import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { ApiPaginationResponse } from '../pagination'
 import {
   ProcedureDetailQuery,
@@ -14,25 +16,28 @@ export class ProcedureApi {
     const params = ProcedureGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/procedure/pagination', { params })
-    const data = response.data as ApiPaginationResponse
+    const { data, meta } = response.data as BaseResponse
     return {
-      total: data.total,
-      page: data.page,
-      limit: data.limit,
-      data: Procedure.fromPlains(data.data),
+      meta,
+      data: Procedure.fromPlains(data),
     }
   }
 
-  static async list(options: ProcedureListQuery): Promise<Procedure[]> {
+  static async list(options: ProcedureListQuery) {
     const params = ProcedureGetQuery.toQuery(options)
 
-    const { data } = await AxiosInstance.get('/procedure/list', { params })
-    return Procedure.fromPlains(data)
+    const response = await AxiosInstance.get('/procedure/list', { params })
+    const { data, time } = response.data as BaseResponse
+    return {
+      time: new Date(time),
+      data: Procedure.fromPlains(data),
+    }
   }
 
   static search: (params: ProcedureListQuery) => Promise<Procedure[]> = debounceAsync(
     async (params: ProcedureListQuery): Promise<Procedure[]> => {
-      const { data } = await AxiosInstance.get('/procedure/list', { params })
+      const response = await AxiosInstance.get('/procedure/list', { params })
+      const { data } = response.data as BaseResponse
       return Procedure.fromPlains(data)
     },
     200
@@ -41,27 +46,28 @@ export class ProcedureApi {
   static async detail(id: number, options: ProcedureDetailQuery): Promise<Procedure> {
     const params = ProcedureGetQuery.toQuery(options)
 
-    const { data } = await AxiosInstance.get(`/procedure/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/procedure/detail/${id}`, { params })
+    const { data } = response.data as BaseResponse
     return Procedure.fromPlain(data)
   }
 
   static async createOne(instance: Procedure) {
-    const plain = Procedure.toPlain(instance, 'CREATE')
-    const { data } = await AxiosInstance.post('/procedure/create', plain)
-
+    const plain = Procedure.toPlain(instance, USER_CREATE)
+    const response = await AxiosInstance.post('/procedure/create', plain)
+    const { data } = response.data as BaseResponse
     return Procedure.fromPlain(data)
   }
 
   static async updateOne(id: number, instance: Procedure) {
-    const plain = Procedure.toPlain(instance, 'UPDATE')
-    const { data } = await AxiosInstance.patch(`/procedure/update/${id}`, plain)
-
+    const plain = Procedure.toPlain(instance, USER_UPDATE)
+    const response = await AxiosInstance.patch(`/procedure/update/${id}`, plain)
+    const { data } = response.data as BaseResponse
     return Procedure.fromPlain(data)
   }
 
   static async deleteOne(id: number) {
-    const { data } = await AxiosInstance.delete(`/procedure/delete/${id}`)
-
+    const response = await AxiosInstance.delete(`/procedure/delete/${id}`)
+    const { data } = response.data as BaseResponse
     return Procedure.fromPlain(data)
   }
 }

@@ -11,6 +11,7 @@ export class DistributorGetQuery {
     debt?: ConditionNumber
     updatedAt?: ConditionDate
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
     debt?: 'ASC' | 'DESC'

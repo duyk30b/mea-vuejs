@@ -7,6 +7,7 @@ export class ProductGetQuery {
   relation?: {
     productBatches?: boolean
   }
+
   filter?: {
     isActive?: 1 | 0
     group?: string
@@ -20,6 +21,7 @@ export class ProductGetQuery {
       updatedAt?: ConditionDate
     }
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'

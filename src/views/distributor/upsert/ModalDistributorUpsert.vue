@@ -13,9 +13,11 @@ import { InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useDistributorStore } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { convertViToEn } from '../../../utils'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalDistributorUpsertSettingScreen =
   ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
@@ -25,8 +27,10 @@ const emit = defineEmits<{
 }>()
 
 const distributorStore = useDistributorStore()
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const distributor = ref(Distributor.blank())
@@ -133,6 +137,7 @@ defineExpose({ openModal })
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
         <div
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDistributorUpsertSettingScreen?.openModal()"
@@ -152,7 +157,7 @@ defineExpose({ openModal })
           </div>
         </div>
         <div
-          v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.phone"
+          v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.phone"
           class="mt-4 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -168,7 +173,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_DISTRIBUTOR_UPSERT.address"
+          v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.address"
           class="mt-4 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -223,7 +228,13 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button
+            v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
+            danger
+            @click="clickDelete"
+          >
+            Xóa
+          </a-button>
           <a-button class="ml-auto" @click="handleClose">
             <template #icon>
               <CloseOutlined />
@@ -240,5 +251,8 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalDistributorUpsertSettingScreen ref="modalDistributorUpsertSettingScreen" />
+  <ModalDistributorUpsertSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalDistributorUpsertSettingScreen"
+  />
 </template>

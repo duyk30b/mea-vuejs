@@ -12,7 +12,8 @@ import { DiscountType, type UnitType } from '../enum'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { ProductBatch } from '../product-batch'
-import { Invoice } from './invoice.model'
+import { Invoice } from '../invoice/invoice.model'
+import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
 
 export enum InvoiceItemType {
   ProductBatch = 1,
@@ -20,10 +21,10 @@ export enum InvoiceItemType {
 }
 
 export class InvoiceItem extends BaseModel {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   invoiceId: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   customerId: number
 
   @Expose()
@@ -69,19 +70,19 @@ export class InvoiceItem extends BaseModel {
   @Expose() // Hướng dẫn sử dụng
   hintUsage: string | null
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Invoice)
   invoice?: Invoice
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ProductBatch)
   productBatch?: ProductBatch
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Procedure)
   procedure?: Procedure
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Customer)
   customer?: Customer
 
@@ -148,7 +149,7 @@ export class InvoiceItem extends BaseModel {
     return plainToInstance(InvoiceItem, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -156,7 +157,7 @@ export class InvoiceItem extends BaseModel {
     return plainToInstance(InvoiceItem, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -164,7 +165,7 @@ export class InvoiceItem extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -172,7 +173,7 @@ export class InvoiceItem extends BaseModel {
     return instanceToInstance(instances, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 

@@ -2,12 +2,13 @@
 import { onBeforeMount, ref } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import { MeaDatabase } from '../core/indexed-db/database'
-import { LocalStorageService, REFRESH_EXP, REFRESH_TOKEN } from '../core/local-storage.service'
-import { useOrganizationStore } from '../store/organization.store'
+import { LocalStorageService } from '../core/local-storage.service'
+import { MeService } from '../modules/_me/me.service'
+import { useMeStore } from '../modules/_me/me.store'
+import { useScreenStore } from '../modules/_me/screen.store'
 import VueLayout from './layout/VueLayout.vue'
-import { useUserStore } from '../modules/user/user.store'
 
-const organizationStore = useOrganizationStore()
+const screenStore = useScreenStore()
 const loaded = ref(false)
 
 onBeforeMount(async () => {
@@ -15,11 +16,11 @@ onBeforeMount(async () => {
     !LocalStorageService.getRefreshToken ||
     LocalStorageService.getRefreshExp() - 60 * 1000 < Date.now()
   ) {
-    LocalStorageService.removeAuth()
-    useUserStore().userInfo = null
+    LocalStorageService.removeToken()
+    useMeStore().user = null
     useRouter().push({ name: 'Login' })
   } else {
-    await organizationStore.initData()
+    await MeService.initData()
     await MeaDatabase.runMigration()
     loaded.value = true
   }
@@ -33,4 +34,3 @@ onBeforeMount(async () => {
 </template>
 
 <style></style>
-../modules/user/user.store

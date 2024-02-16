@@ -5,15 +5,15 @@ import { createVNode, ref } from 'vue'
 import VueModal from '../../common/VueModal.vue'
 import { InputDate, InputNumber, InputText } from '../../common/vue-form'
 import { User } from '../../modules/user'
-import { useOrganizationStore } from '../../store/organization.store'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
 
 const showModal = ref(false)
 const user = ref<User>(User.blank())
@@ -35,7 +35,7 @@ const handleSave = async () => {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
-    if (!user.value.id) {
+    if (!user.value.id && user.value.id !== 0) {
       const response = await RootUserApi.createOne(user.value)
       emit('success', response, 'CREATE')
     } else {
@@ -187,3 +187,4 @@ defineExpose({ openModal })
     </form>
   </VueModal>
 </template>
+../../modules/_me/organization.store

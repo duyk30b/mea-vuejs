@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
-import { useUserStore } from '../modules/user/user.store'
+import { useMeStore } from '../modules/_me/me.store'
+import { AuthService } from '../modules/auth/auth.service'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -270,6 +271,19 @@ const Router = createRouter({
                 },
               ],
             },
+            {
+              path: 'permission',
+              name: 'RootPermission',
+              redirect: () => ({ name: 'RootPermissionList' }),
+              children: [
+                {
+                  path: 'list',
+                  name: 'RootPermissionList',
+                  component: () => import('../views/root/RootPermissionList.vue'),
+                  meta: { title: 'Permission' },
+                },
+              ],
+            },
           ],
         },
       ],
@@ -305,19 +319,19 @@ const Router = createRouter({
 })
 
 Router.beforeEach((to, from, next) => {
-  const userStore = useUserStore()
+  const meStore = useMeStore()
 
-  if (to.meta.auth === AuthLevel.ROOT && userStore.userInfo?.oid !== 0) {
-    userStore.removeAuth()
+  // if (to.meta.auth === AuthLevel.ROOT && meStore.user?.oid !== 0) {
+  //   AuthService.logout()
+  //   return next({ name: 'Login' })
+  // }
+
+  if (to.meta.auth === AuthLevel.USER && !meStore.user) {
+    AuthService.logout()
     return next({ name: 'Login' })
   }
 
-  if (to.meta.auth === AuthLevel.USER && !userStore.userInfo) {
-    userStore.removeAuth()
-    return next({ name: 'Login' })
-  }
-
-  if (to.meta.auth === AuthLevel.GUEST && userStore.userInfo) {
+  if (to.meta.auth === AuthLevel.GUEST && meStore.user) {
     return next({ name: 'AppHome' })
   }
 

@@ -11,11 +11,13 @@ import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
-import { useOrganizationStore } from '../../../store/organization.store'
 import { convertViToEn } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
@@ -25,8 +27,10 @@ const emit = defineEmits<{
 }>()
 
 const customerStore = useCustomerStore()
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const customer = ref<Customer>(Customer.blank())
@@ -136,6 +140,7 @@ defineExpose({ openModal })
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
         <div
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalCustomerUpsertSettingScreen?.openModal()"
@@ -156,7 +161,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.phone"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.phone"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -172,7 +177,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.birthday"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.birthday"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -187,7 +192,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
+        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="customer.gender">
@@ -198,7 +203,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.identityCard"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.identityCard"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -209,7 +214,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -248,7 +253,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.address"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -262,7 +267,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_CUSTOMER_UPSERT.relative"
+          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.relative"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -289,7 +294,13 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button
+            v-if="permissionIdMap[PermissionId.CUSTOMER_DELETE] && customer.id"
+            danger
+            @click="clickDelete"
+          >
+            Xóa
+          </a-button>
           <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
@@ -306,5 +317,8 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalCustomerUpsertSettingScreen ref="modalCustomerUpsertSettingScreen" />
+  <ModalCustomerUpsertSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalCustomerUpsertSettingScreen"
+  />
 </template>

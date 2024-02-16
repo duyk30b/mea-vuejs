@@ -2,9 +2,9 @@
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { Distributor } from '../../../modules/distributor'
 import { ReceiptApi, type Receipt } from '../../../modules/receipt'
-import { useOrganizationStore } from '../../../store/organization.store'
 import { timeToText } from '../../../utils'
 import ReceiptStatusTag from '../../../views/receipt/ReceiptStatusTag.vue'
 
@@ -14,8 +14,8 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const receipts = ref<Receipt[]>([])
 const page = ref(1)
@@ -25,15 +25,15 @@ const limit = ref(
 const total = ref(0)
 
 const startFetchData = async () => {
-  const data = await ReceiptApi.pagination({
+  const { data, meta } = await ReceiptApi.pagination({
     page: page.value,
     limit: limit.value,
     filter: { distributorId: props.distributor.id! },
     relation: { distributor: false, receiptItems: false },
     sort: { id: 'DESC' },
   })
-  receipts.value = data.data
-  total.value = data.total
+  receipts.value = data
+  total.value = meta.total
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ProductBatchDB } from '../../core/indexed-db/repository/product-batch.repository copy'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { objectGroupByArray } from '../../utils'
+import { arrayToKeyArray } from '../../utils'
 import { ProductBatch } from '../product-batch'
 import { ProductApi } from './product.api'
 import type { ProductPaginationQuery } from './product.dto'
@@ -22,17 +22,16 @@ export const useProductStore = defineStore('product-store', {
         refreshTime = { code: 'PRODUCT', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const currentTime = new Date()
-      const productList = await ProductApi.list({
-        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      const { data, time } = await ProductApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
       })
-      if (productList.length) {
-        await ProductDB.upsertMany(productList)
-        refreshTime.time = currentTime.toISOString()
+      if (data.length) {
+        await ProductDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
 
-      return productList
+      return data
     },
 
     async pagination(params: ProductPaginationQuery) {
@@ -66,7 +65,7 @@ export const useProductStore = defineStore('product-store', {
           deletedAt: { IS_NULL: true },
         })
         const productBatchList = ProductBatch.fromObjects(productBatchObjects)
-        const productBatchMap = objectGroupByArray(productBatchList, 'productId')
+        const productBatchMap = arrayToKeyArray(productBatchList, 'productId')
         productList.forEach((i) => {
           i.productBatches = productBatchMap[i.id] || []
           i.productBatches.forEach((b) => (b.product = i))

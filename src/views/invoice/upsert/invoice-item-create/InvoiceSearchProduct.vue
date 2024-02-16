@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { InputOptions, VueSelect } from '../../../../common/vue-form'
 import { Product, useProductStore } from '../../../../modules/product'
 import { ProductBatch, useProductBatchStore } from '../../../../modules/product-batch'
-import { useOrganizationStore } from '../../../../store/organization.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { timeToText } from '../../../../utils'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
@@ -11,8 +11,8 @@ const emit = defineEmits<{ (e: 'selectProductBatch', value: ProductBatch): void 
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 const productStore = useProductStore()
 const productBatchStore = useProductBatchStore()
 
@@ -41,7 +41,7 @@ const selectProduct = async (instance?: Product) => {
       filter: {
         productId: p.id,
         isActive: 1,
-        quantity: organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
+        quantity: screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
           ? undefined
           : { NOT: 0 },
       },
@@ -50,7 +50,7 @@ const selectProduct = async (instance?: Product) => {
 
     searchText.value = p.brandName
     product.value = p
-    if (organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
+    if (screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
       if (p.productBatches.length) {
         selectProductBatch(p.productBatches[0].id)
       }

@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
+import type { BaseResponse } from '../_base/base-dto'
 import type { ApiPaginationResponse } from '../pagination'
 import {
   DistributorDetailQuery,
@@ -14,52 +15,55 @@ export class DistributorApi {
     const params = DistributorGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/distributor/pagination', { params })
-    const data = response.data as ApiPaginationResponse
+    const { data, meta } = response.data as BaseResponse
     return {
-      total: data.total,
-      page: data.page,
-      limit: data.limit,
-      data: Distributor.fromPlains(data.data),
+      meta,
+      data: Distributor.fromPlains(data),
     }
   }
 
-  static async list(options: DistributorListQuery): Promise<Distributor[]> {
+  static async list(options: DistributorListQuery) {
     const params = DistributorGetQuery.toQuery(options)
 
-    const { data } = await AxiosInstance.get('/distributor/list', { params })
-    return Distributor.fromPlains(data)
+    const response = await AxiosInstance.get('/distributor/list', { params })
+    const { data, time } = response.data as BaseResponse
+    return {
+      time: new Date(time),
+      data: Distributor.fromPlains(data),
+    }
   }
 
-  static search = debounceAsync(async (text: string): Promise<Distributor[]> => {
-    return await DistributorApi.list({
-      limit: 10,
-      filter: { searchText: text, isActive: 1 },
-    })
-  }, 200)
+  // static search = debounceAsync(async (text: string): Promise<Distributor[]> => {
+  //   return await DistributorApi.list({
+  //     limit: 10,
+  //     filter: { searchText: text, isActive: 1 },
+  //   })
+  // }, 200)
 
   static async detail(id: number, options: DistributorDetailQuery = {}): Promise<Distributor> {
     const params = DistributorGetQuery.toQuery(options)
-    const { data } = await AxiosInstance.get(`/distributor/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/distributor/detail/${id}`, { params })
+    const { data, meta } = response.data as BaseResponse
     return Distributor.fromPlain(data)
   }
 
   static async createOne(instance: Distributor) {
-    const plain = Distributor.toPlain(instance)
-    const { data } = await AxiosInstance.post('/distributor/create', plain)
-
+    const plain = Distributor.toPlain(instance, 'USER_CREATE')
+    const response = await AxiosInstance.post('/distributor/create', plain)
+    const { data, meta } = response.data as BaseResponse
     return Distributor.fromPlain(data)
   }
 
   static async updateOne(id: number, instance: Distributor) {
-    const plain = Distributor.toPlain(instance)
-    const { data } = await AxiosInstance.patch(`/distributor/update/${id}`, plain)
-
+    const plain = Distributor.toPlain(instance, 'USER_UPDATE')
+    const response = await AxiosInstance.patch(`/distributor/update/${id}`, plain)
+    const { data, meta } = response.data as BaseResponse
     return Distributor.fromPlain(data)
   }
 
   static async deleteOne(id: number) {
-    const { data } = await AxiosInstance.delete(`/distributor/delete/${id}`)
-
+    const response = await AxiosInstance.delete(`/distributor/delete/${id}`)
+    const { data, meta } = response.data as BaseResponse
     return Distributor.fromPlain(data)
   }
 }

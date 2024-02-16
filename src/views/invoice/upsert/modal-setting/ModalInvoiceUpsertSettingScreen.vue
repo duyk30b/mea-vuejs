@@ -4,16 +4,18 @@ import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueModal from '../../../../common/VueModal.vue'
 import { InputOptions } from '../../../../common/vue-form'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, useCustomerStore } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
-import { useOrganizationStore } from '../../../../store/organization.store'
-import { OrganizationSettingsType } from '../../../../store/store.variable'
 import { DTimer } from '../../../../utils'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const customerStore = useCustomerStore()
-const store = useOrganizationStore()
+const store = useScreenStore()
+const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
@@ -22,7 +24,7 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const activeTab = ref('1')
-const customerSearchText = ref(store.customerDefault?.fullName || '')
+const customerSearchText = ref(meStore.customerDefault?.fullName || '')
 
 const customerList = ref<Customer[]>([])
 const customerDefault = ref<Customer>()
@@ -55,13 +57,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      OrganizationSettingsType.SCREEN_INVOICE_UPSERT,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_INVOICE_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
-    store.customerDefault = Customer.fromPlain(customerDefault.value)
+    meStore.customerDefault = Customer.fromPlain(customerDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {

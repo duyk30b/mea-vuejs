@@ -1,20 +1,11 @@
 import { defineStore } from 'pinia'
-import { Customer } from '../modules/customer'
-import { Distributor } from '../modules/distributor'
-import { OrganizationService } from '../modules/organization'
-import { Organization } from '../modules/organization/organization.model'
-import { formatMoney, objectUpdatePropertyByObject } from '../utils'
-import { OrganizationSettingsType } from './store.variable'
+import { formatMoney } from '../../utils'
 
-export const useOrganizationStore = defineStore('organization-store', {
+export const useScreenStore = defineStore('screen-store', {
   state: () => {
     return {
       // const isMobile = ref(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
       isMobile: window.innerWidth <= 768,
-
-      organizationInfo: Organization.blank(),
-      distributorDefault: Distributor.blank(),
-      customerDefault: Customer.blank(),
 
       SYSTEM_SETTING: { moneyDivisionFormat: 1 },
 
@@ -270,37 +261,7 @@ export const useOrganizationStore = defineStore('organization-store', {
     }
   },
 
-  actions: {
-    async initData() {
-      try {
-        const { settings, organization, distributorDefault, customerDefault } =
-          await OrganizationService.info()
-        this.organizationInfo = organization
-        this.distributorDefault = distributorDefault
-        this.customerDefault = customerDefault
-
-        Object.keys(settings || {}).forEach((key) => {
-          if (
-            [
-              OrganizationSettingsType.PRODUCT_GROUP,
-              OrganizationSettingsType.PROCEDURE_GROUP,
-              OrganizationSettingsType.INVOICE_SURCHARGE_DETAIL,
-              OrganizationSettingsType.INVOICE_EXPENSE_DETAIL,
-            ].includes(key as any)
-          ) {
-            this[key as keyof typeof OrganizationSettingsType] = JSON.parse(settings[key])
-          } else {
-            this[key as keyof typeof OrganizationSettingsType] = objectUpdatePropertyByObject(
-              this[key as keyof typeof OrganizationSettingsType] as any,
-              JSON.parse(settings[key])
-            )
-          }
-        })
-      } catch (error) {
-        console.log('🚀 ~ file: organization.store.ts:19 ~ init ~ error:', error)
-      }
-    },
-  },
+  actions: {},
 
   getters: {
     formatMoney: (state) => {

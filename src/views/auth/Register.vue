@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { LocalStorageService } from '../../core/local-storage.service'
-import { AuthApi } from '../../modules/auth'
+import { AuthService } from '../../modules/auth/auth.service'
 
 const router = useRouter()
 
@@ -21,20 +21,16 @@ const onFinishFailed = (errorInfo: any) => {
 const loading = ref(false)
 
 const startLogin = async () => {
-  try {
-    loading.value = true
-    await AuthApi.register({
-      phone: formState.phone,
-      email: formState.email,
-      username: formState.username,
-      password: formState.password,
-    })
+  loading.value = true
+  const result = await AuthService.register({
+    phone: formState.phone,
+    email: formState.email,
+    username: formState.username,
+    password: formState.password,
+  })
+  loading.value = false
+  if (result) {
     router.push({ name: 'AppHome' })
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: 'Đăng ký thất bại' })
-    console.log('🚀 ~ file: Login.vue:34 ~ startLogin ~ error:', error)
-  } finally {
-    loading.value = false
   }
 }
 </script>

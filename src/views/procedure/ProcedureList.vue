@@ -9,13 +9,15 @@ import {
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../modules/_me/me.store'
+import { useScreenStore } from '../../modules/_me/screen.store'
+import { PermissionId } from '../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
-import { useOrganizationStore } from '../../store/organization.store'
 import ModalSettingDataProcedure from './components/ModalDataProcedure.vue'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
 import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalSettingDataProcedure = ref<InstanceType<typeof ModalSettingDataProcedure>>()
@@ -23,8 +25,10 @@ const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureLi
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const procedureStore = useProcedureStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const procedureList = ref<Procedure[]>([])
 
@@ -152,7 +156,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block"><NodeIndexOutlined />Danh sách dịch vụ</div>
-      <a-button type="primary" @click="modalProcedureUpsert?.openModal()">
+      <a-button
+        v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
+        type="primary"
+        @click="modalProcedureUpsert?.openModal()"
+      >
         <template #icon>
           <PlusOutlined />
         </template>
@@ -160,7 +168,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
           <SettingOutlined />
         </span>
@@ -204,7 +212,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         >
           <a-select-option :value="undefined"> Tất cả </a-select-option>
           <a-select-option
-            v-for="(text, value) in organizationStore.PROCEDURE_GROUP"
+            v-for="(text, value) in screenStore.PROCEDURE_GROUP"
             :key="value"
             :value="value"
           >
@@ -256,14 +264,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <div class="font-medium text-justify">
               {{ procedure.name }}
             </div>
-            <div v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.detail">
+            <div v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail">
               <a class="text-base" @click="modalProcedureDetail?.openModal(procedure)">
                 <FileSearchOutlined />
               </a>
             </div>
           </div>
-          <div v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group">
-            {{ organizationStore.PROCEDURE_GROUP[procedure.group] }}
+          <div v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group">
+            {{ screenStore.PROCEDURE_GROUP[procedure.group] }}
           </div>
         </div>
         <div>
@@ -317,7 +325,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
+            <th v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               Giá tiền&nbsp;
               <font-awesome-icon
@@ -334,8 +342,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
-            <th v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action">Thao tác</th>
+            <th v-if="screenStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
+            <th
+              v-if="
+                permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
+                screenStore.SCREEN_PROCEDURE_LIST.table.action
+              "
+            >
+              Thao tác
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -347,20 +362,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               {{ procedure.name }}
               <a
-                v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.detail"
+                v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
                 @click="modalProcedureDetail?.openModal(procedure)"
               >
                 <FileSearchOutlined />
               </a>
             </td>
-            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
-              {{ organizationStore.PROCEDURE_GROUP[procedure.group] }}
+            <td v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
+              {{ screenStore.PROCEDURE_GROUP[procedure.group] }}
             </td>
             <td class="text-right">
               {{ formatMoney(procedure.price) }}
             </td>
-            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
+            <td v-if="screenStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
               <a-tag v-if="procedure.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -374,7 +389,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 Inactive
               </a-tag>
             </td>
-            <td v-if="organizationStore.SCREEN_PROCEDURE_LIST.table.action" class="text-center">
+            <td
+              v-if="
+                permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
+                screenStore.SCREEN_PROCEDURE_LIST.table.action
+              "
+              class="text-center"
+            >
               <a
                 style="color: #eca52b"
                 class="text-xl"

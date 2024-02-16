@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { RouterView, useRouter } from 'vue-router'
 import VueAlert from './common/vue-alert/VueAlert.vue'
-import { useUserStore } from './modules/user/user.store'
+import { useMeStore } from './modules/_me/me.store'
 
-const userStore = useUserStore()
+const meStore = useMeStore()
 const router = useRouter()
 
-userStore.$subscribe((mutation, state) => {
-  if (state.userInfo == null) {
+meStore.$subscribe((mutation, state) => {
+  if (state.user == null) {
     router.push({ name: 'Login' })
   }
 })

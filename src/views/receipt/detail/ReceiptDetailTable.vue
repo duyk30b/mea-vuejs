@@ -3,14 +3,14 @@ import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons
 import { ref } from 'vue'
 import type { Product } from '../../../modules/product'
 import { Receipt } from '../../../modules/receipt'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const props = withDefaults(defineProps<{ receipt: Receipt }>(), { receipt: () => Receipt.blank() })
 const emit = defineEmits<{ (e: 'show-receipt-payment'): void }>()
@@ -45,7 +45,7 @@ const openModalProductDetail = (data?: Product) => {
             <div class="font-medium">
               {{ receiptItem.productBatch!.product!.brandName }}
               <a
-                v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
+                v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
                 class="ml-1"
                 @click="openModalProductDetail(receiptItem.productBatch!.product)"
               >
@@ -53,16 +53,16 @@ const openModalProductDetail = (data?: Product) => {
               </a>
             </div>
             <div
-              v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
+              v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
               style="font-size: 0.8rem"
             >
               {{ receiptItem.productBatch!.product!.substance }}
             </div>
             <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-              <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">
+              <div v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">
                 Lô: {{ receiptItem.productBatch!.batch }}
               </div>
-              <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">
+              <div v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">
                 HSD: {{ timeToText(receiptItem.productBatch!.expiryDate, 'DD/MM/YY') }}
               </div>
             </div>
@@ -87,10 +87,10 @@ const openModalProductDetail = (data?: Product) => {
         <tr>
           <th>#</th>
           <th>Tên</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">Lô</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">HSD</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch">Lô</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate">HSD</th>
           <th>Số lượng</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">Đơn vị</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">Đơn vị</th>
           <th>Giá nhập</th>
           <th>Tổng tiền</th>
         </tr>
@@ -103,26 +103,26 @@ const openModalProductDetail = (data?: Product) => {
               <div style="font-weight: 500">
                 {{ receiptItem.productBatch!.product!.brandName }}
                 <a
-                  v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
+                  v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
                   class="ml-1"
                   @click="openModalProductDetail(receiptItem.productBatch!.product)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance">
+              <div v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance">
                 {{ receiptItem.productBatch!.product!.substance }}
               </div>
             </div>
           </td>
           <td
-            v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch"
+            v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch"
             class="text-center"
           >
             {{ receiptItem.productBatch?.batch }}
           </td>
           <td
-            v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate"
+            v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.expiryDate"
             class="text-center"
           >
             {{ timeToText(receiptItem.productBatch?.expiryDate) }}
@@ -131,7 +131,7 @@ const openModalProductDetail = (data?: Product) => {
             {{ receiptItem.unitQuantity }}
           </td>
           <td
-            v-if="organizationStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit"
+            v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit"
             class="text-center"
           >
             {{ receiptItem.unit?.name }}
@@ -150,13 +150,13 @@ const openModalProductDetail = (data?: Product) => {
   <div class="md:px-4">
     <table class="table-mobile">
       <tbody>
-        <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.itemsActualMoney">
+        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.itemsActualMoney">
           <td class="text-right font-bold" style="width: 70%">Tiền hàng</td>
           <td class="text-right font-bold whitespace-nowrap">
             {{ formatMoney(receipt.itemsActualMoney) }}
           </td>
         </tr>
-        <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.discount">
+        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.discount">
           <td class="text-right">Chiết khấu</td>
           <td class="text-right whitespace-nowrap">
             <a-tag v-if="receipt.discountType === '%'" color="success">
@@ -165,7 +165,7 @@ const openModalProductDetail = (data?: Product) => {
             {{ formatMoney(receipt.discountMoney) }}
           </td>
         </tr>
-        <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.surcharge">
+        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.surcharge">
           <td class="text-right">Phụ phí</td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(receipt.surcharge) }}
@@ -177,7 +177,7 @@ const openModalProductDetail = (data?: Product) => {
             {{ formatMoney(receipt.revenue) }}
           </td>
         </tr>
-        <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.paid">
+        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.paid">
           <td class="text-right cursor-pointer" @click="handleClickReceiptPaymentInfo">
             <span class="mr-1"> Thanh toán </span>
             <ExclamationCircleOutlined />
@@ -186,7 +186,7 @@ const openModalProductDetail = (data?: Product) => {
             {{ formatMoney(receipt.paid) }}
           </td>
         </tr>
-        <tr v-if="organizationStore.SCREEN_RECEIPT_DETAIL.paymentInfo.debt">
+        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.debt">
           <td class="text-right">Ghi nợ</td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(receipt.debt) }}

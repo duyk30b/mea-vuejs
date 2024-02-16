@@ -3,9 +3,11 @@ import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import { DiscountType } from '../../../../modules/enum'
-import { InvoiceItem } from '../../../../modules/invoice'
-import { useOrganizationStore } from '../../../../store/organization.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { convertViToEn } from '../../../../utils'
+import { InvoiceItem } from '../../../../modules/invoice-item/invoice-item.model'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
 
@@ -13,8 +15,10 @@ const props = withDefaults(defineProps<{ tabsKey: 'product' | 'procedure' }>(), 
   tabsKey: 'product',
 })
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const invoiceItem = ref<InvoiceItem>(InvoiceItem.blank())
 
@@ -96,22 +100,20 @@ defineExpose({ setInvoiceItem })
 <template>
   <form class="flex flex-wrap gap-4" @submit.prevent="(e) => addInvoiceItem()">
     <div
-      v-if="
-        tabsKey === 'product' && organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage
-      "
+      v-if="tabsKey === 'product' && screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>Hướng dẫn sử dụng</div>
       <a-auto-complete
         v-model:value="invoiceItem.hintUsage"
         :filter-option="filterOption"
-        :options="organizationStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
+        :options="screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
         class="w-full"
       />
     </div>
 
     <div
-      v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
+      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -129,19 +131,22 @@ defineExpose({ setInvoiceItem })
           @change="handleChangeInvoiceProductSellType"
         >
           <a-select-option
-            v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.retailPrice"
+            v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.retailPrice"
             value="retailPrice"
           >
             Giá bán lẻ
           </a-select-option>
           <a-select-option
-            v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.wholesalePrice"
+            v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.wholesalePrice"
             value="wholesalePrice"
           >
             Giá bán sỉ
           </a-select-option>
           <a-select-option
-            v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice"
+            v-if="
+              permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
+              screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
+            "
             value="costPrice"
           >
             Giá nhập
@@ -154,7 +159,7 @@ defineExpose({ setInvoiceItem })
     </div>
 
     <div
-      v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
+      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -188,7 +193,7 @@ defineExpose({ setInvoiceItem })
     </div>
 
     <div
-      v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
+      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -231,7 +236,7 @@ defineExpose({ setInvoiceItem })
     </div>
 
     <div
-      v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
+      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>

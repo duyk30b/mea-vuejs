@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const loaded = ref(false)
 const productBatchList = ref<ProductBatch[]>([])
@@ -19,7 +19,7 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const timeIsExpire = Date.now() + numberOfDaysToExpire.value * 24 * 60 * 60 * 1000
-    const productBatchPagination = await ProductBatchApi.pagination({
+    const { data, meta } = await ProductBatchApi.pagination({
       page: page.value,
       limit: limit.value,
       sort: { expiryDate: 'ASC' },
@@ -29,8 +29,8 @@ const startFetchData = async () => {
       },
       relation: { product: true },
     })
-    productBatchList.value = productBatchPagination.data
-    total.value = productBatchPagination.total
+    productBatchList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
   } finally {

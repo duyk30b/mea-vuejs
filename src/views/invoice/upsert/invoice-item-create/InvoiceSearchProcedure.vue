@@ -2,18 +2,22 @@
 import { onMounted, ref } from 'vue'
 import { InputOptions } from '../../../../common/vue-form'
 import { Procedure, useProcedureStore } from '../../../../modules/procedure'
-import { useOrganizationStore } from '../../../../store/organization.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import ModalProcedureUpsert from '../../../procedure/components/ModalProcedureUpsert.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure): void }>()
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 const procedureStore = useProcedureStore()
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const searchText = ref('')
 const procedure = ref(Procedure.blank())
@@ -63,7 +67,14 @@ defineExpose({ focus, clear })
   <div>
     <div class="flex justify-between">
       <span>Tên dịch vụ</span>
-      <a @click="modalProcedureUpsert?.openModal()">Thêm dịch vụ mới</a>
+      <span>
+        <a
+          v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
+          @click="modalProcedureUpsert?.openModal()"
+        >
+          Thêm dịch vụ mới
+        </a>
+      </span>
     </div>
     <div style="height: 40px">
       <InputOptions

@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { CustomerPaymentService, type CustomerPaymentPayDebtBody } from './customer-payment.service'
+import { CustomerPaymentApi } from '../customer-payment/customer-payment.api'
+import type { CustomerPaymentPayDebtBody } from '../customer-payment/customer-payment.dto'
 import { CustomerApi } from './customer.api'
 import type { CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
@@ -21,17 +22,16 @@ export const useCustomerStore = defineStore('customer-store', {
         refreshTime = { code: 'CUSTOMER', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const currentTime = new Date()
-      const customerList = await CustomerApi.list({
-        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      const { data, time } = await CustomerApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
       })
-      if (customerList.length) {
-        await CustomerDB.upsertMany(customerList)
-        refreshTime.time = currentTime.toISOString()
+      if (data.length) {
+        await CustomerDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
 
-      return customerList
+      return data
     },
 
     async pagination(params: CustomerPaginationQuery) {
@@ -72,7 +72,7 @@ export const useCustomerStore = defineStore('customer-store', {
     },
 
     async payDebt(body: CustomerPaymentPayDebtBody) {
-      const data = await CustomerPaymentService.payDebt(body)
+      const data = await CustomerPaymentApi.payDebt(body)
       await CustomerDB.replaceOne(data.customer.id, data.customer)
       this.timeSync = Date.now()
       return data

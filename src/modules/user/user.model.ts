@@ -1,16 +1,11 @@
 import {
-  Exclude,
   Expose,
   Transform,
-  TransformationType,
   Type,
   instanceToInstance,
   instanceToPlain,
-  plainToInstance,
+  plainToInstance
 } from 'class-transformer'
-import type { EGender } from '../enum'
-import { Organization } from '../organization'
-import { Role } from '../role/role.model'
 import { decrypt } from '../../utils'
 import {
   FROM_INSTANCE,
@@ -20,6 +15,10 @@ import {
   USER_CREATE,
   USER_UPDATE,
 } from '../_base/base-expose'
+import type { EGender } from '../enum'
+import { Organization } from '../organization'
+import { Role } from '../role/role.model'
+import Device from './device.model'
 
 export class User {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE] })
@@ -28,10 +27,10 @@ export class User {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, USER_CREATE] })
   username: string
 
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, USER_CREATE] })
   @Transform((params) => {
     const { value, type, obj, key, options } = params
     if (!Array.isArray(options.groups)) return value
@@ -75,9 +74,13 @@ export class User {
   @Type(() => Organization)
   organization?: Organization
 
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => Device)
+  devices?: Device[]
+
   static init(): User {
     const ins = new User()
-    ins.id = 0
+    // ins.id = 0 // UserId = 0 là ROOT
     ins.isActive = 1
     return ins
   }

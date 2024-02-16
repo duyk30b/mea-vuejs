@@ -1,7 +1,8 @@
 import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 
 export class Distributor {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
   @Expose()
@@ -22,7 +23,7 @@ export class Distributor {
   @Expose()
   addressStreet?: string
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   debt: number
 
   @Expose()
@@ -31,13 +32,13 @@ export class Distributor {
   @Expose()
   isActive: 1 | 0 // Trạng thái
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   createdAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
   static init(): Distributor {
@@ -67,7 +68,7 @@ export class Distributor {
     return plainToInstance(Distributor, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -75,7 +76,7 @@ export class Distributor {
     return plainToInstance(Distributor, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -86,7 +87,7 @@ export class Distributor {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -94,14 +95,17 @@ export class Distributor {
     return instances.map((i) => Distributor.fromInstance(i))
   }
 
-  static toPlain(instance: Distributor): Record<string, any> {
+  static toPlain(
+    instance: Distributor,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
     if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
       throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
     }
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['CREATE'],
+      groups: [type],
     })
   }
 }

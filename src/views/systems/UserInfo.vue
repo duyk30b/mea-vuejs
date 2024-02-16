@@ -3,27 +3,29 @@ import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
 import { InputDate } from '../../common/vue-form'
-import { useOrganizationStore } from '../../store/organization.store'
+import { MeApi } from '../../modules/_me/me.api'
+import { useMeStore } from '../../modules/_me/me.store'
+import { User } from '../../modules/user'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
-import { useUserStore } from '../../modules/user/user.store'
-import { MeApi, User } from '../../modules/user'
 
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
-const userStore = useUserStore()
-const user = ref<User>(User.fromInstance(userStore.userInfo || User.blank()))
+const meStore = useMeStore()
+const user = ref<User>(User.fromInstance(meStore.user || User.blank()))
 
 onBeforeMount(async () => {
-  user.value = await MeApi.info()
+  const apiResult = await MeApi.info()
+  user.value = apiResult.user
 })
 
 const saveUser = async () => {
   try {
     const userData = await MeApi.updateInfo(user.value)
     user.value = userData
-    userStore.userInfo = User.fromInstance(userData)
+    meStore.user = User.fromInstance(userData)
     message.success('Cập nhật thông tin cá nhân thành công')
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -99,3 +101,4 @@ const saveUser = async () => {
     </div>
   </div>
 </template>
+../../modules/_me/organization.store

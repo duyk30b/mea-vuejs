@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { InvoiceItem, InvoiceItemService, InvoiceItemType } from '../../../modules/invoice'
+import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
+import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
 import { Procedure } from '../../../modules/procedure'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
@@ -13,8 +14,8 @@ const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
 
 const router = useRouter()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PROCEDURE_INVOICE_PAGINATION_LIMIT')) || 10)
@@ -22,7 +23,7 @@ const total = ref(0)
 const invoiceItems = ref<InvoiceItem[]>([])
 
 const startFetchData = async () => {
-  const data = await InvoiceItemService.pagination({
+  const { data, meta } = await InvoiceItemApi.pagination({
     page: page.value,
     limit: limit.value,
     filter: {
@@ -32,8 +33,8 @@ const startFetchData = async () => {
     relation: { invoice: { customer: true } },
     sort: { id: 'DESC' },
   })
-  invoiceItems.value = data.data
-  total.value = data.total
+  invoiceItems.value = data
+  total.value = meta.total
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {

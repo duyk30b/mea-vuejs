@@ -3,14 +3,14 @@ import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { InputNumber } from '../../../common/vue-form'
 import type { Product } from '../../../modules/product'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const openModalProductDetail = (product?: Product) => {
   if (product) modalProductDetail.value?.openModal(product)
@@ -44,7 +44,7 @@ const openModalProductDetail = (product?: Product) => {
             <div class="font-medium">
               {{ receiptItem.productBatch?.product?.brandName }}
               <a
-                v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
                 @click="openModalProductDetail(receiptItem.productBatch?.product)"
               >
@@ -52,16 +52,16 @@ const openModalProductDetail = (product?: Product) => {
               </a>
             </div>
             <div
-              v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+              v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
               style="font-size: 0.8rem"
             >
               {{ receiptItem.productBatch?.product?.substance }}
             </div>
             <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-              <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
+              <div v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
                 Lô: {{ receiptItem.productBatch!.batch }}
               </div>
-              <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">
+              <div v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">
                 HSD: {{ timeToText(receiptItem.productBatch!.expiryDate, 'DD/MM/YY') }}
               </div>
             </div>
@@ -98,10 +98,10 @@ const openModalProductDetail = (product?: Product) => {
         <tr>
           <th>#</th>
           <th>Tên hàng</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">Lô</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">HSD</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">Lô</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">HSD</th>
           <th>Số lượng</th>
-          <th v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đơn vị</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đơn vị</th>
           <th>Giá nhập</th>
           <th>Tổng tiền</th>
           <th>Action</th>
@@ -120,7 +120,7 @@ const openModalProductDetail = (product?: Product) => {
               <div class="font-bold">
                 {{ ri.productBatch?.product?.brandName }}
                 <a
-                  v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                  v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
                   @click="openModalProductDetail(ri.productBatch?.product)"
                 >
@@ -128,18 +128,18 @@ const openModalProductDetail = (product?: Product) => {
                 </a>
               </div>
               <div
-                v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
                 style="font-size: 0.8rem"
               >
                 {{ ri.productBatch?.product?.substance }}
               </div>
             </div>
           </td>
-          <td v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
+          <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
             {{ ri.productBatch?.batch }}
           </td>
           <td
-            v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate"
+            v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate"
             class="text-center"
           >
             {{ timeToText(ri.productBatch?.expiryDate) }}
@@ -169,7 +169,7 @@ const openModalProductDetail = (product?: Product) => {
             </div>
           </td>
           <td
-            v-if="organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit"
+            v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit"
             class="text-center"
           >
             {{ ri.unit.name }}

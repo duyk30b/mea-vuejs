@@ -6,19 +6,20 @@ import {
   TransformationType,
   Type,
 } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
 import type { UnitType } from '../enum'
 import { Product } from '../product'
-import { Receipt } from './receipt.model'
 import { ProductBatch } from '../product-batch'
+import { Receipt } from '../receipt/receipt.model'
 
 export class ReceiptItem {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   receiptId: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   distributorId: number
 
   @Expose()
@@ -43,11 +44,11 @@ export class ReceiptItem {
   @Expose()
   costPrice: number // Giá cost
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Receipt)
   receipt?: Receipt
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ProductBatch)
   productBatch?: ProductBatch
 
@@ -84,7 +85,7 @@ export class ReceiptItem {
     return plainToInstance(ReceiptItem, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -92,7 +93,7 @@ export class ReceiptItem {
     return plainToInstance(ReceiptItem, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -100,7 +101,7 @@ export class ReceiptItem {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -108,7 +109,7 @@ export class ReceiptItem {
     return instanceToInstance(instances, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 

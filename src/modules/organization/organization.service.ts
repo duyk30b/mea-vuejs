@@ -1,29 +1,31 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { OrganizationSettingsType } from '../../store/store.variable'
-import { Customer } from '../customer'
-import { Distributor } from '../distributor'
+import { useMeStore } from '../_me/me.store'
+import type { ScreenSettingKey } from '../_me/store.variable'
+import { OrganizationApi } from './organization.api'
 import { Organization } from './organization.model'
 
 export class OrganizationService {
   static async info() {
-    const { data } = await AxiosInstance.get('/organization/info')
-    return {
-      organization: Organization.fromPlain(data.organization),
-      settings: data.settings as Record<string, any>,
-      distributorDefault: Distributor.fromPlain(data.distributorDefault),
-      customerDefault: Customer.fromPlain(data.customerDefault),
+    try {
+      const organization = await OrganizationApi.info()
+      useMeStore().organization = Organization.fromInstance(organization)
+      return organization
+    } catch (error) {
+      console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
+      return Organization.blank()
     }
   }
 
-  static async updateInfo(organization: Partial<Organization>) {
-    const organizationDto = Organization.toPlain(organization, 'USER_UPDATE')
-    const response = await AxiosInstance.patch('/organization/update', organizationDto)
-
-    return Organization.fromPlain(response.data)
+  static async updateInfo(plain: Partial<Organization>) {
+    try {
+      const organization = await OrganizationApi.updateInfo(plain)
+      useMeStore().organization = Organization.fromInstance(organization)
+      return organization
+    } catch (error) {
+      console.log('🚀 ~ OrganizationService ~ updateInfo ~ error:', error)
+    }
   }
 
-  static async saveSettings(type: OrganizationSettingsType, data: string) {
-    const response = await AxiosInstance.post(`/organization/settings/upsert/${type}`, { data })
-    return response.data
+  static async saveSettings(type: ScreenSettingKey, plain: string) {
+    return await OrganizationApi.saveSettings(type, plain)
   }
 }

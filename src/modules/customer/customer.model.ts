@@ -1,8 +1,9 @@
 import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { EGender } from '../enum'
 
 export class Customer {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
   @Expose()
@@ -38,7 +39,7 @@ export class Customer {
   @Expose()
   healthHistory?: string // Tiền sử bệnh
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   debt: number
 
   @Expose()
@@ -47,13 +48,13 @@ export class Customer {
   @Expose()
   isActive: 1 | 0 // Trạng thái
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   createdAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
   static init(): Customer {
@@ -83,7 +84,7 @@ export class Customer {
     return plainToInstance(Customer, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -91,7 +92,7 @@ export class Customer {
     return plainToInstance(Customer, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -102,7 +103,7 @@ export class Customer {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -110,7 +111,10 @@ export class Customer {
     return instances.map((i) => Customer.fromInstance(i))
   }
 
-  static toPlain(instance: Customer, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: Customer,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
     if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
       throw new Error('Customer.fromInstance error: Instance must be from class Customer')
     }

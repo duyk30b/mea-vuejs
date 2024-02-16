@@ -2,12 +2,12 @@ import { defineStore } from 'pinia'
 import { ProductBatchDB } from '../../core/indexed-db/repository/product-batch.repository copy'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { objectKeyByArray } from '../../utils'
+import { arrayToKeyValue } from '../../utils'
+import type { ConditionNumber } from '../_base/base-condition'
 import { Product } from '../product/product.model'
 import { ProductBatchApi } from './product-batch.api'
 import type { ProductBatchListQuery, ProductBatchPaginationQuery } from './product-batch.dto'
 import { ProductBatch } from './product-batch.model'
-import type { ConditionNumber } from '../_base/base-condition'
 
 export const useProductBatchStore = defineStore('product-batch-store', {
   state: () => {
@@ -23,17 +23,16 @@ export const useProductBatchStore = defineStore('product-batch-store', {
         refreshTime = { code: 'PRODUCT_BATCH', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const currentTime = new Date()
-      const productBatchList = await ProductBatchApi.list({
-        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      const { data, time } = await ProductBatchApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
       })
-      if (productBatchList.length) {
-        await ProductBatchDB.upsertMany(productBatchList)
-        refreshTime.time = currentTime.toISOString()
+      if (data.length) {
+        await ProductBatchDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
 
-      return productBatchList
+      return data
     },
 
     async pagination(params: ProductBatchPaginationQuery) {
@@ -75,7 +74,7 @@ export const useProductBatchStore = defineStore('product-batch-store', {
 
       const productBatchList = ProductBatch.fromObjects(productBatchPagination.data)
       if (relation?.product) {
-        const productMap = objectKeyByArray(productList, 'id')
+        const productMap = arrayToKeyValue(productList, 'id')
         productBatchList.forEach((i) => {
           i.product = productMap[i.productId]
         })
@@ -143,7 +142,7 @@ export const useProductBatchStore = defineStore('product-batch-store', {
         quantity: options?.quantity || undefined,
       })
       const productBatchList = ProductBatch.fromObjects(productBatchObjects)
-      const productMap = objectKeyByArray(productList, 'id')
+      const productMap = arrayToKeyValue(productList, 'id')
       productBatchList.forEach((i) => {
         i.product = productMap[i.productId]
       })

@@ -2,8 +2,9 @@
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AuthApi } from '../../../modules/auth'
-import { MeApi, User } from '../../../modules/user'
+import { MeApi } from '../../../modules/_me/me.api'
+import { AuthService } from '../../../modules/auth/auth.service'
+import { User } from '../../../modules/user'
 
 const showModal = ref(false)
 const user = ref(User.blank())
@@ -32,7 +33,7 @@ const handleSave = async () => {
     }
     await MeApi.changePassword(oldPassword.value, newPassword.value)
     message.success('Đổi mật khẩu thành công')
-    AuthApi.logout()
+    AuthService.logout()
   } catch (error) {
     console.log('🚀 ~ file: ChangePassword.vue:38 ~ handleSave ~ error:', error)
   } finally {

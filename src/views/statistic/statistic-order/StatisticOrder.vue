@@ -5,12 +5,12 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { onMounted, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { StatisticService } from '../../../modules/statistics'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { DTimer } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const moneyDivision = organizationStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = screenStore
 
 const timeType = ref<'date' | 'month'>('date')
 

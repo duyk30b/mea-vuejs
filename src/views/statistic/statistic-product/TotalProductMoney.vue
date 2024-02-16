@@ -3,10 +3,10 @@ import type { ChartData } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
 import { StatisticService } from '../../../modules/statistics'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const pieData = reactive<ChartData<'pie', number[], unknown>>({ labels: [], datasets: [] })
 const options = reactive({

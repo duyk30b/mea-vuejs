@@ -1,10 +1,8 @@
 import { defineStore } from 'pinia'
 import { DistributorDB } from '../../core/indexed-db/repository/distributor.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import {
-  DistributorPaymentService,
-  type DistributorPaymentPayDebtBody,
-} from './distributor-payment.service'
+import { DistributorPaymentApi } from '../distributor-payment/distributor-payment.api'
+import type { DistributorPaymentPayDebtBody } from '../distributor-payment/distributor-payment.dto'
 import { DistributorApi } from './distributor.api'
 import type { DistributorPaginationQuery } from './distributor.dto'
 import { Distributor } from './distributor.model'
@@ -24,17 +22,16 @@ export const useDistributorStore = defineStore('distributor-store', {
         refreshTime = { code: 'DISTRIBUTOR', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const currentTime = new Date()
-      const distributorList = await DistributorApi.list({
-        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      const { data, time } = await DistributorApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
       })
-      if (distributorList.length) {
-        await DistributorDB.upsertMany(distributorList)
-        refreshTime.time = currentTime.toISOString()
+      if (data.length) {
+        await DistributorDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
 
-      return distributorList
+      return data
     },
 
     async pagination(params: DistributorPaginationQuery) {
@@ -75,7 +72,7 @@ export const useDistributorStore = defineStore('distributor-store', {
     },
 
     async payDebt(body: DistributorPaymentPayDebtBody) {
-      const response = await DistributorPaymentService.payDebt(body)
+      const response = await DistributorPaymentApi.payDebt(body)
       await DistributorDB.replaceOne(response.distributor.id, response.distributor)
       this.timeSync = Date.now()
       return response

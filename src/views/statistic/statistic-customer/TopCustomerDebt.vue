@@ -2,11 +2,11 @@
 import { onBeforeMount, ref } from 'vue'
 import { Customer, CustomerApi } from '../../../modules/customer'
 import { StatisticService } from '../../../modules/statistics'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { formatPhone } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const loaded = ref(false)
 const customerList = ref<Customer[]>([])
@@ -19,19 +19,19 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const [customerPagination, customerSumDebt] = await Promise.all([
+    const [customerPagination, sumCustomerDebt] = await Promise.all([
       CustomerApi.pagination({
         page: page.value,
         limit: limit.value,
         filter: { debt: { NOT: 0 } },
         sort: { debt: 'DESC' },
       }),
-      StatisticService.sumDebt(),
+      StatisticService.sumCustomerDebt(),
     ])
 
     customerList.value = customerPagination.data
-    total.value = customerPagination.total
-    sumDebt.value = customerSumDebt
+    total.value = customerPagination.meta.total
+    sumDebt.value = sumCustomerDebt
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
   } finally {

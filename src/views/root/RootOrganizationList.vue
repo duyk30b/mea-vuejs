@@ -9,13 +9,14 @@ import {
 import { onBeforeMount, ref } from 'vue'
 import type { Organization } from '../../modules/organization'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { useOrganizationStore } from '../../store/organization.store'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
+import { MeaDatabase } from '../../core/indexed-db/database'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney, isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 
 const organizationList = ref<Organization[]>([])
 const dataLoading = ref(false)
@@ -26,13 +27,13 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const response = await RootOrganizationApi.pagination({
+    const { data, meta } = await RootOrganizationApi.pagination({
       page: page.value,
       limit: limit.value,
       // relation: { users: true },
     })
-    organizationList.value = response.data
-    total.value = response.total
+    organizationList.value = data
+    total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
   }
@@ -147,3 +148,4 @@ const handleModalRootOrganizationUpsertSuccess = async (
     </div>
   </div>
 </template>
+../../modules/_me/organization.store

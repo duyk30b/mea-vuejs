@@ -12,12 +12,14 @@ export class InvoiceGetQuery {
     invoiceSurcharges?: boolean
     invoiceExpenses?: boolean
   }
+
   filter?: {
     customerId?: number
     time?: ConditionDate
     deleteTime?: ConditionDate
     status?: InvoiceStatus
   }
+
   sort?: { id?: 'ASC' | 'DESC' }
 
   static toQuery(instance: Partial<InvoiceGetQuery>) {

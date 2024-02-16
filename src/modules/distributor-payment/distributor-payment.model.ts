@@ -1,8 +1,12 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import type { PaymentType } from '../enum'
+import { FROM_PLAIN } from '../_base/base-expose'
 
-export class DistributorPayment extends BaseModel {
+export class DistributorPayment {
+  @Expose({ name: 'id', toClassOnly: true })
+  id: number
+
   @Expose()
   distributorId: number
 
@@ -49,7 +53,7 @@ export class DistributorPayment extends BaseModel {
     return plainToInstance(DistributorPayment, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -57,7 +61,7 @@ export class DistributorPayment extends BaseModel {
     return plainToInstance(DistributorPayment, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 

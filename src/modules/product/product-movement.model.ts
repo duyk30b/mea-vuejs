@@ -6,6 +6,7 @@ import {
   TransformationType,
   Type,
 } from 'class-transformer'
+import { FROM_PLAIN } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
 import type { UnitType } from '../enum'
 import { Invoice } from '../invoice'
@@ -88,7 +89,7 @@ export class ProductMovement extends BaseModel {
     return plainToInstance(ProductMovement, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -96,7 +97,7 @@ export class ProductMovement extends BaseModel {
     return plainToInstance(ProductMovement, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 

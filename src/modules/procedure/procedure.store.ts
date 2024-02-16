@@ -20,17 +20,16 @@ export const useProcedureStore = defineStore('procedure-store', {
         refreshTime = { code: 'PROCEDURE', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const currentTime = new Date()
-      const procedureList = await ProcedureApi.list({
-        filter: { updatedAt: { GTE: lastTime, LT: currentTime } },
+      const { data, time } = await ProcedureApi.list({
+        filter: { updatedAt: { GTE: lastTime } },
       })
-      if (procedureList.length) {
-        await ProcedureDB.upsertMany(procedureList)
-        refreshTime.time = currentTime.toISOString()
+      if (data.length) {
+        await ProcedureDB.upsertMany(data)
+        refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
 
-      return procedureList
+      return data
     },
 
     async pagination(params: ProcedurePaginationQuery) {

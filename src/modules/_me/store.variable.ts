@@ -1,4 +1,4 @@
-export enum OrganizationSettingsType {
+export enum ScreenSettingKey {
   SYSTEM_SETTING = 'SYSTEM_SETTING',
 
   PRODUCT_GROUP = 'PRODUCT_GROUP',

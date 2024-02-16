@@ -7,6 +7,7 @@ export class ProductBatchGetQuery {
   relation?: {
     product?: boolean
   }
+
   filter?: {
     quantity?: ConditionNumber
     expiryDate?: ConditionNumber
@@ -21,6 +22,7 @@ export class ProductBatchGetQuery {
       updatedAt?: ConditionDate
     }
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
     expiryDate?: 'ASC' | 'DESC'

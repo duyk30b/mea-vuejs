@@ -10,18 +10,22 @@ import { createVNode, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputNumber, InputText } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useProductStore } from '../../../modules/product'
 import { Product } from '../../../modules/product/product.model'
-import { useOrganizationStore } from '../../../store/organization.store'
 import { convertViToEn } from '../../../utils'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
 
 const emit = defineEmits<{ (e: 'success', value: Product, type: 'CREATE' | 'UPDATE'): void }>()
 const productStore = useProductStore()
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 
@@ -114,6 +118,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thêm/sửa hàng hóa</div>
         <div
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalProductUpsertSettingScreen?.openModal()"
@@ -134,7 +139,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.substance"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.substance"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -145,7 +150,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.group"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.group"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
         >
@@ -157,7 +162,7 @@ defineExpose({ openModal })
               style="width: 100%"
               show-search
               :options="
-                Object.entries(organizationStore.PRODUCT_GROUP).map(([value, label]) => ({
+                Object.entries(screenStore.PRODUCT_GROUP).map(([value, label]) => ({
                   value,
                   label,
                 }))
@@ -167,7 +172,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.unit"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.unit"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
         >
@@ -178,7 +183,7 @@ defineExpose({ openModal })
                 v-model:value="product.unit[0].name"
                 :filter-option="filterOption"
                 class="w-full"
-                :options="organizationStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+                :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
               />
             </div>
             <div v-else class="mt-2">
@@ -193,7 +198,7 @@ defineExpose({ openModal })
                       v-model:value="product.unit[0].name"
                       :filter-option="filterOption"
                       class="w-full"
-                      :options="organizationStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+                      :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
                     />
                   </td>
                   <td style="padding-left: 12px">
@@ -214,7 +219,7 @@ defineExpose({ openModal })
                       <a-auto-complete
                         v-model:value="product.unit[index].name"
                         class="w-full"
-                        :options="organizationStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+                        :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
                       />
                     </td>
                     <td style="padding: 0 0 8px 0">
@@ -250,7 +255,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.route"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.route"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
         >
@@ -258,13 +263,13 @@ defineExpose({ openModal })
           <a-auto-complete
             v-model:value="product.route"
             :filter-option="filterOption"
-            :options="organizationStore.PRODUCT_ROUTE.map((i) => ({ value: i }))"
+            :options="screenStore.PRODUCT_ROUTE.map((i) => ({ value: i }))"
             class="flex-auto"
           />
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.source"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.source"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
         >
@@ -275,7 +280,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="organizationStore.SCREEN_PRODUCT_UPSERT.hintUsage"
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.hintUsage"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
         >
@@ -283,7 +288,7 @@ defineExpose({ openModal })
           <a-auto-complete
             v-model:value="product.hintUsage"
             :filter-option="filterOption"
-            :options="organizationStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
+            :options="screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
             class="flex-auto"
           />
         </div>
@@ -302,7 +307,13 @@ defineExpose({ openModal })
 
       <div class="p-6">
         <div class="flex gap-4">
-          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button
+            v-if="permissionIdMap[PermissionId.PRODUCT_DELETE] && product.id"
+            danger
+            @click="clickDelete"
+          >
+            Xóa
+          </a-button>
           <a-button class="ml-auto" @click="handleClose">
             <template #icon>
               <CloseOutlined />
@@ -319,5 +330,8 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalProductUpsertSettingScreen ref="modalProductUpsertSettingScreen" />
+  <ModalProductUpsertSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalProductUpsertSettingScreen"
+  />
 </template>

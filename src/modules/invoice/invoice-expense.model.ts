@@ -1,9 +1,10 @@
 import { Expose } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { UNKNOWN_KEY } from '../enum'
+import { FROM_PLAIN } from '../_base/base-expose'
 
 export class InvoiceExpense extends BaseModel {
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   invoiceId: number
 
   @Expose()

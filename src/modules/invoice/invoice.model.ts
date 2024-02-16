@@ -3,13 +3,15 @@ import {
   instanceToInstance,
   instanceToPlain,
   plainToInstance,
-  Type
+  Type,
 } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
-import { Customer, CustomerPayment } from '../customer'
+import { Customer } from '../customer'
+import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { DiscountType } from '../enum'
+import { InvoiceItem } from '../invoice-item/invoice-item.model'
 import { InvoiceExpense } from './invoice-expense.model'
-import { InvoiceItem } from './invoice-item.model'
 import { InvoiceSurcharge } from './invoice-surcharge.model'
 
 export enum InvoiceStatus {
@@ -24,16 +26,16 @@ export class Invoice extends BaseModel {
   @Expose({ toClassOnly: true })
   arrivalId: number
 
-  @Expose({ groups: ['ALL', 'COPY', 'CREATE'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE] })
   customerId: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   status: InvoiceStatus
 
   @Expose()
   time: number
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   deleteTime: number
 
   @Expose()
@@ -63,10 +65,10 @@ export class Invoice extends BaseModel {
   @Expose()
   profit: number // tiền lãi = Doanh thu - tiền cost - khoản chi
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   paid: number // tiền đã thanh toán
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   debt: number // tiền nợ
 
   @Expose()
@@ -76,23 +78,23 @@ export class Invoice extends BaseModel {
   // @Type(() => Arrival)
   // arrival: Arrival
 
-  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
+  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
   @Type(() => InvoiceItem)
   invoiceItems?: InvoiceItem[]
 
-  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
+  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
   @Type(() => InvoiceSurcharge)
   invoiceSurcharges?: InvoiceSurcharge[] // Phụ phí chi tiết
 
-  @Expose({ groups: ['ALL', 'CREATE', 'UPDATE'] })
+  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
   @Type(() => InvoiceExpense)
   invoiceExpenses?: InvoiceExpense[] // Chi phí chi tiết
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Customer)
   customer?: Customer
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => CustomerPayment)
   customerPayments: CustomerPayment[]
 
@@ -113,6 +115,7 @@ export class Invoice extends BaseModel {
     ins.debt = 0
     return ins
   }
+
   static blank(): Invoice {
     const instance = Invoice.init()
     instance.invoiceItems = []
@@ -127,7 +130,7 @@ export class Invoice extends BaseModel {
     return plainToInstance(Invoice, dto, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -135,7 +138,7 @@ export class Invoice extends BaseModel {
     return plainToInstance(Invoice, dto, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -143,11 +146,14 @@ export class Invoice extends BaseModel {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
-  static toPlain(instance: Invoice, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: Invoice,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

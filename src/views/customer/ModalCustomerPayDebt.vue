@@ -7,8 +7,8 @@ import VueModal from '../../common/VueModal.vue'
 import { InputMoney } from '../../common/vue-form'
 import { useCustomerStore, type Customer } from '../../modules/customer'
 import { InvoiceService, InvoiceStatus, type Invoice } from '../../modules/invoice'
-import { useOrganizationStore } from '../../store/organization.store'
 import { timeToText } from '../../utils'
+import { useScreenStore } from '../../modules/_me/screen.store'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -18,8 +18,8 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const customerStore = useCustomerStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const openDebt = ref(0)
 const money = ref(0)

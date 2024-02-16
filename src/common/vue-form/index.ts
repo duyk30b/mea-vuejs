@@ -17,6 +17,5 @@ export {
   InputOptions,
   InputPhone,
   InputText,
-  VueSelect
+  VueSelect,
 }
-

@@ -2,14 +2,17 @@
 import { message } from 'ant-design-vue'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { DiscountType } from '../../../../modules/enum'
-import { Invoice, InvoiceItem, InvoiceItemType } from '../../../../modules/invoice'
+import { Invoice } from '../../../../modules/invoice'
+import { InvoiceItem, InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import type { Procedure } from '../../../../modules/procedure'
 import type { ProductBatch } from '../../../../modules/product-batch'
-import { useOrganizationStore } from '../../../../store/organization.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import InvoiceItemDetail from './InvoiceItemDetail.vue'
 import InvoiceSearchProcedure from './InvoiceSearchProcedure.vue'
 import InvoiceSearchProduct from './InvoiceSearchProduct.vue'
 import InvoiceSearchProductBatch from './InvoiceSearchProductBatch.vue'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
 
 const invoiceSearchProduct = ref<InstanceType<typeof InvoiceSearchProduct>>()
 const invoiceSearchProductBatch = ref<InstanceType<typeof InvoiceSearchProductBatch>>()
@@ -43,8 +46,10 @@ onUnmounted(() => {
 const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
 const props = withDefaults(defineProps<{ invoice: Invoice }>(), { invoice: () => Invoice.blank() })
 
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const defaultTabsKey = localStorage.getItem('ARRIVAL_INVOICE_UPSERT_TABS') || 'product'
 const tabsKey = ref<'product' | 'procedure'>(defaultTabsKey as any)
@@ -91,7 +96,7 @@ const selectProcedure = (procedure: Procedure) => {
 }
 
 const nextProcessInvoiceItem = (ii: InvoiceItem) => {
-  if (!organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
+  if (!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
     addInvoiceItem(ii)
   } else {
     invoiceItemDetail.value?.setInvoiceItem(ii)
@@ -183,6 +188,7 @@ const handleChangeTabs = (activeKey: any) => {
     @change="handleChangeTabs"
   >
     <a-tab-pane
+      v-if="permissionIdMap[PermissionId.PRODUCT_READ]"
       key="product"
       :tab="
         `Hàng hóa (` +
@@ -192,20 +198,19 @@ const handleChangeTabs = (activeKey: any) => {
     >
       <div class="flex flex-wrap gap-4">
         <InvoiceSearchProduct
-          v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT'"
+          v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT'"
           ref="invoiceSearchProduct"
           @selectProductBatch="selectProductBatch"
         />
         <InvoiceSearchProductBatch
-          v-if="
-            organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT_BATCH'
-          "
+          v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT_BATCH'"
           ref="invoiceSearchProductBatch"
           @selectProductBatch="selectProductBatch"
         />
       </div>
     </a-tab-pane>
     <a-tab-pane
+      v-if="permissionIdMap[PermissionId.PROCEDURE_READ]"
       key="procedure"
       :tab="
         'Dịch vụ (' +
@@ -217,10 +222,7 @@ const handleChangeTabs = (activeKey: any) => {
     </a-tab-pane>
   </a-tabs>
 
-  <div
-    v-if="organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch"
-    class="mt-4"
-  >
+  <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch" class="mt-4">
     <InvoiceItemDetail
       ref="invoiceItemDetail"
       :tabsKey="tabsKey"

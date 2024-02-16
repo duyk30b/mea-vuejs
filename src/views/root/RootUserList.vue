@@ -7,9 +7,9 @@ import {
   PlusOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
-import { RootUserApi } from '../../modules/root-user/root-user.api'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -22,15 +22,15 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const response = await RootUserApi.pagination({
+    const { data, meta } = await RootUserApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: { organization: true },
     })
-    userList.value = response.data
-    total.value = response.total
+    userList.value = data
+    total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
+    console.log('🚀 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -56,6 +56,12 @@ const handleModalRootUserUpsertSuccess = async (
   data: User,
   type: 'CREATE' | 'UPDATE' | 'DELETE'
 ) => {
+  await startFetchData()
+}
+
+const deviceLogout = async (params: { userId: number; code: string; oid: number }) => {
+  const { userId, oid, code } = params
+  const result = await RootUserApi.deviceLogout({ userId, code, oid })
   await startFetchData()
 }
 </script>
@@ -86,6 +92,7 @@ const handleModalRootUserUpsertSuccess = async (
             <th>OrgPhone</th>
             <th>OrgEmail</th>
             <th>OrgName</th>
+            <th>Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -94,7 +101,7 @@ const handleModalRootUserUpsertSuccess = async (
           <tr v-if="userList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(user, i) in userList" :key="i">
+          <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">{{ user.id }}</td>
             <td class="text-center">{{ user.oid }}</td>
             <td>{{ user.username }}</td>
@@ -102,6 +109,30 @@ const handleModalRootUserUpsertSuccess = async (
             <td class="text-center">{{ user.organization?.phone }}</td>
             <td>{{ user.organization?.email }}</td>
             <td>{{ user.organization?.name }}</td>
+            <td>
+              <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
+                <div>
+                  <span v-if="device.mobile === 1">
+                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                  </span>
+                  <span v-else>
+                    <font-awesome-icon :icon="['fas', 'desktop']" />
+                  </span>
+                  <span class="ml-2">{{ device.os }}</span> / <span>{{ device.browser }}</span>
+                </div>
+                <div>IP: {{ device.ip }}</div>
+                <div>Time: {{ new Date(parseInt(device.code, 36)).toISOString() }}</div>
+                <div>
+                  <a-button
+                    type="default"
+                    size="small"
+                    @click="deviceLogout({ userId: user.id, code: device.code, oid: user.oid })"
+                  >
+                    Đăng xuất
+                  </a-button>
+                </div>
+              </div>
+            </td>
             <td class="text-center">
               <a-tag v-if="user.isActive" color="success">
                 <template #icon>

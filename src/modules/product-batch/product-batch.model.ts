@@ -5,13 +5,14 @@ import {
   plainToInstance,
   Type,
 } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { Product } from '../product/product.model'
 
 export class ProductBatch {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
-  @Expose({ groups: ['ALL', 'COPY', 'CREATE'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE] })
   productId: number
 
   @Expose()
@@ -20,10 +21,10 @@ export class ProductBatch {
   @Expose()
   expiryDate?: number
 
-  @Expose({ groups: ['ALL', 'COPY', 'CREATE'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE] })
   costPrice: number // Giá nhập
 
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   quantity: number
 
   @Expose()
@@ -35,46 +36,55 @@ export class ProductBatch {
   @Expose()
   isActive: 1 | 0 // Trạng thái
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   createdAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
-  @Expose({ groups: ['ALL'] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Product)
   product?: Product
 
   get unitQuantity() {
     return Number(((this.quantity || 0) / this.product!.unitRate).toFixed(3))
   }
+
   get unitCostPrice() {
     return this.costPrice * this.product!.unitRate
   }
+
   get unitRetailPrice() {
     return this.retailPrice * this.product!.unitRate
   }
+
   get unitWholesalePrice() {
     return this.wholesalePrice * this.product!.unitRate
   }
+
   get totalCostPrice() {
     return this.costPrice * this.quantity
   }
+
   get totalRetailPrice() {
     return this.retailPrice * this.quantity
   }
+
   get totalWholesalePrice() {
     return this.wholesalePrice * this.quantity
   }
+
   set unitCostPrice(data) {
     this.costPrice = data / this.product!.unitRate
   }
+
   set unitRetailPrice(data) {
     this.retailPrice = data / this.product!.unitRate
   }
+
   set unitWholesalePrice(data) {
     this.wholesalePrice = data / this.product!.unitRate
   }
@@ -113,7 +123,7 @@ export class ProductBatch {
     return plainToInstance(ProductBatch, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -121,7 +131,7 @@ export class ProductBatch {
     return plainToInstance(ProductBatch, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -133,7 +143,7 @@ export class ProductBatch {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -141,7 +151,10 @@ export class ProductBatch {
     return instances.map((i) => ProductBatch.fromInstance(i))
   }
 
-  static toPlain(instance: ProductBatch, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: ProductBatch,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
     if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_ProductBatch') {
       throw new Error('ProductBatch.fromInstance error: Instance must be from class ProductBatch')
     }

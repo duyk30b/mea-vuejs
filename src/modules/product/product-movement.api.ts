@@ -1,4 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
+import type { BaseResponse } from '../_base/base-dto'
 import type { ApiPaginationRequest, ApiPaginationResponse } from '../pagination'
 import { ProductMovement, ProductMovementType } from './product-movement.model'
 
@@ -10,11 +11,13 @@ export class ProductMovementGetQuery {
     invoice?: boolean
     receipt?: boolean
   }
+
   filter?: {
     productId?: number
     productBatchId?: number
     type?: ProductMovementType
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
   }
@@ -37,13 +40,11 @@ export class ProductMovementApi {
     const params = ProductMovementGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/product-movement/pagination', { params })
-    const data = response.data as ApiPaginationResponse
+    const { data, meta } = response.data as BaseResponse
 
     return {
-      total: data.total,
-      page: data.page,
-      limit: data.limit,
-      data: ProductMovement.fromPlains(data.data),
+      meta,
+      data: ProductMovement.fromPlains(data),
     }
   }
 }

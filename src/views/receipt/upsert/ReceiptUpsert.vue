@@ -6,17 +6,14 @@ import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { Distributor, DistributorApi, useDistributorStore } from '../../../modules/distributor'
 import { DiscountType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore } from '../../../modules/product'
-import {
-  Receipt,
-  ReceiptApi,
-  ReceiptItem,
-  ReceiptStatus,
-  useReceiptStore,
-} from '../../../modules/receipt'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { Receipt, ReceiptApi, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
 import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
@@ -48,8 +45,10 @@ const route = useRoute()
 const productStore = useProductStore()
 const receiptStore = useReceiptStore()
 const distributorStore = useDistributorStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+const { formatMoney } = screenStore
 
 const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 
@@ -87,9 +86,7 @@ onBeforeMount(async () => {
     receipt.value.distributor = distributorRes
     receipt.value.distributorId = distributorRes.id
   } else {
-    const distributorRes = Distributor.fromPlain(
-      organizationStore.distributorDefault || Distributor.blank()
-    )
+    const distributorRes = Distributor.fromPlain(meStore.distributorDefault || Distributor.blank())
     distributor.value = distributorRes
     receipt.value.distributor = distributorRes
     receipt.value.distributorId = distributorRes.id
@@ -168,7 +165,7 @@ const saveReceipt = async (type: EReceiptSave) => {
         const response = await ReceiptApi.createBasic(receipt.value)
 
         receipt.value = Receipt.blank()
-        const distributorRes = Distributor.fromPlain(organizationStore.distributorDefault)
+        const distributorRes = Distributor.fromPlain(meStore.distributorDefault)
         distributor.value = distributorRes
         receipt.value.distributor = distributorRes
         receipt.value.distributorId = distributorRes.id
@@ -199,7 +196,7 @@ const saveReceipt = async (type: EReceiptSave) => {
 
 const handleAddReceiptItem = (ri: ReceiptItem) => {
   const receiptItem = ReceiptItem.clone(ri)
-  if (organizationStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
+  if (screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
     receipt.value.receiptItems!.unshift(receiptItem)
   } else {
     const exist = receipt.value.receiptItems?.find((i) => {
@@ -233,7 +230,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
     <div class="page-header-setting">
-      <a-dropdown trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -264,7 +261,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <b> {{ formatMoney(distributor.debt) }} </b>
               )
             </span>
-            <a @click="modalDistributorUpsert?.openModal()">Thêm NCC mới</a>
+            <span>
+              <a
+                v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
+                @click="modalDistributorUpsert?.openModal()"
+              >
+                Thêm NCC mới
+              </a>
+            </span>
           </div>
           <div style="height: 40px">
             <InputOptions
@@ -305,13 +309,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     />
                   </td>
                 </tr>
-                <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
+                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="width: 120px">Tiền hàng</td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>
-                <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
+                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
                   <td>Chiết khấu</td>
                   <td class="cursor-pointer" style="font-size: 16px">
                     <a-popconfirm>
@@ -358,7 +362,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     </a-popconfirm>
                   </td>
                 </tr>
-                <tr v-if="organizationStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
+                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
                   <td>Phụ phí</td>
                   <td>
                     <InputMoney v-model:value="receipt.surcharge" class="input-payment" />
@@ -380,7 +384,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </div>
 
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
-          <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndNew" class="mt-4">
+          <div
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT] &&
+              screenStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndNew
+            "
+            class="mt-4"
+          >
             <a-button
               type="primary"
               :loading="saveLoading"
@@ -396,7 +406,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </div>
 
           <div
-            v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndDetail"
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT] &&
+              screenStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndDetail
+            "
             class="mt-4"
           >
             <a-button
@@ -413,7 +426,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </a-button>
           </div>
 
-          <div v-if="organizationStore.SCREEN_RECEIPT_UPSERT.save.createDraft" class="mt-4">
+          <div
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
+              screenStore.SCREEN_RECEIPT_UPSERT.save.createDraft
+            "
+            class="mt-4"
+          >
             <a-button
               type="primary"
               :loading="saveLoading"
@@ -430,7 +449,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </template>
 
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
-          <div v-if="[ReceiptStatus.Draft].includes(receipt.status)" class="mt-4">
+          <div
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT] &&
+              [ReceiptStatus.Draft].includes(receipt.status)
+            "
+            class="mt-4"
+          >
             <a-button
               type="primary"
               :loading="saveLoading"
@@ -446,7 +471,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </div>
 
           <div
-            v-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT] &&
+              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
+            "
             class="mt-4"
           >
             <a-button

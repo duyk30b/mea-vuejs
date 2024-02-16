@@ -4,10 +4,10 @@ import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
 import { InvoiceService } from '../../../modules/invoice'
 import { StatisticService } from '../../../modules/statistics'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const badDebtDays = ref(30)
 const totalCustomerDebt = ref(0)
@@ -24,15 +24,15 @@ const loaded = ref(false)
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const [customerSumDebt, { invoiceSumDebt }] = await Promise.all([
-      StatisticService.sumDebt(),
-      InvoiceService.sumDebt({
+    const [sumCustomerDebt, { sumInvoiceDebt }] = await Promise.all([
+      StatisticService.sumCustomerDebt(),
+      InvoiceService.sumInvoiceDebt({
         filter: { time: { LT: Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000 } },
       }),
     ])
-    totalCustomerDebt.value = customerSumDebt
-    const newDebt = customerSumDebt - invoiceSumDebt
-    const badDebt = invoiceSumDebt
+    totalCustomerDebt.value = sumCustomerDebt
+    const newDebt = sumCustomerDebt - sumInvoiceDebt
+    const badDebt = sumInvoiceDebt
 
     pieData.labels = ['Nợ mới', `Nợ cũ > ${badDebtDays.value} ngày`]
     pieData.datasets = [

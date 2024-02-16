@@ -3,15 +3,15 @@ import { onMounted, ref } from 'vue'
 import { InputOptions } from '../../../../common/vue-form'
 import { Product, useProductStore } from '../../../../modules/product'
 import { ProductBatch, useProductBatchStore } from '../../../../modules/product-batch'
-import { useOrganizationStore } from '../../../../store/organization.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{ (e: 'selectProductBatch', value: ProductBatch): void }>()
 
 const inputSearchProductBatch = ref<InstanceType<typeof InputOptions>>()
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 const productStore = useProductStore()
 const productBatchStore = useProductBatchStore()
 
@@ -30,7 +30,7 @@ onMounted(async () => {
 
 const searchingProductBatch = async (text: string) => {
   productBatchList.value = await productBatchStore.search(text, {
-    quantity: organizationStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
+    quantity: screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
       ? undefined
       : { NOT: 0 },
   })

@@ -11,6 +11,7 @@ export class ProcedureGetQuery {
     group?: string
     updatedAt?: ConditionDate
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'

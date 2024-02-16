@@ -1,21 +1,24 @@
 <script setup lang="ts">
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message, type SelectProps } from 'ant-design-vue'
-import { onBeforeMount, ref } from 'vue'
+import { ref } from 'vue'
 import VueModal from '../../common/VueModal.vue'
 import { InputNumber, InputText } from '../../common/vue-form'
-import { Organization } from '../../modules/organization'
-import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { useOrganizationStore } from '../../store/organization.store'
-import { convertViToEn } from '../../utils'
 import { AddressInstance } from '../../core/address.instance'
+import { useScreenStore } from '../../modules/_me/screen.store'
+import { Organization } from '../../modules/organization'
+import { PermissionApi } from '../../modules/permission/permission.api'
+import type { PermissionId } from '../../modules/permission/permission.enum'
+import type { Permission } from '../../modules/permission/permission.model'
+import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
+import { convertViToEn } from '../../utils'
 
 const emit = defineEmits<{
   (e: 'success', value: Organization, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
 
 const provinceOptions = ref<SelectProps['options']>([])
 const districtOptions = ref<SelectProps['options']>([])
@@ -25,12 +28,22 @@ const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
 const saveLoading = ref(false)
 
-const permissionIds = ref([])
+const permissionList = ref<Permission[]>([])
+const permissionIds = ref<PermissionId[]>([])
+
+let firstLoad = true
 
 const openModal = async (instance?: Organization) => {
   showModal.value = true
   organization.value = instance ? Organization.fromInstance(instance) : Organization.blank()
   permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
+
+  if (firstLoad === true) {
+    const provinceList = await AddressInstance.getAllProvinces()
+    provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
+    permissionList.value = await PermissionApi.list({ filter: { level: 1 } })
+    firstLoad = false
+  }
 }
 
 const closeModal = () => {
@@ -38,18 +51,14 @@ const closeModal = () => {
   showModal.value = false
 }
 
-onBeforeMount(async () => {
-  const provinceList = await AddressInstance.getAllProvinces()
-  provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
-})
-
 const handleSave = async () => {
   saveLoading.value = true
   if (!organization.value.phone) {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
+  organization.value.permissionIds = JSON.stringify([...permissionIds.value].sort())
   try {
-    if (!organization.value.id) {
+    if (!organization.value.id && organization.value.id !== 0) {
       const response = await RootOrganizationApi.createOne(organization.value)
       emit('success', response, 'CREATE')
     } else {
@@ -187,6 +196,17 @@ defineExpose({ openModal })
           />
         </div>
 
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div style="width: 100px; flex: none">Permission</div>
+          <div class="flex-auto">
+            <a-checkbox-group v-model:value="permissionIds">
+              <div v-for="permission in permissionList" :key="permission.id" class="mb-3">
+                <a-checkbox :value="permission.id">{{ permission.name }}</a-checkbox>
+              </div>
+            </a-checkbox-group>
+          </div>
+        </div>
+
         <div class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
@@ -195,13 +215,6 @@ defineExpose({ openModal })
           />
           <div v-if="!organization.isActive" class="ml-4">
             Cơ sở này tạm thời không thể hoạt động
-          </div>
-        </div>
-
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">Permission</div>
-          <div class="flex-auto">
-            <InputText v-model:value="organization.permissionIds" required />
           </div>
         </div>
       </div>
@@ -226,3 +239,4 @@ defineExpose({ openModal })
     </form>
   </VueModal>
 </template>
+../../modules/_me/organization.store

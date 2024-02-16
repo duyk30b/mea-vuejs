@@ -10,12 +10,14 @@ export class ReceiptGetQuery {
     distributorPayments?: boolean
     receiptItems?: boolean
   }
+
   filter?: {
     distributorId?: number
     time?: ConditionDate
     deleteTime?: ConditionDate
     status?: ReceiptStatus
   }
+
   sort?: {
     id?: 'ASC' | 'DESC'
   }

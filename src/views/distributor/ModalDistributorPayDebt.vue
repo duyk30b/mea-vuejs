@@ -7,7 +7,7 @@ import VueModal from '../../common/VueModal.vue'
 import { InputMoney } from '../../common/vue-form'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { useOrganizationStore } from '../../store/organization.store'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import { timeToText } from '../../utils'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -18,8 +18,8 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const distributorStore = useDistributorStore()
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
 
 const openDebt = ref(0)
 const money = ref(0)

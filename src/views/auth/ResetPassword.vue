@@ -2,7 +2,7 @@
 import { message } from 'ant-design-vue'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { AuthApi } from '../../modules/auth'
+import { AuthService } from '../../modules/auth/auth.service'
 
 const router = useRouter()
 const route = useRoute()
@@ -27,7 +27,7 @@ const startResetPassword = async () => {
     if (formState.passwordRepeat !== formState.password) {
       return message.error('Điền mật khẩu lần 2 không chính xác')
     }
-    await AuthApi.resetPassword({
+    await AuthService.resetPassword({
       orgPhone: formState.orgPhone as string,
       username: formState.username as string,
       password: formState.password,

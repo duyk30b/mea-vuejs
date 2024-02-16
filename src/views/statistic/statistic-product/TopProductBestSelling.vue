@@ -5,11 +5,11 @@ import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
 import { StatisticService } from '../../../modules/statistics'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { DTimer } from '../../../utils'
 
-const organizationStore = useOrganizationStore()
-const moneyDivision = organizationStore.SYSTEM_SETTING.moneyDivisionFormat
+const screenStore = useScreenStore()
+const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],

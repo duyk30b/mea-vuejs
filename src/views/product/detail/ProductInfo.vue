@@ -10,17 +10,21 @@ import { createVNode, ref, watch } from 'vue'
 import { VueSelect } from '../../../common/vue-form'
 import { Product } from '../../../modules/product'
 import { ProductBatch, ProductBatchApi, useProductBatchStore } from '../../../modules/product-batch'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 import ModalProductBatchUpdate from './ModalProductBatchUpdate.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalProductBatchUpdate = ref<InstanceType<typeof ModalProductBatchUpdate>>()
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
-const organizationStore = useOrganizationStore()
+const screenStore = useScreenStore()
 const productBatchStore = useProductBatchStore()
-const { formatMoney, isMobile } = organizationStore
+const { formatMoney, isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_BATCH_PAGINATION_LIMIT')) || 10)
@@ -105,6 +109,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
 
 <template>
   <ModalProductBatchUpdate
+    v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
     ref="modalProductBatchUpdate"
     @success="handleModalProductBatchUpdateSuccess"
   />
@@ -129,7 +134,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
         <td class="px-2">
-          {{ organizationStore.PRODUCT_GROUP[product.group || 0] }}
+          {{ screenStore.PRODUCT_GROUP[product.group || 0] }}
         </td>
       </tr>
       <tr>
@@ -208,7 +213,9 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
               <div>HSD: {{ timeToText(productBatch.expiryDate, 'DD/MM/YYYY') }}</div>
             </td>
             <td class="text-right">
-              <div>Nhập: {{ formatMoney(productBatch.unitCostPrice) }}</div>
+              <div v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">
+                Nhập: {{ formatMoney(productBatch.unitCostPrice) }}
+              </div>
               <div>Sỉ: {{ formatMoney(productBatch.unitWholesalePrice) }}</div>
               <div>Lẻ: {{ formatMoney(productBatch.unitRetailPrice) }}</div>
             </td>
@@ -218,6 +225,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             <td class="text-center">
               <div class="flex flex-col">
                 <a
+                  v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
                   style="color: #eca52b"
                   class="text-base"
                   @click="modalProductBatchUpdate?.openModal(product, productBatch)"
@@ -225,7 +233,10 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
                   <FormOutlined />
                 </a>
                 <a
-                  v-if="productBatch.quantity === 0"
+                  v-if="
+                    permissionIdMap[PermissionId.PRODUCT_BATCH_DELETE] &&
+                    productBatch.quantity === 0
+                  "
                   style="color: #d9534f"
                   class="text-base"
                   @click="startDeleteProductBatch(productBatch.id)"
@@ -246,7 +257,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
                 <span>
                   SL: {{ productBatches.reduce((acc, cur) => acc + cur.unitQuantity, 0) }}
                 </span>
-                <span>
+                <span v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">
                   Nhập:
                   {{
                     formatMoney(productBatches.reduce((acc, cur) => acc + cur.totalCostPrice, 0))
@@ -271,11 +282,11 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             <th>Mã</th>
             <th>Lô hàng</th>
             <th>HSD</th>
-            <th>G.Nhập</th>
+            <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">G.Nhập</th>
             <th>G.Sỉ</th>
             <th>G.Lẻ</th>
             <th>S.Lượng</th>
-            <th>T.Nhập</th>
+            <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">T.Nhập</th>
             <th>T.Lẻ</th>
             <th>Sửa</th>
           </tr>
@@ -292,7 +303,10 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             <td class="text-center">
               {{ timeToText(productBatch.expiryDate, 'DD/MM/YYYY') }}
             </td>
-            <td class="text-right">
+            <td
+              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
+              class="text-right"
+            >
               {{ formatMoney(productBatch.unitCostPrice) }}
             </td>
             <td class="text-right">
@@ -304,7 +318,10 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             <td class="text-right">
               {{ productBatch.unitQuantity }}
             </td>
-            <td class="text-right">
+            <td
+              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
+              class="text-right"
+            >
               {{ formatMoney(productBatch.totalCostPrice) }}
             </td>
             <td class="text-right">
@@ -312,6 +329,7 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
             </td>
             <td class="text-center">
               <a
+                v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
                 style="color: #eca52b"
                 class="mx-1 text-xl"
                 @click="modalProductBatchUpdate?.openModal(product, productBatch)"
@@ -319,7 +337,9 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
                 <FormOutlined />
               </a>
               <a
-                v-if="productBatch.quantity === 0"
+                v-if="
+                  permissionIdMap[PermissionId.PRODUCT_BATCH_DELETE] && productBatch.quantity === 0
+                "
                 style="color: #d9534f"
                 class="mx-1 text-xl"
                 @click="startDeleteProductBatch(productBatch.id)"
@@ -328,18 +348,43 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
               </a>
             </td>
           </tr>
+        </tbody>
+      </table>
+      <table class="table">
+        <tbody>
           <tr>
-            <td colspan="6" class="text-right">Tổng</td>
+            <td style="width: 60%" class="text-right">Tổng</td>
             <td class="text-right">
-              {{ productBatches.reduce((acc, cur) => acc + cur.quantity, 0) }}
+              <div class="flex justify-between">
+                <span>SL: </span>
+                <span>
+                  {{ productBatches.reduce((acc, cur) => acc + cur.quantity, 0) }}
+                </span>
+              </div>
+            </td>
+            <td
+              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
+              class="text-right font-bold"
+            >
+              <div class="flex justify-between">
+                <span>T.Nhập: </span>
+                <span>
+                  {{
+                    formatMoney(productBatches.reduce((acc, cur) => acc + cur.totalCostPrice, 0))
+                  }}
+                </span>
+              </div>
             </td>
             <td class="text-right font-bold">
-              {{ formatMoney(productBatches.reduce((acc, cur) => acc + cur.totalCostPrice, 0)) }}
+              <div class="flex justify-between">
+                <span>T.Lẻ: </span>
+                <span>
+                  {{
+                    formatMoney(productBatches.reduce((acc, cur) => acc + cur.totalRetailPrice, 0))
+                  }}
+                </span>
+              </div>
             </td>
-            <td class="text-right font-bold">
-              {{ formatMoney(productBatches.reduce((acc, cur) => acc + cur.totalRetailPrice, 0)) }}
-            </td>
-            <td></td>
           </tr>
         </tbody>
       </table>

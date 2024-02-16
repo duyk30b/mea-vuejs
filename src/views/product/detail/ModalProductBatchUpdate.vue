@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { InputDate, InputMoney } from '../../../common/vue-form'
 import { Product } from '../../../modules/product'
 import { ProductBatch, useProductBatchStore } from '../../../modules/product-batch'
+import { useMeStore } from '../../../modules/_me/me.store'
 
 const emit = defineEmits<{ (e: 'success', value: ProductBatch, type: 'UPDATE'): void }>()
 

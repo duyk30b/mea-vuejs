@@ -6,15 +6,17 @@ import VueModal from '../../../common/VueModal.vue'
 import { InputOptions } from '../../../common/vue-form'
 import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
-import { useOrganizationStore } from '../../../store/organization.store'
-import { OrganizationSettingsType } from '../../../store/store.variable'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 import { DTimer } from '../../../utils'
+import { useMeStore } from '../../../modules/_me/me.store'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const distributorStore = useDistributorStore()
 
-const store = useOrganizationStore()
+const store = useScreenStore()
+const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
 )
@@ -22,7 +24,7 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const activeTab = ref('1')
-const distributorSearchText = ref(store.distributorDefault?.fullName || '')
+const distributorSearchText = ref(meStore.distributorDefault?.fullName || '')
 
 const distributorList = ref<Distributor[]>([])
 const distributorDefault = ref<Distributor>()
@@ -56,12 +58,12 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(
-      OrganizationSettingsType.SCREEN_RECEIPT_UPSERT,
+      ScreenSettingKey.SCREEN_RECEIPT_UPSERT,
       settingData
     )
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
-    store.distributorDefault = Distributor.fromPlain(distributorDefault.value)
+    meStore.distributorDefault = Distributor.fromPlain(distributorDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {

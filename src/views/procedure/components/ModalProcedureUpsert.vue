@@ -6,16 +6,20 @@ import VueModal from '../../../common/VueModal.vue'
 import { InputMoney, InputText } from '../../../common/vue-form'
 import { useProcedureStore } from '../../../modules/procedure'
 import { Procedure } from '../../../modules/procedure/procedure.model'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { convertViToEn } from '../../../utils'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{
   (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
 const procedureStore = useProcedureStore()
-const organizationStore = useOrganizationStore()
-const { isMobile } = organizationStore
+const screenStore = useScreenStore()
+const { isMobile } = screenStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const procedure = ref(Procedure.blank())
@@ -145,7 +149,7 @@ defineExpose({ openModal })
             class="flex-auto"
             show-search
             :options="
-              Object.entries(organizationStore.PROCEDURE_GROUP).map(([value, label]) => ({
+              Object.entries(screenStore.PROCEDURE_GROUP).map(([value, label]) => ({
                 value,
                 label,
               }))
@@ -164,9 +168,7 @@ defineExpose({ openModal })
             :checked="Boolean(procedure.isActive)"
             @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)"
           />
-          <div v-if="!procedure.isActive" class="ml-4">
-            Dịch vụ này tạm thời không thể sử dụng
-          </div>
+          <div v-if="!procedure.isActive" class="ml-4">Dịch vụ này tạm thời không thể sử dụng</div>
         </div>
 
         <!-- <div class="mt-10 font-bold">
@@ -223,7 +225,13 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <a-button danger @click="clickDelete">Xóa</a-button>
+          <a-button
+            v-if="permissionIdMap[PermissionId.PROCEDURE_DELETE] && procedure.id"
+            danger
+            @click="clickDelete"
+          >
+            Xóa
+          </a-button>
           <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />

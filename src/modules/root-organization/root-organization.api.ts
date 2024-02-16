@@ -12,12 +12,10 @@ export class RootOrganizationApi {
     const params = RootOrganizationGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/root/organization/pagination', { params })
-    const responseData = response.data as BaseResponse<ApiPaginationResponse>
+    const { data, meta } = response.data as BaseResponse
     return {
-      total: responseData.data.total,
-      page: responseData.data.page,
-      limit: responseData.data.limit,
-      data: Organization.fromPlains(responseData.data.data),
+      meta,
+      data: Organization.fromPlains(data),
     }
   }
 
@@ -25,17 +23,17 @@ export class RootOrganizationApi {
     const plain = Organization.toPlain(instance, 'ROOT_CREATE')
 
     const response = await AxiosInstance.post('/root/organization/create', plain)
-    const responseData = response.data as BaseResponse
+    const { data } = response.data as BaseResponse
 
-    return Organization.fromPlain(responseData.data)
+    return Organization.fromPlain(data)
   }
 
   static async updateOne(id: number, instance: Organization) {
     const plain = Organization.toPlain(instance, 'ROOT_UPDATE')
 
     const response = await AxiosInstance.patch(`/root/organization/update/${id}`, plain)
-    const responseData = response.data as BaseResponse
+    const { data } = response.data as BaseResponse
 
-    return Organization.fromPlain(responseData.data)
+    return Organization.fromPlain(data)
   }
 }

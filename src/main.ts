@@ -20,9 +20,21 @@ import {
   faSort,
   faSortDown,
   faSortUp,
+  faMobileScreenButton,
+  faDesktop,
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faSort, faSortDown, faSortUp, faHospitalUser, faAddressCard, faPlus, faMinus)
+library.add(
+  faSort,
+  faSortDown,
+  faSortUp,
+  faHospitalUser,
+  faAddressCard,
+  faPlus,
+  faMinus,
+  faMobileScreenButton,
+  faDesktop
+)
 
 const start = async () => {
   const app = createApp(App)

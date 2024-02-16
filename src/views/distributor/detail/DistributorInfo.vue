@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { Distributor } from '../../../modules/distributor'
-import { useOrganizationStore } from '../../../store/organization.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { formatPhone } from '../../../utils'
+import { useMeStore } from '../../../modules/_me/me.store'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
 })
 
-const organizationStore = useOrganizationStore()
-const { formatMoney } = organizationStore
+const screenStore = useScreenStore()
+const { formatMoney } = screenStore
+
 </script>
 
 <template>

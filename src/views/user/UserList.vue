@@ -1,14 +1,23 @@
 <script setup lang="ts">
 import {
   ApartmentOutlined,
-  FileSearchOutlined,
+  CheckCircleOutlined,
+  FormOutlined,
+  MinusCircleOutlined,
   PlusOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import type { Role } from '../../modules/role'
+import { useMeStore } from '../../modules/_me/me.store'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { UserApi, type User } from '../../modules/user'
+import ModalUserUpsert from './ModalUserUpsert.vue'
 
-const roleList = ref<Role[]>([])
+const modalUserUpsert = ref<InstanceType<typeof ModalUserUpsert>>()
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+
+const userList = ref<User[]>([])
 
 const dataLoading = ref(false)
 
@@ -16,34 +25,18 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const searchText = ref('')
-const isActive = ref<1 | 0 | ''>(1)
-
-const sortColumn = ref<'fullName' | 'debt' | 'id' | ''>('')
-const sortValue = ref<'ASC' | 'DESC' | ''>('')
-
 const startFetchData = async () => {
-  // try {
-  //   const response = await roleStore.pagination({
-  //     page: page.value,
-  //     limit: limit.value,
-  //     filter: {
-  //       isActive: isActive.value !== '' ? isActive.value : undefined,
-  //       searchText: searchText.value ? searchText.value : undefined,
-  //     },
-  //     sort: sortValue.value
-  //       ? {
-  //           fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
-  //           id: sortColumn.value === 'id' ? sortValue.value : undefined,
-  //           debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
-  //         }
-  //       : { id: 'DESC' },
-  //   })
-  //   roleList.value = response.data
-  //   total.value = response.total
-  // } catch (error) {
-  //   console.log('🚀 ~ file: DistributorList.vue:65 ~ startFetchData ~ error:', error)
-  // }
+  try {
+    const { data, meta } = await UserApi.pagination({
+      page: page.value,
+      limit: limit.value,
+      relation: { role: true },
+    })
+    userList.value = data
+    total.value = meta.total
+  } catch (error) {
+    console.log('🚀 ~ file: DistributorList.vue:65 ~ startFetchData ~ error:', error)
+  }
 }
 
 onBeforeMount(async () => {
@@ -57,35 +50,6 @@ onBeforeMount(async () => {
   }
 })
 
-const startSearch = async () => {
-  page.value = 1
-  await startFetchData()
-}
-
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
-}
-
-const handleSelectStatus = async (value: 1 | 0 | '') => {
-  isActive.value = value
-  await startSearch()
-}
-
-const changeSort = (column: 'fullName' | 'debt' | 'id') => {
-  if (sortValue.value == 'DESC') {
-    sortColumn.value = ''
-    sortValue.value = ''
-  } else if (sortValue.value == 'ASC') {
-    sortColumn.value = column
-    sortValue.value = 'DESC'
-  } else {
-    sortColumn.value = column
-    sortValue.value = 'ASC'
-  }
-  startSearch()
-}
-
 const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
@@ -94,135 +58,97 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   }
   await startFetchData()
 }
+
+const handleModalUserUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE' | 'DELETE') => {
+  await startFetchData()
+}
+
+const deviceLogout = async (userId: number, code: string) => {
+  const result = await UserApi.deviceLogout(userId, code)
+  await startFetchData()
+}
 </script>
 
 <template>
+  <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block"><ApartmentOutlined /> Danh sách nhân viên</div>
-      <a-button type="primary">
+      <a-button
+        v-if="permissionIdMap[PermissionId.USER_CREATE]"
+        type="primary"
+        @click="modalUserUpsert?.openModal()"
+      >
         <template #icon>
           <PlusOutlined />
         </template>
         Thêm mới
       </a-button>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span>
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu>
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
-    </div>
+    <div class="page-header-setting"></div>
   </div>
 
   <div class="page-main">
-    <div class="page-main-options">
-      <div style="flex: 2; flex-basis: 500px">
-        <div>Tìm kiếm</div>
-        <a-input-group compact class="w-full">
-          <a-input
-            :value="searchText"
-            allow-clear
-            style="width: calc(100% - 100px)"
-            @input="handleInputSearchText"
-          />
-          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
-        </a-input-group>
-      </div>
-
-      <div style="flex: 1; flex-basis: 300px">
-        <div>Chọn trạng thái</div>
-        <div>
-          <VueSelect
-            :value="isActive"
-            :options="[
-              { text: 'Tất cả', value: '' },
-              { text: 'Active', value: 1 },
-              { text: 'Inactive', value: 0 },
-            ]"
-            @update:value="handleSelectStatus"
-          />
-        </div>
-      </div>
-    </div>
-
     <div class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
-              Mã NCC &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
-            <th class="cursor-pointer" @click="changeSort('fullName')">
-              Họ Tên&nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'fullName'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
-            <th>SĐT</th>
-            <th>Địa Chỉ</th>
-            <th class="cursor-pointer" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
+            <th>ID</th>
+            <th>Vai trò</th>
+            <th>Username</th>
+            <th>Họ Tên</th>
+            <th v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
-            <th>Sửa</th>
+            <th v-if="permissionIdMap[PermissionId.USER_UPDATE]">Sửa</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="roleList.length === 0">
+          <tr v-if="userList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(role, index) in roleList" :key="index">
-            <td class="text-center">DT{{ role.id }}</td>
-            <td>
-              <div>
-                {{ role.name }}
-                <a>
-                  <FileSearchOutlined />
-                </a>
+          <tr v-for="(user, index) in userList" :key="index">
+            <td class="text-center">U{{ user.id }}</td>
+            <td>{{ user.role?.name }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.fullName }}</td>
+            <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
+              <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
+                <span v-if="device.mobile === 1">
+                  <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                </span>
+                <span v-else>
+                  <font-awesome-icon :icon="['fas', 'desktop']" />
+                </span>
+                <span class="ml-2">{{ device.os }}</span>
+                / <span>{{ device.browser }}</span> - <span>{{ device.ip }}</span>
+                <a-button
+                  class="ml-2"
+                  type="default"
+                  size="small"
+                  @click="deviceLogout(user.id, device.code)"
+                >
+                  Đăng xuất
+                </a-button>
               </div>
+            </td>
+            <td class="text-center">
+              <a-tag v-if="user.isActive" color="success">
+                <template #icon>
+                  <CheckCircleOutlined />
+                </template>
+                Active
+              </a-tag>
+              <a-tag v-else color="warning">
+                <template #icon>
+                  <MinusCircleOutlined />
+                </template>
+                Inactive
+              </a-tag>
+            </td>
+            <td v-if="permissionIdMap[PermissionId.USER_UPDATE]" class="text-center">
+              <a style="color: #eca52b" class="text-xl" @click="modalUserUpsert?.openModal(user)">
+                <FormOutlined />
+              </a>
             </td>
           </tr>
         </tbody>

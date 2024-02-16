@@ -1,38 +1,21 @@
-import {
-  Expose,
-  Transform,
-  TransformationType,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
+import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 
 export class Role {
-  @Expose({ groups: ['ALL', 'COPY'] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
 
   @Expose()
   name: string
 
   @Expose()
-  @Transform(({ value, type }) => {
-    if (type === TransformationType.PLAIN_TO_CLASS) {
-      return JSON.parse(value || JSON.stringify([4, 5, 6]))
-    } else if (type === TransformationType.CLASS_TO_PLAIN) {
-      return JSON.stringify(value || [4, 5, 6])
-    } else if (type === TransformationType.CLASS_TO_CLASS) {
-      return JSON.parse(JSON.stringify(value || [4, 5, 6]))
-    }
-    return value
-  })
-  permissionIds: number[]
+  permissionIds: string
 
   @Expose()
   isActive: 0 | 1
 
   static init(): Role {
     const ins = new Role()
-    ins.id = 0
     ins.isActive = 1
     return ins
   }
@@ -56,7 +39,7 @@ export class Role {
     return plainToInstance(Role, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -64,7 +47,7 @@ export class Role {
     return plainToInstance(Role, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['ALL'],
+      groups: [FROM_PLAIN],
     })
   }
 
@@ -75,7 +58,7 @@ export class Role {
     return instanceToInstance(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
-      groups: ['COPY'],
+      groups: [FROM_INSTANCE],
     })
   }
 
@@ -83,7 +66,10 @@ export class Role {
     return instances.map((i) => Role.fromInstance(i))
   }
 
-  static toPlain(instance: Role, type: 'CREATE' | 'UPDATE'): Record<string, any> {
+  static toPlain(
+    instance: Role,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
     if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Role') {
       throw new Error('Role.fromInstance error: Instance must be from class Role')
     }

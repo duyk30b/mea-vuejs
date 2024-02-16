@@ -15,6 +15,8 @@ import {
 } from 'chart.js'
 import TopCustomerDebt from './statistic/statistic-customer/TopCustomerDebt.vue'
 import TopProductBatchExpiryDate from './statistic/statistic-product/TopProductBatchExpiryDate.vue'
+import { useMeStore } from '../modules/_me/me.store'
+import { PermissionId } from '../modules/permission/permission.enum'
 
 ChartJS.register(
   CategoryScale,
@@ -28,12 +30,24 @@ ChartJS.register(
   Tooltip,
   Legend
 )
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 </script>
 
 <template>
   <div class="flex flex-wrap bg-white p-4 gap-8">
-    <div style="flex-grow: 1; flex-basis: 400px"><TopProductBatchExpiryDate /></div>
-    <div style="flex-grow: 1; flex-basis: 400px"><TopCustomerDebt /></div>
+    <div
+      v-if="permissionIdMap[PermissionId.STATISTIC_PRODUCT]"
+      style="flex-grow: 1; flex-basis: 400px"
+    >
+      <TopProductBatchExpiryDate />
+    </div>
+    <div
+      v-if="permissionIdMap[PermissionId.STATISTIC_CUSTOMER]"
+      style="flex-grow: 1; flex-basis: 400px"
+    >
+      <TopCustomerDebt />
+    </div>
   </div>
 </template>
 
