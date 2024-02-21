@@ -60,5 +60,6 @@
     "key": "/Users/duyk3/.vscode/https/key.pem",
     "cert": "/Users/duyk3/.vscode/https/cert.pem",
     "passphrase": ""
-  }
+  },
+  "editor.linkedEditing": true
 }

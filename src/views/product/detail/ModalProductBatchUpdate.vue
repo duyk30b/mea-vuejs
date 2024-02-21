@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { InputDate, InputMoney } from '../../../common/vue-form'
 import { Product } from '../../../modules/product'
 import { ProductBatch, useProductBatchStore } from '../../../modules/product-batch'
-import { useMeStore } from '../../../modules/_me/me.store'
 
 const emit = defineEmits<{ (e: 'success', value: ProductBatch, type: 'UPDATE'): void }>()
 
@@ -91,16 +90,6 @@ defineExpose({ openModal })
         <div style="width: 100px; flex: none">Giá bán lẻ</div>
         <div class="flex-1">
           <InputMoney v-model:value="productBatch.unitRetailPrice" />
-        </div>
-      </div>
-      <div class="flex items-center mt-4">
-        <div class="w-[100px] flex-none">Active</div>
-        <a-switch
-          :checked="Boolean(productBatch.isActive)"
-          @change="(checked: Boolean) => (productBatch.isActive = checked ? 1 : 0)"
-        />
-        <div v-if="!productBatch.isActive" class="ml-4">
-          Lô hàng này tạm thời không thể nhập hàng và xuất hàng
         </div>
       </div>
     </div>

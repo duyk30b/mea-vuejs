@@ -33,9 +33,6 @@ export class ProductBatch {
   @Expose()
   retailPrice: number // Giá bán lẻ
 
-  @Expose()
-  isActive: 1 | 0 // Trạng thái
-
   @Expose({ groups: [FROM_PLAIN] })
   createdAt: number
 
@@ -97,7 +94,6 @@ export class ProductBatch {
     ins.quantity = 0
     ins.wholesalePrice = 0
     ins.retailPrice = 0
-    ins.isActive = 1
     return ins
   }
 

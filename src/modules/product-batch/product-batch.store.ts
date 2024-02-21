@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ProductBatchDB } from '../../core/indexed-db/repository/product-batch.repository copy'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { arrayToKeyValue } from '../../utils'
+import { DTimer, arrayToKeyValue } from '../../utils'
 import type { ConditionNumber } from '../_base/base-condition'
 import { Product } from '../product/product.model'
 import { ProductBatchApi } from './product-batch.api'
@@ -63,11 +63,10 @@ export const useProductBatchStore = defineStore('product-batch-store', {
         page: page || 1,
         limit: limit || 10,
         condition: {
-          isActive: filter?.isActive,
           expiryDate: filter?.expiryDate,
           quantity: filter?.quantity,
           productId: filter?.product || filter?.productId ? { IN: productIdList } : undefined,
-          deletedAt: { IS_NULL: true },
+          deletedAt: filter?.deletedAt,
         },
         sort: sort || { id: 'DESC' },
       })
@@ -93,7 +92,6 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       const objects = await ProductBatchDB.findMany({
         limit,
         condition: {
-          isActive: filter?.isActive,
           expiryDate: filter?.expiryDate,
           quantity: filter?.quantity,
           deletedAt: { IS_NULL: true },
@@ -105,6 +103,9 @@ export const useProductBatchStore = defineStore('product-batch-store', {
     },
 
     async createOne(instance: ProductBatch) {
+      if (!instance.batch && instance.expiryDate) {
+        instance.batch = DTimer.timeToText(instance.expiryDate, 'YYYYMMDD')
+      }
       const response = await ProductBatchApi.createOne(instance)
       await ProductBatchDB.insertOne(response)
       this.timeSync = Date.now()
@@ -136,7 +137,6 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       const productIdList = productList.map((i) => i.id)
 
       const productBatchObjects = await ProductBatchDB.findManyBy({
-        isActive: 1,
         productId: { IN: productIdList },
         deletedAt: { IS_NULL: true },
         quantity: options?.quantity || undefined,

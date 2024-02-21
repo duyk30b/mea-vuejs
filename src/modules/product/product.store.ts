@@ -59,7 +59,6 @@ export const useProductStore = defineStore('product-store', {
         const productIdList = productList.map((i) => i.id)
         const productBatchObjects = await ProductBatchDB.findManyBy({
           productId: { IN: productIdList },
-          isActive: filter?.productBatch?.isActive,
           quantity: filter?.productBatch?.quantity,
           expiryDate: filter?.productBatch?.expiryDate,
           deletedAt: { IS_NULL: true },

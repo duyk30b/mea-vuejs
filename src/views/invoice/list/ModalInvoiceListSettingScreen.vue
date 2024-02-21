@@ -64,7 +64,7 @@ defineExpose({ openModal })
         </thead>
         <tbody>
           <tr>
-            <td />
+            <td></td>
           </tr>
         </tbody>
       </table>

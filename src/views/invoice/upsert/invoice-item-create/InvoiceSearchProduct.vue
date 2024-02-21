@@ -40,7 +40,6 @@ const selectProduct = async (instance?: Product) => {
     p.productBatches = await productBatchStore.list({
       filter: {
         productId: p.id,
-        isActive: 1,
         quantity: screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
           ? undefined
           : { NOT: 0 },

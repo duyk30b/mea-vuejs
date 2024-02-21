@@ -71,9 +71,7 @@ const startFetchProduct = async () => {
         group: group.value ? group.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
-        productBatch: {
-          isActive: isActive.value !== '' ? isActive.value : undefined,
-        },
+        productBatch: {},
       },
       sort: sortValue.value
         ? {
@@ -102,7 +100,7 @@ const startFetchProductBatch = async () => {
           searchText: searchText.value || undefined,
           group: group.value || undefined,
         },
-        isActive: isActive.value !== '' ? isActive.value : undefined,
+        deletedAt: { IS_NULL: true },
       },
       sort: sortValue.value
         ? { expiryDate: sortColumn.value === 'expiryDate' ? sortValue.value : undefined }

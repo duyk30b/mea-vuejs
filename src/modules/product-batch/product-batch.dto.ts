@@ -12,8 +12,8 @@ export class ProductBatchGetQuery {
     quantity?: ConditionNumber
     expiryDate?: ConditionNumber
     productId?: number | ConditionNumber
-    isActive?: 1 | 0
     updatedAt?: ConditionDate
+    deletedAt?: ConditionNumber
     product?: {
       searchText?: string
       group?: string

@@ -65,7 +65,6 @@ const selectProduct = async (instance?: Product) => {
     productIns.productBatches = await productBatchStore.list({
       filter: {
         productId: productIns.id,
-        isActive: 1,
         // quantity: ['!=', 0],
         // expiryDate: ['>', new Date().toISOString()],
       },
@@ -329,4 +328,3 @@ const addReceiptItem = async () => {
 </template>
 
 <style lang="scss"></style>
-

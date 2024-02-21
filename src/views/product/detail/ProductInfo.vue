@@ -31,7 +31,7 @@ const limit = ref(Number(localStorage.getItem('PRODUCT_BATCH_PAGINATION_LIMIT'))
 const total = ref(0)
 const productBatches = ref<ProductBatch[]>([])
 
-const isActive = ref<1 | 0 | ''>(1)
+const hasDelete = ref<boolean>(false)
 
 const startFetchData = async () => {
   try {
@@ -40,7 +40,7 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         productId: props.product.id,
-        isActive: isActive.value !== '' ? isActive.value : undefined,
+        deletedAt: hasDelete.value ? undefined : { IS_NULL: true },
       },
       sort: { id: 'DESC' },
       relation: { product: true },
@@ -102,7 +102,7 @@ const unitString = (data: Product) => {
   return result
 }
 
-const handleSelectStatus = async (value: 'true' | 'false') => {
+const handleChangeStatus = async (value: 'true' | 'false') => {
   await startFetchData()
 }
 </script>
@@ -177,19 +177,10 @@ const handleSelectStatus = async (value: 'true' | 'false') => {
         <span>Hàng tồn</span>
       </div>
 
-      <div class="flex items-center gap-4">
-        <span>Trạng thái</span>
-        <div style="width: 120px">
-          <VueSelect
-            v-model:value="isActive"
-            :options="[
-              { text: 'Tất cả', value: '' },
-              { text: 'Active', value: 1 },
-              { text: 'Inactive', value: 0 },
-            ]"
-            @update:value="handleSelectStatus"
-          />
-        </div>
+      <div>
+        <a-checkbox v-model:checked="hasDelete" @change="handleChangeStatus">
+          Hiển thị lô hàng đã xóa
+        </a-checkbox>
       </div>
     </div>
     <div v-if="isMobile" class="mt-2">

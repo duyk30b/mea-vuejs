@@ -15,7 +15,6 @@ export class ProductGetQuery {
     quantity?: ConditionNumber
     updatedAt?: ConditionDate
     productBatch?: {
-      isActive?: 1 | 0
       quantity?: ConditionNumber
       expiryDate?: ConditionNumber
       updatedAt?: ConditionDate
