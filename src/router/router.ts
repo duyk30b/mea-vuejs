@@ -26,7 +26,15 @@ const Router = createRouter({
         {
           path: 'arrival',
           name: 'Arrival',
-          component: () => import('../views/arrival/Arrival.vue'),
+          redirect: () => ({ name: 'ArrivalList' }),
+          children: [
+            {
+              path: 'list',
+              name: 'ArrivalList',
+              meta: { title: 'Phòng khám' },
+              component: () => import('../views/arrival/list/ArrivalList.vue'),
+            },
+          ],
         },
         {
           path: 'invoice',

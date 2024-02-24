@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref, watch } from 'vue'
+import type ModalCustomerDetailVue from '../customer/detail/ModalCustomerDetail.vue'
 import { ArrivalService, type Arrival } from '../../modules/arrival'
-import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
 
-const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
+const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetailVue>>()
 
 const loadingComponent = ref(false)
 const page = ref(1)

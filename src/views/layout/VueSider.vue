@@ -55,6 +55,12 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppHome' }">Home</router-link>
       </span>
     </a-menu-item>
+    <a-menu-item v-if="permissionIdMap[PermissionId.ARRIVAL_READ]" key="Arrival">
+      <ContactsOutlined />
+      <span>
+        <router-link :to="{ name: 'Arrival' }">Phòng khám</router-link>
+      </span>
+    </a-menu-item>
     <a-sub-menu v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="Invoice">
       <template #icon>
         <RocketOutlined />
@@ -67,23 +73,12 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'InvoiceList' }"> Danh sách hóa đơn </router-link>
       </a-menu-item>
     </a-sub-menu>
-    <!-- <a-menu-item key="ArrivalDiagnosis">
-      <TeamOutlined /> <span>Khám bệnh</span>
-    </a-menu-item> -->
     <a-menu-item v-if="permissionIdMap[PermissionId.CUSTOMER_READ]" key="Customer">
       <ContactsOutlined />
       <span>
         <router-link :to="{ name: 'Customer' }">Khách Hàng</router-link>
       </span>
     </a-menu-item>
-    <!-- <a-sub-menu key="Reception">
-      <template #icon>
-        <TeamOutlined />
-      </template>
-      <template #title>Tiếp đón</template>
-      <a-menu-item key="ReceptionNew">Đăng ký khám</a-menu-item>
-      <a-menu-item key="ReceptionList">Danh sách khám</a-menu-item>
-    </a-sub-menu> -->
     <a-sub-menu
       v-if="
         permissionIdMap[PermissionId.PRODUCT_READ] ||
