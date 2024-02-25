@@ -5,13 +5,14 @@ import {
   AreaChartOutlined,
   ContactsOutlined,
   PicCenterOutlined,
-  RocketOutlined,
   SettingOutlined,
-  ShopOutlined,
   TeamOutlined,
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import InvoiceIcon from '../../common/icon/InvoiceIcon.vue'
+import MedicalIcon from '../../common/icon/MedicalIcon.vue'
+import StoreIcon from '../../common/icon/StoreIcon.vue'
 import { useMeStore } from '../../modules/_me/me.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 
@@ -57,7 +58,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </a-menu-item>
     <a-menu-item v-if="permissionIdMap[PermissionId.ARRIVAL_READ]" key="Arrival">
       <template #icon>
-        <font-awesome-icon :icon="['fas', 'kit-medical']" />
+        <!-- <font-awesome-icon :icon="['fas', 'kit-medical']" /> -->
+        <MedicalIcon />
       </template>
       <span>
         <router-link :to="{ name: 'Arrival' }">Phòng khám</router-link>
@@ -65,7 +67,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </a-menu-item>
     <a-sub-menu v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="Invoice">
       <template #icon>
-        <font-awesome-icon :icon="['fas', 'file-invoice-dollar']" />
+        <InvoiceIcon />
       </template>
       <template #title> Hóa đơn </template>
       <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]" key="InvoiceUpsert">
@@ -90,7 +92,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       key="Warehouse"
     >
       <template #icon>
-        <ShopOutlined />
+        <StoreIcon />
       </template>
       <template #title> Kho hàng </template>
       <a-menu-item v-if="permissionIdMap[PermissionId.PRODUCT_READ]" key="Product">
