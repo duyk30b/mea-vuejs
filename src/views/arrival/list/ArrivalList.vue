@@ -1,104 +1,121 @@
 <script setup lang="ts">
-import {
-  CheckCircleOutlined,
-  ContactsOutlined,
-  FileSearchOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import { FileSearchOutlined, PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
+import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../../common/vue-form'
+import { InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { formatPhone, timeToText } from '../../../utils'
+import { timeToText } from '../../../utils'
+import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
+
+const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
 const screenStore = useScreenStore()
+const { formatMoney, isMobile } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney, isMobile } = screenStore
 
+const invoiceList = ref<Invoice[]>([])
 const customerList = ref<Customer[]>([])
+const customerSearchText = ref('')
 
 const dataLoading = ref(false)
-
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('CUSTOMER_PAGINATION_LIMIT')) || 10)
+const limit = ref(Number(localStorage.getItem('INVOICE_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const searchText = ref('')
-const isActive = ref<1 | 0 | ''>(1)
+const timeRanger = ref<[Dayjs, Dayjs]>()
+const invoiceStatus = ref<InvoiceStatus | null>(null)
+const customerId = ref<number>()
 
-const sortColumn = ref<'fullName' | 'debt' | 'id' | ''>('')
+const sortColumn = ref<'full_name_en' | 'debt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    const response = await customerStore.pagination({
+    dataLoading.value = true
+
+    const fromTime = timeRanger.value?.[0].startOf('day').toDate()
+    const toTime = timeRanger.value?.[1].endOf('day').toDate()
+
+    const { data, meta } = await InvoiceService.pagination({
       page: page.value,
       limit: limit.value,
+      relation: { customer: true },
       filter: {
-        isActive: isActive.value !== '' ? isActive.value : undefined,
-        searchText: searchText.value ? searchText.value : undefined,
+        customerId: customerId.value ? customerId.value : undefined,
+        time: {
+          GTE: fromTime ? fromTime : undefined,
+          LTE: toTime ? toTime : undefined,
+        },
+        deleteTime: { IS_NULL: true },
+        status: invoiceStatus.value ?? undefined, // Refund = 0 nhé
       },
       sort: sortValue.value
         ? {
-            fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
           }
         : { id: 'DESC' },
     })
 
-    customerList.value = response.data
-    total.value = response.total
+    invoiceList.value = data
+    total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: CustomerList.vue:59 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
+  } finally {
+    dataLoading.value = false
   }
 }
 
 onBeforeMount(async () => {
-  try {
-    dataLoading.value = true
-    await startFetchData()
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
-  }
+  await startFetchData()
 })
 
 onMounted(async () => {
   try {
-    const refreshDB = await customerStore.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (refreshDB?.length) {
-      await startFetchData()
-    }
+    await customerStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
+
+const searchingCustomer = async (text: string) => {
+  if (text) {
+    customerList.value = await customerStore.search(text)
+  } else {
+    customerList.value = []
+    if (customerId.value) {
+      customerId.value = undefined
+      await startFetchData()
+    }
+  }
+}
+
+const selectCustomer = async (data?: Customer) => {
+  customerId.value = data?.id
+  customerSearchText.value = data?.fullName || ''
+  await startFetchData()
+}
 
 const startSearch = async () => {
   page.value = 1
   await startFetchData()
 }
 
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
-}
-
-const handleSelectStatus = async (value: boolean | '') => {
+const handleSelectInvoiceStatus = async (value?: InvoiceStatus) => {
   await startSearch()
 }
 
-const changeSort = async (column: 'fullName' | 'debt' | 'id') => {
+const handleChangeTime = async (value: any) => {
+  await startFetchData()
+}
+
+const changeSort = async (column: 'id') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -116,23 +133,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('CUSTOMER_PAGINATION_LIMIT', String(options.limit))
+    localStorage.setItem('INVOICE_PAGINATION_LIMIT', String(options.limit))
   }
-  await startFetchData()
-}
-
-const updateCustomer = async (data: Customer) => {
-  await startFetchData()
-}
-
-const handleModalCustomerUpsertSuccess = async (
-  data: Customer,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
-) => {
-  await startFetchData()
-}
-
-const handleModalDistributorPayDebtSuccess = async (data: { customer: Customer }) => {
   await startFetchData()
 }
 
@@ -140,69 +142,92 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
 </script>
 
 <template>
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
-  <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
-  <ModalCustomerPayDebt
-    ref="modalCustomerPayDebt"
-    @success="handleModalDistributorPayDebtSuccess"
-  />
-  <ModalCustomerListSettingScreen
+  <ModalInvoiceListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
-    ref="modalCustomerListSettingScreen"
+    ref="modalInvoiceListSettingScreen"
   />
-
+  <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ContactsOutlined /> Danh sách khách hàng</div>
-      <a-button v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]" type="primary">
+      <div class="hidden md:block"><ScheduleOutlined class="mr-1" /> Danh sách hóa đơn</div>
+      <a-button v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]" type="primary">
         <template #icon>
           <PlusOutlined />
         </template>
-        Thêm mới
+        Tạo hóa đơn mới
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
-        <span>
+      <!-- <a-dropdown trigger="click">
+        <span style="font-size: 1.2rem; cursor: pointer;">
           <SettingOutlined />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-          </a-menu>
+          </a-menu>~~
         </template>
-      </a-dropdown>
+      </a-dropdown> -->
     </div>
   </div>
 
   <div class="page-main">
     <div class="page-main-options">
-      <div style="flex: 2; flex-basis: 500px">
-        <div>Tìm kiếm</div>
-        <a-input-group compact class="w-full">
-          <a-input
-            :value="searchText"
-            allow-clear
-            style="width: calc(100% - 100px)"
-            @input="handleInputSearchText"
-          />
-          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
-        </a-input-group>
+      <div style="flex: 1; flex-basis: 250px">
+        <div>Tên khách hàng</div>
+        <div>
+          <InputOptions
+            ref="inputSearchCustomer"
+            v-model:searchText="customerSearchText"
+            :options="customerList"
+            :maxHeight="260"
+            placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+            @selectItem="selectCustomer"
+            @update:searchText="searchingCustomer"
+          >
+            <template
+              #each="{
+                item: { fullName, phone, addressProvince, addressDistrict, addressWard, birthday },
+              }"
+            >
+              <div>
+                <b>{{ fullName }}</b> - {{ phone }} - {{ timeToText(birthday, 'DD/MM/YYYY') }}
+              </div>
+              <div>{{ addressWard }} - {{ addressDistrict }} - {{ addressProvince }}</div>
+            </template>
+          </InputOptions>
+        </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 300px">
-        <div>Chọn trạng thái</div>
+      <div style="flex: 1; flex-basis: 250px">
+        <div>Chọn thời gian</div>
         <div>
-          <VueSelect
-            v-model:value="isActive"
-            :options="[
-              { text: 'Tất cả', value: '' },
-              { text: 'Active', value: 1 },
-              { text: 'Inactive', value: 0 },
-            ]"
-            @update:value="handleSelectStatus"
+          <a-range-picker
+            v-model:value="timeRanger"
+            :onChange="handleChangeTime"
+            format="DD-MM-YYYY"
+            style="width: 100%"
+            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
           />
         </div>
+      </div>
+
+      <div style="flex: 1; flex-basis: 250px">
+        <div>Chọn trạng thái</div>
+        <a-select
+          v-model:value="invoiceStatus"
+          allow-clear
+          class="w-full"
+          placeholder="Tất cả"
+          @change="handleSelectInvoiceStatus"
+        >
+          <a-select-option :value="null"> Tất cả </a-select-option>
+          <a-select-option :value="InvoiceStatus.Draft"> Nháp </a-select-option>
+          <a-select-option :value="InvoiceStatus.AwaitingShipment"> Chờ gửi hàng </a-select-option>
+          <a-select-option :value="InvoiceStatus.Debt"> Nợ </a-select-option>
+          <a-select-option :value="InvoiceStatus.Success"> Hoàn thành </a-select-option>
+          <a-select-option :value="InvoiceStatus.Refund"> Hoàn trả </a-select-option>
+        </a-select>
       </div>
     </div>
 
@@ -210,24 +235,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
       <table class="table-mobile">
         <thead>
           <tr>
-            <th>Tên KH</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
-            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
+            <th>Khách hàng</th>
+            <th>Tiền Đơn</th>
+            <th>Trạng thái</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -245,46 +255,36 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="customerList.length === 0">
+          <tr v-if="invoiceList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(customer, index) in customerList" :key="index">
-            <td style="border-right: none">
+          <tr
+            v-for="(invoice, index) in invoiceList"
+            :key="index"
+            @dblclick="$router.push({ name: 'InvoiceDetail', params: { id: invoice.id } })"
+          >
+            <td>
               <div class="font-medium text-justify">
-                {{ customer.fullName }}
-                <a v-if="screenStore.SCREEN_CUSTOMER_LIST.detail" class="text-base">
+                {{ invoice.customer?.fullName }}
+                <a class="text-base" @click="modalCustomerDetail?.openModal(invoice.customer!)">
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
-                {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
-                {{ customer.addressWard }}
-              </div>
-              <div class="flex gap-4 text-xs">
-                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-                  {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
-                </div>
-                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
-                  <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
-                </div>
-              </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
-                {{ customer.note }}
+              <div class="text-xs">
+                {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
-            <td
-              v-if="screenStore.SCREEN_CUSTOMER_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none"
-            >
-              <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-            </td>
-            <td class="text-right" style="border-left: none">
-              <div>{{ formatMoney(customer.debt) }}</div>
-              <div
-                v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0"
-              >
-                <a-button type="default" size="small"> Trả nợ </a-button>
+            <td class="text-right">
+              <div>{{ formatMoney(invoice.revenue) }}</div>
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
+                Nợ: {{ formatMoney(invoice.debt) }}
               </div>
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+                Đã thanh toán: {{ formatMoney(invoice.paid) }}
+              </div>
+            </td>
+            <td>
+              <InvoiceStatusTag :status="invoice.status" />
             </td>
           </tr>
         </tbody>
@@ -306,7 +306,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Mã KH &nbsp;
+              Mã &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
@@ -321,51 +321,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th class="cursor-pointer" @click="changeSort('fullName')">
-              Họ Tên &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'fullName'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
-            <th class="cursor-pointer" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
-            <th
-              v-if="
-                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
-                screenStore.SCREEN_CUSTOMER_LIST.action
-              "
-            >
-              Sửa
-            </th>
+            <th>Thời gian</th>
+            <th>Khách hàng</th>
+            <th>Tổng Tiền</th>
+            <th>Thanh toán</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -383,83 +342,39 @@ const handleMenuSettingClick = (menu: { key: string }) => {}
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="customerList.length === 0">
+          <tr v-if="invoiceList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(customer, index) in customerList" :key="index">
-            <td class="text-center">CM{{ customer.id }}</td>
+          <tr v-for="(invoice, index) in invoiceList" :key="index">
+            <td class="text-center">
+              <router-link :to="{ name: 'InvoiceDetail', params: { id: invoice.id } }">
+                IV{{ invoice.id }}
+              </router-link>
+            </td>
+            <td class="text-center">
+              {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
+            </td>
             <td>
-              <div>
-                {{ customer.fullName }}
-                <a v-if="screenStore.SCREEN_CUSTOMER_LIST.detail" class="ml-1">
-                  <FileSearchOutlined />
-                </a>
-              </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
-                {{ customer.note }}
-              </div>
-            </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
-              <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
-            </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
-              <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
-            </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-              {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
-            </td>
-
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.address">
-              {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
-              {{ customer.addressWard }}
+              {{ invoice.customer?.fullName }}
+              <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customer!)">
+                <FileSearchOutlined />
+              </a>
             </td>
             <td class="text-right">
-              <div class="flex justify-between gap-1 items-center">
-                <div>
-                  <a-button
-                    v-if="
-                      permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0
-                    "
-                    type="default"
-                    size="small"
-                  >
-                    Trả nợ
-                  </a-button>
-                </div>
-                <div>
-                  {{ formatMoney(customer.debt) }}
-                </div>
+              <div>{{ formatMoney(invoice.revenue) }}</div>
+              <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
+                Nợ: {{ formatMoney(invoice.debt) }}
+              </div>
+              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+                Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
-              <a-tag v-if="customer.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
-            </td>
-            <td
-              v-if="
-                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
-                screenStore.SCREEN_CUSTOMER_LIST.action
-              "
-              class="text-center"
-            >
-              <a style="color: #eca52b" class="text-xl">
-                <FormOutlined />
-              </a>
+            <td class="text-center">
+              <InvoiceStatusTag :status="invoice.status" />
             </td>
           </tr>
         </tbody>
       </table>
-
       <div class="mt-4 float-right mb-2">
         <a-pagination
           v-model:current="page"

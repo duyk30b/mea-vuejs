@@ -56,14 +56,16 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </span>
     </a-menu-item>
     <a-menu-item v-if="permissionIdMap[PermissionId.ARRIVAL_READ]" key="Arrival">
-      <ContactsOutlined />
+      <template #icon>
+        <font-awesome-icon :icon="['fas', 'kit-medical']" />
+      </template>
       <span>
         <router-link :to="{ name: 'Arrival' }">Phòng khám</router-link>
       </span>
     </a-menu-item>
     <a-sub-menu v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="Invoice">
       <template #icon>
-        <RocketOutlined />
+        <font-awesome-icon :icon="['fas', 'file-invoice-dollar']" />
       </template>
       <template #title> Hóa đơn </template>
       <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]" key="InvoiceUpsert">
@@ -150,12 +152,12 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #icon>
         <TeamOutlined />
       </template>
-      <template #title> Tài khoản </template>
+      <template #title> Nhân viên </template>
       <a-menu-item v-if="permissionIdMap[PermissionId.ROLE_READ]" key="Role">
         <router-link :to="{ name: 'Role' }"> Vai trò </router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.USER_READ]" key="User">
-        <router-link :to="{ name: 'User' }"> Nhân viên </router-link>
+        <router-link :to="{ name: 'User' }"> Tài khoản </router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">
