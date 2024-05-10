@@ -8,28 +8,24 @@ import {
 } from 'class-transformer'
 import { FROM_PLAIN } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
-import type { UnitType } from '../enum'
+import type { MovementType, UnitType } from '../enum'
 import { Invoice } from '../invoice'
-import { ProductBatch } from '../product-batch/product-batch.model'
 import { Receipt } from '../receipt'
+import { Batch } from '../batch/batch.model'
+import { Product } from '../product'
 
-export enum ProductMovementType {
-  Receipt = 1,
-  Invoice = 2,
-}
-
-export class ProductMovement extends BaseModel {
+export class BatchMovement extends BaseModel {
   @Expose({ toClassOnly: true })
   productId: number
 
   @Expose({ toClassOnly: true })
-  productBatchId: number
+  batchId: number
 
   @Expose()
   referenceId: number
 
   @Expose()
-  type: ProductMovementType
+  type: MovementType
 
   @Expose()
   isRefund: boolean
@@ -38,7 +34,7 @@ export class ProductMovement extends BaseModel {
   openQuantity: number // Số lượng ban đầu
 
   @Expose()
-  number: number // Số lượng +/-
+  quantity: number // Số lượng +/-
 
   @Expose()
   @Transform(({ value, type }) => {
@@ -60,14 +56,24 @@ export class ProductMovement extends BaseModel {
   price: number // Giá
 
   @Expose()
-  totalMoney: number // Tổng tiền
+  costAmount: number // Vốn
 
   @Expose()
-  createTime: number
+  openCostAmount: number // Vốn
+
+  @Expose()
+  closeCostAmount: number // Vốn
+
+  @Expose()
+  createdAt: number
 
   @Expose({ toClassOnly: true })
-  @Type(() => ProductBatch)
-  productBatch?: ProductBatch
+  @Type(() => Batch)
+  batch?: Batch
+
+  @Expose({ toClassOnly: true })
+  @Type(() => Product)
+  product?: Product
 
   @Expose({ toClassOnly: true })
   @Type(() => Invoice)
@@ -77,31 +83,31 @@ export class ProductMovement extends BaseModel {
   @Type(() => Receipt)
   receipt?: Receipt
 
-  get unitNumber() {
-    return this.number / this.unit.rate
+  get unitQuantity() {
+    return this.quantity / this.unit.rate
   }
 
   get unitPrice() {
     return this.price * this.unit.rate
   }
 
-  static fromPlain(plain: Record<string, any>): ProductMovement {
-    return plainToInstance(ProductMovement, plain, {
+  static fromPlain(plain: Record<string, any>): BatchMovement {
+    return plainToInstance(BatchMovement, plain, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
       groups: [FROM_PLAIN],
     })
   }
 
-  static fromPlains(plains: Record<string, any>[]): ProductMovement[] {
-    return plainToInstance(ProductMovement, plains, {
+  static fromPlains(plains: Record<string, any>[]): BatchMovement[] {
+    return plainToInstance(BatchMovement, plains, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,
       groups: [FROM_PLAIN],
     })
   }
 
-  static toPlain(instance: ProductMovement): Record<string, any> {
+  static toPlain(instance: BatchMovement): Record<string, any> {
     return instanceToPlain(instance, {
       exposeUnsetFields: false,
       excludeExtraneousValues: true,

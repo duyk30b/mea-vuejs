@@ -29,10 +29,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      ScreenSettingKey.SCREEN_PRODUCT_UPSERT,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_PRODUCT_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_PRODUCT_UPSERT = JSON.parse(settingData)
 
@@ -75,12 +72,12 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.group"> Hiển thị nhóm </a-checkbox>
+                <a-checkbox v-model:checked="settingDisplay.unit"> Hiển thị đơn vị </a-checkbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.unit"> Hiển thị đơn vị </a-checkbox>
+                <a-checkbox v-model:checked="settingDisplay.group"> Hiển thị nhóm </a-checkbox>
               </td>
             </tr>
             <tr>

@@ -11,15 +11,13 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
   const rowInvoiceItem = invoice
     .invoiceItems!.map((item, index) => {
       let invoiceItemName = ''
-      if (item.type === InvoiceItemType.ProductBatch) {
-        invoiceItemName = `<div style="font-weight: 500;">${
-          item.productBatch!.product!.brandName
-        }</div>`
+      if (item.productId) {
+        invoiceItemName = `<div style="font-weight: 500;">${item.product!.brandName}</div>`
         if (screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance) {
-          invoiceItemName += `<div>${item.productBatch?.product?.substance}</div>`
+          invoiceItemName += `<div>${item.product?.substance}</div>`
         }
       }
-      if (item.type === InvoiceItemType.Procedure) {
+      if (item.procedureId) {
         invoiceItemName = `<div style="font-weight: 500;">${item.procedure!.name}</div>`
       }
       let expectedPrice = ''
@@ -145,7 +143,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
           </tbody>
         </table>
         <div style="text-align:right; font-style:italic; margin-top: 1rem">
-          ${timeToText(invoice.time, 'hh:mm:ss DD/MM/YYYY')}
+          ${timeToText(invoice.startedAt, 'hh:mm:ss DD/MM/YYYY')}
         </div>
         <table style="width: 100%; margin-top: 0.5rem">
           <tr>

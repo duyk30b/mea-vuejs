@@ -22,6 +22,8 @@ import {
   faSortUp,
   faMobileScreenButton,
   faDesktop,
+  faKitMedical,
+  faFileInvoiceDollar,
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -33,7 +35,9 @@ library.add(
   faPlus,
   faMinus,
   faMobileScreenButton,
-  faDesktop
+  faDesktop,
+  faKitMedical,
+  faFileInvoiceDollar,
 )
 
 const start = async () => {

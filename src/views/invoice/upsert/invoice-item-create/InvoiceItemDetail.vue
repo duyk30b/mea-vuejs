@@ -2,12 +2,12 @@
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
-import { DiscountType } from '../../../../modules/enum'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
-import { convertViToEn } from '../../../../utils'
-import { InvoiceItem } from '../../../../modules/invoice-item/invoice-item.model'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { DiscountType } from '../../../../modules/enum'
+import { InvoiceItem } from '../../../../modules/invoice-item/invoice-item.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { convertViToEn } from '../../../../utils'
 
 const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
 
@@ -21,24 +21,25 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const invoiceItem = ref<InvoiceItem>(InvoiceItem.blank())
+const rootHintUsage = ref('')
 
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
 
 const setInvoiceItem = (data: InvoiceItem) => {
   invoiceItem.value = data
+  rootHintUsage.value = data.product?.hintUsage || ''
   productOutSellType.value = 'retailPrice'
 }
 
 const handleChangeSelectUnit = (rate: number) => {
-  const unit = invoiceItem.value.productBatch!.product!.unit.find((i) => i.rate === rate)
+  const unit = invoiceItem.value.product?.unit.find((i) => i.rate === rate)
   invoiceItem.value.unit = { name: unit!.name, rate: unit!.rate }
 }
 
 const handleChangeInvoiceProductSellType = (
   type: 'retailPrice' | 'wholesalePrice' | 'costPrice'
 ) => {
-  let expectedPrice = invoiceItem.value.productBatch?.[type] || 0
-
+  let expectedPrice = invoiceItem.value.product?.[type] || 0
   if (invoiceItem.value.discountType === '%') {
     const discountPercent = invoiceItem.value.discountPercent || 0
     const discountMoney = Math.round((expectedPrice * discountPercent) / 100)
@@ -107,7 +108,10 @@ defineExpose({ setInvoiceItem })
       <a-auto-complete
         v-model:value="invoiceItem.hintUsage"
         :filter-option="filterOption"
-        :options="screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
+        :options="[
+          { value: rootHintUsage },
+          ...screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i })),
+        ]"
         class="w-full"
       />
     </div>
@@ -120,7 +124,7 @@ defineExpose({ setInvoiceItem })
         Giá niêm yết
         <span v-if="invoiceItem.unit.rate !== 1">
           (Quy đổi: <b>{{ formatMoney(invoiceItem.expectedPrice) }} / </b>
-          {{ invoiceItem.productBatch?.product!.unitBasicName }})
+          {{ invoiceItem?.product?.unitBasicName }})
         </span>
       </div>
       <div class="flex">
@@ -130,16 +134,10 @@ defineExpose({ setInvoiceItem })
           style="width: 120px"
           @change="handleChangeInvoiceProductSellType"
         >
-          <a-select-option
-            v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.retailPrice"
-            value="retailPrice"
-          >
+          <a-select-option v-if="screenStore.SYSTEM_SETTING.retailPrice" value="retailPrice">
             Giá bán lẻ
           </a-select-option>
-          <a-select-option
-            v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.wholesalePrice"
-            value="wholesalePrice"
-          >
+          <a-select-option v-if="screenStore.SYSTEM_SETTING.wholesalePrice" value="wholesalePrice">
             Giá bán sỉ
           </a-select-option>
           <a-select-option
@@ -164,22 +162,29 @@ defineExpose({ setInvoiceItem })
     >
       <div>
         Số lượng
+        <span
+          v-if="invoiceItem.productId && invoiceItem.product?.hasManageQuantity"
+          :class="
+            invoiceItem.quantity > (invoiceItem.product?.quantity || 0)
+              ? 'text-red-500 font-bold'
+              : ''
+          "
+        >
+          (tồn: <b>{{ invoiceItem.product?.unitQuantity || 0 }}</b>)
+        </span>
         <span v-if="invoiceItem.unit.rate !== 1">
-          (Quy đổi: <b>{{ invoiceItem.quantity }}</b>
-          {{ invoiceItem.productBatch?.product!.unitBasicName }})
+          (Quy đổi: <b>{{ invoiceItem.quantity }}</b> {{ invoiceItem?.product?.unitBasicName }})
         </span>
       </div>
       <div class="flex">
         <a-select
           :value="invoiceItem.unit.rate"
           style="flex-basis: 80px"
-          :disabled="(invoiceItem.productBatch?.product!.unit!.length || 0) <= 1"
+          :disabled="(invoiceItem?.product?.unit!.length || 0) <= 1"
           @change="handleChangeSelectUnit"
         >
           <a-select-option
-            v-for="(item, index) in invoiceItem.productBatch?.product!.unit || [
-              { name: '', rate: 1 },
-            ]"
+            v-for="(item, index) in invoiceItem.product?.unit || [{ name: '', rate: 1 }]"
             :key="index"
             :value="item.rate"
           >
@@ -206,9 +211,8 @@ defineExpose({ setInvoiceItem })
           "
         >
           <b>(Quy đổi: {{ formatMoney(invoiceItem.discountMoney) }}</b>
-          {{
-            tabsKey === 'product' ? ' / ' + invoiceItem.productBatch?.product!.unitBasicName : ''
-          }})
+          {{ invoiceItem.productId ? ' / ' + invoiceItem?.product?.unitBasicName : '' }}
+          )
         </span>
       </div>
       <div class="flex">
@@ -227,7 +231,7 @@ defineExpose({ setInvoiceItem })
             @update:value="handleChangeUnitDiscountMoney"
           />
           <InputNumber
-            v-if="invoiceItem.discountType === DiscountType.Percent"
+            v-else
             :value="invoiceItem.discountPercent"
             @update:value="handleChangeDiscountPercent"
           />
@@ -243,7 +247,7 @@ defineExpose({ setInvoiceItem })
         Đơn giá
         <span v-if="invoiceItem.unit.rate !== 1">
           (Quy đổi: <b>{{ formatMoney(invoiceItem.actualPrice) }} / </b>
-          {{ invoiceItem.productBatch?.product!.unitBasicName }})
+          {{ invoiceItem.product?.unitBasicName }})
         </span>
       </div>
       <div style="width: 100%">

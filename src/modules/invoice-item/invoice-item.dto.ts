@@ -6,12 +6,15 @@ export class InvoiceItemGetQuery {
   limit?: number
   relation?: {
     invoice?: boolean | { customer?: boolean }
-    productBatch?: boolean | { product?: boolean }
+    batch?: boolean
+    product?: boolean
     procedure?: boolean
   }
 
   filter?: {
-    referenceId?: number
+    productId?: number
+    procedureId?: number
+    batchId?: number
     customerId?: number
     type?: InvoiceItemType
   }

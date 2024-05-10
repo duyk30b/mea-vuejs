@@ -1,13 +1,29 @@
 import { defineStore } from 'pinia'
 import { formatMoney } from '../../utils'
 
+export enum ReceiptProcessType {
+  NoDebt = 1,
+  HasDebt = 2,
+}
+
+export enum InvoiceProcessType {
+  NoDebt = 1,
+  HasDebt = 2,
+}
+
 export const useScreenStore = defineStore('screen-store', {
   state: () => {
     return {
       // const isMobile = ref(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
       isMobile: window.innerWidth <= 768,
 
-      SYSTEM_SETTING: { moneyDivisionFormat: 1 },
+      SYSTEM_SETTING: {
+        moneyDivisionFormat: 1,
+        retailPrice: true,
+        wholesalePrice: true,
+        hasManageQuantity: true,
+        hasManageBatches: false,
+      },
 
       PRODUCT_GROUP: <Record<string, string>>{
         1: 'Kháng sinh - Kháng Virus',
@@ -61,24 +77,20 @@ export const useScreenStore = defineStore('screen-store', {
 
       SCREEN_PRODUCT_LIST: {
         detail: true,
-        substance: true,
-        group: true,
+        substance: false,
+        group: false,
         unit: true,
-        batch: true,
-        expiryDate: true,
         costPrice: true,
-        wholesalePrice: true,
-        retailPrice: true,
         isActive: true,
         action: true,
       },
       SCREEN_PRODUCT_DETAIL: {},
       SCREEN_PRODUCT_UPSERT: {
-        substance: true,
-        group: true,
+        substance: false,
         unit: true,
-        source: true,
-        route: true,
+        group: false,
+        source: false,
+        route: false,
         hintUsage: true,
       },
 
@@ -129,35 +141,29 @@ export const useScreenStore = defineStore('screen-store', {
           substance: true,
           detail: true,
           batch: true,
-          expiryDate: true,
           unit: true,
         },
         paymentInfo: {
           itemsActualMoney: true,
-          discount: true,
-          surcharge: true,
+          discount: false,
+          surcharge: false,
           paid: true,
           debt: true,
         },
-        receiptProcessType: 1,
+        receiptProcessType: ReceiptProcessType.HasDebt,
         function: {
           forceEdit: false,
         },
       },
       SCREEN_RECEIPT_UPSERT: {
         receiptItemInput: {
-          batch: false,
-          expiryDate: false,
-          expectedPrice: true,
-          retailPrice: true,
-          wholesalePrice: false,
+          salePrice: true,
         },
         receiptItemsTable: {
           allowDuplicateItem: true,
           detail: false,
           substance: false,
           batch: false,
-          expiryDate: false,
           unit: true,
         },
         distributor: {
@@ -179,22 +185,21 @@ export const useScreenStore = defineStore('screen-store', {
       SCREEN_INVOICE_DETAIL: {
         invoiceItemsTable: {
           detail: false,
-          substance: false,
+          substance: true,
           batch: false,
-          expiryDate: false,
           hintUsage: false,
           unit: true,
-          discount: false,
+          discount: true,
           expectedPrice: true,
         },
         paymentInfo: {
-          itemsActualMoney: false,
+          itemsActualMoney: true,
           surcharge: false,
-          discount: false,
+          discount: true,
           paid: true,
-          debt: false,
+          debt: true,
         },
-        invoiceProcessType: 1,
+        invoiceProcessType: InvoiceProcessType.HasDebt,
         function: {
           forceEdit: false,
         },
@@ -216,28 +221,24 @@ export const useScreenStore = defineStore('screen-store', {
       },
       SCREEN_INVOICE_UPSERT: {
         invoiceItemInput: {
-          searchType: 'PRODUCT_BATCH',
-          searchHasZeroQuantity: false,
+          negativeQuantity: false,
           customAfterSearch: true,
           hintUsage: false,
           expectedPrice: true,
-          retailPrice: true,
-          wholesalePrice: false,
-          costPrice: false,
+          costPrice: true,
           quantity: true,
-          discount: false,
+          discount: true,
           actualPrice: true,
         },
         invoiceItemsTable: {
           allowOverQuantity: false,
           allowDuplicateItem: true,
           detail: false,
-          substance: false,
+          substance: true,
           unit: true,
           batch: false,
-          expiryDate: false,
           hintUsage: false,
-          discount: false,
+          discount: true,
           expectedPrice: false,
           editActualPrice: false,
         },
@@ -245,8 +246,8 @@ export const useScreenStore = defineStore('screen-store', {
           idDefault: 1,
         },
         paymentInfo: {
-          itemsActualMoney: false,
-          discount: false,
+          itemsActualMoney: true,
+          discount: true,
           surcharge: false,
           expense: false,
           profit: false,

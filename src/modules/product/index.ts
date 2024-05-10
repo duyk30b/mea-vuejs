@@ -1,5 +1,3 @@
-export * from './product-movement.api'
-export * from './product-movement.model'
 export * from './product.api'
 export * from './product.dto'
 export * from './product.model'

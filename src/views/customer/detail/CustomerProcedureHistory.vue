@@ -105,7 +105,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
               </div>
               <div style="font-size: 0.8rem">
-                TG {{ timeToText(invoiceItem.invoice?.time, 'DD/MM/YYYY hh:mm') }}
+                TG {{ timeToText(invoiceItem.invoice?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -166,7 +166,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(invoiceItem.invoice?.time, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>{{ invoiceItem.procedure?.name }}</td>

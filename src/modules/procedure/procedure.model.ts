@@ -90,4 +90,9 @@ export class Procedure extends BaseModel {
       groups: [type],
     })
   }
+
+  static clone(instance: Procedure): Procedure {
+    const procedure = Procedure.fromInstance(instance)
+    return procedure
+  }
 }

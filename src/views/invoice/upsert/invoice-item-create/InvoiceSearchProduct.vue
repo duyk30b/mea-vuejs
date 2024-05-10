@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { InputOptions, VueSelect } from '../../../../common/vue-form'
-import { Product, useProductStore } from '../../../../modules/product'
-import { ProductBatch, useProductBatchStore } from '../../../../modules/product-batch'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
-import { timeToText } from '../../../../utils'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputOptions, VueSelect } from '../../../../common/vue-form'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { Batch, useBatchStore } from '../../../../modules/batch'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Product, useProductStore } from '../../../../modules/product'
+import { timeToText } from '../../../../utils'
+import ModalProductUpsert from '../../../product/upsert/ModalProductUpsert.vue'
 
-const emit = defineEmits<{ (e: 'selectProductBatch', value: ProductBatch): void }>()
+const emit = defineEmits<{
+  (e: 'selectBatch', value: Batch | null): void
+  (e: 'selectProduct', value: Product | null): void
+}>()
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
+const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
 const screenStore = useScreenStore()
 const { formatMoney } = screenStore
 const productStore = useProductStore()
-const productBatchStore = useProductBatchStore()
+const batchStore = useBatchStore()
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
-const searchText = ref('')
-const productList = ref<Product[]>([])
 const product = ref(Product.blank())
-const productBatch = ref(ProductBatch.blank())
+const productList = ref<Product[]>([])
+const batch = ref(Batch.blank())
+const batchList = ref<Batch[]>([])
 
 onMounted(async () => {
   try {
     await productStore.refreshDB()
-    await productBatchStore.refreshDB()
+    await batchStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -34,106 +43,138 @@ const searchingProduct = async (text: string) => {
   productList.value = await productStore.search(text)
 }
 
-const selectProduct = async (instance?: Product) => {
-  if (instance) {
-    const p = Product.fromInstance(instance)
-    p.productBatches = await productBatchStore.list({
-      filter: {
-        productId: p.id,
-        isActive: 1,
-        quantity: screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchHasZeroQuantity
-          ? undefined
-          : { NOT: 0 },
-      },
-    })
-    p.productBatches.forEach((b) => (b.product = p))
+const selectProduct = async (productData?: Product) => {
+  if (productData) {
+    product.value = Product.clone(productData)
+    if (productData.hasManageBatches) {
+      const batches = await batchStore.list({
+        filter: {
+          productId: productData.id,
+          quantity: { GT: 0 },
+        },
+      })
+      const productScope = Product.clone(productData)
+      batches.forEach((i) => (i.product = productScope))
+      batchList.value = batches
 
-    searchText.value = p.brandName
-    product.value = p
-    if (screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
-      if (p.productBatches.length) {
-        selectProductBatch(p.productBatches[0].id)
+      if (screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
+        if (batches.length) {
+          selectBatch(batches[0].id)
+        } else {
+          emit('selectBatch', null)
+        }
       }
+    } else if (!productData.hasManageBatches) {
+      batchList.value = []
+      const productEmit = Product.clone(productData)
+      emit('selectProduct', productEmit)
     }
   } else {
     product.value = Product.blank()
-    searchText.value = ''
+    emit('selectBatch', null)
   }
 }
 
-const selectProductBatch = (id: number) => {
-  const batch = product.value.productBatches.find((i) => i.id === id)
-  if (batch) {
-    productBatch.value = batch
-    const batchEmit = ProductBatch.clone(batch)
-    emit('selectProductBatch', batchEmit)
+const selectBatch = (id: number) => {
+  const batchFind = batchList.value.find((i) => i.id === id)
+  if (batchFind) {
+    batch.value = batchFind
+    const batchEmit = Batch.clone(batchFind)
+    emit('selectBatch', batchEmit)
   } else {
-    productBatch.value = ProductBatch.blank()
-    // emit('selectProductBatch', ProductBatch.blank())
+    batch.value = Batch.blank()
+    emit('selectBatch', null)
   }
 }
 
 const focus = () => {
-  clear()
+  productList.value = []
+  batch.value = Batch.blank()
   inputSearchProduct.value?.focus()
 }
 
 const clear = () => {
-  searchText.value = ''
   productList.value = []
   product.value = Product.blank()
-  productBatch.value = ProductBatch.blank()
+  batch.value = Batch.blank()
 }
 
-defineExpose({ focus, clear })
+const clearAndFocus = () => {
+  productList.value = []
+  batch.value = Batch.blank()
+  product.value = Product.blank()
+  inputSearchProduct.value?.focus()
+}
+
+defineExpose({ focus, clear, clearAndFocus })
 </script>
 
 <template>
+  <ModalProductUpsert ref="modalProductUpsert" @success="selectProduct" />
   <div class="w-full">
-    <div>Tên hàng hóa</div>
+    <div class="flex justify-between">
+      <span>Tên sản phẩm</span>
+      <span>
+        <a
+          v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
+          @click="modalProductUpsert?.openModalFromInvoice()"
+        >
+          Thêm sản phẩm mới
+        </a>
+      </span>
+    </div>
     <div style="height: 40px">
       <InputOptions
         ref="inputSearchProduct"
-        v-model:searchText="searchText"
+        v-model:searchText="product.brandName"
         :options="productList"
         :maxHeight="320"
-        placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
+        placeholder="(F3) Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
         @selectItem="selectProduct"
         @update:searchText="searchingProduct"
       >
-        <template #each="{ item: { brandName, substance, unitName, unitQuantity } }">
+        <template
+          #each="{ item: { brandName, substance, unitName, unitQuantity, unitRetailPrice } }"
+        >
           <div>
-            <b>{{ brandName }}</b> - <b>{{ unitQuantity }}</b> {{ unitName }}
+            <b>{{ brandName }}</b> -
+            <span style="font-weight: 700" :class="unitQuantity <= 0 ? 'text-red-500' : ''">
+              {{ unitQuantity }}
+            </span>
+            {{ unitName }}
+            - Giá {{ formatMoney(unitRetailPrice) }}
           </div>
           <div>{{ substance }}</div>
         </template>
       </InputOptions>
     </div>
   </div>
-  <div style="flex-grow: 1; flex-basis: 400px">
+  <div v-if="product.hasManageBatches" style="flex-grow: 1; flex-basis: 400px">
     <div>
       Lô hàng
       <span
-        v-if="productBatch?.expiryDate && productBatch?.expiryDate < Date.now()"
+        v-if="batch?.expiryDate && batch?.expiryDate < Date.now()"
         class="text-red-500 font-bold"
       >
         (Hết hạn sử dụng)
       </span>
+      <span v-if="product.id && !batchList.length" class="text-red-500 font-bold">
+        (Không còn tồn kho)
+      </span>
     </div>
     <div>
       <VueSelect
-        :value="productBatch.id"
+        :value="batch.id"
         :options="
-          product.productBatches.map((i: ProductBatch) => ({
+          batchList.map((i: Batch) => ({
             value: i.id,
             text:
-              `${i.batch} - ${timeToText(i.expiryDate, 'DD/MM/YYYY')} ` +
-              `- SL: ${i.unitQuantity} ${i.product?.unitName} ` +
-              `- Giá ${formatMoney(i.unitRetailPrice)}`,
+              `${i.lotNumber} - ${timeToText(i.expiryDate, 'DD/MM/YYYY')} ` +
+              `- SL: ${i.unitQuantity} ${i.product?.unitName}`,
           }))
         "
-        :disabled="product.productBatches.length == 0"
-        @update:value="selectProductBatch"
+        :disabled="batchList.length == 0"
+        @update:value="selectBatch"
       />
     </div>
   </div>

@@ -28,10 +28,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      ScreenSettingKey.SCREEN_PRODUCT_LIST,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_PRODUCT_LIST, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_PRODUCT_LIST = JSON.parse(settingData)
 
@@ -90,34 +87,8 @@ defineExpose({ openModal })
           </tr>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.batch"> Hiển thị lô hàng </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <a-checkbox v-model:checked="settingDisplay.expiryDate">
-                Hiển thị hạn sử dụng
-              </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
               <a-checkbox v-model:checked="settingDisplay.costPrice">
                 Hiển thị giá nhập
-              </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <a-checkbox v-model:checked="settingDisplay.wholesalePrice">
-                Hiển thị giá bán sỉ
-              </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <a-checkbox v-model:checked="settingDisplay.retailPrice">
-                Hiển thị giá bán lẻ
               </a-checkbox>
             </td>
           </tr>

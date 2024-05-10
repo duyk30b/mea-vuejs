@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message, type SelectProps } from 'ant-design-vue'
-import { ref } from 'vue'
+import { Modal, message, type SelectProps } from 'ant-design-vue'
+import { createVNode, ref } from 'vue'
 import VueModal from '../../common/VueModal.vue'
 import { InputNumber, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
@@ -12,9 +12,10 @@ import type { PermissionId } from '../../modules/permission/permission.enum'
 import type { Permission } from '../../modules/permission/permission.model'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import { convertViToEn } from '../../utils'
+import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 
 const emit = defineEmits<{
-  (e: 'success', value: Organization, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+  (e: 'success', value: Organization, type: 'CREATE' | 'UPDATE' | 'CLEAR' | 'DELETE'): void
 }>()
 
 const screenStore = useScreenStore()
@@ -58,7 +59,7 @@ const handleSave = async () => {
   }
   organization.value.permissionIds = JSON.stringify([...permissionIds.value].sort())
   try {
-    if (!organization.value.id && organization.value.id !== 0) {
+    if (organization.value.id === null) {
       const response = await RootOrganizationApi.createOne(organization.value)
       emit('success', response, 'CREATE')
     } else {
@@ -103,6 +104,47 @@ const filterOption = (input: string, option: any) => {
   return optionLabel.indexOf(inputText) >= 0
 }
 
+const clickClear = async () => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn xóa DATA của cơ sở này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'DATA đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        showModal.value = false
+        if (organization.value.id !== null) {
+          const response = await RootOrganizationApi.clearOne(organization.value.id)
+          emit('success', response, 'CLEAR')
+          showModal.value = false
+        }
+      } catch (error) {
+        console.log('🚀 ~ clickClear ~ error:', error)
+      }
+    },
+    onCancel() {},
+  })
+}
+
+const clickDelete = async () => {
+  Modal.confirm({
+    title: 'XÓA CƠ SỞ',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: 'CƠ SỞ NÀY SẼ KHÔNG CÒN TỒN TẠI TRÊN HỆ THỐNG ?',
+    async onOk() {
+      try {
+        if (organization.value.id !== null) {
+          const response = await RootOrganizationApi.deleteOne(organization.value.id)
+          emit('success', response, 'DELETE')
+          showModal.value = false
+        }
+      } catch (error) {
+        console.log('🚀 ~ clickClear ~ error:', error)
+      }
+    },
+    onCancel() {},
+  })
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -111,7 +153,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ organization.id ? 'Cập nhật thông tin cơ sở' : 'Tạo cơ sở mới' }}
+          {{ organization.id !== null ? 'Cập nhật thông tin cơ sở' : 'Tạo cơ sở mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
@@ -221,7 +263,8 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <!-- <a-button danger @click="clickDelete">Xóa</a-button> -->
+          <a-button danger @click="clickDelete"> Xóa </a-button>
+          <a-button danger @click="clickClear"> Clear </a-button>
           <a-button class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
@@ -239,4 +282,3 @@ defineExpose({ openModal })
     </form>
   </VueModal>
 </template>
-../../modules/_me/organization.store

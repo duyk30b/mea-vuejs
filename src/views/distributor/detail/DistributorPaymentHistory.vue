@@ -79,7 +79,7 @@ defineExpose({ startFetchData })
           <th>Tiền</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody style="font-size: 0.8rem">
         <tr v-if="distributorPaymentList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
@@ -90,50 +90,46 @@ defineExpose({ startFetchData })
                 IV{{ distributorPayment.receiptId }}
               </a>
             </div>
-            <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(distributorPayment.time, 'hh:mm DD/MM/YYYY') }}
+            <div style="white-space: nowrap">
+              {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
             <div>
               <DistributorPaymentTypeTag :type="distributorPayment.type" />
             </div>
-            <div v-if="distributorPayment.note" style="font-size: 0.8rem">
+            <div v-if="distributorPayment.note">
               {{ distributorPayment.note }}
             </div>
-            <div v-if="distributorPayment.description" style="font-size: 0.8rem">
+            <div v-if="distributorPayment.description">
               {{ distributorPayment.description }}
             </div>
           </td>
           <td class="text-right">
-            <div class="flex justify-between item-center" style="white-space: nowrap">
-              <span style="font-size: 0.8rem"> TT: </span>
+            <div class="flex justify-between item-center">
+              <span> T.Toán: </span>
               <span>{{ formatMoney(distributorPayment.paid) }}</span>
             </div>
-            <div v-if="distributorPayment.debit != 0" style="white-space: nowrap">
-              <div class="flex justify-between item-center">
-                <div style="font-size: 0.8rem">
-                  <span v-if="distributorPayment.type === PaymentType.ImmediatePayment"
-                    >Ghi nợ:</span
-                  >
-                  <span v-if="distributorPayment.type === PaymentType.ReceiveRefund">Hoàn nợ:</span>
-                  <span v-if="distributorPayment.type === PaymentType.PayDebt">Trừ nợ:</span>
-                </div>
-                <span>{{ formatMoney(distributorPayment.debit) }}</span>
-              </div>
-              <div class="flex justify-between item-center">
-                <span style="font-size: 0.8rem"> Nợ cuối kỳ: </span>
-                <span>{{ formatMoney(distributorPayment.distributorCloseDebt) }}</span>
-              </div>
+            <div class="flex justify-between item-center">
+              <span> Ghi nợ: </span>
+              <span>{{ formatMoney(distributorPayment.debit) }}</span>
+            </div>
+            <div class="flex justify-between item-center">
+              <span> Nợ: </span>
+              <span>
+                {{ formatMoney(distributorPayment.distributorOpenDebt) }} ➞
+                {{ formatMoney(distributorPayment.distributorCloseDebt) }}</span
+              >
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <table v-else class="table-mobile">
+    <table v-if="!isMobile" class="table-mobile">
       <thead>
         <tr>
           <th>Hóa đơn</th>
           <th>Loại</th>
           <th>Thanh toán</th>
+          <th>Ghi nợ</th>
           <th>Công nợ</th>
         </tr>
       </thead>
@@ -149,7 +145,7 @@ defineExpose({ startFetchData })
               </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(distributorPayment.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
 
             <div v-if="distributorPayment.note" style="font-size: 0.8rem">
@@ -165,23 +161,12 @@ defineExpose({ startFetchData })
           <td style="white-space: nowrap; text-align: right">
             {{ formatMoney(distributorPayment.paid) }}
           </td>
+          <td style="white-space: nowrap; text-align: right">
+            {{ formatMoney(distributorPayment.debit) }}
+          </td>
           <td class="text-right">
-            <div v-if="distributorPayment.debit != 0" style="white-space: nowrap">
-              <div class="flex justify-between">
-                <div style="font-size: 0.8rem">
-                  <span v-if="distributorPayment.type === PaymentType.ImmediatePayment"
-                    >Ghi nợ:</span
-                  >
-                  <span v-if="distributorPayment.type === PaymentType.ReceiveRefund">Hoàn nợ:</span>
-                  <span v-if="distributorPayment.type === PaymentType.PayDebt">Trừ nợ:</span>
-                </div>
-                <span>{{ formatMoney(distributorPayment.debit) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span style="font-size: 0.8rem"> Nợ cuối kỳ: </span>
-                <span>{{ formatMoney(distributorPayment.distributorCloseDebt) }}</span>
-              </div>
-            </div>
+            {{ formatMoney(distributorPayment.distributorOpenDebt) }} ➞
+            {{ formatMoney(distributorPayment.distributorCloseDebt) }}
           </td>
         </tr>
       </tbody>

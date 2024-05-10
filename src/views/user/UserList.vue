@@ -73,7 +73,7 @@ const deviceLogout = async (userId: number, code: string) => {
   <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ApartmentOutlined /> Danh sách nhân viên</div>
+      <div class="hidden md:block"><ApartmentOutlined /> Danh sách tài khoản </div>
       <a-button
         v-if="permissionIdMap[PermissionId.USER_CREATE]"
         type="primary"
@@ -125,7 +125,7 @@ const deviceLogout = async (userId: number, code: string) => {
                   class="ml-2"
                   type="default"
                   size="small"
-                  @click="deviceLogout(user.id, device.code)"
+                  @click="deviceLogout(user.id!, device.code)"
                 >
                   Đăng xuất
                 </a-button>

@@ -216,7 +216,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
   <div class="page-header">
     <div class="page-header-content">
       <AuditOutlined /> Thông tin phiếu nhập hàng
-      <span v-if="receipt.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
+      <span v-if="receipt.deletedAt" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
       <a-button
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="primary"
@@ -260,7 +260,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
         <td class="px-2 py-1">
-          {{ timeToText(receipt.time, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YY') }}
         </td>
       </tr>
       <tr>

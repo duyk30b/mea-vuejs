@@ -8,7 +8,7 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 
-const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure): void }>()
+const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure | null): void }>()
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
@@ -45,12 +45,12 @@ const selectProcedure = (instance?: Procedure) => {
   } else {
     procedure.value = Procedure.blank()
     searchText.value = ''
-    // emit('selectProcedure', Procedure.blank())
+    emit('selectProcedure', null)
   }
 }
 
 const focus = () => {
-  clear()
+  procedureList.value = []
   inputSearchProcedure.value?.focus()
 }
 const clear = () => {
@@ -59,7 +59,12 @@ const clear = () => {
   procedure.value = Procedure.blank()
 }
 
-defineExpose({ focus, clear })
+const clearAndFocus = () => {
+  clear()
+  inputSearchProcedure.value?.focus()
+}
+
+defineExpose({ focus, clear, clearAndFocus })
 </script>
 
 <template>

@@ -83,7 +83,7 @@ onBeforeMount(async () => {
       if (mode.value === EInvoiceUpsertMode.CREATE || mode.value === EInvoiceUpsertMode.COPY) {
         time.value = dayjs(new Date())
       } else if (mode.value === EInvoiceUpsertMode.UPDATE) {
-        time.value = dayjs(new Date(invoice.value.time))
+        time.value = dayjs(new Date(invoice.value.startedAt))
       }
     } else if (customerId) {
       const customerRes = await CustomerApi.detail(customerId)
@@ -160,7 +160,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
 
   try {
     saveLoading.value = true
-    invoice.value.time = time.value.valueOf()
+    invoice.value.startedAt = time.value.valueOf()
     invoice.value.invoiceSurcharges = invoice.value.invoiceSurcharges!.filter((i) => {
       i.name = screenStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
       return i.money != 0
@@ -219,7 +219,15 @@ const handleAddInvoiceItem = (invoiceItem: InvoiceItem) => {
     invoice.value.invoiceItems!.unshift(invoiceItem)
   } else {
     const exist = invoice.value.invoiceItems?.find((i) => {
-      return i.referenceId === invoiceItem.referenceId
+      if (i.procedureId) {
+        return i.procedureId === invoiceItem.procedureId
+      }
+      if (i.batchId) {
+        return i.batchId === invoiceItem.batchId
+      }
+      if (i.productId && !i.batchId) {
+        return i.productId === invoiceItem.productId
+      }
     })
     if (exist) {
       exist.quantity += invoiceItem.quantity

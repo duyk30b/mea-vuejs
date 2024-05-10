@@ -261,7 +261,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
           </tr>
         </tbody>
-        <tbody v-else>
+        <tbody v-if="!dataLoading">
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
@@ -307,7 +307,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
-              <div>{{ formatMoney(customer.debt) }}</div>
+              <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
               <div
                 v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0"
               >
@@ -335,7 +335,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div v-else class="page-main-table table-wrapper">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -416,7 +416,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
           </tr>
         </tbody>
-        <tbody v-else>
+        <tbody v-if="!dataLoading">
           <tr v-if="customerList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
@@ -465,7 +465,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     Trả nợ
                   </a-button>
                 </div>
-                <div>
+                <div class="ml-2">
                   {{ formatMoney(customer.debt) }}
                 </div>
               </div>

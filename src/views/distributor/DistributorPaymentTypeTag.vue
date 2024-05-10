@@ -10,9 +10,9 @@ defineProps<{ type: PaymentType }>()
     <template #icon>
       <CheckCircleOutlined />
     </template>
-    Thanh toán trước
+    T.Toán trước
   </a-tag>
-  <a-tag v-if="type === PaymentType.PayDebt" color="warning">
+  <a-tag v-if="type === PaymentType.PayDebt" color="cyan">
     <template #icon>
       <CheckCircleOutlined />
     </template>
@@ -22,10 +22,10 @@ defineProps<{ type: PaymentType }>()
     <template #icon>
       <CheckCircleOutlined />
     </template>
-    Thanh toán khi mua hàng
+    Mua hàng
   </a-tag>
 
-  <a-tag v-if="type === PaymentType.ReceiveRefund" color="default">
+  <a-tag v-if="type === PaymentType.ReceiveRefund" color="warning">
     <template #icon>
       <CheckCircleOutlined />
     </template>

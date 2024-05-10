@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import {
+  AuditOutlined,
+  FileSearchOutlined,
+  PlusOutlined,
+  FormOutlined,
+} from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
@@ -37,13 +42,13 @@ const startFetchData = async () => {
     loadingComponent.value = true
 
     const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
-    const toTime = timeRanger.value?.[1].startOf('day').toISOString()
+    const toTime = timeRanger.value?.[1].endOf('day').toISOString()
 
     const { data, meta } = await receiptStore.pagination({
       relation: { distributor: true },
       filter: {
-        time: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
-        deleteTime: { IS_NULL: true },
+        startedAt: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
+        deletedAt: { IS_NULL: true },
         status: receiptStatus.value ?? undefined,
       },
       page: page.value,
@@ -163,6 +168,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         >
           <a-select-option :value="null"> Tất cả </a-select-option>
           <a-select-option :value="ReceiptStatus.Draft"> Nháp </a-select-option>
+          <a-select-option :value="ReceiptStatus.AwaitingShipment"> Chờ gửi hàng </a-select-option>
+          <a-select-option :value="ReceiptStatus.Debt"> Nợ </a-select-option>
           <a-select-option :value="ReceiptStatus.Success"> Hoàn thành </a-select-option>
           <a-select-option :value="ReceiptStatus.Refund"> Hoàn trả </a-select-option>
         </a-select>
@@ -205,7 +212,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div class="text-xs">
-                {{ timeToText(receipt.time, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td class="text-right">
@@ -254,6 +261,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Nhà cung cấp</th>
             <th>Tổng Tiền</th>
             <th>Trạng thái</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -261,13 +269,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(receipt, index) in receipts" :key="index">
+            <td class="text-center">RC{{ receipt.id }}</td>
             <td class="text-center">
-              <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
-                RC{{ receipt.id }}
-              </router-link>
-            </td>
-            <td class="text-center">
-              {{ timeToText(receipt.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>
@@ -283,6 +287,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td class="text-center">
               <ReceiptStatusTag :status="receipt.status" />
+            </td>
+            <td v-if="permissionIdMap[PermissionId.RECEIPT_READ]" class="text-center">
+              <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
+                <span style="color: #eca52b" class="text-xl">
+                  <FormOutlined />
+                </span>
+              </router-link>
             </td>
           </tr>
         </tbody>

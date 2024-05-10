@@ -57,7 +57,7 @@ defineExpose({ openModal })
       <table class="screen-setting">
         <thead>
           <tr>
-            <th>Thông tin sản phẩm - dịch vụ</th>
+            <th>Danh sách sản phẩm - dịch vụ</th>
           </tr>
         </thead>
         <tbody>
@@ -72,21 +72,14 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.substance">
-                Hiển thị thành phần
+                Hiển thị hoạt chất
               </a-checkbox>
             </td>
           </tr>
           <tr>
             <td>
               <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.batch">
-                Hiển thị tên lô hàng
-              </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.expiryDate">
-                Hiển thị hạn sử dụng
+                Hiển thị số lô và HSD
               </a-checkbox>
             </td>
           </tr>
@@ -189,7 +182,7 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-checkbox v-model:checked="settingDisplay.function.forceEdit">
-                Cho phép sửa mọi đơn hàng
+                Cho phép sửa mọi đơn hàng (kể cả đơn hàng đã hoàn thành)
               </a-checkbox>
             </td>
           </tr>

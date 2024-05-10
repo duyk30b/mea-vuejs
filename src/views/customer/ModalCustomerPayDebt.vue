@@ -4,7 +4,7 @@ import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueModal from '../../common/VueModal.vue'
-import { InputMoney } from '../../common/vue-form'
+import { InputMoney, InputText } from '../../common/vue-form'
 import { useCustomerStore, type Customer } from '../../modules/customer'
 import { InvoiceService, InvoiceStatus, type Invoice } from '../../modules/invoice'
 import { timeToText } from '../../utils'
@@ -45,6 +45,7 @@ const openModal = async (customerIdProp: number, openDebtProp: number) => {
         customerId: customerIdProp,
         status: InvoiceStatus.Debt,
       },
+      sort: { id: 'ASC' }, // trả nợ cho đơn cũ nhất
     })
     invoicePayments.value = invoiceDebtList.map((i) => ({ invoice: i, money: 0 }))
   } catch (error) {
@@ -172,7 +173,7 @@ defineExpose({ openModal })
                     - Nợ
                     <span class="font-medium"> {{ formatMoney(invoicePayment.invoice.debt) }}</span>
                   </div>
-                  <div>{{ timeToText(invoicePayment.invoice.time, 'DD/MM/YYYY hh:mm') }}</div>
+                  <div>{{ timeToText(invoicePayment.invoice.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(invoicePayment.money) }}
@@ -183,7 +184,7 @@ defineExpose({ openModal })
         </div>
         <div class="flex items-center mt-3">
           <div style="width: 100px; flex: none">Ghi chú:</div>
-          <a-input v-model:value="note" />
+          <InputText v-model:value="note" />
         </div>
       </div>
 

@@ -101,7 +101,7 @@ const startFetchHighProfit = async () => {
     0,
     data.length,
     ...data.map((i) => {
-      return i.sumCostMoney / moneyDivision
+      return i.sumCostAmount / moneyDivision
     })
   )
   barData.datasets[1].data.splice(
@@ -142,7 +142,7 @@ const startFetchHighActualMoney = async () => {
     0,
     data.length,
     ...data.map((i) => {
-      return i.sumCostMoney / moneyDivision
+      return i.sumCostAmount / moneyDivision
     })
   )
   barData.datasets[1].data.splice(
@@ -190,7 +190,7 @@ onBeforeMount(async () => await startFetchData())
       class="flex flex-col md:flex-row md:items-center justify-between gap-4"
       style="height: 80px"
     >
-      <div class="flex justify-between items-center gap-2">
+      <div class="flex items-center gap-4">
         <span style="font-size: 18px; font-weight: 500">Hàng bán chạy nhất:</span>
         <div style="width: 120px">
           <VueSelect

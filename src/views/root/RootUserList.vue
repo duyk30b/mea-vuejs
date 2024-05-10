@@ -26,6 +26,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       relation: { organization: true },
+      sort: { oid: 'DESC' },
     })
     userList.value = data
     total.value = meta.total
@@ -126,7 +127,7 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
                   <a-button
                     type="default"
                     size="small"
-                    @click="deviceLogout({ userId: user.id, code: device.code, oid: user.oid })"
+                    @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })"
                   >
                     Đăng xuất
                   </a-button>

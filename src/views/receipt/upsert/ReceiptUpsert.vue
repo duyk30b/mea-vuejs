@@ -78,7 +78,7 @@ onBeforeMount(async () => {
     if (mode.value === EReceiptUpsertMode.CREATE || mode.value === EReceiptUpsertMode.COPY) {
       time.value = dayjs(new Date())
     } else if (mode.value === EReceiptUpsertMode.UPDATE) {
-      time.value = dayjs(new Date(receipt.value.time))
+      time.value = dayjs(new Date(receipt.value.startedAt))
     }
   } else if (distributorId) {
     const distributorRes = await DistributorApi.detail(distributorId)
@@ -142,13 +142,13 @@ const saveReceipt = async (type: EReceiptSave) => {
   const invalidReceiptItem = receipt.value.receiptItems!.find((ri) => ri.quantity === 0)
   if (invalidReceiptItem) {
     return message.error(
-      `Lỗi: sản phẩm ${invalidReceiptItem.productBatch!.product!.brandName} có số lượng 0`
+      `Lỗi: sản phẩm ${invalidReceiptItem!.product!.brandName} có số lượng 0`
     )
   }
 
   try {
     saveLoading.value = true
-    receipt.value.time = time.value.valueOf()
+    receipt.value.startedAt = time.value.valueOf()
 
     switch (type) {
       case EReceiptSave.CREATE_DRAFT: {
@@ -200,7 +200,7 @@ const handleAddReceiptItem = (ri: ReceiptItem) => {
     receipt.value.receiptItems!.unshift(receiptItem)
   } else {
     const exist = receipt.value.receiptItems?.find((i) => {
-      return i.productBatchId === receiptItem.productBatchId
+      return i.batchId === receiptItem.batchId
     })
     if (exist) {
       exist.quantity += ri.quantity

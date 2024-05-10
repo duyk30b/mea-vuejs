@@ -93,7 +93,7 @@ const openBlankInvoiceUpsert = (customerId: number) => {
               </span>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="text-right">
@@ -128,7 +128,7 @@ const openBlankInvoiceUpsert = (customerId: number) => {
               <a @click="openBlankInvoiceDetail(invoice.id)"> IV{{ invoice.id }} </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td>

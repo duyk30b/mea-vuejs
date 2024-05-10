@@ -36,7 +36,10 @@ export class RootUserGetQuery {
   }
 
   filter?: {}
-  sort?: { id?: 'ASC' | 'DESC' }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    oid?: 'ASC' | 'DESC'
+  }
 
   static toQuery(instance: Partial<RootUserGetQuery>) {
     return {

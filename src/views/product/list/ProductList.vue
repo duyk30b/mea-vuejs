@@ -16,8 +16,6 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore, type Product } from '../../../modules/product'
-import type { ProductBatch } from '../../../modules/product-batch'
-import { useProductBatchStore } from '../../../modules/product-batch/product-batch.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
@@ -31,15 +29,12 @@ const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
 const screenStore = useScreenStore()
 const productStore = useProductStore()
-const productBatchStore = useProductBatchStore()
 const { formatMoney, isMobile } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const { timeSync: productTimeSync } = storeToRefs(productStore)
-const { timeSync: productBatchTimeSync } = storeToRefs(productBatchStore)
 
 const productList = ref<Product[]>([])
-const productBatchList = ref<ProductBatch[]>([])
 
 const dataLoading = ref(false)
 
@@ -57,23 +52,18 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 watch(productTimeSync, async () => {
   startFetchData()
 })
-watch(productBatchTimeSync, async () => {
-  startFetchData()
-})
 
-const startFetchProduct = async () => {
+const startFetchData = async () => {
   try {
     const data = await productStore.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { productBatches: true },
+      relation: { batches: true },
       filter: {
         group: group.value ? group.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
-        productBatch: {
-          isActive: isActive.value !== '' ? isActive.value : undefined,
-        },
+        batches: { quantity: { NOT: 0 } },
       },
       sort: sortValue.value
         ? {
@@ -87,31 +77,6 @@ const startFetchProduct = async () => {
     total.value = data.total
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:59 ~ error:', error)
-  }
-}
-
-const startFetchProductBatch = async () => {
-  try {
-    const data = await productBatchStore.pagination({
-      page: page.value,
-      limit: limit.value,
-      relation: { product: true },
-      filter: {
-        product: {
-          isActive: isActive.value !== '' ? isActive.value : undefined,
-          searchText: searchText.value || undefined,
-          group: group.value || undefined,
-        },
-        isActive: isActive.value !== '' ? isActive.value : undefined,
-      },
-      sort: sortValue.value
-        ? { expiryDate: sortColumn.value === 'expiryDate' ? sortValue.value : undefined }
-        : undefined,
-    })
-    productBatchList.value = data.data
-    total.value = data.total
-  } catch (error) {
-    console.log('🚀 ~ file: ProductList.vue:77 ~ error:', error)
   }
 }
 
@@ -129,22 +94,13 @@ onBeforeMount(async () => {
 onMounted(async () => {
   try {
     const productList = await productStore.refreshDB()
-    const productBatchList = await productBatchStore.refreshDB()
-    if (productList?.length || productBatchList?.length) {
+    if (productList?.length) {
       await startFetchData()
     }
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
-
-const startFetchData = async () => {
-  if (sortColumn.value === 'expiryDate') {
-    await startFetchProductBatch()
-  } else {
-    await startFetchProduct()
-  }
-}
 
 const startSearch = async () => {
   page.value = 1
@@ -193,7 +149,7 @@ const handleModalProductUpsertSuccess = async (
   data: Product,
   type: 'CREATE' | 'UPDATE' | 'DELETE'
 ) => {
-  // await startFetchData()
+  await startFetchData()
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
@@ -225,7 +181,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template #icon>
           <PlusOutlined />
         </template>
-        Thêm hàng hóa
+        Thêm Sản Phẩm
       </a-button>
     </div>
     <div class="page-header-setting">
@@ -383,60 +339,32 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
                 {{ screenStore.PRODUCT_GROUP[product.group!] }}
               </div>
-            </div>
-            <div style="font-size: 16px; font-weight: 500">
-              {{ product.unitQuantity }}
-            </div>
-            <div
-              v-if="screenStore.SCREEN_PRODUCT_LIST.unit"
-              style="flex-basis: 30px"
-              class="flex justify-end"
-            >
-              <span class="ml-1 text-xs text-right"> {{ product.unitName }} </span>
-            </div>
-          </div>
-          <div v-if="product.productBatches.length > 0 && screenStore.SCREEN_PRODUCT_LIST.batch">
-            <div v-for="(avail, y) in product.productBatches" :key="y">
-              <div class="flex justify-between text-xs">
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.expiryDate" style="width: 35%">
-                  HSD:
-                  <span
-                    v-if="avail.expiryDate && avail.expiryDate < Date.now()"
-                    style="color: #ff4d4f; font-weight: bold"
-                  >
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span
-                    v-else-if="
-                      avail.expiryDate &&
-                      avail.expiryDate < Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
-                    "
-                    style="color: orange; font-weight: bold"
-                  >
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span v-else>
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-
-                  <span v-if="product.productBatches.length > 1"> ({{ avail.unitQuantity }}) </span>
-                </div>
+              <div class="flex text-xs">
                 <div
                   v-if="
                     permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
                     screenStore.SCREEN_PRODUCT_LIST.costPrice
                   "
-                  style="width: 20%"
+                  style="width: 25%"
                 >
-                  N: {{ formatMoney(avail.unitCostPrice) }}
+                  N: {{ formatMoney(product.unitCostPrice) }}
                 </div>
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.wholesalePrice" style="width: 20%">
-                  S: {{ formatMoney(avail.unitWholesalePrice) }}
+                <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" style="width: 20%">
+                  S: {{ formatMoney(product.unitWholesalePrice) }}
                 </div>
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.retailPrice" style="width: 20%">
-                  L: {{ formatMoney(avail.unitRetailPrice) }}
+                <div v-if="screenStore.SYSTEM_SETTING.retailPrice" style="width: 20%">
+                  L: {{ formatMoney(product.unitRetailPrice) }}
                 </div>
               </div>
+            </div>
+            <div v-if="screenStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
+              <span class="ml-1 text-xs"> {{ product.unitName }} </span>
+            </div>
+            <div
+              style="width: 40px; font-size: 16px; font-weight: 500; text-align: right"
+              :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''"
+            >
+              {{ product.unitQuantity || 0 }}
             </div>
           </div>
         </div>
@@ -454,12 +382,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div v-else class="page-main-table table-wrapper">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Mã HH &nbsp;
+              Mã SP &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
@@ -492,7 +420,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
             <th v-if="screenStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
             <th v-if="screenStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.batch">Lô</th>
             <th class="cursor-pointer" @click="changeSort('quantity')">
               SL &nbsp;
               <font-awesome-icon
@@ -510,26 +437,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               />
             </th>
             <th
-              v-if="screenStore.SCREEN_PRODUCT_LIST.expiryDate"
-              class="cursor-pointer"
-              @click="changeSort('expiryDate')"
-            >
-              HSD &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'expiryDate'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'expiryDate' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
-              <font-awesome-icon
-                v-if="sortColumn === 'expiryDate' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
-            </th>
-            <th
               v-if="
                 permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
                 screenStore.SCREEN_PRODUCT_LIST.costPrice
@@ -537,8 +444,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             >
               G.Nhập
             </th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.wholesalePrice">G.Sỉ</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.retailPrice">G.Lẻ</th>
+            <th v-if="screenStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
+            <th v-if="screenStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
             <th v-if="screenStore.SCREEN_PRODUCT_LIST.isActive">Trạng thái</th>
             <th
               v-if="
@@ -564,259 +471,81 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
           </tr>
         </tbody>
-        <tbody v-else>
-          <template v-if="sortColumn !== 'expiryDate'">
-            <tr v-if="productList.length === 0">
-              <td colspan="20" class="text-center">Không có dữ liệu</td>
-            </tr>
-            <template v-for="(product, index) in productList" :key="index">
-              <tr>
-                <td :rowspan="product.productBatches.length || 1" class="text-center">
-                  PR{{ product.id }}
-                </td>
-                <td :rowspan="product.productBatches.length || 1">
-                  <div>
-                    {{ product.brandName }}
-                    <a
-                      v-if="screenStore.SCREEN_PRODUCT_LIST.detail"
-                      class="ml-1"
-                      @click="modalProductDetail?.openModal(product)"
-                    >
-                      <FileSearchOutlined />
-                    </a>
-                  </div>
-                  <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
-                    {{ product.substance }}
-                  </div>
-                </td>
-                <td
-                  v-if="screenStore.SCREEN_PRODUCT_LIST.group"
-                  :rowspan="product.productBatches.length || 1"
-                  class="text-center"
-                >
-                  {{ screenStore.PRODUCT_GROUP[product.group!] }}
-                </td>
-                <td
-                  v-if="screenStore.SCREEN_PRODUCT_LIST.unit"
-                  :rowspan="product.productBatches.length || 1"
-                  class="text-center"
-                >
-                  {{ product.unitName }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.batch" class="text-center">
-                  {{ product.productBatches[0]?.batch || '' }}
-                </td>
-                <td class="text-right">
-                  {{ product.productBatches[0]?.unitQuantity || 0 }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center">
-                  <span
-                    v-if="
-                      product.productBatches[0]?.expiryDate &&
-                      product.productBatches[0]?.expiryDate < Date.now()
-                    "
-                    style="color: #ff4d4f; font-weight: bold"
-                  >
-                    {{ timeToText(product.productBatches[0]?.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span
-                    v-else-if="
-                      product.productBatches[0]?.expiryDate &&
-                      product.productBatches[0]?.expiryDate <
-                        Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
-                    "
-                    style="color: orange; font-weight: bold"
-                  >
-                    {{ timeToText(product.productBatches[0]?.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span v-else>
-                    {{ timeToText(product.productBatches[0]?.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                </td>
-                <td
-                  v-if="
-                    permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                    screenStore.SCREEN_PRODUCT_LIST.costPrice
-                  "
-                  class="text-right"
-                >
-                  {{ formatMoney(product.productBatches[0]?.unitCostPrice) }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.wholesalePrice" class="text-right">
-                  {{ formatMoney(product.productBatches[0]?.unitWholesalePrice) }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.retailPrice" class="text-right">
-                  {{ formatMoney(product.productBatches[0]?.unitRetailPrice) }}
-                </td>
-                <td
-                  v-if="screenStore.SCREEN_PRODUCT_LIST.isActive"
-                  :rowspan="product.productBatches.length || 1"
-                  class="text-center"
-                >
-                  <a-tag v-if="product.isActive" color="success">
-                    <template #icon>
-                      <CheckCircleOutlined />
-                    </template>
-                    Active
-                  </a-tag>
-                  <a-tag v-else color="warning">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Inactive
-                  </a-tag>
-                </td>
-                <td
-                  v-if="
-                    permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-                    screenStore.SCREEN_PRODUCT_LIST.action
-                  "
-                  :rowspan="product.productBatches.length || 1"
-                  class="text-center"
-                >
-                  <a
-                    style="color: #eca52b"
-                    class="text-xl"
-                    @click="modalProductUpsert?.openModal(product)"
-                  >
-                    <FormOutlined />
-                  </a>
-                </td>
-              </tr>
-
-              <tr v-for="(avail, i) in product.productBatches.slice(1)" :key="i">
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.batch" class="text-center">
-                  {{ avail.batch }}
-                </td>
-                <td class="text-right">
-                  {{ avail.unitQuantity }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center">
-                  <span
-                    v-if="avail.expiryDate && avail.expiryDate < Date.now()"
-                    style="color: #ff4d4f; font-weight: bold"
-                  >
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span
-                    v-else-if="
-                      avail.expiryDate &&
-                      avail.expiryDate < Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
-                    "
-                    style="color: orange; font-weight: bold"
-                  >
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                  <span v-else>
-                    {{ timeToText(avail.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
-                </td>
-                <td
-                  v-if="
-                    permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                    screenStore.SCREEN_PRODUCT_LIST.costPrice
-                  "
-                  class="text-right"
-                >
-                  {{ formatMoney(avail.unitCostPrice) }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.wholesalePrice" class="text-right">
-                  {{ formatMoney(avail.unitWholesalePrice) }}
-                </td>
-                <td v-if="screenStore.SCREEN_PRODUCT_LIST.retailPrice" class="text-right">
-                  {{ formatMoney(avail.unitRetailPrice) }}
-                </td>
-              </tr>
-            </template>
-          </template>
-
-          <template v-if="sortColumn === 'expiryDate'">
-            <tr v-if="productBatchList.length === 0">
-              <td colspan="20" class="text-center">Không có dữ liệu</td>
-            </tr>
-            <tr v-for="(batch, index) in productBatchList" :key="index">
-              <td class="text-center">PB{{ batch.id }}</td>
-              <td>
-                <div class="flex justify-between">
-                  <div style="font-weight: 500">
-                    {{ batch.product?.brandName }}
-                  </div>
-                  <div v-if="screenStore.SCREEN_PRODUCT_LIST.detail">
-                    <a class="text-xl" @click="modalProductDetail?.openModal(batch.product!)">
-                      <FileSearchOutlined />
-                    </a>
-                  </div>
-                </div>
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance">
-                  {{ batch.product?.substance }}
-                </div>
-              </td>
-
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-center">
-                {{ screenStore.PRODUCT_GROUP[batch.product!.group!] }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
-                {{ batch.product?.unitName }}
-              </td>
-              <td class="text-center">
-                {{ batch.unitQuantity }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.batch" class="text-center">
-                {{ batch.batch }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-right">
-                <span
-                  v-if="batch.expiryDate && batch.expiryDate < Date.now()"
-                  style="color: #ff4d4f; font-weight: 500"
-                >
-                  {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }} ({{ batch.unitQuantity }})
-                </span>
-                <span
-                  v-else-if="
-                    batch.expiryDate && batch.expiryDate < Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
-                  "
-                  style="color: orange"
-                >
-                  {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-                </span>
-                <span v-else>
-                  {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-                </span>
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.costPrice" class="text-right">
-                {{ formatMoney(batch.unitCostPrice) }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.wholesalePrice" class="text-right">
-                {{ formatMoney(batch.unitWholesalePrice) }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.retailPrice" class="text-right">
-                {{ formatMoney(batch.unitRetailPrice) }}
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
-                <a-tag v-if="batch.product!.isActive" color="success">
-                  <template #icon>
-                    <CheckCircleOutlined />
-                  </template>
-                  Active
-                </a-tag>
-                <a-tag v-else color="warning">
-                  <template #icon>
-                    <MinusCircleOutlined />
-                  </template>
-                  Inactive
-                </a-tag>
-              </td>
-              <td v-if="screenStore.SCREEN_PRODUCT_LIST.action" class="text-center">
+        <tbody v-if="!dataLoading">
+          <tr v-if="productList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(product, index) in productList" :key="index">
+            <td class="text-center">PR{{ product.id }}</td>
+            <td>
+              <div>
+                {{ product.brandName }}
                 <a
-                  style="color: #eca52b"
-                  class="text-xl"
-                  @click="modalProductUpsert?.openModal(batch.product)"
+                  v-if="screenStore.SCREEN_PRODUCT_LIST.detail"
+                  class="ml-1"
+                  @click="modalProductDetail?.openModal(product)"
                 >
-                  <FormOutlined />
+                  <FileSearchOutlined />
                 </a>
-              </td>
-            </tr>
-          </template>
+              </div>
+              <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
+                {{ product.substance }}
+              </div>
+            </td>
+            <td v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-center">
+              {{ screenStore.PRODUCT_GROUP[product.group!] }}
+            </td>
+            <td v-if="screenStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
+              {{ product.unitName }}
+            </td>
+            <td class="text-right" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
+              {{ product.unitQuantity || 0 }}
+            </td>
+            <td
+              v-if="
+                permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
+                screenStore.SCREEN_PRODUCT_LIST.costPrice
+              "
+              class="text-right"
+            >
+              {{ formatMoney(product.unitCostPrice || 0) }}
+            </td>
+            <td v-if="screenStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
+              {{ formatMoney(product.unitWholesalePrice || 0) }}
+            </td>
+            <td v-if="screenStore.SYSTEM_SETTING.retailPrice" class="text-right">
+              {{ formatMoney(product.unitRetailPrice) }}
+            </td>
+            <td v-if="screenStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
+              <a-tag v-if="product.isActive" color="success">
+                <template #icon>
+                  <CheckCircleOutlined />
+                </template>
+                Active
+              </a-tag>
+              <a-tag v-else color="warning">
+                <template #icon>
+                  <MinusCircleOutlined />
+                </template>
+                Inactive
+              </a-tag>
+            </td>
+            <td
+              v-if="
+                permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                screenStore.SCREEN_PRODUCT_LIST.action
+              "
+              class="text-center"
+            >
+              <a
+                style="color: #eca52b"
+                class="text-xl"
+                @click="modalProductUpsert?.openModal(product)"
+              >
+                <FormOutlined />
+              </a>
+            </td>
+          </tr>
         </tbody>
       </table>
 

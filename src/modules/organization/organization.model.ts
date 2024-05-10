@@ -17,7 +17,7 @@ import {
 
 export class Organization {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
-  id: number
+  id: number | null
 
   @Expose()
   name: string
@@ -55,7 +55,8 @@ export class Organization {
 
   static init(): Organization {
     const ins = new Organization()
-    ins.id = 0
+    ins.id = null // id = 0 là Root rồi
+    ins.level = 1
     return ins
   }
 

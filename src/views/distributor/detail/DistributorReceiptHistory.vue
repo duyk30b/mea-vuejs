@@ -107,7 +107,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(receipt.time, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td class="text-right">

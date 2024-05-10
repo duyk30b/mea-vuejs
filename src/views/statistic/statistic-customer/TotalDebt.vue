@@ -27,7 +27,7 @@ const startFetchData = async () => {
     const [sumCustomerDebt, { sumInvoiceDebt }] = await Promise.all([
       StatisticService.sumCustomerDebt(),
       InvoiceService.sumInvoiceDebt({
-        filter: { time: { LT: Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000 } },
+        filter: { startedAt: { LT: Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000 } },
       }),
     ])
     totalCustomerDebt.value = sumCustomerDebt

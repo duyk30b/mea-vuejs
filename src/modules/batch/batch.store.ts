@@ -1,15 +1,15 @@
 import { defineStore } from 'pinia'
-import { ProductBatchDB } from '../../core/indexed-db/repository/product-batch.repository copy'
+import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { arrayToKeyValue } from '../../utils'
+import { DTimer, arrayToKeyValue } from '../../utils'
 import type { ConditionNumber } from '../_base/base-condition'
 import { Product } from '../product/product.model'
-import { ProductBatchApi } from './product-batch.api'
-import type { ProductBatchListQuery, ProductBatchPaginationQuery } from './product-batch.dto'
-import { ProductBatch } from './product-batch.model'
+import { BatchApi } from './batch.api'
+import type { BatchGetOneQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
+import { Batch } from './batch.model'
 
-export const useProductBatchStore = defineStore('product-batch-store', {
+export const useBatchStore = defineStore('batch-store', {
   state: () => {
     return {
       timeSync: Date.now(),
@@ -18,16 +18,16 @@ export const useProductBatchStore = defineStore('product-batch-store', {
 
   actions: {
     async refreshDB() {
-      let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_BATCH')
+      let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
       if (!refreshTime) {
-        refreshTime = { code: 'PRODUCT_BATCH', time: new Date(0).toISOString() }
+        refreshTime = { code: 'BATCH', time: new Date(0).toISOString() }
       }
       const lastTime = new Date(refreshTime.time)
-      const { data, time } = await ProductBatchApi.list({
+      const { data, time } = await BatchApi.list({
         filter: { updatedAt: { GTE: lastTime } },
       })
       if (data.length) {
-        await ProductBatchDB.upsertMany(data)
+        await BatchDB.upsertMany(data)
         refreshTime.time = time.toISOString()
         await RefreshTimeDB.upsertOne(refreshTime)
       }
@@ -35,7 +35,7 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       return data
     },
 
-    async pagination(params: ProductBatchPaginationQuery) {
+    async pagination(params: BatchPaginationQuery) {
       const { page, limit, relation, filter, sort } = params
 
       let productIdList: number[] = []
@@ -59,20 +59,19 @@ export const useProductBatchStore = defineStore('product-batch-store', {
         productIdList = productList.map((i) => i.id)
       }
 
-      const productBatchPagination = await ProductBatchDB.pagination({
+      const productBatchPagination = await BatchDB.pagination({
         page: page || 1,
         limit: limit || 10,
         condition: {
-          isActive: filter?.isActive,
           expiryDate: filter?.expiryDate,
           quantity: filter?.quantity,
-          productId: filter?.product || filter?.productId ? { IN: productIdList } : undefined,
-          deletedAt: { IS_NULL: true },
+          ...(filter?.product ? { productId: { IN: productIdList } } : {}),
+          ...(filter?.productId ? { productId: filter.productId } : {}),
         },
         sort: sort || { id: 'DESC' },
       })
 
-      const productBatchList = ProductBatch.fromObjects(productBatchPagination.data)
+      const productBatchList = Batch.fromObjects(productBatchPagination.data)
       if (relation?.product) {
         const productMap = arrayToKeyValue(productList, 'id')
         productBatchList.forEach((i) => {
@@ -88,39 +87,43 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       }
     },
 
-    async list(params: ProductBatchListQuery) {
+    async list(params: BatchListQuery) {
       const { filter, limit, sort } = params
-      const objects = await ProductBatchDB.findMany({
+      const objects = await BatchDB.findMany({
         limit,
         condition: {
-          isActive: filter?.isActive,
           expiryDate: filter?.expiryDate,
           quantity: filter?.quantity,
-          deletedAt: { IS_NULL: true },
           productId: filter?.productId,
         },
         sort,
       })
-      return ProductBatch.fromObjects(objects)
+      return Batch.fromObjects(objects)
     },
 
-    async createOne(instance: ProductBatch) {
-      const response = await ProductBatchApi.createOne(instance)
-      await ProductBatchDB.insertOne(response)
+    async getOne(params: BatchGetOneQuery) {
+      const { filter } = params
+      const object = await BatchDB.findOneBy({
+        productId: filter?.productId,
+        expiryDate: filter?.expiryDate,
+        quantity: filter?.quantity,
+      })
+      return object ? Batch.fromObject(object) : null
+    },
+
+    async createOne(instance: Batch) {
+      if (!instance.lotNumber && instance.expiryDate) {
+        instance.lotNumber = DTimer.timeToText(instance.expiryDate, 'YYYYMMDD')
+      }
+      const response = await BatchApi.createOne(instance)
+      await BatchDB.insertOne(response)
       this.timeSync = Date.now()
       return response
     },
 
-    async updateOne(id: number, instance: ProductBatch) {
-      const response = await ProductBatchApi.updateOne(id, instance)
-      await ProductBatchDB.replaceOne(id, response)
-      this.timeSync = Date.now()
-      return response
-    },
-
-    async deleteOne(id: number) {
-      const response = await ProductBatchApi.deleteOne(id)
-      await ProductBatchDB.replaceOne(id, response)
+    async updateOne(id: number, instance: Batch) {
+      const response = await BatchApi.updateOne(id, instance)
+      await BatchDB.replaceOne(id, response)
       this.timeSync = Date.now()
       return response
     },
@@ -135,13 +138,11 @@ export const useProductBatchStore = defineStore('product-batch-store', {
       const productList = Product.fromObjects(productObjects)
       const productIdList = productList.map((i) => i.id)
 
-      const productBatchObjects = await ProductBatchDB.findManyBy({
-        isActive: 1,
+      const productBatchObjects = await BatchDB.findManyBy({
         productId: { IN: productIdList },
-        deletedAt: { IS_NULL: true },
         quantity: options?.quantity || undefined,
       })
-      const productBatchList = ProductBatch.fromObjects(productBatchObjects)
+      const productBatchList = Batch.fromObjects(productBatchObjects)
       const productMap = arrayToKeyValue(productList, 'id')
       productBatchList.forEach((i) => {
         i.product = productMap[i.productId]

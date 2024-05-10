@@ -14,7 +14,7 @@ export class CustomerPayment {
   invoiceId: number
 
   @Expose()
-  time: number
+  createdAt: number
 
   @Expose()
   type: PaymentType

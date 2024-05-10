@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { ProductBatch, ProductBatchApi } from '../../../modules/product-batch'
+import { Batch, BatchApi } from '../../../modules/batch'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { timeToText } from '../../../utils'
 
@@ -8,8 +8,7 @@ const screenStore = useScreenStore()
 const { formatMoney, isMobile } = screenStore
 
 const loaded = ref(false)
-const productBatchList = ref<ProductBatch[]>([])
-const numberOfDaysToExpire = ref(180)
+const batchList = ref<Batch[]>([])
 
 const page = ref(1)
 const limit = ref(10)
@@ -18,18 +17,16 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const timeIsExpire = Date.now() + numberOfDaysToExpire.value * 24 * 60 * 60 * 1000
-    const { data, meta } = await ProductBatchApi.pagination({
+    const { data, meta } = await BatchApi.pagination({
       page: page.value,
       limit: limit.value,
       sort: { expiryDate: 'ASC' },
       filter: {
-        expiryDate: { LT: new Date(timeIsExpire).getTime() },
         quantity: { NOT: 0 },
       },
       relation: { product: true },
     })
-    productBatchList.value = data
+    batchList.value = data
     total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
@@ -39,10 +36,6 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => await startFetchData())
-
-const handleNumberOfDaysToExpiryDate = async (value: number) => {
-  await startFetchData()
-}
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
@@ -56,19 +49,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   <div class="flex flex-col" style="height: 100%">
     <div class="flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500"> Hàng cận date: </span>
-      <a-select
-        v-model:value="numberOfDaysToExpire"
-        allow-clear
-        style="width: 150px"
-        @change="handleNumberOfDaysToExpiryDate"
-      >
-        <a-select-option :value="90"> 3 tháng </a-select-option>
-        <a-select-option :value="180"> 6 tháng </a-select-option>
-        <a-select-option :value="365"> 1 năm </a-select-option>
-        <a-select-option :value="730"> 2 năm </a-select-option>
-      </a-select>
     </div>
-    <div class="mt-3">
+    <div class="mt-2">
       <table class="table-mobile">
         <thead>
           <tr>
@@ -81,30 +63,30 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="productBatchList.length === 0">
+          <tr v-if="batchList.length === 0">
             <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
           </tr>
-          <tr v-for="(productBatch, index) in productBatchList" :key="index">
+          <tr v-for="(batch, index) in batchList" :key="index">
             <td class="text-center" style="white-space: nowrap">
               {{ index + 1 }}
             </td>
             <td>
-              <div>{{ productBatch.product?.brandName }}</div>
-              <div v-if="productBatch.product?.substance" style="font-size: 0.8rem">
-                {{ productBatch.product?.substance }}
+              <div>{{ batch.product?.brandName }}</div>
+              <div v-if="batch.product?.substance" style="font-size: 0.8rem">
+                {{ batch.product?.substance }}
               </div>
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ timeToText(productBatch.expiryDate) }}
+              {{ timeToText(batch.expiryDate) }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ productBatch.unitQuantity }}
+              {{ batch.unitQuantity }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ productBatch.product?.unitName }}
+              {{ batch.product?.unitName }}
             </td>
             <td class="text-right" style="white-space: nowrap">
-              {{ formatMoney(productBatch.unitRetailPrice) }}
+              {{ formatMoney(batch.product?.unitRetailPrice || 0) }}
             </td>
           </tr>
         </tbody>

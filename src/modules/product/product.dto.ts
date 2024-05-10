@@ -5,7 +5,7 @@ export class ProductGetQuery {
   page?: number
   limit?: number
   relation?: {
-    productBatches?: boolean
+    batches?: boolean
   }
 
   filter?: {
@@ -14,8 +14,7 @@ export class ProductGetQuery {
     searchText?: string
     quantity?: ConditionNumber
     updatedAt?: ConditionDate
-    productBatch?: {
-      isActive?: 1 | 0
+    batches?: {
       quantity?: ConditionNumber
       expiryDate?: ConditionNumber
       updatedAt?: ConditionDate
@@ -26,6 +25,7 @@ export class ProductGetQuery {
     id?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'
     brandName?: 'ASC' | 'DESC'
+    costAmount?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<ProductGetQuery>) {

@@ -6,7 +6,7 @@ const receipt = ref<Receipt>(Receipt.blank())
 
 watchEffect(() => {
   const itemsActualMoney = receipt.value.receiptItems!.reduce(
-    (acc, item) => acc + (item.productBatch?.costPrice || 0) * item.quantity,
+    (acc, item) => acc + item.costPrice * item.quantity,
     0
   )
 

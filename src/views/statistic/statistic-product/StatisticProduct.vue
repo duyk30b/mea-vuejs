@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ShopOutlined } from '@ant-design/icons-vue'
 import TopProductBestSelling from './TopProductBestSelling.vue'
-import TopProductBatchExpiryDate from './TopProductBatchExpiryDate.vue'
-import TopProductHighCostMoney from './TopProductHighCostMoney.vue'
+import TopBatchExpiryDate from './TopBatchExpiryDate.vue'
+import TopProductHighMoney from './TopProductHighMoney.vue'
 import TotalProductMoney from './TotalProductMoney.vue'
 </script>
 
@@ -23,7 +23,7 @@ import TotalProductMoney from './TotalProductMoney.vue'
           <TotalProductMoney />
         </div>
         <div style="flex: 1">
-          <TopProductBatchExpiryDate />
+          <TopBatchExpiryDate />
         </div>
       </div>
       <div class="mt-10 flex flex-wrap items-stretch gap-20">
@@ -31,7 +31,7 @@ import TotalProductMoney from './TotalProductMoney.vue'
           <TopProductBestSelling />
         </div>
         <div style="flex: 1; min-height: 500px">
-          <TopProductHighCostMoney />
+          <TopProductHighMoney />
         </div>
       </div>
     </div>
@@ -39,3 +39,4 @@ import TotalProductMoney from './TotalProductMoney.vue'
 </template>
 
 <style lang="scss" scoped></style>
+./TopProductHighMoney.vue

@@ -4,10 +4,12 @@ import {
   Type,
   instanceToInstance,
   instanceToPlain,
-  plainToInstance
+  plainToInstance,
 } from 'class-transformer'
 import { decrypt } from '../../utils'
 import {
+  ADMIN_CREATE,
+  ADMIN_UPDATE,
   FROM_INSTANCE,
   FROM_PLAIN,
   ROOT_CREATE,
@@ -25,12 +27,12 @@ export class User {
   oid: number
 
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
-  id: number
+  id: number | null
 
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, USER_CREATE] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, ADMIN_CREATE] })
   username: string
 
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, USER_CREATE] })
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, ADMIN_CREATE] })
   @Transform((params) => {
     const { value, type, obj, key, options } = params
     if (!Array.isArray(options.groups)) return value
@@ -54,7 +56,9 @@ export class User {
   @Expose()
   phone: string
 
-  @Expose()
+  @Expose({
+    groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, ADMIN_CREATE, ADMIN_UPDATE],
+  })
   roleId: number
 
   @Expose()
@@ -63,7 +67,9 @@ export class User {
   @Expose()
   gender?: EGender
 
-  @Expose()
+  @Expose({
+    groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE, ADMIN_CREATE, ADMIN_UPDATE],
+  })
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
@@ -80,8 +86,9 @@ export class User {
 
   static init(): User {
     const ins = new User()
-    // ins.id = 0 // UserId = 0 là ROOT
+    ins.id = null // UserId = 0 là ROOT
     ins.isActive = 1
+    ins.roleId = 1
     return ins
   }
 
@@ -133,7 +140,13 @@ export class User {
 
   static toPlain(
     instance: User,
-    type: typeof ROOT_CREATE | typeof ROOT_UPDATE | typeof USER_CREATE | typeof USER_UPDATE
+    type:
+      | typeof ROOT_CREATE
+      | typeof ROOT_UPDATE
+      | typeof ADMIN_CREATE
+      | typeof ADMIN_UPDATE
+      | typeof USER_CREATE
+      | typeof USER_UPDATE
   ): Record<string, any> {
     if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_User') {
       throw new Error('User.fromInstance error: Instance must be from class User')

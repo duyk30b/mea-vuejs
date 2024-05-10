@@ -98,7 +98,7 @@ defineExpose({ openModal })
               </td>
               <td class="text-left">
                 <div>
-                  {{ timeToText(customerPayment.time, 'DD/MM/YY hh:mm') }}
+                  {{ timeToText(customerPayment.createdAt, 'DD/MM/YY hh:mm') }}
                 </div>
                 <div>
                   <CustomerPaymentTypeTag :type="customerPayment.type" />

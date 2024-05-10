@@ -35,7 +35,7 @@ const handleSave = async () => {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
-    if (!user.value.id && user.value.id !== 0) {
+    if (user.value.id === null) {
       const response = await RootUserApi.createOne(user.value)
       emit('success', response, 'CREATE')
     } else {
@@ -52,7 +52,9 @@ const handleSave = async () => {
 
 const handleDelete = async () => {
   try {
-    await RootUserApi.delete(user.value.id)
+    if (user.value.id !== null) {
+      await RootUserApi.delete(user.value.id)
+    }
     emit('success', user.value, 'DELETE')
     closeModal()
   } catch (error) {
@@ -80,7 +82,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ user.id ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
+          {{ user.id !== null ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
@@ -91,7 +93,7 @@ defineExpose({ openModal })
         <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Oid</div>
           <div class="flex-auto">
-            <InputNumber v-model:value="user.oid" :disabled="!!user.id" required />
+            <InputNumber v-model:value="user.oid" :disabled="user.id !== null" required />
           </div>
         </div>
 
@@ -187,4 +189,3 @@ defineExpose({ openModal })
     </form>
   </VueModal>
 </template>
-../../modules/_me/organization.store

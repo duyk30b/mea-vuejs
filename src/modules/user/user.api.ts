@@ -30,14 +30,14 @@ export class UserApi {
   }
 
   static async createOne(instance: User) {
-    const plain = User.toPlain(instance, 'USER_CREATE')
+    const plain = User.toPlain(instance, 'ADMIN_CREATE')
     const response = await AxiosInstance.post('/user/create', plain)
     const { data } = response.data as BaseResponse
     return User.fromPlain(data)
   }
 
   static async updateOne(id: number, instance: User) {
-    const plain = User.toPlain(instance, 'USER_UPDATE')
+    const plain = User.toPlain(instance, 'ADMIN_UPDATE')
     const response = await AxiosInstance.patch(`/user/update/${id}`, plain)
     const { data } = response.data as BaseResponse
     return User.fromPlain(data)

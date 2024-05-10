@@ -9,15 +9,13 @@ import {
 } from 'class-transformer'
 import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { UnitType } from '../enum'
-import { ProductBatch } from '../product-batch/product-batch.model'
-import { ProductMovement } from './product-movement.model'
+import { ProductMovement } from '../movement/product-movement.model'
+import { Batch } from '../batch/batch.model'
+import { useScreenStore } from '../_me/screen.store'
 
 export class Product {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
-  quantity: number
 
   @Expose()
   brandName: string // Tên biệt dược
@@ -25,11 +23,23 @@ export class Product {
   @Expose()
   substance: string // Hoạt chất
 
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  quantity: number
+
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  costAmount: number // Tổng vốn
+
+  @Expose()
+  hasManageQuantity: number
+
+  @Expose()
+  hasManageBatches: number
+
   @Expose()
   group: string // Nhóm sản phẩm: kháng sinh, dinh dưỡng ...
 
   @Expose()
-  @Transform(({ value, type }) => {
+  @Transform(({ value, type, options }) => {
     if (type === TransformationType.PLAIN_TO_CLASS) {
       return JSON.parse(value || JSON.stringify([{ name: '', rate: 1, default: true }]))
     } else if (type === TransformationType.CLASS_TO_PLAIN) {
@@ -54,6 +64,15 @@ export class Product {
   hintUsage: string // Gợi ý cách sử dụng
 
   @Expose()
+  costPrice: number // Giá nhập
+
+  @Expose()
+  wholesalePrice: number // Giá bán sỉ
+
+  @Expose()
+  retailPrice: number // Giá bán lẻ
+
+  @Expose()
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
@@ -63,11 +82,11 @@ export class Product {
   updatedAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
-  deletedAt: number
+  deletedAt: number | null
 
   @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => ProductBatch)
-  productBatches: ProductBatch[]
+  @Type(() => Batch)
+  batches: Batch[]
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ProductMovement)
@@ -88,25 +107,55 @@ export class Product {
   }
 
   get unitRate() {
-    return this.unitDefault.rate
+    return this.unitDefault.rate || 1
   }
 
   get unitQuantity() {
     return Number(((this.quantity || 0) / this.unitRate).toFixed(3))
   }
 
+  get unitCostPrice() {
+    return this.costPrice * this.unitRate
+  }
+
+  get unitRetailPrice() {
+    return this.retailPrice * this.unitRate
+  }
+
+  get unitWholesalePrice() {
+    return this.wholesalePrice * this.unitRate
+  }
+
+  set unitCostPrice(data) {
+    this.costPrice = data / this.unitRate
+  }
+
+  set unitRetailPrice(data) {
+    this.retailPrice = data / this.unitRate
+  }
+
+  set unitWholesalePrice(data) {
+    this.wholesalePrice = data / this.unitRate
+  }
+
   static init(): Product {
     const ins = new Product()
     ins.id = 0
+    ins.hasManageQuantity = 1
+    ins.hasManageBatches = 0
     ins.unit = [{ name: '', rate: 1, default: true }]
     ins.isActive = 1
     return ins
   }
 
   static blank(): Product {
+    const screenStore = useScreenStore()
+
     const ins = Product.init()
-    ins.productBatches = []
+    ins.batches = []
     ins.productMovements = []
+    ins.hasManageBatches = Number(screenStore.SYSTEM_SETTING.hasManageBatches)
+    ins.hasManageQuantity = Number(screenStore.SYSTEM_SETTING.hasManageQuantity)
     return ins
   }
 
@@ -159,5 +208,15 @@ export class Product {
       excludeExtraneousValues: true,
       groups: [type],
     })
+  }
+
+  static clone(instance: Product): Product {
+    const product = Product.fromInstance(instance)
+    if (instance.batches) {
+      product.batches = instance.batches.map((batch) => {
+        return Batch.fromInstance(batch)
+      })
+    }
+    return product
   }
 }

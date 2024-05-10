@@ -9,7 +9,7 @@ import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputNumber, InputText } from '../../../common/vue-form'
+import { InputMoney, InputNumber, InputText } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useProductStore } from '../../../modules/product'
@@ -36,7 +36,16 @@ const openModal = async (instance?: Product) => {
   showModal.value = true
   if (instance) {
     product.value = Product.fromInstance(instance)
+  } else {
+    product.value.hasManageBatches = Number(screenStore.SYSTEM_SETTING.hasManageBatches)
+    product.value.hasManageQuantity = Number(screenStore.SYSTEM_SETTING.hasManageQuantity)
   }
+}
+
+const openModalFromInvoice = () => {
+  showModal.value = true
+  product.value.hasManageBatches = 0
+  product.value.hasManageQuantity = 0
 }
 
 const handleAddUnit = () => {
@@ -109,14 +118,17 @@ const filterOption = (input: string, option: any) => {
   return optionLabel.indexOf(inputText) >= 0
 }
 
-defineExpose({ openModal })
+defineExpose({ openModal, openModalFromInvoice })
 </script>
 
 <template>
   <VueModal v-model:show="showModal">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Thêm/sửa hàng hóa</div>
+        <div class="flex-1 text-lg font-medium">
+          <span v-if="!product.id">Thêm sản phẩm</span>
+          <span v-if="product.id">Sửa sản phẩm</span>
+        </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
           style="font-size: 1.2rem"
@@ -130,8 +142,8 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-6 mt-4">
-        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+      <div class="my-4 flex flex-wrap gap-4" :class="isMobile ? 'px-4' : 'px-6'">
+        <div class="grow basis-[600px] flex flex-col items-stretch">
           <div class="w-[100px] flex-none text-left">Tên hàng hóa</div>
           <div class="flex-auto">
             <InputText v-model:value="product.brandName" required />
@@ -140,8 +152,7 @@ defineExpose({ openModal })
 
         <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.substance"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
+          class="grow basis-[600px] flex flex-col items-stretch"
         >
           <div class="w-[100px] flex-none">Hoạt chất</div>
           <div class="flex-auto">
@@ -150,31 +161,9 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.group"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
-        >
-          <div class="w-[100px] flex-none">Nhóm</div>
-          <div class="flex-auto">
-            <a-select
-              v-model:value="product.group"
-              :filter-option="filterOption"
-              style="width: 100%"
-              show-search
-              :options="
-                Object.entries(screenStore.PRODUCT_GROUP).map(([value, label]) => ({
-                  value,
-                  label,
-                }))
-              "
-            />
-          </div>
-        </div>
-
-        <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.unit"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+          :class="product.unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
+          class="grow flex flex-col items-stretch"
         >
           <div class="w-[100px] flex-none">Đơn vị</div>
           <div class="flex-auto">
@@ -255,9 +244,29 @@ defineExpose({ openModal })
         </div>
 
         <div
+          v-if="screenStore.SCREEN_PRODUCT_UPSERT.group"
+          class="grow basis-[300px] flex flex-col items-stretch"
+        >
+          <div class="w-[100px] flex-none">Nhóm</div>
+          <div class="flex-auto">
+            <a-select
+              v-model:value="product.group"
+              :filter-option="filterOption"
+              style="width: 100%"
+              show-search
+              :options="
+                Object.entries(screenStore.PRODUCT_GROUP).map(([value, label]) => ({
+                  value,
+                  label,
+                }))
+              "
+            />
+          </div>
+        </div>
+
+        <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.route"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+          class="grow basis-[300px] flex flex-col items-stretch"
         >
           <div class="w-[100px] flex-none">Đường dùng</div>
           <a-auto-complete
@@ -270,8 +279,7 @@ defineExpose({ openModal })
 
         <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.source"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+          class="grow basis-[300px] flex flex-col items-stretch"
         >
           <div class="w-[100px] flex-none">Nguồn gốc</div>
           <div class="flex-auto">
@@ -281,8 +289,8 @@ defineExpose({ openModal })
 
         <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.hintUsage"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
+          style="flex-basis: 600px; flex-grow: 1"
+          class="flex flex-col items-stretch"
         >
           <div class="w-[100px] flex-none">Cách sử dụng</div>
           <a-auto-complete
@@ -293,19 +301,80 @@ defineExpose({ openModal })
           />
         </div>
 
-        <div class="flex items-center mt-4">
-          <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(product.isActive)"
-            @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
-          />
-          <div v-if="!product.isActive" class="ml-4">
-            Sản phẩm này tạm thời không thể nhập hàng và xuất hàng
+        <div class="grow basis-[200px] flex flex-col items-stretch">
+          <div class="w-[100px] flex-none">Giá nhập</div>
+          <div class="flex-1">
+            <InputMoney v-model:value="product.unitCostPrice" />
+          </div>
+        </div>
+
+        <div
+          v-if="screenStore.SYSTEM_SETTING.wholesalePrice"
+          class="grow basis-[200px] flex flex-col items-stretch"
+        >
+          <div class="w-[100px] flex-none">Giá bán sỉ</div>
+          <div class="flex-1">
+            <InputMoney v-model:value="product.unitWholesalePrice" />
+          </div>
+        </div>
+
+        <div
+          v-if="screenStore.SYSTEM_SETTING.retailPrice"
+          class="grow basis-[200px] flex flex-col items-stretch"
+        >
+          <div class="w-[100px] flex-none">Giá bán lẻ</div>
+          <div class="flex-1">
+            <InputMoney v-model:value="product.unitRetailPrice" />
+          </div>
+        </div>
+
+        <div class="mt-2 grow basis-[600px] flex items-stretch">
+          <div class="w-[60px] flex-none">
+            <a-switch
+              :checked="Boolean(product.hasManageQuantity)"
+              :disabled="!!product.quantity"
+              @change="(checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)"
+            />
+          </div>
+          <div>
+            <span>Quản lý tồn kho</span>
+            <span v-if="product.hasManageQuantity">
+              ( Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất )
+            </span>
+            <span v-if="!product.hasManageQuantity"> ( Sản phẩm này không có số lượng ) </span>
+          </div>
+        </div>
+
+        <div class="mt-2 grow basis-[600px] flex items-stretch">
+          <div class="w-[60px] flex-none">
+            <a-switch
+              :checked="Boolean(product.hasManageBatches)"
+              :disabled="!!product.quantity"
+              @change="(checked: Boolean) => (product.hasManageBatches = checked ? 1 : 0)"
+            />
+          </div>
+          <div>
+            <span>Quản lý lô hàng và hạn sử dụng</span>
+          </div>
+        </div>
+
+        <div class="mt-2 grow basis-[600px] flex items-stretch">
+          <div class="w-[60px] flex-none">
+            <a-switch
+              :checked="Boolean(product.isActive)"
+              @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
+            />
+          </div>
+          <div>
+            <span>Active</span>
+            <span v-if="!product.isActive">
+              ( Sản phẩm này tạm thời không thể nhập hàng và xuất hàng )
+            </span>
           </div>
         </div>
       </div>
 
-      <div class="p-6">
+      <div class="pb-6 pt-8" :class="isMobile ? 'px-4' : 'px-6'">
         <div class="flex gap-4">
           <a-button
             v-if="permissionIdMap[PermissionId.PRODUCT_DELETE] && product.id"

@@ -85,35 +85,18 @@ defineExpose({ openModal })
 
       <div class="px-6 mt-4 invoice-upsert-setting-screen-tabs">
         <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-          <a-tab-pane key="1" tab="Cài đặt tìm kiếm">
+          <a-tab-pane key="1" tab="Chọn sản phẩm">
             <table class="table-setting">
               <thead>
                 <tr>
-                  <th>Tìm kiếm sản phẩm</th>
+                  <th>Cài đặt hiển thị</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>
-                    <div>Phương thức tìm kiếm</div>
-                    <div class="pl-7">
-                      <a-radio-group v-model:value="settingDisplay.invoiceItemInput.searchType">
-                        <a-radio style="display: flex; line-height: 36px" :value="'PRODUCT'">
-                          Tìm kiếm sản phẩm (chọn sản phẩm trước, sau đó chọn lô hàng)
-                        </a-radio>
-                        <a-radio style="display: flex; line-height: 36px" :value="'PRODUCT_BATCH'">
-                          Tìm kiếm lô hàng
-                        </a-radio>
-                      </a-radio-group>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox
-                      v-model:checked="settingDisplay.invoiceItemInput.searchHasZeroQuantity"
-                    >
-                      Kết quả tìm kiếm có chứa lô hàng số lượng = 0
+                    <a-checkbox v-model:checked="settingDisplay.invoiceItemInput.negativeQuantity">
+                      Được phép xuất số lượng nhiều hơn số lượng tồn (số lượng tồn có thể là số âm)
                     </a-checkbox>
                   </td>
                 </tr>
@@ -143,29 +126,7 @@ defineExpose({ openModal })
                           Hiển thị giá bán niêm yết
                         </a-checkbox>
                       </div>
-                      <div class="pt-3 pl-7">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.retailPrice"
-                          :disabled="
-                            !settingDisplay.invoiceItemInput.customAfterSearch ||
-                            !settingDisplay.invoiceItemInput.expectedPrice
-                          "
-                        >
-                          Hiển thị chọn giá bán lẻ
-                        </a-checkbox>
-                      </div>
-                      <div class="pt-3 pl-7">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.wholesalePrice"
-                          :disabled="
-                            !settingDisplay.invoiceItemInput.customAfterSearch ||
-                            !settingDisplay.invoiceItemInput.expectedPrice
-                          "
-                        >
-                          Hiển thị chọn giá bán sỉ
-                        </a-checkbox>
-                      </div>
-                      <div class="pt-3 pl-7">
+                      <div class="pt-3">
                         <a-checkbox
                           v-model:checked="settingDisplay.invoiceItemInput.costPrice"
                           :disabled="
@@ -173,7 +134,7 @@ defineExpose({ openModal })
                             !settingDisplay.invoiceItemInput.expectedPrice
                           "
                         >
-                          Hiển thị chọn giá nhập
+                          Thêm lựa chọn giá bán = giá nhập
                         </a-checkbox>
                       </div>
                       <div class="pt-3">
@@ -259,14 +220,7 @@ defineExpose({ openModal })
                 <tr>
                   <td>
                     <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.batch">
-                      Hiển thị tên lô hàng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.expiryDate">
-                      Hiển thị hạn sử dụng
+                      Hiển thị số lô và HSD
                     </a-checkbox>
                   </td>
                 </tr>

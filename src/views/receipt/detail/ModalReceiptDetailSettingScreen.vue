@@ -3,7 +3,7 @@ import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { ReceiptProcessType, useScreenStore } from '../../../modules/_me/screen.store'
 import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -28,10 +28,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      ScreenSettingKey.SCREEN_RECEIPT_DETAIL,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_RECEIPT_DETAIL, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_DETAIL = JSON.parse(settingData)
 
@@ -82,14 +79,7 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
-                Hiển thị lô hàng
-              </a-checkbox>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">
-                Hiển thị hạn sử dụng
+                Hiển thị số lô và HSD
               </a-checkbox>
             </td>
           </tr>
@@ -103,7 +93,7 @@ defineExpose({ openModal })
         </tbody>
         <thead>
           <tr>
-            <th>Thông tin đơn hàng</th>
+            <th>Thông tin phiếu nhập hàng</th>
           </tr>
         </thead>
         <tbody>
@@ -159,10 +149,16 @@ defineExpose({ openModal })
           <tr>
             <td>
               <a-radio-group v-model:value="settingDisplay.receiptProcessType">
-                <a-radio style="display: flex; line-height: 36px" :value="1">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="ReceiptProcessType.NoDebt"
+                >
                   Phiếu nhập hàng không nợ: Nhập hàng và thanh toán đồng thời
                 </a-radio>
-                <a-radio style="display: flex; line-height: 36px" :value="2">
+                <a-radio
+                  style="display: flex; line-height: 36px"
+                  :value="ReceiptProcessType.HasDebt"
+                >
                   Phiếu nhập hàng có nợ: Nhập hàng riêng, thanh toán riêng
                 </a-radio>
               </a-radio-group>

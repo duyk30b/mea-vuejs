@@ -5,14 +5,21 @@ import { Invoice } from '../../../modules/invoice'
 const invoice = ref<Invoice>(Invoice.blank())
 
 watchEffect(() => {
-  const itemsCostMoney = invoice.value.invoiceItems!.reduce(
-    (acc, item) => acc + item.costPrice * item.quantity,
-    0
-  )
-  const itemsActualMoney = invoice.value.invoiceItems!.reduce(
-    (acc, item) => acc + item.actualPrice * item.quantity,
-    0
-  )
+  const itemsCostMoney = invoice.value.invoiceItems!.reduce((acc, item) => {
+    let itemCost = 0
+    if (item.batchId && item.batch!.quantity !== 0) {
+      itemCost = (item.batch!.costAmount / item.batch!.quantity) * item.quantity
+    }
+    if (!item.batchId && item.productId && item.product!.quantity !== 0) {
+      itemCost = (item.product!.costAmount / item.product!.quantity) * item.quantity
+    }
+    const itemCostAmount = Math.floor(itemCost / 100) * 100
+    item.costAmount = itemCostAmount
+    return acc + item.costAmount
+  }, 0)
+  const itemsActualMoney = invoice.value.invoiceItems!.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
+  }, 0)
 
   let discountMoney = 0
   let discountPercent = 0

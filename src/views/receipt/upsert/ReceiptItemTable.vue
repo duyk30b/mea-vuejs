@@ -27,7 +27,7 @@ const openModalProductDetail = (product?: Product) => {
           <th>#</th>
           <th>Sản phẩm</th>
           <th>SL</th>
-          <th>ĐG</th>
+          <th>G.Nhập</th>
           <th>TT</th>
           <th></th>
         </tr>
@@ -42,11 +42,11 @@ const openModalProductDetail = (product?: Product) => {
           </td>
           <td>
             <div class="font-medium">
-              {{ receiptItem.productBatch?.product?.brandName }}
+              {{ receiptItem?.product?.brandName }}
               <a
                 v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
-                @click="openModalProductDetail(receiptItem.productBatch?.product)"
+                @click="openModalProductDetail(receiptItem?.product)"
               >
                 <FileSearchOutlined />
               </a>
@@ -55,15 +55,16 @@ const openModalProductDetail = (product?: Product) => {
               v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
               style="font-size: 0.8rem"
             >
-              {{ receiptItem.productBatch?.product?.substance }}
+              {{ receiptItem?.product?.substance }}
             </div>
-            <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-              <div v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
-                Lô: {{ receiptItem.productBatch!.batch }}
-              </div>
-              <div v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">
-                HSD: {{ timeToText(receiptItem.productBatch!.expiryDate, 'DD/MM/YY') }}
-              </div>
+            <div
+              v-if="
+                screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
+              "
+              style="font-size: 0.8rem"
+            >
+              S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
+              {{ timeToText(receiptItem.batch?.expiryDate) }}
             </div>
           </td>
           <td class="text-center whitespace-nowrap">
@@ -81,7 +82,7 @@ const openModalProductDetail = (product?: Product) => {
             {{ formatMoney(receiptItem.unitCostPrice) }}
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receiptItem.costPrice * receiptItem.quantity) }}
+            {{ formatMoney(receiptItem.amount) }}
           </td>
           <td class="text-center">
             <a class="text-red-500" @click="receipt.receiptItems!.splice(index, 1)">
@@ -92,18 +93,16 @@ const openModalProductDetail = (product?: Product) => {
       </tbody>
     </table>
   </div>
-  <div v-else class="table-wrapper mt-2">
+  <div v-if="!isMobile" class="table-wrapper mt-2">
     <table class="table">
       <thead>
         <tr>
           <th>#</th>
-          <th>Tên hàng</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">Lô</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate">HSD</th>
-          <th>Số lượng</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đơn vị</th>
-          <th>Giá nhập</th>
-          <th>Tổng tiền</th>
+          <th>Sản phẩm</th>
+          <th>S.Lượng</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
+          <th>G.Nhập</th>
+          <th>T.Tiền</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -111,18 +110,18 @@ const openModalProductDetail = (product?: Product) => {
         <tr v-if="receipt.receiptItems!.length === 0">
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
-        <tr v-for="(ri, index) in receipt.receiptItems" :key="index">
+        <tr v-for="(receiptItem, index) in receipt.receiptItems" :key="index">
           <td class="text-center">
             {{ index + 1 }}
           </td>
           <td style="min-width: 150px">
             <div>
               <div class="font-bold">
-                {{ ri.productBatch?.product?.brandName }}
+                {{ receiptItem?.product?.brandName }}
                 <a
                   v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="openModalProductDetail(ri.productBatch?.product)"
+                  @click="openModalProductDetail(receiptItem?.product)"
                 >
                   <FileSearchOutlined />
                 </a>
@@ -131,18 +130,18 @@ const openModalProductDetail = (product?: Product) => {
                 v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
                 style="font-size: 0.8rem"
               >
-                {{ ri.productBatch?.product?.substance }}
+                {{ receiptItem?.product?.substance }}
+              </div>
+              <div
+                v-if="
+                  screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
+                "
+                style="font-size: 0.8rem"
+              >
+                S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
+                {{ timeToText(receiptItem.batch?.expiryDate) }}
               </div>
             </div>
-          </td>
-          <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch">
-            {{ ri.productBatch?.batch }}
-          </td>
-          <td
-            v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.expiryDate"
-            class="text-center"
-          >
-            {{ timeToText(ri.productBatch?.expiryDate) }}
           </td>
           <td class="text-center" style="width: 150px">
             <div class="flex items-center justify-between">
@@ -168,17 +167,14 @@ const openModalProductDetail = (product?: Product) => {
               </div>
             </div>
           </td>
-          <td
-            v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit"
-            class="text-center"
-          >
-            {{ ri.unit.name }}
+          <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
+            {{ receiptItem.unit.name }}
           </td>
           <td class="text-right">
-            {{ formatMoney(ri.unitCostPrice) }}
+            {{ formatMoney(receiptItem.unitCostPrice) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(ri.productBatch!.costPrice * ri.quantity) }}
+            {{ formatMoney(receiptItem.amount) }}
           </td>
           <td class="text-center">
             <a class="text-red-500 text-xl" @click="receipt.receiptItems!.splice(index, 1)">
@@ -189,7 +185,7 @@ const openModalProductDetail = (product?: Product) => {
         <tr>
           <td colspan="100" class="text-right">
             <span class="mr-10">Tổng tiền hàng:</span>
-            <span class="mr-20"> {{ formatMoney(receipt.revenue) }} </span>
+            <span class="mr-20"> {{ formatMoney(receipt.itemsActualMoney) }} </span>
           </td>
         </tr>
       </tbody>

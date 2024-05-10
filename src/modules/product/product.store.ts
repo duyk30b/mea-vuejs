@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
-import { ProductBatchDB } from '../../core/indexed-db/repository/product-batch.repository copy'
+import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { arrayToKeyArray } from '../../utils'
-import { ProductBatch } from '../product-batch'
+import { Batch } from '../batch'
 import { ProductApi } from './product.api'
 import type { ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
@@ -55,21 +55,20 @@ export const useProductStore = defineStore('product-store', {
       })
       const productList = Product.fromObjects(productPagination.data)
 
-      if (relation?.productBatches) {
-        const productIdList = productList.map((i) => i.id)
-        const productBatchObjects = await ProductBatchDB.findManyBy({
-          productId: { IN: productIdList },
-          isActive: filter?.productBatch?.isActive,
-          quantity: filter?.productBatch?.quantity,
-          expiryDate: filter?.productBatch?.expiryDate,
-          deletedAt: { IS_NULL: true },
-        })
-        const productBatchList = ProductBatch.fromObjects(productBatchObjects)
-        const productBatchMap = arrayToKeyArray(productBatchList, 'productId')
-        productList.forEach((i) => {
-          i.productBatches = productBatchMap[i.id] || []
-          i.productBatches.forEach((b) => (b.product = i))
-        })
+      if (relation?.batches) {
+        // TODO
+        // const productIdList = productList.map((i) => i.id)
+        // const batchObjects = await BatchDB.findManyBy({
+        //   productId: { IN: productIdList },
+        //   quantity: filter?.batches?.quantity,
+        //   expiryDate: filter?.batches?.expiryDate,
+        // })
+        // const batchList = Batch.fromObjects(batchObjects)
+        // const productBatchMap = arrayToKeyArray(batchList, 'productId')
+        // productList.forEach((i) => {
+        //   i.batches = productBatchMap[i.id] || []
+        //   i.batches.forEach((b) => (b.product = i))
+        // })
       }
 
       return {

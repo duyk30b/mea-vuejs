@@ -235,7 +235,7 @@ const openModalInvoicePreview = () => {
   <div class="page-header">
     <div class="page-header-content">
       <ScheduleOutlined /> Thông tin hóa đơn
-      <span v-if="invoice.deleteTime" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
+      <span v-if="invoice.deletedAt" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
       <a-button
         v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
         type="primary"
@@ -279,7 +279,7 @@ const openModalInvoicePreview = () => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Thời gian tạo</td>
         <td class="px-2 py-1">
-          {{ timeToText(invoice.time, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YY') }}
         </td>
       </tr>
       <tr>

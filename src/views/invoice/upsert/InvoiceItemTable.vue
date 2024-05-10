@@ -3,7 +3,7 @@ import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { InputMoney, InputNumber } from '../../../common/vue-form'
 import { DiscountType } from '../../../modules/enum'
-import { InvoiceItemType } from '../../../modules/invoice-item/invoice-item.model'
+import { InvoiceItem, InvoiceItemType } from '../../../modules/invoice-item/invoice-item.model'
 import type { Procedure } from '../../../modules/procedure'
 import type { Product } from '../../../modules/product'
 import { useScreenStore } from '../../../modules/_me/screen.store'
@@ -54,12 +54,31 @@ const handleChangeUnitActualPrice = (data: number, index: number) => {
   invoice.value.invoiceItems![index].discountType = DiscountType.VND
 }
 
+const handleChangeInvoiceItemQuantity = (quantity: number, index: number) => {
+  invoice.value.invoiceItems![index].unitQuantity = quantity
+}
+
 const openModalProductDetail = (product?: Product) => {
   if (product) modalProductDetail.value?.openModal(product)
 }
 
 const openModalProcedureDetail = (procedure?: Procedure) => {
   if (procedure) modalProcedureDetail.value?.openModal(procedure)
+}
+
+const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
+  if (invoiceItem.procedureId) return false
+  if (invoiceItem.batchId) {
+    return invoiceItem.quantity > invoiceItem.batch!.quantity
+  }
+  if (!invoiceItem.batchId && invoiceItem.productId) {
+    if (invoiceItem.product?.hasManageQuantity) {
+      return invoiceItem.quantity > invoiceItem.product!.quantity
+    } else {
+      return false
+    }
+  }
+  return false
 }
 </script>
 
@@ -88,13 +107,13 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
               {{ index + 1 }}
             </td>
             <td>
-              <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+              <div v-if="invoiceItem.productId">
                 <div class="font-medium text-justify">
-                  {{ invoiceItem.productBatch!.product!.brandName }}
+                  {{ invoiceItem.product!.brandName }}
                   <a
                     v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
-                    @click="openModalProductDetail(invoiceItem.productBatch?.product)"
+                    @click="openModalProductDetail(invoiceItem.product)"
                   >
                     <FileSearchOutlined />
                   </a>
@@ -104,15 +123,17 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   style="font-size: 0.8rem"
                   class="text-justify"
                 >
-                  {{ invoiceItem.productBatch!.product!.substance }}
+                  {{ invoiceItem.product!.substance }}
                 </div>
-                <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-                  <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
-                    Lô: {{ invoiceItem.productBatch!.batch }}
-                  </div>
-                  <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
-                    HSD: {{ timeToText(invoiceItem.productBatch!.expiryDate, 'DD/MM/YY') }}
-                  </div>
+                <div
+                  v-if="
+                    screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
+                  "
+                  class="flex gap-2 flex-wrap"
+                  style="font-size: 0.8rem"
+                >
+                  Số Lô: {{ invoiceItem.batch?.lotNumber }} - HSD:
+                  {{ timeToText(invoiceItem.batch!.expiryDate, 'DD/MM/YY') }}
                 </div>
                 <div
                   v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
@@ -124,7 +145,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   {{ invoiceItem.hintUsage }}
                 </div>
               </div>
-              <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
+              <div v-if="invoiceItem.procedureId">
                 <div class="font-medium text-justify">
                   {{ invoiceItem.procedure!.name }}
                   <a
@@ -206,7 +227,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
               </div>
             </td>
             <td class="text-center whitespace-nowrap">
-              <div class="flex items-center justify-between">
+              <!-- <div class="flex items-center justify-between">
                 <div
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
@@ -224,21 +245,21 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 >
                   <font-awesome-icon :icon="['fas', 'plus']" />
                 </div>
-              </div>
-              <!-- <div class="item-quantity">
-                <div
-                  class="item-quantity-up"
-                  @click="invoice.invoiceItems[index].quantity += invoiceItem.unit.rate"
+              </div> -->
+              <div>
+                <button
+                  style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                  class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  :disabled="
+                    !screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
+                    overQuantityInvoiceItem(invoice.invoiceItems![index])
+                  "
+                  @click="invoice.invoiceItems![index].quantity += invoiceItem.unit.rate"
                 >
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.3" />
-                </div>
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
                 <div
-                  class="item-quantity-down"
-                  @click="invoice.invoiceItems[index].quantity -= invoiceItem.unit.rate"
-                >
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.3" />
-                </div>
-                <div
+                  style="font-size: 1.1rem"
                   contenteditable="true"
                   @input="
                     (e) =>
@@ -250,7 +271,14 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 >
                   {{ invoiceItem.quantity / invoiceItem.unit.rate }}
                 </div>
-              </div> -->
+                <button
+                  style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                  class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  @click="invoice.invoiceItems![index].quantity -= invoiceItem.unit.rate"
+                >
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
             </td>
             <td class="text-right whitespace-nowrap">
               {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
@@ -271,17 +299,15 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
         </tbody>
       </table>
     </div>
-    <div v-else class="table-wrapper mt-2 mx-4">
+    <div v-if="!isMobile" class="table-wrapper mt-2 mx-4">
       <table class="table">
         <thead>
           <tr>
             <th>#</th>
             <th>Tên</th>
-            <th style="width: 120px">Số lượng</th>
-            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đơn vị</th>
-            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
-              Chiết khấu
-            </th>
+            <th>Số lượng</th>
+            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đ.Vị</th>
+            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đơn giá</th>
             <th>Tổng tiền</th>
             <th>Action</th>
@@ -296,13 +322,13 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
               {{ index + 1 }}
             </td>
             <td>
-              <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+              <div v-if="invoiceItem.productId">
                 <div style="font-weight: 500" class="text-justify">
-                  {{ invoiceItem.productBatch!.product!.brandName }}
+                  {{ invoiceItem.product!.brandName }}
                   <a
                     v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
-                    @click="openModalProductDetail(invoiceItem.productBatch?.product)"
+                    @click="openModalProductDetail(invoiceItem.product)"
                   >
                     <FileSearchOutlined />
                   </a>
@@ -312,15 +338,17 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                   class="text-justify"
                   style="font-size: 0.8rem"
                 >
-                  {{ invoiceItem.productBatch!.product!.substance }}
+                  {{ invoiceItem.product!.substance }}
                 </div>
-                <div style="font-size: 0.8rem" class="flex gap-2">
-                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch">
-                    Lô {{ invoiceItem.productBatch!.batch }}
-                  </span>
-                  <span v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expiryDate">
-                    - HSD {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
-                  </span>
+                <div
+                  v-if="
+                    screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
+                  "
+                  style="font-size: 0.8rem"
+                  class="flex gap-2"
+                >
+                  Số lô {{ invoiceItem.batch?.lotNumber }} - HSD
+                  {{ timeToText(invoiceItem.batch!.expiryDate) }}
                 </div>
                 <div
                   v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
@@ -346,34 +374,40 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
             <td style="width: 150px">
               <div class="flex items-center justify-between">
-                <div
+                <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   @click="invoice.invoiceItems![index].unitQuantity--"
                 >
                   <font-awesome-icon :icon="['fas', 'minus']" />
-                </div>
+                </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
                   <InputNumber v-model:value="invoiceItem.unitQuantity" textAlign="right" />
                 </div>
-                <div
+                <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  :disabled="
+                    !screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
+                    overQuantityInvoiceItem(invoice.invoiceItems![index])
+                  "
                   @click="invoice.invoiceItems![index].unitQuantity++"
                 >
                   <font-awesome-icon :icon="['fas', 'plus']" />
-                </div>
+                </button>
               </div>
             </td>
             <td
               v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
               class="text-center"
+              style="width: 20px"
             >
               {{ invoiceItem.unit.name || 'Lần' }}
             </td>
             <td
               v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
               class="text-center"
+              style="width: 40px"
             >
               <a-popconfirm>
                 <template #cancelButton>
@@ -423,10 +457,8 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 </a-tag>
               </a-popconfirm>
             </td>
-            <td style="width: 120px" class="text-center">
-              <div
-                v-if="!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice"
-              >
+            <td class="text-center">
+              <div v-if="!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice">
                 <div v-if="invoiceItem.discountMoney" class="text-xs italic text-red-500">
                   <del>{{ formatMoney(invoiceItem.unitExpectedPrice) }}</del>
                 </div>
@@ -443,7 +475,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <td class="text-right">
               {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
             </td>
-            <td class="text-center">
+            <td class="text-center" style="width: 20px">
               <a class="text-red-500 text-xl" @click="invoice.invoiceItems!.splice(index, 1)">
                 <DeleteOutlined />
               </a>
@@ -461,36 +493,4 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
   </div>
 </template>
 
-<style lang="scss" scoped>
-.item-quantity {
-  position: relative;
-  line-height: 2rem;
-
-  .item-quantity-text {
-    width: 2rem;
-    padding: 0.8rem 0;
-    display: flex;
-    justify-content: center;
-    font-size: 1.1rem;
-    line-height: 2rem;
-  }
-
-  .item-quantity-up {
-    position: absolute;
-    font-size: 1.2rem;
-    line-height: 0.1rem;
-    top: -15%;
-    left: 50%;
-    transform: translate(-50%, 0%);
-  }
-
-  .item-quantity-down {
-    position: absolute;
-    font-size: 1.2rem;
-    line-height: 0.1rem;
-    top: 115%;
-    left: 50%;
-    transform: translate(-50%, -100%);
-  }
-}
-</style>
+<style lang="scss" scoped></style>

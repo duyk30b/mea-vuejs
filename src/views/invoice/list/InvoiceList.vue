@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { FileSearchOutlined, PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
+import {
+  FileSearchOutlined,
+  PlusOutlined,
+  ScheduleOutlined,
+  FormOutlined,
+} from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -53,11 +58,11 @@ const startFetchData = async () => {
       relation: { customer: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
-        time: {
+        startedAt: {
           GTE: fromTime ? fromTime : undefined,
           LTE: toTime ? toTime : undefined,
         },
-        deleteTime: { IS_NULL: true },
+        deletedAt: { IS_NULL: true },
         status: invoiceStatus.value ?? undefined, // Refund = 0 nhé
       },
       sort: sortValue.value
@@ -283,7 +288,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div class="text-xs">
-                {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td class="text-right">
@@ -313,7 +318,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div v-else class="page-main-table table-wrapper">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -337,6 +342,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Khách hàng</th>
             <th>Tổng Tiền</th>
             <th>Thanh toán</th>
+            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -358,13 +364,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(invoice, index) in invoiceList" :key="index">
+            <td class="text-center">IV{{ invoice.id }}</td>
             <td class="text-center">
-              <router-link :to="{ name: 'InvoiceDetail', params: { id: invoice.id } }">
-                IV{{ invoice.id }}
-              </router-link>
-            </td>
-            <td class="text-center">
-              {{ timeToText(invoice.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               {{ invoice.customer?.fullName }}
@@ -383,6 +385,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td class="text-center">
               <InvoiceStatusTag :status="invoice.status" />
+            </td>
+            <td v-if="permissionIdMap[PermissionId.INVOICE_READ]" class="text-center">
+              <router-link :to="{ name: 'InvoiceDetail', params: { id: invoice.id } }">
+                <span style="color: #eca52b" class="text-xl">
+                  <FormOutlined />
+                </span>
+              </router-link>
             </td>
           </tr>
         </tbody>

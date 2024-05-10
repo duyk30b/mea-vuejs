@@ -27,7 +27,7 @@ const startFetchData = async () => {
     page: page.value,
     limit: limit.value,
     filter: {
-      referenceId: props.procedure.id,
+      procedureId: props.procedure.id,
       type: InvoiceItemType.Procedure,
     },
     relation: { invoice: { customer: true } },
@@ -72,7 +72,6 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           <th>Đơn</th>
           <th>SL</th>
           <th>Giá</th>
-          <th>T.Tiền</th>
           <th>T.Toán</th>
         </tr>
       </thead>
@@ -81,7 +80,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           <td colspan="20" class="text-center">No data</td>
         </tr>
         <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
-          <td class="text-center">
+          <td>
             <div style="white-space: nowrap">
               <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
                 IV{{ invoiceItem.invoiceId }}
@@ -91,7 +90,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
               </span>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(invoiceItem.invoice?.time, 'hh:mm DD/MM/YYYY') }}
+              {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="text-right">
@@ -107,10 +106,6 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
             {{ formatMoney(invoiceItem.actualPrice) }}
           </td>
-          <td class="text-right">
-            {{ formatMoney(invoiceItem.quantity * invoiceItem.actualPrice) }}
-          </td>
-
           <td class="text-center">
             <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
           </td>

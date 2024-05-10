@@ -29,11 +29,11 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const data = await StatisticService.sumWarehouse()
-    pieData.labels = ['Lãi dự kiến', 'Tổng nhập']
+    pieData.labels = ['Lãi dự kiến', 'Tổng vốn']
     pieData.datasets = [
       {
         // backgroundColor: ['#41B883', '#E46651'],
-        data: [data.totalRetailMoney - data.totalCostMoney, data.totalCostMoney],
+        data: [data.totalRetailMoney - data.totalCostAmount, data.totalCostAmount],
       },
     ]
     options.plugins.title.text = 'Tổng tồn kho: ' + formatMoney(data.totalRetailMoney)
@@ -50,7 +50,7 @@ onBeforeMount(async () => await startFetchData())
 <template>
   <div>
     <div>
-      <Pie v-if="loaded" :data="pieData" :options="options" />
+      <Pie v-if="loaded" :data="pieData" :options="options as any" />
     </div>
   </div>
 </template>

@@ -97,27 +97,30 @@ defineExpose({ openModal })
                 </td>
                 <td>
                   <div class="text-justify">
-                    <span v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
-                      {{ invoiceItem.productBatch!.product!.brandName }}
+                    <span v-if="invoiceItem.productId">
+                      {{ invoiceItem.product!.brandName }}
                     </span>
-                    <span v-if="invoiceItem.type === InvoiceItemType.Procedure">
+                    <span v-if="invoiceItem.procedureId">
                       {{ invoiceItem.procedure!.name }}
                     </span>
                   </div>
-                  <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+                  <div v-if="invoiceItem.productId">
                     <div
                       v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
                       style="font-size: 0.8rem"
                     >
-                      {{ invoiceItem.productBatch!.product!.substance }}
+                      {{ invoiceItem.product!.substance }}
                     </div>
-                    <div style="font-size: 0.8rem" class="flex gap-2">
-                      <span v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch">
-                        Lô {{ invoiceItem.productBatch!.batch }}
-                      </span>
-                      <span v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expiryDate">
-                        - HSD {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
-                      </span>
+                    <div
+                      v-if="
+                        screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
+                        invoiceItem.batchId
+                      "
+                      style="font-size: 0.8rem"
+                      class="flex gap-2"
+                    >
+                      Lô {{ invoiceItem.batch!.lotNumber }} - HSD
+                      {{ timeToText(invoiceItem.batch!.expiryDate) }}
                     </div>
                     <div
                       v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
@@ -199,7 +202,7 @@ defineExpose({ openModal })
         </div>
         <div class="flex justify-end mt-4">
           Ngày tạo đơn:
-          {{ timeToText(invoice.time, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YY') }}
         </div>
       </div>
 

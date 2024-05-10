@@ -15,8 +15,8 @@ export class InvoiceGetQuery {
 
   filter?: {
     customerId?: number
-    time?: ConditionDate
-    deleteTime?: ConditionDate
+    startedAt?: ConditionDate
+    deletedAt?: ConditionDate
     status?: InvoiceStatus
   }
 

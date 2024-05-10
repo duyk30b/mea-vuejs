@@ -42,13 +42,13 @@ const handleClickInvoicePaymentInfo = () => {
             {{ index + 1 }}
           </td>
           <td>
-            <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+            <div v-if="invoiceItem.productId">
               <div class="font-medium text-justify">
-                {{ invoiceItem.productBatch!.product!.brandName }}
+                {{ invoiceItem.product!.brandName }}
                 <a
                   v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)"
+                  @click="modalProductDetail?.openModal(invoiceItem.product!)"
                 >
                   <FileSearchOutlined />
                 </a>
@@ -58,15 +58,17 @@ const handleClickInvoicePaymentInfo = () => {
                 style="font-size: 0.8rem"
                 class="text-justify"
               >
-                {{ invoiceItem.productBatch!.product!.substance }}
+                {{ invoiceItem.product!.substance }}
               </div>
-              <div class="flex gap-2 flex-wrap" style="font-size: 0.8rem">
-                <div v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch">
-                  Lô: {{ invoiceItem.productBatch!.batch }}
-                </div>
-                <div v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expiryDate">
-                  HSD: {{ timeToText(invoiceItem.productBatch!.expiryDate, 'DD/MM/YY') }}
-                </div>
+              <div
+                v-if="
+                  screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
+                "
+                class="flex gap-2 flex-wrap"
+                style="font-size: 0.8rem"
+              >
+                Số Lô: {{ invoiceItem.batch!.lotNumber }} - HSD
+                {{ timeToText(invoiceItem.batch!.expiryDate, 'DD/MM/YY') }}
               </div>
               <div
                 v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
@@ -75,7 +77,7 @@ const handleClickInvoicePaymentInfo = () => {
                 {{ invoiceItem.hintUsage }}
               </div>
             </div>
-            <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
+            <div v-if="invoiceItem.procedureId">
               <div class="font-medium text-justify">
                 {{ invoiceItem.procedure!.name }}
                 <a
@@ -133,7 +135,7 @@ const handleClickInvoicePaymentInfo = () => {
     </table>
   </div>
 
-  <div v-else class="px-4 table-wrapper w-full">
+  <div v-if="!isMobile" class="px-4 table-wrapper w-full">
     <table>
       <thead>
         <tr>
@@ -152,13 +154,13 @@ const handleClickInvoicePaymentInfo = () => {
             {{ index + 1 }}
           </td>
           <td>
-            <div v-if="invoiceItem.type === InvoiceItemType.ProductBatch">
+            <div v-if="invoiceItem.productId">
               <div class="text-justify font-medium">
-                {{ invoiceItem.productBatch!.product!.brandName }}
+                {{ invoiceItem.product!.brandName }}
                 <a
                   v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(invoiceItem.productBatch!.product!)"
+                  @click="modalProductDetail?.openModal(invoiceItem.product!)"
                 >
                   <FileSearchOutlined />
                 </a>
@@ -167,15 +169,17 @@ const handleClickInvoicePaymentInfo = () => {
                 v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
                 style="font-size: 0.8rem"
               >
-                {{ invoiceItem.productBatch!.product!.substance }}
+                {{ invoiceItem.product!.substance }}
               </div>
-              <div style="font-size: 0.8rem" class="flex gap-2">
-                <span v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch">
-                  Lô {{ invoiceItem.productBatch!.batch }}
-                </span>
-                <span v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expiryDate">
-                  - HSD {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
-                </span>
+              <div
+                v-if="
+                  screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
+                "
+                style="font-size: 0.8rem"
+                class="flex gap-2"
+              >
+                Số lô {{ invoiceItem.batch!.lotNumber }} - HSD
+                {{ timeToText(invoiceItem.batch!.expiryDate) }}
               </div>
               <div
                 v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
@@ -185,7 +189,7 @@ const handleClickInvoicePaymentInfo = () => {
               </div>
             </div>
             <div
-              v-if="invoiceItem.type === InvoiceItemType.Procedure"
+              v-if="invoiceItem.procedureId"
               class="text-justify font-medium whitespace-nowrap"
               style="word-break: break-all"
             >
@@ -202,10 +206,7 @@ const handleClickInvoicePaymentInfo = () => {
           <td class="text-center">
             {{ invoiceItem.quantity / invoiceItem.unit.rate }}
           </td>
-          <td
-            v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit"
-            class="text-center"
-          >
+          <td v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit" class="text-center">
             {{ invoiceItem.unit.name || 'Lần' }}
           </td>
           <td
@@ -253,7 +254,7 @@ const handleClickInvoicePaymentInfo = () => {
             {{ formatMoney(invoice.itemsActualMoney) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount">
+        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || invoice.discountMoney">
           <td class="text-right">Chiết khấu</td>
           <td class="text-right">
             <a-tag v-if="invoice.discountType === '%'" color="success">
@@ -262,7 +263,7 @@ const handleClickInvoicePaymentInfo = () => {
             {{ formatMoney(invoice.discountMoney) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge">
+        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || invoice.surcharge">
           <td class="text-right">
             Phụ phí
             <span
@@ -290,7 +291,11 @@ const handleClickInvoicePaymentInfo = () => {
             {{ formatMoney(invoice.revenue) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid">
+        <tr
+          v-if="
+            screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid || invoice.paid !== invoice.revenue
+          "
+        >
           <td class="text-right cursor-pointer" @click="handleClickInvoicePaymentInfo">
             <span class="mr-1"> Thanh toán </span>
             <ExclamationCircleOutlined />
@@ -299,7 +304,7 @@ const handleClickInvoicePaymentInfo = () => {
             {{ formatMoney(invoice.paid) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt">
+        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || invoice.debt">
           <td class="text-right">Ghi nợ</td>
           <td class="text-right">
             {{ formatMoney(invoice.debt) }}

@@ -50,20 +50,48 @@ const saveSystemSetting = async () => {
         <table class="screen-setting">
           <thead>
             <tr>
-              <th>Hiển thị tiền</th>
+              <th>Cài đặt chung</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>
-                <a-radio-group v-model:value="settingDisplay.moneyDivisionFormat">
-                  <a-radio style="display: flex; line-height: 36px" :value="1">
-                    Hiển thị cơ bản: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230,500
-                  </a-radio>
-                  <a-radio style="display: flex; line-height: 36px" :value="1000">
-                    Hiển thị rút gọn: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230.5
-                  </a-radio>
-                </a-radio-group>
+                <div>Hiển thị tiền</div>
+                <div>
+                  <a-radio-group v-model:value="settingDisplay.moneyDivisionFormat">
+                    <a-radio style="display: flex; line-height: 32px" :value="1">
+                      Hiển thị cơ bản: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230,500
+                    </a-radio>
+                    <a-radio style="display: flex; line-height: 32px" :value="1000">
+                      Hiển thị rút gọn: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230.5
+                    </a-radio>
+                  </a-radio-group>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div>Sản phẩm</div>
+                <div style="line-height: 32px">
+                  <a-checkbox v-model:checked="settingDisplay.retailPrice">
+                    Sử dụng giá bán lẻ
+                  </a-checkbox>
+                </div>
+                <div style="line-height: 32px">
+                  <a-checkbox v-model:checked="settingDisplay.wholesalePrice">
+                    Sử dụng giá bán sỉ
+                  </a-checkbox>
+                </div>
+                <div style="line-height: 32px">
+                  <a-checkbox v-model:checked="settingDisplay.hasManageQuantity">
+                    Sản phẩm mặc định có quản lý số lượng tồn kho
+                  </a-checkbox>
+                </div>
+                <div style="line-height: 32px">
+                  <a-checkbox v-model:checked="settingDisplay.hasManageBatches">
+                    Sản phẩm mặc định được quản lý theo lô
+                  </a-checkbox>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -80,4 +108,3 @@ const saveSystemSetting = async () => {
     </div>
   </div>
 </template>
-../../modules/_me/organization.store../../store/store.variable

@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import { message } from 'ant-design-vue'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { DiscountType } from '../../../../modules/enum'
 import { Invoice } from '../../../../modules/invoice'
 import { InvoiceItem, InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
-import type { Procedure } from '../../../../modules/procedure'
-import type { ProductBatch } from '../../../../modules/product-batch'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Procedure } from '../../../../modules/procedure'
 import InvoiceItemDetail from './InvoiceItemDetail.vue'
 import InvoiceSearchProcedure from './InvoiceSearchProcedure.vue'
 import InvoiceSearchProduct from './InvoiceSearchProduct.vue'
-import InvoiceSearchProductBatch from './InvoiceSearchProductBatch.vue'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Product } from '../../../../modules/product'
+import { Batch, useBatchStore } from '../../../../modules/batch'
 
 const invoiceSearchProduct = ref<InstanceType<typeof InvoiceSearchProduct>>()
-const invoiceSearchProductBatch = ref<InstanceType<typeof InvoiceSearchProductBatch>>()
 const invoiceSearchProcedure = ref<InstanceType<typeof InvoiceSearchProcedure>>()
 const invoiceItemDetail = ref<InstanceType<typeof InvoiceItemDetail>>()
 
@@ -24,14 +23,11 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
     e.preventDefault()
     if (tabsKey.value === 'product') {
       tabsKey.value = 'procedure'
-      nextTick(() => {
-        invoiceSearchProcedure.value?.focus()
-      })
-    } else if (tabsKey.value === 'procedure') {
+      nextTick(() => invoiceSearchProcedure.value?.focus())
+    }
+    if (tabsKey.value === 'procedure') {
       tabsKey.value = 'product'
-      nextTick(() => {
-        ;(invoiceSearchProduct.value || invoiceSearchProductBatch.value)?.focus()
-      })
+      nextTick(() => invoiceSearchProduct.value?.focus())
     }
   }
 }
@@ -47,8 +43,9 @@ const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
 const props = withDefaults(defineProps<{ invoice: Invoice }>(), { invoice: () => Invoice.blank() })
 
 const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const productBatchStore = useBatchStore()
 const meStore = useMeStore()
+const { isMobile } = screenStore
 const { permissionIdMap } = meStore
 
 const defaultTabsKey = localStorage.getItem('ARRIVAL_INVOICE_UPSERT_TABS') || 'product'
@@ -56,64 +53,128 @@ const tabsKey = ref<'product' | 'procedure'>(defaultTabsKey as any)
 
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
 
-const selectProductBatch = (batch: ProductBatch) => {
-  const ii = InvoiceItem.blank()
-  ii.referenceId = batch.id
-  ii.type = InvoiceItemType.ProductBatch
-  ii.productBatch = batch
-
-  const unitDefault = batch.product!.unitDefault
-  ii.unit = { name: unitDefault.name, rate: unitDefault.rate }
-  ii.costPrice = batch.costPrice
-  ii.expectedPrice = batch.retailPrice
-  ii.actualPrice = batch.retailPrice
-  ii.discountMoney = 0
-  ii.discountPercent = 0
-  ii.discountType = DiscountType.Percent
-  ii.quantity = batch.product?.unitDefault.rate || 1
-  ii.hintUsage = batch.product?.hintUsage || ''
-
+const selectBatch = (batch: Batch | null) => {
   productOutSellType.value = 'retailPrice'
-  nextProcessInvoiceItem(ii)
+  if (batch) {
+    const ii = InvoiceItem.blank()
+    ii.batchId = batch.id
+    ii.productId = batch.productId
+    ii.procedureId = 0
+
+    ii.type = InvoiceItemType.Batch
+    ii.batch = Batch.clone(batch)
+    ii.product = Product.clone(batch.product!)
+
+    const unitDefault = batch.product!.unitDefault
+    ii.unit = { name: unitDefault.name, rate: unitDefault.rate }
+    ii.costPrice = batch.costPrice
+    ii.expectedPrice = batch.product!.retailPrice
+    ii.actualPrice = batch.product!.retailPrice
+    ii.discountMoney = 0
+    ii.discountPercent = 0
+    ii.discountType = DiscountType.Percent
+    ii.quantity = batch.product?.unitDefault.rate || 1
+    ii.hintUsage = batch.product?.hintUsage || ''
+
+    nextProcessInvoiceItem(ii)
+  } else {
+    nextProcessInvoiceItem(InvoiceItem.blank())
+  }
 }
 
-const selectProcedure = (procedure: Procedure) => {
-  const ii = InvoiceItem.blank()
-  ii.referenceId = procedure.id
-  ii.type = InvoiceItemType.Procedure
-  ii.unit = { name: 'Lần', rate: 1 }
+const selectProduct = (product: Product | null) => {
+  productOutSellType.value = 'retailPrice'
+  if (product) {
+    const ii = InvoiceItem.blank()
+    ii.productId = product.id
+    ii.batchId = 0
+    ii.procedureId = 0
 
-  ii.costPrice = 0
-  ii.expectedPrice = procedure.price
-  ii.actualPrice = procedure.price
-  ii.discountMoney = 0
-  ii.discountPercent = 0
-  ii.discountType = DiscountType.Percent
-  ii.quantity = 1
-  ii.procedure = procedure
+    if (product.hasManageQuantity) {
+      ii.type = InvoiceItemType.Product
+    } else {
+      ii.type = InvoiceItemType.ProductNoManageQuantity
+    }
+    ii.product = Product.clone(product)
 
-  nextProcessInvoiceItem(ii)
+    const unitDefault = product!.unitDefault
+    ii.unit = { name: unitDefault.name, rate: unitDefault.rate }
+    ii.costPrice = product.costPrice
+    ii.expectedPrice = product.retailPrice
+    ii.actualPrice = product.retailPrice
+    ii.discountMoney = 0
+    ii.discountPercent = 0
+    ii.discountType = DiscountType.Percent
+    ii.quantity = product.unitDefault.rate || 1
+    ii.hintUsage = product.hintUsage || ''
+
+    nextProcessInvoiceItem(ii)
+  } else {
+    nextProcessInvoiceItem(InvoiceItem.blank())
+  }
+}
+
+const selectProcedure = (procedure: Procedure | null) => {
+  if (procedure) {
+    const ii = InvoiceItem.blank()
+    ii.procedureId = procedure.id
+    ii.batchId = 0
+    ii.productId = 0
+
+    ii.type = InvoiceItemType.Procedure
+    ii.procedure = Procedure.clone(procedure)
+
+    ii.unit = { name: 'Lần', rate: 1 }
+    ii.costPrice = 0
+    ii.expectedPrice = procedure.price
+    ii.actualPrice = procedure.price
+    ii.discountMoney = 0
+    ii.discountPercent = 0
+    ii.discountType = DiscountType.Percent
+    ii.quantity = 1
+
+    nextProcessInvoiceItem(ii)
+  } else {
+    nextProcessInvoiceItem(InvoiceItem.blank())
+  }
 }
 
 const nextProcessInvoiceItem = (ii: InvoiceItem) => {
   if (!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.customAfterSearch) {
-    addInvoiceItem(ii)
+    if (ii.quantity > 0) {
+      addInvoiceItem(ii)
+    }
   } else {
     invoiceItemDetail.value?.setInvoiceItem(ii)
   }
 }
 
-const addInvoiceItem = (ii: InvoiceItem) => {
-  if (!ii.referenceId) {
+const addInvoiceItem = async (ii: InvoiceItem) => {
+  if (!ii.productId && !ii.procedureId) {
     message.error('Lỗi: Chưa chọn sản phẩm hoặc dịch vụ')
-    if (tabsKey.value === 'product')
-      return (invoiceSearchProduct.value || invoiceSearchProductBatch.value)?.focus()
+    if (tabsKey.value === 'product') return invoiceSearchProduct.value?.focus()
     if (tabsKey.value === 'procedure') return invoiceSearchProcedure.value?.focus()
     return
   }
 
+  // Kiểm tra số lượng
   if (!ii.quantity) {
     return message.error('Lỗi: Chưa chọn số lượng')
+  }
+  if (!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity) {
+    if (ii.procedureId) {
+      // Không cần check
+    }
+    if (ii.batchId) {
+      if (ii.quantity > ii.batch!.quantity) {
+        return message.error('Lỗi: Số lượng tồn kho không đủ')
+      }
+    }
+    if (!ii.batchId && ii.productId) {
+      if (ii.product!.hasManageQuantity && ii.quantity > ii.product!.quantity) {
+        return message.error('Lỗi: Số lượng tồn kho không đủ')
+      }
+    }
   }
 
   emit('addInvoiceItem', ii)
@@ -121,60 +182,16 @@ const addInvoiceItem = (ii: InvoiceItem) => {
   invoiceItemDetail.value?.setInvoiceItem(InvoiceItem.blank())
 
   if (!isMobile) {
-    if (tabsKey.value === 'product')
-      return (invoiceSearchProduct.value || invoiceSearchProductBatch.value)?.focus()
-    if (tabsKey.value === 'procedure') return invoiceSearchProcedure.value?.focus()
+    if (tabsKey.value === 'product') return invoiceSearchProduct.value?.clearAndFocus()
+    if (tabsKey.value === 'procedure') return invoiceSearchProcedure.value?.clearAndFocus()
   } else {
-    if (tabsKey.value === 'product')
-      return (invoiceSearchProduct.value || invoiceSearchProductBatch.value)?.clear()
+    if (tabsKey.value === 'product') return invoiceSearchProduct.value?.clear()
     if (tabsKey.value === 'procedure') return invoiceSearchProcedure.value?.clear()
   }
 }
 
-// const autoAddConsumableByHint = async (hintText: string, quantity: number) => {
-//   const consumableHint = JSON.parse(hintText) as { productId: number, quantity: number }[]
-//   const productIds = consumableHint.map((i) => i.productId)
-//   const productList = await ProductApi.getManyByIds(productIds, { productBatches: true })
-//   consumableHint.forEach((i) => {
-//     const pr = productList.find((j) => j.id === i.productId)
-//     if (!pr) {
-//       return message.warning('Cảnh báo: Vật tư dùng cho dịch vụ không tồn tại')
-//     }
-//     if (pr.productBatches.length === 0) {
-//       return message.warning('Cảnh báo: Vật tư dùng cho dịch vụ không còn hàng tồn')
-//     }
-
-//     const pa = pr.productBatches[0]
-//     const po = new InvoiceProduct()
-//     po.product = pr
-//     po.productId = pa.productId
-//     po.productBatchId = pa.id!
-//     po.batch = pa.batch
-//     po.expiryDate = pa.expiryDate
-//     po.costPrice = pa.costPrice
-//     po.expectedPrice = pa.retailPrice
-//     po.actualPrice = 0
-//     po.discountMoney = pa.retailPrice
-//     po.discountPercent = 100
-//     po.discountType = '%'
-//     po.quantity = i.quantity * quantity
-
-//     const findExistPo = invoice.value.invoiceProducts.find((i) => {
-//       return i.productBatchId === po.productBatchId
-//     })
-//     if (findExistPo) {
-//       findExistPo.quantity += po.quantity
-//       findExistPo.discountMoney = po.discountMoney
-//       findExistPo.discountPercent = po.discountPercent
-//       findExistPo.discountType = po.discountType
-//       findExistPo.actualPrice = po.actualPrice
-//     } else {
-//       invoice.value.invoiceProducts.push(po)
-//     }
-//   })
-// }
-
 const handleChangeTabs = (activeKey: any) => {
+  invoiceItemDetail.value?.setInvoiceItem(InvoiceItem.blank())
   localStorage.setItem('ARRIVAL_INVOICE_UPSERT_TABS', activeKey)
 }
 </script>
@@ -192,20 +209,15 @@ const handleChangeTabs = (activeKey: any) => {
       key="product"
       :tab="
         `Hàng hóa (` +
-        invoice.invoiceItems!.filter((i) => i.type === InvoiceItemType.ProductBatch).length +
+        invoice.invoiceItems!.filter((i) => i.type === InvoiceItemType.Batch).length +
         `)`
       "
     >
       <div class="flex flex-wrap gap-4">
         <InvoiceSearchProduct
-          v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT'"
           ref="invoiceSearchProduct"
-          @selectProductBatch="selectProductBatch"
-        />
-        <InvoiceSearchProductBatch
-          v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.searchType === 'PRODUCT_BATCH'"
-          ref="invoiceSearchProductBatch"
-          @selectProductBatch="selectProductBatch"
+          @selectProduct="selectProduct"
+          @selectBatch="selectBatch"
         />
       </div>
     </a-tab-pane>

@@ -33,12 +33,6 @@ export class Invoice extends BaseModel {
   status: InvoiceStatus
 
   @Expose()
-  time: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
-  deleteTime: number
-
-  @Expose()
   itemsCostMoney: number // tổng tiền cost = tổng cost sản phẩm
 
   @Expose()
@@ -74,9 +68,14 @@ export class Invoice extends BaseModel {
   @Expose()
   note: string // Ghi chú
 
-  // @Expose({ name: 'arrival' })
-  // @Type(() => Arrival)
-  // arrival: Arrival
+  @Expose()
+  startedAt: number
+
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  shippedAt: number
+
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  deletedAt: number
 
   @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
   @Type(() => InvoiceItem)

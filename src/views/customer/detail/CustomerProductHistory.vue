@@ -29,10 +29,11 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         customerId: props.customer.id!,
-        type: InvoiceItemType.ProductBatch,
+        type: InvoiceItemType.Batch,
       },
       relation: {
-        productBatch: { product: true },
+        batch: true,
+        product: true,
         invoice: { customer: false },
       },
       sort: { id: 'DESC' },
@@ -97,11 +98,11 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
             <td>
               <div class="font-medium">
-                {{ invoiceItem.productBatch!.product!.brandName }}
+                {{ invoiceItem.product!.brandName }}
               </div>
               <div style="font-size: 0.8rem">
-                Lô {{ invoiceItem.productBatch!.batch }} - HSD
-                {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
+                Lô {{ invoiceItem.batch!.lotNumber }} - HSD
+                {{ timeToText(invoiceItem.batch!.expiryDate) }}
               </div>
               <div style="font-size: 0.8rem">
                 ĐH
@@ -111,7 +112,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
               </div>
               <div style="font-size: 0.8rem">
-                TG {{ timeToText(invoiceItem.invoice?.time, 'DD/MM/YYYY hh:mm') }}
+                TG {{ timeToText(invoiceItem.invoice?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -147,7 +148,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
         />
       </div>
     </div>
-    <div v-else class="table-wrapper mt-4 w-full">
+    <div v-if="!isMobile" class="table-wrapper mt-4 w-full">
       <table class="table">
         <thead>
           <tr>
@@ -156,7 +157,6 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
             <th>Đơn vị</th>
             <th>S.Lượng</th>
             <th>Đ.Giá</th>
-            <th>T.Tiền</th>
           </tr>
         </thead>
         <tbody>
@@ -174,20 +174,20 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(invoiceItem.invoice?.time, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>
               <div class="font-medium">
-                {{ invoiceItem.productBatch!.product!.brandName }}
+                {{ invoiceItem.product!.brandName }}
               </div>
               <div style="font-size: 0.8rem">
-                Lô {{ invoiceItem.productBatch!.batch }} - HSD
-                {{ timeToText(invoiceItem.productBatch!.expiryDate) }}
+                Lô {{ invoiceItem.batch!.lotNumber }} - HSD
+                {{ timeToText(invoiceItem.batch!.expiryDate) }}
               </div>
             </td>
             <td class="text-center">
-              {{ invoiceItem.productBatch!.product!.unit.find((i) => i.rate === 1)?.name }}
+              {{ invoiceItem.product!.unitBasicName }}
             </td>
             <td class="text-center">
               {{ invoiceItem.quantity }}
@@ -207,9 +207,6 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
               <div style="white-space: nowrap">
                 {{ formatMoney(invoiceItem.actualPrice) }}
               </div>
-            </td>
-            <td class="text-right">
-              {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
             </td>
           </tr>
         </tbody>

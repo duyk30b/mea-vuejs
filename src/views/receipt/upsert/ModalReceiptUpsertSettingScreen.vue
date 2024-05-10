@@ -57,10 +57,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(
-      ScreenSettingKey.SCREEN_RECEIPT_UPSERT,
-      settingData
-    )
+    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_RECEIPT_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
     meStore.distributorDefault = Distributor.fromPlain(distributorDefault.value)
@@ -88,47 +85,22 @@ defineExpose({ openModal })
 
       <div class="px-6 mt-4 receipt-upsert-setting-screen-tabs">
         <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-          <a-tab-pane key="1" tab="Cài đặt tìm kiếm">
+          <a-tab-pane key="1" tab="Cài đặt danh sách">
             <table class="table-setting">
               <thead>
                 <tr>
-                  <th>Tìm kiếm sản phẩm</th>
+                  <th>Chọn sản phẩm</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>
-                    <a-checkbox v-model:checked="settingDisplay.receiptItemInput.batch">
-                      Hiển thị lô hàng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.receiptItemInput.expiryDate">
-                      Hiển thị hạn sử dụng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.receiptItemInput.wholesalePrice">
-                      Hiển thị giá bán sỉ
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.receiptItemInput.retailPrice">
-                      Hiển thị giá bán lẻ
+                    <a-checkbox v-model:checked="settingDisplay.receiptItemInput.salePrice">
+                      Cập nhật giá bán
                     </a-checkbox>
                   </td>
                 </tr>
               </tbody>
-            </table>
-          </a-tab-pane>
-          <a-tab-pane key="2" tab="Cài đặt danh sách">
-            <table class="table-setting">
               <thead>
                 <tr>
                   <th>Danh sách hàng trong phiếu</th>
@@ -172,14 +144,7 @@ defineExpose({ openModal })
                 <tr>
                   <td>
                     <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
-                      Hiển thị lô hàng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.expiryDate">
-                      Hiển thị hạn sử dụng
+                      Hiển thị số lô và HSD
                     </a-checkbox>
                   </td>
                 </tr>
@@ -193,7 +158,7 @@ defineExpose({ openModal })
               </tbody>
             </table>
           </a-tab-pane>
-          <a-tab-pane key="3" tab="Cài đặt phiếu">
+          <a-tab-pane key="2" tab="Cài đặt phiếu">
             <table class="table-setting">
               <thead>
                 <tr>

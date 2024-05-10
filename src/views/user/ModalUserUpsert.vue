@@ -102,7 +102,7 @@ defineExpose({ openModal })
             <VueSelect
               v-model:value="user.roleId"
               :options="roles.map((i) => ({ text: i.name, value: i.id }))"
-              :disabled="user.roleId === 0 || user.roleId === 1"
+              :disabled="!!user.id && [0, 1].includes(user.roleId)"
             />
           </div>
         </div>

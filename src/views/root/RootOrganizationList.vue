@@ -7,11 +7,10 @@ import {
   PlusOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import type { Organization } from '../../modules/organization'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { useScreenStore } from '../../modules/_me/screen.store'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
-import { MeaDatabase } from '../../core/indexed-db/database'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
 
@@ -22,7 +21,7 @@ const organizationList = ref<Organization[]>([])
 const dataLoading = ref(false)
 
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('ORGANIZATION_PAGINATION_LIMIT')) || 10)
+const limit = ref(Number(localStorage.getItem('ORGANIZATION_PAGINATION_LIMIT')) || 50)
 const total = ref(0)
 
 const startFetchData = async () => {
@@ -31,6 +30,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       // relation: { users: true },
+      sort: { id: 'DESC' },
     })
     organizationList.value = data
     total.value = meta.total
@@ -59,7 +59,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalRootOrganizationUpsertSuccess = async (
   data: Organization,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'CLEAR' | 'DELETE'
 ) => {
   await startFetchData()
 }
@@ -148,4 +148,3 @@ const handleModalRootOrganizationUpsertSuccess = async (
     </div>
   </div>
 </template>
-../../modules/_me/organization.store

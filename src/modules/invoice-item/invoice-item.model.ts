@@ -6,18 +6,20 @@ import {
   TransformationType,
   Type,
 } from 'class-transformer'
+import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
+import { Batch } from '../batch'
 import { Customer } from '../customer'
 import { DiscountType, type UnitType } from '../enum'
+import { Invoice } from '../invoice/invoice.model'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
-import { ProductBatch } from '../product-batch'
-import { Invoice } from '../invoice/invoice.model'
-import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
 
 export enum InvoiceItemType {
-  ProductBatch = 1,
+  Batch = 1,
   Procedure = 2,
+  Product = 3,
+  ProductNoManageQuantity = 4,
 }
 
 export class InvoiceItem extends BaseModel {
@@ -28,7 +30,13 @@ export class InvoiceItem extends BaseModel {
   customerId: number
 
   @Expose()
-  referenceId: number
+  productId: number
+
+  @Expose()
+  batchId: number
+
+  @Expose()
+  procedureId: number
 
   @Expose()
   type: InvoiceItemType
@@ -48,6 +56,9 @@ export class InvoiceItem extends BaseModel {
 
   @Expose()
   costPrice: number // Giá cost
+
+  @Expose()
+  costAmount: number // Giá cost
 
   @Expose()
   expectedPrice: number // Giá dự kiến
@@ -75,8 +86,12 @@ export class InvoiceItem extends BaseModel {
   invoice?: Invoice
 
   @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => ProductBatch)
-  productBatch?: ProductBatch
+  @Type(() => Product)
+  product?: Product
+
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => Batch)
+  batch?: Batch
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Procedure)
@@ -179,18 +194,14 @@ export class InvoiceItem extends BaseModel {
 
   static clone(root: InvoiceItem): InvoiceItem {
     const ins = InvoiceItem.fromInstance(root)
-    if (ins.type === InvoiceItemType.Procedure) {
-      if (root.procedure) {
-        ins.procedure = Procedure.fromInstance(root.procedure)
-      }
+    if (root.procedure) {
+      ins.procedure = Procedure.fromInstance(root.procedure)
     }
-    if (ins.type === InvoiceItemType.ProductBatch) {
-      if (root.productBatch) {
-        ins.productBatch = ProductBatch.fromInstance(root.productBatch)
-        if (root.productBatch.product) {
-          ins.productBatch.product = Product.fromInstance(root.productBatch?.product)
-        }
-      }
+    if (root.batch) {
+      ins.batch = Batch.fromInstance(root.batch)
+    }
+    if (root.product) {
+      ins.product = Product.fromInstance(root.product)
     }
     return ins
   }

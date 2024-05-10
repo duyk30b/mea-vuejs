@@ -280,6 +280,13 @@ defineExpose({ openModal })
           </div>
         </div>
 
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+          <div style="width: 100px; flex: none">Ghi chú</div>
+          <div style="flex: 1">
+            <InputText v-model:value="customer.note" />
+          </div>
+        </div>
+
         <div class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch

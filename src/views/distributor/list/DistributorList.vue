@@ -287,8 +287,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a :href="'tel:' + distributor.phone">{{ formatPhone(distributor.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
-              <div>{{ formatMoney(distributor.debt) }}</div>
-              <div v-if="distributor.debt != 0">
+              <div style="white-space: nowrap">{{ formatMoney(distributor.debt) }}</div>
+              <div
+                v-if="
+                  permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                  distributor.debt != 0
+                "
+              >
                 <a-button
                   type="default"
                   size="small"
@@ -313,7 +318,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div v-else class="page-main-table table-wrapper">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table class="table">
         <thead>
           <tr>
@@ -378,7 +383,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-if="!dataLoading">
           <tr v-if="distributorList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
@@ -421,7 +440,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     Trả nợ
                   </a-button>
                 </div>
-                <div>
+                <div class="ml-2">
                   {{ formatMoney(distributor.debt) }}
                 </div>
               </div>

@@ -38,12 +38,6 @@ export class Receipt {
   status: ReceiptStatus
 
   @Expose()
-  time: number
-
-  @Expose({ groups: [FROM_PLAIN] })
-  deleteTime: number
-
-  @Expose()
   itemsActualMoney: number // tiền sản phẩm
 
   @Expose()
@@ -69,6 +63,15 @@ export class Receipt {
 
   @Expose()
   note: string
+
+  @Expose()
+  startedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  shippedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
 
   @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
   @Type(() => ReceiptItem)

@@ -9,7 +9,7 @@ import {
 import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
 import type { UnitType } from '../enum'
 import { Product } from '../product'
-import { ProductBatch } from '../product-batch'
+import { Batch } from '../batch'
 import { Receipt } from '../receipt/receipt.model'
 
 export class ReceiptItem {
@@ -23,7 +23,10 @@ export class ReceiptItem {
   distributorId: number
 
   @Expose()
-  productBatchId: number
+  productId: number
+
+  @Expose()
+  batchId: number
 
   @Expose()
   @Transform(({ value, type }) => {
@@ -39,18 +42,22 @@ export class ReceiptItem {
   unit: UnitType
 
   @Expose()
-  quantity: number = 0
+  costPrice: number // Giá cost
 
   @Expose()
-  costPrice: number // Giá cost
+  quantity: number = 0
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Receipt)
   receipt?: Receipt
 
   @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => ProductBatch)
-  productBatch?: ProductBatch
+  @Type(() => Batch)
+  batch?: Batch
+
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => Product)
+  product?: Product
 
   get unitQuantity() {
     return Number((this.quantity / this.unit.rate).toFixed(3))
@@ -64,6 +71,10 @@ export class ReceiptItem {
     this.quantity = data * this.unit.rate
   }
 
+  get amount() {
+    return this.costPrice * this.quantity
+  }
+
   static init() {
     const ins = new ReceiptItem()
     ins.id = 0
@@ -75,8 +86,8 @@ export class ReceiptItem {
 
   static blank() {
     const ins = ReceiptItem.init()
-    ins.productBatch = ProductBatch.init()
-    ins.productBatch.product = Product.init()
+    ins.batch = Batch.init()
+    ins.product = Product.init()
     ins.receipt = Receipt.init()
     return ins
   }
@@ -115,11 +126,11 @@ export class ReceiptItem {
 
   static clone(root: ReceiptItem): ReceiptItem {
     const ins = ReceiptItem.fromInstance(root)
-    if (root.productBatch) {
-      ins.productBatch = ProductBatch.fromInstance(root.productBatch)
-      if (root.productBatch.product) {
-        ins.productBatch.product = Product.fromInstance(root.productBatch.product)
-      }
+    if (root.batch) {
+      ins.batch = Batch.fromInstance(root.batch)
+    }
+    if (root.product) {
+      ins.product = Product.fromInstance(root.product)
     }
 
     return ins

@@ -29,6 +29,9 @@ export class MeService {
         if (
           [
             ScreenSettingKey.PRODUCT_GROUP,
+            ScreenSettingKey.PRODUCT_UNIT,
+            ScreenSettingKey.PRODUCT_ROUTE,
+            ScreenSettingKey.PRODUCT_HINT_USAGE,
             ScreenSettingKey.PROCEDURE_GROUP,
             ScreenSettingKey.INVOICE_SURCHARGE_DETAIL,
             ScreenSettingKey.INVOICE_EXPENSE_DETAIL,

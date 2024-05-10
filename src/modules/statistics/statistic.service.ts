@@ -8,21 +8,9 @@ export class StatisticService {
     const response = await AxiosInstance.get('/statistic/sum-warehouse')
     const { data } = response.data as BaseResponse
     return {
-      totalCostMoney: data.totalCostMoney,
+      totalCostAmount: data.totalCostAmount,
       totalRetailMoney: data.totalRetailMoney,
     }
-  }
-
-  static async topProductHighCostMoney(params: { limit: number }) {
-    const response = await AxiosInstance.get('/statistic/top-product-high-cost-money', { params })
-    const { data } = response.data as BaseResponse<any[]>
-
-    return data.map((i: any) => ({
-      sumCostMoney: i.sumCostMoney,
-      sumRetailMoney: i.sumRetailMoney,
-      sumQuantity: i.sumQuantity,
-      product: Product.fromPlain(i.product),
-    }))
   }
 
   static async topProductBestSelling(params: {
@@ -37,11 +25,33 @@ export class StatisticService {
     return data.map((i: any) => ({
       productId: i.productId as number,
       sumActualMoney: i.sumActualMoney as number,
-      sumCostMoney: i.sumCostMoney as number,
+      sumCostAmount: i.sumCostAmount as number,
       sumQuantity: i.sumQuantity as number,
       sumProfit: i.sumProfit as number,
       product: Product.fromPlain(i.product),
     }))
+  }
+
+  static async topProductHightMoney(params: {
+    limit: number
+    orderBy: 'quantity' | 'costAmount' | 'sumRetailMoney'
+  }) {
+    const response = await AxiosInstance.get('/statistic/top-product-high-money', {
+      params,
+    })
+    const { data } = response.data as BaseResponse<any[]>
+
+    data.forEach((i: Product & { sumRetailMoney: number }) => {
+      i.quantity = Number(i.quantity)
+      i.wholesalePrice = Number(i.wholesalePrice)
+      i.retailPrice = Number(i.retailPrice)
+      i.costPrice = Number(i.costPrice)
+      i.costAmount = Number(i.costAmount)
+      i.createdAt = Number(i.createdAt)
+      i.updatedAt = Number(i.updatedAt)
+      i.deletedAt = i.deletedAt === null ? null : Number(i.deletedAt)
+    })
+    return data
   }
 
   static async topProcedureBestSelling(params: {

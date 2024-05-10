@@ -1,7 +1,7 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
-export class ProductBatchGetQuery {
+export class BatchGetQuery {
   page?: number
   limit?: number
   relation?: {
@@ -12,7 +12,6 @@ export class ProductBatchGetQuery {
     quantity?: ConditionNumber
     expiryDate?: ConditionNumber
     productId?: number | ConditionNumber
-    isActive?: 1 | 0
     updatedAt?: ConditionDate
     product?: {
       searchText?: string
@@ -28,7 +27,7 @@ export class ProductBatchGetQuery {
     expiryDate?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<ProductBatchGetQuery>) {
+  static toQuery(instance: Partial<BatchGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -39,6 +38,7 @@ export class ProductBatchGetQuery {
   }
 }
 
-export class ProductBatchPaginationQuery extends ProductBatchGetQuery {}
-export class ProductBatchListQuery extends OmitClass(ProductBatchGetQuery, ['page']) {}
-export class ProductBatchDetailQuery extends PickClass(ProductBatchGetQuery, ['relation']) {}
+export class BatchPaginationQuery extends BatchGetQuery {}
+export class BatchListQuery extends OmitClass(BatchGetQuery, ['page']) {}
+export class BatchGetOneQuery extends PickClass(BatchGetQuery, ['relation', 'filter']) {}
+export class BatchDetailQuery extends PickClass(BatchGetQuery, ['relation']) {}

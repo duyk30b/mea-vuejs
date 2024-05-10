@@ -14,7 +14,7 @@ export class DistributorPayment {
   receiptId: number
 
   @Expose()
-  time: number
+  createdAt: number
 
   @Expose({ toClassOnly: true })
   type: PaymentType

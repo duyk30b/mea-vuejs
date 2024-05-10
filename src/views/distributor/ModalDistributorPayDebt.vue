@@ -5,9 +5,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueModal from '../../common/VueModal.vue'
 import { InputMoney } from '../../common/vue-form'
+import { useScreenStore } from '../../modules/_me/screen.store'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { useScreenStore } from '../../modules/_me/screen.store'
 import { timeToText } from '../../utils'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -28,6 +28,7 @@ const distributorId = ref(0)
 const receiptPayments = ref<{ receipt: Receipt; money: number }[]>([])
 
 const showModal = ref(false)
+const dataLoading = ref(false)
 const saveLoading = ref(false)
 
 const openModal = async (distributorIdProp: number, openDebtProp: number) => {
@@ -37,17 +38,25 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
   distributorId.value = distributorIdProp
   showModal.value = true
 
-  const receiptDebtList = await ReceiptApi.list({
-    filter: {
-      distributorId: distributorIdProp,
-      status: ReceiptStatus.Debt,
-    },
-  })
-  receiptPayments.value = receiptDebtList.map((i) => ({ receipt: i, money: 0 }))
+  try {
+    dataLoading.value = true
+    const receiptDebtList = await ReceiptApi.list({
+      filter: {
+        distributorId: distributorIdProp,
+        status: ReceiptStatus.Debt,
+      },
+    })
+    receiptPayments.value = receiptDebtList.map((i) => ({ receipt: i, money: 0 }))
+  } catch (error) {
+    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:56 ~ openModal ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
 }
 
 const closeModal = () => {
   showModal.value = false
+  receiptPayments.value = []
 }
 
 const handleSave = async () => {
@@ -139,6 +148,20 @@ defineExpose({ openModal })
                 <th>Số tiền trả</th>
               </tr>
             </thead>
+            <tbody v-if="dataLoading">
+              <tr>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="100">
+                  <div class="vue-skeleton-loading"></div>
+                  <div class="vue-skeleton-loading mt-2"></div>
+                </td>
+              </tr>
+            </tbody>
             <tbody>
               <tr v-for="(receiptPayment, index) in receiptPayments" :key="index">
                 <td>
@@ -149,7 +172,7 @@ defineExpose({ openModal })
                     - Nợ
                     <span class="font-medium"> {{ formatMoney(receiptPayment.receipt.debt) }}</span>
                   </div>
-                  <div>{{ timeToText(receiptPayment.receipt.time, 'DD/MM/YYYY hh:mm') }}</div>
+                  <div>{{ timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(receiptPayment.money) }}
