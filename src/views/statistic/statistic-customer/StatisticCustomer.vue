@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ShopOutlined } from '@ant-design/icons-vue'
-import TopCustomerBestSelling from './TopCustomerBestSelling.vue'
+import TopCustomerBestInvoice from './TopCustomerBestInvoice.vue'
+import TopCustomerBestVisit from './TopCustomerBestVisit.vue'
 import TopCustomerDebt from './TopCustomerDebt.vue'
 </script>
 
@@ -23,7 +24,10 @@ import TopCustomerDebt from './TopCustomerDebt.vue'
       </div>
       <div class="mt-10 flex flex-wrap items-stretch gap-20">
         <div style="flex: 1; min-height: 500px">
-          <TopCustomerBestSelling />
+          <TopCustomerBestInvoice />
+        </div>
+        <div style="flex: 1; min-height: 500px">
+          <TopCustomerBestVisit />
         </div>
       </div>
     </div>

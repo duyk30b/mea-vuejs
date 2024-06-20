@@ -25,13 +25,7 @@ export class Batch {
   costPrice: number // Giá nhập
 
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
-  costAmount: number // Tổng tiền nhập còn lại
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   quantity: number
-
-  @Expose({ groups: [FROM_PLAIN] })
-  createdAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
@@ -41,15 +35,15 @@ export class Batch {
   product?: Product
 
   get unitQuantity() {
-    return Number(((this.quantity || 0) / this.product!.unitRate).toFixed(3))
+    return Number(((this.quantity || 0) / this.product!.unitDefaultRate).toFixed(3))
   }
 
   get unitCostPrice() {
-    return this.costPrice * this.product!.unitRate
+    return this.costPrice * this.product!.unitDefaultRate
   }
 
   set unitCostPrice(data) {
-    this.costPrice = data / this.product!.unitRate
+    this.costPrice = data / this.product!.unitDefaultRate
   }
 
   static init() {
@@ -65,6 +59,17 @@ export class Batch {
     const ins = Batch.init()
     ins.product = Product.init()
     return ins
+  }
+
+  static toBasic(root: Batch) {
+    const ins = new Batch()
+    Object.assign(ins, root)
+    delete ins.product
+    return ins
+  }
+
+  static toBasics(roots: Batch[]) {
+    return roots.map((i) => Batch.toBasic(i))
   }
 
   // lấy từ 1 object có cấu trúc giống 100%, nhưng nó chỉ là object, ko phải class như object lấy từ indexedDB

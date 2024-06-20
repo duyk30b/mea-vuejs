@@ -1,22 +1,21 @@
 type Ward = {
-  ward_id: string
-  ward_name: string
-  ward_type: string
+  id: string
+  full_name: string
+  name: string
   province_id: string
 }
 
 type District = {
-  district_id: string
-  district_name: string
-  district_type: string
-  province_id: string
+  id: string
+  full_name: string
+  name: string
   wards: Ward[]
 }
 
 type Province = {
-  province_id: string
-  province_name: string
-  province_type: string
+  id: string
+  full_name: string
+  name: string
   districts: District[]
 }
 
@@ -26,9 +25,9 @@ export class AddressInstance {
   static fetchAllProvinces = (() => {
     const start = async () => {
       try {
-        const response = await fetch('https://vapi.vnappmob.com/api/province')
+        const response = await fetch('https://esgoo.net/api-tinhthanh/1/0.htm')
         const data = await response.json()
-        AddressInstance.data = data.results as Province[]
+        AddressInstance.data = data.data as Province[]
       } catch (error) {
         console.log('🚀 ~ file: address.instance.ts:26 ~ Address ~ start ~ error:', error)
       }
@@ -42,16 +41,14 @@ export class AddressInstance {
 
   static async fetchDistrictByProvince(provinceName: string): Promise<District[]> {
     await this.fetchAllProvinces()
-    const province = this.data.find((item) => item.province_name === provinceName)
+    const province = this.data.find((item) => item.full_name === provinceName)
     if (!province) throw new Error(`No exists province: ${provinceName}`)
 
     try {
       if (!province.districts || province.districts?.length == 0) {
-        const response = await fetch(
-          `https://vapi.vnappmob.com/api/province/district/${province.province_id}`
-        )
+        const response = await fetch(`https://esgoo.net/api-tinhthanh/2/${province.id}.htm`)
         const data = await response.json()
-        province.districts = data.results as District[]
+        province.districts = data.data as District[]
       }
       return province.districts
     } catch (error) {
@@ -64,19 +61,17 @@ export class AddressInstance {
     districtName: string
   ): Promise<Ward[]> {
     await this.fetchAllProvinces()
-    const province = this.data.find((item) => item.province_name === provinceName)
+    const province = this.data.find((item) => item.full_name === provinceName)
     if (!province) throw new Error(`No exists province: ${provinceName}`)
 
-    const district = province.districts.find((item) => item.district_name === districtName)
+    const district = province.districts.find((item) => item.full_name === districtName)
     if (!district) throw new Error(`No exists district: ${districtName}`)
 
     try {
       if (!district.wards || district.wards.length === 0) {
-        const response = await fetch(
-          `https://vapi.vnappmob.com/api/province/ward/${district.district_id}`
-        )
+        const response = await fetch(`https://esgoo.net/api-tinhthanh/3/${district.id}.htm`)
         const data = await response.json()
-        district.wards = (await data.results) as Ward[]
+        district.wards = data.data as Ward[]
       }
       return district.wards
     } catch (error) {
@@ -86,12 +81,12 @@ export class AddressInstance {
 
   static async getAllProvinces(): Promise<string[]> {
     await this.fetchAllProvinces()
-    return this.data.map((item) => item.province_name).sort()
+    return this.data.map((item) => item.full_name).sort()
   }
 
   static async getDistrictsByProvince(provinceName: string): Promise<string[]> {
     const data = await this.fetchDistrictByProvince(provinceName)
-    return data.map((item) => item.district_name).sort()
+    return data.map((item) => item.full_name).sort()
   }
 
   static async getWardsByProvinceAndDistrict(
@@ -99,6 +94,6 @@ export class AddressInstance {
     districtName: string
   ): Promise<string[]> {
     const data = await this.fetchWardsByProvinceAndDistrict(provinceName, districtName)
-    return data.map((item) => item.ward_name).sort()
+    return data.map((item) => item.full_name).sort()
   }
 }

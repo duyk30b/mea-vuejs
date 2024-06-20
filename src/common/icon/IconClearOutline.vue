@@ -1,0 +1,20 @@
+<script lang="ts" setup>
+const props = withDefaults(defineProps<{ width?: number | string; height?: number | string }>(), {
+  width: '1em',
+  height: '1em',
+})
+</script>
+<template>
+  <svg
+    style="vertical-align: middle; fill: currentColor; overflow: hidden"
+    :width="width"
+    :height="height"
+    viewBox="0 0 1024 1024"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M565.9648 512l261.8368-261.8368c7.9872-7.9872 7.9872-20.992 0-28.9792-7.9872-7.9872-20.992-7.9872-28.9792 0L536.9856 483.0208 275.1488 221.184c-7.9872-7.9872-20.992-7.9872-28.9792 0-7.9872 7.9872-7.9872 20.992 0 28.9792L508.0064 512 246.1696 773.8368c-7.9872 7.9872-7.9872 20.992 0 28.9792 7.9872 7.9872 20.992 7.9872 28.9792 0l261.8368-261.8368L798.8224 802.816c7.9872 7.9872 20.992 7.9872 28.9792 0 7.9872-7.9872 7.9872-20.992 0-28.9792L565.9648 512z"
+    />
+  </svg>
+</template>

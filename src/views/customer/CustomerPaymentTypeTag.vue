@@ -2,33 +2,38 @@
 import { CheckCircleOutlined } from '@ant-design/icons-vue'
 import { PaymentType } from '../../modules/enum'
 
-defineProps<{ type: PaymentType }>()
+defineProps<{ paymentType: PaymentType }>()
 </script>
 
 <template>
-  <a-tag v-if="type === PaymentType.Prepayment" color="processing">
+  <a-tag v-if="paymentType === PaymentType.Prepayment" color="processing">
     <template #icon>
       <CheckCircleOutlined />
     </template>
-    T.Toán trước
+    Tạm ứng
   </a-tag>
-  <a-tag v-if="type === PaymentType.PayDebt" color="cyan">
+  <a-tag v-if="paymentType === PaymentType.ReceiveRefund" color="warning">
+    <template #icon>
+      <CheckCircleOutlined />
+    </template>
+    Hoàn trả
+  </a-tag>
+  <a-tag v-if="paymentType === PaymentType.Close" color="success">
+    <template #icon>
+      <CheckCircleOutlined />
+    </template>
+    Đóng phiếu
+  </a-tag>
+  <a-tag v-if="paymentType === PaymentType.PayDebt" color="cyan">
     <template #icon>
       <CheckCircleOutlined />
     </template>
     Trả nợ
   </a-tag>
-  <a-tag v-if="type === PaymentType.ImmediatePayment" color="success">
+  <a-tag v-if="paymentType === PaymentType.Reopen" color="purple">
     <template #icon>
       <CheckCircleOutlined />
     </template>
-    Gửi hàng
-  </a-tag>
-
-  <a-tag v-if="type === PaymentType.ReceiveRefund" color="warning">
-    <template #icon>
-      <CheckCircleOutlined />
-    </template>
-    Hoàn trả
+    Mở lại phiếu
   </a-tag>
 </template>

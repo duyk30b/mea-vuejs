@@ -9,15 +9,16 @@ import { Modal, type SelectProps } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputText } from '../../../common/vue-form'
+import { InputHint, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useDistributorStore } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
 import { useScreenStore } from '../../../modules/_me/screen.store'
-import { convertViToEn } from '../../../utils'
+import { convertViToEn, customFilter, sleep } from '../../../utils'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalDistributorUpsertSettingScreen =
   ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
@@ -36,19 +37,34 @@ const showModal = ref(false)
 const distributor = ref(Distributor.blank())
 const saveLoading = ref(false)
 
-const provinceOptions = ref<SelectProps['options']>([])
-const districtOptions = ref<SelectProps['options']>([])
-const wardOptions = ref<SelectProps['options']>([])
+const provinceList = ref<string[]>([])
+const districtList = ref<string[]>([])
+const wardList = ref<string[]>([])
 
 const openModal = async (instance?: Distributor) => {
-  showModal.value = true
-  distributor.value = instance ? Distributor.fromInstance(instance) : Distributor.blank()
-  const provinceList = await AddressInstance.getAllProvinces()
-  provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
+  try {
+    showModal.value = true
+    distributor.value = instance ? Distributor.toBasic(instance) : Distributor.blank()
+
+    provinceList.value = await AddressInstance.getAllProvinces()
+    if (instance?.addressProvince) {
+      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
+      if (instance.addressDistrict) {
+        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+          instance.addressProvince,
+          instance.addressDistrict
+        )
+      }
+    }
+  } catch (error) {
+    console.log('🚀 ~ file: ModalDistributorUpsert.vue:57 ~ openModal ~ error:', error)
+  }
 }
 
 const handleClose = () => {
   distributor.value = Distributor.blank()
+  districtList.value = []
+  wardList.value = []
   showModal.value = false
 }
 
@@ -99,31 +115,32 @@ const clickDelete = () => {
   })
 }
 
-const handleChangeProvince = async (e: string) => {
+const handleChangeProvince = async (province: string) => {
+  if (!province) {
+    districtList.value = []
+    wardList.value = []
+    return
+  }
   try {
-    const districtList = await AddressInstance.getDistrictsByProvince(e)
-    districtOptions.value = districtList.map((i) => ({ value: i, label: i }))
+    districtList.value = await AddressInstance.getDistrictsByProvince(province)
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:54 ~ handleChangeProvince ~ error:', error)
+    console.log('🚀 ~ handleChangeProvince ~ error:', error)
   }
 }
 
-const handleChangeDistrict = async (e: string) => {
+const handleChangeDistrict = async (district: string) => {
+  if (!district) {
+    wardList.value = []
+    return
+  }
   try {
-    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(
+    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
       distributor.value.addressProvince || '',
-      e
+      district
     )
-    wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
+    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
   }
-}
-
-const filterOption = (input: string, option: any) => {
-  const inputText = convertViToEn(input).toLowerCase()
-  const optionLabel = convertViToEn(option.label).toLowerCase()
-  return optionLabel.indexOf(inputText) >= 0
 }
 
 defineExpose({ openModal })
@@ -142,27 +159,23 @@ defineExpose({ openModal })
           class="px-4 cursor-pointer"
           @click="modalDistributorUpsertSettingScreen?.openModal()"
         >
-          <SettingOutlined />
+          <!-- <SettingOutlined /> -->
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
           <CloseOutlined />
         </div>
       </div>
 
-      <div class="px-4 mt-4">
-        <div class="mt-4 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div class="w-[100px] flex-none">Tên NCC</div>
-          <div class="flex-auto">
+      <div class="px-4 mt-4 gap-4 flex flex-wrap">
+        <div class="grow basis-[600px]">
+          <div>Tên nhà cung cấp</div>
+          <div>
             <InputText v-model:value="distributor.fullName" required />
           </div>
         </div>
-        <div
-          v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.phone"
-          class="mt-4 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-        >
-          <div class="w-[100px] flex-none">Số điện thoại</div>
-          <div class="flex-auto">
+        <div class="grow basis-[600px]">
+          <div>Số điện thoại</div>
+          <div>
             <InputText
               v-model:value="distributor.phone"
               pattern="[0][356789][0-9]{8}"
@@ -172,45 +185,52 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.address"
-          class="mt-4 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
-        >
-          <div class="w-[100px] flex-none">Địa chỉ</div>
-          <div class="flex-auto flex gap-4 flex-wrap">
-            <a-select
-              v-model:value="distributor.addressProvince"
-              :options="provinceOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Thành Phố / Tỉnh"
-              @change="handleChangeProvince"
-            />
-            <a-select
-              v-model:value="distributor.addressDistrict"
-              :options="districtOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Quận / Huyện"
-              @change="handleChangeDistrict"
-            />
-            <a-select
-              v-model:value="distributor.addressWard"
-              :options="wardOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Phường / Xã"
-            />
-            <div style="flex: 1; flex-basis: 100%">
-              <InputText v-model:value="distributor.addressStreet" placeholder="Số nhà / Đường" />
+        <div v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
+          <div>Địa chỉ</div>
+          <div class="flex gap-4 flex-wrap">
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="distributor.addressProvince"
+                :options="provinceList"
+                :maxHeight="180"
+                placeholder="Thành Phố / Tỉnh"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                @update:value="handleChangeProvince"
+              />
             </div>
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="distributor.addressDistrict"
+                :maxHeight="180"
+                :options="districtList"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                placeholder="Quận / Huyện"
+                @update:value="handleChangeDistrict"
+              />
+            </div>
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="distributor.addressWard"
+                :maxHeight="180"
+                :options="wardList"
+                placeholder="Phường / Xã"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+              />
+            </div>
+
+            <div class="grow basis-[80%]">
+              <InputText
+                v-model:value="distributor.addressStreet"
+                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grow basis-[80%]">
+          <div>Ghi chú</div>
+          <div>
+            <InputText v-model:value="distributor.note" />
           </div>
         </div>
 
@@ -228,25 +248,26 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <a-button
+          <VueButton
             v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
-            danger
+            color="red"
+            type="button"
             @click="clickDelete"
           >
             Xóa
-          </a-button>
-          <a-button class="ml-auto" @click="handleClose">
+          </VueButton>
+          <VueButton class="ml-auto" type="reset" @click="handleClose">
             <template #icon>
               <CloseOutlined />
             </template>
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading">
             <template #icon>
               <SaveOutlined />
             </template>
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

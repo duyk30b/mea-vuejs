@@ -25,14 +25,14 @@ watchEffect(() => {
     discountType = DiscountType.Percent
   }
   const surcharge = receipt.value.surcharge || 0
-  const revenue = itemsActualMoney - discountMoney + surcharge
+  const totalMoney = itemsActualMoney - discountMoney + surcharge
 
   receipt.value.itemsActualMoney = itemsActualMoney
   receipt.value.discountMoney = discountMoney
   receipt.value.discountPercent = discountPercent
   receipt.value.discountType = discountType
   receipt.value.surcharge = surcharge
-  receipt.value.revenue = revenue
+  receipt.value.totalMoney = totalMoney
 })
 
 export { receipt }
@@ -45,8 +45,8 @@ export enum EReceiptUpsertMode {
 
 export enum EReceiptSave {
   CREATE_DRAFT = 'CREATE_DRAFT',
-  CREATE_BASIC_AND_NEW = 'CREATE_BASIC_AND_NEW',
-  CREATE_BASIC_AND_DETAIL = 'CREATE_BASIC_AND_DETAIL',
-  UPDATE_DRAFT = 'UPDATE_DRAFT',
-  UPDATE_BASIC = 'UPDATE_BASIC',
+  CREATE_QUICK_AND_NEW = 'CREATE_QUICK_AND_NEW',
+  CREATE_BASIC_AND_REDIRECT_DETAIL = 'CREATE_BASIC_AND_REDIRECT_DETAIL',
+  UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT = 'UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT',
+  UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS = 'UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS',
 }

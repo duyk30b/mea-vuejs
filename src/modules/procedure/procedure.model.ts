@@ -19,9 +19,6 @@ export class Procedure extends BaseModel {
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
-  createdAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
@@ -37,6 +34,12 @@ export class Procedure extends BaseModel {
 
   static blank() {
     const ins = Procedure.init()
+    return ins
+  }
+
+  static toBasic(root: Procedure) {
+    const ins = new Procedure()
+    Object.assign(ins, root)
     return ins
   }
 

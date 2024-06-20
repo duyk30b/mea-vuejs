@@ -17,7 +17,7 @@ export class DistributorPayment {
   createdAt: number
 
   @Expose({ toClassOnly: true })
-  type: PaymentType
+  paymentType: PaymentType
 
   @Expose()
   paid: number = 0 // Số tiền thanh toán
@@ -26,16 +26,10 @@ export class DistributorPayment {
   debit: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
 
   @Expose()
-  distributorOpenDebt: number = 0 // Dư nợ đầu kỳ của NCC
+  openDebt: number = 0 // Dư nợ đầu kỳ của NCC
 
-  @Expose() // distributorOpenDebt + debit = distributorCloseDebt
-  distributorCloseDebt: number = 0 // Dư nợ cuối kỳ của NCC
-
-  @Expose()
-  receiptOpenDebt: number = 0 // Dư nợ đầu kỳ của phiếu nhập
-
-  @Expose() // receiptOpenDebt + debit = receiptCloseDebt
-  receiptCloseDebt: number = 0 // Dư nợ cuối kỳ của phiếu nhập
+  @Expose() // openDebt + debit = closeDebt
+  closeDebt: number = 0 // Dư nợ cuối kỳ của NCC
 
   @Expose()
   note: string = ''
@@ -47,6 +41,16 @@ export class DistributorPayment {
     const instance = new DistributorPayment()
     instance.id = 0
     return instance
+  }
+
+  static toBasic(root: DistributorPayment) {
+    const ins = new DistributorPayment()
+    Object.assign(ins, root)
+    return ins
+  }
+
+  static toBasics(roots: DistributorPayment[]) {
+    return roots.map((i) => DistributorPayment.toBasic(i))
   }
 
   static fromPlain(plain: Record<string, any>): DistributorPayment {

@@ -73,6 +73,12 @@ export class User {
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Role)
   role?: Role
 
@@ -94,6 +100,15 @@ export class User {
 
   static blank(): User {
     const ins = User.init()
+    return ins
+  }
+
+  static toBasic(root: User) {
+    const ins = new User()
+    Object.assign(ins, root)
+    delete ins.role
+    delete ins.organization
+    delete ins.devices
     return ins
   }
 

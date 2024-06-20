@@ -18,6 +18,7 @@ import ModalSettingDataProcedure from './components/ModalDataProcedure.vue'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
 import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
+import { InputText } from '../../common/vue-form'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalSettingDataProcedure = ref<InstanceType<typeof ModalSettingDataProcedure>>()
@@ -97,11 +98,6 @@ onMounted(async () => {
 const startSearch = async () => {
   page.value = 1
   await startFetchData()
-}
-
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
 }
 
 const handleSelectStatus = async (value: 'true' | 'false' | '') => {
@@ -186,19 +182,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <a-input-group compact class="w-full">
-          <a-input
-            :value="searchText"
-            allow-clear
-            style="width: calc(100% - 100px)"
-            @input="handleInputSearchText"
-          />
-          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
-        </a-input-group>
-        <!-- <span class="ant-input-affix-wrapper">
-          <input :value="searchText" @input="handleInputSearchText" allow-clear enter-button class="ant-input w-full"
-            placeholder="Tìm kiếm bằng tên hoặc hoạt chất" />
-        </span> -->
+        <div>
+          <InputText v-model:value="searchText" @update:value="startSearch" />
+        </div>
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
@@ -236,13 +222,43 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </a-select>
       </div>
     </div>
-    <div v-if="isMobile" class="page-main-list">
+    <div v-if="isMobile" class="page-main-list table-wrapper">
       <div
         class="py-2 px-4 flex justify-between text-white font-bold"
         style="background-color: var(--color-table-thead-bg)"
       >
-        <span>Tên dịch vụ</span>
-        <span>Giá</span>
+        <div class="cursor-pointer" @click="changeSort('name')">
+          Tên dịch vụ &nbsp;
+          <font-awesome-icon
+            v-if="sortColumn !== 'name'"
+            :icon="['fas', 'sort']"
+            style="opacity: 0.4"
+          />
+          <font-awesome-icon
+            v-if="sortColumn === 'name' && sortValue === 'ASC'"
+            :icon="['fas', 'sort-up']"
+          />
+          <font-awesome-icon
+            v-if="sortColumn === 'name' && sortValue === 'DESC'"
+            :icon="['fas', 'sort-down']"
+          />
+        </div>
+        <div class="cursor-pointer" @click="changeSort('price')">
+          Giá &nbsp;
+          <font-awesome-icon
+            v-if="sortColumn !== 'price'"
+            :icon="['fas', 'sort']"
+            style="opacity: 0.4"
+          />
+          <font-awesome-icon
+            v-if="sortColumn === 'price' && sortValue === 'ASC'"
+            :icon="['fas', 'sort-up']"
+          />
+          <font-awesome-icon
+            v-if="sortColumn === 'price' && sortValue === 'DESC'"
+            :icon="['fas', 'sort-down']"
+          />
+        </div>
       </div>
       <div
         v-if="procedureList.length === 0"
@@ -265,7 +281,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               {{ procedure.name }}
             </div>
             <div v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail">
-              <a class="text-base" @click="modalProcedureDetail?.openModal(procedure)">
+              <a class="text-base" @click="modalProcedureDetail?.openModal(procedure.id)">
                 <FileSearchOutlined />
               </a>
             </div>
@@ -290,7 +306,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
     <div v-else class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -364,7 +380,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a
                 v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure)"
+                @click="modalProcedureDetail?.openModal(procedure.id)"
               >
                 <FileSearchOutlined />
               </a>

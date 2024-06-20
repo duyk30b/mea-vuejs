@@ -71,8 +71,8 @@ defineExpose({ startFetchData })
 </script>
 
 <template>
-  <div class="mt-4 w-full">
-    <table v-if="isMobile" class="table-mobile">
+  <div class="mt-4 w-full table-wrapper">
+    <table v-if="isMobile">
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -94,7 +94,7 @@ defineExpose({ startFetchData })
               {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
             <div>
-              <DistributorPaymentTypeTag :type="distributorPayment.type" />
+              <DistributorPaymentTypeTag :paymentType="distributorPayment.paymentType" />
             </div>
             <div v-if="distributorPayment.note">
               {{ distributorPayment.note }}
@@ -115,15 +115,15 @@ defineExpose({ startFetchData })
             <div class="flex justify-between item-center">
               <span> Nợ: </span>
               <span>
-                {{ formatMoney(distributorPayment.distributorOpenDebt) }} ➞
-                {{ formatMoney(distributorPayment.distributorCloseDebt) }}</span
+                {{ formatMoney(distributorPayment.openDebt) }} ➞
+                {{ formatMoney(distributorPayment.closeDebt) }}</span
               >
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <table v-if="!isMobile" class="table-mobile">
+    <table v-if="!isMobile">
       <thead>
         <tr>
           <th>Hóa đơn</th>
@@ -147,15 +147,14 @@ defineExpose({ startFetchData })
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
-
-            <div v-if="distributorPayment.note" style="font-size: 0.8rem">
-              {{ distributorPayment.note }}
-            </div>
           </td>
           <td class="px-4">
-            <DistributorPaymentTypeTag :type="distributorPayment.type" />
+            <DistributorPaymentTypeTag :paymentType="distributorPayment.paymentType" />
             <div v-if="distributorPayment.description" style="font-size: 0.8rem">
               {{ distributorPayment.description }}
+            </div>
+            <div v-if="distributorPayment.note" style="font-size: 0.8rem">
+              {{ distributorPayment.note }}
             </div>
           </td>
           <td style="white-space: nowrap; text-align: right">
@@ -165,8 +164,8 @@ defineExpose({ startFetchData })
             {{ formatMoney(distributorPayment.debit) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(distributorPayment.distributorOpenDebt) }} ➞
-            {{ formatMoney(distributorPayment.distributorCloseDebt) }}
+            {{ formatMoney(distributorPayment.openDebt) }} ➞
+            {{ formatMoney(distributorPayment.closeDebt) }}
           </td>
         </tr>
       </tbody>

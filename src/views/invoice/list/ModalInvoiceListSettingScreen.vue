@@ -56,7 +56,7 @@ defineExpose({ openModal })
     @ok="handleSave"
   >
     <div class="table-wrapper">
-      <table class="screen-setting">
+      <table>
         <thead>
           <tr>
             <th>Chưa có nội dung</th>

@@ -1,7 +1,6 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useScreenStore } from '../../../../modules/_me/screen.store'
 import type { Invoice } from '../../../../modules/invoice'
-import { InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { timeToText } from '../../../../utils'
 
 export const invoiceHtmlContent = (invoice: Invoice) => {
@@ -23,17 +22,17 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
       let expectedPrice = ''
       if (screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice && item.discountMoney) {
         expectedPrice = `<div style="color:red"><del><i><small>
-            ${formatMoney(item.expectedPrice * item.unit.rate)}
+            ${formatMoney(item.expectedPrice * item.unitRate)}
           </small></i></del></div>`
       }
       return `<tr>
       <td style="text-align: center">${index + 1}</td>
       <td>${invoiceItemName}</td>
-      <td style="text-align: center">${item.unit.name}</td>
-      <td style="text-align: center">${item.quantity / item.unit.rate}</td>
+      <td style="text-align: center">${item.unitName}</td>
+      <td style="text-align: center">${item.quantity / item.unitRate}</td>
       <td style="text-align: right">
         ${expectedPrice}
-        <div>${formatMoney(item.actualPrice * item.unit.rate)}</div>
+        <div>${formatMoney(item.actualPrice * item.unitRate)}</div>
       </td>
       <td style="text-align: right">${formatMoney(item.quantity * item.actualPrice)}</td>
     </tr>`
@@ -43,24 +42,24 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
   let itemsActualMoney = ''
   if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney) {
     itemsActualMoney = `<tr>
-      <td colspan="5" style="text-align: right"><b>Tiền hàng</b></td>
-      <td style="text-align: right"><b>${formatMoney(invoice.itemsActualMoney)}</b></td>
+      <td colspan="4" style="text-align: right"><b>Tiền hàng</b></td>
+      <td colspan="2" style="text-align: right"><b>${formatMoney(invoice.itemsActualMoney)}</b></td>
     </tr>`
   }
 
   let discount = ''
   if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount) {
     discount = `<tr>
-      <td colspan="5" style="text-align: right">Chiết khấu</td>
-      <td style="text-align: right">${formatMoney(invoice.discountMoney)}</td>
+      <td colspan="4" style="text-align: right">Chiết khấu</td>
+      <td colspan="2" style="text-align: right">${formatMoney(invoice.discountMoney)}</td>
     </tr>`
   }
 
   let surcharge = ''
   if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge) {
     surcharge = `<tr>
-      <td colspan="5" style="text-align: right">Phụ phí</td>
-      <td style="text-align: right">${formatMoney(invoice.surcharge)}</td>
+      <td colspan="4" style="text-align: right">Phụ phí</td>
+      <td colspan="2" style="text-align: right">${formatMoney(invoice.surcharge)}</td>
     </tr>`
   }
 
@@ -101,7 +100,10 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
               <p>${meStore.organization.name} </p>
               <p>${meStore.organization.phone} </p>
             </td>
-            <td style="width: 50%; text-align:right">Mã hóa đơn: HĐ${invoice.id} </td>
+            <td style="width: 50%; text-align:right">
+              <p>Mã KH: C${invoice.id}  </p>
+              <p>Mã HĐ: IV${invoice.id}  </p>
+            </td>
           </tr>
         </table>
         <div style="text-align: center; font-size: 1.8rem; font-weight: bold; line-height: 2.5">HÓA ĐƠN</div>
@@ -112,12 +114,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
           </tr>
           <tr>
             <td>Địa chỉ: </td>
-            <td>
-              ${invoice.customer?.addressStreet},
-              ${invoice.customer?.addressWard},
-              ${invoice.customer?.addressDistrict},
-              ${invoice.customer?.addressProvince}
-            </td>
+            <td>  ${invoice.customer?.addressString} </td>
           </tr>
         </table>
         <table class="print-invoice-item-list">
@@ -137,8 +134,10 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
             ${discount}
             ${surcharge}
             <tr>
-              <td colspan="5" style="text-align: right"><b>Thành tiền</b></td>
-              <td style="text-align: right"><b>${formatMoney(invoice.revenue)}</b></td>
+              <td colspan="4" style="text-align: right"><b>Thành tiền</b></td>
+              <td colspan="2" style="text-align: right"><b>${formatMoney(
+                invoice.totalMoney
+              )}</b></td>
             </tr>
           </tbody>
         </table>

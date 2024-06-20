@@ -122,7 +122,7 @@ defineExpose({ openModal })
               </div>
             </details>
             <div class="flex mt-4">
-              <div style="width: 90px; font-weight: 600; padding: 0 5px">Mã</div>
+              <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
               <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên phụ phí</div>
             </div>
             <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
@@ -176,7 +176,7 @@ defineExpose({ openModal })
               </div>
             </details>
             <div class="flex mt-4">
-              <div style="width: 90px; font-weight: 600; padding: 0 5px">Mã</div>
+              <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
               <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên chi phí</div>
             </div>
             <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">

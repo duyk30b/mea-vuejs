@@ -10,14 +10,52 @@
 @import "./basic/base.scss";
 
 @import "./components/table";
-@import "./components/form";
-@import "./components/button";
 @import "./components/skeleton";
 
 body {
   font-family: 'Roboto', sans-serif !important;
   font-size: 14px;
 }
+
+.ck-editor__editable {
+  // min-height: 200px !important;
+  max-height: 300px !important;
+}
+
+.ck-button.ck-source-editing-button {
+  margin-left: auto !important;
+}
+
+.ant-tag {
+  margin-right: 0 !important;
+}
+
+.ant-btn-primary {
+  background-color: var(--color-btn-primary) !important;
+  border-color: var(--color-btn-primary) !important;
+
+  &:hover {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
+
+  &:focus {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
+
+  &:active {
+    // background-color: color-mix(in srgb, var(--color-btn-primary), #0000 90%) !important;
+    // border-color: color-mix(in srgb, var(--color-btn-primary), #0000 10%) !important;
+    background-color: #5886c5 !important;
+    border-color: #446797 !important;
+  }
+}
+
 
 .page-header {
   margin: 1rem 1rem 0 1rem;
@@ -63,6 +101,7 @@ body {
 
   .page-main-list {
     margin-top: 1rem;
+
     .page-main-item {
       padding: 0.5rem 1rem;
       display: flex;

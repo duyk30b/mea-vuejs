@@ -74,7 +74,7 @@ defineExpose({ openModal })
       <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
         <a-tab-pane key="1" tab="Nhóm dịch vụ">
           <div class="w-full">
-            <div class="text-center font-bold">Danh sách nhóm dịch vụ</div>
+            <div class="text-center text-lg uppercase" style="font-weight: 500;">Danh sách nhóm dịch vụ</div>
             <div v-for="(r, key, i) in GROUP" :key="key">
               <div class="py-2 flex">
                 <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />

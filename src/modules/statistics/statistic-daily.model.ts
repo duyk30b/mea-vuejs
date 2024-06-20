@@ -27,7 +27,7 @@ export class StatisticDaily extends BaseModel {
   // invoiceSurcharge: number
   // @Expose({ name: 'invoice_expenses' })
   // invoiceExpenses: number
-  // @Expose({ name: 'invoice_revenue' })
+  // @Expose({ name: 'invoice_totalMoney' })
   // invoiceRevenue: number
   // @Expose({ name: 'invoice_profit' })
   // invoiceProfit: number
@@ -39,7 +39,7 @@ export class StatisticDaily extends BaseModel {
   // invoiceSurchargeDetails: SurchargeDetailType[]
   // @Expose({ name: 'invoice_expenses_details' })
   // invoiceExpensesDetails: ExpensesDetailType[]
-  // @Expose({ name: 'receipt_revenue' })
+  // @Expose({ name: 'receipt_totalMoney' })
   // receiptRevenue: number
   // @Expose({ name: 'receipt_count' })
   // receiptCount: number

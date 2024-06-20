@@ -13,15 +13,15 @@ const screenStore = useScreenStore()
 const { formatMoney, isMobile } = screenStore
 
 const openModalProductDetail = (product?: Product) => {
-  if (product) modalProductDetail.value?.openModal(product)
+  if (product) modalProductDetail.value?.openModal(product.id)
 }
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <div>Danh sách hàng trong phiếu</div>
-  <div v-if="isMobile" class="mt-2">
-    <table class="table-mobile">
+  <div v-if="isMobile" class="table-wrapper mt-2">
+    <table>
       <thead>
         <tr>
           <th>#</th>
@@ -94,7 +94,7 @@ const openModalProductDetail = (product?: Product) => {
     </table>
   </div>
   <div v-if="!isMobile" class="table-wrapper mt-2">
-    <table class="table">
+    <table>
       <thead>
         <tr>
           <th>#</th>
@@ -168,7 +168,7 @@ const openModalProductDetail = (product?: Product) => {
             </div>
           </td>
           <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
-            {{ receiptItem.unit.name }}
+            {{ receiptItem.unitName }}
           </td>
           <td class="text-right">
             {{ formatMoney(receiptItem.unitCostPrice) }}

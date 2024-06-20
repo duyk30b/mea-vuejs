@@ -1,15 +1,5 @@
 import { defineStore } from 'pinia'
-import { formatMoney } from '../../utils'
-
-export enum ReceiptProcessType {
-  NoDebt = 1,
-  HasDebt = 2,
-}
-
-export enum InvoiceProcessType {
-  NoDebt = 1,
-  HasDebt = 2,
-}
+import { formatNumber } from '../../utils'
 
 export const useScreenStore = defineStore('screen-store', {
   state: () => {
@@ -111,7 +101,6 @@ export const useScreenStore = defineStore('screen-store', {
       },
       SCREEN_DISTRIBUTOR_DETAIL: {},
       SCREEN_DISTRIBUTOR_UPSERT: {
-        phone: true,
         address: true,
       },
 
@@ -150,8 +139,9 @@ export const useScreenStore = defineStore('screen-store', {
           paid: true,
           debt: true,
         },
-        receiptProcessType: ReceiptProcessType.HasDebt,
-        function: {
+        process: {
+          sendProductAndPayment: true,
+          sendProductAndDebit: false,
           forceEdit: false,
         },
       },
@@ -176,7 +166,6 @@ export const useScreenStore = defineStore('screen-store', {
         },
         save: {
           createBasicAndNew: false,
-          createBasicAndDetail: false,
           createDraft: true,
         },
       },
@@ -194,13 +183,15 @@ export const useScreenStore = defineStore('screen-store', {
         },
         paymentInfo: {
           itemsActualMoney: true,
-          surcharge: false,
           discount: true,
+          surcharge: false,
+          profit: false,
           paid: true,
           debt: true,
         },
-        invoiceProcessType: InvoiceProcessType.HasDebt,
-        function: {
+        process: {
+          sendProductAndPayment: true,
+          sendProductAndDebit: false,
           forceEdit: false,
         },
       },
@@ -255,9 +246,16 @@ export const useScreenStore = defineStore('screen-store', {
         other: { expense: false },
         save: {
           createBasicAndNew: false,
-          createBasicAndDetail: false,
           createDraft: true,
         },
+      },
+      SCREEN_VISIT_CREATE: {
+        phone: true,
+        birthday: true,
+        gender: true,
+        identityCard: true,
+        address: true,
+        relative: true,
       },
     }
   },
@@ -268,10 +266,13 @@ export const useScreenStore = defineStore('screen-store', {
     formatMoney: (state) => {
       return (money: number) => {
         if (state.SYSTEM_SETTING.moneyDivisionFormat === 1) {
-          return formatMoney({ number: money, fixed: 0 })
+          return formatNumber({ number: money, fixed: 0 })
         }
         if (state.SYSTEM_SETTING.moneyDivisionFormat === 1000) {
-          return formatMoney({ number: money / state.SYSTEM_SETTING.moneyDivisionFormat, fixed: 3 })
+          return formatNumber({
+            number: money / state.SYSTEM_SETTING.moneyDivisionFormat,
+            fixed: 3,
+          })
         }
       }
     },

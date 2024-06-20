@@ -17,15 +17,12 @@ import { InvoiceSurcharge } from './invoice-surcharge.model'
 export enum InvoiceStatus {
   Refund = -1,
   Draft = 0,
-  AwaitingShipment = 1,
+  Prepayment = 1,
   Debt = 2,
   Success = 3,
 }
 
 export class Invoice extends BaseModel {
-  @Expose({ toClassOnly: true })
-  arrivalId: number
-
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE] })
   customerId: number
 
@@ -33,7 +30,7 @@ export class Invoice extends BaseModel {
   status: InvoiceStatus
 
   @Expose()
-  itemsCostMoney: number // tổng tiền cost = tổng cost sản phẩm
+  totalCostAmount: number // tổng tiền cost = tổng cost sản phẩm
 
   @Expose()
   itemsActualMoney: number // totalItemProduct + totalItemProcedure
@@ -51,7 +48,7 @@ export class Invoice extends BaseModel {
   surcharge: number // phụ phí
 
   @Expose()
-  revenue: number // Doanh thu = totalItemMoney + phụ phí - tiền giảm giá
+  totalMoney: number // Doanh thu = totalItemMoney + phụ phí - tiền giảm giá
 
   @Expose()
   expense: number // Mục này sẽ không hiện trong đơn hàng, khách hàng ko nhìn thấy
@@ -77,15 +74,15 @@ export class Invoice extends BaseModel {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   deletedAt: number
 
-  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => InvoiceItem)
   invoiceItems?: InvoiceItem[]
 
-  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => InvoiceSurcharge)
   invoiceSurcharges?: InvoiceSurcharge[] // Phụ phí chi tiết
 
-  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => InvoiceExpense)
   invoiceExpenses?: InvoiceExpense[] // Chi phí chi tiết
 
@@ -95,19 +92,19 @@ export class Invoice extends BaseModel {
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => CustomerPayment)
-  customerPayments: CustomerPayment[]
+  customerPayments?: CustomerPayment[]
 
   static init() {
     const ins = new Invoice()
     ins.id = 0
     ins.status = InvoiceStatus.Draft
-    ins.itemsCostMoney = 0
+    ins.totalCostAmount = 0
     ins.itemsActualMoney = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
     ins.surcharge = 0
-    ins.revenue = 0
+    ins.totalMoney = 0
     ins.expense = 0
     ins.profit = 0
     ins.paid = 0
@@ -116,13 +113,28 @@ export class Invoice extends BaseModel {
   }
 
   static blank(): Invoice {
-    const instance = Invoice.init()
-    instance.invoiceItems = []
-    instance.customerPayments = []
-    instance.customer = Customer.init()
-    instance.invoiceExpenses = [InvoiceExpense.init()]
-    instance.invoiceSurcharges = [InvoiceExpense.init()]
-    return instance
+    const ins = Invoice.init()
+    ins.invoiceItems = []
+    ins.customerPayments = []
+    ins.customer = Customer.init()
+    ins.invoiceExpenses = [InvoiceExpense.init()]
+    ins.invoiceSurcharges = [InvoiceExpense.init()]
+    return ins
+  }
+
+  static toBasic(root: Invoice) {
+    const ins = new Invoice()
+    Object.assign(ins, root)
+    delete ins.invoiceItems
+    delete ins.invoiceSurcharges
+    delete ins.invoiceExpenses
+    delete ins.customer
+    delete ins.customerPayments
+    return ins
+  }
+
+  static toBasics(roots: Invoice[]) {
+    return roots.map((i) => Invoice.toBasic(i))
   }
 
   static fromPlain(dto: Record<string, any>): Invoice {

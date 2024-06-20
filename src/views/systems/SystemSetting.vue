@@ -47,7 +47,7 @@ const saveSystemSetting = async () => {
   <div class="mx-4 mt-4 p-4 bg-white">
     <div style="max-width: 800px">
       <div class="table-wrapper">
-        <table class="screen-setting">
+        <table>
           <thead>
             <tr>
               <th>Cài đặt chung</th>

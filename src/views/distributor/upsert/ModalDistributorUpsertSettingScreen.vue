@@ -56,20 +56,13 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <table class="table-mobile">
+        <table>
           <thead>
             <tr>
               <th>Màn hình thêm/sửa nhà cung cấp</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.phone">
-                  Hiển thị số điện thoại
-                </a-checkbox>
-              </td>
-            </tr>
             <tr>
               <td>
                 <a-checkbox v-model:checked="settingDisplay.address">

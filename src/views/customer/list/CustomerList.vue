@@ -9,17 +9,18 @@ import {
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
-import { VueSelect } from '../../../common/vue-form'
-import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputText, VueSelect } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { formatPhone, timeToText } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -96,15 +97,6 @@ onMounted(async () => {
 const startSearch = async () => {
   page.value = 1
   await startFetchData()
-}
-
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
-}
-
-const handleSelectStatus = async (value: boolean | '') => {
-  await startSearch()
 }
 
 const changeSort = async (column: 'fullName' | 'debt' | 'id') => {
@@ -196,15 +188,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <a-input-group compact class="w-full">
-          <a-input
-            :value="searchText"
-            allow-clear
-            style="width: calc(100% - 100px)"
-            @input="handleInputSearchText"
-          />
-          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
-        </a-input-group>
+        <div>
+          <InputText v-model:value="searchText" @update:value="startSearch" />
+        </div>
       </div>
 
       <div style="flex: 1; flex-basis: 300px">
@@ -217,14 +203,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="handleSelectStatus"
+            @update:value="(e) => startSearch()"
           />
         </div>
       </div>
     </div>
 
-    <div v-if="isMobile" class="page-main-list">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="page-main-list table-wrapper">
+      <table>
         <thead>
           <tr>
             <th>Tên KH</th>
@@ -279,24 +265,29 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
-                  @click="modalCustomerDetail?.openModal(customer)"
+                  @click="modalCustomerDetail?.openModal(customer.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
               <div v-if="screenStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
-                {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
-                {{ customer.addressWard }}
+                {{ customer.addressString }}
               </div>
               <div class="flex gap-4 text-xs">
                 <div v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
                   {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
-                  <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
+                <div
+                  v-if="screenStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
+                  class="text-center"
+                >
+                  {{ customer.gender ? 'Nam' : 'Nữ' }}
                 </div>
               </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
+              <div
+                v-if="screenStore.SCREEN_CUSTOMER_LIST.note && customer.note"
+                class="text-xs italic"
+              >
                 {{ customer.note }}
               </div>
             </td>
@@ -336,7 +327,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -428,12 +419,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
-                  @click="modalCustomerDetail?.openModal(customer)"
+                  @click="modalCustomerDetail?.openModal(customer.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.note" class="text-center">
+              <div
+                v-if="screenStore.SCREEN_CUSTOMER_LIST.note && customer.note"
+                class="text-xs italic"
+              >
                 {{ customer.note }}
               </div>
             </td>
@@ -448,22 +442,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
 
             <td v-if="screenStore.SCREEN_CUSTOMER_LIST.address">
-              {{ customer.addressProvince }} - {{ customer.addressDistrict }} -
-              {{ customer.addressWard }}
+              {{ customer.addressString }}
             </td>
             <td class="text-right">
               <div class="flex justify-between gap-1 items-center">
                 <div>
-                  <a-button
+                  <VueButton
                     v-if="
                       permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0
                     "
-                    type="default"
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
                   >
                     Trả nợ
-                  </a-button>
+                  </VueButton>
                 </div>
                 <div class="ml-2">
                   {{ formatMoney(customer.debt) }}

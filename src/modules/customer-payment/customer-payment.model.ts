@@ -1,7 +1,6 @@
 import { Expose, instanceToPlain, plainToInstance } from 'class-transformer'
 import { FROM_PLAIN } from '../_base/base-expose'
-import { BaseModel } from '../base.model'
-import type { PaymentType } from '../enum'
+import type { PaymentType, VoucherType } from '../enum'
 
 export class CustomerPayment {
   @Expose({ name: 'id', toClassOnly: true })
@@ -11,13 +10,16 @@ export class CustomerPayment {
   customerId: number
 
   @Expose()
-  invoiceId: number
+  voucherId: number
+
+  @Expose()
+  voucherType: VoucherType
 
   @Expose()
   createdAt: number
 
   @Expose()
-  type: PaymentType
+  paymentType: PaymentType
 
   @Expose()
   paid: number = 0 // Số tiền thanh toán
@@ -26,16 +28,10 @@ export class CustomerPayment {
   debit: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
 
   @Expose()
-  customerOpenDebt: number = 0 // Dư nợ đầu kỳ của khách hàng
+  openDebt: number = 0 // Dư nợ đầu kỳ của khách hàng
 
-  @Expose() // customerOpenDebt + debit = customerCloseDebt
-  customerCloseDebt: number = 0 // Dư nợ cuối kỳ của khách hàng
-
-  @Expose()
-  invoiceOpenDebt: number = 0 // Dư nợ đầu kỳ của hóa đơn
-
-  @Expose() // invoiceOpenDebt + debit = invoiceCloseDebt
-  invoiceCloseDebt: number = 0 // Dư nợ cuối kỳ của hóa đơn
+  @Expose() // openDebt + debit = closeDebt
+  closeDebt: number = 0 // Dư nợ cuối kỳ của khách hàng
 
   @Expose()
   note: string = ''
@@ -43,10 +39,25 @@ export class CustomerPayment {
   @Expose()
   description: string = ''
 
+  static init(): CustomerPayment {
+    const ins = new CustomerPayment()
+    ins.id = 0
+    return ins
+  }
+
   static blank(): CustomerPayment {
-    const instance = new CustomerPayment()
-    instance.id = 0
-    return instance
+    const ins = CustomerPayment.init()
+    return ins
+  }
+
+  static toBasic(root: CustomerPayment) {
+    const ins = new CustomerPayment()
+    Object.assign(ins, root)
+    return ins
+  }
+
+  static toBasics(roots: CustomerPayment[]) {
+    return roots.map((i) => CustomerPayment.toBasic(i))
   }
 
   static fromPlain(plain: Record<string, any>): CustomerPayment {

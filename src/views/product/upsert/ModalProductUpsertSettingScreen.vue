@@ -55,8 +55,8 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
-        <table class="table-mobile">
+      <div class="table-wrapper p-4">
+        <table>
           <thead>
             <tr>
               <th>Màn hình thêm/sửa hàng hóa</th>

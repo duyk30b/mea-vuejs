@@ -54,7 +54,7 @@ defineExpose({ openModal })
     @ok="handleSave"
   >
     <div class="table-wrapper">
-      <table class="screen-setting">
+      <table>
         <thead>
           <tr>
             <th>Danh sách sản phẩm - dịch vụ</th>
@@ -141,6 +141,13 @@ defineExpose({ openModal })
           </tr>
           <tr>
             <td>
+              <a-checkbox v-model:checked="settingDisplay.paymentInfo.profit">
+                Hiển thị tiền lãi
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
               <a-checkbox v-model:checked="settingDisplay.paymentInfo.paid">
                 Hiển thị tiền đã thanh toán
               </a-checkbox>
@@ -156,32 +163,27 @@ defineExpose({ openModal })
         </tbody>
         <thead>
           <tr>
-            <th>Gửi hàng và thanh toán</th>
+            <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
-              <a-radio-group v-model:value="settingDisplay.invoiceProcessType">
-                <a-radio style="display: flex; line-height: 36px" :value="1">
-                  Đơn hàng không nợ: Gửi hàng và thanh toán đồng thời
-                </a-radio>
-                <a-radio style="display: flex; line-height: 36px" :value="2">
-                  Đơn hàng có nợ: Gửi hàng riêng, thanh toán riêng
-                </a-radio>
-              </a-radio-group>
+              <a-checkbox v-model:checked="settingDisplay.process.sendProductAndPayment">
+                Hiển thị nút: Gửi hàng và thanh toán
+              </a-checkbox>
             </td>
           </tr>
-        </tbody>
-        <thead>
-          <tr>
-            <th>Chức năng</th>
-          </tr>
-        </thead>
-        <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.function.forceEdit">
+              <a-checkbox v-model:checked="settingDisplay.process.sendProductAndDebit">
+                Hiển thị nút: Gửi hàng và ghi nợ
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.process.forceEdit">
                 Cho phép sửa mọi đơn hàng (kể cả đơn hàng đã hoàn thành)
               </a-checkbox>
             </td>

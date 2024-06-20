@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
 import { InvoiceSurcharge } from '../../../modules/invoice'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { invoice } from './invoice-upsert.store'
+import { invoice } from './invoice-upsert.ref'
+import VueButton from '../../../common/VueButton.vue'
 
 const screenStore = useScreenStore()
 const { formatMoney } = screenStore
@@ -73,7 +74,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
         <div></div>
       </template>
       <template #title>
-        <div style="width: 320px">
+        <div style="max-width: 100vw;">
           <div class="flex">
             <div style="width: 160px; font-size: 13px">Loại phụ phí</div>
             <div style="flex: 1; font-size: 13px">Số tiền</div>
@@ -89,12 +90,10 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                 style="width: 160px"
                 :options="
                   [
-                    ...Object.entries(screenStore.INVOICE_SURCHARGE_DETAIL).map(
-                      ([key, text]) => ({
-                        value: key,
-                        text: text,
-                      })
-                    ),
+                    ...Object.entries(screenStore.INVOICE_SURCHARGE_DETAIL).map(([key, text]) => ({
+                      value: key,
+                      text: text,
+                    })),
                     ...(screenStore.INVOICE_SURCHARGE_DETAIL[surcharge.key]
                       ? []
                       : [{ value: surcharge.key, text: surcharge.name }]),
@@ -108,7 +107,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                 />
               </div>
               <div style="width: 60px">
-                <a-button danger @click="handleDeleteSurchargeDetail(index)"> Xóa </a-button>
+                <VueButton color="red" danger @click="handleDeleteSurchargeDetail(index)"> Xóa </VueButton>
               </div>
             </div>
           </div>

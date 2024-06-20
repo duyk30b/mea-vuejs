@@ -7,39 +7,45 @@ import {
   OneToOneOutlined,
   PlusOutlined,
   UserOutlined,
+  ShopOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
-import { Customer } from '../../../modules/customer'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import { Customer, useCustomerStore } from '../../../modules/customer'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerInvoiceHistory from './CustomerInvoiceHistory.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
 import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-
-const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
+import CustomerVisitHistory from './CustomerVisitHistory.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>()
+
+const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
+const router = useRouter()
 
 const screenStore = useScreenStore()
 const { formatMoney } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const customerStore = useCustomerStore()
 
 const showModal = ref(false)
-const saveLoading = ref(false)
 const activeTab = ref('info')
 
 const customer = ref<Customer>(Customer.blank())
 
-const openModal = async (c: Customer) => {
+const openModal = async (customerId: number) => {
   showModal.value = true
-  customer.value = Customer.fromInstance(c)
+  const response = await customerStore.getOne(customerId)
+  customer.value = response || Customer.blank()
 }
 
 const closeModal = () => {
@@ -53,13 +59,21 @@ const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) =
   emit('update_customer', data.customer)
 }
 
+const openBlankInvoiceUpsert = (customerId: number) => {
+  let route = router.resolve({
+    name: 'InvoiceUpsert',
+    query: { customer_id: customerId, mode: 'CREATE' },
+  })
+  window.open(route.href, '_blank')
+}
+
 defineExpose({ openModal })
 </script>
 
 <template>
   <VueModal
     v-model:show="showModal"
-    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
   >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
@@ -84,6 +98,70 @@ defineExpose({ openModal })
             </template>
             <CustomerInfo :customer="customer" />
           </a-tab-pane>
+
+          <a-tab-pane v-if="permissionIdMap[PermissionId.VISIT_READ]" key="visit-history">
+            <template #tab>
+              <span> <DeploymentUnitOutlined />Phiếu khám </span>
+            </template>
+            <div class="flex flex-wrap justify-between items-center">
+              <div class="flex flex-wrap gap-4">
+                <span>
+                  KH: <b>{{ customer.fullName }} </b>
+                </span>
+                <span> - {{ customer.phone }} </span>
+                <span> - {{ customer.addressString }} </span>
+                <span>
+                  - Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b>
+                </span>
+              </div>
+              <div class="flex gap-4">
+                <VueButton
+                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
+                  color="blue"
+                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
+                >
+                  <PlusOutlined />
+                  Trả nợ
+                </VueButton>
+              </div>
+            </div>
+            <CustomerVisitHistory :customer="customer" />
+          </a-tab-pane>
+          <a-tab-pane v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="invoice-history">
+            <template #tab>
+              <span> <ShopOutlined />Bán hàng </span>
+            </template>
+            <div class="flex flex-wrap justify-between items-center">
+              <div class="flex flex-wrap">
+                <span class="mr-4">
+                  KH: <b>{{ customer.fullName }} </b>
+                </span>
+                <span>
+                  Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b>
+                </span>
+              </div>
+              <div class="flex gap-4">
+                <VueButton
+                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
+                  color="blue"
+                  @click="openBlankInvoiceUpsert(customer.id!)"
+                >
+                  <PlusOutlined />
+                  Tạo phiếu bán hàng mới
+                </VueButton>
+                <VueButton
+                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
+                  color="blue"
+                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
+                >
+                  <PlusOutlined />
+                  Trả nợ
+                </VueButton>
+              </div>
+            </div>
+            <CustomerInvoiceHistory :customer="customer" />
+          </a-tab-pane>
+
           <a-tab-pane
             v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_READ]"
             key="debts-history"
@@ -114,34 +192,6 @@ defineExpose({ openModal })
               </div>
             </div>
             <CustomerPaymentHistory ref="customerPaymentHistory" :customer="customer" />
-          </a-tab-pane>
-          <a-tab-pane v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="invoices-history">
-            <template #tab>
-              <span> <DeploymentUnitOutlined />Hóa Đơn </span>
-            </template>
-            <div class="flex justify-between items-center">
-              <div class="flex flex-wrap">
-                <span class="mr-4">
-                  KH: <b>{{ customer.fullName }} </b>
-                </span>
-                <span>
-                  Công nợ hiện tại: <b>{{ formatMoney(customer.debt) }}</b>
-                </span>
-              </div>
-              <div>
-                <a-button
-                  v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT]"
-                  type="primary"
-                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
-                >
-                  <template #icon>
-                    <PlusOutlined />
-                  </template>
-                  Trả nợ
-                </a-button>
-              </div>
-            </div>
-            <CustomerInvoiceHistory :customer="customer" />
           </a-tab-pane>
           <a-tab-pane
             v-if="
@@ -196,4 +246,3 @@ defineExpose({ openModal })
   }
 }
 </style>
-

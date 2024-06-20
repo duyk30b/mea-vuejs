@@ -13,7 +13,7 @@ const getDevice = () => {
   if (userAgentData) {
     const brands = userAgentData.brands
     device.platform = userAgentData.platform
-    device.browser = brands[brands.length - 1].brand
+    device.browser = brands[brands.length - 1]?.brand
   } else {
     const userAgent = navigator.userAgent
     const platform = navigator.platform

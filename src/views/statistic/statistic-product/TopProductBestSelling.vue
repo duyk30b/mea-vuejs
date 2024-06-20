@@ -4,12 +4,13 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
-import { StatisticService } from '../../../modules/statistics'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import { StatisticService } from '../../../modules/statistics'
 import { DTimer } from '../../../utils'
 
 const screenStore = useScreenStore()
 const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = screenStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
@@ -55,15 +56,15 @@ const startFetchHighQuantity = async () => {
   const data = await StatisticService.topProductBestSelling({
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
-    limit: 10,
+    limit: isMobile ? 10 : 20,
     orderBy: 'sumQuantity',
   })
-  barData.labels = Array.from({ length: 10 }, (_, i) => '')
+  barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
     {
       type: 'bar',
       label: 'Số lượng',
-      data: Array.from({ length: 10 }, (_, i) => 0),
+      data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
       borderWidth: 1,
       stack: 'Stack 0',
     },
@@ -76,22 +77,22 @@ const startFetchHighProfit = async () => {
   const data = await StatisticService.topProductBestSelling({
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
-    limit: 10,
+    limit: isMobile ? 10 : 20,
     orderBy: 'sumProfit',
   })
-  barData.labels = Array.from({ length: 10 }, (_, i) => '')
+  barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
     {
       type: 'bar',
       label: 'Tiền cost',
-      data: Array.from({ length: 10 }, (_, i) => 0),
+      data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
       borderWidth: 1,
       stack: 'Stack 0',
     },
     {
       type: 'bar',
       label: 'Tiền lãi',
-      data: Array.from({ length: 10 }, (_, i) => 0),
+      data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
       borderWidth: 1,
       stack: 'Stack 0',
     },
@@ -117,22 +118,22 @@ const startFetchHighActualMoney = async () => {
   const data = await StatisticService.topProductBestSelling({
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
-    limit: 10,
+    limit: isMobile ? 10 : 20,
     orderBy: 'sumActualMoney',
   })
-  barData.labels = Array.from({ length: 10 }, (_, i) => '')
+  barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
     {
       type: 'bar',
       label: 'Tiền cost',
-      data: Array.from({ length: 10 }, (_, i) => 0),
+      data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
       borderWidth: 1,
       stack: 'Stack 0',
     },
     {
       type: 'bar',
       label: 'Tiền lãi',
-      data: Array.from({ length: 10 }, (_, i) => 0),
+      data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
       borderWidth: 1,
       stack: 'Stack 0',
     },
@@ -176,11 +177,6 @@ const handleChangeTime = async (value: any) => {
   await startFetchData()
 }
 
-const handleChangeTypeBestselling = async (value: any) => {
-  typeBestSelling.value = value
-  await startFetchData()
-}
-
 onBeforeMount(async () => await startFetchData())
 </script>
 
@@ -194,13 +190,13 @@ onBeforeMount(async () => await startFetchData())
         <span style="font-size: 18px; font-weight: 500">Hàng bán chạy nhất:</span>
         <div style="width: 120px">
           <VueSelect
-            :value="typeBestSelling"
+            v-model:value="typeBestSelling"
             :options="[
               { text: 'Số lượng', value: 'topQuantity' },
               { text: 'Tiền bán', value: 'topActualMoney' },
               { text: 'Tiền lãi', value: 'topProfit' },
             ]"
-            @update:value="handleChangeTypeBestselling"
+            @selectItem="startFetchData"
           />
         </div>
       </div>

@@ -10,7 +10,7 @@ import { ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
-import { Distributor } from '../../../modules/distributor'
+import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
@@ -26,6 +26,7 @@ const screenStore = useScreenStore()
 const { formatMoney } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const distributorStore = useDistributorStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -33,9 +34,10 @@ const activeTab = ref('info')
 
 const distributor = ref<Distributor>(Distributor.blank())
 
-const openModal = async (d: Distributor) => {
+const openModal = async (distributorId: number) => {
   showModal.value = true
-  distributor.value = Distributor.fromInstance(d)
+  const response = await distributorStore.getOne(distributorId)
+  distributor.value = response || Distributor.blank()
 }
 
 const closeModal = () => {

@@ -57,9 +57,14 @@ export const useCustomerStore = defineStore('customer-store', {
       }
     },
 
+    async getOne(id: number) {
+      const customer = await CustomerDB.findOneByKey(id)
+      return customer ? Customer.fromObject(customer) : null
+    },
+
     async createOne(instance: Customer) {
       const response = await CustomerApi.createOne(instance)
-      await CustomerDB.insertOne(response)
+      await CustomerDB.upsertOne(response)
       this.timeSync = Date.now()
       return response
     },

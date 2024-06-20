@@ -1,37 +1,37 @@
 <script setup lang="ts">
 import { NodeIndexOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
 import { DiscountType } from '../../../modules/enum'
 import {
   Invoice,
+  InvoiceApi,
   InvoiceExpense,
-  InvoiceService,
   InvoiceStatus,
   InvoiceSurcharge,
 } from '../../../modules/invoice'
-import { useProductStore } from '../../../modules/product'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import type { InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { timeToText } from '../../../utils'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceExpenses from './InvoiceExpenses.vue'
 import InvoiceItemTable from './InvoiceItemTable.vue'
 import InvoiceSurcharges from './InvoiceSurcharges.vue'
 import InvoiceItemContainer from './invoice-item-create/InvoiceItemContainer.vue'
-import { EInvoiceSave, EInvoiceUpsertMode, invoice } from './invoice-upsert.store'
+import { EInvoiceSave, EInvoiceUpsertMode, invoice } from './invoice-upsert.ref'
 import ModalDataInvoice from './modal-setting/ModalDataInvoice.vue'
 import ModalInvoiceUpsertSettingScreen from './modal-setting/ModalInvoiceUpsertSettingScreen.vue'
-import type { InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
+import { nextTick } from 'vue'
 
 const modalInvoiceUpsertSettingScreen = ref<InstanceType<typeof ModalInvoiceUpsertSettingScreen>>()
-const inputSearchCustomer = ref<InstanceType<typeof InputOptions>>()
+const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalDataInvoice = ref<InstanceType<typeof ModalDataInvoice>>()
 const invoiceUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
@@ -39,7 +39,6 @@ const invoiceUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 const router = useRouter()
 const route = useRoute()
 
-const productStore = useProductStore()
 const customerStore = useCustomerStore()
 const screenStore = useScreenStore()
 const meStore = useMeStore()
@@ -59,11 +58,12 @@ onBeforeMount(async () => {
   try {
     const invoiceId = Number(route.params.id)
     const customerId = Number(route.query.customer_id)
+    let customerDefault = Customer.blank()
     if (route.query.mode) {
       mode.value = route.query.mode as any
     }
     if (invoiceId) {
-      const invoiceResponse = await InvoiceService.detail(invoiceId, {
+      const invoiceResponse = await InvoiceApi.detail(invoiceId, {
         relation: {
           customer: true,
           invoiceItems: true,
@@ -73,29 +73,36 @@ onBeforeMount(async () => {
       })
 
       invoice.value = invoiceResponse
+      customerDefault = invoiceResponse.customer!
+
       if (invoice.value.invoiceExpenses!.length === 0) {
         invoice.value.invoiceExpenses!.push(InvoiceExpense.blank())
       }
       if (invoice.value.invoiceSurcharges!.length === 0) {
         invoice.value.invoiceSurcharges!.push(InvoiceSurcharge.blank())
       }
-      customer.value = Customer.fromInstance(invoiceResponse.customer!)
       if (mode.value === EInvoiceUpsertMode.CREATE || mode.value === EInvoiceUpsertMode.COPY) {
         time.value = dayjs(new Date())
       } else if (mode.value === EInvoiceUpsertMode.UPDATE) {
         time.value = dayjs(new Date(invoice.value.startedAt))
       }
     } else if (customerId) {
-      const customerRes = await CustomerApi.detail(customerId)
-      customer.value = customerRes
-      invoice.value.customer = customerRes
-      invoice.value.customerId = customerId
+      customerDefault = await CustomerApi.detail(customerId)
     } else {
-      const customerRes = Customer.fromPlain(meStore.customerDefault || Customer.blank())
-      customer.value = customerRes
-      invoice.value.customer = customerRes
-      invoice.value.customerId = customerRes.id
+      customerDefault = Customer.toBasic(meStore.customerDefault)
     }
+
+    customer.value = customerDefault
+    invoice.value.customer = customerDefault
+    invoice.value.customerId = customerDefault.id
+
+    nextTick(() => {
+      inputOptionsCustomer.value?.setItem({
+        value: customerDefault.id,
+        text: customerDefault.fullName,
+        data: customerDefault,
+      })
+    })
   } catch (error) {
     console.log('🚀 ~ file: ArrivalInvoiceUpsert.vue:73 ~ error:', error)
   }
@@ -104,7 +111,7 @@ onBeforeMount(async () => {
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F4') {
     e.preventDefault()
-    inputSearchCustomer.value?.focus()
+    inputOptionsCustomer.value?.focus()
   }
 }
 onMounted(async () => {
@@ -129,11 +136,19 @@ const searchingCustomer = async (text: string) => {
   }
 }
 
-const selectCustomer = (data: Customer) => {
-  const snapCustomer = Customer.fromInstance(data || Customer.blank())
-  invoice.value.customerId = snapCustomer.id!
-  invoice.value.customer = snapCustomer
-  customer.value = snapCustomer
+const createCustomer = (instance?: Customer) => {
+  inputOptionsCustomer.value?.setItem({
+    text: instance?.fullName,
+    data: instance,
+    value: instance?.id,
+  })
+  selectCustomer(instance)
+}
+
+const selectCustomer = (data?: Customer) => {
+  invoice.value.customerId = data?.id || 0
+  invoice.value.customer = data
+  customer.value = data || Customer.blank()
 }
 
 const handleChangeInvoiceDiscountMoney = (data: number) => {
@@ -151,11 +166,15 @@ const saveInvoice = async (type: EInvoiceSave) => {
     return invoiceUpsertForm.value?.reportValidity()
   }
   if (invoice.value.invoiceItems!.length == 0) {
-    return message.error('Lỗi: cần có ít nhất 1 dịch vụ trong phiếu')
+    return AlertStore.addError('Lỗi: cần có ít nhất 1 dịch vụ trong phiếu')
   }
   const invalidInvoiceItem = invoice.value.invoiceItems!.find((ii) => ii.quantity === 0)
   if (invalidInvoiceItem) {
-    return message.error(`Lỗi: dịch vụ ${invalidInvoiceItem.procedure?.name} có số lượng 0`)
+    return AlertStore.addError(
+      `Lỗi: ${
+        invalidInvoiceItem.product?.brandName || invalidInvoiceItem.procedure?.name
+      } có số lượng 0`
+    )
   }
 
   try {
@@ -172,35 +191,40 @@ const saveInvoice = async (type: EInvoiceSave) => {
 
     switch (type) {
       case EInvoiceSave.CREATE_DRAFT: {
-        const response = await InvoiceService.createDraft(invoice.value)
+        const response = await InvoiceApi.createDraft(invoice.value)
         router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
         break
       }
-      case EInvoiceSave.CREATE_BASIC_AND_DETAIL: {
-        const response = await InvoiceService.createBasic(invoice.value)
-        router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
-        break
-      }
-      case EInvoiceSave.CREATE_BASIC_AND_NEW: {
-        await InvoiceService.createBasic(invoice.value)
+      case EInvoiceSave.CREATE_QUICK_AND_NEW: {
+        await InvoiceApi.createQuickInvoice(invoice.value)
         invoice.value = Invoice.blank()
 
         const customerRes = Customer.fromPlain(meStore.customerDefault)
         customer.value = customerRes
         invoice.value.customer = customerRes
         invoice.value.customerId = customerRes.id
+        inputOptionsCustomer.value?.setItem({
+          text: customerRes.fullName,
+          value: customerRes.id,
+          data: customerRes,
+        })
 
         AlertStore.add({ type: 'success', message: 'Tạo đơn thành công', time: 500 })
-        await productStore.refreshDB() //update product mới nhất luôn
         break
       }
-      case EInvoiceSave.UPDATE_DRAFT: {
-        const response = await InvoiceService.updateDraft(invoice.value.id, invoice.value)
+      case EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT: {
+        const response = await InvoiceApi.updateInvoiceDraftAndInvoicePrepayment(
+          invoice.value.id,
+          invoice.value
+        )
         router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
         break
       }
-      case EInvoiceSave.UPDATE_BASIC: {
-        const response = await InvoiceService.updateBasic(invoice.value.id, invoice.value)
+      case EInvoiceSave.UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS: {
+        const response = await InvoiceApi.updateInvoiceDebtAndInvoiceSuccess(
+          invoice.value.id,
+          invoice.value
+        )
         router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
         break
       }
@@ -208,7 +232,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
         break
     }
   } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
+    console.log('🚀 ~ file: InvoiceUpsert.vue:211 ~ saveInvoice ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -249,7 +273,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 <template>
   <ModalInvoiceUpsertSettingScreen ref="modalInvoiceUpsertSettingScreen" />
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="selectCustomer" />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
   <ModalDataInvoice ref="modalDataInvoice" />
   <div class="page-header">
     <div class="page-header-content">
@@ -276,7 +300,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
   </div>
 
-  <div class="mt-4 md:mx-4 invoice-procedure-upsert-tabs">
+  <div class="mt-4 md:mx-4">
     <div class="flex flex-col md:flex-row gap-4">
       <div class="md:w-2/3">
         <div class="bg-white p-4">
@@ -304,32 +328,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </div>
           <div style="height: 40px">
             <InputOptions
-              ref="inputSearchCustomer"
-              v-model:searchText="customer.fullName"
-              :options="customerList"
-              :maxHeight="260"
+              ref="inputOptionsCustomer"
+              :options="customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
+              :maxHeight="320"
               placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+              :disabled="mode == EInvoiceUpsertMode.UPDATE"
               required
-              :disabled="mode === EInvoiceUpsertMode.UPDATE"
-              @selectItem="selectCustomer"
-              @update:searchText="searchingCustomer"
+              @selectItem="({ data }) => selectCustomer(data)"
+              @update:text="searchingCustomer"
             >
-              <template
-                #each="{
-                  item: {
-                    fullName,
-                    phone,
-                    addressProvince,
-                    addressDistrict,
-                    addressWard,
-                    birthday,
-                  },
-                }"
-              >
+              <template #option="{ item: { data } }">
                 <div>
-                  <b>{{ fullName }}</b> - {{ phone }} - {{ timeToText(birthday, 'DD/MM/YYYY') }}
+                  <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                  {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div>{{ addressWard }} - {{ addressDistrict }} - {{ addressProvince }}</div>
+                <div>
+                  {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
+                </div>
               </template>
             </InputOptions>
           </div>
@@ -415,7 +430,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <tr>
                   <td class="font-bold whitespace-nowrap">Tổng tiền</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(invoice.revenue) }}
+                    {{ formatMoney(invoice.totalMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -460,39 +475,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
+              type="button"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveInvoice(EInvoiceSave.CREATE_BASIC_AND_NEW)"
+              @click="saveInvoice(EInvoiceSave.CREATE_QUICK_AND_NEW)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Lưu và Tạo đơn mới
-            </a-button>
-          </div>
-
-          <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE] &&
-              screenStore.SCREEN_INVOICE_UPSERT.save.createBasicAndDetail
-            "
-            class="mt-4"
-          >
-            <a-button
-              type="primary"
-              :loading="saveLoading"
-              size="large"
-              block
-              @click="saveInvoice(EInvoiceSave.CREATE_BASIC_AND_DETAIL)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
-              Lưu và Xem chi tiết
-            </a-button>
+            </VueButton>
           </div>
 
           <div
@@ -502,62 +497,87 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
-              size="large"
-              block
+              :size="'large'"
+              type="button"
               @click="saveInvoice(EInvoiceSave.CREATE_DRAFT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Lưu nháp
-            </a-button>
+            </VueButton>
           </div>
         </template>
 
         <template v-if="[EInvoiceUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.INVOICE_UPDATE_DRAFT] &&
+              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
               [InvoiceStatus.Draft].includes(invoice.status)
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveInvoice(EInvoiceSave.UPDATE_DRAFT)"
+              type="button"
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Cập nhật đơn nháp
-            </a-button>
+            </VueButton>
           </div>
 
           <div
             v-if="
-              permissionIdMap[PermissionId.INVOICE] &&
-              [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
+              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
+              [InvoiceStatus.Prepayment].includes(invoice.status)
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveInvoice(EInvoiceSave.UPDATE_BASIC)"
+              type="button"
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
-              Cập nhật đơn
-            </a-button>
+              Cập nhật đơn tạm ứng
+            </VueButton>
+          </div>
+
+          <div
+            v-if="
+              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS] &&
+              [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
+            "
+            class="mt-4"
+          >
+            <VueButton
+              style="width: 100%"
+              color="blue"
+              :loading="saveLoading"
+              size="large"
+              type="button"
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Cập nhật đơn đã gửi
+            </VueButton>
           </div>
         </template>
       </form>

@@ -1,0 +1,179 @@
+.vue-input {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #d9d9d9;
+  outline: none;
+  border-radius: 2px;
+  display: flex;
+  align-items: stretch;
+
+  &:focus-within {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px #1890ff33;
+  }
+
+  &:not(.disabled):hover {
+    border-color: #40a9ff;
+
+    .icon-append {
+      .icon-blur {
+        display: none !important;
+      }
+
+      .icon-clear-hover {
+        display: block !important;
+      }
+
+      .icon-hover {
+        display: block !important;
+      }
+
+      &:hover {
+        .icon-clear-hover {
+          display: none !important;
+        }
+
+        .icon-clear-focus {
+          display: block !important;
+        }
+      }
+    }
+  }
+
+  &.disabled {
+    background-color: #eeeeee;
+    border-color: #d9d9d9;
+
+    &:hover {
+      border-color: #bbb;
+    }
+
+    .append {
+      opacity: 0.8;
+    }
+
+    .prepend {
+      opacity: 0.8;
+    }
+
+    .clear {
+      cursor: not-allowed !important;
+    }
+  }
+
+  .input-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    input {
+      width: 100%;
+      padding: 4px 12px 4px 12px;
+      outline: none;
+      border: none;
+
+      &::placeholder {
+        opacity: 0.4;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        background-color: #eeeeee;
+        opacity: 0.8;
+      }
+    }
+
+    input::placeholder {
+      font-size: 14px;
+    }
+  }
+
+  .icon-append {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.6;
+    padding: 0 0.5rem 0 0;
+
+    .icon-blur {
+      display: block;
+    }
+
+    .icon-hover {
+      display: none;
+    }
+
+    .icon-clear-hover {
+      display: none;
+    }
+
+    .icon-clear-focus {
+      display: none;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .append {
+    padding: 0 12px;
+    border-left: 1px solid #d9d9d9;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    background-color: #eee;
+    color: #777;
+    font-size: 0.8em;
+  }
+
+
+
+  .prepend {
+    padding: 0 12px;
+    border-right: 1px solid #d9d9d9;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    background-color: #eee;
+    color: #777;
+    font-size: 0.8em;
+  }
+
+  .options {
+    position: absolute;
+    z-index: 9;
+    background-color: #fff;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    border: 1px solid #d4d4d4;
+    box-shadow: 5px 5px 4px #aaaaaa;
+    overflow-y: auto;
+
+    .item-option {
+      position: relative;
+      padding: 6px 12px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid #d4d4d4;
+
+      &.active {
+        background-color: dodgerblue !important;
+        color: #fff;
+      }
+
+      &:hover {
+        background-color: #e9e9e9;
+      }
+
+      .item-text {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
+  }
+}

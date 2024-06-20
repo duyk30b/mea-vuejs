@@ -208,7 +208,7 @@ export class BaseRepository<
       transaction.commit()
       return data
     } catch (error) {
-      console.log('🚀 ~ replaceOne ~ error:', error)
+      console.log('🚀 ~ findOneByKey ~ error:', error)
       throw error
     } finally {
       db.close()
@@ -258,7 +258,7 @@ export class BaseRepository<
       }
       return result
     } catch (error) {
-      console.log('🚀 ~ replaceOne ~ error:', error)
+      console.log('🚀 ~ insertMany ~ error:', error)
       throw error
     } finally {
       db.close()
@@ -348,7 +348,7 @@ export class BaseRepository<
       }
       return result
     } catch (error) {
-      console.log('🚀 ~ upsertMany ~ error:', error)
+      console.log('🚀 ~ replaceMany ~ error:', error)
       throw error
     } finally {
       db.close()
@@ -383,7 +383,9 @@ export class BaseRepository<
       transaction.commit()
       return result
     } catch (error) {
-      console.log('🚀 ~ replaceOne ~ error:', error)
+      console.log(`🚀 ~ replaceOne ~ key:`, key)
+      console.log(`🚀 ~ replaceOne ~ data:`, data)
+      console.log(`🚀 ~ replaceOne ~ error:`, error)
       throw error
     } finally {
       db.close()
@@ -458,7 +460,8 @@ export class BaseRepository<
       transaction.commit()
       return result
     } catch (error) {
-      console.log('🚀 ~ upsertMany ~ error:', error)
+      console.log(`🚀 ~ upsertOne ~ data:`, data)
+      console.log('🚀 ~ upsertOne ~ error:', error)
       throw error
     } finally {
       db.close()
@@ -507,7 +510,7 @@ export class BaseRepository<
       }
       return result
     } catch (error) {
-      console.log('🚀 ~ upsertMany ~ error:', error)
+      console.log('🚀 ~ deleteMany ~ error:', error)
       throw error
     } finally {
       db.close()
@@ -536,7 +539,7 @@ export class BaseRepository<
       transaction.commit()
       return result
     } catch (error) {
-      console.log('🚀 ~ upsertMany ~ error:', error)
+      console.log('🚀 ~ deleteOneByKey ~ error:', error)
       throw error
     } finally {
       db.close()

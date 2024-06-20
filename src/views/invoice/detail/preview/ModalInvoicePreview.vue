@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { CloseOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import VueButton from '../../../../common/VueButton.vue'
 import VueModal from '../../../../common/VueModal.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { Invoice } from '../../../../modules/invoice'
-import { InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { timeToText } from '../../../../utils'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
 
@@ -28,6 +28,10 @@ const handleClose = () => {
   showModal.value = false
   invoice.value = Invoice.blank()
 }
+
+const colspan = computed(() => {
+  return 3 + Number(screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit)
+})
 
 defineExpose({ openModal })
 </script>
@@ -56,8 +60,8 @@ defineExpose({ openModal })
             <div>{{ meStore.organization.phone }}</div>
           </div>
           <div class="flex flex-col items-center">
-            <div>Mã hóa đơn</div>
-            <div>HĐ{{ invoice.id }}</div>
+            <div>Mã KH: C{{ invoice.customerId }}</div>
+            <div>Mã HĐ: IV{{ invoice.id }}</div>
           </div>
         </div>
         <div style="text-align: center; font-size: 1.2rem; font-weight: bold; line-height: 2.5">
@@ -70,12 +74,7 @@ defineExpose({ openModal })
           </div>
           <div class="flex">
             <div style="width: 6rem">Địa chỉ:</div>
-            <div>
-              {{ invoice.customer?.addressStreet }}
-              {{ invoice.customer?.addressWard }}
-              {{ invoice.customer?.addressDistrict }}
-              {{ invoice.customer?.addressProvince }}
-            </div>
+            <div>{{ invoice.customer?.addressString }}</div>
           </div>
         </div>
         <div>
@@ -84,7 +83,7 @@ defineExpose({ openModal })
               <tr>
                 <th>#</th>
                 <th>Tên</th>
-                <th v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">Đ.Vị</th>
+                <th v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">ĐV</th>
                 <th>SL</th>
                 <th>Đ.Giá</th>
                 <th>T.Tiền</th>
@@ -134,7 +133,7 @@ defineExpose({ openModal })
                   v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
                   class="text-center"
                 >
-                  {{ invoiceItem.unit.name || 'Lần' }}
+                  {{ invoiceItem.unitName || 'Lần' }}
                 </td>
                 <td class="text-center">
                   {{ invoiceItem.quantity }}
@@ -161,39 +160,35 @@ defineExpose({ openModal })
                   {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
                 </td>
               </tr>
-            </tbody>
-          </table>
-          <table class="invoice-preview">
-            <tbody>
               <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney">
-                <td style="width: 60%; text-align: right">
+                <td :colspan="colspan" style="text-align: right">
                   <b>Tiền hàng</b>
                 </td>
-                <td style="text-align: right">
+                <td :colspan="2" style="text-align: right">
                   <b>
                     {{ formatMoney(invoice.itemsActualMoney) }}
                   </b>
                 </td>
               </tr>
               <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
-                <td style="text-align: right">Chiết khấu</td>
-                <td style="text-align: right">
+                <td :colspan="colspan" style="text-align: right">Chiết khấu</td>
+                <td :colspan="2" style="text-align: right">
                   {{ formatMoney(invoice.discountMoney) }}
                 </td>
               </tr>
               <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
-                <td style="text-align: right">Phụ phí</td>
-                <td style="text-align: right">
+                <td :colspan="colspan" style="text-align: right">Phụ phí</td>
+                <td :colspan="2" style="text-align: right">
                   {{ formatMoney(invoice.surcharge) }}
                 </td>
               </tr>
               <tr>
-                <td style="text-align: right">
+                <td :colspan="colspan" style="text-align: right">
                   <b>Tổng tiền</b>
                 </td>
-                <td style="text-align: right">
+                <td :colspan="2" style="text-align: right">
                   <b>
-                    {{ formatMoney(invoice.revenue) }}
+                    {{ formatMoney(invoice.totalMoney) }}
                   </b>
                 </td>
               </tr>
@@ -206,15 +201,11 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Đóng lại
-          </a-button>
-        </div>
+      <div class="p-4 flex justify-center">
+        <VueButton @click="handleClose">
+          <CloseOutlined />
+          Đóng lại
+        </VueButton>
       </div>
     </div>
   </VueModal>

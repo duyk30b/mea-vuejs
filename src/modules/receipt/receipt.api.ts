@@ -1,6 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
+import { DistributorPayment } from '../distributor-payment/distributor-payment.model'
+import { ReceiptItem } from '../receipt-item/receipt-item.model'
 import {
   ReceiptDetailQuery,
   ReceiptGetQuery,
@@ -34,33 +36,15 @@ export class ReceiptApi {
 
     const response = await AxiosInstance.get(`/receipt/detail/${id}`, { params })
     const { data } = response.data as BaseResponse
-    return Receipt.fromPlain(data)
+    return Receipt.fromPlain(data || {})
   }
 
-  static async createBasic(receipt: Receipt) {
-    const receiptDto = Receipt.toPlain(receipt, USER_CREATE)
-    const response = await AxiosInstance.post('/receipt/create-basic', receiptDto)
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
-  }
-
-  static async updateBasic(oldReceiptId: number, receipt: Receipt) {
-    const receiptDto = Receipt.toPlain(receipt, USER_CREATE) // tạo phiếu mới đè lên phiếu cũ
-    const response = await AxiosInstance.patch(`/receipt/update-basic/${oldReceiptId}`, receiptDto)
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
-  }
-
-  static async createDraft(receipt: Receipt) {
-    const receiptDto = Receipt.toPlain(receipt, USER_CREATE)
-    const response = await AxiosInstance.post('/receipt/create-draft', receiptDto)
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
-  }
-
-  static async updateDraft(receiptId: number, receipt: Receipt) {
-    const receiptDto = Receipt.toPlain(receipt, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/receipt/update-draft/${receiptId}`, receiptDto)
+  static async createDraft(instance: Receipt) {
+    const body = {
+      receipt: Receipt.toPlain(instance, 'USER_CREATE'),
+      receiptItemList: ReceiptItem.toPlains(instance.receiptItems || [], 'USER_CREATE'),
+    }
+    const response = await AxiosInstance.post('/receipt/create-draft', body)
     const { data } = response.data as BaseResponse<{ receiptId: number }>
     return data
   }
@@ -73,32 +57,104 @@ export class ReceiptApi {
 
   static async prepayment(receiptId: number, money: number) {
     const response = await AxiosInstance.post(`/receipt/prepayment/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPayments: any[]
+    }>
+    return {
+      receiptBasic: Receipt.toBasic(data.receiptBasic || {}),
+      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+    }
   }
 
-  static async startShipAndPayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/start-ship-and-payment/${receiptId}`, {
+  static async refundPrepayment(receiptId: number, money: number) {
+    const response = await AxiosInstance.post(`/receipt/refund-prepayment/${receiptId}`, { money })
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPayments: any[]
+    }>
+    return {
+      receiptBasic: Receipt.toBasic(data.receiptBasic || {}),
+      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+    }
+  }
+
+  static async sendProductAndPayment(receiptId: number, money: number) {
+    const response = await AxiosInstance.post(`/receipt/send-product-and-payment/${receiptId}`, {
       money,
     })
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPayments: any[]
+    }>
+    return {
+      receiptBasic: Receipt.toBasic(data.receiptBasic || {}),
+      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+    }
   }
 
   static async payDebt(receiptId: number, money: number) {
     const response = await AxiosInstance.post(`/receipt/pay-debt/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPayments: any[]
+    }>
+    return {
+      receiptBasic: Receipt.toBasic(data.receiptBasic || {}),
+      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+    }
   }
 
-  static async startRefund(receiptId: number) {
-    const response = await AxiosInstance.post(`/receipt/start-refund/${receiptId}`)
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
+  static async returnProduct(receiptId: number, money: number) {
+    const response = await AxiosInstance.post(`/receipt/return-product/${receiptId}`, { money })
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPayments: any[]
+    }>
+    return {
+      receiptBasic: Receipt.toBasic(data.receiptBasic || {}),
+      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+    }
   }
 
   static async softDeleteRefund(receiptId: number) {
     const response = await AxiosInstance.delete(`/receipt/soft-delete-refund/${receiptId}`)
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
+  }
+
+  static async createQuickReceipt(instance: Receipt) {
+    const body = {
+      receipt: Receipt.toPlain(instance, 'USER_CREATE'),
+      receiptItemList: ReceiptItem.toPlains(instance.receiptItems || [], 'USER_CREATE'),
+    }
+    const response = await AxiosInstance.post('/receipt/create-quick-receipt', body)
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
+  }
+
+  static async updateReceiptDraftAndReceiptPrepayment(receiptId: number, instance: Receipt) {
+    const body = {
+      receipt: Receipt.toPlain(instance, 'USER_UPDATE'),
+      receiptItemList: ReceiptItem.toPlains(instance.receiptItems || [], 'USER_UPDATE'),
+    }
+    const response = await AxiosInstance.patch(
+      `/receipt/update-receipt-draft-and-receipt-prepayment/${receiptId}`,
+      body
+    )
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
+  }
+
+  static async updateReceiptDebtAndReceiptSuccess(receiptId: number, instance: Receipt) {
+    const body = {
+      receipt: Receipt.toPlain(instance, 'USER_CREATE'),
+      receiptItemList: ReceiptItem.toPlains(instance.receiptItems || [], 'USER_CREATE'),
+    }
+    const response = await AxiosInstance.patch(
+      `/receipt/update-receipt-debt-and-receipt-success/${receiptId}`,
+      body
+    )
     const { data } = response.data as BaseResponse<{ receiptId: number }>
     return data
   }

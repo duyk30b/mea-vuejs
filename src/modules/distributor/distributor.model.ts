@@ -33,13 +33,22 @@ export class Distributor {
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
-  createdAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
+
+  get addressString() {
+    return [this.addressWard, this.addressDistrict, this.addressProvince]
+      .filter((i) => !!i)
+      .join(' - ')
+      .replace('Tỉnh', '')
+      .replace('Thành phố', '')
+      .replace('Quận ', '')
+      .replace('Huyện ', '')
+      .replace('Phường ', '')
+      .replace('Xã ', '')
+  }
 
   static init(): Distributor {
     const ins = new Distributor()
@@ -54,14 +63,14 @@ export class Distributor {
     return ins
   }
 
-  static fromObject(object: Partial<Distributor>) {
+  static toBasic(root: Distributor) {
     const ins = new Distributor()
-    Object.assign(ins, object)
+    Object.assign(ins, root)
     return ins
   }
 
-  static fromObjects(objects: Partial<Distributor>[]) {
-    return objects.map((i) => Distributor.fromObject(i))
+  static toBasics(roots: Distributor[]) {
+    return roots.map((i) => Distributor.toBasic(i))
   }
 
   static fromPlain(plain: Record<string, any> = {}): Distributor {
@@ -78,21 +87,6 @@ export class Distributor {
       excludeExtraneousValues: true,
       groups: [FROM_PLAIN],
     })
-  }
-
-  static fromInstance(instance: Distributor): Distributor {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Distributor') {
-      throw new Error('Distributor.fromInstance error: Instance must be from class Distributor')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static fromInstances(instances: Distributor[]): Distributor[] {
-    return instances.map((i) => Distributor.fromInstance(i))
   }
 
   static toPlain(

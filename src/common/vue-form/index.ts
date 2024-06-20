@@ -1,4 +1,3 @@
-import InputArea from './InputArea.vue'
 import InputDate from './InputDate.vue'
 import InputHint from './InputHint.vue'
 import InputMoney from './InputMoney.vue'
@@ -9,7 +8,6 @@ import InputText from './InputText.vue'
 import VueSelect from './VueSelect.vue'
 
 export {
-  InputArea,
   InputDate,
   InputHint,
   InputMoney,

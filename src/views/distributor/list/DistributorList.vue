@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../../common/vue-form'
+import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useDistributorStore, type Distributor } from '../../../modules/distributor'
@@ -20,6 +20,7 @@ import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -99,16 +100,6 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
-}
-
-const handleSelectStatus = async (value: 1 | 0 | '') => {
-  isActive.value = value
-  await startSearch()
-}
-
 const changeSort = (column: 'fullName' | 'debt' | 'id') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
@@ -169,16 +160,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block"><ApartmentOutlined /> Danh sách nhà cung cấp</div>
-      <a-button
+      <VueButton
         v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
-        type="primary"
+        color="blue"
         @click="modalDistributorUpsert?.openModal()"
       >
         <template #icon>
           <PlusOutlined />
         </template>
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
@@ -198,35 +189,29 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <a-input-group compact class="w-full">
-          <a-input
-            :value="searchText"
-            allow-clear
-            style="width: calc(100% - 100px)"
-            @input="handleInputSearchText"
-          />
-          <a-button type="primary" class="w-[100px]"> Tìm kiếm </a-button>
-        </a-input-group>
+        <div>
+          <InputText v-model:value="searchText" @update:value="startSearch" />
+        </div>
       </div>
 
       <div style="flex: 1; flex-basis: 300px">
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            :value="isActive"
+            v-model:value="isActive"
             :options="[
               { text: 'Tất cả', value: '' },
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="handleSelectStatus"
+            @update:value="(e) => startSearch()"
           />
         </div>
       </div>
     </div>
 
-    <div v-if="isMobile" class="page-main-list">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="page-main-list table-wrapper">
+      <table>
         <thead>
           <tr>
             <th>Tên NCC</th>
@@ -267,16 +252,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="text-base"
-                  @click="modalDistributorDetail?.openModal(distributor)"
+                  @click="modalDistributorDetail?.openModal(distributor.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
               <div v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
-                {{ distributor.addressProvince }} - {{ distributor.addressDistrict }} -
-                {{ distributor.addressWard }}
+                {{ distributor.addressString }}
               </div>
-              <div v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note" class="text-center">
+              <div
+                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                class="text-xs italic"
+              >
                 {{ distributor.note }}
               </div>
             </td>
@@ -293,14 +280,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
                   distributor.debt != 0
                 "
+                class="flex justify-end"
               >
-                <a-button
-                  type="default"
+                <VueButton
                   size="small"
                   @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
                 >
                   Trả nợ
-                </a-button>
+                </VueButton>
               </div>
             </td>
           </tr>
@@ -319,7 +306,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -409,12 +396,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="ml-1"
-                  @click="modalDistributorDetail?.openModal(distributor)"
+                  @click="modalDistributorDetail?.openModal(distributor.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note" style="font-size: 0.8rem">
+              <div
+                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                class="text-xs italic"
+              >
                 {{ distributor.note }}
               </div>
             </td>
@@ -422,23 +412,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               {{ distributor.phone }}
             </td>
             <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address">
-              {{ distributor.addressProvince }} - {{ distributor.addressDistrict }} -
-              {{ distributor.addressWard }}
+              {{ distributor.addressString }}
             </td>
             <td class="text-right">
               <div class="flex justify-between">
                 <div>
-                  <a-button
+                  <VueButton
                     v-if="
                       permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
                       distributor.debt != 0
                     "
-                    type="default"
                     size="small"
                     @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)"
                   >
                     Trả nợ
-                  </a-button>
+                  </VueButton>
                 </div>
                 <div class="ml-2">
                   {{ formatMoney(distributor.debt) }}

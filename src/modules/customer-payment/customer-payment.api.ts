@@ -1,9 +1,11 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer/customer.model'
-import type { ApiPaginationResponse } from '../pagination'
+import { Invoice } from '../invoice'
+import { Visit } from '../visit'
 import {
   CustomerPaymentGetQuery,
+  CustomerPaymentListQuery,
   type CustomerPaymentPaginationQuery,
   type CustomerPaymentPayDebtBody,
 } from './customer-payment.dto'
@@ -18,6 +20,29 @@ export class CustomerPaymentApi {
     return {
       meta,
       data: CustomerPayment.fromPlains(data),
+    }
+  }
+
+  static async list(options: CustomerPaymentListQuery) {
+    const params = CustomerPaymentGetQuery.toQuery(options)
+
+    const response = await AxiosInstance.get('/customer-payment/list', { params })
+    const { data } = response.data as BaseResponse
+    return CustomerPayment.fromPlains(data)
+  }
+
+  static async voucherDebtList(customerId: number) {
+    const response = await AxiosInstance.get('/customer-payment/voucher-debt-list', {
+      params: { customerId },
+    })
+
+    const { data } = response.data as BaseResponse<{
+      invoiceBasicList: any[]
+      visitBasicList: any[]
+    }>
+    return {
+      invoiceBasicList: Invoice.toBasics(data.invoiceBasicList),
+      visitBasicList: Visit.toBasics(data.visitBasicList),
     }
   }
 

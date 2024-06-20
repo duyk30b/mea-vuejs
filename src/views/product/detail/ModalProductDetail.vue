@@ -4,12 +4,13 @@ import { ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product } from '../../../modules/product'
+import { Product, useProductStore } from '../../../modules/product'
 import ProductInfo from './ProductInfo.vue'
 import ProductMovement from './ProductMovement.vue'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const productStore = useProductStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -17,9 +18,10 @@ const activeTab = ref('product-batch')
 
 const product = ref<Product>(Product.blank())
 
-const openModal = async (data: Product) => {
+const openModal = async (productId: number) => {
   showModal.value = true
-  product.value = Product.fromInstance(data)
+  const response = await productStore.getOne(productId)
+  product.value = response || Product.blank()
 }
 
 const closeModal = () => {
@@ -56,7 +58,7 @@ defineExpose({ openModal })
             <template #tab>
               <span> <DeploymentUnitOutlined />Thông tin </span>
             </template>
-            <ProductInfo :product="product" />
+            <ProductInfo :productId="product.id" />
           </a-tab-pane>
           <a-tab-pane
             v-if="permissionIdMap[PermissionId.PRODUCT_MOVEMENT_READ]"

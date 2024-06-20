@@ -1,19 +1,27 @@
 <script setup lang="ts">
-import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import {
+  CloseOutlined,
+  ExclamationCircleOutlined,
+  SaveOutlined,
+  SisternodeOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputMoney, InputText } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProcedureStore } from '../../../modules/procedure'
 import { Procedure } from '../../../modules/procedure/procedure.model'
-import { useScreenStore } from '../../../modules/_me/screen.store'
 import { convertViToEn } from '../../../utils'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
+import ModalDataProcedure from './ModalDataProcedure.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: Procedure, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
+const modalDataProcedure = ref<InstanceType<typeof ModalDataProcedure>>()
 
 const procedureStore = useProcedureStore()
 const screenStore = useScreenStore()
@@ -129,6 +137,14 @@ defineExpose({ openModal })
         <div class="flex-1 text-lg font-medium">
           {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
         </div>
+        <div
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
+          @click="modalDataProcedure?.openModal()"
+        >
+          <SisternodeOutlined />
+        </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>
@@ -178,21 +194,10 @@ defineExpose({ openModal })
         <div class="flex items-center">
           <div style="width: 100px; flex: none;">Tên hàng</div>
           <div class="flex-auto">
-            <InputOptions ref="inputSearchProduct" :options="productList" v-model:searchText="product.brandName"
-              @selectItem="selectProduct" @update:searchText="searchingProduct" :maxHeight="260"
-              placeholder="Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm">
-              <template v-slot:each="{ item: { brandName, substance, unit, lastCostPrice, lastRetailPrice } }">
-                <div> <b>{{ brandName }}</b>
-                  - Giá nhập <b>{{ formatNumber(lastCostPrice || 0, 0) }}</b>/{{ unit }}
-                  - Giá bán <b>{{ formatNumber(lastRetailPrice || 0, 0) }}</b>/{{ unit }}
-                </div>
-                <div>{{ substance }} </div>
-              </template>
-            </InputOptions>
           </div>
         </div>
         <div class="table-wrapper mt-4">
-          <table class="screen-setting">
+          <table>
             <thead>
               <tr>
                 <th>#</th>
@@ -238,14 +243,16 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
-            Lưu lại
-          </a-button>
+          <button class="btn btn-blue">
+            <LoadingOutlined v-if="saveLoading" />
+            <SaveOutlined v-if="!saveLoading" /> Lưu lại
+          </button>
         </div>
       </div>
     </form>
   </VueModal>
+  <ModalDataProcedure
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalDataProcedure"
+  />
 </template>

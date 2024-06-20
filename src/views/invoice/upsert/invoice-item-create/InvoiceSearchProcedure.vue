@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { InputOptions } from '../../../../common/vue-form'
-import { Procedure, useProcedureStore } from '../../../../modules/procedure'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
-import ModalProcedureUpsert from '../../../procedure/components/ModalProcedureUpsert.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { InvoiceItem, InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Procedure, useProcedureStore } from '../../../../modules/procedure'
+import ModalProcedureUpsert from '../../../procedure/components/ModalProcedureUpsert.vue'
+import { invoiceItem } from './invoice-item.ref'
 
-const emit = defineEmits<{ (e: 'selectProcedure', value: Procedure | null): void }>()
-
-const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
+const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
+
+const props = withDefaults(defineProps<{ tabsKey: 'product' | 'procedure' }>(), {
+  tabsKey: 'product',
+})
+
+const emit = defineEmits<{ (e: 'createInvoiceItemProcedure'): void }>()
 
 const screenStore = useScreenStore()
 const { formatMoney } = screenStore
@@ -19,8 +25,6 @@ const procedureStore = useProcedureStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const searchText = ref('')
-const procedure = ref(Procedure.blank())
 const procedureList = ref<Procedure[]>([])
 
 onMounted(async () => {
@@ -35,33 +39,41 @@ const searchingProcedure = async (text: string) => {
   procedureList.value = await procedureStore.search(text)
 }
 
-const selectProcedure = (instance?: Procedure) => {
-  if (instance) {
-    searchText.value = instance.name
-    procedure.value = instance
+const selectProcedure = (procedure: Procedure) => {
+  createInvoiceItemProcedure(procedure)
+}
 
-    const dataEmit = Procedure.fromInstance(instance)
-    emit('selectProcedure', dataEmit)
-  } else {
-    procedure.value = Procedure.blank()
-    searchText.value = ''
-    emit('selectProcedure', null)
+const createInvoiceItemProcedure = (procedure?: Procedure) => {
+  const ii = InvoiceItem.blank()
+  if (procedure) {
+    ii.procedureId = procedure.id
+    ii.batchId = 0
+    ii.productId = 0
+    ii.type = InvoiceItemType.Procedure
+    ii.procedure = procedure
+
+    ii.unitRate = 1
+    ii.expectedPrice = procedure.price
+    ii.actualPrice = procedure.price
+    ii.quantity = 1
   }
+  invoiceItem.value = ii
+  emit('createInvoiceItemProcedure')
 }
 
 const focus = () => {
   procedureList.value = []
-  inputSearchProcedure.value?.focus()
+  inputOptionsProcedure.value?.focus()
 }
 const clear = () => {
-  searchText.value = ''
   procedureList.value = []
-  procedure.value = Procedure.blank()
+  inputOptionsProcedure.value?.clear()
 }
 
 const clearAndFocus = () => {
-  clear()
-  inputSearchProcedure.value?.focus()
+  procedureList.value = []
+  inputOptionsProcedure.value?.clear()
+  inputOptionsProcedure.value?.focus()
 }
 
 defineExpose({ focus, clear, clearAndFocus })
@@ -83,17 +95,17 @@ defineExpose({ focus, clear, clearAndFocus })
     </div>
     <div style="height: 40px">
       <InputOptions
-        ref="inputSearchProcedure"
-        v-model:searchText="searchText"
-        :options="procedureList"
+        ref="inputOptionsProcedure"
+        :options="procedureList.map((i) => ({ value: i.id, text: i.name, data: i }))"
+        :required="tabsKey === 'procedure'"
         :maxHeight="320"
         placeholder="(F3) Tìm kiếm tên dịch vụ"
-        @selectItem="selectProcedure"
-        @update:searchText="searchingProcedure"
+        @selectItem="({ data }) => selectProcedure(data)"
+        @update:text="searchingProcedure"
       >
-        <template #each="{ item: { name, price } }">
+        <template #option="{ item: { data } }">
           <div>
-            <b>{{ name }}</b> - {{ formatMoney(price) }}
+            <b>{{ data.name }}</b> - {{ formatMoney(data.price) }}
           </div>
         </template>
       </InputOptions>

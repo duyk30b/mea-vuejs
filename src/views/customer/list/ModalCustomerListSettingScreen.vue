@@ -54,7 +54,7 @@ defineExpose({ openModal })
     @ok="handleSave"
   >
     <div class="table-wrapper">
-      <table class="screen-setting">
+      <table>
         <thead>
           <tr>
             <th>Màn hình danh sách khách hàng</th>

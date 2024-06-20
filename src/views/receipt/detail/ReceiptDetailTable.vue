@@ -1,102 +1,46 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
-import type { Product } from '../../../modules/product'
-import { Receipt } from '../../../modules/receipt'
+import { computed, ref } from 'vue'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import { PaymentViewType } from '../../../modules/enum'
+import { ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
+import { receipt } from './receipt-detail.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
 const screenStore = useScreenStore()
 const { formatMoney, isMobile } = screenStore
 
-const props = withDefaults(defineProps<{ receipt: Receipt }>(), { receipt: () => Receipt.blank() })
-const emit = defineEmits<{ (e: 'show-receipt-payment'): void }>()
+const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
 
-const handleClickReceiptPaymentInfo = () => {
-  emit('show-receipt-payment')
+const showModalReceiptPayment = (paymentView: PaymentViewType) => {
+  emit('showReceiptPayment', paymentView)
 }
-const openModalProductDetail = (data?: Product) => {
-  if (data) modalProductDetail.value?.openModal(data)
-}
+
+const colspan = computed(() => {
+  return 3 + Number(screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit)
+})
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <div v-if="isMobile" class="mt-2">
-    <table class="table-mobile">
+  <div class="mt-2 table-wrapper" :class="!isMobile ? 'px-4 w-full' : ''">
+    <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Sản phẩm</th>
           <th>SL</th>
-          <th>ĐG</th>
-          <th>TT</th>
+          <th v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">ĐV</th>
+          <th>G.Nhập</th>
+          <th>T.Tiền</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
-          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
-          </td>
-          <td>
-            <div class="font-medium">
-              {{ receiptItem!.product!.brandName }}
-              <a
-                v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
-                class="ml-1"
-                @click="openModalProductDetail(receiptItem!.product)"
-              >
-                <FileSearchOutlined />
-              </a>
-            </div>
-            <div
-              v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
-              style="font-size: 0.8rem"
-            >
-              {{ receiptItem!.product!.substance }}
-            </div>
-            <div
-              v-if="
-                screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch && receiptItem.batchId
-              "
-              style="font-size: 0.8rem"
-            >
-              Số Lô {{ receiptItem.batch!.lotNumber }} - HSD
-              {{ timeToText(receiptItem.batch!.expiryDate, 'DD/MM/YY') }}
-            </div>
-          </td>
-          <td class="text-center whitespace-nowrap">
-            {{ receiptItem.unitQuantity }}
-          </td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receiptItem.unitCostPrice) }}
-          </td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receiptItem.amount) }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div v-if="!isMobile" class="mt-2 px-4 table-wrapper w-full">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Tên</th>
-          <th>Số lượng</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">Đơn vị</th>
-          <th>Giá nhập</th>
-          <th>Tổng tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
-          <td class="index" />
+          <td class="text-center">{{ index + 1 }}</td>
           <td>
             <div class="text-justify">
               <div style="font-weight: 500">
@@ -104,29 +48,34 @@ const openModalProductDetail = (data?: Product) => {
                 <a
                   v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="openModalProductDetail(receiptItem!.product)"
+                  @click="modalProductDetail?.openModal(receiptItem.productId)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance">
+              <div
+                v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
+                style="font-size: 0.8rem"
+              >
                 {{ receiptItem!.product!.substance }}
               </div>
               <div
                 v-if="
                   screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch && receiptItem.batchId
                 "
+                class="flex flex-wrap"
+                style="font-size: 0.8rem"
               >
-                S.Lô {{ receiptItem!.batch?.lotNumber }} - HSD
-                {{ timeToText(receiptItem.batch?.expiryDate) }}
+                <span class="mr-2">S.Lô {{ receiptItem!.batch?.lotNumber }}</span>
+                <span>- HSD {{ timeToText(receiptItem.batch?.expiryDate) }}</span>
               </div>
             </div>
           </td>
-          <td class="text-right">
+          <td class="text-center">
             {{ receiptItem.unitQuantity }}
           </td>
           <td v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit" class="text-center">
-            {{ receiptItem.unit?.name }}
+            {{ receiptItem.unitName }}
           </td>
           <td class="text-right">
             {{ formatMoney(receiptItem.unitCostPrice) }}
@@ -135,22 +84,17 @@ const openModalProductDetail = (data?: Product) => {
             {{ formatMoney(receiptItem.amount) }}
           </td>
         </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="md:px-4">
-    <table class="table-mobile">
-      <tbody>
         <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.itemsActualMoney">
-          <td class="text-right font-bold" style="width: 70%">Tiền hàng</td>
-          <td class="text-right font-bold whitespace-nowrap">
+          <td class="text-right font-bold" style="padding-right: 1rem" :colspan="colspan">
+            Tiền hàng
+          </td>
+          <td colspan="2" class="text-right font-bold whitespace-nowrap">
             {{ formatMoney(receipt.itemsActualMoney) }}
           </td>
         </tr>
         <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.discount || receipt.discountMoney">
-          <td class="text-right">Chiết khấu</td>
-          <td class="text-right whitespace-nowrap">
+          <td class="text-right" style="padding-right: 1rem" :colspan="colspan">Chiết khấu</td>
+          <td colspan="2" class="text-right whitespace-nowrap">
             <a-tag v-if="receipt.discountType === '%'" color="success">
               {{ receipt.discountPercent || 0 }}%
             </a-tag>
@@ -158,35 +102,70 @@ const openModalProductDetail = (data?: Product) => {
           </td>
         </tr>
         <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.surcharge || receipt.surcharge">
-          <td class="text-right">Phụ phí</td>
-          <td class="text-right whitespace-nowrap">
+          <td class="text-right" style="padding-right: 1rem" :colspan="colspan">Phụ phí</td>
+          <td colspan="2" class="text-right whitespace-nowrap">
             {{ formatMoney(receipt.surcharge) }}
           </td>
         </tr>
         <tr>
-          <td class="text-right font-bold">Tổng tiền</td>
-          <td class="text-right font-bold whitespace-nowrap">
-            {{ formatMoney(receipt.revenue) }}
+          <td class="text-right font-bold" style="padding-right: 1rem" :colspan="colspan">
+            Tổng tiền
+          </td>
+          <td colspan="2" class="text-right font-bold whitespace-nowrap">
+            {{ formatMoney(receipt.totalMoney) }}
           </td>
         </tr>
         <tr
           v-if="
-            screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.paid || receipt.paid !== receipt.revenue
+            screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
+            receipt.paid !== receipt.totalMoney
           "
         >
-          <td class="text-right cursor-pointer" @click="handleClickReceiptPaymentInfo">
-            <span class="mr-1"> Thanh toán </span>
-            <ExclamationCircleOutlined />
+          <td
+            v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)"
+            class="text-right cursor-pointer"
+            :colspan="colspan"
+            @click="showModalReceiptPayment(PaymentViewType.Prepayment)"
+          >
+            <a> <span class="mr-1">Đã tạm ứng</span> <ExclamationCircleOutlined /> </a>
           </td>
-          <td class="text-right">
+          <td
+            v-else-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
+            class="text-right cursor-pointer"
+            :colspan="colspan"
+            @click="showModalReceiptPayment(PaymentViewType.PayDebt)"
+          >
+            <a> <span class="mr-1"> Đã thanh toán </span><ExclamationCircleOutlined /></a>
+          </td>
+          <td
+            v-else
+            class="text-right cursor-pointer"
+            :colspan="colspan"
+            @click="showModalReceiptPayment(PaymentViewType.Success)"
+          >
+            <a><span class="mr-1"> Đã thanh toán </span> <ExclamationCircleOutlined /></a>
+          </td>
+          <td colspan="2" class="text-right">
             {{ formatMoney(receipt.paid) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_RECEIPT_DETAIL.paymentInfo.debt || receipt.debt">
-          <td class="text-right">Ghi nợ</td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(receipt.debt) }}
-          </td>
+        <tr
+          v-if="
+            screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.totalMoney - receipt.paid
+          "
+        >
+          <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)">
+            <td class="text-right" :colspan="colspan">Còn thiếu</td>
+            <td colspan="2" class="text-right font-medium">
+              {{ formatMoney(receipt.totalMoney - receipt.paid) }}
+            </td>
+          </template>
+          <template v-else>
+            <td class="text-right" :colspan="colspan">Ghi nợ</td>
+            <td colspan="2" class="text-right font-medium">
+              {{ formatMoney(receipt.debt) }}
+            </td>
+          </template>
         </tr>
       </tbody>
     </table>

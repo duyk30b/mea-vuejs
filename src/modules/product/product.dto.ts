@@ -5,16 +5,17 @@ export class ProductGetQuery {
   page?: number
   limit?: number
   relation?: {
-    batches?: boolean
+    batchList?: boolean
   }
 
   filter?: {
+    id?: number | ConditionNumber
     isActive?: 1 | 0
     group?: string
     searchText?: string
     quantity?: ConditionNumber
     updatedAt?: ConditionDate
-    batches?: {
+    batchList?: {
       quantity?: ConditionNumber
       expiryDate?: ConditionNumber
       updatedAt?: ConditionDate
@@ -41,4 +42,4 @@ export class ProductGetQuery {
 
 export class ProductPaginationQuery extends ProductGetQuery {}
 export class ProductListQuery extends OmitClass(ProductGetQuery, ['page']) {}
-export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation']) {}
+export class ProductDetailQuery extends PickClass(ProductGetQuery, ['relation', 'filter']) {}
