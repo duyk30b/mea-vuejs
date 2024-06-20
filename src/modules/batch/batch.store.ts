@@ -113,7 +113,7 @@ export const useBatchStore = defineStore('batch-store', {
 
     async createOne(instance: Batch) {
       if (!instance.lotNumber && instance.expiryDate) {
-        instance.lotNumber = DTimer.timeToText(instance.expiryDate, 'YYYYMMDD')
+        instance.lotNumber = DTimer.timeToText(instance.expiryDate, 'DDMMYYYY')
       }
       const response = await BatchApi.createOne(instance)
       await BatchDB.insertOne(response)

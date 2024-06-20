@@ -1,4 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionEnum } from '../_base/base-condition'
 import type { InvoiceItemType } from './invoice-item.model'
 
 export class InvoiceItemGetQuery {
@@ -16,7 +17,7 @@ export class InvoiceItemGetQuery {
     procedureId?: number
     batchId?: number
     customerId?: number
-    type?: InvoiceItemType
+    type?: InvoiceItemType | ConditionEnum<InvoiceItemType>
   }
 
   sort?: { id?: 'ASC' | 'DESC' }

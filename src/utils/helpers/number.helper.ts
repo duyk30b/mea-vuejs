@@ -1,4 +1,4 @@
-export const formatMoney = (options: {
+export const formatNumber = (options: {
   number: number
   fixed?: number
   part?: number

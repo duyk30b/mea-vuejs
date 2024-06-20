@@ -2,7 +2,9 @@
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { InvoiceStatus } from '../../modules/invoice'
 
-defineProps<{ status: InvoiceStatus }>()
+const props = withDefaults(defineProps<{ status: InvoiceStatus }>(), {
+  status: InvoiceStatus.Draft,
+})
 </script>
 
 <template>
@@ -12,11 +14,11 @@ defineProps<{ status: InvoiceStatus }>()
     </template>
     Nháp
   </a-tag>
-  <a-tag v-if="status === InvoiceStatus.AwaitingShipment" color="processing">
+  <a-tag v-if="status === InvoiceStatus.Prepayment" color="processing">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
-    Chờ gửi hàng
+    Tạm ứng
   </a-tag>
   <a-tag v-if="status === InvoiceStatus.Debt" color="error">
     <template #icon>

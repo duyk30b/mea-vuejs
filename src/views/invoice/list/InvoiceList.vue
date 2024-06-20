@@ -8,17 +8,18 @@ import {
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputOptions } from '../../../common/vue-form'
+import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
-import { Invoice, InvoiceService, InvoiceStatus } from '../../../modules/invoice'
+import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceStatusTag.vue'
-import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.store'
+import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.ref'
 import ModalInvoiceListSettingScreen from './ModalInvoiceListSettingScreen.vue'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -31,7 +32,6 @@ const { permissionIdMap } = meStore
 
 const invoiceList = ref<Invoice[]>([])
 const customerList = ref<Customer[]>([])
-const customerSearchText = ref('')
 
 const dataLoading = ref(false)
 const page = ref(1)
@@ -52,7 +52,7 @@ const startFetchData = async () => {
     const fromTime = timeRanger.value?.[0].startOf('day').toDate()
     const toTime = timeRanger.value?.[1].endOf('day').toDate()
 
-    const { data, meta } = await InvoiceService.pagination({
+    const { data, meta } = await InvoiceApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: { customer: true },
@@ -107,17 +107,12 @@ const searchingCustomer = async (text: string) => {
 
 const selectCustomer = async (data?: Customer) => {
   customerId.value = data?.id
-  customerSearchText.value = data?.fullName || ''
   await startFetchData()
 }
 
 const startSearch = async () => {
   page.value = 1
   await startFetchData()
-}
-
-const handleSelectInvoiceStatus = async (value?: InvoiceStatus) => {
-  await startSearch()
 }
 
 const handleChangeTime = async (value: any) => {
@@ -163,16 +158,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block"><ScheduleOutlined class="mr-1" /> Danh sách hóa đơn</div>
-      <a-button
-        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
-        type="primary"
-        @click="$router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
-        Tạo hóa đơn mới
-      </a-button>
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
+          color="blue"
+          @click="
+            $router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })
+          "
+        >
+          <template #icon>
+            <PlusOutlined />
+          </template>
+          Tạo hóa đơn mới
+        </VueButton>
+      </div>
     </div>
     <div class="page-header-setting">
       <!-- <a-dropdown trigger="click">
@@ -194,23 +193,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div>Tên khách hàng</div>
         <div>
           <InputOptions
-            ref="inputSearchCustomer"
-            v-model:searchText="customerSearchText"
-            :options="customerList"
+            ref="inputOptionsCustomer"
+            :options="customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
             :maxHeight="260"
-            placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-            @selectItem="selectCustomer"
-            @update:searchText="searchingCustomer"
+            placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+            @selectItem="({ data }) => selectCustomer(data)"
+            @update:text="searchingCustomer"
           >
-            <template
-              #each="{
-                item: { fullName, phone, addressProvince, addressDistrict, addressWard, birthday },
-              }"
-            >
+            <template #option="{ item: { data } }">
               <div>
-                <b>{{ fullName }}</b> - {{ phone }} - {{ timeToText(birthday, 'DD/MM/YYYY') }}
+                <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
-              <div>{{ addressWard }} - {{ addressDistrict }} - {{ addressProvince }}</div>
+              <div>
+                {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
+              </div>
             </template>
           </InputOptions>
         </div>
@@ -231,25 +228,26 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
-        <a-select
-          v-model:value="invoiceStatus"
-          allow-clear
-          class="w-full"
-          placeholder="Tất cả"
-          @change="handleSelectInvoiceStatus"
-        >
-          <a-select-option :value="null"> Tất cả </a-select-option>
-          <a-select-option :value="InvoiceStatus.Draft"> Nháp </a-select-option>
-          <a-select-option :value="InvoiceStatus.AwaitingShipment"> Chờ gửi hàng </a-select-option>
-          <a-select-option :value="InvoiceStatus.Debt"> Nợ </a-select-option>
-          <a-select-option :value="InvoiceStatus.Success"> Hoàn thành </a-select-option>
-          <a-select-option :value="InvoiceStatus.Refund"> Hoàn trả </a-select-option>
-        </a-select>
+        <div>
+          <VueSelect
+            v-model:value="invoiceStatus"
+            :options="[
+              { text: 'Tất cả', value: null },
+              { text: 'Nháp', value: InvoiceStatus.Draft },
+              { text: 'Tạm ứng (Chờ gửi hàng)', value: InvoiceStatus.Prepayment },
+              { text: 'Nợ (Đã gửi hàng)', value: InvoiceStatus.Debt },
+              { text: 'Hoàn thành', value: InvoiceStatus.Success },
+              { text: 'Hoàn trả', value: InvoiceStatus.Refund },
+            ]"
+            @update:value="(e) => startSearch()"
+          >
+          </VueSelect>
+        </div>
       </div>
     </div>
 
-    <div v-if="isMobile" class="page-main-list">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="page-main-list table-wrapper">
+      <table>
         <thead>
           <tr>
             <th>Khách hàng</th>
@@ -283,20 +281,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div class="font-medium text-justify">
                 {{ invoice.customer?.fullName }}
-                <a class="text-base" @click="modalCustomerDetail?.openModal(invoice.customer!)">
+                <a class="text-base" @click="modalCustomerDetail?.openModal(invoice.customerId)">
                   <FileSearchOutlined />
                 </a>
               </div>
               <div class="text-xs">
                 {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
+              <div v-if="invoice.customer?.note" class="text-xs italic">
+                {{ invoice.customer?.note }}
+              </div>
             </td>
             <td class="text-right">
-              <div>{{ formatMoney(invoice.revenue) }}</div>
+              <div>{{ formatMoney(invoice.totalMoney) }}</div>
               <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+              <div v-if="invoice.status === InvoiceStatus.Prepayment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>
@@ -319,7 +320,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -369,17 +370,22 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
-              {{ invoice.customer?.fullName }}
-              <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customer!)">
-                <FileSearchOutlined />
-              </a>
+              <div>
+                {{ invoice.customer?.fullName }}
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customerId)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
+              <div v-if="invoice.customer?.note" class="text-xs italic">
+                {{ invoice.customer?.note }}
+              </div>
             </td>
             <td class="text-right">
-              <div>{{ formatMoney(invoice.revenue) }}</div>
+              <div>{{ formatMoney(invoice.totalMoney) }}</div>
               <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(invoice.debt) }}
               </div>
-              <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+              <div v-if="invoice.status === InvoiceStatus.Prepayment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(invoice.paid) }}
               </div>
             </td>

@@ -56,8 +56,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         Danh sách khách nợ: (Tổng nợ {{ formatMoney(sumDebt) }})
       </span>
     </div>
-    <div class="mt-2">
-      <table class="table-mobile">
+    <div class="mt-2 table-wrapper">
+      <table class="">
         <thead>
           <tr>
             <th>#</th>

@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
-import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
+import { InputHint, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useScreenStore } from '../../../../modules/_me/screen.store'
 import { DiscountType } from '../../../../modules/enum'
-import { InvoiceItem } from '../../../../modules/invoice-item/invoice-item.model'
+import { InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { convertViToEn } from '../../../../utils'
+import { customFilter } from '../../../../utils'
+import { invoiceItem } from './invoice-item.ref'
 
-const emit = defineEmits<{ (e: 'addInvoiceItem', value: InvoiceItem): void }>()
-
+// cần dùng tabskey chứ không phải invoiceItemType vì ban đầu chưa có invoiceItem
+// Chế độ hiển thị thay đổi ngay khi di chuyển tab
 const props = withDefaults(defineProps<{ tabsKey: 'product' | 'procedure' }>(), {
   tabsKey: 'product',
 })
@@ -20,21 +20,7 @@ const { formatMoney } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const invoiceItem = ref<InvoiceItem>(InvoiceItem.blank())
-const rootHintUsage = ref('')
-
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
-
-const setInvoiceItem = (data: InvoiceItem) => {
-  invoiceItem.value = data
-  rootHintUsage.value = data.product?.hintUsage || ''
-  productOutSellType.value = 'retailPrice'
-}
-
-const handleChangeSelectUnit = (rate: number) => {
-  const unit = invoiceItem.value.product?.unit.find((i) => i.rate === rate)
-  invoiceItem.value.unit = { name: unit!.name, rate: unit!.rate }
-}
 
 const handleChangeInvoiceProductSellType = (
   type: 'retailPrice' | 'wholesalePrice' | 'costPrice'
@@ -57,7 +43,7 @@ const handleChangeInvoiceProductSellType = (
 }
 
 const handleChangeUnitDiscountMoney = (data: number) => {
-  const discountMoney = data / invoiceItem.value.unit.rate
+  const discountMoney = data / invoiceItem.value.unitRate
   const expectedPrice = invoiceItem.value.expectedPrice || 0
   const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
   invoiceItem.value.discountPercent = discountPercent
@@ -74,7 +60,7 @@ const handleChangeDiscountPercent = (data: number) => {
 }
 
 const handleChangeUnitActualPrice = (data: number) => {
-  const actualPrice = data / invoiceItem.value.unit.rate
+  const actualPrice = data / invoiceItem.value.unitRate
   const expectedPrice = invoiceItem.value.expectedPrice
   const discountMoney = expectedPrice - actualPrice
   const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
@@ -84,36 +70,30 @@ const handleChangeUnitActualPrice = (data: number) => {
   invoiceItem.value.actualPrice = actualPrice
 }
 
-const filterOption = (input: string, option: any) => {
-  const inputText = convertViToEn(input).toLowerCase()
-  const optionLabel = convertViToEn(option.label || option.value).toLowerCase()
-  return optionLabel.indexOf(inputText) >= 0
+const clear = () => {
+  productOutSellType.value = 'retailPrice'
 }
 
-const addInvoiceItem = () => {
-  const ii = InvoiceItem.clone(invoiceItem.value)
-  emit('addInvoiceItem', ii)
-}
-
-defineExpose({ setInvoiceItem })
+defineExpose({ clear })
 </script>
 
 <template>
-  <form class="flex flex-wrap gap-4" @submit.prevent="(e) => addInvoiceItem()">
+  <div class="flex flex-wrap gap-4">
     <div
       v-if="tabsKey === 'product' && screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>Hướng dẫn sử dụng</div>
-      <a-auto-complete
-        v-model:value="invoiceItem.hintUsage"
-        :filter-option="filterOption"
-        :options="[
-          { value: rootHintUsage },
-          ...screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i })),
-        ]"
-        class="w-full"
-      />
+      <div>
+        <InputHint
+          v-model:value="invoiceItem.hintUsage"
+          :options="[
+            ...(invoiceItem.product?.hintUsage ? [invoiceItem.product?.hintUsage] : []),
+            ...screenStore.PRODUCT_HINT_USAGE,
+          ]"
+          :logic-filter="(item: string, text: string) => customFilter(item, text)"
+        />
+      </div>
     </div>
 
     <div
@@ -122,34 +102,31 @@ defineExpose({ setInvoiceItem })
     >
       <div>
         Giá niêm yết
-        <span v-if="invoiceItem.unit.rate !== 1">
-          (Quy đổi: <b>{{ formatMoney(invoiceItem.expectedPrice) }} / </b>
+        <span v-if="invoiceItem.unitRate !== 1">
+          (<b>{{ formatMoney(invoiceItem.expectedPrice) }} / </b>
           {{ invoiceItem?.product?.unitBasicName }})
         </span>
       </div>
       <div class="flex">
-        <a-select
-          v-if="tabsKey === 'product'"
-          v-model:value="productOutSellType"
-          style="width: 120px"
-          @change="handleChangeInvoiceProductSellType"
-        >
-          <a-select-option v-if="screenStore.SYSTEM_SETTING.retailPrice" value="retailPrice">
-            Giá bán lẻ
-          </a-select-option>
-          <a-select-option v-if="screenStore.SYSTEM_SETTING.wholesalePrice" value="wholesalePrice">
-            Giá bán sỉ
-          </a-select-option>
-          <a-select-option
-            v-if="
-              permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
+        <div v-if="tabsKey === 'product'" style="width: 120px">
+          <VueSelect
+            v-model:value="productOutSellType"
+            :options="[
+              ...(permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
               screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
-            "
-            value="costPrice"
+                ? [{ value: 'costPrice', text: 'Giá nhập' }]
+                : []),
+              ...(screenStore.SYSTEM_SETTING.wholesalePrice
+                ? [{ value: 'wholesalePrice', text: 'Giá bán sỉ' }]
+                : []),
+              ...(screenStore.SYSTEM_SETTING.retailPrice
+                ? [{ value: 'retailPrice', text: 'Giá bán lẻ' }]
+                : []),
+            ]"
+            @selectItem="({ value }) => handleChangeInvoiceProductSellType(value)"
           >
-            Giá nhập
-          </a-select-option>
-        </a-select>
+          </VueSelect>
+        </div>
         <div class="flex-1">
           <InputMoney :value="invoiceItem.unitExpectedPrice" disabled />
         </div>
@@ -163,36 +140,45 @@ defineExpose({ setInvoiceItem })
       <div>
         Số lượng
         <span
-          v-if="invoiceItem.productId && invoiceItem.product?.hasManageQuantity"
+          v-if="invoiceItem.type === InvoiceItemType.ProductHasManageQuantity"
           :class="
             invoiceItem.quantity > (invoiceItem.product?.quantity || 0)
               ? 'text-red-500 font-bold'
               : ''
           "
         >
-          (tồn: <b>{{ invoiceItem.product?.unitQuantity || 0 }}</b>)
+          (tồn: <b>{{ (invoiceItem.product?.quantity || 0) / invoiceItem.unitRate }}</b
+          >)
         </span>
-        <span v-if="invoiceItem.unit.rate !== 1">
-          (Quy đổi: <b>{{ invoiceItem.quantity }}</b> {{ invoiceItem?.product?.unitBasicName }})
+        <span
+          v-if="invoiceItem.type === InvoiceItemType.Batch"
+          :class="
+            invoiceItem.quantity > (invoiceItem.batch?.quantity || 0)
+              ? 'text-red-500 font-bold'
+              : ''
+          "
+        >
+          (tồn: <b>{{ (invoiceItem.batch?.quantity || 0) / invoiceItem.unitRate }}</b
+          >)
+        </span>
+        <span v-if="invoiceItem.unitRate !== 1">
+          (<b>{{ invoiceItem.quantity }}</b> {{ invoiceItem?.product?.unitBasicName }})
         </span>
       </div>
       <div class="flex">
-        <a-select
-          :value="invoiceItem.unit.rate"
-          style="flex-basis: 80px"
-          :disabled="(invoiceItem?.product?.unit!.length || 0) <= 1"
-          @change="handleChangeSelectUnit"
-        >
-          <a-select-option
-            v-for="(item, index) in invoiceItem.product?.unit || [{ name: '', rate: 1 }]"
-            :key="index"
-            :value="item.rate"
+        <div style="width: 120px">
+          <VueSelect
+            v-model:value="invoiceItem.unitRate"
+            :disabled="(invoiceItem.product?.unitObject.length || 0) <= 1"
+            :options="
+              invoiceItem.product?.unitObject.map((i) => ({ value: i.rate, text: i.name, data: i }))
+            "
+            required
           >
-            {{ item.name }}
-          </a-select-option>
-        </a-select>
+          </VueSelect>
+        </div>
         <div class="flex-1">
-          <InputNumber v-model:value="invoiceItem.unitQuantity" />
+          <InputNumber v-model:value="invoiceItem.unitQuantity" :validate="{ gt: 0 }" />
         </div>
       </div>
     </div>
@@ -207,10 +193,10 @@ defineExpose({ setInvoiceItem })
           v-if="
             (invoiceItem.discountType === DiscountType.Percent &&
               invoiceItem.discountPercent !== 0) ||
-            invoiceItem.unit.rate > 1
+            invoiceItem.unitRate > 1
           "
         >
-          <b>(Quy đổi: {{ formatMoney(invoiceItem.discountMoney) }}</b>
+          (<b>{{ formatMoney(invoiceItem.discountMoney) }}</b>
           {{ invoiceItem.productId ? ' / ' + invoiceItem?.product?.unitBasicName : '' }}
           )
         </span>
@@ -245,29 +231,20 @@ defineExpose({ setInvoiceItem })
     >
       <div>
         Đơn giá
-        <span v-if="invoiceItem.unit.rate !== 1">
-          (Quy đổi: <b>{{ formatMoney(invoiceItem.actualPrice) }} / </b>
+        <span v-if="invoiceItem.unitRate !== 1">
+          (<b>{{ formatMoney(invoiceItem.actualPrice) }} / </b>
           {{ invoiceItem.product?.unitBasicName }})
         </span>
       </div>
       <div style="width: 100%">
         <InputMoney
           :value="invoiceItem.unitActualPrice"
-          :prepend="invoiceItem.unit.rate !== 1 ? invoiceItem.unit.name : ''"
+          :prepend="invoiceItem.unitRate !== 1 ? invoiceItem.unitName : ''"
           @update:value="handleChangeUnitActualPrice"
         />
       </div>
     </div>
-
-    <div class="grow basis-[90%] text-center">
-      <a-button type="primary" htmlType="submit">
-        <template #icon>
-          <PlusOutlined />
-        </template>
-        Thêm vào đơn
-      </a-button>
-    </div>
-  </form>
+  </div>
 </template>
 
 <style lang="scss"></style>

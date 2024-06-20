@@ -49,13 +49,22 @@ export class Customer {
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
-  createdAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
+
+  get addressString() {
+    return [this.addressWard, this.addressDistrict, this.addressProvince]
+      .filter((i) => !!i)
+      .join(' - ')
+      .replace('Tỉnh', '')
+      .replace('Thành phố', '')
+      .replace('Quận ', '')
+      .replace('Huyện ', '')
+      .replace('Phường ', '')
+      .replace('Xã ', '')
+  }
 
   static init(): Customer {
     const ins = new Customer()
@@ -67,6 +76,12 @@ export class Customer {
 
   static blank(): Customer {
     const ins = Customer.init()
+    return ins
+  }
+
+  static toBasic(root: Customer) {
+    const ins = new Customer()
+    Object.assign(ins, root)
     return ins
   }
 

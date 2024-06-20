@@ -1,3 +1,23 @@
+<script lang="ts" setup>
+import type { PropType, StyleValue } from 'vue'
+
+const props = withDefaults(
+  defineProps<{
+    show: boolean
+    style?: StyleValue
+  }>(),
+  {
+    show: false,
+    style: () => ({ width: '800px' }),
+  }
+)
+const emit = defineEmits<{ (e: 'update:show', value: boolean): void }>()
+
+const closeModal = () => {
+  emit('update:show', false)
+}
+</script>
+
 <template>
   <Teleport to="body">
     <Transition name="modal">
@@ -16,26 +36,6 @@
     </Transition>
   </Teleport>
 </template>
-
-<script lang="ts">
-import type { PropType, StyleValue } from 'vue'
-
-export default {
-  props: {
-    show: { type: Boolean, default: () => false },
-    style: {
-      type: [String, Object] as PropType<StyleValue>,
-      default: () => ({ width: '800px' }),
-    },
-  },
-  emits: ['update:show'],
-  methods: {
-    closeModal() {
-      this.$emit('update:show', false)
-    },
-  },
-}
-</script>
 
 <style>
 .modal-mask {

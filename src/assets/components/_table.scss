@@ -1,11 +1,10 @@
 .table-wrapper {
   overflow-x: auto;
 
-  table {
-    counter-reset: row-index;
+  &>table {
     color: #333;
     font-size: 14px;
-    min-width: 100%;
+    width: 100%;
 
     thead {
       background-color: var(--color-table-thead-bg);
@@ -13,23 +12,26 @@
       border: 1px solid var(--color-table-thead-bg);
 
       th {
-        text-align: center;
-        padding: 0.8em;
+        padding: 0.4rem 0.5rem;
+      }
+
+      &.thead-basic {
+        background-color: #fff;
+        color: #333;
+        border: 1px solid #e8e8e8;
       }
     }
 
     tbody {
 
       tr {
-        counter-increment: row-index;
-
         &:nth-child(even) {
           background-color: var(--color-table-td-even-bg);
         }
 
         td {
           border: 1px solid #e8e8e8;
-          padding: 0.8em;
+          padding: 0.4rem 0.4rem;
         }
 
         td.index {
@@ -41,73 +43,6 @@
             min-width: 1em;
           }
         }
-      }
-    }
-  }
-
-  table.screen-setting {
-    thead {
-      th {
-        text-align: left;
-        font-weight: 400;
-        padding: 0.4em 0.8em;
-      }
-    }
-  }
-}
-
-table.table-mobile {
-  width: 100%;
-
-  thead {
-    background-color: var(--color-table-thead-bg);
-    color: var(--color-table-thead-text);
-    border: 1px solid var(--color-table-thead-bg);
-
-    th {
-      padding: 0.5rem 0.5rem;
-    }
-  }
-
-  tbody {
-    tr {
-      &:nth-child(even) {
-        background-color: var(--color-table-td-even-bg);
-      }
-
-      td {
-        word-break: break-word;
-        border: 1px solid #e8e8e8;
-        padding: 0.5rem;
-      }
-    }
-  }
-}
-
-table.table-setting {
-  width: 100%;
-
-  thead {
-    background-color: var(--color-table-thead-bg);
-    color: var(--color-table-thead-text);
-    border: 1px solid var(--color-table-thead-bg);
-
-    th {
-      padding: 0.4rem 0.5rem;
-      text-align: left;
-    }
-  }
-
-  tbody {
-    tr {
-      &:nth-child(even) {
-        background-color: var(--color-table-td-even-bg);
-      }
-
-      td {
-        word-break: break-word;
-        border: 1px solid #e8e8e8;
-        padding: 0.5rem;
       }
     }
   }

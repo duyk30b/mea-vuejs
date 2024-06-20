@@ -2,13 +2,13 @@
 import type { ChartData, ChartOptions } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { StatisticService } from '../../../modules/statistics'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ProductApi } from '../../../modules/product'
 import { VueSelect } from '../../../common/vue-form'
+import { useScreenStore } from '../../../modules/_me/screen.store'
+import { StatisticService } from '../../../modules/statistics'
 
 const screenStore = useScreenStore()
 const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = screenStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
@@ -48,23 +48,23 @@ const startFetchData = async () => {
   try {
     loaded.value = false
     const data = await StatisticService.topProductHightMoney({
-      limit: 10,
+      limit: isMobile ? 10 : 20,
       orderBy: typeHighMoney.value,
     })
 
-    barData.labels = Array.from({ length: 10 }, (_, i) => '')
+    barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
     barData.datasets = [
       {
         type: 'bar',
         label: 'Tiền vốn',
-        data: Array.from({ length: 10 }, (_, i) => 0),
+        data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
         borderWidth: 1,
         stack: 'Stack 0',
       },
       {
         type: 'bar',
         label: 'Lãi dự kiến',
-        data: Array.from({ length: 10 }, (_, i) => 0),
+        data: Array.from({ length: isMobile ? 10 : 20 }, (_, i) => 0),
         borderWidth: 1,
         stack: 'Stack 0',
       },
@@ -105,12 +105,12 @@ onBeforeMount(async () => await startFetchData())
       <span style="font-size: 18px; font-weight: 500"> Hàng tồn giá trị cao: </span>
       <div style="width: 120px">
         <VueSelect
-          :value="typeHighMoney"
+          v-model:value="typeHighMoney"
           :options="[
             { text: 'Tiền vốn', value: 'costAmount' },
             { text: 'Tiền bán', value: 'sumRetailMoney' },
           ]"
-          @update:value="handleChangeTypeHighMoney"
+          @update:value="startFetchData"
         />
       </div>
     </div>

@@ -5,7 +5,7 @@ import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.rep
 import { arrayToKeyArray } from '../../utils'
 import { Batch } from '../batch'
 import { ProductApi } from './product.api'
-import type { ProductPaginationQuery } from './product.dto'
+import type { ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
 
 export const useProductStore = defineStore('product-store', {
@@ -55,7 +55,7 @@ export const useProductStore = defineStore('product-store', {
       })
       const productList = Product.fromObjects(productPagination.data)
 
-      if (relation?.batches) {
+      if (relation?.batchList) {
         // TODO
         // const productIdList = productList.map((i) => i.id)
         // const batchObjects = await BatchDB.findManyBy({
@@ -79,9 +79,29 @@ export const useProductStore = defineStore('product-store', {
       }
     },
 
+    async list(params: ProductListQuery) {
+      const { filter, limit, sort } = params
+      const objects = await ProductDB.findMany({
+        limit,
+        condition: {
+          id: filter?.id,
+          isActive: filter?.isActive,
+          group: filter?.group,
+          quantity: filter?.quantity,
+        },
+        sort,
+      })
+      return Product.fromObjects(objects)
+    },
+
+    async getOne(id: number) {
+      const product = await ProductDB.findOneByKey(id)
+      return product ? Product.fromObject(product) : null
+    },
+
     async createOne(instance: Product) {
       const response = await ProductApi.createOne(instance)
-      await ProductDB.insertOne(response)
+      await ProductDB.upsertOne(response)
       this.timeSync = Date.now()
       return response
     },

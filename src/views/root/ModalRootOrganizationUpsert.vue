@@ -36,7 +36,7 @@ let firstLoad = true
 
 const openModal = async (instance?: Organization) => {
   showModal.value = true
-  organization.value = instance ? Organization.fromInstance(instance) : Organization.blank()
+  organization.value = instance ? Organization.toBasic(instance) : Organization.blank()
   permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
 
   if (firstLoad === true) {

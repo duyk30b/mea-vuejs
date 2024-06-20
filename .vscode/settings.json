@@ -4,6 +4,7 @@
   "workbench.tree.indent": 16,
   "editor.tabSize": 2,
   "eslint.validate": ["javascript", "javascriptreact", "vue"],
+  "workbench.editor.wrapTabs": true,
   "window.title": "${rootName}",
   "editor.inlayHints.fontSize": 10,
   "workbench.colorCustomizations": {
@@ -34,6 +35,7 @@
     "Axios",
     "beforeinput",
     "chartjs",
+    "ckeditor",
     "colspan",
     "fontawesome",
     "fortawesome",

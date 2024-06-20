@@ -2,9 +2,9 @@
 import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import { OrganizationService } from '../../../modules/organization'
-import { ReceiptProcessType, useScreenStore } from '../../../modules/_me/screen.store'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -54,7 +54,7 @@ defineExpose({ openModal })
     @ok="handleSave"
   >
     <div class="table-wrapper">
-      <table class="screen-setting">
+      <table>
         <thead>
           <tr>
             <th>Thông tin hàng hóa</th>
@@ -142,39 +142,28 @@ defineExpose({ openModal })
         </tbody>
         <thead>
           <tr>
-            <th>Nhập hàng và thanh toán</th>
+            <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
-              <a-radio-group v-model:value="settingDisplay.receiptProcessType">
-                <a-radio
-                  style="display: flex; line-height: 36px"
-                  :value="ReceiptProcessType.NoDebt"
-                >
-                  Phiếu nhập hàng không nợ: Nhập hàng và thanh toán đồng thời
-                </a-radio>
-                <a-radio
-                  style="display: flex; line-height: 36px"
-                  :value="ReceiptProcessType.HasDebt"
-                >
-                  Phiếu nhập hàng có nợ: Nhập hàng riêng, thanh toán riêng
-                </a-radio>
-              </a-radio-group>
+              <a-checkbox v-model:checked="settingDisplay.process.sendProductAndPayment">
+                Hiển thị nút: Nhập hàng và thanh toán
+              </a-checkbox>
             </td>
           </tr>
-        </tbody>
-        <thead>
-          <tr>
-            <th>Chức năng</th>
-          </tr>
-        </thead>
-        <tbody>
           <tr>
             <td>
-              <a-checkbox v-model:checked="settingDisplay.function.forceEdit">
-                Cho phép sửa mọi phiếu hàng
+              <a-checkbox v-model:checked="settingDisplay.process.sendProductAndDebit">
+                Hiển thị nút: Nhập hàng và ghi nợ
+              </a-checkbox>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <a-checkbox v-model:checked="settingDisplay.process.forceEdit">
+                Cho phép sửa mọi phiếu hàng (kể cả phiếu hàng đã hoàn thành)
               </a-checkbox>
             </td>
           </tr>

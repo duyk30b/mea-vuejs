@@ -11,12 +11,11 @@ import {
 import { storeToRefs } from 'pinia'
 import { onBeforeMount, onMounted, ref, watch } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../../common/vue-form'
+import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore, type Product } from '../../../modules/product'
-import { timeToText } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
@@ -58,12 +57,10 @@ const startFetchData = async () => {
     const data = await productStore.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { batches: true },
       filter: {
         group: group.value ? group.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
-        batches: { quantity: { NOT: 0 } },
       },
       sort: sortValue.value
         ? {
@@ -105,20 +102,6 @@ onMounted(async () => {
 const startSearch = async () => {
   page.value = 1
   await startFetchData()
-}
-
-const handleInputSearchText = (event: any) => {
-  searchText.value = event.target.value
-  startSearch()
-}
-
-const handleSelectGroup = async () => {
-  await startSearch()
-}
-
-const handleSelectStatus = async (value: 1 | 0 | '') => {
-  isActive.value = value
-  await startSearch()
 }
 
 const changeSort = async (value: 'expiryDate' | 'id' | 'brandName' | 'quantity') => {
@@ -203,52 +186,42 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-main-options">
       <div style="flex: 2; flex-basis: 500px">
         <div>Tìm kiếm</div>
-        <!-- <span class="ant-input-affix-wrapper">
-          <input :value="searchText" @input="handleInputSearchText" allow-clear enter-button class="ant-input w-full"
-            placeholder="Tìm kiếm bằng tên hoặc hoạt chất" />
-        </span> -->
-        <a-input-search
-          :value="searchText"
-          allow-clear
-          enter-button
-          placeholder="Tìm kiếm bằng tên hoặc hoạt chất"
-          style="width: 100%"
-          @input="handleInputSearchText"
-          @search="startSearch"
-        />
+        <div>
+          <InputText
+            v-model:value="searchText"
+            placeholder="Tìm kiếm bằng tên hoặc hoạt chất"
+            @update:value="startSearch"
+          />
+        </div>
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn nhóm hàng</div>
-        <a-select
-          v-model:value="group"
-          allow-clear
-          class="w-full"
-          placeholder="Tất cả"
-          @change="handleSelectGroup"
-        >
-          <a-select-option value=""> Tất cả </a-select-option>
-          <a-select-option
-            v-for="(text, value) in screenStore.PRODUCT_GROUP"
-            :key="value"
-            :value="value"
-          >
-            {{ text }}
-          </a-select-option>
-        </a-select>
+        <div>
+          <VueSelect
+            v-model:value="group"
+            :options="[
+              { value: '', text: 'Tất cả' },
+              ...Object.entries(screenStore.PRODUCT_GROUP).map(([value, text]) => ({
+                value,
+                text,
+              })),
+            ]"
+            @update:value="startSearch"
+          />
+        </div>
       </div>
-
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            :value="isActive"
+            v-model:value="isActive"
             :options="[
               { text: 'Tất cả', value: '' },
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="handleSelectStatus"
+            @update:value="startSearch"
           />
         </div>
       </div>
@@ -328,7 +301,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   {{ product.brandName }}
                 </div>
                 <div v-if="screenStore.SCREEN_PRODUCT_LIST.detail">
-                  <a @click="modalProductDetail?.openModal(product)">
+                  <a @click="modalProductDetail?.openModal(product.id)">
                     <FileSearchOutlined />
                   </a>
                 </div>
@@ -349,16 +322,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 >
                   N: {{ formatMoney(product.unitCostPrice) }}
                 </div>
-                <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" style="width: 20%">
+                <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" style="width: 25%">
                   S: {{ formatMoney(product.unitWholesalePrice) }}
                 </div>
-                <div v-if="screenStore.SYSTEM_SETTING.retailPrice" style="width: 20%">
+                <div v-if="screenStore.SYSTEM_SETTING.retailPrice" style="width: 25%">
                   L: {{ formatMoney(product.unitRetailPrice) }}
                 </div>
               </div>
             </div>
             <div v-if="screenStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
-              <span class="ml-1 text-xs"> {{ product.unitName }} </span>
+              <span class="ml-1 text-xs"> {{ product.unitDefaultName }} </span>
             </div>
             <div
               style="width: 40px; font-size: 16px; font-weight: 500; text-align: right"
@@ -383,7 +356,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -483,7 +456,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="screenStore.SCREEN_PRODUCT_LIST.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(product)"
+                  @click="modalProductDetail?.openModal(product.id)"
                 >
                   <FileSearchOutlined />
                 </a>
@@ -496,9 +469,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               {{ screenStore.PRODUCT_GROUP[product.group!] }}
             </td>
             <td v-if="screenStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
-              {{ product.unitName }}
+              {{ product.unitDefaultName }}
             </td>
-            <td class="text-right" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
+            <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
               {{ product.unitQuantity || 0 }}
             </td>
             <td

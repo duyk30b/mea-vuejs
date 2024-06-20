@@ -1,7 +1,7 @@
-import { Expose } from 'class-transformer'
+import { Expose, instanceToPlain } from 'class-transformer'
 import { BaseModel } from '../base.model'
 import { UNKNOWN_KEY } from '../enum'
-import { FROM_PLAIN } from '../_base/base-expose'
+import { FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 
 export class InvoiceExpense extends BaseModel {
   @Expose({ groups: [FROM_PLAIN] })
@@ -28,5 +28,23 @@ export class InvoiceExpense extends BaseModel {
   static blank(): InvoiceExpense {
     const ins = InvoiceExpense.init()
     return ins
+  }
+
+  static toPlain(
+    instance: InvoiceExpense,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
+
+  static toPlains(
+    instances: InvoiceExpense[],
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instances.map((i) => InvoiceExpense.toPlain(i, type))
   }
 }

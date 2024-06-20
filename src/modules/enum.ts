@@ -32,10 +32,11 @@ export enum DiscountType {
 }
 
 export enum PaymentType {
-  ReceiveRefund = -1, // Nhận tiền hoàn trả
-  Prepayment = 0, // Thanh toán trước mua hàng
-  ImmediatePayment = 1, // Thanh toán ngay khi mua hàng
-  PayDebt = 2, // Trả nợ (thanh toán sau mua hàng )
+  Prepayment = 1, // Thanh toán trước mua hàng
+  ReceiveRefund = 2, // Nhận tiền hoàn trả
+  Close = 3, // Đóng hồ sơ
+  PayDebt = 4, // Trả nợ (thanh toán sau mua hàng )
+  Reopen = 5, // Mở lại hồ sơ
 }
 
 export type UnitType = { name: string; rate: number; default?: boolean }
@@ -43,4 +44,27 @@ export type UnitType = { name: string; rate: number; default?: boolean }
 export enum MovementType {
   Receipt = 1,
   Invoice = 2,
+  Visit = 3,
+}
+
+export enum VoucherType {
+  Receipt = 1,
+  Invoice = 2,
+  Visit = 3,
+}
+
+export enum DeliveryStatus {
+  OutOfStock = 0,
+  Pending = 1,
+  Delivered = 2,
+  PartiallyReturned = 3,
+  FullyReturned = 4,
+}
+
+export enum PaymentViewType {
+  Prepayment = 1,
+  SendProductAndPayment = 2,
+  PayDebt = 3,
+  RefundOverpaid = 4,
+  Success = 5,
 }

@@ -7,7 +7,7 @@ export class OrganizationService {
   static async info() {
     try {
       const organization = await OrganizationApi.info()
-      useMeStore().organization = Organization.fromInstance(organization)
+      useMeStore().organization = Organization.toBasic(organization)
       return organization
     } catch (error) {
       console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
@@ -16,13 +16,9 @@ export class OrganizationService {
   }
 
   static async updateInfo(plain: Partial<Organization>) {
-    try {
-      const organization = await OrganizationApi.updateInfo(plain)
-      useMeStore().organization = Organization.fromInstance(organization)
-      return organization
-    } catch (error) {
-      console.log('🚀 ~ OrganizationService ~ updateInfo ~ error:', error)
-    }
+    const organization = await OrganizationApi.updateInfo(plain)
+    useMeStore().organization = Organization.toBasic(organization)
+    return organization
   }
 
   static async saveSettings(type: ScreenSettingKey, plain: string) {

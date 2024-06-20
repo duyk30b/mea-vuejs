@@ -14,6 +14,9 @@ export class Role {
   @Expose()
   isActive: 0 | 1
 
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
+
   static init(): Role {
     const ins = new Role()
     ins.isActive = 1

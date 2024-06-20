@@ -83,7 +83,7 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
   </div>
   <div class="page-main">
     <div class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>ID</th>

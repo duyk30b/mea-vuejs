@@ -31,6 +31,7 @@ table {
     tr {
       th {
         white-space: nowrap;
+        text-align: center;
       }
     }
   }
@@ -53,4 +54,22 @@ select {
 
 input {
   font-size: 16px !important;
+  outline: none;
+
+  &[type='number'] {
+    text-align: right;
+  }
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  margin-left: 1rem;
+}
+
+[contenteditable=true]:empty:before {
+  content: attr(placeholder);
+  opacity: 0.7;
+  pointer-events: none;
+  display: block;
+  /* For Firefox */
 }

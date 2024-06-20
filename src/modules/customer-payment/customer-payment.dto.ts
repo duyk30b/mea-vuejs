@@ -1,16 +1,24 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { PaymentType, VoucherType } from '../enum'
 
 export interface CustomerPaymentPayDebtBody {
   customerId: number
   note: string
-  invoicePayments: { invoiceId: number; money: number }[]
+  invoicePaymentList: { invoiceId: number; money: number }[]
+  visitPaymentList: { visitId: number; money: number }[]
 }
 
 export class CustomerPaymentGetQuery {
   page: number
   limit?: number
   relation?: {}
-  filter: { customerId: number }
+  filter: {
+    customerId?: number
+    voucherId?: number
+    voucherType?: VoucherType
+    paymentType?: PaymentType
+  }
+
   sort?: { id?: 'ASC' | 'DESC' }
 
   static toQuery(instance: Partial<CustomerPaymentGetQuery>) {

@@ -1,14 +1,174 @@
+<script lang="ts" setup>
+import { nextTick, ref, watch } from 'vue'
+import IconClearCircle from '../icon/IconClearCircle.vue'
+import IconClearOutline from '../icon/IconClearOutline.vue'
+import IconTriangleUp from '../icon/IconTriangleUp.vue'
+import IconTriangleDown from '../icon/IconTriangleDown.vue'
+
+const props = withDefaults(
+  defineProps<{
+    value?: string | number | boolean | null
+    options: { value: any; text?: string; data?: any }[]
+    disabled?: boolean
+    placeholder?: string
+    maxHeight?: number
+    required?: boolean
+    iconClear?: boolean
+  }>(),
+  {
+    value: null,
+    options: () => [],
+    disabled: false,
+    placeholder: '',
+    maxHeight: 300,
+    required: false,
+    iconClear: false,
+  }
+)
+
+const emit = defineEmits<{
+  (e: 'update:value', value: string | number | boolean | null | undefined): void
+  (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
+}>()
+
+const inputRef = ref<HTMLInputElement>()
+const indexFocus = ref<number>(-1)
+const showOptions = ref<boolean>(false)
+const itemSelected = ref<{ value?: any; text?: any; data?: any }>({})
+
+const optionsElement = ref<HTMLElement>()
+
+watch(
+  () => props.value, // mục đích của watch value là để tìm và show ra text
+  (newValue) => {
+    const index = props.options.findIndex((item) => {
+      return item.value === newValue
+    })
+    indexFocus.value = index
+    itemSelected.value = index !== -1 ? props.options[index] : {}
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.options, // mục đích của watch value là để tìm và show ra text
+  (newOptions) => {
+    const index = newOptions.findIndex((item) => {
+      return item.value === props.value
+    })
+    indexFocus.value = index
+    itemSelected.value = index !== -1 ? newOptions[index] : {}
+  },
+  { immediate: true }
+)
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Tab' || e.key === 'Escape') {
+    showOptions.value = false
+  } else if (e.key === 'ArrowDown') {
+    indexFocus.value += 1
+    if (indexFocus.value >= props.options.length) indexFocus.value = 0
+    setScrollOption('ArrowDown')
+  } else if (e.key === 'ArrowUp') {
+    indexFocus.value -= 1
+    if (indexFocus.value < 0) indexFocus.value = props.options.length - 1
+    setScrollOption('ArrowUp')
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    showOptions.value = !showOptions.value
+    if (indexFocus.value !== -1) {
+      handleSelectItem(indexFocus.value)
+    }
+  } else {
+    e.preventDefault()
+  }
+}
+
+const handleSelectItem = (index: number) => {
+  indexFocus.value = index
+  showOptions.value = false
+
+  const item = props.options[index]
+
+  emit('update:value', item.value)
+  emit('selectItem', item) // phải để event này cuối cùng, để ghi đè: update:text
+}
+
+const handleClear = () => {
+  if (props.disabled) return
+  showOptions.value = false
+  indexFocus.value = -1
+  itemSelected.value = {}
+  emit('update:value', undefined)
+  emit('selectItem', {})
+  if (inputRef.value) {
+    inputRef.value.value = ''
+  }
+}
+
+const setScrollOption = (type: 'ArrowUp' | 'ArrowDown') => {
+  nextTick(() => {
+    if (!optionsElement.value) return
+    const activeItem = optionsElement.value.querySelector('.item-option.active') as HTMLElement
+    if (!activeItem) return
+
+    const topItem = activeItem.offsetTop
+    const bottomItem = activeItem.offsetTop + activeItem.offsetHeight
+
+    // nếu item vẫn đang trong khoảng có thể hiển thị thì không scroll
+    if (
+      topItem > optionsElement.value.scrollTop &&
+      bottomItem < optionsElement.value.scrollTop + props.maxHeight
+    ) {
+      return
+    }
+    if (type === 'ArrowUp') optionsElement.value.scrollTop = topItem - 20
+    if (type === 'ArrowDown') optionsElement.value.scrollTop = bottomItem - props.maxHeight + 20
+  })
+}
+
+const focus = () => inputRef.value?.focus()
+
+defineExpose({ focus })
+</script>
 <template>
   <div
-    v-click-outside="() => (showOptions = false)"
-    :class="{ 'vue-select': true, 'disabled': disabled }"
+    :class="{ 'vue-input': true, disabled }"
+    :tabindex="disabled ? -1 : 0"
+    @focusin="showOptions = true"
+    @blur="showOptions = false"
+    @keydown="handleKeydown"
   >
-    <select :value="value" :disabled="disabled" @change="handleChange" @focusin="handleFocusIn">
-      <option v-for="(option, index) in options" :key="index" :value="option.value">
-        {{ option.text }}
-      </option>
-    </select>
-    <div :class="{ 'wrap-select': true, 'active': showOptions }" @click="handleClickWrapSelect" />
+    <div class="input-area">
+      <input
+        ref="inputRef"
+        :required="required"
+        :value="Object.keys(itemSelected).length || ''"
+        disabled
+      />
+      <div class="mask" @click="showOptions = true">
+        <slot name="text" :content="itemSelected">
+          <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+            {{
+              itemSelected.text != null
+                ? itemSelected.text || '&nbsp;'
+                : JSON.stringify(itemSelected.data)
+            }}
+          </div>
+        </slot>
+      </div>
+    </div>
+    <div class="icon-append">
+      <template v-if="iconClear">
+        <IconTriangleDown class="icon-blur" />
+        <IconClearOutline class="icon-clear-hover" @click="handleClear" />
+        <IconClearCircle class="icon-clear-focus" @click="handleClear" />
+      </template>
+      <template v-else>
+        <IconTriangleDown v-if="!showOptions" />
+        <IconTriangleUp v-if="showOptions" />
+      </template>
+    </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
@@ -16,213 +176,41 @@
       :style="{ maxHeight: `${maxHeight}px` }"
     >
       <div
-        v-for="(option, index) in options"
+        v-for="(item, index) in options"
         :key="index"
-        :class="{ 'item-search': true, 'active': index == indexFocus }"
-        @click="handleClickItem(option.value)"
+        :class="{ 'item-option': true, 'active': index == indexFocus }"
+        @click.stop="handleSelectItem(index)"
       >
-        <slot name="each" :item="option" :index="index">
-          <div class="item-json">{{ option.text }}</div>
+        <slot name="option" :item="item" :index="index">
+          <div class="item-text">
+            {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}
+          </div>
         </slot>
       </div>
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import type { PropType } from 'vue'
-import { ref } from 'vue'
-
-export default {
-  props: {
-    value: {
-      // VueSelect không sử dụng được giá trị null (vì select ko sử dụng được)
-      type: [Number, String, Boolean] as PropType<number | string | boolean>,
-      default: () => '',
-    },
-    options: { type: Array as PropType<{ value: any; text: string }[]>, default: () => [] },
-    disabled: { type: Boolean, default: () => false },
-    maxHeight: { type: Number, default: () => 300 },
-  },
-  emits: ['update:value'],
-  setup() {
-    return {
-      indexFocus: ref<number>(-1),
-      showOptions: ref<boolean>(false),
-    }
-  },
-  watch: {
-    value: {
-      async handler(newValue) {
-        this.indexFocus = this.options.findIndex((item) => {
-          return item.value === newValue
-        })
-      },
-      // immediate: true,
-    },
-  },
-  methods: {
-    handleChange(e: Event) {
-      const target = e.target as HTMLSelectElement
-      this.$emit('update:value', target.value)
-    },
-
-    handleFocusIn(e: Event) {
-      this.showOptions = true
-      this.setScrollOption('ArrowDown')
-    },
-
-    handleClickWrapSelect(e: Event) {
-      // e.stopPropagation() ==> không được dùng để tránh hủy sự kiện bên ngoài, như: v-click-outside
-      if (this.disabled) return
-      this.showOptions = !this.showOptions
-    },
-
-    handleClickItem(value: string | number | null) {
-      this.showOptions = false
-      this.$emit('update:value', value)
-    },
-
-    setScrollOption(type: 'ArrowUp' | 'ArrowDown') {
-      this.$nextTick(() => {
-        const optionsElement = this.$refs.optionsElement as HTMLElement
-        const activeItem = optionsElement.querySelector('.item-search.active') as HTMLElement
-        if (!activeItem) return
-
-        const topItem = activeItem.offsetTop
-        const bottomItem = activeItem.offsetTop + activeItem.offsetHeight
-
-        // nếu item vẫn đang trong khoảng có thể hiển thị thì không scroll
-        if (
-          topItem > optionsElement.scrollTop &&
-          bottomItem < optionsElement.scrollTop + this.maxHeight
-        ) {
-          return
-        }
-        if (type === 'ArrowUp') optionsElement.scrollTop = topItem - 20
-        if (type === 'ArrowDown') optionsElement.scrollTop = bottomItem - this.maxHeight + 20
-      })
-    },
-  },
-}
-</script>
-
 <style lang="scss" scoped>
-.vue-select {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding: 5px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 2px;
-  display: flex;
-  align-items: stretch;
-
-  &:focus-within {
-    border-color: #40a9ff;
-    box-shadow: 0 0 0 2px #1890ff33;
-  }
-
-  &:hover {
-    border-color: #40a9ff;
-  }
-
-  &.disabled {
-    background-color: #eeeeee;
-    border-color: #d9d9d9;
-
-    label {
-      border: 1px solid #eee;
-    }
-
-    .wrap-select {
-      cursor: not-allowed;
-    }
-  }
-
-  select {
-    width: 100%;
-    outline: none;
-    border: none;
-    background-color: white;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    text-indent: 1px;
-    text-overflow: '';
-
-    &::placeholder {
-      opacity: 0.4;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      background-color: #eeeeee;
-      opacity: 0.8;
-    }
-  }
-
-  select::-ms-expand {
-    display: none;
-  }
-
-  .options {
-    position: absolute;
-    z-index: 9;
-    background-color: #fff;
-    top: 100%;
-    left: -1px;
-    right: -1px;
-    border: 1px solid #d4d4d4;
-    box-shadow: 5px 5px 4px #aaaaaa;
-    overflow-y: auto;
-
-    .item-search {
-      position: relative;
-      padding: 5px 12px;
-      cursor: pointer;
-      user-select: none;
-      border-bottom: 1px solid #d4d4d4;
-
-      &.active {
-        background-color: dodgerblue !important;
-        color: #fff;
-      }
-
-      &:hover {
-        background-color: #e9e9e9;
-      }
-
-      .item-json {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-      }
-    }
-  }
-
-  .wrap-select {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    cursor: pointer;
-
-    &:after {
-      --border-width: 6px;
+.vue-input {
+  .input-area {
+    .mask {
       position: absolute;
-      content: '';
-      top: calc(50% - var(--border-width) * 0.5);
+      top: 0;
+      left: 0;
       right: 12px;
-      width: 0;
-      height: 0;
-      border: var(--border-width) solid transparent;
-      border-color: gray transparent transparent transparent;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
     }
 
-    &.active::after {
-      top: calc(50% - var(--border-width) * 1.5);
-      border-color: transparent transparent gray transparent;
+    input {
+      opacity: 0;
+      cursor: pointer;
     }
   }
 }

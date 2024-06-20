@@ -24,15 +24,21 @@ const Router = createRouter({
           meta: { title: 'Trang chủ' },
         },
         {
-          path: 'arrival',
-          name: 'Arrival',
-          redirect: () => ({ name: 'ArrivalList' }),
+          path: 'visit',
+          name: 'Visit',
+          redirect: () => ({ name: 'VisitList' }),
           children: [
             {
-              path: 'list',
-              name: 'ArrivalList',
+              path: 'visit-list',
+              name: 'VisitList',
               meta: { title: 'Phòng khám' },
-              component: () => import('../views/arrival/list/ArrivalList.vue'),
+              component: () => import('../views/visit/list/VisitList.vue'),
+            },
+            {
+              path: 'visit-detail/:id',
+              name: 'VisitDetail',
+              meta: { title: 'Khám bệnh' },
+              component: () => import('../views/visit/detail/VisitDetail.vue'),
             },
           ],
         },
@@ -158,6 +164,7 @@ const Router = createRouter({
         {
           path: 'statistic',
           name: 'Statistic',
+          redirect: () => ({ name: 'StatisticInvoice' }),
           component: () => import('../views/statistic/Statistics.vue'),
           children: [
             {
@@ -181,10 +188,16 @@ const Router = createRouter({
                 import('../views/statistic/statistic-customer/StatisticCustomer.vue'),
             },
             {
-              path: 'statistic-order',
+              path: 'statistic-invoice',
               meta: { title: 'Thống kê' },
-              name: 'StatisticOrder',
-              component: () => import('../views/statistic/statistic-order/StatisticOrder.vue'),
+              name: 'StatisticInvoice',
+              component: () => import('../views/statistic/statistic-invoice/StatisticInvoice.vue'),
+            },
+            {
+              path: 'statistic-visit',
+              meta: { title: 'Thống kê' },
+              name: 'StatisticVisit',
+              component: () => import('../views/statistic/statistic-visit/StatisticVisit.vue'),
             },
           ],
         },

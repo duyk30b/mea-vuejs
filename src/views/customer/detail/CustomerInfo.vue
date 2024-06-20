@@ -50,8 +50,7 @@ const { formatMoney } = screenStore
     <tr>
       <td class="px-2 py-1 whitespace-nowrap align-top">Địa chỉ</td>
       <td class="px-2 text-justify">
-        {{ customer.addressProvince }}
-        - {{ customer.addressDistrict }} - {{ customer.addressWard }} - {{ customer.addressStreet }}
+        {{ customer.addressString }}
       </td>
     </tr>
     <tr>

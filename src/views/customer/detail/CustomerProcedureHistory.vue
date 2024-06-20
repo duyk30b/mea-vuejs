@@ -79,8 +79,8 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
       </div>
       <div></div>
     </div>
-    <div v-if="isMobile" class="mt-4 w-full">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="mt-4 w-full table-wrapper">
+      <table>
         <thead>
           <tr>
             <th>Sản phẩm</th>
@@ -115,6 +115,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
               <div
                 v-if="invoiceItem.discountMoney"
                 style="
+                  color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;
@@ -142,7 +143,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
       </div>
     </div>
     <div v-else class="table-wrapper mt-4 w-full">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>HĐ</th>
@@ -177,6 +178,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
               <div
                 v-if="invoiceItem.discountMoney"
                 style="
+                  color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;

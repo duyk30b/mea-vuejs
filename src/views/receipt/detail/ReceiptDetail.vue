@@ -10,9 +10,10 @@ import {
   MoreOutlined,
   PlusOutlined,
   SettingOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import { createVNode, h, onBeforeMount, ref } from 'vue'
+import { createVNode, h, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -27,6 +28,9 @@ import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.vue'
 import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
+import { receipt } from './receipt-detail.ref'
+import { PaymentViewType } from '../../../modules/enum'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -41,18 +45,21 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const saveLoading = ref(false)
-const receipt = ref<Receipt>(Receipt.blank())
 
 const loadingProcess = ref(false)
 
 const startFetchData = async (receiptId: number) => {
-  receipt.value = await ReceiptApi.detail(receiptId, {
-    relation: {
-      distributor: true,
-      receiptItems: true,
-      distributorPayments: true,
-    },
-  })
+  try {
+    receipt.value = await ReceiptApi.detail(receiptId, {
+      relation: {
+        distributor: true,
+        receiptItems: true,
+        distributorPayments: true,
+      },
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: ReceiptDetail.vue:58 ~ startFetchData ~ error:', error)
+  }
 }
 
 onBeforeMount(async () => {
@@ -60,6 +67,10 @@ onBeforeMount(async () => {
   if (receiptId) {
     await startFetchData(receiptId)
   }
+})
+
+onUnmounted(() => {
+  receipt.value = Receipt.blank()
 })
 
 const startEdit = () => {
@@ -91,14 +102,35 @@ const destroyDraft = async () => {
   }
 }
 
-const startRefund = async () => {
+const startRefundPrepayment = async () => {
   try {
     loadingProcess.value = true
-    const { receiptId } = await ReceiptApi.startRefund(receipt.value.id!)
-    await startFetchData(receiptId)
-    AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
-  } catch (error: any) {
-    console.log('🚀 ~ startRefund ~ error:', error)
+    const { receiptBasic, distributorPayments } = await ReceiptApi.refundPrepayment(
+      receipt.value.id,
+      receipt.value.paid
+    )
+    Object.assign(receipt.value, receiptBasic)
+    receipt.value.distributorPayments = distributorPayments
+    AlertStore.add({ type: 'success', message: 'Trả tiền tạm ứng thành công', time: 1000 })
+  } catch (error) {
+    console.log('🚀 ~ file: ReceiptDetail.vue:117 ~ startRefundPrepayment ~ error:', error)
+  } finally {
+    loadingProcess.value = false
+  }
+}
+
+const startReturnProduct = async () => {
+  try {
+    loadingProcess.value = true
+    const { receiptBasic, distributorPayments } = await ReceiptApi.returnProduct(
+      receipt.value.id!,
+      receipt.value.paid
+    )
+    Object.assign(receipt.value, receiptBasic)
+    receipt.value.distributorPayments = distributorPayments
+    AlertStore.add({ type: 'success', message: 'Trả hàng thành công', time: 1000 })
+  } catch (error) {
+    console.log('🚀 ~ startReturnProduct ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -117,20 +149,23 @@ const softDeleteRefund = async () => {
   }
 }
 
-const startShipAndPayment = async (money: number) => {
+const sendProductAndDebit = async () => {
   try {
     loadingProcess.value = true
-    await ReceiptApi.startShipAndPayment(receipt.value.id!, money)
-    await startFetchData(receipt.value.id)
-    AlertStore.add({ type: 'success', message: 'Thành công', time: 1000 })
-  } catch (error: any) {
-    console.log('🚀 ~ file: ReceiptDetail.vue:51 ~ startShipAndPayment ~ error:', error)
+    const { receiptBasic, distributorPayments } = await ReceiptApi.sendProductAndPayment(
+      receipt.value.id!,
+      0
+    )
+    Object.assign(receipt.value, receiptBasic)
+    receipt.value.distributorPayments = distributorPayments
+  } catch (error) {
+    console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
 }
 
-const clickRefund = () => {
+const clickReturnProduct = () => {
   Modal.confirm({
     title: 'Bạn có chắc chắn hoàn trả phiếu nhập này ?',
     icon: createVNode(ExclamationCircleOutlined),
@@ -143,13 +178,28 @@ const clickRefund = () => {
         ? [
             h(
               'div',
-              `- Nhà cung cấp nhận lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`
+              `- Nhà cung cấp trả lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`
             ),
           ]
         : []),
     ]),
     async onOk() {
-      await startRefund()
+      await startReturnProduct()
+    },
+    onCancel() {},
+  })
+}
+
+const clickRefundPrepayment = () => {
+  Modal.confirm({
+    title: 'Hoàn trả (nhận lại) tiền đã tạm ứng phiếu nhập này',
+    icon: createVNode(ExclamationCircleOutlined),
+    content: h('div', {}, [
+      h('div', `- NCC trả lại số tiền đã thanh toán là: ${formatMoney(receipt.value.paid)}`),
+      h('div', '- Phiếu nhập hàng sẽ chuyển về trạng thái NHÁP'),
+    ]),
+    async onOk() {
+      await startRefundPrepayment()
     },
     onCancel() {},
   })
@@ -159,7 +209,7 @@ const clickDestroyDraft = () => {
   Modal.confirm({
     title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
     icon: createVNode(ExclamationCircleOutlined),
-    content: 'Đơn hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Phiếu nhập đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       await destroyDraft()
     },
@@ -171,7 +221,7 @@ const clickSoftDeleteRefund = () => {
   Modal.confirm({
     title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
     icon: createVNode(ExclamationCircleOutlined),
-    content: 'Đơn hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Phiếu nhập đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       await softDeleteRefund()
     },
@@ -186,7 +236,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 }
 
 const handleMenuActionClick = (menu: { key: string }) => {
-  if (menu.key === 'REFUND') clickRefund()
+  if (menu.key === 'EDIT_RECEIPT') startEdit()
+  if (menu.key === 'REFUND_PREPAYMENT') clickRefundPrepayment()
+  if (menu.key === 'RETURN_PRODUCT') clickReturnProduct()
   if (menu.key === 'DELETE') {
     if (receipt.value.status === ReceiptStatus.Draft) {
       clickDestroyDraft()
@@ -197,7 +249,7 @@ const handleMenuActionClick = (menu: { key: string }) => {
 }
 
 const openModalDistributorDetail = (data?: Distributor) => {
-  if (data) modalDistributorDetail.value?.openModal(data)
+  if (data) modalDistributorDetail.value?.openModal(data.id)
 }
 </script>
 
@@ -207,16 +259,12 @@ const openModalDistributorDetail = (data?: Distributor) => {
     ref="modalReceiptDetailSettingScreen"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <ModalReceiptPayment
-    ref="modalReceiptPayment"
-    :receipt="receipt"
-    @success="startFetchData(receipt.id)"
-  />
+  <ModalReceiptPayment ref="modalReceiptPayment" @success="startFetchData(receipt.id)" />
 
   <div class="page-header">
     <div class="page-header-content">
       <AuditOutlined /> Thông tin phiếu nhập hàng
-      <span v-if="receipt.deletedAt" style="color: #ff4d4f">(Đơn đã bị xóa)</span>
+      <span v-if="receipt.deletedAt" style="color: var(--text-red)">(Đơn đã bị xóa)</span>
       <a-button
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="primary"
@@ -280,53 +328,54 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
   <div class="page-main">
     <div class="px-4 pt-2 flex justify-end gap-2">
-      <a-button
+      <VueButton
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         class="ml-auto"
-        type="default"
         @click="startCopy"
       >
-        <template #icon>
-          <CopyOutlined />
-        </template>
-        Copy phiếu
-      </a-button>
-
-      <template
+        <CopyOutlined /> Copy phiếu
+      </VueButton>
+      <VueButton
         v-if="
-          permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT] &&
-          receipt.status !== ReceiptStatus.Refund
+          permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+          [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
         "
+        color="blue"
+        @click="startEdit"
       >
-        <a-button
-          v-if="
-            receipt.status === ReceiptStatus.Draft ||
-            (screenStore.SCREEN_RECEIPT_DETAIL.function.forceEdit &&
-              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status))
-          "
-          type="primary"
-          @click="startEdit"
-        >
-          <template #icon>
-            <ExceptionOutlined />
-          </template>
-          Sửa phiếu
-        </a-button>
-      </template>
+        <ExceptionOutlined />
+        Sửa phiếu
+      </VueButton>
 
       <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_REFUND] &&
-                [
-                  ReceiptStatus.Success,
-                  ReceiptStatus.Debt,
-                  ReceiptStatus.AwaitingShipment,
-                ].includes(receipt.status)
+                screenStore.SCREEN_RECEIPT_DETAIL.process.forceEdit &&
+                [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
-              key="REFUND"
+              key="EDIT_RECEIPT"
+            >
+              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Sửa phiếu </span>
+            </a-menu-item>
+            <a-menu-item
+              v-if="
+                permissionIdMap[PermissionId.RECEIPT_REFUND_PREPAYMENT] &&
+                [ReceiptStatus.Prepayment].includes(receipt.status)
+              "
+              key="REFUND_PREPAYMENT"
+            >
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" /> Hoàn trả tiền tạm ứng
+              </span>
+            </a-menu-item>
+            <a-menu-item
+              v-if="
+                permissionIdMap[PermissionId.RECEIPT_RETURN_PRODUCT] &&
+                [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
+              "
+              key="RETURN_PRODUCT"
             >
               <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
             </a-menu-item>
@@ -337,7 +386,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
               "
               key="DELETE"
             >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Xóa phiếu </span>
+              <span class="text-red-500"> <DeleteOutlined class="mr-2" /> Xóa phiếu </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -350,56 +399,57 @@ const openModalDistributorDetail = (data?: Distributor) => {
     </div>
 
     <div class="mt-2">
-      <ReceiptDetailTable
-        :receipt="receipt"
-        @show-receipt-payment="modalReceiptPayment?.openModal()"
-      />
+      <ReceiptDetailTable @showReceiptPayment="(view) => modalReceiptPayment?.openModal(view)" />
     </div>
 
     <div class="flex justify-center gap-4 my-4">
       <template
-        v-if="permissionIdMap[PermissionId.RECEIPT] && receipt.status === ReceiptStatus.Draft"
-      >
-        <a-button
-          v-if="screenStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 1"
-          type="primary"
-          :loading="loadingProcess"
-          @click="startShipAndPayment(receipt.revenue)"
-        >
-          <template #icon>
-            <FileDoneOutlined />
-          </template>
-          Nhập hàng và thanh toán
-        </a-button>
-
-        <a-button
-          v-if="
-            permissionIdMap[PermissionId.RECEIPT_PREPAYMENT] &&
-            screenStore.SCREEN_RECEIPT_DETAIL.receiptProcessType === 2
-          "
-          type="primary"
-          :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal()"
-        >
-          <template #icon>
-            <FileDoneOutlined />
-          </template>
-          Thanh toán
-        </a-button>
-      </template>
-
-      <template
         v-if="
-          permissionIdMap[PermissionId.RECEIPT_SHIP] &&
-          receipt.status === ReceiptStatus.AwaitingShipment
+          permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
+          [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
         "
       >
-        <a-button type="primary" :loading="loadingProcess" @click="startShipAndPayment(0)">
+        <VueButton
+          v-if="receipt.paid == receipt.totalMoney"
+          color="blue"
+          :loading="loadingProcess"
+          @click="sendProductAndDebit"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
           Nhập hàng
-        </a-button>
+        </VueButton>
+
+        <VueButton
+          v-if="
+            receipt.paid != receipt.totalMoney &&
+            screenStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndPayment
+          "
+          color="blue"
+          :loading="loadingProcess"
+          @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPayment)"
+        >
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Nhập hàng và Thanh toán
+        </VueButton>
+
+        <VueButton
+          v-if="
+            receipt.paid != receipt.totalMoney &&
+            screenStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndDebit
+          "
+          color="blue"
+          :loading="loadingProcess"
+          @click="sendProductAndDebit"
+        >
+          <template #icon>
+            <FileDoneOutlined />
+          </template>
+          Nhập hàng và Ghi nợ
+        </VueButton>
       </template>
 
       <template
@@ -407,16 +457,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
           permissionIdMap[PermissionId.RECEIPT_PAY_DEBT] && receipt.status === ReceiptStatus.Debt
         "
       >
-        <a-button
-          type="primary"
+        <VueButton
+          color="blue"
           :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal()"
+          @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"
         >
           <template #icon>
             <FileDoneOutlined />
           </template>
           Trả nợ
-        </a-button>
+        </VueButton>
       </template>
     </div>
   </div>

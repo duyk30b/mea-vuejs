@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import VueModal from '../../../../common/VueModal.vue'
 import { InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -10,6 +10,8 @@ import { ScreenSettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, useCustomerStore } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
 import { DTimer } from '../../../../utils'
+
+const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -24,14 +26,12 @@ const showModal = ref(false)
 const saveLoading = ref(false)
 
 const activeTab = ref('1')
-const customerSearchText = ref(meStore.customerDefault?.fullName || '')
 
 const customerList = ref<Customer[]>([])
-const customerDefault = ref<Customer>()
+const customerDefault = ref<Customer>(meStore.customerDefault)
 
 const selectCustomer = async (data?: Customer) => {
   settingDisplay.value.customer.idDefault = data?.id || 0
-  customerSearchText.value = data?.fullName || ''
   customerDefault.value = data || Customer.blank()
 }
 
@@ -47,6 +47,14 @@ const searchingCustomer = async (text: string) => {
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
+
+  nextTick(() => {
+    inputOptionsCustomer.value?.setItem({
+      value: customerDefault.value?.id || 0,
+      text: customerDefault.value?.fullName || '',
+      data: customerDefault,
+    })
+  })
 }
 
 const handleClose = () => {
@@ -60,7 +68,7 @@ const handleSave = async () => {
     await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_INVOICE_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
-    meStore.customerDefault = Customer.fromPlain(customerDefault.value)
+    meStore.customerDefault = Customer.toBasic(customerDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -86,106 +94,112 @@ defineExpose({ openModal })
       <div class="px-6 mt-4 invoice-upsert-setting-screen-tabs">
         <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
           <a-tab-pane key="1" tab="Chọn sản phẩm">
-            <table class="table-setting">
-              <thead>
-                <tr>
-                  <th>Cài đặt hiển thị</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemInput.negativeQuantity">
-                      Được phép xuất số lượng nhiều hơn số lượng tồn (số lượng tồn có thể là số âm)
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div>
+            <div class="table-wrapper">
+              <table class="">
+                <thead>
+                  <tr>
+                    <th>Cài đặt hiển thị</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
                       <a-checkbox
-                        v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"
+                        v-model:checked="settingDisplay.invoiceItemInput.negativeQuantity"
                       >
-                        Lựa chọn thêm sau khi tìm kiếm
+                        Được phép xuất số lượng nhiều hơn số lượng tồn (số lượng tồn có thể là số
+                        âm)
                       </a-checkbox>
-                    </div>
-                    <div class="pl-7">
-                      <div class="pt-2">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div>
                         <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
-                          :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                          v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"
                         >
-                          Chỉnh sửa hướng dẫn sử dụng
+                          Lựa chọn thêm sau khi tìm kiếm
                         </a-checkbox>
                       </div>
-                      <div class="pt-3">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
-                          :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                        >
-                          Hiển thị giá bán niêm yết
-                        </a-checkbox>
+                      <div class="pl-7">
+                        <div class="pt-2">
+                          <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                          >
+                            Chỉnh sửa hướng dẫn sử dụng
+                          </a-checkbox>
+                        </div>
+                        <div class="pt-3">
+                          <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                          >
+                            Hiển thị giá bán niêm yết
+                          </a-checkbox>
+                        </div>
+                        <div class="pt-3">
+                          <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.costPrice"
+                            :disabled="
+                              !settingDisplay.invoiceItemInput.customAfterSearch ||
+                              !settingDisplay.invoiceItemInput.expectedPrice
+                            "
+                          >
+                            Thêm lựa chọn giá bán = giá nhập
+                          </a-checkbox>
+                        </div>
+                        <div class="pt-3">
+                          <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.discount"
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                          >
+                            Chỉnh sửa chiết khấu
+                          </a-checkbox>
+                        </div>
+                        <div class="pt-3">
+                          <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                          >
+                            Chỉnh sửa giá bán thực tế
+                          </a-checkbox>
+                        </div>
                       </div>
-                      <div class="pt-3">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.costPrice"
-                          :disabled="
-                            !settingDisplay.invoiceItemInput.customAfterSearch ||
-                            !settingDisplay.invoiceItemInput.expectedPrice
-                          "
-                        >
-                          Thêm lựa chọn giá bán = giá nhập
-                        </a-checkbox>
-                      </div>
-                      <div class="pt-3">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.discount"
-                          :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                        >
-                          Chỉnh sửa chiết khấu
-                        </a-checkbox>
-                      </div>
-                      <div class="pt-3">
-                        <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
-                          :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                        >
-                          Chỉnh sửa giá bán thực tế
-                        </a-checkbox>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </a-tab-pane>
           <a-tab-pane key="2" tab="Cài đặt danh sách">
-            <table class="table-setting">
-              <thead>
-                <tr>
-                  <th>Danh sách hàng trong đơn</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
-                    <div class="pl-7">
-                      <a-radio-group
-                        v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem"
-                      >
-                        <a-radio style="display: flex; line-height: 36px" :value="false">
-                          Cộng gộp số lượng
-                        </a-radio>
-                        <a-radio style="display: flex; line-height: 36px" :value="true">
-                          Không cộng gộp (VD: bán 4 tặng 1 thì bản ghi số lượng 1 có thể điền đơn
-                          giá = 0)
-                        </a-radio>
-                      </a-radio-group>
-                    </div>
-                  </td>
-                </tr>
-                <!-- <tr>
+            <div class="table-wrapper">
+              <table class="">
+                <thead>
+                  <tr>
+                    <th>Danh sách hàng trong đơn</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
+                      <div class="pl-7">
+                        <a-radio-group
+                          v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem"
+                        >
+                          <a-radio style="display: flex; line-height: 36px" :value="false">
+                            Cộng gộp số lượng
+                          </a-radio>
+                          <a-radio style="display: flex; line-height: 36px" :value="true">
+                            Không cộng gộp (VD: bán 4 tặng 1 thì bản ghi số lượng 1 có thể điền đơn
+                            giá = 0)
+                          </a-radio>
+                        </a-radio-group>
+                      </div>
+                    </td>
+                  </tr>
+                  <!-- <tr>
                   <td>
                     <div>Khi thêm sản phẩm vượt quá số lượng tồn kho</div>
                     <div class="pl-7">
@@ -202,176 +216,165 @@ defineExpose({ openModal })
                     </div>
                   </td>
                 </tr> -->
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.detail">
-                      Hiển thị chi tiết sản phẩm (
-                      <FileSearchOutlined /> )
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.substance">
-                      Hiển thị hoạt chất
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.batch">
-                      Hiển thị số lô và HSD
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.hintUsage">
-                      Hiển thị hướng dẫn sử dụng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.unit">
-                      Hiển thị đơn vị
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.expectedPrice">
-                      Hiển thị giá niêm yết
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.editActualPrice">
-                      Cho phép sửa đơn giá
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.discount">
-                      Hiển thị chiết khấu
-                    </a-checkbox>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </a-tab-pane>
-          <a-tab-pane key="3" tab="Cài đặt hóa đơn">
-            <table class="table-setting">
-              <thead>
-                <tr>
-                  <th>Thông tin thanh toán</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div>Khách hàng mặc định</div>
-                    <div class="py-2">
-                      <InputOptions
-                        ref="inputSearchCustomer"
-                        v-model:searchText="customerSearchText"
-                        :options="customerList"
-                        :maxHeight="260"
-                        placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-                        @selectItem="selectCustomer"
-                        @update:searchText="searchingCustomer"
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.detail">
+                        Hiển thị chi tiết sản phẩm (
+                        <FileSearchOutlined /> )
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.substance">
+                        Hiển thị hoạt chất
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.batch">
+                        Hiển thị số lô và HSD
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.hintUsage">
+                        Hiển thị hướng dẫn sử dụng
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.unit">
+                        Hiển thị đơn vị
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.expectedPrice">
+                        Hiển thị giá niêm yết
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox
+                        v-model:checked="settingDisplay.invoiceItemsTable.editActualPrice"
                       >
-                        <template
-                          #each="{
-                            item: {
-                              fullName,
-                              phone,
-                              addressProvince,
-                              addressDistrict,
-                              addressWard,
-                              birthday,
-                            },
-                          }"
+                        Cho phép sửa đơn giá
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.discount">
+                        Hiển thị chiết khấu
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="3" tab="Cài đặt hóa đơn" forceRender>
+            <div class="table-wrapper">
+              <table class="">
+                <thead>
+                  <tr>
+                    <th>Thông tin thanh toán</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div>Khách hàng mặc định</div>
+                      <div class="py-2">
+                        <InputOptions
+                          ref="inputOptionsCustomer"
+                          :options="
+                            customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))
+                          "
+                          :maxHeight="260"
+                          placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+                          @selectItem="({ data }) => selectCustomer(data)"
+                          @update:text="searchingCustomer"
                         >
-                          <div>
-                            <b>{{ fullName }}</b> - {{ phone }} -
-                            {{ DTimer.timeToText(birthday, 'DD/MM/YYYY') }}
-                          </div>
-                          <div>
-                            {{ addressWard }} - {{ addressDistrict }} - {{ addressProvince }}
-                          </div>
-                        </template>
-                      </InputOptions>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
-                      Hiển thị tiền hàng
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
-                      Hiển thị chiết khấu
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
-                      Hiển thị phụ phí
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.expense">
-                      Hiển thị chi phí
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.paymentInfo.profit">
-                      Hiển thị tiền lãi
-                    </a-checkbox>
-                  </td>
-                </tr>
-              </tbody>
-              <thead>
-                <tr>
-                  <th>Lưu lại</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.save.createBasicAndDetail">
-                      Lưu và Xem chi tiết
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.save.createBasicAndNew">
-                      Lưu và Tạo đơn mới
-                    </a-checkbox>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <a-checkbox v-model:checked="settingDisplay.save.createDraft">
-                      Lưu nháp
-                    </a-checkbox>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                          <template #option="{ item: { data } }">
+                            <div>
+                              <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                              {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                            </div>
+                            <div>
+                              {{ data.addressWard }} - {{ data.addressDistrict }} -
+                              {{ data.addressProvince }}
+                            </div>
+                          </template>
+                        </InputOptions>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                        Hiển thị tiền hàng
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                        Hiển thị chiết khấu
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                        Hiển thị phụ phí
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.expense">
+                        Hiển thị chi phí
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.profit">
+                        Hiển thị tiền lãi
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                </tbody>
+                <thead>
+                  <tr>
+                    <th>Lưu lại</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.save.createBasicAndNew">
+                        Lưu và Tạo đơn mới
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a-checkbox v-model:checked="settingDisplay.save.createDraft">
+                        Lưu nháp
+                      </a-checkbox>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </a-tab-pane>
         </a-tabs>
       </div>

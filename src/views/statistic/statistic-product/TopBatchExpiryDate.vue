@@ -23,6 +23,7 @@ const startFetchData = async () => {
       sort: { expiryDate: 'ASC' },
       filter: {
         quantity: { NOT: 0 },
+        expiryDate: { IS_NULL: false },
       },
       relation: { product: true },
     })
@@ -50,8 +51,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     <div class="flex justify-between items-center">
       <span style="font-size: 18px; font-weight: 500"> Hàng cận date: </span>
     </div>
-    <div class="mt-2">
-      <table class="table-mobile">
+    <div class="mt-2 table-wrapper">
+      <table class="">
         <thead>
           <tr>
             <th>#</th>
@@ -83,7 +84,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               {{ batch.unitQuantity }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{ batch.product?.unitName }}
+              {{ batch.product?.unitDefaultName }}
             </td>
             <td class="text-right" style="white-space: nowrap">
               {{ formatMoney(batch.product?.unitRetailPrice || 0) }}

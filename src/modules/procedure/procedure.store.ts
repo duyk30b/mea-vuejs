@@ -52,9 +52,14 @@ export const useProcedureStore = defineStore('procedure-store', {
       }
     },
 
+    async getOne(id: number) {
+      const procedure = await ProcedureDB.findOneByKey(id)
+      return procedure ? Procedure.fromObject(procedure) : null
+    },
+
     async createOne(instance: Procedure) {
       const response = await ProcedureApi.createOne(instance)
-      await ProcedureDB.insertOne(response)
+      await ProcedureDB.upsertOne(response)
       this.timeSync = Date.now()
       return response
     },

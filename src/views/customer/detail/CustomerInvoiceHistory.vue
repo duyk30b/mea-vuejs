@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { Customer } from '../../../modules/customer'
-import { InvoiceService, InvoiceStatus, type Invoice } from '../../../modules/invoice'
+import { InvoiceApi, InvoiceStatus, type Invoice } from '../../../modules/invoice'
 import { timeToText } from '../../../utils'
 import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
@@ -22,7 +22,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await InvoiceService.pagination({
+    const { data, meta } = await InvoiceApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { customerId: props.customer.id! },
@@ -61,19 +61,11 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
   })
   window.open(route.href, '_blank')
 }
-
-const openBlankInvoiceUpsert = (customerId: number) => {
-  let route = router.resolve({
-    name: 'InvoiceUpsert',
-    query: { customer_id: customerId, mode: 'CREATE' },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
-  <div class="mt-4 w-full">
-    <table v-if="isMobile" class="table-mobile">
+  <div class="mt-4 w-full table-wrapper">
+    <table v-if="isMobile">
       <thead>
         <tr>
           <th>Đơn hàng</th>
@@ -98,19 +90,19 @@ const openBlankInvoiceUpsert = (customerId: number) => {
           </td>
           <td class="text-right">
             <div style="font-weight: 500">
-              {{ formatMoney(invoice.revenue) }}
+              {{ formatMoney(invoice.totalMoney) }}
             </div>
             <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
               Nợ: {{ formatMoney(invoice.debt) }}
             </div>
-            <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+            <div v-if="invoice.status === InvoiceStatus.Prepayment" class="text-xs">
               Đã thanh toán: {{ formatMoney(invoice.paid) }}
             </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <table v-else class="table-mobile">
+    <table v-else>
       <thead>
         <tr>
           <th>Đơn hàng</th>
@@ -136,12 +128,12 @@ const openBlankInvoiceUpsert = (customerId: number) => {
           </td>
           <td class="text-right">
             <div style="font-weight: 500">
-              {{ formatMoney(invoice.revenue) }}
+              {{ formatMoney(invoice.totalMoney) }}
             </div>
             <div v-if="invoice.status === InvoiceStatus.Debt" class="text-xs">
               Nợ: {{ formatMoney(invoice.debt) }}
             </div>
-            <div v-if="invoice.status === InvoiceStatus.AwaitingShipment" class="text-xs">
+            <div v-if="invoice.status === InvoiceStatus.Prepayment" class="text-xs">
               Đã thanh toán: {{ formatMoney(invoice.paid) }}
             </div>
           </td>

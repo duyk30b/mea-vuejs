@@ -2,7 +2,7 @@
 import type { ChartData } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
-import { InvoiceService } from '../../../modules/invoice'
+import { InvoiceApi } from '../../../modules/invoice'
 import { StatisticService } from '../../../modules/statistics'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 
@@ -26,7 +26,7 @@ const startFetchData = async () => {
     loaded.value = false
     const [sumCustomerDebt, { sumInvoiceDebt }] = await Promise.all([
       StatisticService.sumCustomerDebt(),
-      InvoiceService.sumInvoiceDebt({
+      InvoiceApi.sumInvoiceDebt({
         filter: { startedAt: { LT: Date.now() - badDebtDays.value * 24 * 60 * 60 * 1000 } },
       }),
     ])

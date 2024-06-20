@@ -14,7 +14,7 @@ import { ReceiptItem } from '../receipt-item/receipt-item.model'
 export enum ReceiptStatus {
   Refund = -1,
   Draft = 0,
-  AwaitingShipment = 1, // Chờ gửi hàng
+  Prepayment = 1, // Chờ gửi hàng
   Debt = 2,
   Success = 3,
 }
@@ -53,7 +53,7 @@ export class Receipt {
   surcharge: number // phụ phí: tiền phải trả thêm: như tiền ship, tiền vé, hao phí xăng dầu
 
   @Expose()
-  revenue: number // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
+  totalMoney: number // tổng tiền = tiền sản phẩm + phụ phí - tiền giảm giá
 
   @Expose({ groups: [FROM_PLAIN] })
   paid: number
@@ -73,7 +73,7 @@ export class Receipt {
   @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
-  @Expose({ groups: [FROM_PLAIN, USER_CREATE, USER_UPDATE] })
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => ReceiptItem)
   receiptItems?: ReceiptItem[]
 
@@ -94,7 +94,7 @@ export class Receipt {
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
     ins.surcharge = 0
-    ins.revenue = 0
+    ins.totalMoney = 0
     ins.paid = 0
     ins.debt = 0
 
@@ -107,6 +107,19 @@ export class Receipt {
     ins.distributor = Distributor.init()
     ins.distributorPayments = []
     return ins
+  }
+
+  static toBasic(root: Receipt) {
+    const ins = new Receipt()
+    Object.assign(ins, root)
+    delete ins.receiptItems
+    delete ins.distributor
+    delete ins.distributorPayments
+    return ins
+  }
+
+  static toBasics(roots: Receipt[]) {
+    return roots.map((i) => Receipt.toBasic(i))
   }
 
   static fromPlain(plain: Record<string, any>): Receipt {

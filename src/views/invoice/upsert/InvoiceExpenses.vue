@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
+import { useScreenStore } from '../../../modules/_me/screen.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
 import { InvoiceExpense } from '../../../modules/invoice'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { invoice } from './invoice-upsert.store'
+import { invoice } from './invoice-upsert.ref'
+import VueButton from '../../../common/VueButton.vue'
 
 const screenStore = useScreenStore()
 const { formatMoney } = screenStore
@@ -67,7 +68,7 @@ const handleChangeInvoiceExpense = (data: number) => {
         <div></div>
       </template>
       <template #title>
-        <div style="width: 320px">
+        <div style="max-width: 100vw">
           <div class="flex">
             <div style="width: 160px; font-size: 13px">Loại chi phí</div>
             <div style="flex: 1; font-size: 13px">Số tiền</div>
@@ -83,12 +84,10 @@ const handleChangeInvoiceExpense = (data: number) => {
                 style="width: 160px"
                 :options="
                   [
-                    ...Object.entries(screenStore.INVOICE_EXPENSE_DETAIL).map(
-                      ([key, text]) => ({
-                        value: key,
-                        text: text,
-                      })
-                    ),
+                    ...Object.entries(screenStore.INVOICE_EXPENSE_DETAIL).map(([key, text]) => ({
+                      value: key,
+                      text: text,
+                    })),
                     ...(screenStore.INVOICE_EXPENSE_DETAIL[expense.key]
                       ? []
                       : [{ value: expense.key, text: expense.name }]),
@@ -102,7 +101,7 @@ const handleChangeInvoiceExpense = (data: number) => {
                 />
               </div>
               <div style="width: 60px">
-                <a-button danger @click="handleDeleteExpenseDetail(index)"> Xóa </a-button>
+                <VueButton color="red" @click="handleDeleteExpenseDetail(index)"> Xóa </VueButton>
               </div>
             </div>
           </div>
@@ -134,3 +133,4 @@ const handleChangeInvoiceExpense = (data: number) => {
     />
   </td>
 </template>
+./invoice-upsert.ref

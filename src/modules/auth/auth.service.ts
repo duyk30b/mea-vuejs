@@ -1,6 +1,7 @@
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { MeaDatabase } from '../../core/indexed-db/database'
 import { LocalStorageService } from '../../core/local-storage.service'
+import { reconnectSocket } from '../../core/socket/socket.base'
 import { useMeStore } from '../_me/me.store'
 import { AuthApi } from './auth.api'
 import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto'
@@ -12,6 +13,7 @@ export class AuthService {
       LocalStorageService.setToken(data)
       LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
       useMeStore().user = data.user
+      reconnectSocket()
       return true
     } catch (error: any) {
       const message =
@@ -26,6 +28,7 @@ export class AuthService {
       LocalStorageService.setToken(data)
       LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
       useMeStore().user = data.user
+      reconnectSocket()
       return true
     } catch (error: any) {
       const message =
@@ -40,6 +43,7 @@ export class AuthService {
       LocalStorageService.setToken(data)
       // LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
       useMeStore().user = data.user
+      reconnectSocket()
       return true
     } catch (error: any) {
       const message =

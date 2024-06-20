@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import { OrganizationService } from '../../../modules/organization'
+import VueButton from '../../../common/VueButton.vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputText } from '../../../common/vue-form'
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -25,10 +29,6 @@ const openModal = async () => {
   UNIT.value = JSON.parse(JSON.stringify(store.PRODUCT_UNIT))
   ROUTE.value = JSON.parse(JSON.stringify(store.PRODUCT_ROUTE))
   HINT_USAGE.value = JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE))
-}
-
-const refreshModal = () => {
-  showModal.value = false
 }
 
 const handleSave = async () => {
@@ -75,113 +75,106 @@ const handleReload = () => {
   ROUTE.value = JSON.parse(JSON.stringify(store.PRODUCT_ROUTE))
 }
 
+const closeModal = () => {
+  showModal.value = false
+}
+
 defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal
-    v-model:visible="showModal"
-    width="900px"
-    title="Cài đặt dữ liệu"
-    :confirm-loading="saveLoading"
-    :afterClose="refreshModal"
-  >
-    <template #footer>
-      <div class="flex justify-between px-2">
-        <div>
-          <a-button @click="handleReload"> Tải lại </a-button>
-        </div>
-        <div>
-          <a-button @click="showModal = false"> Hủy </a-button>
-          <a-button type="primary" :loading="saveLoading" @click="handleSave"> Lưu lại </a-button>
+  <VueModal v-model:show="showModal">
+    <div class="bg-white">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 font-medium" style="font-size: 16px">Cài đặt dữ liệu</div>
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
         </div>
       </div>
-    </template>
-    <div class="modal-data-product-tabs">
-      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-        <a-tab-pane key="1" tab="Nhóm hàng">
-          <div class="w-full">
-            <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
-            <div v-for="(r, key, i) in GROUP" :key="key">
-              <div class="py-2 flex">
-                <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />
-                <a-button type="text" danger @click="delete GROUP[key]"> Xóa </a-button>
+
+      <div class="px-4 mt-4 modal-data-product-tabs">
+        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
+          <a-tab-pane key="1" tab="Nhóm hàng">
+            <div class="w-full">
+              <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
+              <div v-for="(r, key) in GROUP" :key="key">
+                <div class="py-2 flex items-center gap-4">
+                  <InputText v-model:value="GROUP[key]" :prepend="key" style="flex: 1" />
+                  <a style="color: var(--text-red)" @click="delete GROUP[key]"> Xóa </a>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="py-2 flex justify-center">
-            <a-button
-              type="primary"
-              style="background-color: #28a745; border-color: #28a745"
-              @click="GROUP[Date.now().toString(36)] = ''"
-            >
-              Thêm mới
-            </a-button>
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="2" tab="Đơn vị">
-          <div class="w-full">
-            <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
-            <div v-for="(u, i) in UNIT" :key="i">
-              <div class="py-2 flex">
-                <a-input v-model:value="UNIT[i]" :addon-before="i + 1" style="flex: 1" />
-                <a-button type="text" danger @click="UNIT.splice(i, 1)"> Xóa </a-button>
+            <div class="py-2 flex justify-center">
+              <VueButton color="blue" @click="GROUP[Date.now().toString(36)] = ''">
+                Thêm mới
+              </VueButton>
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="2" tab="Đơn vị">
+            <div class="w-full">
+              <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+              <div v-for="(u, i) in UNIT" :key="i">
+                <div class="py-2 flex gap-4">
+                  <InputText v-model:value="UNIT[i]" :prepend="i.toString()" style="flex: 1" />
+                  <a style="color: var(--text-red)" @click="UNIT.splice(i, 1)"> Xóa </a>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="py-2 flex justify-center">
-            <a-button
-              type="primary"
-              style="background-color: #28a745; border-color: #28a745"
-              @click="UNIT.push('')"
-            >
-              Thêm mới
-            </a-button>
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="3" tab="Đường dùng">
-          <div class="w-full">
-            <div class="text-center font-bold">Danh sách đường dùng</div>
-            <div v-for="(r, i) in ROUTE" :key="i">
-              <div class="py-2 flex">
-                <a-input v-model:value="ROUTE[i]" :addon-before="i + 1" style="flex: 1" />
-                <a-button type="text" danger @click="ROUTE.splice(i, 1)"> Xóa </a-button>
+            <div class="py-2 flex justify-center">
+              <VueButton color="blue" @click="UNIT.push('')"> Thêm mới </VueButton>
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="3" tab="Đường dùng">
+            <div class="w-full">
+              <div class="text-center font-bold">Danh sách đường dùng</div>
+              <div v-for="(r, i) in ROUTE" :key="i">
+                <div class="py-2 flex gap-4">
+                  <InputText v-model:value="ROUTE[i]" :prepend="i.toString()" style="flex: 1" />
+                  <a style="color: var(--text-red)" @click="ROUTE.splice(i, 1)"> Xóa </a>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="py-2 flex justify-center">
-            <a-button
-              type="primary"
-              style="background-color: #28a745; border-color: #28a745"
-              @click="ROUTE.push('')"
-            >
-              Thêm mới
-            </a-button>
-          </div>
-        </a-tab-pane>
-        <a-tab-pane key="4" tab="Cách sử dụng">
-          <div class="w-full">
-            <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
-            <div v-for="(u, i) in HINT_USAGE" :key="i">
-              <div class="py-2 flex">
-                <a-input v-model:value="HINT_USAGE[i]" :addon-before="i + 1" style="flex: 1" />
-                <a-button type="text" danger @click="HINT_USAGE.splice(i, 1)"> Xóa </a-button>
+            <div class="py-2 flex justify-center">
+              <VueButton color="blue" @click="ROUTE.push('')"> Thêm mới </VueButton>
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="4" tab="Cách sử dụng">
+            <div class="w-full">
+              <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+              <div v-for="(u, i) in HINT_USAGE" :key="i">
+                <div class="py-2 flex gap-4">
+                  <InputText
+                    v-model:value="HINT_USAGE[i]"
+                    :prepend="i.toString()"
+                    style="flex: 1"
+                  />
+                  <a style="color: var(--text-red)" @click="HINT_USAGE.splice(i, 1)"> Xóa </a>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="py-2 flex justify-center">
-            <a-button
-              type="primary"
-              style="background-color: #28a745; border-color: #28a745"
-              @click="HINT_USAGE.push('')"
-            >
-              Thêm mới
-            </a-button>
-          </div>
-        </a-tab-pane>
-      </a-tabs>
+            <div class="py-2 flex justify-center">
+              <VueButton color="blue" @click="HINT_USAGE.push('')"> Thêm mới </VueButton>
+            </div>
+          </a-tab-pane>
+        </a-tabs>
+      </div>
+
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <VueButton class="ml-auto" @click="closeModal">
+            <CloseOutlined />
+            Hủy bỏ
+          </VueButton>
+          <VueButton color="blue" :loading="saveLoading" @click="handleSave">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            Lưu lại
+          </VueButton>
+        </div>
+      </div>
     </div>
-  </a-modal>
+  </VueModal>
 </template>
 
 <style lang="scss">

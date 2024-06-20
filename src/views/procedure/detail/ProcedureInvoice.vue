@@ -23,18 +23,22 @@ const total = ref(0)
 const invoiceItems = ref<InvoiceItem[]>([])
 
 const startFetchData = async () => {
-  const { data, meta } = await InvoiceItemApi.pagination({
-    page: page.value,
-    limit: limit.value,
-    filter: {
-      procedureId: props.procedure.id,
-      type: InvoiceItemType.Procedure,
-    },
-    relation: { invoice: { customer: true } },
-    sort: { id: 'DESC' },
-  })
-  invoiceItems.value = data
-  total.value = meta.total
+  try {
+    const { data, meta } = await InvoiceItemApi.pagination({
+      page: page.value,
+      limit: limit.value,
+      filter: {
+        procedureId: props.procedure.id,
+        type: InvoiceItemType.Procedure,
+      },
+      relation: { invoice: { customer: true } },
+      sort: { id: 'DESC' },
+    })
+    invoiceItems.value = data
+    total.value = meta.total
+  } catch (error) {
+    console.log('🚀 ~ file: ProcedureInvoice.vue:40 ~ startFetchData ~ error:', error)
+  }
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -66,7 +70,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
 
 <template>
   <div class="table-wrapper">
-    <table class="table">
+    <table>
       <thead>
         <tr>
           <th>Đơn</th>
@@ -93,14 +97,14 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
               {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
-          <td class="text-right">
+          <td class="text-center">
             {{ invoiceItem.quantity }}
           </td>
           <td class="text-right">
             <div
               v-if="invoiceItem.discountMoney"
               class="text-xs italic line-through"
-              style="color: #ff4d4f"
+              style="color: var(--text-red)"
             >
               {{ formatMoney(invoiceItem.expectedPrice) }}
             </div>

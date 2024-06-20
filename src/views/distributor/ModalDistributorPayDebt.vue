@@ -4,11 +4,13 @@ import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueModal from '../../common/VueModal.vue'
-import { InputMoney } from '../../common/vue-form'
+import { InputMoney, InputText } from '../../common/vue-form'
 import { useScreenStore } from '../../modules/_me/screen.store'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
+import VueButton from '../../common/VueButton.vue'
+import { nextTick } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -22,7 +24,7 @@ const screenStore = useScreenStore()
 const { formatMoney } = screenStore
 
 const openDebt = ref(0)
-const money = ref(0)
+const money = ref<number>(0)
 const note = ref('')
 const distributorId = ref(0)
 const receiptPayments = ref<{ receipt: Receipt; money: number }[]>([])
@@ -37,7 +39,7 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
   openDebt.value = openDebtProp
   distributorId.value = distributorIdProp
   showModal.value = true
-
+  nextTick(() => inputMoneyPay.value?.focus())
   try {
     dataLoading.value = true
     const receiptDebtList = await ReceiptApi.list({
@@ -92,16 +94,6 @@ const openBlankReceiptDetail = (receiptId: number) => {
   window.open(route.href, '_blank')
 }
 
-const handleChangeMoney = (data: number) => {
-  if (data <= openDebt.value) {
-    money.value = data
-  } else {
-    money.value = openDebt.value
-    inputMoneyPay.value?.$forceUpdate()
-  }
-  calculatorEachReceiptPayment()
-}
-
 const handleClickPayAllDebt = () => {
   money.value = openDebt.value
   calculatorEachReceiptPayment()
@@ -121,10 +113,10 @@ defineExpose({ openModal })
 
 <template>
   <VueModal v-model:show="showModal">
-    <div class="bg-white">
+    <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
-          Công nợ: {{ formatMoney(openDebt) }}
+          {{ 'Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
@@ -132,19 +124,13 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <div class="w-full flex items-center">
-          <div style="width: 100px; flex: none">Số tiền trả:</div>
-          <div class="flex-1">
-            <InputMoney ref="inputMoneyPay" :value="money" @update:value="handleChangeMoney" />
-          </div>
-          <a-button type="primary" @click="handleClickPayAllDebt"> Tất cả </a-button>
-        </div>
-        <div class="mt-4">Trả tiền vào đơn (tự động)</div>
-        <div class="mt-2">
-          <table class="table-mobile">
+        <div class="">Tính tiền vào đơn (tự động)</div>
+        <div class="mt-2 table-wrapper">
+          <table>
             <thead>
               <tr>
                 <th>Đơn</th>
+                <th>Nợ</th>
                 <th>Số tiền trả</th>
               </tr>
             </thead>
@@ -169,10 +155,11 @@ defineExpose({ openModal })
                     <a @click="openBlankReceiptDetail(receiptPayment.receipt.id)">
                       IV{{ receiptPayment.receipt.id }}
                     </a>
-                    - Nợ
-                    <span class="font-medium"> {{ formatMoney(receiptPayment.receipt.debt) }}</span>
                   </div>
                   <div>{{ timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
+                </td>
+                <td class="text-right">
+                  {{ formatMoney(receiptPayment.receipt.debt) }}
                 </td>
                 <td class="text-right">
                   {{ formatMoney(receiptPayment.money) }}
@@ -182,27 +169,42 @@ defineExpose({ openModal })
           </table>
         </div>
         <div class="flex items-center mt-3">
+          <div style="width: 100px; flex: none">Công nợ:</div>
+          <div style="font-size: 16px; padding-left: 12px">{{ formatMoney(openDebt) }}</div>
+        </div>
+        <div class="flex items-center mt-3">
+          <div style="width: 100px; flex: none">Số tiền trả:</div>
+          <div class="flex-1">
+            <InputMoney
+              ref="inputMoneyPay"
+              v-model:value="money"
+              :validate="{ lte: openDebt, gt: 0 }"
+              required
+              @update:value="calculatorEachReceiptPayment"
+            />
+          </div>
+          <VueButton color="blue" @click="handleClickPayAllDebt"> Tất cả </VueButton>
+        </div>
+        <div class="flex items-center mt-3">
           <div style="width: 100px; flex: none">Ghi chú:</div>
-          <a-input v-model:value="note" />
+          <InputText v-model:value="note" />
         </div>
       </div>
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <a-button @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <VueButton type="reset" @click="closeModal">
+            <CloseOutlined />
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" @click="handleSave">
+          </VueButton>
+          <VueButton type="submit" color="blue" :loading="saveLoading">
             <template #icon>
               <SaveOutlined />
             </template>
             Xác nhận trả nợ
-          </a-button>
+          </VueButton>
         </div>
       </div>
-    </div>
+    </form>
   </VueModal>
 </template>

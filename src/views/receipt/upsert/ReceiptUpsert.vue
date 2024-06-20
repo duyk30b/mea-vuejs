@@ -2,7 +2,7 @@
 import { SaveOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import dayjs, { Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
@@ -12,30 +12,26 @@ import { Distributor, DistributorApi, useDistributorStore } from '../../../modul
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore } from '../../../modules/product'
-import { Receipt, ReceiptApi, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
 import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 
 const modalReceiptUpsertSettingScreen = ref<InstanceType<typeof ModalReceiptUpsertSettingScreen>>()
 const receiptUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 
-const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
-const inputSearchDistributor = ref<InstanceType<typeof InputOptions>>()
+const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
-  if (e.key === 'F3') {
-    e.preventDefault()
-    inputSearchProduct.value?.focus()
-  }
   if (e.key === 'F4') {
     e.preventDefault()
-    inputSearchDistributor.value?.focus()
+    inputOptionsDistributor.value?.focus()
   }
 }
 
@@ -43,7 +39,6 @@ const router = useRouter()
 const route = useRoute()
 
 const productStore = useProductStore()
-const receiptStore = useReceiptStore()
 const distributorStore = useDistributorStore()
 const screenStore = useScreenStore()
 const meStore = useMeStore()
@@ -62,6 +57,7 @@ const saveLoading = ref(false)
 onBeforeMount(async () => {
   const receiptId = Number(route.params.id)
   const distributorId = Number(route.query.distributor_id)
+  let distributorDefault = Distributor.blank()
   if (route.query.mode) {
     mode.value = route.query.mode as any
   }
@@ -74,23 +70,29 @@ onBeforeMount(async () => {
     })
 
     receipt.value = receiptResponse
-    distributor.value = Distributor.fromInstance(receiptResponse.distributor!)
+    distributorDefault = receiptResponse.distributor!
+
     if (mode.value === EReceiptUpsertMode.CREATE || mode.value === EReceiptUpsertMode.COPY) {
       time.value = dayjs(new Date())
     } else if (mode.value === EReceiptUpsertMode.UPDATE) {
       time.value = dayjs(new Date(receipt.value.startedAt))
     }
   } else if (distributorId) {
-    const distributorRes = await DistributorApi.detail(distributorId)
-    distributor.value = distributorRes
-    receipt.value.distributor = distributorRes
-    receipt.value.distributorId = distributorRes.id
+    distributorDefault = await DistributorApi.detail(distributorId)
   } else {
-    const distributorRes = Distributor.fromPlain(meStore.distributorDefault || Distributor.blank())
-    distributor.value = distributorRes
-    receipt.value.distributor = distributorRes
-    receipt.value.distributorId = distributorRes.id
+    distributorDefault = Distributor.toBasic(meStore.distributorDefault)
   }
+
+  distributor.value = distributorDefault
+  receipt.value.distributor = distributorDefault
+  receipt.value.distributorId = distributorDefault.id
+  nextTick(() => {
+    inputOptionsDistributor.value?.setItem({
+      text: distributorDefault.fullName,
+      data: distributorDefault,
+      value: distributorDefault.id,
+    })
+  })
 })
 
 onMounted(async () => {
@@ -115,8 +117,17 @@ const searchingDistributor = async (text: string) => {
   }
 }
 
+const createDistributor = (instance?: Distributor) => {
+  inputOptionsDistributor.value?.setItem({
+    text: instance?.fullName,
+    data: instance,
+    value: instance?.id,
+  })
+  selectDistributor(instance)
+}
+
 const selectDistributor = (data?: Distributor) => {
-  const snapDistributor = data ? Distributor.fromInstance(data) : Distributor.blank()
+  const snapDistributor = data ? Distributor.toBasic(data) : Distributor.blank()
   distributor.value = snapDistributor
   receipt.value.distributorId = snapDistributor.id!
   receipt.value.distributor = snapDistributor
@@ -137,11 +148,11 @@ const saveReceipt = async (type: EReceiptSave) => {
     return receiptUpsertForm.value?.reportValidity()
   }
   if (receipt.value.receiptItems!.length == 0) {
-    return message.error('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
+    return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
   }
   const invalidReceiptItem = receipt.value.receiptItems!.find((ri) => ri.quantity === 0)
   if (invalidReceiptItem) {
-    return message.error(
+    return AlertStore.addError(
       `Lỗi: sản phẩm ${invalidReceiptItem!.product!.brandName} có số lượng 0`
     )
   }
@@ -156,31 +167,35 @@ const saveReceipt = async (type: EReceiptSave) => {
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
-      case EReceiptSave.CREATE_BASIC_AND_DETAIL: {
-        const response = await ReceiptApi.createBasic(receipt.value)
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
-        break
-      }
-      case EReceiptSave.CREATE_BASIC_AND_NEW: {
-        const response = await ReceiptApi.createBasic(receipt.value)
-
+      case EReceiptSave.CREATE_QUICK_AND_NEW: {
+        const response = await ReceiptApi.createQuickReceipt(receipt.value)
         receipt.value = Receipt.blank()
+
         const distributorRes = Distributor.fromPlain(meStore.distributorDefault)
         distributor.value = distributorRes
         receipt.value.distributor = distributorRes
         receipt.value.distributorId = distributorRes.id
-
+        inputOptionsDistributor.value?.setItem({
+          text: distributorRes.fullName,
+          value: distributorRes.id,
+          data: distributorRes,
+        })
         AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
-        await productStore.refreshDB() //update product mới nhất luôn
         break
       }
-      case EReceiptSave.UPDATE_DRAFT: {
-        const response = await ReceiptApi.updateDraft(receipt.value.id, receipt.value)
+      case EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT: {
+        const response = await ReceiptApi.updateReceiptDraftAndReceiptPrepayment(
+          receipt.value.id,
+          receipt.value
+        )
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
-      case EReceiptSave.UPDATE_BASIC: {
-        const response = await ReceiptApi.updateBasic(receipt.value.id, receipt.value)
+      case EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS: {
+        const response = await ReceiptApi.updateReceiptDebtAndReceiptSuccess(
+          receipt.value.id,
+          receipt.value
+        )
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -218,7 +233,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </script>
 
 <template>
-  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="selectDistributor" />
+  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="createDistributor" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
     <div class="page-header-content">
@@ -270,23 +285,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </a>
             </span>
           </div>
+
           <div style="height: 40px">
             <InputOptions
-              ref="inputSearchDistributor"
-              v-model:searchText="distributor.fullName"
-              :options="distributorList"
+              ref="inputOptionsDistributor"
+              :options="distributorList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
               :max-height="260"
-              placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+              placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               :disabled="mode === EReceiptUpsertMode.UPDATE"
               required
-              @select-item="selectDistributor"
-              @update:search-text="searchingDistributor"
+              @selectItem="({ data }) => createDistributor(data)"
+              @update:text="searchingDistributor"
             >
-              <template #each="{ item: { fullName, phone, address } }">
+              <template #option="{ item: { data } }">
                 <div>
-                  <b>{{ fullName }}</b> - {{ phone }}
+                  <b>{{ data.fullName }}</b> - {{ data.phone }}
                 </div>
-                <div>{{ address }}</div>
+                <div>{{ data.address }}</div>
               </template>
             </InputOptions>
           </div>
@@ -375,7 +390,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <tr>
                   <td class="font-bold">Tổng tiền</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(receipt.revenue) }}
+                    {{ formatMoney(receipt.totalMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -391,41 +406,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
+              type="button"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveReceipt(EReceiptSave.CREATE_BASIC_AND_NEW)"
+              @click="saveReceipt(EReceiptSave.CREATE_QUICK_AND_NEW)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Lưu và Tạo phiếu mới
-            </a-button>
+            </VueButton>
           </div>
-
-          <div
-            v-if="
-              permissionIdMap[PermissionId.RECEIPT] &&
-              screenStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndDetail
-            "
-            class="mt-4"
-          >
-            <a-button
-              type="primary"
-              :loading="saveLoading"
-              size="large"
-              block
-              @click="saveReceipt(EReceiptSave.CREATE_BASIC_AND_DETAIL)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
-              Lưu và Xem chi tiết
-            </a-button>
-          </div>
-
           <div
             v-if="
               permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
@@ -433,62 +427,86 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
-              size="large"
-              block
+              :size="'large'"
+              type="button"
               @click="saveReceipt(EReceiptSave.CREATE_DRAFT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Lưu nháp
-            </a-button>
+            </VueButton>
           </div>
         </template>
 
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT] &&
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT)"
+              type="button"
+              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
               Cập nhật phiếu nháp
-            </a-button>
+            </VueButton>
           </div>
 
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT] &&
-              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+              [ReceiptStatus.Prepayment].includes(receipt.status)
             "
             class="mt-4"
           >
-            <a-button
-              type="primary"
+            <VueButton
+              style="width: 100%"
+              color="blue"
               :loading="saveLoading"
               size="large"
-              block
-              @click="saveReceipt(EReceiptSave.UPDATE_BASIC)"
+              type="button"
+              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)"
             >
               <template #icon>
                 <SaveOutlined />
               </template>
-              Cập nhật phiếu
-            </a-button>
+              Cập nhật phiếu tạm ứng
+            </VueButton>
+          </div>
+
+          <div
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS] &&
+              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
+            "
+            class="mt-4"
+          >
+            <VueButton
+              style="width: 100%"
+              color="blue"
+              :loading="saveLoading"
+              size="large"
+              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS)"
+            >
+              <template #icon>
+                <SaveOutlined />
+              </template>
+              Cập nhật phiếu đã nhập
+            </VueButton>
           </div>
         </template>
       </form>

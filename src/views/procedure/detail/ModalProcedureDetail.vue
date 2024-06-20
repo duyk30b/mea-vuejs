@@ -2,11 +2,13 @@
 import { CloseOutlined, DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
-import { Procedure } from '../../../modules/procedure'
+import { Procedure, useProcedureStore } from '../../../modules/procedure'
 import ProcedureInfo from './ProcedureInfo.vue'
 import ProcedureInvoice from './ProcedureInvoice.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
+
+const procedureStore = useProcedureStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -14,9 +16,10 @@ const activeTab = ref('procedure-info')
 
 const procedure = ref<Procedure>(Procedure.blank())
 
-const openModal = async (p: Procedure) => {
+const openModal = async (procedureId: number) => {
   showModal.value = true
-  procedure.value = Procedure.fromInstance(p)
+  const response = await procedureStore.getOne(procedureId)
+  procedure.value = response || Procedure.blank()
 }
 
 const refreshModal = () => {
@@ -39,7 +42,7 @@ defineExpose({ openModal })
   >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Dịch vụ</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Dịch vụ: {{ procedure.name }}</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
         </div>

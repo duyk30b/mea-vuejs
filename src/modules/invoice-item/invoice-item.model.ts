@@ -1,12 +1,13 @@
 import {
   Expose,
   instanceToInstance,
+  instanceToPlain,
   plainToInstance,
   Transform,
   TransformationType,
   Type,
 } from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
 import { Batch } from '../batch'
 import { Customer } from '../customer'
@@ -18,11 +19,14 @@ import { Product } from '../product'
 export enum InvoiceItemType {
   Batch = 1,
   Procedure = 2,
-  Product = 3,
+  ProductHasManageQuantity = 3,
   ProductNoManageQuantity = 4,
 }
 
-export class InvoiceItem extends BaseModel {
+export class InvoiceItem {
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  id: number
+
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   invoiceId: number
 
@@ -42,20 +46,10 @@ export class InvoiceItem extends BaseModel {
   type: InvoiceItemType
 
   @Expose()
-  @Transform(({ value, type }) => {
-    if (type === TransformationType.PLAIN_TO_CLASS) {
-      return JSON.parse(value || JSON.stringify({ name: '', rate: 1 }))
-    } else if (type === TransformationType.CLASS_TO_PLAIN) {
-      return JSON.stringify(value || { name: '', rate: 1 })
-    } else if (type === TransformationType.CLASS_TO_CLASS) {
-      return JSON.parse(JSON.stringify(value || { name: '', rate: 1 }))
-    }
-    return value
-  })
-  unit: UnitType
+  quantity: number
 
   @Expose()
-  costPrice: number // Giá cost
+  unitRate: number
 
   @Expose()
   costAmount: number // Giá cost
@@ -75,9 +69,6 @@ export class InvoiceItem extends BaseModel {
   @Expose()
   actualPrice: number // Giá thực tế
 
-  @Expose()
-  quantity: number
-
   @Expose() // Hướng dẫn sử dụng
   hintUsage: string | null
 
@@ -86,12 +77,12 @@ export class InvoiceItem extends BaseModel {
   invoice?: Invoice
 
   @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Product)
-  product?: Product
-
-  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Batch)
   batch?: Batch
+
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => Product)
+  product?: Product
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Procedure)
@@ -101,51 +92,47 @@ export class InvoiceItem extends BaseModel {
   @Type(() => Customer)
   customer?: Customer
 
-  get unitQuantity() {
-    return Number((this.quantity / this.unit.rate).toFixed(3))
+  get unitName() {
+    return this.product?.getUnitNameByRate(this.unitRate) || ''
   }
 
-  get unitCostPrice() {
-    return this.costPrice * this.unit.rate
+  get unitQuantity() {
+    return Number((this.quantity / this.unitRate).toFixed(3))
   }
 
   get unitExpectedPrice() {
-    return this.expectedPrice * this.unit.rate
+    return this.expectedPrice * this.unitRate
   }
 
   get unitDiscountMoney() {
-    return this.discountMoney * this.unit.rate
+    return this.discountMoney * this.unitRate
   }
 
   get unitActualPrice() {
-    return this.actualPrice * this.unit.rate
+    return this.actualPrice * this.unitRate
   }
 
   set unitQuantity(data: number) {
-    this.quantity = data * this.unit.rate
-  }
-
-  set unitCostPrice(data: number) {
-    this.costPrice = data / this.unit.rate
+    this.quantity = data * this.unitRate
   }
 
   set unitExpectedPrice(data: number) {
-    this.expectedPrice = data / this.unit.rate
+    this.expectedPrice = data / this.unitRate
   }
 
   set unitDiscountMoney(data: number) {
-    this.discountMoney = data / this.unit.rate
+    this.discountMoney = data / this.unitRate
   }
 
   set unitActualPrice(data: number) {
-    this.actualPrice = data / this.unit.rate
+    this.actualPrice = data / this.unitRate
   }
 
   static init() {
     const ins = new InvoiceItem()
     ins.id = 0
-    ins.unit = { name: '', rate: 1 }
-    ins.costPrice = 0
+    ins.unitRate = 1
+    ins.costAmount = 0
     ins.expectedPrice = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
@@ -190,6 +177,24 @@ export class InvoiceItem extends BaseModel {
       excludeExtraneousValues: true,
       groups: [FROM_INSTANCE],
     })
+  }
+
+  static toPlain(
+    instance: InvoiceItem,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
+
+  static toPlains(
+    instances: InvoiceItem[],
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instances.map((i) => InvoiceItem.toPlain(i, type))
   }
 
   static clone(root: InvoiceItem): InvoiceItem {

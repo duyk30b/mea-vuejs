@@ -95,7 +95,7 @@ export const formatUrlEncode = (text: string) => {
   return text.replace(/[^a-zA-Z0-9_\-.*]+/g, '')
 }
 
-export const customFilter = (str: string, filter: string, skip = 2): boolean => {
+export const customFilter = (str = '', filter = '', skip = 2): boolean => {
   const key = convertViToEn(filter.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
   const stringConvert = convertViToEn(str.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
   let pattern = ''

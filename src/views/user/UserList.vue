@@ -90,7 +90,7 @@ const deviceLogout = async (userId: number, code: string) => {
 
   <div class="page-main">
     <div class="page-main-table table-wrapper">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>ID</th>

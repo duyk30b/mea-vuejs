@@ -1,79 +1,47 @@
 <script setup lang="ts">
-import {
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-  FileDoneOutlined,
-  FormOutlined,
-} from '@ant-design/icons-vue'
-import { Modal, message } from 'ant-design-vue'
-import { createVNode, ref, watch } from 'vue'
-import { VueSelect } from '../../../common/vue-form'
-import { Product } from '../../../modules/product'
-import { Batch, BatchApi, useBatchStore } from '../../../modules/batch'
+import { FileDoneOutlined, FormOutlined } from '@ant-design/icons-vue'
+import { ref, watch } from 'vue'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import type { Batch } from '../../../modules/batch'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Product, ProductApi } from '../../../modules/product'
 import { timeToText } from '../../../utils'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 
-const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
+const props = withDefaults(defineProps<{ productId: number }>(), { productId: 0 })
 
 const screenStore = useScreenStore()
-const batchStore = useBatchStore()
 const { formatMoney, isMobile } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const page = ref(1)
-const limit = ref(Number(localStorage.getItem('PRODUCT_BATCH_PAGINATION_LIMIT')) || 10)
-const total = ref(0)
-const batches = ref<Batch[]>([])
-
+const product = ref<Product>(Product.blank())
 const hasZeroQuantity = ref<boolean>(false)
-
 const startFetchData = async () => {
-  if (!props.product.hasManageBatches) return
+  if (!props.productId) return
 
-  await batchStore.refreshDB()
   try {
-    const pagination = await batchStore.pagination({
-      page: page.value,
-      limit: limit.value,
-      filter: {
-        productId: props.product.id,
-        quantity: hasZeroQuantity.value ? undefined : { NOT: 0 },
-      },
-      sort: { id: 'DESC' },
+    const productResponse = await ProductApi.detail(props.productId, {
+      relation: { batchList: true },
+      filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { GT: 0 } } },
     })
-    const productClone = Product.clone(props.product)
-    pagination.data.forEach((i) => (i.product = productClone))
-
-    batches.value = pagination.data
-    total.value = pagination.total
+    productResponse.batchList?.forEach((i) => (i.product = productResponse))
+    product.value = productResponse
   } catch (error) {
-    console.log('🚀 ~ file: Batch.vue:41 ~ error:', error)
+    console.log('🚀 ~ file: ProductInfo.vue:35 ~ startFetchData ~ error:', error)
   }
 }
 
 watch(
-  () => props.product.id,
+  () => props.productId,
   async (newValue) => {
-    if (newValue) await startFetchData()
-    else batches.value = []
+    await startFetchData()
   },
   { immediate: true }
 )
-
-const changePagination = async (options: { page?: number; limit?: number }) => {
-  if (options.page) page.value = options.page
-  if (options.limit) {
-    limit.value = options.limit
-    localStorage.setItem('PRODUCT_BATCH_PAGINATION_LIMIT', String(options.limit))
-  }
-  await startFetchData()
-}
 
 const handleModalBatchUpdateSuccess = async (data: Batch, type: 'UPDATE') => {
   await startFetchData()
@@ -81,14 +49,14 @@ const handleModalBatchUpdateSuccess = async (data: Batch, type: 'UPDATE') => {
 
 const unitString = (data: Product) => {
   let result = data.unitBasicName
-  for (let i = 1; i < (data.unit.length || 0); i++) {
-    const currentUnit = data.unit[i]
+  for (let i = 1; i < (data.unitObject.length || 0); i++) {
+    const currentUnit = data.unitObject[i]
     result += `, ${currentUnit.name} (${currentUnit.rate} ${data.unitBasicName})`
   }
   return result
 }
 
-const handleChangeStatus = async (value: 'true' | 'false') => {
+const handleZeroQuantity = async (value: 'true' | 'false') => {
   await startFetchData()
 }
 </script>
@@ -114,14 +82,14 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
         <td class="px-2">
-          <b>{{ product.unitQuantity }}</b> {{ product.unitName }}
-          <span v-if="product.unitRate != 1" class="ml-2">
+          <b>{{ product.unitQuantity }}</b> {{ product.unitDefaultName }}
+          <span v-if="product.unitDefaultRate != 1" class="ml-2">
             (<b>{{ product.quantity }}</b> {{ product.unitBasicName }})
           </span>
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Giá nhập</td>
+        <td class="px-2 py-1 whitespace-nowrap">Giá nhập lần cuối</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.unitCostPrice) }}
         </td>
@@ -136,6 +104,12 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
         <td class="px-2 py-1 whitespace-nowrap">Giá bán lẻ</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.unitRetailPrice) }}
+        </td>
+      </tr>
+      <tr v-if="screenStore.SYSTEM_SETTING.retailPrice">
+        <td class="px-2 py-1 whitespace-nowrap">Giá vốn trung bình</td>
+        <td class="px-2 font-medium">
+          {{ formatMoney(Math.floor(product.costAmount / (product.quantity || 1))) }}
         </td>
       </tr>
       <tr v-if="screenStore.SYSTEM_SETTING.retailPrice">
@@ -191,27 +165,26 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
         <span>Lô Hàng</span>
       </div>
 
-      <div>
-        <a-checkbox v-model:checked="hasZeroQuantity" @change="handleChangeStatus">
+      <div class="cursor-pointer">
+        <a-checkbox v-model:checked="hasZeroQuantity" @change="handleZeroQuantity">
           Hiển thị lô hàng đã hết
         </a-checkbox>
       </div>
     </div>
-    <div v-if="isMobile" class="mt-2">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="table-wrapper mt-2">
+      <table>
         <thead>
           <tr>
             <th>Lô</th>
             <th>SL</th>
-            <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">Tiền vốn</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="batches.length === 0">
+          <tr v-if="product.batchList?.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(batch, index) in batches" :key="index">
+          <tr v-for="(batch, index) in product.batchList || []" :key="index">
             <td>
               <div>Mã: {{ batch.id }}</div>
               <div>S.Lô: {{ batch.lotNumber }}</div>
@@ -219,11 +192,6 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
             </td>
             <td class="text-right whitespace-nowrap">
               {{ batch.quantity }}
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">
-                {{ formatMoney(batch.costAmount) }}
-              </div>
             </td>
             <td class="text-center">
               <div class="flex flex-col">
@@ -238,39 +206,27 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
               </div>
             </td>
           </tr>
-          <tr>
-            <td class="font-bold whitespace-nowrap">Tổng vốn</td>
-            <td class="text-right whitespace-nowrap">
-              {{ batches.reduce((acc, cur) => acc + cur.unitQuantity, 0) }}
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <span v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">
-                {{ formatMoney(batches.reduce((acc, cur) => acc + cur.costAmount, 0)) }}
-              </span>
-            </td>
-            <td></td>
-          </tr>
         </tbody>
       </table>
     </div>
     <div v-if="!isMobile" class="table-wrapper mt-2">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>Mã</th>
             <th>Số lô</th>
             <th>HSD</th>
             <th>SL</th>
+            <th>Đ.Vị</th>
             <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">G.Nhập</th>
-            <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">Tiền Vốn</th>
             <th>Sửa</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="batches.length === 0">
+          <tr v-if="product.batchList?.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(batch, index) in batches" :key="index">
+          <tr v-for="(batch, index) in product.batchList || []" :key="index">
             <td class="text-center">PB{{ batch.id }}</td>
             <td class="text-center">
               {{ batch.lotNumber }}
@@ -278,20 +234,17 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
             <td class="text-center">
               {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
             </td>
-            <td class="text-right">
+            <td class="text-center">
               {{ batch.unitQuantity }}
+            </td>
+            <td class="text-center">
+              {{ batch.product?.unitDefaultName }}
             </td>
             <td
               v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
               class="text-right"
             >
               {{ formatMoney(batch.unitCostPrice) }}
-            </td>
-            <td
-              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
-              class="text-right"
-            >
-              {{ formatMoney(batch.costAmount) }}
             </td>
             <td class="text-center">
               <a
@@ -304,31 +257,8 @@ const handleChangeStatus = async (value: 'true' | 'false') => {
               </a>
             </td>
           </tr>
-          <tr>
-            <td class="text-right font-bold" colspan="3">Tổng Vốn</td>
-            <td class="text-right">
-              {{ batches.reduce((acc, cur) => acc + cur.quantity, 0) }}
-            </td>
-            <td></td>
-            <td
-              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
-              class="text-right font-bold"
-            >
-              {{ formatMoney(batches.reduce((acc, cur) => acc + cur.costAmount, 0)) }}
-            </td>
-            <td></td>
-          </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
     </div>
   </div>
 </template>

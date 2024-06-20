@@ -2,19 +2,21 @@
 import {
   AuditOutlined,
   FileSearchOutlined,
-  PlusOutlined,
   FormOutlined,
+  PlusOutlined,
 } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
-import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { VueSelect } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
@@ -75,10 +77,6 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleSelectReceiptStatus = async (value: ReceiptStatus | '') => {
-  await startSearch()
-}
-
 const handleChangeTime = async (value: any) => {
   await startFetchData()
 }
@@ -116,18 +114,24 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block"><AuditOutlined /> Danh sách phiếu nhập hàng</div>
-      <a-button
-        v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
-        type="primary"
-        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+    <div class="flex items-center gap-4">
+      <div
+        class="hidden md:block"
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
       >
-        <template #icon>
-          <PlusOutlined />
-        </template>
-        Tạo phiếu nhập mới
-      </a-button>
+        <AuditOutlined class="mr-1" /> Danh sách phiếu nhập hàng
+      </div>
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
+          class="btn btn-blue"
+          @click="
+            $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
+          "
+        >
+          <PlusOutlined /> Tạo phiếu nhập hàng mới
+        </VueButton>
+      </div>
     </div>
     <div class="page-header-setting">
       <!-- <a-dropdown trigger="click">
@@ -159,72 +163,70 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
-        <a-select
-          v-model:value="receiptStatus"
-          allow-clear
-          class="w-full"
-          placeholder="Tất cả"
-          @change="handleSelectReceiptStatus"
-        >
-          <a-select-option :value="null"> Tất cả </a-select-option>
-          <a-select-option :value="ReceiptStatus.Draft"> Nháp </a-select-option>
-          <a-select-option :value="ReceiptStatus.AwaitingShipment"> Chờ gửi hàng </a-select-option>
-          <a-select-option :value="ReceiptStatus.Debt"> Nợ </a-select-option>
-          <a-select-option :value="ReceiptStatus.Success"> Hoàn thành </a-select-option>
-          <a-select-option :value="ReceiptStatus.Refund"> Hoàn trả </a-select-option>
-        </a-select>
+        <div>
+          <VueSelect
+            v-model:value="receiptStatus"
+            :options="[
+              { text: 'Tất cả', value: null },
+              { text: 'Nháp', value: ReceiptStatus.Draft },
+              { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Prepayment },
+              { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
+              { text: 'Hoàn thành', value: ReceiptStatus.Success },
+              { text: 'Hoàn trả', value: ReceiptStatus.Refund },
+            ]"
+            @update:value="startSearch"
+          />
+        </div>
       </div>
-      <!-- <div style="flex: 2; flex-basis: 500px;">
-        <a-button type="primary" @click="startSearch">Tìm kiếm
-          <template #icon>
-            <SearchOutlined />
-          </template>
-        </a-button>
-      </div> -->
     </div>
 
     <div v-if="isMobile" class="page-main-list" style="width: 100%">
-      <table class="table-mobile">
-        <thead>
-          <tr>
-            <th>Nhà cung cấp</th>
-            <th>Tiền</th>
-            <th>T.Thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="receipts.length === 0">
-            <td colspan="20" class="text-center">Không có dữ liệu</td>
-          </tr>
-          <tr
-            v-for="(receipt, index) in receipts"
-            :key="index"
-            @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
-          >
-            <td>
-              <div class="font-medium text-justify">
-                {{ receipt.distributor?.fullName }}
-                <a
-                  class="text-base"
-                  @click="modalDistributorDetail?.openModal(receipt.distributor!)"
-                >
-                  <FileSearchOutlined class="ml-1" />
-                </a>
-              </div>
-              <div class="text-xs">
-                {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
-              </div>
-            </td>
-            <td class="text-right">
-              <div>{{ formatMoney(receipt.revenue) }}</div>
-              <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
-            </td>
-            <td class="text-left">
-              <ReceiptStatusTag :status="receipt.status" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nhà cung cấp</th>
+              <th>Tiền</th>
+              <th>T.Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="receipts.length === 0">
+              <td colspan="20" class="text-center">Không có dữ liệu</td>
+            </tr>
+            <tr
+              v-for="(receipt, index) in receipts"
+              :key="index"
+              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
+            >
+              <td>
+                <div class="font-medium text-justify">
+                  {{ receipt.distributor?.fullName }}
+                  <a
+                    class="text-base"
+                    @click="modalDistributorDetail?.openModal(receipt.distributorId)"
+                  >
+                    <FileSearchOutlined class="ml-1" />
+                  </a>
+                </div>
+                <div class="text-xs">
+                  {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
+                </div>
+                <div v-if="receipt.distributor?.note" class="text-xs italic">
+                  {{ receipt.distributor?.note }}
+                </div>
+              </td>
+              <td class="text-right">
+                <div>{{ formatMoney(receipt.totalMoney) }}</div>
+                <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
+              </td>
+              <td class="text-left">
+                <ReceiptStatusTag :status="receipt.status" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="mt-4 float-right mb-2">
         <a-pagination
           v-model:current="page"
@@ -237,8 +239,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
 
-    <div v-else class="page-main-table table-wrapper">
-      <table class="table">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
+      <table>
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
@@ -276,13 +278,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div>
                 {{ receipt.distributor?.fullName }}
-                <a class="ml-1" @click="modalDistributorDetail?.openModal(receipt.distributor!)">
+                <a class="ml-1" @click="modalDistributorDetail?.openModal(receipt.distributorId)">
                   <FileSearchOutlined />
                 </a>
               </div>
+              <div v-if="receipt.distributor?.note" class="text-xs italic">
+                {{ receipt.distributor?.note }}
+              </div>
             </td>
             <td class="text-right">
-              <div>{{ formatMoney(receipt.revenue) }}</div>
+              <div>{{ formatMoney(receipt.totalMoney) }}</div>
               <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
             </td>
             <td class="text-center">

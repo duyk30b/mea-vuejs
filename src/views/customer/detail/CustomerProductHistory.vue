@@ -7,6 +7,9 @@ import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item
 import { useScreenStore } from '../../../modules/_me/screen.store'
 import { formatPhone, timeToText } from '../../../utils'
 import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
+import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
+import { MovementType, VoucherType } from '../../../modules/enum'
+import type { ProductMovement } from '../../../modules/product-movement/product-movement.model'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -17,28 +20,26 @@ const router = useRouter()
 const screenStore = useScreenStore()
 const { formatMoney, isMobile } = screenStore
 
-const invoiceItems = ref<InvoiceItem[]>([])
+const productMovementList = ref<ProductMovement[]>([])
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('CUSTOMER_PRODUCT_HISTORY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await InvoiceItemApi.pagination({
+    const { data, meta } = await ProductMovementApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
-        customerId: props.customer.id!,
-        type: InvoiceItemType.Batch,
+        contactId: props.customer.id!,
+        voucherType: { IN: [VoucherType.Invoice, VoucherType.Visit] },
       },
       relation: {
-        batch: true,
         product: true,
-        invoice: { customer: false },
       },
       sort: { id: 'DESC' },
     })
-    invoiceItems.value = data
+    productMovementList.value = data
     total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
@@ -58,7 +59,7 @@ watch(
   () => props.customer.id,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else invoiceItems.value = []
+    else productMovementList.value = []
   },
   { immediate: true }
 )
@@ -67,6 +68,14 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
   let route = router.resolve({
     name: 'InvoiceDetail',
     params: { id: invoiceId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankVisitDetail = (visitId: number) => {
+  let route = router.resolve({
+    name: 'VisitDetail',
+    params: { id: visitId },
   })
   window.open(route.href, '_blank')
 }
@@ -82,8 +91,8 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
         <a :href="'tel:' + customer.phone"> {{ formatPhone(customer.phone || '') }} </a>
       </span>
     </div>
-    <div v-if="isMobile" class="mt-4 w-full">
-      <table class="table-mobile">
+    <div v-if="isMobile" class="mt-4 w-full table-wrapper">
+      <table>
         <thead>
           <tr>
             <th>Sản phẩm</th>
@@ -92,46 +101,52 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoiceItems.length === 0">
+          <tr v-if="productMovementList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
+          <tr v-for="(productMovement, index) in productMovementList" :key="index">
             <td>
               <div class="font-medium">
-                {{ invoiceItem.product!.brandName }}
+                {{ productMovement.product!.brandName }}
               </div>
-              <div style="font-size: 0.8rem">
-                Lô {{ invoiceItem.batch!.lotNumber }} - HSD
-                {{ timeToText(invoiceItem.batch!.expiryDate) }}
-              </div>
-              <div style="font-size: 0.8rem">
-                ĐH
-                <a class="mr-2" @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
-                  IV{{ invoiceItem.invoice!.id }}
+              <div
+                v-if="(productMovement.voucherType = VoucherType.Invoice)"
+                style="font-size: 0.8rem"
+              >
+                <a class="mr-2" @click="openBlankInvoiceDetail(productMovement.voucherId)">
+                  IV{{ productMovement.voucherId }}
                 </a>
-                <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
+              </div>
+              <div
+                v-if="(productMovement.voucherType = VoucherType.Visit)"
+                style="font-size: 0.8rem"
+              >
+                <a class="mr-2" @click="openBlankVisitDetail(productMovement.voucherId)">
+                  IV{{ productMovement.voucherId }}
+                </a>
               </div>
               <div style="font-size: 0.8rem">
-                TG {{ timeToText(invoiceItem.invoice?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                TG {{ timeToText(productMovement.createdAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
-              {{ invoiceItem.quantity }}
+              {{ -productMovement.unitQuantity }}
             </td>
             <td class="text-right">
               <div
-                v-if="invoiceItem.discountMoney"
+                v-if="productMovement.expectedPrice !== productMovement.actualPrice"
                 style="
+                  color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
                 "
               >
-                {{ formatMoney(invoiceItem.expectedPrice) }}
+                {{ formatMoney(productMovement.unitExpectedPrice) }}
               </div>
               <div style="white-space: nowrap">
-                {{ formatMoney(invoiceItem.actualPrice) }}
+                {{ formatMoney(productMovement.unitActualPrice) }}
               </div>
             </td>
           </tr>
@@ -149,7 +164,7 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
       </div>
     </div>
     <div v-if="!isMobile" class="table-wrapper mt-4 w-full">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>HĐ</th>
@@ -160,52 +175,51 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoiceItems.length === 0">
+          <tr v-if="productMovementList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
+          <tr v-for="(productMovement, index) in productMovementList" :key="index">
             <td>
-              <div>
-                <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
-                  IV{{ invoiceItem.invoice!.id }}
+              <div v-if="productMovement.voucherType === VoucherType.Invoice">
+                <a @click="openBlankInvoiceDetail(productMovement.voucherId)">
+                  IV{{ productMovement.voucherId }}
                 </a>
-                <span class="ml-2">
-                  <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
-                </span>
+              </div>
+              <div v-if="productMovement.voucherType === VoucherType.Visit">
+                <a @click="openBlankVisitDetail(productMovement.voucherId)">
+                  VS{{ productMovement.voucherId }}
+                </a>
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>
               <div class="font-medium">
-                {{ invoiceItem.product!.brandName }}
-              </div>
-              <div style="font-size: 0.8rem">
-                Lô {{ invoiceItem.batch!.lotNumber }} - HSD
-                {{ timeToText(invoiceItem.batch!.expiryDate) }}
+                {{ productMovement.product!.brandName }}
               </div>
             </td>
             <td class="text-center">
-              {{ invoiceItem.product!.unitBasicName }}
+              {{ productMovement.unitName }}
             </td>
             <td class="text-center">
-              {{ invoiceItem.quantity }}
+              {{ -productMovement.unitQuantity }}
             </td>
             <td class="text-right">
               <div
-                v-if="invoiceItem.discountMoney"
+                v-if="productMovement.expectedPrice !== productMovement.actualPrice"
                 style="
+                  color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
                 "
               >
-                {{ formatMoney(invoiceItem.expectedPrice) }}
+                {{ formatMoney(productMovement.unitExpectedPrice) }}
               </div>
               <div style="white-space: nowrap">
-                {{ formatMoney(invoiceItem.actualPrice) }}
+                {{ formatMoney(productMovement.unitActualPrice) }}
               </div>
             </td>
           </tr>

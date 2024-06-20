@@ -2,61 +2,76 @@
 import {
   CloseOutlined,
   ExclamationCircleOutlined,
+  LoadingOutlined,
   SaveOutlined,
   SettingOutlined,
+  SisternodeOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputText } from '../../../common/vue-form'
+import {
+  InputHint,
+  InputMoney,
+  InputNumber,
+  InputOptions,
+  InputText,
+} from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useScreenStore } from '../../../modules/_me/screen.store'
+import type { UnitType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore } from '../../../modules/product'
 import { Product } from '../../../modules/product/product.model'
-import { convertViToEn } from '../../../utils'
+import { customFilter } from '../../../utils'
+import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
+const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 
 const emit = defineEmits<{ (e: 'success', value: Product, type: 'CREATE' | 'UPDATE'): void }>()
 const productStore = useProductStore()
 const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const { isMobile, formatMoney } = screenStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 
 const product = ref(Product.blank())
+const unit = ref<UnitType[]>([])
 const saveLoading = ref(false)
 
 const openModal = async (instance?: Product) => {
   showModal.value = true
   if (instance) {
-    product.value = Product.fromInstance(instance)
+    product.value = Product.toBasic(instance)
+    unit.value = JSON.parse(instance.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
   } else {
-    product.value.hasManageBatches = Number(screenStore.SYSTEM_SETTING.hasManageBatches)
-    product.value.hasManageQuantity = Number(screenStore.SYSTEM_SETTING.hasManageQuantity)
+    product.value = Product.blank()
+    unit.value = [{ name: '', rate: 1, default: true }]
   }
 }
 
 const openModalFromInvoice = () => {
   showModal.value = true
+  product.value = Product.blank()
+  unit.value = [{ name: '', rate: 1, default: true }]
   product.value.hasManageBatches = 0
   product.value.hasManageQuantity = 0
 }
 
 const handleAddUnit = () => {
-  product.value.unit.push({ name: '', rate: Math.pow(10, product.value.unit.length) })
+  unit.value.push({ name: '', rate: Math.pow(10, unit.value.length) })
 }
 
 const handleChangeUnitDefault = (e: any, index: number) => {
   const value = e.target?.checked as boolean
-  product.value.unit.forEach((u, i) => {
+  unit.value.forEach((u, i) => {
     if (i === index && value) u.default = true
-    else u.default = false
+    else delete u.default
   })
 }
 
@@ -67,6 +82,7 @@ const handleClose = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
+  product.value.unit = JSON.stringify(unit.value)
   try {
     if (!product.value.id) {
       const data = await productStore.createOne(product.value)
@@ -112,12 +128,6 @@ const clickDelete = () => {
   })
 }
 
-const filterOption = (input: string, option: any) => {
-  const inputText = convertViToEn(input).toLowerCase()
-  const optionLabel = convertViToEn(option.label || option.value).toLowerCase()
-  return optionLabel.indexOf(inputText) >= 0
-}
-
 defineExpose({ openModal, openModalFromInvoice })
 </script>
 
@@ -133,6 +143,14 @@ defineExpose({ openModal, openModalFromInvoice })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
+          @click="modalDataProduct?.openModal()"
+        >
+          <SisternodeOutlined />
+        </div>
+        <div
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          style="font-size: 1.2rem"
+          class="px-4 cursor-pointer"
           @click="modalProductUpsertSettingScreen?.openModal()"
         >
           <SettingOutlined />
@@ -143,36 +161,32 @@ defineExpose({ openModal, openModalFromInvoice })
       </div>
 
       <div class="my-4 flex flex-wrap gap-4" :class="isMobile ? 'px-4' : 'px-6'">
-        <div class="grow basis-[600px] flex flex-col items-stretch">
-          <div class="w-[100px] flex-none text-left">Tên hàng hóa</div>
-          <div class="flex-auto">
+        <div class="grow basis-[600px]">
+          <div class="">Tên hàng hóa</div>
+          <div class="">
             <InputText v-model:value="product.brandName" required />
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.substance"
-          class="grow basis-[600px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Hoạt chất</div>
-          <div class="flex-auto">
+        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.substance" class="grow basis-[600px]">
+          <div class="">Hoạt chất</div>
+          <div class="">
             <InputText v-model:value="product.substance" />
           </div>
         </div>
 
         <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.unit"
-          :class="product.unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
-          class="grow flex flex-col items-stretch"
+          :class="unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
+          class="grow"
         >
-          <div class="w-[100px] flex-none">Đơn vị</div>
-          <div class="flex-auto">
-            <div v-if="product.unit.length === 1">
-              <a-auto-complete
-                v-model:value="product.unit[0].name"
-                :filter-option="filterOption"
-                class="w-full"
-                :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+          <div class="">Đơn vị</div>
+          <div class="">
+            <div v-if="unit.length === 1">
+              <InputHint
+                v-model:value="unit[0].name"
+                :options="screenStore.PRODUCT_UNIT"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
               />
             </div>
             <div v-else class="mt-2">
@@ -183,16 +197,16 @@ defineExpose({ openModal, openModalFromInvoice })
                 </tr>
                 <tr>
                   <td colspan="2">
-                    <a-auto-complete
-                      v-model:value="product.unit[0].name"
-                      :filter-option="filterOption"
-                      class="w-full"
-                      :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+                    <InputHint
+                      v-model:value="unit[0].name"
+                      required
+                      :options="screenStore.PRODUCT_UNIT"
+                      :logic-filter="(item: string, text: string) => customFilter(item, text)"
                     />
                   </td>
                   <td style="padding-left: 12px">
                     <a-checkbox
-                      :checked="!!product.unit[0].default"
+                      :checked="!!unit[0].default"
                       @change="(e: any) => handleChangeUnitDefault(e, 0)"
                     ></a-checkbox>
                   </td>
@@ -202,26 +216,27 @@ defineExpose({ openModal, openModalFromInvoice })
                   <td><small>Quy đổi ra đơn vị cơ bản</small></td>
                   <td></td>
                 </tr>
-                <tr v-for="(item, index) in product.unit" :key="index" class="py-2">
+                <tr v-for="(item, index) in unit" :key="index" class="py-2">
                   <template v-if="index > 0">
                     <td style="width: 30%; padding: 0 10px 8px 0">
-                      <a-auto-complete
-                        v-model:value="product.unit[index].name"
-                        class="w-full"
-                        :options="screenStore.PRODUCT_UNIT.map((i) => ({ value: i }))"
+                      <InputHint
+                        v-model:value="unit[index].name"
+                        required
+                        :options="screenStore.PRODUCT_UNIT"
+                        :logic-filter="(item: string, text: string) => customFilter(item, text)"
                       />
                     </td>
                     <td style="padding: 0 0 8px 0">
                       <InputNumber
-                        v-model:value="product.unit[index].rate"
-                        :append="product.unit[0].name"
+                        v-model:value="unit[index].rate"
+                        :append="unit[0].name"
                         :disabled="index == 0"
                       />
                     </td>
                     <td style="padding: 0 0 8px 12px">
                       <div class="flex flex-nowrap justify-between items-center">
                         <a-checkbox
-                          :checked="!!product.unit[index].default"
+                          :checked="!!unit[index].default"
                           @change="(e: any) => handleChangeUnitDefault(e, index)"
                         ></a-checkbox>
                         <a-button
@@ -229,7 +244,7 @@ defineExpose({ openModal, openModalFromInvoice })
                           :disabled="index == 0"
                           danger
                           style="margin-left: 5px"
-                          @click="product.unit.splice(index, 1)"
+                          @click="unit.splice(index, 1)"
                         >
                           Xóa
                         </a-button>
@@ -243,46 +258,36 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.group"
-          class="grow basis-[300px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Nhóm</div>
-          <div class="flex-auto">
-            <a-select
+        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.group" class="grow basis-[300px]">
+          <div class="">Nhóm</div>
+          <div>
+            <InputOptions
               v-model:value="product.group"
-              :filter-option="filterOption"
-              style="width: 100%"
-              show-search
               :options="
-                Object.entries(screenStore.PRODUCT_GROUP).map(([value, label]) => ({
+                Object.entries(screenStore.PRODUCT_GROUP).map(([value, text]) => ({
                   value,
-                  label,
+                  text,
                 }))
               "
+              :logic-filter="(item: any, text: string) => customFilter(item?.text, text)"
+            ></InputOptions>
+          </div>
+        </div>
+
+        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.route" class="grow basis-[40%]">
+          <div class="">Đường dùng {{ product.route }}</div>
+          <div>
+            <InputHint
+              v-model:value="product.route"
+              :options="screenStore.PRODUCT_ROUTE"
+              :logic-filter="(item: string, text: string) => customFilter(item, text)"
             />
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.route"
-          class="grow basis-[300px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Đường dùng</div>
-          <a-auto-complete
-            v-model:value="product.route"
-            :filter-option="filterOption"
-            :options="screenStore.PRODUCT_ROUTE.map((i) => ({ value: i }))"
-            class="flex-auto"
-          />
-        </div>
-
-        <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.source"
-          class="grow basis-[300px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Nguồn gốc</div>
-          <div class="flex-auto">
+        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.source" class="grow basis-[40%]">
+          <div class="">Nguồn gốc</div>
+          <div class="">
             <InputText v-model:value="product.source" />
           </div>
         </div>
@@ -290,41 +295,72 @@ defineExpose({ openModal, openModalFromInvoice })
         <div
           v-if="screenStore.SCREEN_PRODUCT_UPSERT.hintUsage"
           style="flex-basis: 600px; flex-grow: 1"
-          class="flex flex-col items-stretch"
+          class=""
         >
-          <div class="w-[100px] flex-none">Cách sử dụng</div>
-          <a-auto-complete
-            v-model:value="product.hintUsage"
-            :filter-option="filterOption"
-            :options="screenStore.PRODUCT_HINT_USAGE.map((i) => ({ value: i }))"
-            class="flex-auto"
-          />
-        </div>
-
-        <div class="grow basis-[200px] flex flex-col items-stretch">
-          <div class="w-[100px] flex-none">Giá nhập</div>
-          <div class="flex-1">
-            <InputMoney v-model:value="product.unitCostPrice" />
+          <div class="">Cách sử dụng</div>
+          <div>
+            <InputHint
+              v-model:value="product.hintUsage"
+              :options="screenStore.PRODUCT_HINT_USAGE"
+              :logic-filter="(item: string, text: string) => customFilter(item, text)"
+            />
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SYSTEM_SETTING.wholesalePrice"
-          class="grow basis-[200px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Giá bán sỉ</div>
-          <div class="flex-1">
-            <InputMoney v-model:value="product.unitWholesalePrice" />
+        <div class="grow basis-[40%]">
+          <div class="">
+            <span>Giá nhập</span>
+            <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
+              ({{ formatMoney(product.costPrice) }}/{{ unit.find((i) => i.default)?.name }})</span
+            >
+          </div>
+          <div class="">
+            <InputMoney
+              :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
+              :prepend="product.unitDefaultName"
+              @update:value="
+                (value) => (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))
+              "
+            />
           </div>
         </div>
 
-        <div
-          v-if="screenStore.SYSTEM_SETTING.retailPrice"
-          class="grow basis-[200px] flex flex-col items-stretch"
-        >
-          <div class="w-[100px] flex-none">Giá bán lẻ</div>
-          <div class="flex-1">
-            <InputMoney v-model:value="product.unitRetailPrice" />
+        <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
+          <div class="">
+            <span>Giá bán sỉ</span>
+            <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
+              ({{ formatMoney(product.wholesalePrice) }}/{{
+                unit.find((i) => i.default)?.name
+              }})</span
+            >
+          </div>
+          <div class="">
+            <InputMoney
+              :value="product.wholesalePrice * (unit.find((i) => i.default)?.rate || 1)"
+              :prepend="product.unitDefaultName"
+              @update:value="
+                (value) =>
+                  (product.wholesalePrice = value / (unit.find((i) => i.default)?.rate || 1))
+              "
+            />
+          </div>
+        </div>
+
+        <div v-if="screenStore.SYSTEM_SETTING.retailPrice" class="grow basis-[40%]">
+          <div class="">
+            <span>Giá bán lẻ</span>
+            <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
+              ({{ formatMoney(product.retailPrice) }}/{{ unit.find((i) => i.default)?.name }})</span
+            >
+          </div>
+          <div class="">
+            <InputMoney
+              :value="product.retailPrice * (unit.find((i) => i.default)?.rate || 1)"
+              :prepend="product.unitDefaultName"
+              @update:value="
+                (value) => (product.retailPrice = value / (unit.find((i) => i.default)?.rate || 1))
+              "
+            />
           </div>
         </div>
 
@@ -383,18 +419,13 @@ defineExpose({ openModal, openModalFromInvoice })
           >
             Xóa
           </a-button>
-          <a-button class="ml-auto" @click="handleClose">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
-            Lưu lại
-          </a-button>
+          <button class="btn ml-auto" type="reset" @click="handleClose">
+            <CloseOutlined /> Hủy bỏ
+          </button>
+          <button class="btn btn-blue">
+            <LoadingOutlined v-if="saveLoading" />
+            <SaveOutlined v-if="!saveLoading" /> Lưu lại
+          </button>
         </div>
       </div>
     </form>
@@ -402,5 +433,9 @@ defineExpose({ openModal, openModalFromInvoice })
   <ModalProductUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
     ref="modalProductUpsertSettingScreen"
+  />
+  <ModalDataProduct
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    ref="modalDataProduct"
   />
 </template>

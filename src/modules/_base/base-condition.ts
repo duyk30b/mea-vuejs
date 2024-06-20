@@ -36,6 +36,17 @@ export type ConditionNumber = {
   'BETWEEN'?: [number, number]
 }
 
+export type ConditionEnum<T> = {
+  '=='?: T
+  'EQUAL'?: T
+  '!='?: T
+  'NOT'?: T
+  'IS_NULL'?: boolean
+  'NOT_NULL'?: boolean
+  'IN'?: T[]
+  'BETWEEN'?: [T, T]
+}
+
 export class ConditionString {
   '=='?: string
   'EQUAL'?: string

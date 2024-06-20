@@ -87,7 +87,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
       </div>
     </div>
     <div class="table-wrapper mt-4 w-full">
-      <table class="table-mobile">
+      <table>
         <thead>
           <tr>
             <th>Phiếu</th>
@@ -112,7 +112,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
             </td>
             <td class="text-right">
               <div style="font-weight: 500">
-                {{ formatMoney(receipt.revenue) }}
+                {{ formatMoney(receipt.totalMoney) }}
               </div>
               <div v-if="receipt.debt">
                 <i

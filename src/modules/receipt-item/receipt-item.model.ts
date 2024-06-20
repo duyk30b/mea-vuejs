@@ -1,15 +1,13 @@
 import {
   Expose,
   instanceToInstance,
+  instanceToPlain,
   plainToInstance,
-  Transform,
-  TransformationType,
   Type,
 } from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN } from '../_base/base-expose'
-import type { UnitType } from '../enum'
-import { Product } from '../product'
+import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { Batch } from '../batch'
+import { Product } from '../product'
 import { Receipt } from '../receipt/receipt.model'
 
 export class ReceiptItem {
@@ -29,23 +27,13 @@ export class ReceiptItem {
   batchId: number
 
   @Expose()
-  @Transform(({ value, type }) => {
-    if (type === TransformationType.PLAIN_TO_CLASS) {
-      return JSON.parse(value || JSON.stringify({ name: '', rate: 1 }))
-    } else if (type === TransformationType.CLASS_TO_PLAIN) {
-      return JSON.stringify(value || { name: '', rate: 1 })
-    } else if (type === TransformationType.CLASS_TO_CLASS) {
-      return JSON.parse(JSON.stringify(value || { name: '', rate: 1 }))
-    }
-    return value
-  })
-  unit: UnitType
-
-  @Expose()
   costPrice: number // Giá cost
 
   @Expose()
   quantity: number = 0
+
+  @Expose()
+  unitRate: number
 
   @Expose({ groups: [FROM_PLAIN] })
   @Type(() => Receipt)
@@ -59,16 +47,20 @@ export class ReceiptItem {
   @Type(() => Product)
   product?: Product
 
+  get unitName() {
+    return this.product!.getUnitNameByRate(this.unitRate)
+  }
+
   get unitQuantity() {
-    return Number((this.quantity / this.unit.rate).toFixed(3))
+    return Number((this.quantity / this.unitRate).toFixed(3))
   }
 
   get unitCostPrice() {
-    return this.costPrice * this.unit.rate
+    return this.costPrice * this.unitRate
   }
 
   set unitQuantity(data: number) {
-    this.quantity = data * this.unit.rate
+    this.quantity = data * this.unitRate
   }
 
   get amount() {
@@ -80,7 +72,7 @@ export class ReceiptItem {
     ins.id = 0
     ins.quantity = 0
     ins.costPrice = 0
-    ins.unit = { rate: 1, name: '' }
+    ins.unitRate = 1
     return ins
   }
 
@@ -106,6 +98,24 @@ export class ReceiptItem {
       excludeExtraneousValues: true,
       groups: [FROM_PLAIN],
     })
+  }
+
+  static toPlain(
+    instance: ReceiptItem,
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instanceToPlain(instance, {
+      exposeUnsetFields: false,
+      excludeExtraneousValues: true,
+      groups: [type],
+    })
+  }
+
+  static toPlains(
+    instances: ReceiptItem[],
+    type: typeof USER_CREATE | typeof USER_UPDATE
+  ): Record<string, any> {
+    return instances.map((i) => ReceiptItem.toPlain(i, type))
   }
 
   static fromInstance(instance: ReceiptItem): ReceiptItem {

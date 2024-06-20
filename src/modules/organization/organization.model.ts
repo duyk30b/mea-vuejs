@@ -19,17 +19,17 @@ export class Organization {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number | null
 
-  @Expose()
-  name: string
+  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
+  phone: string
 
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
   email: string
 
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
-  phone: string
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, ROOT_CREATE, ROOT_UPDATE] })
   level: number
+
+  @Expose()
+  name: string
 
   @Expose()
   addressProvince: string
@@ -50,8 +50,17 @@ export class Organization {
   isActive: 1 | 0 // Trạng thái
 
   @Expose({ groups: [FROM_PLAIN] })
+  createdAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  updatedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
+  deletedAt: number
+
+  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => User)
-  users: User[]
+  users?: User[]
 
   static init(): Organization {
     const ins = new Organization()
@@ -65,14 +74,11 @@ export class Organization {
     return ins
   }
 
-  static fromObject(object: Partial<Organization>) {
+  static toBasic(root: Organization) {
     const ins = new Organization()
-    Object.assign(ins, object)
+    Object.assign(ins, root)
+    delete ins.users
     return ins
-  }
-
-  static fromObjects(objects: Partial<Organization>[]): Organization[] {
-    return objects.map((i) => Organization.fromObject(i))
   }
 
   static fromPlain(plain: Record<string, any>): Organization {
@@ -89,21 +95,6 @@ export class Organization {
       excludeExtraneousValues: true,
       groups: [FROM_PLAIN],
     })
-  }
-
-  static fromInstance(instance: Organization): Organization {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Organization') {
-      throw new Error('Organization.fromInstance error: Instance must be from class Organization')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static fromInstances(instances: Organization[]): Organization[] {
-    return instances.map((i) => Organization.fromInstance(i))
   }
 
   static toPlain(
