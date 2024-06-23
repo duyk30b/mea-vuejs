@@ -72,7 +72,7 @@ const selectProduct = async (instance?: Product) => {
       batchListResponse.forEach((i) => (i.product = instance))
       batchList.value = batchListResponse
 
-      batch.value = batchListResponse[0]
+      batch.value = batchListResponse[0] || Batch.blank()
       createInvoiceItemBatch(batchListResponse[0])
     } else {
       batchList.value = []
