@@ -26,7 +26,7 @@ const startFetchData = async () => {
   try {
     const productResponse = await ProductApi.detail(props.productId, {
       relation: { batchList: true },
-      filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { GT: 0 } } },
+      filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { NOT: 0 } } },
     })
     productResponse.batchList?.forEach((i) => (i.product = productResponse))
     product.value = productResponse
