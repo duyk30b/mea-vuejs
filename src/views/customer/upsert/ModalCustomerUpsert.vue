@@ -12,7 +12,7 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputHint, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
 import { convertViToEn, customFilter } from '../../../utils'
@@ -28,8 +28,8 @@ const emit = defineEmits<{
 }>()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -158,7 +158,7 @@ defineExpose({ openModal })
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalCustomerUpsertSettingScreen?.openModal()"
@@ -179,7 +179,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.phone"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.phone"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -195,7 +195,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.birthday"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.birthday"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -210,7 +210,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="customer.gender">
@@ -221,7 +221,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.identityCard"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.identityCard"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -232,7 +232,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -271,7 +271,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -285,7 +285,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.relative"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative"
           class="mt-3 flex"
           :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'"
         >
@@ -330,10 +330,7 @@ defineExpose({ openModal })
             <CloseOutlined />
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>
         </div>
@@ -341,7 +338,7 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalCustomerUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalCustomerUpsertSettingScreen"
   />
 </template>

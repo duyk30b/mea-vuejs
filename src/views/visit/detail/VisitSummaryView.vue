@@ -15,7 +15,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputNumber } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { DiscountType, PaymentViewType } from '../../../modules/enum'
 import { VisitApi, VisitStatus } from '../../../modules/visit'
@@ -25,22 +25,24 @@ import { VisitProduct } from '../../../modules/visit-product'
 import { arrayToKeyArray, timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
-import ModalVisitPayment from './ModalVisitPayment.vue'
-import ModalVisitReturnProduct from './ModalVisitReturnProduct.vue'
+import ModalVisitPayment from './modal/ModalVisitPayment.vue'
+import ModalVisitReturnProduct from './modal/ModalVisitReturnProduct.vue'
 import { visit } from './visit.ref'
 import { Handlebars } from '../../../core/handlebars'
+import { VisitRadiology } from '../../../modules/visit-radiology'
 
 const modalVisitPayment = ref<InstanceType<typeof ModalVisitPayment>>()
 const modalVisitReturnProduct = ref<InstanceType<typeof ModalVisitReturnProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 
 const visitProductList = ref<VisitProduct[]>([])
 const visitProcedureList = ref<VisitProcedure[]>([])
+const visitRadiologyList = ref<VisitRadiology[]>([])
 
 const saveLoading = ref(false)
 const sendProductLoading = ref(false)
@@ -126,6 +128,13 @@ watch(
   },
   { immediate: true }
 )
+watch(
+  () => visit.value.visitRadiologyList,
+  (newValue, oldValue) => {
+    visitRadiologyList.value = VisitRadiology.cloneList(newValue || [])
+  },
+  { immediate: true }
+)
 
 const productsMoney = computed(() => {
   return visitProductList.value.reduce((acc, item) => {
@@ -139,13 +148,38 @@ const proceduresMoney = computed(() => {
   }, 0)
 })
 
+const radiologyMoney = computed(() => {
+  return visitRadiologyList.value.reduce((acc, item) => {
+    return acc + item.actualPrice
+  }, 0)
+})
+
 const disabledSave = computed(() => {
-  return (
-    (JSON.stringify(visitProductList.value) === JSON.stringify(visit.value.visitProductList) &&
-      JSON.stringify(visitProcedureList.value) ===
-        JSON.stringify(visit.value.visitProcedureList)) ||
-    [VisitStatus.Debt, VisitStatus.Completed].includes(visit.value.visitStatus)
-  )
+  if ([VisitStatus.Debt, VisitStatus.Completed].includes(visit.value.visitStatus)) {
+    return true
+  }
+
+  let hasChange = false
+  visitProductList.value.forEach((i, index) => {
+    if (JSON.stringify(i) !== JSON.stringify(visit.value.visitProductList![index])) {
+      hasChange = true
+    }
+  })
+  visitProcedureList.value.forEach((i, index) => {
+    if (JSON.stringify(i) !== JSON.stringify(visit.value.visitProcedureList![index])) {
+      hasChange = true
+    }
+  })
+  visitRadiologyList.value.forEach((i, index) => {
+    if (JSON.stringify(i) !== JSON.stringify(visit.value.visitRadiologyList![index])) {
+      hasChange = true
+    }
+  })
+  if (hasChange) {
+    return false
+  }
+
+  return true
 })
 
 const disableSendProduct = computed(() => {
@@ -156,7 +190,7 @@ const disableSendProduct = computed(() => {
   )
 })
 
-const handleChangeProcedureDiscountMoney = (discountMoney: number, index: number) => {
+const handleChangeVisitProcedureDiscountMoney = (discountMoney: number, index: number) => {
   const expectedPrice = visitProcedureList.value[index].expectedPrice || 0
   const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
   const actualPrice = expectedPrice - discountMoney
@@ -166,7 +200,7 @@ const handleChangeProcedureDiscountMoney = (discountMoney: number, index: number
   visitProcedureList.value[index].discountType = DiscountType.VND
 }
 
-const handleChangeProcedureDiscountPercent = (discountPercent: number, index: number) => {
+const handleChangeVisitProcedureDiscountPercent = (discountPercent: number, index: number) => {
   const expectedPrice = visitProcedureList.value[index].expectedPrice || 0
   const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
   const actualPrice = expectedPrice - discountMoney
@@ -176,7 +210,27 @@ const handleChangeProcedureDiscountPercent = (discountPercent: number, index: nu
   visitProcedureList.value[index].discountType = DiscountType.Percent
 }
 
-const handleChangeProductDiscountMoney = (data: number, index: number) => {
+const handleChangeVisitRadiologyDiscountMoney = (discountMoney: number, index: number) => {
+  const expectedPrice = visitRadiologyList.value[index].expectedPrice || 0
+  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
+  const actualPrice = expectedPrice - discountMoney
+  visitRadiologyList.value[index].discountMoney = discountMoney
+  visitRadiologyList.value[index].discountPercent = discountPercent
+  visitRadiologyList.value[index].actualPrice = actualPrice
+  visitRadiologyList.value[index].discountType = DiscountType.VND
+}
+
+const handleChangeVisitRadiologyDiscountPercent = (discountPercent: number, index: number) => {
+  const expectedPrice = visitRadiologyList.value[index].expectedPrice || 0
+  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
+  const actualPrice = expectedPrice - discountMoney
+  visitRadiologyList.value[index].discountPercent = discountPercent
+  visitRadiologyList.value[index].discountMoney = discountMoney
+  visitRadiologyList.value[index].actualPrice = actualPrice
+  visitRadiologyList.value[index].discountType = DiscountType.Percent
+}
+
+const handleChangeVisitProductDiscountMoney = (data: number, index: number) => {
   const expectedPrice = visitProductList.value[index].expectedPrice || 0
   const discountMoney = data / visitProductList.value[index].unitRate
   const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
@@ -187,7 +241,7 @@ const handleChangeProductDiscountMoney = (data: number, index: number) => {
   visitProductList.value[index].discountType = DiscountType.VND
 }
 
-const handleChangeProductDiscountPercent = (discountPercent: number, index: number) => {
+const handleChangeVisitProductDiscountPercent = (discountPercent: number, index: number) => {
   const expectedPrice = visitProductList.value[index].expectedPrice || 0
   const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
   const actualPrice = expectedPrice - discountMoney
@@ -199,40 +253,18 @@ const handleChangeProductDiscountPercent = (discountPercent: number, index: numb
 
 const saveVisitItems = async () => {
   saveLoading.value = true
-
-  const visitProductListUpdate: VisitProduct[] = []
-  visitProductList.value.forEach((item, index) => {
-    if (JSON.stringify(item) == JSON.stringify(visit.value.visitProductList![index])) return
-    const visitProduct = new VisitProduct()
-    visitProduct.id = item.id
-    visitProduct.productId = item.productId
-    visitProduct.quantity = item.quantity
-    visitProduct.costAmount = item.costAmount
-    visitProduct.discountMoney = item.discountMoney
-    visitProduct.discountPercent = item.discountPercent
-    visitProduct.discountType = item.discountType
-    visitProduct.actualPrice = item.actualPrice
-    visitProductListUpdate.push(visitProduct)
-  })
-
-  const visitProcedureListUpdate: VisitProcedure[] = []
-  visitProcedureList.value.forEach((item, index) => {
-    if (JSON.stringify(item) == JSON.stringify(visit.value.visitProcedureList![index])) return
-    const visitProcedure = new VisitProcedure()
-    visitProcedure.id = item.id
-    visitProcedure.procedureId = item.procedureId
-    visitProcedure.discountMoney = item.discountMoney
-    visitProcedure.discountPercent = item.discountPercent
-    visitProcedure.discountType = item.discountType
-    visitProcedure.actualPrice = item.actualPrice
-    visitProcedureListUpdate.push(visitProcedure)
-  })
-
   try {
     await VisitApi.updateVisitItemsMoney({
       visitId: visit.value.id,
-      visitProcedureList: visitProcedureListUpdate,
-      visitProductList: visitProductListUpdate,
+      visitProductList: visitProductList.value.filter((item, index) => {
+        return JSON.stringify(item) != JSON.stringify(visit.value.visitProductList![index])
+      }),
+      visitProcedureList: visitProcedureList.value.filter((item, index) => {
+        return JSON.stringify(item) != JSON.stringify(visit.value.visitProcedureList![index])
+      }),
+      visitRadiologyList: visitRadiologyList.value.filter((item, index) => {
+        return JSON.stringify(item) != JSON.stringify(visit.value.visitRadiologyList![index])
+      }),
     })
   } catch (e) {
     console.log('🚀 ~ file: VisitPayment.vue:137 ~ saveVisitItems ~ e:', e)
@@ -417,6 +449,7 @@ const startPrint = async () => {
       organization: meStore.organization,
       visit: visit.value,
     })
+    console.log('🚀 ~ file: VisitSummaryView.vue:444 ~ startPrint ~ visit.value:', visit.value)
 
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
@@ -474,7 +507,7 @@ const handleMenuActionClick = (menu: { key: string }) => {
   <ModalVisitReturnProduct ref="modalVisitReturnProduct" />
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <div class="flex gap-4">
+  <div class="mt-4 flex gap-4">
     <VueButton
       class="ml-auto"
       color="green"
@@ -484,9 +517,8 @@ const handleMenuActionClick = (menu: { key: string }) => {
         [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
       "
       :loading="sendProductLoading"
-      @click="sendProductList"
-    >
-      <template #icon> <SendOutlined /> </template>
+      @click="sendProductList">
+      <template #icon><SendOutlined /></template>
       <span class="font-bold">XUẤT THUỐC</span>
     </VueButton>
     <VueButton
@@ -497,33 +529,27 @@ const handleMenuActionClick = (menu: { key: string }) => {
       "
       size="small"
       color="green"
-      @click="modalVisitPayment?.openModal(PaymentViewType.RefundOverpaid)"
-    >
+      @click="modalVisitPayment?.openModal(PaymentViewType.RefundOverpaid)">
       <DollarOutlined />
-      <span class="font-bold"> HOÀN TIỀN </span>
+      <span class="font-bold">HOÀN TIỀN</span>
     </VueButton>
-    <!-- <VueButton color="green" @click="modalVisitPayment?.openModal()">
-      <DollarOutlined />
-      <span v-if="!visit.finishedAt && visit.paid >= visit.totalMoney" class="font-bold">
-        TẠM ỨNG
-      </span>
-      <span v-if="!visit.finishedAt && visit.paid < visit.totalMoney" class="font-bold">
-        THANH TOÁN
-      </span>
-      <span v-if="visit.finishedAt" class="font-bold">TRẢ NỢ</span>
-    </VueButton> -->
     <div class="flex items-center">
       <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
             <a-menu-item key="RETURN_PRODUCT_LIST">
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả thuốc</span>
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Hoàn trả thuốc
+              </span>
             </a-menu-item>
             <a-menu-item
               v-if="[VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)"
-              key="REOPEN_VISIT"
-            >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Mở lại phiếu khám</span>
+              key="REOPEN_VISIT">
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Mở lại phiếu khám
+              </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -537,6 +563,317 @@ const handleMenuActionClick = (menu: { key: string }) => {
   </div>
   <div class="mt-4 table-wrapper">
     <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>THUỐC - VẬT TƯ</th>
+          <th>Đ.Vị</th>
+          <th>SL kê</th>
+          <th>SL mua</th>
+          <th>Giá</th>
+          <th>Chiết khấu</th>
+          <th>Tổng tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(visitProduct, visitProductIndex) in visitProductList || []"
+          :key="visitProduct.id + '_' + visitProductIndex">
+          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+            {{ visitProductIndex + 1 }}
+          </td>
+          <td>
+            <div style="font-weight: 500">
+              {{ visitProduct.product?.brandName }}
+              <a class="ml-1" @click="modalProductDetail?.openModal(visitProduct.productId)">
+                <FileSearchOutlined />
+              </a>
+            </div>
+            <div v-if="visitProduct.product?.substance" class="text-xs italic">
+              {{ visitProduct.product.substance }}
+            </div>
+            <div v-if="visitProduct.product?.hasManageBatches">
+              <div v-if="visitProduct.isSent">
+                <div v-if="(visitBatchSentListMap[visitProduct.id]?.length || 0) >= 2">
+                  <a-popconfirm>
+                    <template #cancelButton>
+                      <div></div>
+                    </template>
+                    <template #okButton>
+                      <div></div>
+                    </template>
+                    <template #title>
+                      <div>
+                        <span>Chi tiết số lượng tính theo từng lô</span>
+                      </div>
+                      <div class="mt-2" style="max-width: 100vw; overflow: auto">
+                        <table class="table-batch-select-quantity">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Số lô</th>
+                              <th>HSD</th>
+                              <th>Đ.Vị</th>
+                              <th>Số lượng</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              v-for="(vbSent, vbSentIndex) in visitBatchSentListMap[
+                                visitProduct.id
+                              ]"
+                              :key="vbSentIndex">
+                              <td class="text-center">{{ vbSentIndex + 1 }}</td>
+                              <td>{{ vbSent.batch!.lotNumber }}</td>
+                              <td>{{ timeToText(vbSent.batch!.expiryDate) }}</td>
+                              <td class="text-center">
+                                {{ visitProduct.product?.getUnitNameByRate(visitProduct.unitRate) }}
+                              </td>
+                              <td class="text-center">
+                                {{ vbSent.quantity / visitProduct.unitRate }}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td colspan="4" class="text-center" style="font-weight: 500">Tổng</td>
+                              <td class="text-center">
+                                {{ visitProductList![visitProductIndex].unitQuantity }}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <a class="text-xs italic underline">
+                      {{ visitBatchSentListMap[visitProduct.id].length }} lô hàng
+                    </a>
+                  </a-popconfirm>
+                </div>
+                <div
+                  v-if="(visitBatchSentListMap[visitProduct.id]?.length || 0) === 1"
+                  class="text-xs italic">
+                  Lô {{ visitBatchSentListMap[visitProduct.id][0].batch?.lotNumber }} - HSD
+                  {{ timeToText(visitBatchSentListMap[visitProduct.id][0].batch?.expiryDate) }}
+                </div>
+              </div>
+              <div v-if="!visitProduct.isSent">
+                <div v-if="(visitBatchUnsentListMap[visitProduct.id]?.length || 0) >= 2">
+                  <a-popconfirm>
+                    <template #cancelButton>
+                      <div></div>
+                    </template>
+                    <template #okButton>
+                      <div></div>
+                    </template>
+                    <template #title>
+                      <div>
+                        <span>Chi tiết số lượng tính theo từng lô</span>
+                      </div>
+                      <div class="mt-2" style="max-width: 80vw; overflow: auto">
+                        <table class="table-batch-select-quantity">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Số lô</th>
+                              <th>HSD</th>
+                              <th>Đ.Vị</th>
+                              <th>Tồn</th>
+                              <th>Số lượng</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              v-for="(vbUnsent, vbUnsentIndex) in visitBatchUnsentListMap[
+                                visitProduct.id
+                              ]"
+                              :key="vbUnsentIndex">
+                              <td class="text-center">{{ vbUnsentIndex + 1 }}</td>
+                              <td>{{ vbUnsent.batch.lotNumber }}</td>
+                              <td>{{ timeToText(vbUnsent.batch.expiryDate) }}</td>
+                              <td>
+                                {{ visitProduct.product?.getUnitNameByRate(visitProduct.unitRate) }}
+                              </td>
+                              <td
+                                class="text-center"
+                                :class="
+                                  vbUnsent.batch.quantity < vbUnsent.quantity
+                                    ? 'font-bold text-red-500'
+                                    : ''
+                                ">
+                                {{ vbUnsent.batch.quantity / visitProduct.unitRate }}
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  :class="
+                                    vbUnsent.batch.quantity < vbUnsent.quantity
+                                      ? 'text-red-500'
+                                      : ''
+                                  "
+                                  :value="vbUnsent.quantity / visitProduct.unitRate"
+                                  @input="
+                                    (e) =>
+                                      updateVisitBatchUnsentQuantity(
+                                        visitProductIndex,
+                                        vbUnsentIndex,
+                                        Number((e.target as HTMLInputElement).value || 0) *
+                                          visitProduct.unitRate
+                                      )
+                                  " />
+                              </td>
+                            </tr>
+                            <tr>
+                              <td colspan="5" class="text-right" style="font-weight: 500">Tổng</td>
+                              <td>
+                                <input
+                                  type="number"
+                                  :value="visitProductList![visitProductIndex].unitQuantity"
+                                  @input="
+                                    (e) =>
+                                      updateVisitProductQuantity(
+                                        visitProductIndex,
+                                        Number((e.target as HTMLInputElement)?.value || 0)
+                                      )
+                                  " />
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <a class="text-xs italic underline">
+                      {{ visitBatchUnsentListMap[visitProduct.id]?.length }} lô hàng
+                    </a>
+                  </a-popconfirm>
+                </div>
+                <div
+                  v-if="(visitBatchUnsentListMap[visitProduct.id]?.length || 0) === 1"
+                  class="text-xs italic">
+                  Lô {{ visitBatchUnsentListMap[visitProduct.id][0].batch!.lotNumber }} - HSD
+                  {{ timeToText(visitBatchUnsentListMap[visitProduct.id][0].batch!.expiryDate) }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="text-center">{{ visitProduct.unitName }}</td>
+          <td class="text-center">{{ visitProduct.unitQuantityPrescription }}</td>
+          <td class="text-center" style="width: 150px">
+            <div
+              v-if="
+                visitProduct.isSent ||
+                [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
+              "
+              class="text-center">
+              {{ visitProduct.unitQuantity }}
+            </div>
+            <div v-else class="flex items-center justify-between">
+              <button
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                :disabled="visitProductList![visitProductIndex].quantity <= 0"
+                @click="
+                  updateVisitProductQuantity(
+                    visitProductIndex,
+                    visitProductList![visitProductIndex].unitQuantity - 1
+                  )
+                ">
+                <font-awesome-icon :icon="['fas', 'minus']" />
+              </button>
+              <div style="width: calc(100% - 60px); min-width: 50px">
+                <InputNumber
+                  :value="visitProductList![visitProductIndex].unitQuantity"
+                  textAlign="right"
+                  @update:value="(value) => updateVisitProductQuantity(visitProductIndex, value)" />
+              </div>
+              <button
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                @click="
+                  updateVisitProductQuantity(
+                    visitProductIndex,
+                    visitProductList![visitProductIndex].unitQuantity + 1
+                  )
+                ">
+                <font-awesome-icon :icon="['fas', 'plus']" />
+              </button>
+            </div>
+          </td>
+          <td class="text-right whitespace-nowrap">
+            <div v-if="visitProduct.discountMoney" class="text-xs italic text-red-500">
+              <del>{{ formatMoney(visitProduct.unitExpectedPrice) }}</del>
+            </div>
+            <div>{{ formatMoney(visitProduct.unitActualPrice) }}</div>
+          </td>
+          <td class="text-center" style="width: 40px">
+            <a-popconfirm>
+              <template #cancelButton>
+                <div></div>
+              </template>
+              <template #okButton>
+                <div></div>
+              </template>
+              <template #title>
+                <div>
+                  Chiết khấu (Tiền hàng:
+                  <b>
+                    {{ formatMoney(visitProduct.unitExpectedPrice) }}
+                  </b>
+                  )
+                </div>
+                <div class="mt-2">
+                  <div>
+                    <InputNumber
+                      :value="visitProduct.unitDiscountMoney"
+                      :disabled="
+                        !!visitProduct.isSent ||
+                        [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
+                      "
+                      append="VNĐ"
+                      @update:value="
+                        (e: number) => handleChangeVisitProductDiscountMoney(e, visitProductIndex)
+                      " />
+                  </div>
+                  <div class="mt-2">
+                    <div class="w-full">
+                      <InputNumber
+                        :value="visitProduct.discountPercent"
+                        append="%"
+                        :disabled="
+                          !!visitProduct.isSent ||
+                          [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
+                        "
+                        @update:value="
+                          (e: number) =>
+                            handleChangeVisitProductDiscountPercent(e, visitProductIndex)
+                        " />
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <a-tag
+                v-if="visitProduct.discountType === 'VNĐ'"
+                color="success"
+                style="cursor: pointer">
+                {{ formatMoney(visitProduct.unitDiscountMoney) }}
+              </a-tag>
+              <a-tag
+                v-if="visitProduct.discountType === '%'"
+                color="success"
+                style="cursor: pointer">
+                {{ visitProduct.discountPercent || 0 }}%
+              </a-tag>
+            </a-popconfirm>
+          </td>
+          <td class="text-right whitespace-nowrap">
+            {{ formatMoney(visitProduct.actualPrice * visitProduct.quantity) }}
+          </td>
+        </tr>
+        <tr>
+          <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
+          <td class="font-bold text-right whitespace-nowrap">
+            {{ formatMoney(productsMoney) }}
+          </td>
+        </tr>
+      </tbody>
       <thead>
         <tr>
           <th>#</th>
@@ -590,8 +927,9 @@ const handleMenuActionClick = (menu: { key: string }) => {
                       :disabled="
                         [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
                       "
-                      @update:value="(e: number) => handleChangeProcedureDiscountMoney(e, index)"
-                    />
+                      @update:value="
+                        (e: number) => handleChangeVisitProcedureDiscountMoney(e, index)
+                      " />
                   </div>
                   <div class="mt-2">
                     <div class="w-full">
@@ -602,9 +940,8 @@ const handleMenuActionClick = (menu: { key: string }) => {
                           [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
                         "
                         @update:value="
-                          (e: number) => handleChangeProcedureDiscountPercent(e, index)
-                        "
-                      />
+                          (e: number) => handleChangeVisitProcedureDiscountPercent(e, index)
+                        " />
                     </div>
                   </div>
                 </div>
@@ -612,15 +949,13 @@ const handleMenuActionClick = (menu: { key: string }) => {
               <a-tag
                 v-if="visitProcedure.discountType === 'VNĐ'"
                 color="success"
-                style="cursor: pointer"
-              >
+                style="cursor: pointer">
                 {{ formatMoney(visitProcedure.discountMoney) }}
               </a-tag>
               <a-tag
                 v-if="visitProcedure.discountType === '%'"
                 color="success"
-                style="cursor: pointer"
-              >
+                style="cursor: pointer">
                 {{ visitProcedure.discountPercent || 0 }}%
               </a-tag>
             </a-popconfirm>
@@ -640,255 +975,27 @@ const handleMenuActionClick = (menu: { key: string }) => {
       <thead>
         <tr>
           <th>#</th>
-          <th>THUỐC</th>
-          <th>Đ.Vị</th>
-          <th>SL kê</th>
-          <th>SL mua</th>
+          <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
           <th>Giá</th>
           <th>Chiết khấu</th>
           <th>Tổng tiền</th>
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="(visitProduct, visitProductIndex) in visitProductList || []"
-          :key="visitProduct.id + '_' + visitProductIndex"
-        >
+        <tr v-for="(visitRadiology, index) in visitRadiologyList || []" :key="index">
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ visitProductIndex + 1 }}
+            {{ index + 1 }}
           </td>
-          <td>
-            <div style="font-weight: 500">
-              {{ visitProduct.product?.brandName }}
-              <a class="ml-1" @click="modalProductDetail?.openModal(visitProduct.productId)">
-                <FileSearchOutlined />
-              </a>
-            </div>
-            <div v-if="visitProduct.product?.substance" class="text-xs italic">
-              {{ visitProduct.product.substance }}
-            </div>
-            <div v-if="visitProduct.product?.hasManageBatches">
-              <div v-if="visitProduct.isSent">
-                <div v-if="(visitBatchSentListMap[visitProduct.id]?.length || 0) >= 2">
-                  <a-popconfirm>
-                    <template #cancelButton>
-                      <div></div>
-                    </template>
-                    <template #okButton>
-                      <div></div>
-                    </template>
-                    <template #title>
-                      <div>
-                        <span>Chi tiết số lượng tính theo từng lô</span>
-                      </div>
-                      <div class="mt-2" style="max-width: 100vw; overflow: auto">
-                        <table class="table-batch-select-quantity">
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>Số lô</th>
-                              <th>HSD</th>
-                              <th>Đ.Vị</th>
-                              <th>Số lượng</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr
-                              v-for="(vbSent, vbSentIndex) in visitBatchSentListMap[
-                                visitProduct.id
-                              ]"
-                              :key="vbSentIndex"
-                            >
-                              <td class="text-center">{{ vbSentIndex + 1 }}</td>
-                              <td>{{ vbSent.batch!.lotNumber }}</td>
-                              <td>{{ timeToText(vbSent.batch!.expiryDate) }}</td>
-                              <td class="text-center">
-                                {{ visitProduct.product?.getUnitNameByRate(visitProduct.unitRate) }}
-                              </td>
-                              <td class="text-center">
-                                {{ vbSent.quantity / visitProduct.unitRate }}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td colspan="4" class="text-center" style="font-weight: 500">Tổng</td>
-                              <td class="text-center">
-                                {{ visitProductList![visitProductIndex].unitQuantity }}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </template>
-                    <a class="text-xs italic underline">
-                      {{ visitBatchSentListMap[visitProduct.id].length }} lô hàng
-                    </a>
-                  </a-popconfirm>
-                </div>
-                <div
-                  v-if="(visitBatchSentListMap[visitProduct.id]?.length || 0) === 1"
-                  class="text-xs italic"
-                >
-                  Lô {{ visitBatchSentListMap[visitProduct.id][0].batch?.lotNumber }} - HSD
-                  {{ timeToText(visitBatchSentListMap[visitProduct.id][0].batch?.expiryDate) }}
-                </div>
-              </div>
-              <div v-if="!visitProduct.isSent">
-                <div v-if="(visitBatchUnsentListMap[visitProduct.id]?.length || 0) >= 2">
-                  <a-popconfirm>
-                    <template #cancelButton>
-                      <div></div>
-                    </template>
-                    <template #okButton>
-                      <div></div>
-                    </template>
-                    <template #title>
-                      <div>
-                        <span>Chi tiết số lượng tính theo từng lô</span>
-                      </div>
-                      <div class="mt-2" style="max-width: 80vw; overflow: auto">
-                        <table class="table-batch-select-quantity">
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>Số lô</th>
-                              <th>HSD</th>
-                              <th>Đ.Vị</th>
-                              <th>Tồn</th>
-                              <th>Số lượng</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr
-                              v-for="(vbUnsent, vbUnsentIndex) in visitBatchUnsentListMap[
-                                visitProduct.id
-                              ]"
-                              :key="vbUnsentIndex"
-                            >
-                              <td class="text-center">{{ vbUnsentIndex + 1 }}</td>
-                              <td>{{ vbUnsent.batch.lotNumber }}</td>
-                              <td>{{ timeToText(vbUnsent.batch.expiryDate) }}</td>
-                              <td>
-                                {{ visitProduct.product?.getUnitNameByRate(visitProduct.unitRate) }}
-                              </td>
-                              <td
-                                class="text-center"
-                                :class="
-                                  vbUnsent.batch.quantity < vbUnsent.quantity
-                                    ? 'font-bold text-red-500'
-                                    : ''
-                                "
-                              >
-                                {{ vbUnsent.batch.quantity / visitProduct.unitRate }}
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  :class="
-                                    vbUnsent.batch.quantity < vbUnsent.quantity
-                                      ? 'text-red-500'
-                                      : ''
-                                  "
-                                  :value="vbUnsent.quantity / visitProduct.unitRate"
-                                  @input="
-                                    (e) =>
-                                      updateVisitBatchUnsentQuantity(
-                                        visitProductIndex,
-                                        vbUnsentIndex,
-                                        Number((e.target as HTMLInputElement).value || 0) *
-                                          visitProduct.unitRate
-                                      )
-                                  "
-                                />
-                              </td>
-                            </tr>
-                            <tr>
-                              <td colspan="5" class="text-right" style="font-weight: 500">Tổng</td>
-                              <td>
-                                <input
-                                  type="number"
-                                  :value="visitProductList![visitProductIndex].unitQuantity"
-                                  @input="
-                                    (e) =>
-                                      updateVisitProductQuantity(
-                                        visitProductIndex,
-                                        Number((e.target as HTMLInputElement)?.value || 0)
-                                      )
-                                  "
-                                />
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </template>
-                    <a class="text-xs italic underline">
-                      {{ visitBatchUnsentListMap[visitProduct.id]?.length }} lô hàng
-                    </a>
-                  </a-popconfirm>
-                </div>
-                <div
-                  v-if="(visitBatchUnsentListMap[visitProduct.id]?.length || 0) === 1"
-                  class="text-xs italic"
-                >
-                  Lô {{ visitBatchUnsentListMap[visitProduct.id][0].batch!.lotNumber }} - HSD
-                  {{ timeToText(visitBatchUnsentListMap[visitProduct.id][0].batch!.expiryDate) }}
-                </div>
-              </div>
-            </div>
-          </td>
-          <td class="text-center">{{ visitProduct.unitName }}</td>
-          <td class="text-center">{{ visitProduct.unitQuantityPrescription }}</td>
-          <td class="text-center" style="width: 150px">
-            <div
-              v-if="
-                visitProduct.isSent ||
-                [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
-              "
-              class="text-center"
-            >
-              {{ visitProduct.unitQuantity }}
-            </div>
-            <div v-else class="flex items-center justify-between">
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                :disabled="visitProductList![visitProductIndex].quantity <= 0"
-                @click="
-                  updateVisitProductQuantity(
-                    visitProductIndex,
-                    visitProductList![visitProductIndex].unitQuantity - 1
-                  )
-                "
-              >
-                <font-awesome-icon :icon="['fas', 'minus']" />
-              </button>
-              <div style="width: calc(100% - 60px); min-width: 50px">
-                <InputNumber
-                  :value="visitProductList![visitProductIndex].unitQuantity"
-                  textAlign="right"
-                  @update:value="(value) => updateVisitProductQuantity(visitProductIndex, value)"
-                />
-              </div>
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                @click="
-                  updateVisitProductQuantity(
-                    visitProductIndex,
-                    visitProductList![visitProductIndex].unitQuantity + 1
-                  )
-                "
-              >
-                <font-awesome-icon :icon="['fas', 'plus']" />
-              </button>
-            </div>
+          <td colspan="4">
+            {{ visitRadiology.radiology?.name }}
           </td>
           <td class="text-right whitespace-nowrap">
-            <div v-if="visitProduct.discountMoney" class="text-xs italic text-red-500">
-              <del>{{ formatMoney(visitProduct.unitExpectedPrice) }}</del>
+            <div v-if="visitRadiology.discountMoney" class="text-xs italic text-red-500">
+              <del>{{ formatMoney(visitRadiology.expectedPrice) }}</del>
             </div>
-            <div>{{ formatMoney(visitProduct.unitActualPrice) }}</div>
+            <div>{{ formatMoney(visitRadiology.actualPrice) }}</div>
           </td>
+
           <td class="text-center" style="width: 40px">
             <a-popconfirm>
               <template #cancelButton>
@@ -901,86 +1008,84 @@ const handleMenuActionClick = (menu: { key: string }) => {
                 <div>
                   Chiết khấu (Tiền hàng:
                   <b>
-                    {{ formatMoney(visitProduct.unitExpectedPrice) }}
+                    {{ formatMoney(visitRadiology.expectedPrice) }}
                   </b>
                   )
                 </div>
                 <div class="mt-2">
                   <div>
                     <InputNumber
-                      :value="visitProduct.unitDiscountMoney"
+                      :value="visitRadiology.discountMoney"
+                      append="VNĐ"
                       :disabled="
-                        !!visitProduct.isSent ||
                         [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
                       "
-                      append="VNĐ"
                       @update:value="
-                        (e: number) => handleChangeProductDiscountMoney(e, visitProductIndex)
-                      "
-                    />
+                        (e: number) => handleChangeVisitRadiologyDiscountMoney(e, index)
+                      " />
                   </div>
                   <div class="mt-2">
                     <div class="w-full">
                       <InputNumber
-                        :value="visitProduct.discountPercent"
+                        :value="visitRadiology.discountPercent"
                         append="%"
                         :disabled="
-                          !!visitProduct.isSent ||
                           [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
                         "
                         @update:value="
-                          (e: number) => handleChangeProductDiscountPercent(e, visitProductIndex)
-                        "
-                      />
+                          (e: number) => handleChangeVisitRadiologyDiscountPercent(e, index)
+                        " />
                     </div>
                   </div>
                 </div>
               </template>
               <a-tag
-                v-if="visitProduct.discountType === 'VNĐ'"
+                v-if="visitRadiology.discountType === 'VNĐ'"
                 color="success"
-                style="cursor: pointer"
-              >
-                {{ formatMoney(visitProduct.unitDiscountMoney) }}
+                style="cursor: pointer">
+                {{ formatMoney(visitRadiology.discountMoney) }}
               </a-tag>
               <a-tag
-                v-if="visitProduct.discountType === '%'"
+                v-if="visitRadiology.discountType === '%'"
                 color="success"
-                style="cursor: pointer"
-              >
-                {{ visitProduct.discountPercent || 0 }}%
+                style="cursor: pointer">
+                {{ visitRadiology.discountPercent || 0 }}%
               </a-tag>
             </a-popconfirm>
           </td>
           <td class="text-right whitespace-nowrap">
-            {{ formatMoney(visitProduct.actualPrice * visitProduct.quantity) }}
+            {{ formatMoney(visitRadiology.actualPrice) }}
           </td>
         </tr>
         <tr>
-          <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
+          <td class="uppercase text-right" colspan="7">Tiền CHẨN ĐOÁN HÌNH ẢNH</td>
           <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(productsMoney) }}
+            {{ formatMoney(radiologyMoney) }}
           </td>
         </tr>
+      </tbody>
+      <tbody>
         <tr>
           <td class="uppercase text-right" colspan="7">Tổng tiền thanh toán</td>
           <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(productsMoney + proceduresMoney) }}
+            {{ formatMoney(productsMoney + proceduresMoney + radiologyMoney) }}
           </td>
         </tr>
       </tbody>
     </table>
   </div>
   <div class="mt-8 flex gap-4">
-    <VueButton color="blue" @click="startPrint"><PrinterOutlined /> In hóa đơn</VueButton>
+    <VueButton color="blue" @click="startPrint">
+      <PrinterOutlined />
+      In hóa đơn
+    </VueButton>
     <VueButton
       class="ml-auto"
       color="blue"
       :disabled="disabledSave"
       :loading="saveLoading"
-      @click="saveVisitItems"
-    >
-      <template #icon> <SaveOutlined /> </template>
+      @click="saveVisitItems">
+      <template #icon><SaveOutlined /></template>
       Lưu lại
     </VueButton>
   </div>

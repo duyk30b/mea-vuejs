@@ -10,7 +10,7 @@ import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -25,8 +25,8 @@ const modalInvoiceListSettingScreen = ref<InstanceType<typeof ModalInvoiceListSe
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -151,7 +151,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 <template>
   <ModalInvoiceListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalInvoiceListSettingScreen"
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />

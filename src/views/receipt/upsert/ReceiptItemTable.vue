@@ -3,14 +3,14 @@ import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { InputNumber } from '../../../common/vue-form'
 import type { Product } from '../../../modules/product'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const openModalProductDetail = (product?: Product) => {
   if (product) modalProductDetail.value?.openModal(product.id)
@@ -44,7 +44,7 @@ const openModalProductDetail = (product?: Product) => {
             <div class="font-medium">
               {{ receiptItem?.product?.brandName }}
               <a
-                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
                 @click="openModalProductDetail(receiptItem?.product)"
               >
@@ -52,14 +52,14 @@ const openModalProductDetail = (product?: Product) => {
               </a>
             </div>
             <div
-              v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
               style="font-size: 0.8rem"
             >
               {{ receiptItem?.product?.substance }}
             </div>
             <div
               v-if="
-                screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
+                settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
               "
               style="font-size: 0.8rem"
             >
@@ -100,7 +100,7 @@ const openModalProductDetail = (product?: Product) => {
           <th>#</th>
           <th>Sản phẩm</th>
           <th>S.Lượng</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
+          <th v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
           <th>G.Nhập</th>
           <th>T.Tiền</th>
           <th>Action</th>
@@ -119,7 +119,7 @@ const openModalProductDetail = (product?: Product) => {
               <div class="font-bold">
                 {{ receiptItem?.product?.brandName }}
                 <a
-                  v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                  v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
                   @click="openModalProductDetail(receiptItem?.product)"
                 >
@@ -127,14 +127,14 @@ const openModalProductDetail = (product?: Product) => {
                 </a>
               </div>
               <div
-                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
                 style="font-size: 0.8rem"
               >
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
                 v-if="
-                  screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
+                  settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
                 "
                 style="font-size: 0.8rem"
               >
@@ -167,7 +167,7 @@ const openModalProductDetail = (product?: Product) => {
               </div>
             </div>
           </td>
-          <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
+          <td v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
             {{ receiptItem.unitName }}
           </td>
           <td class="text-right">

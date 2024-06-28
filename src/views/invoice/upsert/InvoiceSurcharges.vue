@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
 import { InvoiceSurcharge } from '../../../modules/invoice'
 import { invoice } from './invoice-upsert.ref'
 import VueButton from '../../../common/VueButton.vue'
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
   invoice.value.invoiceSurcharges![index].money = money
@@ -29,9 +29,9 @@ const handleDeleteSurchargeDetail = (index: number) => {
 const handleAddSurchargeDetail = () => {
   const existKey = invoice.value.invoiceSurcharges!.map((i) => i.key)
   existKey.push(UNKNOWN_KEY)
-  const allKey = Object.keys(screenStore.INVOICE_SURCHARGE_DETAIL)
+  const allKey = Object.keys(settingStore.INVOICE_SURCHARGE_DETAIL)
   const key = allKey.find((i) => !existKey.includes(i)) || UNKNOWN_KEY
-  const name = screenStore.INVOICE_SURCHARGE_DETAIL[key]
+  const name = settingStore.INVOICE_SURCHARGE_DETAIL[key]
   const newSurcharge = new InvoiceSurcharge()
   newSurcharge.key = key
   newSurcharge.name = name || ''
@@ -57,7 +57,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
     // nếu không có other thì thêm mới other
     const other = InvoiceSurcharge.blank()
     other.key = UNKNOWN_KEY
-    other.name = screenStore.INVOICE_SURCHARGE_DETAIL[UNKNOWN_KEY]
+    other.name = settingStore.INVOICE_SURCHARGE_DETAIL[UNKNOWN_KEY]
     other.money = data - totalKnownMoney
     invoice.value.invoiceSurcharges!.push(other)
   }
@@ -90,11 +90,11 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                 style="width: 160px"
                 :options="
                   [
-                    ...Object.entries(screenStore.INVOICE_SURCHARGE_DETAIL).map(([key, text]) => ({
+                    ...Object.entries(settingStore.INVOICE_SURCHARGE_DETAIL).map(([key, text]) => ({
                       value: key,
                       text: text,
                     })),
-                    ...(screenStore.INVOICE_SURCHARGE_DETAIL[surcharge.key]
+                    ...(settingStore.INVOICE_SURCHARGE_DETAIL[surcharge.key]
                       ? []
                       : [{ value: surcharge.key, text: surcharge.name }]),
                   ].reverse()

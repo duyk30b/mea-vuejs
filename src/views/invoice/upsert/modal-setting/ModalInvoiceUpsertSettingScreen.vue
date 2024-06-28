@@ -5,8 +5,8 @@ import { nextTick, ref } from 'vue'
 import VueModal from '../../../../common/VueModal.vue'
 import { InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, useCustomerStore } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
 import { DTimer } from '../../../../utils'
@@ -16,7 +16,7 @@ const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const customerStore = useCustomerStore()
-const store = useScreenStore()
+const store = useSettingStore()
 const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
@@ -48,11 +48,12 @@ const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
 
+  customerDefault.value = await meStore.getCustomerDefault()
   nextTick(() => {
     inputOptionsCustomer.value?.setItem({
-      value: customerDefault.value?.id || 0,
-      text: customerDefault.value?.fullName || '',
-      data: customerDefault,
+      value: customerDefault.value.id,
+      text: customerDefault.value.fullName,
+      data: customerDefault.value,
     })
   })
 }
@@ -65,7 +66,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_INVOICE_UPSERT, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
     meStore.customerDefault = Customer.toBasic(customerDefault.value)
@@ -297,7 +298,7 @@ defineExpose({ openModal })
                           :options="
                             customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))
                           "
-                          :maxHeight="260"
+                          :maxHeight="180"
                           placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                           @selectItem="({ data }) => selectCustomer(data)"
                           @update:text="searchingCustomer"

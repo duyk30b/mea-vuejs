@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { InputHint, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
@@ -15,8 +15,8 @@ const props = withDefaults(defineProps<{ tabsKey: 'product' | 'procedure' }>(), 
   tabsKey: 'product',
 })
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -80,7 +80,7 @@ defineExpose({ clear })
 <template>
   <div class="flex flex-wrap gap-4">
     <div
-      v-if="tabsKey === 'product' && screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage"
+      v-if="tabsKey === 'product' && settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>Hướng dẫn sử dụng</div>
@@ -89,7 +89,7 @@ defineExpose({ clear })
           v-model:value="invoiceItem.hintUsage"
           :options="[
             ...(invoiceItem.product?.hintUsage ? [invoiceItem.product?.hintUsage] : []),
-            ...screenStore.PRODUCT_HINT_USAGE,
+            ...settingStore.PRODUCT_HINT_USAGE,
           ]"
           :logic-filter="(item: string, text: string) => customFilter(item, text)"
         />
@@ -97,7 +97,7 @@ defineExpose({ clear })
     </div>
 
     <div
-      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
+      v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -113,13 +113,13 @@ defineExpose({ clear })
             v-model:value="productOutSellType"
             :options="[
               ...(permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-              screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
+              settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
                 ? [{ value: 'costPrice', text: 'Giá nhập' }]
                 : []),
-              ...(screenStore.SYSTEM_SETTING.wholesalePrice
+              ...(settingStore.SYSTEM_SETTING.wholesalePrice
                 ? [{ value: 'wholesalePrice', text: 'Giá bán sỉ' }]
                 : []),
-              ...(screenStore.SYSTEM_SETTING.retailPrice
+              ...(settingStore.SYSTEM_SETTING.retailPrice
                 ? [{ value: 'retailPrice', text: 'Giá bán lẻ' }]
                 : []),
             ]"
@@ -134,7 +134,7 @@ defineExpose({ clear })
     </div>
 
     <div
-      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
+      v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -184,7 +184,7 @@ defineExpose({ clear })
     </div>
 
     <div
-      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
+      v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>
@@ -226,7 +226,7 @@ defineExpose({ clear })
     </div>
 
     <div
-      v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
+      v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
       class="grow basis-[90%] lg:basis-[45%]"
     >
       <div>

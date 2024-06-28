@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { InvoiceStatus } from '../../../modules/invoice'
 import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../../views/procedure/detail/ModalProcedureDetail.vue'
@@ -12,8 +12,8 @@ import { PaymentViewType } from '../../../modules/enum'
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const emit = defineEmits<{ (e: 'showInvoicePayment', value: PaymentViewType): void }>()
 
@@ -24,8 +24,8 @@ const colspan = computed(() => {
   if (isMobile) return 2
   return (
     3 +
-    Number(screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
-    Number(screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount)
+    Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
+    Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount)
   )
 })
 </script>
@@ -54,7 +54,7 @@ const colspan = computed(() => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.product!.brandName }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="modalProductDetail?.openModal(invoiceItem.productId)"
                   >
@@ -62,7 +62,7 @@ const colspan = computed(() => {
                   </a>
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
+                  v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
                   style="font-size: 0.8rem"
                   class="text-justify"
                 >
@@ -70,7 +70,7 @@ const colspan = computed(() => {
                 </div>
                 <div
                   v-if="
-                    screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
+                    settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
                   "
                   class="flex gap-2 flex-wrap"
                   style="font-size: 0.8rem"
@@ -79,7 +79,7 @@ const colspan = computed(() => {
                   {{ timeToText(invoiceItem.batch!.expiryDate, 'DD/MM/YY') }}
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
+                  v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
                   style="font-size: 0.8rem"
                 >
                   {{ invoiceItem.hintUsage }}
@@ -89,7 +89,7 @@ const colspan = computed(() => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.procedure!.name }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="modalProcedureDetail?.openModal(invoiceItem.procedureId)"
                   >
@@ -98,14 +98,14 @@ const colspan = computed(() => {
                 </div>
               </div>
               <div class="flex gap-2" style="font-size: 0.8rem">
-                <div v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">
+                <div v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">
                   NY:
                   <span class="font-medium">
                     {{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unitRate) }}
                   </span>
                   <span
                     v-if="
-                      screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
+                      settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
                       invoiceItem.unitName
                     "
                   >
@@ -115,7 +115,7 @@ const colspan = computed(() => {
                 <div
                   v-if="
                     invoiceItem.discountMoney &&
-                    screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount
+                    settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount
                   "
                 >
                   - CK:
@@ -133,7 +133,7 @@ const colspan = computed(() => {
                   </span>
                   <span
                     v-if="
-                      screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
+                      settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
                       invoiceItem.unitName
                     "
                   >
@@ -157,8 +157,8 @@ const colspan = computed(() => {
             <th>#</th>
             <th>Tên</th>
             <th>S.Lượng</th>
-            <th v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
-            <th v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>
+            <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
+            <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đ.Giá</th>
             <th>T.Tiền</th>
           </tr>
@@ -173,7 +173,7 @@ const colspan = computed(() => {
                 <div class="text-justify font-medium">
                   {{ invoiceItem.product!.brandName }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="modalProductDetail?.openModal(invoiceItem.productId)"
                   >
@@ -181,14 +181,14 @@ const colspan = computed(() => {
                   </a>
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
+                  v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
                   style="font-size: 0.8rem"
                 >
                   {{ invoiceItem.product!.substance }}
                 </div>
                 <div
                   v-if="
-                    screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
+                    settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch && invoiceItem.batchId
                   "
                   style="font-size: 0.8rem"
                   class="flex gap-2"
@@ -197,7 +197,7 @@ const colspan = computed(() => {
                   {{ timeToText(invoiceItem.batch!.expiryDate) }}
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
+                  v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
                   style="font-size: 0.8rem"
                 >
                   {{ invoiceItem.hintUsage }}
@@ -210,7 +210,7 @@ const colspan = computed(() => {
               >
                 {{ invoiceItem.procedure!.name }}
                 <a
-                  v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
+                  v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
                   @click="modalProcedureDetail?.openModal(invoiceItem.procedureId)"
                 >
@@ -221,11 +221,11 @@ const colspan = computed(() => {
             <td class="text-center">
               {{ invoiceItem.quantity / invoiceItem.unitRate }}
             </td>
-            <td v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit" class="text-center">
+            <td v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit" class="text-center">
               {{ invoiceItem.unitName || 'Lần' }}
             </td>
             <td
-              v-if="screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
+              v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
               class="text-center"
             >
               <a-tag
@@ -246,7 +246,7 @@ const colspan = computed(() => {
             <td class="text-right">
               <div
                 v-if="
-                  screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice &&
+                  settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice &&
                   invoiceItem.discountMoney
                 "
                 class="text-xs italic line-through"
@@ -260,14 +260,14 @@ const colspan = computed(() => {
               {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
             </td>
           </tr>
-          <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
+          <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
             <td class="text-right font-medium" :colspan="colspan">Tiền hàng</td>
             <td class="text-right font-medium" :colspan="2">
               {{ formatMoney(invoice.itemsActualMoney) }}
             </td>
           </tr>
           <tr
-            v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || invoice.discountMoney"
+            v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || invoice.discountMoney"
           >
             <td class="text-right" :colspan="colspan">Chiết khấu</td>
             <td class="text-right" :colspan="2">
@@ -277,7 +277,7 @@ const colspan = computed(() => {
               {{ formatMoney(invoice.discountMoney) }}
             </td>
           </tr>
-          <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || invoice.surcharge">
+          <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || invoice.surcharge">
             <td class="text-right" :colspan="colspan">
               Phụ phí
               <span
@@ -305,7 +305,7 @@ const colspan = computed(() => {
               {{ formatMoney(invoice.totalMoney) }}
             </td>
           </tr>
-          <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
+          <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
             <td class="text-right" :colspan="colspan">Tiền lãi</td>
             <td class="text-right font-medium" :colspan="2">
               {{ invoice.status != InvoiceStatus.Refund ? formatMoney(invoice.profit) : 0 }}
@@ -313,7 +313,7 @@ const colspan = computed(() => {
           </tr>
           <tr
             v-if="
-              screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
+              settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
               invoice.paid !== invoice.totalMoney
             "
           >
@@ -350,7 +350,7 @@ const colspan = computed(() => {
           </tr>
           <tr
             v-if="
-              screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt ||
+              settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt ||
               invoice.totalMoney - invoice.paid
             "
           >
@@ -372,13 +372,13 @@ const colspan = computed(() => {
         </tbody>
       </template>
       <tbody>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
           <td class="text-right font-medium" :colspan="colspan">Tiền hàng</td>
           <td class="text-right font-medium" :colspan="2">
             {{ formatMoney(invoice.itemsActualMoney) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || invoice.discountMoney">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || invoice.discountMoney">
           <td class="text-right" :colspan="colspan">Chiết khấu</td>
           <td class="text-right" :colspan="2">
             <a-tag v-if="invoice.discountType === '%'" color="success">
@@ -387,7 +387,7 @@ const colspan = computed(() => {
             {{ formatMoney(invoice.discountMoney) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || invoice.surcharge">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || invoice.surcharge">
           <td class="text-right" :colspan="colspan">
             Phụ phí
             <span
@@ -415,7 +415,7 @@ const colspan = computed(() => {
             {{ formatMoney(invoice.totalMoney) }}
           </td>
         </tr>
-        <tr v-if="screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
           <td class="text-right" :colspan="colspan">Tiền lãi</td>
           <td class="text-right font-medium" :colspan="2">
             {{ invoice.status != InvoiceStatus.Refund ? formatMoney(invoice.profit) : 0 }}
@@ -423,7 +423,7 @@ const colspan = computed(() => {
         </tr>
         <tr
           v-if="
-            screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
+            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
             invoice.paid !== invoice.totalMoney
           "
         >
@@ -457,7 +457,7 @@ const colspan = computed(() => {
         </tr>
         <tr
           v-if="
-            screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || invoice.totalMoney - invoice.paid
+            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || invoice.totalMoney - invoice.paid
           "
         >
           <template v-if="[InvoiceStatus.Draft, InvoiceStatus.Prepayment].includes(invoice.status)">

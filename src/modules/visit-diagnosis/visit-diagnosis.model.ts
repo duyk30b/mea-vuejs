@@ -6,6 +6,7 @@ import {
   plainToInstance,
 } from 'class-transformer'
 import { FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
+import type { Image } from '../image/image.model'
 
 export class VisitDiagnosis {
   @Expose({ groups: [FROM_PLAIN] })
@@ -29,7 +30,13 @@ export class VisitDiagnosis {
   @Expose()
   vitalSigns: string
 
+  @Expose()
+  imageIds: string
+
   @Expose({ groups: [FROM_PLAIN] })
+  imageList: Image[]
+
+  @Expose({ groups: [FROM_PLAIN] }) // update cùng API tạo sửa đơn thuốc
   advice?: string // Lời nhắc
 
   static init(): VisitDiagnosis {

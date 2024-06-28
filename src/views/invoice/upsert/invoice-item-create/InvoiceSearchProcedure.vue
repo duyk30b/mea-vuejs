@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { InvoiceItem, InvoiceItemType } from '../../../../modules/invoice-item/invoice-item.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../../../modules/procedure'
@@ -19,8 +19,8 @@ const props = withDefaults(defineProps<{ tabsKey: 'product' | 'procedure' }>(), 
 
 const emit = defineEmits<{ (e: 'createInvoiceItemProcedure'): void }>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const procedureStore = useProcedureStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore

@@ -10,6 +10,7 @@ import { onBeforeMount, ref } from 'vue'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
+import VueButton from '../../common/VueButton.vue'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -124,13 +125,12 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
                 <div>IP: {{ device.ip }}</div>
                 <div>Time: {{ new Date(parseInt(device.code, 36)).toISOString() }}</div>
                 <div>
-                  <a-button
-                    type="default"
+                  <VueButton
                     size="small"
                     @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })"
                   >
                     Đăng xuất
-                  </a-button>
+                  </VueButton>
                 </div>
               </div>
             </td>

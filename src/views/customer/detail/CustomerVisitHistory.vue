@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { Visit, VisitApi } from '../../../modules/visit'
 import { useVisitStore } from '../../../modules/visit/visit.store'
@@ -10,8 +10,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
 })
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const visitStore = useVisitStore()
 const visitList = ref<Visit[]>([])

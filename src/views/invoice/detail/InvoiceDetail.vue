@@ -20,7 +20,7 @@ import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { timeToText } from '../../../utils'
@@ -40,10 +40,10 @@ const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalInvoicePreview = ref<InstanceType<typeof ModalInvoicePreview>>()
 const modalInvoicePayment = ref<InstanceType<typeof ModalInvoicePayment>>()
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney, isMobile } = screenStore
+const { formatMoney, isMobile } = settingStore
 
 const route = useRoute()
 const router = useRouter()
@@ -296,7 +296,7 @@ const openModalInvoicePreview = () => {
       </div>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -400,7 +400,7 @@ const openModalInvoicePreview = () => {
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
-                screenStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
+                settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
                 [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
               "
               key="EDIT_INVOICE"
@@ -472,7 +472,7 @@ const openModalInvoicePreview = () => {
         <VueButton
           v-if="
             invoice.paid != invoice.totalMoney &&
-            screenStore.SCREEN_INVOICE_DETAIL.process.sendProductAndPayment
+            settingStore.SCREEN_INVOICE_DETAIL.process.sendProductAndPayment
           "
           color="blue"
           :loading="loadingProcess"
@@ -487,7 +487,7 @@ const openModalInvoicePreview = () => {
         <VueButton
           v-if="
             invoice.paid != invoice.totalMoney &&
-            screenStore.SCREEN_INVOICE_DETAIL.process.sendProductAndDebit
+            settingStore.SCREEN_INVOICE_DETAIL.process.sendProductAndDebit
           "
           color="blue"
           :loading="loadingProcess"

@@ -10,7 +10,7 @@ import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useVisitStore } from '../../../modules/visit/visit.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -25,8 +25,8 @@ const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalVisitCreate = ref<InstanceType<typeof ModalVisitCreate>>()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -289,7 +289,7 @@ const handleModalVisitCreateSuccess = async () => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th>Khách hàng</th>
+            <th style="min-width: 150px;">Khách hàng</th>
             <th>Chẩn đoán</th>
             <th>Thanh toán</th>
           </tr>

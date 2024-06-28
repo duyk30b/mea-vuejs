@@ -1,5 +1,6 @@
 import { useMeStore } from '../_me/me.store'
-import type { ScreenSettingKey } from '../_me/store.variable'
+import type { SettingKey } from '../_me/store.variable'
+import { SettingApi } from '../setting/setting.api'
 import { OrganizationApi } from './organization.api'
 import { Organization } from './organization.model'
 
@@ -21,7 +22,7 @@ export class OrganizationService {
     return organization
   }
 
-  static async saveSettings(type: ScreenSettingKey, plain: string) {
-    return await OrganizationApi.saveSettings(type, plain)
+  static async saveSettings(type: SettingKey, plain: string) {
+    return await SettingApi.saveSettings(type, plain)
   }
 }

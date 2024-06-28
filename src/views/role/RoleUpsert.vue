@@ -4,13 +4,14 @@ import { message } from 'ant-design-vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { usePermissionStore } from '../../modules/permission/permission.store'
 import { Role, RoleApi } from '../../modules/role'
+import VueButton from '../../common/VueButton.vue'
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const permissionStore = usePermissionStore()
-const { formatMoney, isMobile } = screenStore
+const { formatMoney, isMobile } = settingStore
 
 const route = useRoute()
 const router = useRouter()
@@ -99,12 +100,7 @@ const handleSave = async () => {
       </a-tree>
     </div>
     <div class="mt-8">
-      <a-button type="primary" htmlType="submit" :loading="saveLoading">
-        <template #icon>
-          <PlusOutlined />
-        </template>
-        Lưu lại
-      </a-button>
+      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save"> Lưu lại </VueButton>
     </div>
   </form>
 </template>

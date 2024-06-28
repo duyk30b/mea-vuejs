@@ -26,6 +26,7 @@ export const useVisitStore = defineStore('visit-store', {
             visitDiagnosis: true,
             visitProductList: true,
             visitProcedureList: true,
+            visitRadiologyList: true,
           },
         })
       }

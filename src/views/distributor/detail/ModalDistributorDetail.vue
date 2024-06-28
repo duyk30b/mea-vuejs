@@ -9,7 +9,7 @@ import {
 import { ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
@@ -22,8 +22,8 @@ const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
 const distributorPaymentHistory = ref<InstanceType<typeof DistributorPaymentHistory>>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const distributorStore = useDistributorStore()

@@ -6,12 +6,12 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
 import { useMeStore } from '../../modules/_me/me.store'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 const meStore = useMeStore()
@@ -96,10 +96,7 @@ const disableButtonSave = computed(() => {
       </div>
 
       <div class="my-8 text-center flex justify-center">
-        <VueButton color="blue" :disabled="disableButtonSave" @click="saveUser">
-          <template #icon>
-            <SaveOutlined />
-          </template>
+        <VueButton color="blue" :disabled="disableButtonSave" icon="save" @click="saveUser">
           Lưu lại
         </VueButton>
       </div>

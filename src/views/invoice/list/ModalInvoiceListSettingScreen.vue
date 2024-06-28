@@ -2,12 +2,12 @@
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_LIST>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_LIST))
 )
@@ -28,7 +28,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(
-      ScreenSettingKey.SCREEN_INVOICE_LIST,
+      SettingKey.SCREEN_INVOICE_LIST,
       settingData
     )
     message.success('Cập nhật cài đặt thành công')

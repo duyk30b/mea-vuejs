@@ -5,11 +5,12 @@ import { nextTick, ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
 import { DTimer } from '../../../utils'
+import VueButton from '../../../common/VueButton.vue'
 
 const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 
@@ -17,7 +18,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const distributorStore = useDistributorStore()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
@@ -48,11 +49,12 @@ const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
 
+  distributorDefault.value = await meStore.getDistributorDefault()
   nextTick(() => {
     inputOptionsDistributor.value?.setItem({
-      value: distributorDefault.value?.id || 0,
-      text: distributorDefault.value?.fullName || '',
-      data: distributorDefault,
+      value: distributorDefault.value.id,
+      text: distributorDefault.value.fullName,
+      data: distributorDefault.value,
     })
   })
 }
@@ -65,7 +67,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_RECEIPT_UPSERT, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
     meStore.distributorDefault = Distributor.toBasic(distributorDefault.value)
@@ -186,7 +188,7 @@ defineExpose({ openModal })
                           :options="
                             distributorList.map((i) => ({ value: i.id, text: i.fullName, data: i }))
                           "
-                          :max-height="260"
+                          :max-height="180"
                           placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                           @selectItem="({ data }) => selectDistributor(data)"
                           @update:text="searchingDistributor"
@@ -256,18 +258,13 @@ defineExpose({ openModal })
 
       <div class="p-6">
         <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <VueButton @click="handleClose">
+            <CloseOutlined />
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" :loading="saveLoading" @click="handleSave">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          </VueButton>
+          <VueButton color="blue" :loading="saveLoading" icon="save" @click="handleSave">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </div>

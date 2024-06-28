@@ -19,7 +19,7 @@ import {
   InputText,
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { UnitType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore } from '../../../modules/product'
@@ -27,14 +27,15 @@ import { Product } from '../../../modules/product/product.model'
 import { customFilter } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 
 const emit = defineEmits<{ (e: 'success', value: Product, type: 'CREATE' | 'UPDATE'): void }>()
 const productStore = useProductStore()
-const screenStore = useScreenStore()
-const { isMobile, formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -140,7 +141,7 @@ defineExpose({ openModal, openModalFromInvoice })
           <span v-if="product.id">Sửa sản phẩm</span>
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDataProduct?.openModal()"
@@ -148,7 +149,7 @@ defineExpose({ openModal, openModalFromInvoice })
           <SisternodeOutlined />
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalProductUpsertSettingScreen?.openModal()"
@@ -168,7 +169,7 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.substance" class="grow basis-[600px]">
+        <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.substance" class="grow basis-[600px]">
           <div class="">Hoạt chất</div>
           <div class="">
             <InputText v-model:value="product.substance" />
@@ -176,7 +177,7 @@ defineExpose({ openModal, openModalFromInvoice })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.unit"
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.unit"
           :class="unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
           class="grow"
         >
@@ -185,7 +186,7 @@ defineExpose({ openModal, openModalFromInvoice })
             <div v-if="unit.length === 1">
               <InputHint
                 v-model:value="unit[0].name"
-                :options="screenStore.PRODUCT_UNIT"
+                :options="settingStore.PRODUCT_UNIT"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
               />
             </div>
@@ -200,7 +201,7 @@ defineExpose({ openModal, openModalFromInvoice })
                     <InputHint
                       v-model:value="unit[0].name"
                       required
-                      :options="screenStore.PRODUCT_UNIT"
+                      :options="settingStore.PRODUCT_UNIT"
                       :logic-filter="(item: string, text: string) => customFilter(item, text)"
                     />
                   </td>
@@ -222,7 +223,7 @@ defineExpose({ openModal, openModalFromInvoice })
                       <InputHint
                         v-model:value="unit[index].name"
                         required
-                        :options="screenStore.PRODUCT_UNIT"
+                        :options="settingStore.PRODUCT_UNIT"
                         :logic-filter="(item: string, text: string) => customFilter(item, text)"
                       />
                     </td>
@@ -258,13 +259,13 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.group" class="grow basis-[300px]">
+        <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.group" class="grow basis-[300px]">
           <div class="">Nhóm</div>
           <div>
             <InputOptions
               v-model:value="product.group"
               :options="
-                Object.entries(screenStore.PRODUCT_GROUP).map(([value, text]) => ({
+                Object.entries(settingStore.PRODUCT_GROUP).map(([value, text]) => ({
                   value,
                   text,
                 }))
@@ -274,18 +275,18 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.route" class="grow basis-[40%]">
+        <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.route" class="grow basis-[40%]">
           <div class="">Đường dùng {{ product.route }}</div>
           <div>
             <InputHint
               v-model:value="product.route"
-              :options="screenStore.PRODUCT_ROUTE"
+              :options="settingStore.PRODUCT_ROUTE"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
             />
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_PRODUCT_UPSERT.source" class="grow basis-[40%]">
+        <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.source" class="grow basis-[40%]">
           <div class="">Nguồn gốc</div>
           <div class="">
             <InputText v-model:value="product.source" />
@@ -293,7 +294,7 @@ defineExpose({ openModal, openModalFromInvoice })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_PRODUCT_UPSERT.hintUsage"
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.hintUsage"
           style="flex-basis: 600px; flex-grow: 1"
           class=""
         >
@@ -301,7 +302,7 @@ defineExpose({ openModal, openModalFromInvoice })
           <div>
             <InputHint
               v-model:value="product.hintUsage"
-              :options="screenStore.PRODUCT_HINT_USAGE"
+              :options="settingStore.PRODUCT_HINT_USAGE"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
             />
           </div>
@@ -325,7 +326,7 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
+        <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
           <div class="">
             <span>Giá bán sỉ</span>
             <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -346,7 +347,7 @@ defineExpose({ openModal, openModalFromInvoice })
           </div>
         </div>
 
-        <div v-if="screenStore.SYSTEM_SETTING.retailPrice" class="grow basis-[40%]">
+        <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="grow basis-[40%]">
           <div class="">
             <span>Giá bán lẻ</span>
             <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -412,30 +413,29 @@ defineExpose({ openModal, openModalFromInvoice })
 
       <div class="pb-6 pt-8" :class="isMobile ? 'px-4' : 'px-6'">
         <div class="flex gap-4">
-          <a-button
+          <VueButton
             v-if="permissionIdMap[PermissionId.PRODUCT_DELETE] && product.id"
-            danger
+            color="red"
             @click="clickDelete"
           >
             Xóa
-          </a-button>
-          <button class="btn ml-auto" type="reset" @click="handleClose">
+          </VueButton>
+          <VueButton class="btn ml-auto" type="reset" @click="handleClose">
             <CloseOutlined /> Hủy bỏ
-          </button>
-          <button class="btn btn-blue">
-            <LoadingOutlined v-if="saveLoading" />
-            <SaveOutlined v-if="!saveLoading" /> Lưu lại
-          </button>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
+            Lưu lại
+          </VueButton>
         </div>
       </div>
     </form>
   </VueModal>
   <ModalProductUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalProductUpsertSettingScreen"
   />
   <ModalDataProduct
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalDataProduct"
   />
 </template>

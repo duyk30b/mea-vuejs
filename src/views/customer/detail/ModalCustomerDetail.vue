@@ -14,7 +14,7 @@ import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, useCustomerStore } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
@@ -31,8 +31,8 @@ const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>(
 const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const customerStore = useCustomerStore()

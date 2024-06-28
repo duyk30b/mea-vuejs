@@ -5,7 +5,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueModal from '../../common/VueModal.vue'
 import { InputMoney, InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
@@ -20,8 +20,8 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const openDebt = ref(0)
 const money = ref<number>(0)

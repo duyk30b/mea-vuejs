@@ -13,7 +13,7 @@ import { InputHint, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useDistributorStore } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { convertViToEn, customFilter, sleep } from '../../../utils'
 import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -28,8 +28,8 @@ const emit = defineEmits<{
 }>()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -154,7 +154,7 @@ defineExpose({ openModal })
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDistributorUpsertSettingScreen?.openModal()"
@@ -185,7 +185,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
+        <div v-if="settingStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
           <div>Địa chỉ</div>
           <div class="flex gap-4 flex-wrap">
             <div style="flex: 1; flex-basis: 200px">
@@ -262,10 +262,7 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>
         </div>
@@ -273,7 +270,7 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalDistributorUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalDistributorUpsertSettingScreen"
   />
 </template>

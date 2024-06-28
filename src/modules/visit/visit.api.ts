@@ -4,6 +4,7 @@ import { Customer } from '../customer'
 import { VisitDiagnosis } from '../visit-diagnosis'
 import { VisitProcedure } from '../visit-procedure/visit-procedure.model'
 import { VisitProduct } from '../visit-product/visit-product.model'
+import type { VisitRadiology } from '../visit-radiology'
 import {
   VisitDetailQuery,
   VisitGetQuery,
@@ -63,14 +64,24 @@ export class VisitApi {
     customerId: number
     visitDiagnosisId: number
     visitDiagnosis: VisitDiagnosis
+    imageIdsKeep: number[]
+    files: File[]
   }) {
-    const visitDiagnosisPlain = VisitDiagnosis.toPlain(body.visitDiagnosis, 'USER_UPDATE')
+    const { visitId, customerId, visitDiagnosisId, visitDiagnosis, files, imageIdsKeep } = body
+    const visitDiagnosisPlain = VisitDiagnosis.toPlain(visitDiagnosis, 'USER_UPDATE')
+    visitDiagnosisPlain.imageIdsKeep = imageIdsKeep
 
-    const response = await AxiosInstance.put(`/visit/update-visit-diagnosis`, {
-      visitId: body.visitId,
-      customerId: body.customerId,
-      visitDiagnosisId: body.visitDiagnosisId,
-      visitDiagnosis: visitDiagnosisPlain,
+    const formData = new FormData()
+    formData.append('visitId', visitId.toString())
+    formData.append('customerId', customerId.toString())
+    formData.append('visitDiagnosisId', visitDiagnosisId.toString())
+    formData.append('visitDiagnosis', JSON.stringify(visitDiagnosisPlain))
+    files.forEach((file, index) => formData.append('files', file))
+
+    const response = await AxiosInstance.post(`/visit/update-visit-diagnosis`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     })
     const { data } = response.data as BaseResponse<{
       visitId: number
@@ -78,7 +89,7 @@ export class VisitApi {
     }>
   }
 
-  static async replaceVisitProcedures(body: {
+  static async replaceVisitProcedureList(body: {
     visitId: number
     customerId: number
     visitProcedureList: VisitProcedure[]
@@ -89,6 +100,30 @@ export class VisitApi {
       visitId: body.visitId,
       customerId: body.customerId,
       visitProcedureList: visitProcedureListPlain,
+    })
+    const { data } = response.data as BaseResponse
+  }
+
+  static async replaceVisitRadiologyList(body: {
+    visitId: number
+    customerId: number
+    visitRadiologyList: VisitRadiology[]
+  }) {
+    const plainList = body.visitRadiologyList.map((i) => {
+      const plain: { [P in keyof VisitRadiology]?: any } = {}
+      plain.radiologyId = i.radiologyId
+      plain.expectedPrice = i.expectedPrice
+      plain.discountMoney = i.discountMoney
+      plain.discountPercent = i.discountPercent
+      plain.discountType = i.discountType
+      plain.actualPrice = i.actualPrice
+      return plain
+    })
+
+    const response = await AxiosInstance.put(`/visit/replace-visit-radiology-list`, {
+      visitId: body.visitId,
+      customerId: body.customerId,
+      visitRadiologyList: plainList,
     })
     const { data } = response.data as BaseResponse
   }
@@ -111,11 +146,45 @@ export class VisitApi {
     visitId: number
     visitProductList: VisitProduct[]
     visitProcedureList: VisitProcedure[]
+    visitRadiologyList: VisitRadiology[]
   }) {
+    const visitProductList = body.visitProductList.map((item) => {
+      return {
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        costAmount: item.costAmount,
+        discountMoney: item.discountMoney,
+        discountPercent: item.discountPercent,
+        discountType: item.discountType,
+        actualPrice: item.actualPrice,
+      }
+    })
+    const visitProcedureList = body.visitProcedureList.map((item) => {
+      return {
+        id: item.id,
+        procedureId: item.procedureId,
+        discountMoney: item.discountMoney,
+        discountPercent: item.discountPercent,
+        discountType: item.discountType,
+        actualPrice: item.actualPrice,
+      }
+    })
+    const visitRadiologyList = body.visitRadiologyList.map((item) => {
+      return {
+        id: item.id,
+        radiologyId: item.radiologyId,
+        discountMoney: item.discountMoney,
+        discountPercent: item.discountPercent,
+        discountType: item.discountType,
+        actualPrice: item.actualPrice,
+      }
+    })
     const response = await AxiosInstance.post(`/visit/update-visit-items-money`, {
       visitId: body.visitId,
-      visitProductList: body.visitProductList,
-      visitProcedureList: body.visitProcedureList,
+      visitProductList,
+      visitProcedureList,
+      visitRadiologyList,
     })
     const { data } = response.data as BaseResponse
   }

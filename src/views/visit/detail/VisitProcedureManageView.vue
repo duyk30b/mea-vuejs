@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { DeleteOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { DeleteOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../../modules/procedure'
@@ -12,6 +13,7 @@ import { VisitApi, VisitStatus } from '../../../modules/visit'
 import { VisitProcedure } from '../../../modules/visit-procedure'
 import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
 import { visit } from './visit.ref'
+import { IconDelete } from '../../../common/icon-google'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
@@ -19,11 +21,10 @@ const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const procedure = ref(Procedure.blank())
 const procedureList = ref<Procedure[]>([])
 const procedureStore = useProcedureStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const visitProcedureList = ref<VisitProcedure[]>([])
 watch(
@@ -58,19 +59,22 @@ const selectProcedure = (instance?: Procedure) => {
     const visitProcedure = new VisitProcedure()
     visitProcedure.visitId = visit.value.id
     visitProcedure.procedureId = instance.id
-    visitProcedure.procedure = Procedure.clone(instance)
+    visitProcedure.procedure = instance
     visitProcedure.expectedPrice = instance.price
     visitProcedure.discountMoney = 0
     visitProcedure.discountPercent = 0
     visitProcedure.discountType = DiscountType.VND
+    visitProcedure.expectedPrice = instance.price
     visitProcedure.actualPrice = instance.price
     visitProcedure.quantity = 1
     visitProcedure.createdAt = Date.now()
     visitProcedureList.value.push(visitProcedure)
   }
-  procedure.value = Procedure.blank()
 
-  inputSearchProcedure.value?.focus()
+  procedureList.value = []
+  if (!isMobile) {
+    inputSearchProcedure.value?.focus()
+  }
 }
 
 const changeItemPosition = (index: number, count: number) => {
@@ -79,27 +83,22 @@ const changeItemPosition = (index: number, count: number) => {
   visitProcedureList.value[index + count] = temp
 }
 
-const saveVisitProcedures = async () => {
-  await VisitApi.replaceVisitProcedures({
+const saveVisitProcedureList = async () => {
+  await VisitApi.replaceVisitProcedureList({
     visitId: visit.value.id,
     customerId: visit.value.customerId || 0,
     visitProcedureList: visitProcedureList.value,
   })
 }
-
-const resetVisitDiagnosis = () => {
-  visitProcedureList.value = VisitProcedure.cloneList(visit.value.visitProcedureList! || [])
-}
 </script>
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="selectProcedure" />
-  <div class="flex justify-between">
+  <div class="mt-4 flex justify-between">
     <span>Chỉ định dịch vụ</span>
     <span>
       <a
         v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
-        @click="modalProcedureUpsert?.openModal()"
-      >
+        @click="modalProcedureUpsert?.openModal()">
         Thêm dịch vụ mới
       </a>
     </span>
@@ -113,11 +112,11 @@ const resetVisitDiagnosis = () => {
       clear-after-selected
       :disabled="[VisitStatus.Completed, VisitStatus.Debt].includes(visit.visitStatus)"
       @selectItem="({ data }) => selectProcedure(data)"
-      @update:text="searchingProcedure"
-    >
+      @update:text="searchingProcedure">
       <template #option="{ item: { data } }">
         <div>
-          <b>{{ data.name }}</b> - {{ formatMoney(data.price) }}
+          <b>{{ data.name }}</b>
+          - {{ formatMoney(data.price) }}
         </div>
       </template>
     </InputOptions>
@@ -142,8 +141,7 @@ const resetVisitDiagnosis = () => {
           </tr>
           <tr
             v-for="(visitProcedure, index) in visitProcedureList"
-            :key="visitProcedure.procedureId"
-          >
+            :key="visitProcedure.procedureId">
             <td>
               <div class="flex flex-col items-center">
                 <button
@@ -156,11 +154,10 @@ const resetVisitDiagnosis = () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0"
-                  @click="changeItemPosition(index, -1)"
-                >
+                  @click="changeItemPosition(index, -1)">
                   <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
                 </button>
-                <span> {{ index + 1 }} </span>
+                <span>{{ index + 1 }}</span>
                 <button
                   style="
                     border: none;
@@ -171,8 +168,7 @@ const resetVisitDiagnosis = () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === visitProcedureList.length - 1"
-                  @click="changeItemPosition(index, 1)"
-                >
+                  @click="changeItemPosition(index, 1)">
                   <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
                 </button>
               </div>
@@ -181,8 +177,7 @@ const resetVisitDiagnosis = () => {
             <td style="width: 150px">
               <div
                 v-if="[VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)"
-                class="text-center"
-              >
+                class="text-center">
                 {{ visitProcedure.quantity }}
               </div>
               <div v-else class="flex items-center justify-between">
@@ -190,8 +185,7 @@ const resetVisitDiagnosis = () => {
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="visitProcedure.quantity <= 0"
-                  @click="visitProcedureList[index].quantity--"
-                >
+                  @click="visitProcedureList[index].quantity--">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
@@ -200,8 +194,7 @@ const resetVisitDiagnosis = () => {
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  @click="visitProcedureList[index].quantity++"
-                >
+                  @click="visitProcedureList[index].quantity++">
                   <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
               </div>
@@ -214,9 +207,8 @@ const resetVisitDiagnosis = () => {
               <a
                 v-if="![VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)"
                 class="text-red-500"
-                @click="visitProcedureList.splice(index, 1)"
-              >
-                <DeleteOutlined />
+                @click="visitProcedureList.splice(index, 1)">
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
@@ -232,8 +224,8 @@ const resetVisitDiagnosis = () => {
                       return (acc += item.expectedPrice * item.quantity)
                     }, 0)
                   )
-                }}</b
-              >
+                }}
+              </b>
             </td>
             <td></td>
           </tr>
@@ -242,15 +234,10 @@ const resetVisitDiagnosis = () => {
     </div>
   </div>
   <div class="mt-4 flex justify-between">
-    <div>
-      <!-- <button class="btn" :disabled="disabledButton" @click="resetVisitDiagnosis">
-        <UndoOutlined />
-        Tải lại
-      </button> -->
-    </div>
-    <button class="btn btn-blue" :disabled="disabledButton" @click="saveVisitProcedures">
-      <SaveOutlined /> Lưu lại
-    </button>
+    <div></div>
+    <VueButton color="blue" :disabled="disabledButton" icon="save" @click="saveVisitProcedureList">
+      Lưu lại
+    </VueButton>
   </div>
 </template>
 <script lang="scss" scope></script>

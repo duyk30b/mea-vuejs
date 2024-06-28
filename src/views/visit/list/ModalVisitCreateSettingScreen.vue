@@ -4,13 +4,13 @@ import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueModal from '../../../common/VueModal.vue'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import VueButton from '../../../common/VueButton.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_CUSTOMER_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_CUSTOMER_UPSERT))
 )
@@ -30,7 +30,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_CUSTOMER_UPSERT, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_CUSTOMER_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_CUSTOMER_UPSERT = JSON.parse(settingData)
 
@@ -116,12 +116,7 @@ defineExpose({ openModal })
             <PlusOutlined />
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" @click="handleSave">
-            <template #icon>
-              <PlusOutlined />
-            </template>
-            Lưu lại
-          </VueButton>
+          <VueButton color="blue" icon="save" @click="handleSave"> Lưu lại </VueButton>
         </div>
       </div>
     </div>

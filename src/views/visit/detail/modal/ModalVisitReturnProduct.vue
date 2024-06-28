@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { CloseOutlined, DollarOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/VueModal.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import type { Batch } from '../../../modules/batch'
-import { VisitApi } from '../../../modules/visit/visit.api'
-import type { Product } from '../../../modules/product'
-import { arrayToKeyArray, timeToText } from '../../../utils'
-import { visit } from './visit.ref'
-import type { VisitProduct } from '../../../modules/visit-product'
+import VueButton from '../../../../common/VueButton.vue'
+import VueModal from '../../../../common/VueModal.vue'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import type { Batch } from '../../../../modules/batch'
+import type { VisitProduct } from '../../../../modules/visit-product'
+import { VisitApi } from '../../../../modules/visit/visit.api'
+import { arrayToKeyArray, timeToText } from '../../../../utils'
+import { visit } from '../visit.ref'
 
 const visitProductReturnList = ref<
   {
@@ -35,8 +34,8 @@ const visitBatchReturnListMap = ref<
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const showModal = ref(false)
 const returnLoading = ref(false)
@@ -196,7 +195,7 @@ defineExpose({ openModal })
           <div></div>
           <div>
             <VueButton type="button" @click="setReturnAllQuantity">
-              <span> Chọn tất cả số lượng </span>
+              <span>Chọn tất cả số lượng</span>
             </VueButton>
           </div>
         </div>
@@ -219,8 +218,7 @@ defineExpose({ openModal })
               </tr>
               <tr
                 v-for="(vProductReturn, vProductReturnIndex) in visitProductReturnList"
-                :key="vProductReturn.visitProductId"
-              >
+                :key="vProductReturn.visitProductId">
                 <td class="text-center">
                   {{ vProductReturnIndex + 1 }}
                 </td>
@@ -264,8 +262,7 @@ defineExpose({ openModal })
                                   v-for="(
                                     vBatchReturn, vBatchReturnIndex
                                   ) in visitBatchReturnListMap[vProductReturn.visitProductId]"
-                                  :key="vBatchReturnIndex"
-                                >
+                                  :key="vBatchReturnIndex">
                                   <td class="text-center">{{ vBatchReturnIndex + 1 }}</td>
                                   <td>{{ vBatchReturn.batch?.lotNumber }}</td>
                                   <td>{{ timeToText(vBatchReturn.batch?.expiryDate) }}</td>
@@ -282,8 +279,7 @@ defineExpose({ openModal })
                                       vBatchReturn.quantity < vBatchReturn.quantityReturn
                                         ? 'font-bold text-red-500'
                                         : ''
-                                    "
-                                  >
+                                    ">
                                     {{ vBatchReturn!.quantity / vProductReturn.vpRoot.unitRate }}
                                   </td>
                                   <td>
@@ -305,8 +301,7 @@ defineExpose({ openModal })
                                             Number((e.target as HTMLInputElement).value || 0) *
                                               vProductReturn.vpRoot.unitRate
                                           )
-                                      "
-                                    />
+                                      " />
                                   </td>
                                 </tr>
                                 <tr>
@@ -326,8 +321,7 @@ defineExpose({ openModal })
                                             vProductReturnIndex,
                                             Number((e.target as HTMLInputElement)?.value || 0)
                                           )
-                                      "
-                                    />
+                                      " />
                                   </td>
                                 </tr>
                               </tbody>
@@ -342,8 +336,7 @@ defineExpose({ openModal })
                     </div>
                     <div
                       v-if="visitBatchReturnListMap[vProductReturn.visitProductId].length === 1"
-                      class="text-xs italic"
-                    >
+                      class="text-xs italic">
                       Lô
                       {{
                         visitBatchReturnListMap[vProductReturn.visitProductId][0].batch?.lotNumber
@@ -362,10 +355,14 @@ defineExpose({ openModal })
                   {{ vProductReturn.vpRoot.quantity / vProductReturn.vpRoot.unitRate }}
                 </td>
                 <td class="text-center">
-                  {{ vProductReturn.vpRoot.product?.getUnitNameByRate(vProductReturn.vpRoot.unitRate) }}
+                  {{
+                    vProductReturn.vpRoot.product?.getUnitNameByRate(vProductReturn.vpRoot.unitRate)
+                  }}
                 </td>
                 <td class="text-center">
-                  {{ formatMoney(vProductReturn.vpRoot.actualPrice * vProductReturn.vpRoot.unitRate) }}
+                  {{
+                    formatMoney(vProductReturn.vpRoot.actualPrice * vProductReturn.vpRoot.unitRate)
+                  }}
                 </td>
                 <td class="text-right">
                   <input
@@ -381,11 +378,12 @@ defineExpose({ openModal })
                           Number((e.target as HTMLInputElement).value || 0) *
                             vProductReturn.vpRoot.unitRate
                         )
-                    "
-                  />
+                    " />
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(vProductReturn.quantityReturn * vProductReturn.vpRoot.actualPrice) }}
+                  {{
+                    formatMoney(vProductReturn.quantityReturn * vProductReturn.vpRoot.actualPrice)
+                  }}
                 </td>
               </tr>
               <tr>
@@ -405,15 +403,17 @@ defineExpose({ openModal })
         </div>
 
         <div class="pb-4 pt-8 flex justify-center gap-4">
-          <button type="reset" class="btn" @click="closeModal"><CloseOutlined /> Đóng lại</button>
+          <VueButton type="reset" @click="closeModal">
+            <CloseOutlined />
+            Đóng lại
+          </VueButton>
           <VueButton
             color="blue"
             type="submit"
             :loading="returnLoading"
-            :disabled="visitProductReturnList.length === 0"
-          >
+            :disabled="visitProductReturnList.length === 0">
             <DollarOutlined />
-            <span> HOÀN TRẢ </span>
+            <span>HOÀN TRẢ</span>
           </VueButton>
         </div>
       </form>

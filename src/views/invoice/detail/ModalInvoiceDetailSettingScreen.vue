@@ -2,13 +2,13 @@
 import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_DETAIL>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_DETAIL))
 )
@@ -28,7 +28,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_INVOICE_DETAIL, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_DETAIL, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_DETAIL = JSON.parse(settingData)
 

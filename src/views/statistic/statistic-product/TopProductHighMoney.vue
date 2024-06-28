@@ -3,12 +3,12 @@ import type { ChartData, ChartOptions } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { StatisticService } from '../../../modules/statistics'
 
-const screenStore = useScreenStore()
-const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = screenStore
+const settingStore = useSettingStore()
+const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = settingStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],

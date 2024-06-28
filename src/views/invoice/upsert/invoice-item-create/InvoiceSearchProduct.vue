@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../../modules/batch'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../../modules/product'
@@ -25,8 +25,8 @@ const emit = defineEmits<{
   (e: 'createInvoiceItemProduct'): void
 }>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const productStore = useProductStore()
 const batchStore = useBatchStore()
 const meStore = useMeStore()
@@ -72,8 +72,13 @@ const selectProduct = async (instance?: Product) => {
       batchListResponse.forEach((i) => (i.product = instance))
       batchList.value = batchListResponse
 
-      batch.value = batchListResponse[0]
-      createInvoiceItemBatch(batchListResponse[0])
+      if (batchListResponse.length) {
+        batch.value = batchListResponse[0]
+        createInvoiceItemBatch(batchListResponse[0])
+      } else {
+        batch.value = Batch.blank()
+        createInvoiceItemProduct(instance)
+      }
     } else {
       batchList.value = []
       createInvoiceItemProduct(instance)

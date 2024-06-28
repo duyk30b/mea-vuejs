@@ -12,7 +12,7 @@ import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useDistributorStore, type Distributor } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { formatPhone } from '../../../utils'
@@ -29,8 +29,8 @@ const modalDistributorListSettingScreen =
   ref<InstanceType<typeof ModalDistributorListSettingScreen>>()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -172,7 +172,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -215,7 +215,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <thead>
           <tr>
             <th>Tên NCC</th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -250,25 +250,25 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div class="font-medium text-justify">
                 {{ distributor.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
+                  v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="text-base"
                   @click="modalDistributorDetail?.openModal(distributor.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
+              <div v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
                 {{ distributor.addressString }}
               </div>
               <div
-                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
                 class="text-xs italic"
               >
                 {{ distributor.note }}
               </div>
             </td>
             <td
-              v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone"
+              v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none"
             >
               <a :href="'tel:' + distributor.phone">{{ formatPhone(distributor.phone || '') }}</a>
@@ -341,8 +341,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -359,10 +359,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.isActive">Trạng thái</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive">Trạng thái</th>
             <th
               v-if="
-                screenStore.SCREEN_DISTRIBUTOR_LIST.action &&
+                settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
               "
             >
@@ -394,7 +394,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ distributor.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
+                  v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="ml-1"
                   @click="modalDistributorDetail?.openModal(distributor.id)"
                 >
@@ -402,16 +402,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div
-                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
                 class="text-xs italic"
               >
                 {{ distributor.note }}
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
               {{ distributor.phone }}
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">
               {{ distributor.addressString }}
             </td>
             <td class="text-right">
@@ -433,7 +433,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.isActive" class="text-center">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive" class="text-center">
               <a-tag v-if="distributor.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -449,7 +449,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td
               v-if="
-                screenStore.SCREEN_DISTRIBUTOR_LIST.action &&
+                settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
               "
               class="text-center"

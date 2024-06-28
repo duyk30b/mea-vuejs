@@ -5,15 +5,16 @@ import { createVNode, ref } from 'vue'
 import VueModal from '../../common/VueModal.vue'
 import { InputDate, InputNumber, InputText } from '../../common/vue-form'
 import { User } from '../../modules/user'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
+import VueButton from '../../common/VueButton.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const showModal = ref(false)
 const user = ref<User>(User.blank())
@@ -82,7 +83,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ user.id !== null ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
+          {{ user.id ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
@@ -93,7 +94,7 @@ defineExpose({ openModal })
         <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Oid</div>
           <div class="flex-auto">
-            <InputNumber v-model:value="user.oid" :disabled="user.id !== null" required />
+            <InputNumber v-model:value="user.oid" :disabled="!!user.id" required />
           </div>
         </div>
 
@@ -171,19 +172,14 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <!-- <a-button danger @click="clickDelete">Xóa</a-button> -->
-          <a-button class="ml-auto" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <!-- <VueButton danger @click="clickDelete">Xóa</VueButton> -->
+          <VueButton class="ml-auto" @click="closeModal">
+            <CloseOutlined />
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

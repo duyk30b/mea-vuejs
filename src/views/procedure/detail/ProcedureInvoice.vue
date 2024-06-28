@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
 import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
 import { Procedure } from '../../../modules/procedure'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 
@@ -14,8 +14,8 @@ const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PROCEDURE_INVOICE_PAGINATION_LIMIT')) || 10)

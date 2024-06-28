@@ -1,17 +1,12 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  ExclamationCircleOutlined,
-  SaveOutlined,
-  SisternodeOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons-vue'
+import { CloseOutlined, ExclamationCircleOutlined, SisternodeOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputMoney, InputText } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProcedureStore } from '../../../modules/procedure'
 import { Procedure } from '../../../modules/procedure/procedure.model'
@@ -24,8 +19,8 @@ const emit = defineEmits<{
 const modalDataProcedure = ref<InstanceType<typeof ModalDataProcedure>>()
 
 const procedureStore = useProcedureStore()
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -40,7 +35,7 @@ const saveLoading = ref(false)
 
 const openModal = async (instance?: Procedure) => {
   showModal.value = true
-  procedure.value = instance ? Procedure.fromInstance(instance) : Procedure.blank()
+  procedure.value = instance ? Procedure.toBasic(instance) : Procedure.blank()
 
   // if (procedure.value.consumableHint) {
   //   const consumableHint = JSON.parse(procedure.value.consumableHint) as { productId: number, quantity: number }[]
@@ -86,7 +81,7 @@ const handleSave = async () => {
 const handleDelete = async () => {
   try {
     await procedureStore.deleteOne(procedure.value.id)
-    emit('success', Procedure.fromInstance(procedure.value), 'DELETE')
+    emit('success', Procedure.toBasic(procedure.value), 'DELETE')
     closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
@@ -138,7 +133,7 @@ defineExpose({ openModal })
           {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDataProcedure?.openModal()"
@@ -165,7 +160,7 @@ defineExpose({ openModal })
             class="flex-auto"
             show-search
             :options="
-              Object.entries(screenStore.PROCEDURE_GROUP).map(([value, label]) => ({
+              Object.entries(settingStore.PROCEDURE_GROUP).map(([value, label]) => ({
                 value,
                 label,
               }))
@@ -230,29 +225,26 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <a-button
+          <VueButton
             v-if="permissionIdMap[PermissionId.PROCEDURE_DELETE] && procedure.id"
-            danger
+            color="red"
+            icon="trash"
             @click="clickDelete"
           >
             Xóa
-          </a-button>
-          <a-button class="ml-auto" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          </VueButton>
+          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
             Hủy bỏ
-          </a-button>
-          <button class="btn btn-blue">
-            <LoadingOutlined v-if="saveLoading" />
-            <SaveOutlined v-if="!saveLoading" /> Lưu lại
-          </button>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
+            Lưu lại
+          </VueButton>
         </div>
       </div>
     </form>
   </VueModal>
   <ModalDataProcedure
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalDataProcedure"
   />
 </template>

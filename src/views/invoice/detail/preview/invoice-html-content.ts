@@ -1,18 +1,18 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Invoice } from '../../../../modules/invoice'
 import { timeToText } from '../../../../utils'
 
 export const invoiceHtmlContent = (invoice: Invoice) => {
-  const screenStore = useScreenStore()
+  const settingStore = useSettingStore()
   const meStore = useMeStore()
-  const { formatMoney } = screenStore
+  const { formatMoney } = settingStore
   const rowInvoiceItem = invoice
     .invoiceItems!.map((item, index) => {
       let invoiceItemName = ''
       if (item.productId) {
         invoiceItemName = `<div style="font-weight: 500;">${item.product!.brandName}</div>`
-        if (screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance) {
+        if (settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance) {
           invoiceItemName += `<div>${item.product?.substance}</div>`
         }
       }
@@ -20,7 +20,10 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
         invoiceItemName = `<div style="font-weight: 500;">${item.procedure!.name}</div>`
       }
       let expectedPrice = ''
-      if (screenStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice && item.discountMoney) {
+      if (
+        settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice &&
+        item.discountMoney
+      ) {
         expectedPrice = `<div style="color:red"><del><i><small>
             ${formatMoney(item.expectedPrice * item.unitRate)}
           </small></i></del></div>`
@@ -40,7 +43,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
     .join('')
 
   let itemsActualMoney = ''
-  if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney) {
+  if (settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney) {
     itemsActualMoney = `<tr>
       <td colspan="4" style="text-align: right"><b>Tiền hàng</b></td>
       <td colspan="2" style="text-align: right"><b>${formatMoney(invoice.itemsActualMoney)}</b></td>
@@ -48,7 +51,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
   }
 
   let discount = ''
-  if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount) {
+  if (settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount) {
     discount = `<tr>
       <td colspan="4" style="text-align: right">Chiết khấu</td>
       <td colspan="2" style="text-align: right">${formatMoney(invoice.discountMoney)}</td>
@@ -56,7 +59,7 @@ export const invoiceHtmlContent = (invoice: Invoice) => {
   }
 
   let surcharge = ''
-  if (screenStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge) {
+  if (settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge) {
     surcharge = `<tr>
       <td colspan="4" style="text-align: right">Phụ phí</td>
       <td colspan="2" style="text-align: right">${formatMoney(invoice.surcharge)}</td>

@@ -5,13 +5,13 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputText } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const GROUP = ref<typeof store.PRODUCT_GROUP>(JSON.parse(JSON.stringify(store.PRODUCT_GROUP)))
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
@@ -39,25 +39,25 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_GROUP, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_GROUP, data)
       store.PRODUCT_GROUP = JSON.parse(data)
     }
     if (activeTab.value === '2') {
       const data = JSON.stringify(UNIT.value.filter((i) => !!i))
       UNIT.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_UNIT, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_UNIT, data)
       store.PRODUCT_UNIT = JSON.parse(data)
     }
     if (activeTab.value === '3') {
       const data = JSON.stringify(ROUTE.value.filter((i) => !!i))
       ROUTE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_ROUTE, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_ROUTE, data)
       store.PRODUCT_ROUTE = JSON.parse(data)
     }
     if (activeTab.value === '4') {
       const data = JSON.stringify(HINT_USAGE.value.filter((i) => !!i))
       HINT_USAGE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_HINT_USAGE, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_HINT_USAGE, data)
       store.PRODUCT_HINT_USAGE = JSON.parse(data)
     }
 
@@ -161,14 +161,8 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton class="ml-auto" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
-          <VueButton color="blue" :loading="saveLoading" @click="handleSave">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton icon="close" class="ml-auto" @click="closeModal"> Hủy bỏ </VueButton>
+          <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>
         </div>

@@ -10,13 +10,14 @@ import VueModal from '../../../common/VueModal.vue'
 import { InputDate, InputHint, InputOptions, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { VisitApi } from '../../../modules/visit/visit.api'
 import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { convertViToEn, customFilter, timeToText } from '../../../utils'
 import ModalVisitCreateSettingScreen from './ModalVisitCreateSettingScreen.vue'
+import VueButton from '../../../common/VueButton.vue'
 
 const modalVisitCreateSettingScreen = ref<InstanceType<typeof ModalVisitCreateSettingScreen>>()
 const visitCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
@@ -26,8 +27,8 @@ const emit = defineEmits<{
 }>()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -184,7 +185,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thêm phiếu khám mới</div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalVisitCreateSettingScreen?.openModal()"
@@ -239,7 +240,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.birthday"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.birthday"
           style="flex-grow: 1; flex-basis: 250px"
         >
           <div>Ngày sinh</div>
@@ -254,7 +255,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.identityCard"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.identityCard"
           style="flex-grow: 1; flex-basis: 250px"
         >
           <div style="width: 100px; flex: none">Số CCCD</div>
@@ -264,7 +265,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.gender"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender"
           style="flex-grow: 1; flex-basis: 150px"
         >
           <div>Giới tính</div>
@@ -277,13 +278,13 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address"
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
           class="grow basis-[80%]"
           style="margin-bottom: -1rem"
         >
           Địa chỉ
         </div>
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
           <InputHint
             v-model:value="customer.addressProvince"
             :options="provinceList"
@@ -293,7 +294,7 @@ defineExpose({ openModal })
             @update:value="handleChangeProvince"
           />
         </div>
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
           <InputHint
             v-model:value="customer.addressDistrict"
             :maxHeight="180"
@@ -303,7 +304,7 @@ defineExpose({ openModal })
             @update:value="handleChangeDistrict"
           />
         </div>
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
           <InputHint
             v-model:value="customer.addressWard"
             :maxHeight="180"
@@ -313,14 +314,14 @@ defineExpose({ openModal })
           />
         </div>
 
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[80%]">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[80%]">
           <InputText
             v-model:value="customer.addressStreet"
             placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
           />
         </div>
 
-        <div v-if="screenStore.SCREEN_CUSTOMER_UPSERT.relative" class="grow basis-[80%]">
+        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative" class="grow basis-[80%]">
           <div>Người thân</div>
           <div>
             <InputText
@@ -340,28 +341,29 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex flex-wrap gap-4">
-          <button class="mr-auto btn" type="reset" @click="closeModal">
+          <VueButton class="mr-auto btn" type="reset" @click="closeModal">
             <CloseOutlined /> Hủy bỏ
-          </button>
-          <button
+          </VueButton>
+          <VueButton
             v-if="!!customer.id"
-            class="btn btn-blue"
-            type="button"
+            color="blue"
             :disabled="disabledUpdateCustomer"
             @click="handleUpdateCustomer"
           >
             <SaveOutlined /> Cập nhật thông tin
-          </button>
-          <button class="btn btn-blue" type="submit">
-            <LoadingOutlined v-if="saveLoading" />
-            <SaveOutlined v-if="!saveLoading" /> ĐĂNG KÝ KHÁM
-          </button>
+          </VueButton>
+          <VueButton class="btn btn-blue" type="submit" :loading="saveLoading">
+            <template #icon>
+              <SaveOutlined />
+            </template>
+            ĐĂNG KÝ KHÁM
+          </VueButton>
         </div>
       </div>
     </form>
   </VueModal>
   <ModalVisitCreateSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalVisitCreateSettingScreen"
   />
 </template>

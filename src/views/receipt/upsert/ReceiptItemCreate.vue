@@ -13,7 +13,7 @@ import {
   VueSelect,
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../modules/product'
@@ -39,8 +39,8 @@ const productStore = useProductStore()
 const batchStore = useBatchStore()
 const receiptStore = useReceiptStore()
 const meStore = useMeStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const { permissionIdMap } = meStore
 
 const productList = ref<Product[]>([])
@@ -356,8 +356,8 @@ const addReceiptItem = async () => {
       </div>
       <div
         v-if="
-          screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.salePrice &&
-          screenStore.SYSTEM_SETTING.wholesalePrice
+          settingStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.salePrice &&
+          settingStore.SYSTEM_SETTING.wholesalePrice
         "
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"
@@ -381,8 +381,8 @@ const addReceiptItem = async () => {
 
       <div
         v-if="
-          screenStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.salePrice &&
-          screenStore.SYSTEM_SETTING.retailPrice
+          settingStore.SCREEN_RECEIPT_UPSERT.receiptItemInput.salePrice &&
+          settingStore.SYSTEM_SETTING.retailPrice
         "
         style="flex-grow: 1"
         class="basis-[90%] lg:basis-[45%]"

@@ -17,6 +17,9 @@
       "source.organizeImports": "explicit"
     }
   },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "search.smartCase": true,
   "javascript.preferences.quoteStyle": "single",
   "javascript.format.semicolons": "remove",

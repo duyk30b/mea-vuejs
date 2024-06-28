@@ -52,6 +52,10 @@ export const socketInit = () => {
     SocketService.listenProcedureUpsert(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.SETTING_RELOAD, (data) => {
+    SocketService.listenSettingReload(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.VISIT_CREATE, (data) => {
     SocketService.listenVisitCreate(data)
   })
@@ -74,6 +78,14 @@ export const socketInit = () => {
 
   SocketBase.on(SOCKET_EVENT.VISIT_REPLACE_VISIT_PROCEDURE_LIST, (data) => {
     SocketService.listenVisitReplaceVisitProcedureList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.VISIT_UPSERT_VISIT_RADIOLOGY, (data) => {
+    SocketService.listenVisitUpsertVisitRadiology(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.VISIT_REPLACE_VISIT_RADIOLOGY_LIST, (data) => {
+    SocketService.listenVisitReplaceVisitRadiologyList(data)
   })
 }
 

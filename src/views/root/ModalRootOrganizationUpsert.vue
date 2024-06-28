@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { Modal, message, type SelectProps } from 'ant-design-vue'
+import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { Modal, message } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
 import VueModal from '../../common/VueModal.vue'
-import { InputNumber, InputText } from '../../common/vue-form'
+import { InputHint, InputNumber, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization } from '../../modules/organization'
-import { PermissionApi } from '../../modules/permission/permission.api'
 import type { PermissionId } from '../../modules/permission/permission.enum'
 import type { Permission } from '../../modules/permission/permission.model'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { convertViToEn } from '../../utils'
-import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { convertViToEn, customFilter } from '../../utils'
+import { PermissionApi } from '../../modules/permission/permission.api'
 
 const emit = defineEmits<{
   (e: 'success', value: Organization, type: 'CREATE' | 'UPDATE' | 'CLEAR' | 'DELETE'): void
 }>()
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
-const provinceOptions = ref<SelectProps['options']>([])
-const districtOptions = ref<SelectProps['options']>([])
-const wardOptions = ref<SelectProps['options']>([])
+const provinceList = ref<string[]>([])
+const districtList = ref<string[]>([])
+const wardList = ref<string[]>([])
 
 const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
@@ -35,20 +35,37 @@ const permissionIds = ref<PermissionId[]>([])
 let firstLoad = true
 
 const openModal = async (instance?: Organization) => {
-  showModal.value = true
-  organization.value = instance ? Organization.toBasic(instance) : Organization.blank()
-  permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
+  try {
+    showModal.value = true
+    if (!instance) return
 
-  if (firstLoad === true) {
-    const provinceList = await AddressInstance.getAllProvinces()
-    provinceOptions.value = provinceList.map((i) => ({ value: i, label: i }))
-    permissionList.value = await PermissionApi.list({ filter: { level: 1 } })
-    firstLoad = false
+    organization.value = instance ? Organization.toBasic(instance) : Organization.blank()
+    permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
+
+    if (firstLoad === true) {
+      permissionList.value = await PermissionApi.list({ filter: { level: 1 } })
+      firstLoad = false
+    }
+
+    provinceList.value = await AddressInstance.getAllProvinces()
+    if (instance.addressProvince) {
+      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
+      if (instance.addressDistrict) {
+        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+          instance.addressProvince,
+          instance.addressDistrict
+        )
+      }
+    }
+  } catch (error) {
+    console.log('🚀 ~ file: ModalRootOrganizationUpsert.vue:48 ~ openModal ~ error:', error)
   }
 }
 
 const closeModal = () => {
   organization.value = Organization.blank()
+  districtList.value = []
+  wardList.value = []
   showModal.value = false
 }
 
@@ -57,7 +74,10 @@ const handleSave = async () => {
   if (!organization.value.phone) {
     return message.error('Lỗi: Tên khách hàng không được bỏ trống')
   }
-  organization.value.permissionIds = JSON.stringify([...permissionIds.value].sort())
+
+  organization.value.permissionIds = JSON.stringify(
+    [...permissionIds.value].sort((a, b) => (a > b ? 1 : -1))
+  )
   try {
     if (organization.value.id === null) {
       const response = await RootOrganizationApi.createOne(organization.value)
@@ -77,24 +97,31 @@ const handleSave = async () => {
   }
 }
 
-const handleChangeProvince = async (e: string) => {
+const handleChangeProvince = async (province: string) => {
+  if (!province) {
+    districtList.value = []
+    wardList.value = []
+    return
+  }
   try {
-    const districtList = await AddressInstance.getDistrictsByProvince(e)
-    districtOptions.value = districtList.map((i) => ({ value: i, label: i }))
+    districtList.value = await AddressInstance.getDistrictsByProvince(province)
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:54 ~ handleChangeProvince ~ error:', error)
+    console.log('🚀 ~ handleChangeProvince ~ error:', error)
   }
 }
 
-const handleChangeDistrict = async (e: string) => {
+const handleChangeDistrict = async (district: string) => {
+  if (!district) {
+    wardList.value = []
+    return
+  }
   try {
-    const wardList = await AddressInstance.getWardsByProvinceAndDistrict(
+    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
       organization.value.addressProvince,
-      e
+      district
     )
-    wardOptions.value = wardList.map((i) => ({ value: i, label: i }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:63 ~ handleChangeDistrict ~ error:', error)
+    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
   }
 }
 
@@ -197,35 +224,35 @@ defineExpose({ openModal })
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
           <div style="width: 100px; flex: none">Địa chỉ</div>
           <div class="flex-auto flex gap-4 flex-wrap">
-            <a-select
-              v-model:value="organization.addressProvince"
-              :options="provinceOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Thành Phố / Tỉnh"
-              @change="handleChangeProvince"
-            />
-            <a-select
-              v-model:value="organization.addressDistrict"
-              :options="districtOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Quận / Huyện"
-              @change="handleChangeDistrict"
-            />
-            <a-select
-              v-model:value="organization.addressWard"
-              :options="wardOptions"
-              :filter-option="filterOption"
-              show-search
-              allow-clear
-              style="flex: 1; flex-basis: 30%"
-              placeholder="Phường / Xã"
-            />
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="organization.addressProvince"
+                :options="provinceList"
+                :maxHeight="180"
+                placeholder="Thành Phố / Tỉnh"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                @update:value="handleChangeProvince"
+              />
+            </div>
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="organization.addressDistrict"
+                :maxHeight="180"
+                :options="districtList"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                placeholder="Quận / Huyện"
+                @update:value="handleChangeDistrict"
+              />
+            </div>
+            <div style="flex: 1; flex-basis: 200px">
+              <InputHint
+                v-model:value="organization.addressWard"
+                :maxHeight="180"
+                :options="wardList"
+                placeholder="Phường / Xã"
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+              />
+            </div>
           </div>
         </div>
 
@@ -261,22 +288,17 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4 mt-2">
+      <div class="p-4 mt-4">
         <div class="flex gap-4">
-          <a-button danger @click="clickDelete"> Xóa </a-button>
-          <a-button danger @click="clickClear"> Clear </a-button>
-          <a-button class="ml-auto" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <VueButton color="red" @click="clickDelete"> Xóa </VueButton>
+          <VueButton color="red" @click="clickClear"> Clear </VueButton>
+          <VueButton class="ml-auto" @click="closeModal">
+            <CloseOutlined />
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
@@ -15,8 +15,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const customerPaymentList = ref<CustomerPayment[]>([])
 const page = ref(1)

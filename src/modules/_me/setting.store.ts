@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { formatNumber } from '../../utils'
 
-export const useScreenStore = defineStore('screen-store', {
+export const useSettingStore = defineStore('setting-store', {
   state: () => {
     return {
-      // const isMobile = ref(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
-      isMobile: window.innerWidth <= 768,
-
+      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+      // isMobile: window.innerWidth <= 768,
+      GOOGLE_DRIVER: { email: '' },
       SYSTEM_SETTING: {
         moneyDivisionFormat: 1,
         retailPrice: true,
@@ -157,7 +157,7 @@ export const useScreenStore = defineStore('screen-store', {
           unit: true,
         },
         distributor: {
-          idDefault: 1,
+          idDefault: 0,
         },
         paymentInfo: {
           itemsActualMoney: false,
@@ -234,7 +234,7 @@ export const useScreenStore = defineStore('screen-store', {
           editActualPrice: false,
         },
         customer: {
-          idDefault: 1,
+          idDefault: 0,
         },
         paymentInfo: {
           itemsActualMoney: true,

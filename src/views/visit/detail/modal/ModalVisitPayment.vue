@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/VueModal.vue'
-import { InputMoney, InputNumber } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
-import { PaymentViewType, VoucherType } from '../../../modules/enum'
-import { VisitStatus } from '../../../modules/visit'
-import { VisitApi } from '../../../modules/visit/visit.api'
-import { timeToText } from '../../../utils'
-import CustomerPaymentTypeTag from '../../customer/CustomerPaymentTypeTag.vue'
-import { visit } from './visit.ref'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import VueButton from '../../../../common/VueButton.vue'
+import VueModal from '../../../../common/VueModal.vue'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputMoney, InputNumber } from '../../../../common/vue-form'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { CustomerPaymentApi } from '../../../../modules/customer-payment/customer-payment.api'
+import { PaymentViewType, VoucherType } from '../../../../modules/enum'
+import { VisitStatus } from '../../../../modules/visit'
+import { VisitApi } from '../../../../modules/visit/visit.api'
+import { timeToText } from '../../../../utils'
+import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
+import { visit } from '../visit.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -39,7 +39,9 @@ const openModal = async (view: PaymentViewType) => {
     },
     sort: { id: 'ASC' },
   })
-  nextTick(() => inputMoneyPayment.value?.focus())
+  if (!isMobile) {
+    nextTick(() => inputMoneyPayment.value?.focus())
+  }
 }
 
 const closeModal = () => {
@@ -105,10 +107,10 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="text-right">
-          <span class="mr-2">Tổng chi phí: </span>
+          <span class="mr-2">Tổng chi phí:</span>
           <span class="font-bold" style="font-size: 16px">
-            {{ formatMoney(visit.totalMoney) }}</span
-          >
+            {{ formatMoney(visit.totalMoney) }}
+          </span>
         </div>
         <div class="table-wrapper mt-2">
           <table>
@@ -140,8 +142,8 @@ defineExpose({ openModal })
               </tr>
               <tr v-if="visit.visitStatus !== VisitStatus.Completed">
                 <td colspan="3" class="text-right">
-                  <span v-if="visit.debt > 0"> Đang thiếu: </span>
-                  <span v-else> Đang thừa : </span>
+                  <span v-if="visit.debt > 0">Đang thiếu:</span>
+                  <span v-else>Đang thừa :</span>
                 </td>
                 <td class="text-right font-bold">{{ formatMoney(Math.abs(visit.debt)) }}</td>
               </tr>
@@ -165,8 +167,7 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0 }"
-                        text-align="right"
-                      />
+                        text-align="right" />
                     </div>
                   </div>
                 </td>
@@ -191,7 +192,8 @@ defineExpose({ openModal })
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
             <VueButton color="blue" type="submit" :loading="paymentLoading">
-              <SaveOutlined /> Tạm ứng
+              <SaveOutlined />
+              Tạm ứng
             </VueButton>
           </div>
         </form>
@@ -204,14 +206,13 @@ defineExpose({ openModal })
                 </td>
                 <td>
                   <div class="flex items-stretch pl-6">
-                    <VueButton type="button" @click="money = visit.debt"> Tất cả </VueButton>
+                    <VueButton type="button" @click="money = visit.debt">Tất cả</VueButton>
                     <div class="flex-1">
                       <InputNumber
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0 }"
-                        text-align="right"
-                      />
+                        text-align="right" />
                     </div>
                   </div>
                 </td>
@@ -236,14 +237,14 @@ defineExpose({ openModal })
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
             <VueButton type="submit" color="blue" :loading="paymentLoading">
-              <SaveOutlined /> Trả nợ
+              <SaveOutlined />
+              Trả nợ
             </VueButton>
           </div>
         </form>
         <form
           v-else-if="paymentView === PaymentViewType.RefundOverpaid"
-          @submit.prevent="startRefundOverpaid"
-        >
+          @submit.prevent="startRefundOverpaid">
           <table class="w-full mt-4">
             <tbody>
               <tr>
@@ -252,14 +253,13 @@ defineExpose({ openModal })
                 </td>
                 <td>
                   <div class="flex items-stretch pl-6">
-                    <VueButton type="button" @click="money = -visit.debt"> Tất cả </VueButton>
+                    <VueButton type="button" @click="money = -visit.debt">Tất cả</VueButton>
                     <div class="flex-1">
                       <InputNumber
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0 }"
-                        text-align="right"
-                      />
+                        text-align="right" />
                     </div>
                   </div>
                 </td>
@@ -284,14 +284,16 @@ defineExpose({ openModal })
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
             <VueButton type="submit" color="blue" :loading="paymentLoading">
-              <SaveOutlined /> Hoàn trả
+              <SaveOutlined />
+              Hoàn trả
             </VueButton>
           </div>
         </form>
 
         <div v-else class="pb-4 pt-8 flex justify-center gap-4">
           <VueButton type="reset" class="btn" @click="closeModal">
-            <CloseOutlined /> Đóng lại
+            <CloseOutlined />
+            Đóng lại
           </VueButton>
         </div>
       </div>

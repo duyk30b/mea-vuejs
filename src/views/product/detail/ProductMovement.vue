@@ -3,7 +3,7 @@ import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { BatchMovementApi } from '../../../modules/batch-movement/batch-movement.api'
 import type { BatchMovement } from '../../../modules/batch-movement/batch-movement.model'
@@ -17,8 +17,8 @@ const props = withDefaults(defineProps<{ product: Product }>(), { product: () =>
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const movements = ref<ProductMovement[] | BatchMovement[]>([])
 const batchAll = ref<Batch[]>([])

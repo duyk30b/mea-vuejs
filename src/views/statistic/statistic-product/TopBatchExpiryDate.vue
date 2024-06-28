@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { Batch, BatchApi } from '../../../modules/batch'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const loaded = ref(false)
 const batchList = ref<Batch[]>([])

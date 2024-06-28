@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Procedure } from '../../../modules/procedure'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),
 })
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 </script>
 
 <template>
@@ -22,7 +22,7 @@ const { formatMoney } = screenStore
     </p>
     <p class="mt-2">
       <span class="inline-block w-40">Nhóm</span>
-      <span>{{ screenStore.PROCEDURE_GROUP[procedure.group || 0] }}</span>
+      <span>{{ settingStore.PROCEDURE_GROUP[procedure.group || 0] }}</span>
     </p>
     <p class="mt-2">
       <span class="inline-block w-40">Giá dịch vụ</span>

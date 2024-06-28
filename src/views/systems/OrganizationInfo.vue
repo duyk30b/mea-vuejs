@@ -6,12 +6,12 @@ import VueButton from '../../common/VueButton.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputHint, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization, OrganizationService } from '../../modules/organization'
 import { convertViToEn, customFilter } from '../../utils'
 import { useMeStore } from '../../modules/_me/me.store'
 
-const orgStore = useScreenStore()
+const orgStore = useSettingStore()
 const meStore = useMeStore()
 const { isMobile } = orgStore
 
@@ -165,11 +165,9 @@ const disableButtonSave = computed(() => {
           :disabled="disableButtonSave"
           color="blue"
           :loading="saveLoading"
+          icon="save"
           @click="saveOrganization"
         >
-          <template #icon>
-            <SaveOutlined />
-          </template>
           Lưu lại
         </VueButton>
       </div>

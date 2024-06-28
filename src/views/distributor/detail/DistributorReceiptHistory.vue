@@ -2,7 +2,7 @@
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
 import { ReceiptApi, type Receipt } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
@@ -14,8 +14,8 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const receipts = ref<Receipt[]>([])
 const page = ref(1)

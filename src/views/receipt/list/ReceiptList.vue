@@ -9,7 +9,7 @@ import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
@@ -21,8 +21,8 @@ import VueButton from '../../../common/VueButton.vue'
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
 const receiptStore = useReceiptStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 

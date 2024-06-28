@@ -5,32 +5,37 @@ import {
   ContainerOutlined,
   DeploymentUnitOutlined,
   DisconnectOutlined,
-  ExclamationCircleOutlined,
   LoginOutlined,
   NodeIndexOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import { createVNode, h, onBeforeMount, ref } from 'vue'
+import { h, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
+import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
+import VueTabPanel from '../../../common/vue-tabs/VueTabPanel.vue'
+import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { VisitApi, VisitStatus } from '../../../modules/visit'
 import { VisitDiagnosis } from '../../../modules/visit-diagnosis'
-import VisitCheckup from './VisitCheckup.vue'
+import VisitDiagnosisManageView from './VisitDiagnosisManageView.vue'
 import VisitInformation from './VisitInformation.vue'
-import VisitInvoice from './VisitInvoice.vue'
-import VisitPrescription from './VisitPrescription.vue'
-import VisitProcedure from './VisitProcedure.vue'
+import VisitSummaryView from './VisitSummaryView.vue'
+import VisitPrescriptionManageView from './VisitPrescriptionManageView.vue'
+import VisitProcedureManageView from './VisitProcedureManageView.vue'
 import { visit } from './visit.ref'
+import { IconFluidMed, IconRadiology, IconStethoscope } from '../../../common/icon-google'
+import VisitRadiologyManageView from './VisitRadiologyManageView.vue'
 
 const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const { permissionIdMap } = meStore
-const { formatMoney } = screenStore
+const { formatMoney } = settingStore
 const tabsKey = ref<'diagnosis' | 'procedure' | 'prescription' | 'payment'>('diagnosis')
 
 const startFetchData = async (visitId: number) => {
@@ -42,6 +47,7 @@ const startFetchData = async (visitId: number) => {
         visitDiagnosis: true,
         visitProductList: true,
         visitProcedureList: true,
+        visitRadiologyList: true,
       },
     })
     if (!visitData.visitDiagnosis) {
@@ -129,74 +135,89 @@ const clickCloseVisit = () => {
       </div>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
     </div>
   </div>
-  <div class="mt-4 md:mx-4 flex flex-col md:flex-row gap-4">
-    <div class="md:w-2/3 px-4 pt-2 pb-4 bg-white">
-      <a-tabs
-        v-model:activeKey="tabsKey"
-        type="card"
-        :tabBarGutter="10"
-        style="overflow: visible"
-        @change="handleChangeTabs"
-      >
-        <a-tab-pane key="diagnosis">
-          <template #tab>
-            <span> <NodeIndexOutlined />Khám</span>
+  <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
+    <div style="flex-basis: 600px; flex-grow: 2; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
+      <VueTabs :tabStart="tabsKey" @changeTab="handleChangeTabs">
+        <template #menu>
+          <VueTabMenu tabKey="diagnosis">
+            <IconStethoscope />
+            Khám
+          </VueTabMenu>
+          <template
+            v-if="
+              [VisitStatus.InProgress, VisitStatus.Debt, VisitStatus.Completed].includes(
+                visit.visitStatus
+              )
+            ">
+            <VueTabMenu tabKey="procedure">
+              <IconFluidMed />
+              Dịch vụ
+            </VueTabMenu>
+            <VueTabMenu tabKey="radiology">
+              <IconRadiology />
+              CĐHA
+            </VueTabMenu>
+            <VueTabMenu tabKey="prescription">
+              <DisconnectOutlined />
+              Đơn thuốc
+            </VueTabMenu>
+            <VueTabMenu tabKey="payment">
+              <AuditOutlined />
+              Tổng kết
+            </VueTabMenu>
           </template>
-          <VisitCheckup />
-        </a-tab-pane>
-        <a-tab-pane v-if="visit.startedAt" key="procedure">
-          <template #tab>
-            <span> <DeploymentUnitOutlined />Dịch vụ</span>
-          </template>
-          <VisitProcedure />
-        </a-tab-pane>
-        <a-tab-pane v-if="visit.startedAt" key="prescription">
-          <template #tab>
-            <span> <DisconnectOutlined />Đơn thuốc</span>
-          </template>
-          <VisitPrescription />
-        </a-tab-pane>
-        <a-tab-pane v-if="visit.startedAt" key="payment" forceRender>
-          <template #tab>
-            <span> <AuditOutlined />Tổng kết</span>
-          </template>
-          <!-- Rerender lại, mục đích để reload kiểm tra lô hàng của từng thuốc -->
-          <VisitInvoice v-if="tabsKey == 'payment'" />
-        </a-tab-pane>
-      </a-tabs>
+        </template>
+        <template #panel>
+          <VueTabPanel tabKey="diagnosis">
+            <VisitDiagnosisManageView />
+          </VueTabPanel>
+          <VueTabPanel tabKey="procedure">
+            <VisitProcedureManageView />
+          </VueTabPanel>
+          <VueTabPanel tabKey="radiology">
+            <VisitRadiologyManageView />
+          </VueTabPanel>
+          <VueTabPanel tabKey="prescription">
+            <VisitPrescriptionManageView />
+          </VueTabPanel>
+          <VueTabPanel tabKey="payment" destroy-on-in-active>
+            <VisitSummaryView />
+          </VueTabPanel>
+        </template>
+      </VueTabs>
     </div>
-    <div class="md:w-1/3">
+    <div style="flex-basis: 300px; flex-grow: 1" class="">
       <VisitInformation />
-      <div class="mt-4">
-        <button
+      <div class="mt-4 w-full flex flex-col px-1 gap-4">
+        <VueButton
           v-if="[VisitStatus.Scheduled, VisitStatus.Waiting].includes(visit.visitStatus)"
-          class="btn btn-blue btn-large w-full"
-          @click="startCheckup"
-        >
-          <LoginOutlined /> VÀO KHÁM
-        </button>
-      </div>
-      <div class="mt-4">
-        <button
-          class="btn btn-blue btn-large w-full"
+          color="blue"
+          size="default"
+          @click="startCheckup">
+          <LoginOutlined />
+          VÀO KHÁM
+        </VueButton>
+        <VueButton
+          color="blue"
+          size="default"
           :disabled="![VisitStatus.InProgress].includes(visit.visitStatus)"
-          @click="clickCloseVisit"
-        >
-          <ContainerOutlined /> ĐÓNG PHIẾU KHÁM
-        </button>
+          @click="clickCloseVisit">
+          <ContainerOutlined />
+          ĐÓNG PHIẾU KHÁM
+        </VueButton>
       </div>
     </div>
   </div>

@@ -4,13 +4,13 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { StatisticService } from '../../../modules/statistics'
 import { DTimer } from '../../../utils'
 
-const screenStore = useScreenStore()
-const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = screenStore
+const settingStore = useSettingStore()
+const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = settingStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],

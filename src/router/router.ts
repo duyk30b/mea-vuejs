@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
+import { clinicRouter } from './clinic.router'
+import { warehouseRouter } from './warehouse.router'
+import { statisticRouter } from './statistic.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -23,25 +26,9 @@ const Router = createRouter({
           component: () => import('../views/AppHome.vue'),
           meta: { title: 'Trang chủ' },
         },
-        {
-          path: 'visit',
-          name: 'Visit',
-          redirect: () => ({ name: 'VisitList' }),
-          children: [
-            {
-              path: 'visit-list',
-              name: 'VisitList',
-              meta: { title: 'Phòng khám' },
-              component: () => import('../views/visit/list/VisitList.vue'),
-            },
-            {
-              path: 'visit-detail/:id',
-              name: 'VisitDetail',
-              meta: { title: 'Khám bệnh' },
-              component: () => import('../views/visit/detail/VisitDetail.vue'),
-            },
-          ],
-        },
+        clinicRouter,
+        warehouseRouter,
+        statisticRouter,
         {
           path: 'invoice',
           name: 'Invoice',
@@ -85,69 +72,7 @@ const Router = createRouter({
             },
           ],
         },
-        {
-          path: 'warehouse',
-          name: 'Warehouse',
-          redirect: () => ({ name: 'ProductList' }),
-          children: [
-            {
-              path: 'product',
-              name: 'Product',
-              redirect: () => ({ name: 'ProductList' }),
-              children: [
-                {
-                  path: 'list',
-                  name: 'ProductList',
-                  component: () => import('../views/product/list/ProductList.vue'),
-                  meta: { title: 'Tồn kho' },
-                },
-              ],
-            },
-            {
-              path: 'receipt',
-              name: 'Receipt',
-              redirect: () => ({ name: 'ReceiptList' }),
-              children: [
-                {
-                  path: 'list',
-                  name: 'ReceiptList',
-                  component: () => import('../views/receipt/list/ReceiptList.vue'),
-                  meta: { title: 'Nhập hàng' },
-                },
-                {
-                  path: 'detail/:id',
-                  name: 'ReceiptDetail',
-                  component: () => import('../views/receipt/detail/ReceiptDetail.vue'),
-                  meta: { title: 'Nhập hàng' },
-                },
-                {
-                  path: 'upsert/:id?',
-                  name: 'ReceiptUpsert',
-                  component: () => import('../views/receipt/upsert/ReceiptUpsert.vue'),
-                  meta: {
-                    title: (route: RouteLocationNormalizedLoaded) => {
-                      if (route.query?.mode === 'UPDATE') return 'Nhập hàng'
-                      return 'Nhập hàng'
-                    },
-                  },
-                },
-              ],
-            },
-            {
-              path: 'distributor',
-              name: 'Distributor',
-              redirect: () => ({ name: 'DistributorList' }),
-              children: [
-                {
-                  path: 'list',
-                  name: 'DistributorList',
-                  component: () => import('../views/distributor/list/DistributorList.vue'),
-                  meta: { title: 'Nhà cung cấp' },
-                },
-              ],
-            },
-          ],
-        },
+
         {
           path: 'procedure',
           name: 'Procedure',
@@ -158,46 +83,6 @@ const Router = createRouter({
               name: 'ProcedureList',
               component: () => import('../views/procedure/ProcedureList.vue'),
               meta: { title: 'Dịch vụ' },
-            },
-          ],
-        },
-        {
-          path: 'statistic',
-          name: 'Statistic',
-          redirect: () => ({ name: 'StatisticInvoice' }),
-          component: () => import('../views/statistic/Statistics.vue'),
-          children: [
-            {
-              path: 'statistic-product',
-              meta: { title: 'Thống kê' },
-              name: 'StatisticProduct',
-              component: () => import('../views/statistic/statistic-product/StatisticProduct.vue'),
-            },
-            {
-              path: 'statistic-procedure',
-              meta: { title: 'Thống kê' },
-              name: 'StatisticProcedure',
-              component: () =>
-                import('../views/statistic/statistic-procedure/StatisticProcedure.vue'),
-            },
-            {
-              path: 'statistic-customer',
-              meta: { title: 'Thống kê' },
-              name: 'StatisticCustomer',
-              component: () =>
-                import('../views/statistic/statistic-customer/StatisticCustomer.vue'),
-            },
-            {
-              path: 'statistic-invoice',
-              meta: { title: 'Thống kê' },
-              name: 'StatisticInvoice',
-              component: () => import('../views/statistic/statistic-invoice/StatisticInvoice.vue'),
-            },
-            {
-              path: 'statistic-visit',
-              meta: { title: 'Thống kê' },
-              name: 'StatisticVisit',
-              component: () => import('../views/statistic/statistic-visit/StatisticVisit.vue'),
             },
           ],
         },
@@ -293,17 +178,10 @@ const Router = createRouter({
               ],
             },
             {
-              path: 'permission',
-              name: 'RootPermission',
-              redirect: () => ({ name: 'RootPermissionList' }),
-              children: [
-                {
-                  path: 'list',
-                  name: 'RootPermissionList',
-                  component: () => import('../views/root/RootPermissionList.vue'),
-                  meta: { title: 'Permission' },
-                },
-              ],
+              path: 'data',
+              name: 'RootData',
+              component: () => import('../views/root/RootData.vue'),
+              meta: { title: 'Data' },
             },
           ],
         },

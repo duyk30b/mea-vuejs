@@ -159,7 +159,8 @@ defineExpose({ focus })
       </div>
     </div>
     <div class="icon-append">
-      <template v-if="iconClear">
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
         <IconClearCircle class="icon-clear-focus" @click="handleClear" />
@@ -167,7 +168,9 @@ defineExpose({ focus })
       <template v-else>
         <IconTriangleDown v-if="!showOptions" />
         <IconTriangleUp v-if="showOptions" />
-      </template>
+      </template> -->
+      <IconTriangleDown v-if="!showOptions" />
+      <IconTriangleUp v-if="showOptions" />
     </div>
     <div
       v-if="showOptions"

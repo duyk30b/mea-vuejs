@@ -43,14 +43,8 @@ export class Procedure extends BaseModel {
     return ins
   }
 
-  static fromObject(object: Partial<Procedure>) {
-    const ins = new Procedure()
-    Object.assign(ins, object)
-    return ins
-  }
-
-  static fromObjects(objects: Partial<Procedure>[]): Procedure[] {
-    return objects.map((i) => Procedure.fromObject(i))
+  static toBasics(objects: Procedure[]): Procedure[] {
+    return objects.map((i) => Procedure.toBasic(i))
   }
 
   static fromPlain(plain: Record<string, any>): Procedure {
@@ -69,17 +63,6 @@ export class Procedure extends BaseModel {
     })
   }
 
-  static fromInstance(instance: Procedure): Procedure {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
-      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
   static toPlain(
     instance: Procedure,
     type: typeof USER_CREATE | typeof USER_UPDATE
@@ -92,10 +75,5 @@ export class Procedure extends BaseModel {
       excludeExtraneousValues: true,
       groups: [type],
     })
-  }
-
-  static clone(instance: Procedure): Procedure {
-    const procedure = Procedure.fromInstance(instance)
-    return procedure
   }
 }

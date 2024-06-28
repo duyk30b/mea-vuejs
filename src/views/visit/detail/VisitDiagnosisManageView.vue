@@ -3,10 +3,15 @@ import { LoadingOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { Table } from '@ckeditor/ckeditor5-table'
 import { computed, ref, watch } from 'vue'
 import { BasicEditor } from '../../../ckeditor/class-editor'
+import ImageUpload from '../../../common/ImageUpload.vue'
 import { InputText } from '../../../common/vue-form'
 import { VisitApi } from '../../../modules/visit'
-import { VisitDiagnosis } from '../../../modules/visit-diagnosis'
+import { VisitDiagnosis, VisitDiagnosisApi } from '../../../modules/visit-diagnosis'
 import { visit } from './visit.ref'
+import { ImageHost } from '../../../modules/image/image.model'
+import VueButton from '../../../common/VueButton.vue'
+
+const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
 
 const visitDiagnosis = ref<VisitDiagnosis>(VisitDiagnosis.blank())
 const vitalSigns = ref<{
@@ -47,38 +52,46 @@ watch(
 )
 
 const disabledButton = computed(() => {
-  return (
-    visit.value.visitDiagnosis!.reason === visitDiagnosis.value.reason &&
-    visit.value.visitDiagnosis!.healthHistory === visitDiagnosis.value.healthHistory &&
-    visit.value.visitDiagnosis!.summary === visitDiagnosis.value.summary &&
-    visit.value.visitDiagnosis!.vitalSigns === JSON.stringify(vitalSigns.value) &&
-    visit.value.visitDiagnosis!.diagnosis === visitDiagnosis.value.diagnosis
-  )
+  return false
+  // return (
+  //   visit.value.visitDiagnosis!.reason === visitDiagnosis.value.reason &&
+  //   visit.value.visitDiagnosis!.healthHistory === visitDiagnosis.value.healthHistory &&
+  //   visit.value.visitDiagnosis!.summary === visitDiagnosis.value.summary &&
+  //   visit.value.visitDiagnosis!.vitalSigns === JSON.stringify(vitalSigns.value) &&
+  //   visit.value.visitDiagnosis!.diagnosis === visitDiagnosis.value.diagnosis
+  // )
 })
 
 const saveVisitDiagnosis = async () => {
   try {
     saveLoading.value = true
     visitDiagnosis.value.vitalSigns = JSON.stringify(vitalSigns.value)
-    await VisitApi.updateVisitDiagnosis({
-      visitId: visit.value.id,
-      customerId: visit.value.customerId!,
-      visitDiagnosis: visitDiagnosis.value,
-      visitDiagnosisId: visit.value.visitDiagnosis!.id,
+
+    const { filesPosition, imageIdsKeep, files } = imageUploadRef.value?.getData() || {
+      filesPosition: [],
+      imageIdsKeep: [],
+      files: [],
+    }
+
+    await VisitDiagnosisApi.updateOne({
+      id: visit.value.visitDiagnosis!.id,
+      imageIdsKeep,
+      files,
+      filesPosition,
+      object: {
+        ...visitDiagnosis.value,
+        customerId: visit.value.customerId,
+      },
     })
   } catch (error) {
-    console.log('🚀 ~ file: VisitDiagnosis.vue:37 ~ saveVisitDiagnosis ~ error:', error)
+    console.log('🚀 ~ file: VisitDiagnosis.vue:77 ~ saveVisitDiagnosis ~ error:', error)
   } finally {
     saveLoading.value = false
   }
 }
-
-const resetVisitDiagnosis = () => {
-  visitDiagnosis.value = VisitDiagnosis.clone(visit.value.visitDiagnosis!)
-}
 </script>
 <template>
-  <div>
+  <div class="mt-4">
     <div>
       <div>Lý do khám</div>
       <div>
@@ -88,8 +101,12 @@ const resetVisitDiagnosis = () => {
     <div class="mt-4 flex flex-col md:flex-row flex-wrap gap-4">
       <div class="flex-1">
         <div>Tiền sử</div>
-        <div>
+        <div class="healthHistory">
           <ckeditor v-model="visitDiagnosis.healthHistory" :editor="BasicEditor"></ckeditor>
+        </div>
+        <div class="mt-4">Tóm tắt</div>
+        <div class="summary">
+          <ckeditor v-model="visitDiagnosis.summary" :editor="BasicEditor"></ckeditor>
         </div>
       </div>
       <div class="md:w-[220px] w-full flex flex-col">
@@ -156,11 +173,21 @@ const resetVisitDiagnosis = () => {
         </div>
       </div>
     </div>
+    <div class="mt-4"></div>
     <div class="mt-4">
-      <div>Tóm tắt bệnh án</div>
-      <div>
-        <ckeditor v-model="visitDiagnosis.summary" :editor="BasicEditor"></ckeditor>
-      </div>
+      <div>Hình ảnh</div>
+      <ImageUpload
+        ref="imageUploadRef"
+        :height="100"
+        :rootImageList="
+          (visit.visitDiagnosis?.imageList || [])
+            .filter((i) => i.hostType === ImageHost.GoogleDriver)
+            .map((i) => ({
+              thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
+              enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
+              id: i.id,
+            }))
+        " />
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
@@ -169,22 +196,24 @@ const resetVisitDiagnosis = () => {
       </div>
     </div>
     <div class="mt-4 flex justify-between gap-4">
-      <div>
-        <!-- <button class="btn" @click="resetVisitDiagnosis">
-          <UndoOutlined />
-          Tải lại
-        </button> -->
-      </div>
-      <button class="btn btn-blue" :disabled="disabledButton" @click="saveVisitDiagnosis">
-        <LoadingOutlined v-if="saveLoading" />
-        <SaveOutlined v-if="!saveLoading" /> Lưu lại
-      </button>
+      <div></div>
+      <VueButton
+        color="blue"
+        :disabled="disabledButton"
+        :loading="saveLoading"
+        icon="save"
+        @click="saveVisitDiagnosis">
+        Lưu lại
+      </VueButton>
     </div>
   </div>
 </template>
 <style lang="scss" scoped>
-:deep(.ck-editor__editable) {
-  height: 200px !important;
+:deep(.healthHistory .ck-editor__editable) {
+  height: 120px !important;
+}
+:deep(.summary .ck-editor__editable) {
+  height: 120px !important;
 }
 .table-vital-signs {
   width: 100%;

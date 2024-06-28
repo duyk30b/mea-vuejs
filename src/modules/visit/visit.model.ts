@@ -13,6 +13,7 @@ import { VisitBatch } from '../visit-batch'
 import { VisitDiagnosis } from '../visit-diagnosis'
 import { VisitProcedure } from '../visit-procedure/visit-procedure.model'
 import { VisitProduct } from '../visit-product/visit-product.model'
+import { VisitRadiology } from '../visit-radiology'
 
 export enum VisitStatus {
   Scheduled = 1, // Hẹn khám
@@ -43,6 +44,9 @@ export class Visit {
 
   @Expose({})
   productsMoney: number
+
+  @Expose({})
+  radiologyMoney: number
 
   @Expose()
   discountMoney: number // tiền giảm giá
@@ -107,6 +111,10 @@ export class Visit {
   @Type(() => VisitBatch)
   visitBatchList?: VisitBatch[]
 
+  @Expose({ groups: [FROM_PLAIN] })
+  @Type(() => VisitRadiology)
+  visitRadiologyList?: VisitRadiology[]
+
   static init(): Visit {
     const ins = new Visit()
     ins.id = 0
@@ -115,9 +123,14 @@ export class Visit {
 
   static blank(): Visit {
     const ins = Visit.init()
+    // ins.customer = Customer.init() chưa hiểu tại sao lỗi khi có dòng này
+    ins.customerPayments = []
+    ins.visitDiagnosis = VisitDiagnosis.init()
     ins.visitProcedureList = []
     ins.visitProductList = []
-    ins.visitDiagnosis = VisitDiagnosis.blank()
+    ins.visitBatchList = []
+    ins.visitRadiologyList = []
+
     return ins
   }
 
@@ -130,6 +143,7 @@ export class Visit {
     delete ins.visitProcedureList
     delete ins.visitProductList
     delete ins.visitBatchList
+    delete ins.visitRadiologyList
     return ins
   }
 

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { CloseOutlined, DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
+import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
+import VueTabPanel from '../../../common/vue-tabs/VueTabPanel.vue'
+import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { Procedure, useProcedureStore } from '../../../modules/procedure'
 import ProcedureInfo from './ProcedureInfo.vue'
 import ProcedureInvoice from './ProcedureInvoice.vue'
@@ -12,7 +16,7 @@ const procedureStore = useProcedureStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref('procedure-info')
+const activeTab = ref('info')
 
 const procedure = ref<Procedure>(Procedure.blank())
 
@@ -48,50 +52,38 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4 procedure-detail">
-        <a-tabs
-          v-model:activeKey="activeTab"
-          type="card"
-          :tabBarGutter="10"
-          :destroyInactiveTabPane="true"
-        >
-          <a-tab-pane key="procedure-info">
-            <template #tab>
-              <span> <DeploymentUnitOutlined />Thông tin </span>
-            </template>
-            <ProcedureInfo :procedure="procedure" />
-          </a-tab-pane>
-          <a-tab-pane key="procedure-invoice">
-            <template #tab>
-              <span> <DiffOutlined />Lịch sử hóa đơn </span>
-            </template>
-            <ProcedureInvoice :procedure="procedure" />
-          </a-tab-pane>
-        </a-tabs>
+      <div class="p-4">
+        <VueTabs :tabStart="activeTab">
+          <template #menu>
+            <VueTabMenu tabKey="info">
+              <span> <DeploymentUnitOutlined /> Thông tin </span>
+            </VueTabMenu>
+            <VueTabMenu tabKey="history">
+              <span> <DiffOutlined /> Lịch sử hóa đơn </span>
+            </VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel tabKey="info">
+              <div class="mt-4">
+                <ProcedureInfo :procedure="procedure" />
+              </div>
+            </VueTabPanel>
+            <VueTabPanel tabKey="history">
+              <div class="mt-4">
+                <ProcedureInvoice :procedure="procedure" />
+              </div>
+            </VueTabPanel>
+          </template>
+        </VueTabs>
       </div>
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <a-button @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Đóng
-          </a-button>
+          <VueButton icon="close" @click="closeModal"> Đóng </VueButton>
         </div>
       </div>
     </div>
   </VueModal>
 </template>
 
-<style lang="scss">
-.procedure-detail {
-  .ant-tabs-tab {
-    border-top: 5px solid #d6d6d6 !important;
-
-    &.ant-tabs-tab-active {
-      border-top-color: #1890ff !important;
-    }
-  }
-}
-</style>
+<style lang="scss"></style>

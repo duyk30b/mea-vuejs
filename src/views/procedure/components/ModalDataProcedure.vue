@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { CloseOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import VueModal from '../../../common/VueModal.vue'
+import { InputText } from '../../../common/vue-form'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const GROUP = ref<typeof store.PROCEDURE_GROUP>(JSON.parse(JSON.stringify(store.PROCEDURE_GROUP)))
 
 const showModal = ref(false)
@@ -19,10 +24,6 @@ const openModal = async () => {
   GROUP.value = JSON.parse(JSON.stringify(store.PROCEDURE_GROUP))
 }
 
-const refreshModal = () => {
-  showModal.value = false
-}
-
 const handleSave = async () => {
   saveLoading.value = true
   try {
@@ -31,7 +32,7 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(ScreenSettingKey.PROCEDURE_GROUP, data)
+      await OrganizationService.saveSettings(SettingKey.PROCEDURE_GROUP, data)
       store.PROCEDURE_GROUP = JSON.parse(data)
     }
 
@@ -44,63 +45,60 @@ const handleSave = async () => {
     saveLoading.value = false
   }
 }
-const handleReload = () => {
-  GROUP.value = JSON.parse(JSON.stringify(store.PROCEDURE_GROUP))
+
+const closeModal = () => {
+  showModal.value = false
 }
 
 defineExpose({ openModal })
 </script>
 
 <template>
-  <a-modal
-    v-model:visible="showModal"
-    width="900px"
-    title="Cài đặt dữ liệu"
-    :confirm-loading="saveLoading"
-    :afterClose="refreshModal"
-  >
-    <template #footer>
-      <div class="flex justify-between px-2">
-        <div>
-          <a-button @click="handleReload"> Tải lại </a-button>
-        </div>
-        <div>
-          <a-button @click="showModal = false"> Hủy </a-button>
-          <a-button type="primary" :loading="saveLoading" @click="handleSave"> Lưu lại </a-button>
+  <VueModal v-model:show="showModal">
+    <div class="bg-white">
+      <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
+        <div class="flex-1 font-medium" style="font-size: 16px">Cài đặt dữ liệu</div>
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+          <CloseOutlined />
         </div>
       </div>
-    </template>
-    <div class="modal-data-procedure-tabs">
-      <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-        <a-tab-pane key="1" tab="Nhóm dịch vụ">
-          <div class="w-full">
-            <div class="text-center text-lg uppercase" style="font-weight: 500;">Danh sách nhóm dịch vụ</div>
-            <div v-for="(r, key, i) in GROUP" :key="key">
-              <div class="py-2 flex">
-                <a-input v-model:value="GROUP[key]" :addon-before="i + 1" style="flex: 1" />
-                <a-button type="text" danger @click="delete GROUP[key]"> Xóa </a-button>
+      <div class="px-4 mt-4">
+        <VueTabs :tabStart="activeTab">
+          <template #menu>
+            <VueTabMenu tabKey="1"> Nhóm dịch vụ </VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel tabKey="1">
+              <div class="w-full mt-4">
+                <div class="text-center text-lg uppercase" style="font-weight: 500">
+                  Danh sách nhóm dịch vụ
+                </div>
+                <div v-for="(r, key) in GROUP" :key="key">
+                  <div class="py-2 flex items-center gap-4">
+                    <InputText v-model:value="GROUP[key]" :prepend="key" style="flex: 1" />
+                    <a style="color: var(--text-red)" @click="delete GROUP[key]"> Xóa </a>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div class="py-2 flex justify-center">
-            <a-button type="primary" @click="GROUP[Date.now().toString(36)] = ''">
-              Thêm mới
-            </a-button>
-          </div>
-        </a-tab-pane>
-      </a-tabs>
+              <div class="py-2 flex justify-center">
+                <VueButton color="blue" icon="plus" @click="GROUP[Date.now().toString(36)] = ''">
+                  Thêm mới
+                </VueButton>
+              </div>
+            </VueTabPanel>
+          </template>
+        </VueTabs>
+      </div>
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <VueButton icon="close" class="ml-auto" @click="closeModal"> Hủy bỏ </VueButton>
+          <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
+            Lưu lại
+          </VueButton>
+        </div>
+      </div>
     </div>
-  </a-modal>
+  </VueModal>
 </template>
 
-<style lang="scss">
-.modal-data-procedure-tabs {
-  .ant-tabs-tab {
-    border-top: 5px solid #d6d6d6 !important;
-
-    &.ant-tabs-tab-active {
-      border-top-color: #1890ff !important;
-    }
-  }
-}
-</style>
+<style lang="scss"></style>

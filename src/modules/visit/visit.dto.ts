@@ -9,6 +9,7 @@ export class VisitGetQuery {
     customerPayments?: boolean
     visitProductList?: boolean
     visitProcedureList?: boolean
+    visitRadiologyList?: boolean
     visitDiagnosis?: boolean
   }
 

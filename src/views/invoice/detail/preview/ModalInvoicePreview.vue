@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VueModal from '../../../../common/VueModal.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { useScreenStore } from '../../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Invoice } from '../../../../modules/invoice'
 import { timeToText } from '../../../../utils'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
@@ -12,9 +12,9 @@ import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen
 const modalInvoicePreviewSettingScreen =
   ref<InstanceType<typeof ModalInvoicePreviewSettingScreen>>()
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
-const { formatMoney } = screenStore
+const { formatMoney } = settingStore
 
 const showModal = ref(false)
 const invoice = ref(Invoice.blank())
@@ -30,7 +30,7 @@ const handleClose = () => {
 }
 
 const colspan = computed(() => {
-  return 3 + Number(screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit)
+  return 3 + Number(settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit)
 })
 
 defineExpose({ openModal })
@@ -83,7 +83,7 @@ defineExpose({ openModal })
               <tr>
                 <th>#</th>
                 <th>Tên</th>
-                <th v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">ĐV</th>
+                <th v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit">ĐV</th>
                 <th>SL</th>
                 <th>Đ.Giá</th>
                 <th>T.Tiền</th>
@@ -105,14 +105,14 @@ defineExpose({ openModal })
                   </div>
                   <div v-if="invoiceItem.productId">
                     <div
-                      v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
+                      v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
                       style="font-size: 0.8rem"
                     >
                       {{ invoiceItem.product!.substance }}
                     </div>
                     <div
                       v-if="
-                        screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
+                        settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
                         invoiceItem.batchId
                       "
                       style="font-size: 0.8rem"
@@ -122,7 +122,7 @@ defineExpose({ openModal })
                       {{ timeToText(invoiceItem.batch!.expiryDate) }}
                     </div>
                     <div
-                      v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
+                      v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
                       style="font-size: 0.8rem; font-style: italic"
                     >
                       {{ invoiceItem.hintUsage }}
@@ -130,7 +130,7 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td
-                  v-if="screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
+                  v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
                   class="text-center"
                 >
                   {{ invoiceItem.unitName || 'Lần' }}
@@ -141,7 +141,7 @@ defineExpose({ openModal })
                 <td class="text-right">
                   <div
                     v-if="
-                      screenStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
+                      settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
                       invoiceItem.discountMoney != 0
                     "
                     style="color: rgb(255, 102, 0)"
@@ -160,7 +160,7 @@ defineExpose({ openModal })
                   {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
                 </td>
               </tr>
-              <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney">
+              <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney">
                 <td :colspan="colspan" style="text-align: right">
                   <b>Tiền hàng</b>
                 </td>
@@ -170,13 +170,13 @@ defineExpose({ openModal })
                   </b>
                 </td>
               </tr>
-              <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
+              <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
                 <td :colspan="colspan" style="text-align: right">Chiết khấu</td>
                 <td :colspan="2" style="text-align: right">
                   {{ formatMoney(invoice.discountMoney) }}
                 </td>
               </tr>
-              <tr v-if="screenStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
+              <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
                 <td :colspan="colspan" style="text-align: right">Phụ phí</td>
                 <td :colspan="2" style="text-align: right">
                   {{ formatMoney(invoice.surcharge) }}

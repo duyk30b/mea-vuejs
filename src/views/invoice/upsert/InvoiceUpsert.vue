@@ -7,7 +7,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
 import { DiscountType } from '../../../modules/enum'
 import {
@@ -40,10 +40,10 @@ const router = useRouter()
 const route = useRoute()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney } = screenStore
+const { formatMoney } = settingStore
 
 const mode = ref<EInvoiceUpsertMode>(EInvoiceUpsertMode.CREATE)
 
@@ -89,7 +89,7 @@ onBeforeMount(async () => {
     } else if (customerId) {
       customerDefault = await CustomerApi.detail(customerId)
     } else {
-      customerDefault = Customer.toBasic(meStore.customerDefault)
+      customerDefault = await meStore.getCustomerDefault()
     }
 
     customer.value = customerDefault
@@ -181,11 +181,11 @@ const saveInvoice = async (type: EInvoiceSave) => {
     saveLoading.value = true
     invoice.value.startedAt = time.value.valueOf()
     invoice.value.invoiceSurcharges = invoice.value.invoiceSurcharges!.filter((i) => {
-      i.name = screenStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
+      i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
       return i.money != 0
     })
     invoice.value.invoiceExpenses = invoice.value.invoiceExpenses!.filter((i) => {
-      i.name = screenStore.INVOICE_EXPENSE_DETAIL[i.key] || i.name
+      i.name = settingStore.INVOICE_EXPENSE_DETAIL[i.key] || i.name
       return i.money != 0
     })
 
@@ -239,7 +239,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
 }
 
 const handleAddInvoiceItem = (invoiceItem: InvoiceItem) => {
-  if (screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
     invoice.value.invoiceItems!.unshift(invoiceItem)
   } else {
     const exist = invoice.value.invoiceItems?.find((i) => {
@@ -286,7 +286,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     </div>
 
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -301,8 +301,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   </div>
 
   <div class="mt-4 md:mx-4">
-    <div class="flex flex-col md:flex-row gap-4">
-      <div class="md:w-2/3">
+    <div class="flex flex-wrap gap-4">
+      <div style="flex-basis: 600px; flex-grow: 2" class="">
         <div class="bg-white p-4">
           <InvoiceItemContainer :invoice="invoice" @addInvoiceItem="handleAddInvoiceItem" />
         </div>
@@ -310,7 +310,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <InvoiceItemTable />
         </div>
       </div>
-      <form ref="invoiceUpsertForm" class="md:w-1/3">
+      <form ref="invoiceUpsertForm" style="flex-basis: 300px; flex-grow: 1">
         <div class="bg-white p-4">
           <div class="flex justify-between">
             <span>
@@ -356,25 +356,26 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr>
-                  <td class="whitespace-nowrap">Thời gian</td>
+                  <td style="white-space: nowrap; padding-right: 10px">Thời gian</td>
                   <td>
                     <a-date-picker
                       v-model:value="time"
                       show-time
                       placeholder="Select Time"
                       :format="'DD/MM/YYYY HH:mm:ss'"
-                      style="width: 100%; margin-left: 0.5rem"
                     />
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
-                  <td class="font-bold whitespace-nowrap" style="width: 120px">Tiền hàng</td>
+                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
+                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
+                    Tiền hàng
+                  </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(invoice.itemsActualMoney) }}
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
-                  <td class="whitespace-nowrap">Chiết khấu</td>
+                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
+                  <td style="white-space: nowrap; padding-right: 10px">Chiết khấu</td>
                   <td class="cursor-pointer" style="font-size: 16px">
                     <a-popconfirm>
                       <template #cancelButton>
@@ -420,7 +421,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     </a-popconfirm>
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_INVOICE_UPSERT.paymentInfo.surcharge">
+                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.surcharge">
                   <InvoiceSurcharges />
                 </tr>
                 <tr>
@@ -428,7 +429,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <td></td>
                 </tr>
                 <tr>
-                  <td class="font-bold whitespace-nowrap">Tổng tiền</td>
+                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">Tổng tiền</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(invoice.totalMoney) }}
                   </td>
@@ -443,14 +444,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">
               <tbody>
-                <tr v-if="screenStore.SCREEN_INVOICE_UPSERT.paymentInfo.expense">
+                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.expense">
                   <InvoiceExpenses />
                 </tr>
                 <tr>
                   <td></td>
                   <td></td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
+                <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
                   <td class="font-bold whitespace-nowrap">Tiền lãi</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(invoice.profit) }}
@@ -471,12 +472,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <div
             v-if="
               permissionIdMap[PermissionId.INVOICE] &&
-              screenStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew
+              settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew
             "
-            class="mt-4"
+            class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              style="width: 100%"
               color="blue"
               type="button"
               :loading="saveLoading"
@@ -493,12 +493,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <div
             v-if="
               permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT] &&
-              screenStore.SCREEN_INVOICE_UPSERT.save.createDraft
+              settingStore.SCREEN_INVOICE_UPSERT.save.createDraft
             "
-            class="mt-4"
+            class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               :size="'large'"
@@ -519,10 +518,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
               [InvoiceStatus.Draft].includes(invoice.status)
             "
-            class="mt-4"
+            class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               size="large"
@@ -541,10 +539,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
               [InvoiceStatus.Prepayment].includes(invoice.status)
             "
-            class="mt-4"
+            class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               size="large"
@@ -563,10 +560,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS] &&
               [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
             "
-            class="mt-4"
+            class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               size="large"

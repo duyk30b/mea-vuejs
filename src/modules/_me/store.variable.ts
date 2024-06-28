@@ -1,4 +1,5 @@
-export enum ScreenSettingKey {
+export enum SettingKey {
+  GOOGLE_DRIVER = 'GOOGLE_DRIVER',
   SYSTEM_SETTING = 'SYSTEM_SETTING',
 
   PRODUCT_GROUP = 'PRODUCT_GROUP',

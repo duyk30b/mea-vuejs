@@ -6,7 +6,7 @@ import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputMoney } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
@@ -19,8 +19,8 @@ const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 

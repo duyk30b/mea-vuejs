@@ -17,7 +17,7 @@ import { createVNode, h, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Distributor } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
@@ -39,8 +39,8 @@ const modalReceiptPayment = ref<InstanceType<typeof ModalReceiptPayment>>()
 const route = useRoute()
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -255,7 +255,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
 <template>
   <ModalReceiptDetailSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalReceiptDetailSettingScreen"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
@@ -277,7 +277,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -352,7 +352,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
-                screenStore.SCREEN_RECEIPT_DETAIL.process.forceEdit &&
+                settingStore.SCREEN_RECEIPT_DETAIL.process.forceEdit &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
               key="EDIT_RECEIPT"
@@ -424,7 +424,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <VueButton
           v-if="
             receipt.paid != receipt.totalMoney &&
-            screenStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndPayment
+            settingStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndPayment
           "
           color="blue"
           :loading="loadingProcess"
@@ -439,7 +439,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <VueButton
           v-if="
             receipt.paid != receipt.totalMoney &&
-            screenStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndDebit
+            settingStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndDebit
           "
           color="blue"
           :loading="loadingProcess"

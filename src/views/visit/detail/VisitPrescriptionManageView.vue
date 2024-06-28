@@ -12,7 +12,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { InputHint, InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
 import { Handlebars } from '../../../core/handlebars'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../modules/product'
@@ -25,8 +25,8 @@ import { visit } from './visit.ref'
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -175,7 +175,7 @@ const saveVisitProducts = async () => {
 <template>
   <ModalProductUpsert ref="modalProductUpsert" @success="selectProduct" />
   <form @submit.prevent="(e) => addPrescriptionItem()">
-    <div class="flex justify-between">
+    <div class="mt-4 flex justify-between">
       <span>Tên thuốc</span>
       <span>
         <a
@@ -255,7 +255,7 @@ const saveVisitProducts = async () => {
         v-model:value="hintUsage"
         :options="[
           ...(product.hintUsage ? [product.hintUsage] : []),
-          ...screenStore.PRODUCT_HINT_USAGE,
+          ...settingStore.PRODUCT_HINT_USAGE,
         ]"
         :maxHeight="320"
         :logic-filter="(item: any, text: string) => customFilter(item, text)"
@@ -424,14 +424,16 @@ const saveVisitProducts = async () => {
     </div>
   </div>
   <div class="mt-4 flex gap-4">
-    <!-- <button class="btn" @click="resetVisitProducts">
-        <UndoOutlined />
-        Tải lại
-      </button> -->
-    <button class="btn btn-blue" @click="startPrint"><PrinterOutlined /> In đơn thuốc</button>
-    <button class="btn btn-blue ml-auto" :disabled="disabledButton" @click="saveVisitProducts">
-      <SaveOutlined /> Lưu lại
-    </button>
+    <VueButton color="blue" icon="print" @click="startPrint"> In đơn thuốc</VueButton>
+    <VueButton
+      color="blue"
+      class="ml-auto"
+      :disabled="disabledButton"
+      icon="save"
+      @click="saveVisitProducts"
+    >
+      Lưu lại
+    </VueButton>
   </div>
 </template>
 

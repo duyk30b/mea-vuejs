@@ -12,7 +12,7 @@ import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { formatPhone, timeToText } from '../../../utils'
@@ -28,10 +28,10 @@ const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerList
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney, isMobile } = screenStore
+const { formatMoney, isMobile } = settingStore
 
 const customerList = ref<Customer[]>([])
 
@@ -152,7 +152,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     @success="handleModalDistributorPayDebtSuccess"
   />
   <ModalCustomerListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen"
   />
 
@@ -171,7 +171,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </a-button>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -214,7 +214,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <thead>
           <tr>
             <th>Tên KH</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -263,36 +263,36 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div class="font-medium text-justify">
                 {{ customer.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
+                  v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
                   @click="modalCustomerDetail?.openModal(customer.id)"
                 >
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
+              <div v-if="settingStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
                 {{ customer.addressString }}
               </div>
               <div class="flex gap-4 text-xs">
-                <div v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
+                <div v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
                   {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
+                  v-if="settingStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
                   class="text-center"
                 >
                   {{ customer.gender ? 'Nam' : 'Nữ' }}
                 </div>
               </div>
               <div
-                v-if="screenStore.SCREEN_CUSTOMER_LIST.note && customer.note"
+                v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
                 class="text-xs italic"
               >
                 {{ customer.note }}
               </div>
             </td>
             <td
-              v-if="screenStore.SCREEN_CUSTOMER_LIST.phone"
+              v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none"
             >
               <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
@@ -362,10 +362,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
@@ -382,11 +382,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 :icon="['fas', 'sort-down']"
               />
             </th>
-            <th v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
+            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
-                screenStore.SCREEN_CUSTOMER_LIST.action
+                settingStore.SCREEN_CUSTOMER_LIST.action
               "
             >
               Sửa
@@ -417,7 +417,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ customer.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_CUSTOMER_LIST.detail"
+                  v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
                   @click="modalCustomerDetail?.openModal(customer.id)"
                 >
@@ -425,23 +425,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div
-                v-if="screenStore.SCREEN_CUSTOMER_LIST.note && customer.note"
+                v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
                 class="text-xs italic"
               >
                 {{ customer.note }}
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
             </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.gender" class="text-center">
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
               {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
             </td>
 
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.address">
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.address">
               {{ customer.addressString }}
             </td>
             <td class="text-right">
@@ -462,7 +462,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
+            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
               <a-tag v-if="customer.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -479,7 +479,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td
               v-if="
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
-                screenStore.SCREEN_CUSTOMER_LIST.action
+                settingStore.SCREEN_CUSTOMER_LIST.action
               "
               class="text-center"
             >

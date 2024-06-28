@@ -6,7 +6,7 @@ import { DiscountType } from '../../../modules/enum'
 import { InvoiceItem, InvoiceItemType } from '../../../modules/invoice-item/invoice-item.model'
 import type { Procedure } from '../../../modules/procedure'
 import type { Product } from '../../../modules/product'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
@@ -15,8 +15,8 @@ import { invoice } from './invoice-upsert.ref'
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const handleChangeUnitDiscountMoney = (data: number, index: number) => {
   const discountMoney = data / invoice.value.invoiceItems![index].unitRate
@@ -111,7 +111,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.product!.brandName }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProductDetail(invoiceItem.product)"
                   >
@@ -119,7 +119,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   </a>
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
                   style="font-size: 0.8rem"
                   class="text-justify"
                 >
@@ -127,7 +127,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 </div>
                 <div
                   v-if="
-                    screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
+                    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
                   "
                   class="flex gap-2 flex-wrap"
                   style="font-size: 0.8rem"
@@ -136,7 +136,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   {{ timeToText(invoiceItem.batch!.expiryDate, 'DD/MM/YY') }}
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
                   style="font-size: 0.8rem"
                   class="flex gap-2"
                   contenteditable="true"
@@ -150,7 +150,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 <div class="font-medium text-justify">
                   {{ invoiceItem.procedure!.name }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProcedureDetail(invoiceItem.procedure)"
                   >
@@ -159,21 +159,21 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 </div>
               </div>
               <div class="flex gap-2" style="font-size: 0.8rem">
-                <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
+                <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
                   NY:
                   <span class="font-medium">
                     {{ formatMoney(invoiceItem.unitExpectedPrice) }}
                   </span>
                   <span
                     v-if="
-                      screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
+                      settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
                       invoiceItem.unitName
                     "
                   >
                     /{{ invoiceItem.unitName }}
                   </span>
                 </div>
-                <div v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
+                <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
                   - CK:
                   <a-popconfirm>
                     <template #cancelButton>
@@ -228,7 +228,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   </span>
                   <span
                     v-if="
-                      screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
+                      settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
                       invoiceItem.unitName
                     "
                   >
@@ -262,7 +262,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
                   class="disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="
-                    !screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
+                    !settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
                     overQuantityInvoiceItem(invoice.invoiceItems![index])
                   "
                   @click="invoice.invoiceItems![index].quantity += invoiceItem.unitRate"
@@ -318,8 +318,8 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
             <th>#</th>
             <th>Tên</th>
             <th>Số lượng</th>
-            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đ.Vị</th>
-            <th v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">C.Khấu</th>
+            <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đ.Vị</th>
+            <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đơn giá</th>
             <th>Tổng tiền</th>
             <th>Action</th>
@@ -338,7 +338,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 <div style="font-weight: 500" class="text-justify">
                   {{ invoiceItem.product!.brandName }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProductDetail(invoiceItem.product)"
                   >
@@ -346,7 +346,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   </a>
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
                   class="text-justify"
                   style="font-size: 0.8rem"
                 >
@@ -354,7 +354,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 </div>
                 <div
                   v-if="
-                    screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
+                    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
                   "
                   style="font-size: 0.8rem"
                   class="flex gap-2"
@@ -363,7 +363,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   {{ timeToText(invoiceItem.batch!.expiryDate) }}
                 </div>
                 <div
-                  v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
                   placeholder="Hướng dẫn sử dụng ..."
                   contenteditable="true"
                   style="font-size: 0.8rem"
@@ -376,7 +376,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 <div style="font-weight: 500">
                   {{ invoiceItem.procedure!.name }}
                   <a
-                    v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
                     class="ml-1"
                     @click="openModalProcedureDetail(invoiceItem.procedure)"
                   >
@@ -402,7 +402,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="
-                    !screenStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
+                    !settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
                     overQuantityInvoiceItem(invoice.invoiceItems![index])
                   "
                   @click="invoice.invoiceItems![index].unitQuantity++"
@@ -412,14 +412,14 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
               </div>
             </td>
             <td
-              v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
+              v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
               class="text-center"
               style="width: 20px"
             >
               {{ invoiceItem.unitName || 'Lần' }}
             </td>
             <td
-              v-if="screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
+              v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
               class="text-center"
               style="width: 40px"
             >
@@ -472,7 +472,7 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
               </a-popconfirm>
             </td>
             <td class="text-center">
-              <div v-if="!screenStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice">
+              <div v-if="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice">
                 <div v-if="invoiceItem.discountMoney" class="text-xs italic text-red-500">
                   <del>{{ formatMoney(invoiceItem.unitExpectedPrice) }}</del>
                 </div>

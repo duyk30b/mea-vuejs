@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { Customer } from '../../../modules/customer'
 import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
 import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { formatPhone, timeToText } from '../../../utils'
 import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
 import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
@@ -17,8 +17,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const productMovementList = ref<ProductMovement[]>([])
 const page = ref(1)

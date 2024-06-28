@@ -1,3 +1,4 @@
+import { MeService } from '../../modules/_me/me.service'
 import { Batch, useBatchStore } from '../../modules/batch'
 import { Customer, useCustomerStore } from '../../modules/customer'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
@@ -8,6 +9,7 @@ import { VisitBatch } from '../../modules/visit-batch'
 import { VisitDiagnosis } from '../../modules/visit-diagnosis'
 import { VisitProcedure } from '../../modules/visit-procedure'
 import { VisitProduct } from '../../modules/visit-product'
+import { VisitRadiology } from '../../modules/visit-radiology'
 import { useVisitStore } from '../../modules/visit/visit.store'
 import { visit } from '../../views/visit/detail/visit.ref'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
@@ -61,6 +63,10 @@ export class SocketService {
     const procedure = Procedure.toBasic(data.procedure)
     await ProcedureDB.upsertOne(procedure)
     useProcedureStore().timeSync = Date.now()
+  }
+
+  static async listenSettingReload(data: any) {
+    await MeService.reloadSetting()
   }
 
   static async listenVisitCreate(data: { visit: any }) {
@@ -149,6 +155,56 @@ export class SocketService {
 
     if (visit.value.id === visitId) {
       visit.value.visitProcedureList = VisitProcedure.fromPlains(visitProcedureList)
+    }
+  }
+
+  static async listenVisitUpsertVisitRadiology(data: { visitId: number; visitRadiology: any }) {
+    const { visitId } = data
+    const visitRadiology = VisitRadiology.fromPlain(data.visitRadiology)
+
+    const visitFind = useVisitStore().visitList.find((i) => i.id === data.visitId)
+    if (visitFind) {
+      if (!visitFind.visitRadiologyList) {
+        visitFind.visitRadiologyList = []
+      }
+      const visitRadiologyFind = visitFind.visitRadiologyList.find((i) => {
+        return i.id === visitRadiology.id
+      })
+      if (visitRadiologyFind) {
+        Object.assign(visitRadiologyFind, visitRadiology)
+      } else {
+        visitFind.visitRadiologyList.push(visitRadiology)
+      }
+    }
+
+    if (visit.value.id === visitId) {
+      if (!visit.value.visitRadiologyList) {
+        visit.value.visitRadiologyList = []
+      }
+      const visitRadiologyFind = visit.value.visitRadiologyList.find((i) => {
+        return i.id === visitRadiology.id
+      })
+      if (visitRadiologyFind) {
+        Object.assign(visitRadiologyFind, visitRadiology)
+      } else {
+        visit.value.visitRadiologyList.push(visitRadiology)
+      }
+    }
+  }
+
+  static async listenVisitReplaceVisitRadiologyList(data: {
+    visitId: number
+    visitRadiologyList: any[]
+  }) {
+    const { visitId, visitRadiologyList } = data
+
+    const visitFind = useVisitStore().visitList.find((i) => i.id === visitId)
+    if (visitFind) {
+      visitFind.visitRadiologyList = VisitRadiology.fromPlains(visitRadiologyList)
+    }
+
+    if (visit.value.id === visitId) {
+      visit.value.visitRadiologyList = VisitRadiology.fromPlains(visitRadiologyList)
     }
   }
 }

@@ -2,7 +2,7 @@
 import { FileDoneOutlined, FormOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductApi } from '../../../modules/product'
@@ -13,8 +13,8 @@ const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 
 const props = withDefaults(defineProps<{ productId: number }>(), { productId: 0 })
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -26,7 +26,7 @@ const startFetchData = async () => {
   try {
     const productResponse = await ProductApi.detail(props.productId, {
       relation: { batchList: true },
-      filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { GT: 0 } } },
+      filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { NOT: 0 } } },
     })
     productResponse.batchList?.forEach((i) => (i.product = productResponse))
     product.value = productResponse
@@ -94,25 +94,25 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
           {{ formatMoney(product.unitCostPrice) }}
         </td>
       </tr>
-      <tr v-if="screenStore.SYSTEM_SETTING.wholesalePrice">
+      <tr v-if="settingStore.SYSTEM_SETTING.wholesalePrice">
         <td class="px-2 py-1 whitespace-nowrap">Giá bán sỉ</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.unitWholesalePrice) }}
         </td>
       </tr>
-      <tr v-if="screenStore.SYSTEM_SETTING.retailPrice">
+      <tr v-if="settingStore.SYSTEM_SETTING.retailPrice">
         <td class="px-2 py-1 whitespace-nowrap">Giá bán lẻ</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.unitRetailPrice) }}
         </td>
       </tr>
-      <tr v-if="screenStore.SYSTEM_SETTING.retailPrice">
+      <tr v-if="settingStore.SYSTEM_SETTING.retailPrice">
         <td class="px-2 py-1 whitespace-nowrap">Giá vốn trung bình</td>
         <td class="px-2 font-medium">
           {{ formatMoney(Math.floor(product.costAmount / (product.quantity || 1))) }}
         </td>
       </tr>
-      <tr v-if="screenStore.SYSTEM_SETTING.retailPrice">
+      <tr v-if="settingStore.SYSTEM_SETTING.retailPrice">
         <td class="px-2 py-1 whitespace-nowrap">Tổng vốn</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.costAmount) }}
@@ -127,7 +127,7 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
         <td class="px-2">
-          {{ screenStore.PRODUCT_GROUP[product.group || 0] }}
+          {{ settingStore.PRODUCT_GROUP[product.group || 0] }}
         </td>
       </tr>
 

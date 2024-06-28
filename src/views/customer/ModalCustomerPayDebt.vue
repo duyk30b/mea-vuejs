@@ -5,7 +5,7 @@ import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueModal from '../../common/VueModal.vue'
 import { InputMoney, InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../modules/customer'
 import { CustomerPaymentApi } from '../../modules/customer-payment/customer-payment.api'
 import type { Invoice } from '../../modules/invoice'
@@ -21,8 +21,8 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const openDebt = ref(0)
 const money = ref(0)
@@ -41,7 +41,9 @@ const openModal = async (customerIdProp: number, openDebtProp: number) => {
   openDebt.value = openDebtProp
   customerId.value = customerIdProp
   showModal.value = true
-  nextTick(() => inputMoneyPay.value?.focus())
+  if (!isMobile) {
+    nextTick(() => inputMoneyPay.value?.focus())
+  }
   try {
     dataLoading.value = true
     const response = await CustomerPaymentApi.voucherDebtList(customerIdProp)

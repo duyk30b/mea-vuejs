@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
 import { DistributorPaymentApi } from '../../../modules/distributor-payment/distributor-payment.api'
 import type { DistributorPayment } from '../../../modules/distributor-payment/distributor-payment.model'
@@ -16,8 +16,8 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 

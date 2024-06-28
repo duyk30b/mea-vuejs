@@ -11,20 +11,20 @@ import {
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { VisitStatus } from '../../../modules/visit'
 import { timeToText } from '../../../utils'
 import VisitStatusTag from '../VisitStatusTag.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import ModalVisitPayment from './ModalVisitPayment.vue'
+import ModalVisitPayment from './modal/ModalVisitPayment.vue'
 import { visit } from './visit.ref'
 
 const modalVisitPayment = ref<InstanceType<typeof ModalVisitPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const updateCustomer = () => {}
 </script>
 <template>
@@ -65,12 +65,12 @@ const updateCustomer = () => {}
       </div>
     </div>
     <a-divider />
-    <div class="mt-2 flex items-center justify-between">
-      <div class="flex items-center gap-4">
+    <div class="mt-2 flex gap-4 items-center justify-between">
+      <div class="flex items-center gap-4 whitespace-nowrap">
         <DollarOutlined />
         <div>Thanh toán :</div>
       </div>
-      <div class="flex gap-4 items-center">
+      <div class="flex flex-wrap items-center justify-end">
         <div>
           <VueButton
             v-if="
@@ -105,7 +105,7 @@ const updateCustomer = () => {}
             <span class="font-bold"> THANH TOÁN </span>
           </VueButton>
         </div>
-        <span> {{ formatMoney(visit.paid) }} / {{ formatMoney(visit.totalMoney) }} </span>
+        <span class="ml-4"> {{ formatMoney(visit.paid) }} / {{ formatMoney(visit.totalMoney) }} </span>
       </div>
     </div>
     <div class="mt-2 flex items-center justify-between">

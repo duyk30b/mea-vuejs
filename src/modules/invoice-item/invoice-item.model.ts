@@ -200,7 +200,7 @@ export class InvoiceItem {
   static clone(root: InvoiceItem): InvoiceItem {
     const ins = InvoiceItem.fromInstance(root)
     if (root.procedure) {
-      ins.procedure = Procedure.fromInstance(root.procedure)
+      ins.procedure = Procedure.toBasic(root.procedure)
     }
     if (root.batch) {
       ins.batch = Batch.fromInstance(root.batch)

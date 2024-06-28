@@ -6,9 +6,9 @@ import {
   Type,
 } from 'class-transformer'
 import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import { useScreenStore } from '../_me/screen.store'
 import { Batch } from '../batch/batch.model'
 import type { UnitType } from '../enum'
+import { useSettingStore } from '../_me/setting.store'
 
 export class Product {
   @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
@@ -151,12 +151,12 @@ export class Product {
   }
 
   static blank(): Product {
-    const screenStore = useScreenStore()
+    const settingStore = useSettingStore()
 
     const ins = Product.init()
     ins.batchList = []
-    ins.hasManageBatches = Number(screenStore.SYSTEM_SETTING.hasManageBatches) as 0 | 1
-    ins.hasManageQuantity = Number(screenStore.SYSTEM_SETTING.hasManageQuantity) as 0 | 1
+    ins.hasManageBatches = Number(settingStore.SYSTEM_SETTING.hasManageBatches) as 0 | 1
+    ins.hasManageQuantity = Number(settingStore.SYSTEM_SETTING.hasManageQuantity) as 0 | 1
     return ins
   }
 

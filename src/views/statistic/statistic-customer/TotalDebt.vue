@@ -4,10 +4,10 @@ import { onBeforeMount, reactive, ref } from 'vue'
 import { Pie } from 'vue-chartjs'
 import { InvoiceApi } from '../../../modules/invoice'
 import { StatisticService } from '../../../modules/statistics'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const badDebtDays = ref(30)
 const totalCustomerDebt = ref(0)

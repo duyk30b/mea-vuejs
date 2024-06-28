@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueModal from '../../common/VueModal.vue'
 import { InputDate, InputText, VueSelect } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { RoleApi, type Role } from '../../modules/role'
 import { User, UserApi } from '../../modules/user'
+import VueButton from '../../common/VueButton.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const showModal = ref(false)
 const user = ref<User>(User.blank())
@@ -179,18 +180,15 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <!-- <a-button danger @click="clickDelete">Xóa</a-button> -->
-          <a-button class="ml-auto" @click="closeModal">
+          <VueButton type="reset" class="ml-auto" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

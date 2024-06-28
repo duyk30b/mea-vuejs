@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { InvoiceApi, InvoiceStatus, type Invoice } from '../../../modules/invoice'
 import { timeToText } from '../../../utils'
@@ -12,8 +12,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 })
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const invoices = ref<Invoice[]>([])
 const page = ref(1)
