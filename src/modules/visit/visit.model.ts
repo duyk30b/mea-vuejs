@@ -64,15 +64,15 @@ export class Visit {
 
   static blank(): Visit {
     const ins = Visit.init()
-    // ins.customer = Customer.init() chưa hiểu tại sao lỗi khi có dòng này
+    // ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
     ins.customerPaymentList = []
     ins.visitDiagnosis = VisitDiagnosis.init()
     ins.visitProcedureList = []
     ins.visitProductList = []
     ins.visitBatchList = []
     ins.visitRadiologyList = []
-    ins.visitSurchargeList = []
-    ins.visitExpenseList = []
+    ins.visitSurchargeList = [VisitSurcharge.init()]
+    ins.visitExpenseList = [VisitExpense.init()]
 
     return ins
   }

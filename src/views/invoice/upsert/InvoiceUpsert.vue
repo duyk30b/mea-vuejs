@@ -11,15 +11,11 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
 import { DiscountType } from '../../../modules/enum'
-import {
-  Invoice,
-  InvoiceApi,
-  InvoiceExpense,
-  InvoiceStatus,
-  InvoiceSurcharge,
-} from '../../../modules/invoice'
-import type { InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
+import { Invoice, InvoiceApi } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Visit, VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitExpense } from '../../../modules/visit-expense/visit-expense.model'
+import { VisitSurcharge } from '../../../modules/visit-surcharge/visit-surcharge.model'
 import { timeToText } from '../../../utils'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceExpenses from './InvoiceExpenses.vue'
@@ -30,9 +26,6 @@ import InvoiceSurcharges from './InvoiceSurcharges.vue'
 import { EInvoiceSave, EInvoiceUpsertMode, invoice, visit } from './invoice-upsert.ref'
 import ModalDataInvoice from './modal-setting/ModalDataInvoice.vue'
 import ModalInvoiceUpsertSettingScreen from './modal-setting/ModalInvoiceUpsertSettingScreen.vue'
-import { VisitApi } from '../../../modules/visit'
-import { VisitExpense } from '../../../modules/visit-expense/visit-expense.model'
-import { VisitSurcharge } from '../../../modules/visit-surcharge/visit-surcharge.model'
 
 const modalInvoiceUpsertSettingScreen = ref<InstanceType<typeof ModalInvoiceUpsertSettingScreen>>()
 const invoiceItemProcedure = ref<InstanceType<typeof InvoiceItemProcedure>>()
@@ -144,7 +137,7 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
-  invoice.value = Invoice.blank()
+  visit.value = Visit.blank()
 })
 
 const searchingCustomer = async (text: string) => {
@@ -185,26 +178,26 @@ const saveInvoice = async (type: EInvoiceSave) => {
   if (!validForm) {
     return invoiceUpsertForm.value?.reportValidity()
   }
-  if (invoice.value.invoiceItems!.length == 0) {
-    return AlertStore.addError('Lỗi: cần có ít nhất 1 dịch vụ trong phiếu')
+  if (visit.value.visitProductList!.length == 0 && visit.value.visitProcedureList!.length == 0) {
+    return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm hoặc dịch vụ trong phiếu')
   }
-  const invalidInvoiceItem = invoice.value.invoiceItems!.find((ii) => ii.quantity === 0)
-  if (invalidInvoiceItem) {
-    return AlertStore.addError(
-      `Lỗi: ${
-        invalidInvoiceItem.product?.brandName || invalidInvoiceItem.procedure?.name
-      } có số lượng 0`
-    )
+  const invalidVisitProduct = visit.value.visitProductList!.find((vp) => vp.quantity === 0)
+  if (invalidVisitProduct) {
+    return AlertStore.addError(`Lỗi: ${invalidVisitProduct.product?.brandName} có số lượng 0`)
+  }
+  const invalidVisitProcedure = visit.value.visitProcedureList!.find((vp) => vp.quantity === 0)
+  if (invalidVisitProcedure) {
+    return AlertStore.addError(`Lỗi: ${invalidVisitProcedure.procedure?.name} có số lượng 0`)
   }
 
   try {
     saveLoading.value = true
-    invoice.value.startedAt = time.value.valueOf()
-    invoice.value.invoiceSurcharges = invoice.value.invoiceSurcharges!.filter((i) => {
+    visit.value.startedAt = time.value.valueOf()
+    visit.value.visitSurchargeList = visit.value.visitSurchargeList!.filter((i) => {
       i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
       return i.money != 0
     })
-    invoice.value.invoiceExpenses = invoice.value.invoiceExpenses!.filter((i) => {
+    visit.value.visitExpenseList = visit.value.visitExpenseList!.filter((i) => {
       i.name = settingStore.INVOICE_EXPENSE_DETAIL[i.key] || i.name
       return i.money != 0
     })
@@ -252,32 +245,9 @@ const saveInvoice = async (type: EInvoiceSave) => {
         break
     }
   } catch (error: any) {
-    console.log('🚀 ~ file: InvoiceUpsert.vue:211 ~ saveInvoice ~ error:', error)
+    console.log('🚀 ~ file: InvoiceUpsert.vue:248 ~ saveInvoice ~ error:', error)
   } finally {
     saveLoading.value = false
-  }
-}
-
-const handleAddInvoiceItem = (invoiceItem: InvoiceItem) => {
-  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
-    invoice.value.invoiceItems!.unshift(invoiceItem)
-  } else {
-    const exist = invoice.value.invoiceItems?.find((i) => {
-      if (i.procedureId) {
-        return i.procedureId === invoiceItem.procedureId
-      }
-      if (i.batchId) {
-        return i.batchId === invoiceItem.batchId
-      }
-      if (i.productId && !i.batchId) {
-        return i.productId === invoiceItem.productId
-      }
-    })
-    if (exist) {
-      exist.quantity += invoiceItem.quantity
-    } else {
-      invoice.value.invoiceItems!.unshift(invoiceItem)
-    }
   }
 }
 
@@ -513,10 +483,7 @@ const handleChangeTabs = (activeKey: any) => {
 
         <template v-if="[EInvoiceUpsertMode.CREATE, EInvoiceUpsertMode.COPY].includes(mode)">
           <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE] &&
-              settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew
-            "
+            v-if="settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew"
             class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
@@ -532,10 +499,7 @@ const handleChangeTabs = (activeKey: any) => {
           </div>
 
           <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT] &&
-              settingStore.SCREEN_INVOICE_UPSERT.save.createDraft
-            "
+            v-if="settingStore.SCREEN_INVOICE_UPSERT.save.createDraft"
             class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
@@ -553,10 +517,7 @@ const handleChangeTabs = (activeKey: any) => {
 
         <template v-if="[EInvoiceUpsertMode.UPDATE].includes(mode)">
           <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
-              [InvoiceStatus.Draft].includes(invoice.status)
-            "
+            v-if="[VisitStatus.Draft].includes(visit.visitStatus)"
             class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
@@ -572,10 +533,7 @@ const handleChangeTabs = (activeKey: any) => {
           </div>
 
           <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
-              [InvoiceStatus.Prepayment].includes(invoice.status)
-            "
+            v-if="[VisitStatus.InProgress].includes(visit.visitStatus)"
             class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
@@ -591,10 +549,7 @@ const handleChangeTabs = (activeKey: any) => {
           </div>
 
           <div
-            v-if="
-              permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS] &&
-              [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
-            "
+            v-if="[VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)"
             class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"

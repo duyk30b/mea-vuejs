@@ -192,12 +192,12 @@ const addVisitProduct = () => {
     AlertStore.addError('Lỗi: Chưa chọn sản phẩm')
     return inputOptionsProduct.value?.focus()
   }
-  if (visitProduct.value.quantity <= 0) {
+  if (quantity <= 0) {
     return AlertStore.addError('Lỗi: Số lượng không hợp lệ')
   }
-  if (visitProduct.value.product?.hasManageQuantity) {
-    if (visitProduct.value.product.hasManageBatches) {
-      if (visitProduct.value.visitBatchList?.length == 0) {
+  if (product?.hasManageQuantity) {
+    if (product.hasManageBatches) {
+      if (visitBatchList?.length == 0) {
         return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
       }
       if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity) {
@@ -209,7 +209,7 @@ const addVisitProduct = () => {
       }
     }
 
-    if (!visitProduct.value.product.hasManageBatches) {
+    if (!product.hasManageBatches) {
       if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity) {
         if (quantity > product!.quantity) {
           return AlertStore.addError(
@@ -219,7 +219,27 @@ const addVisitProduct = () => {
       }
     }
   }
-  visit.value.visitProductList?.push(visitProduct.value)
+
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
+    visit.value.visitProductList?.push(visitProduct.value)
+  } else {
+    let exist: VisitProduct | null | undefined
+    if (!product?.hasManageBatches) {
+      exist = visit.value.visitProductList?.find((i) => {
+        return i.productId === product!.id
+      })
+    } else {
+      exist = visit.value.visitProductList?.find((i) => {
+        return i.productId === product!.id && i.visitBatchList?.[0]?.batchId === batch?.id
+      })
+    }
+    if (exist) {
+      exist.quantity += quantity
+    } else {
+      visit.value.visitProductList?.push(visitProduct.value)
+    }
+  }
+
   clear()
   if (!isMobile) {
     inputOptionsProduct.value?.focus()

@@ -98,7 +98,20 @@ const addVisitProcedure = () => {
   if (visitProcedure.value.quantity <= 0) {
     return AlertStore.addError('Lỗi: Số lượng không hợp lệ')
   }
-  visit.value.visitProcedureList?.push(visitProcedure.value)
+
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
+    visit.value.visitProcedureList?.push(visitProcedure.value)
+  } else {
+    let exist = visit.value.visitProcedureList?.find((i) => {
+      return i.procedureId === visitProcedure.value.procedureId
+    })
+    if (exist) {
+      exist.quantity += visitProcedure.value.quantity
+    } else {
+      visit.value.visitProcedureList?.push(visitProcedure.value)
+    }
+  }
+
   clear()
   if (!isMobile) {
     inputOptionsProcedure.value?.focus()
