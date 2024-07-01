@@ -1,65 +1,63 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import VueButton from '../../../common/VueButton.vue'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
-import { InvoiceSurcharge } from '../../../modules/invoice'
-import { invoice } from './invoice-upsert.ref'
-import VueButton from '../../../common/VueButton.vue'
+import { VisitSurcharge } from '../../../modules/visit-surcharge/visit-surcharge.model'
+import { visit } from './invoice-upsert.ref'
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
-  invoice.value.invoiceSurcharges![index].money = money
-  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce(
-    (acc, cur) => acc + cur.money,
-    0
-  )
+  visit.value.visitSurchargeList![index].money = money
+  visit.value.surcharge = visit.value.visitSurchargeList!.reduce((acc, cur) => {
+    return acc + cur.money
+  }, 0)
 }
 
 const handleDeleteSurchargeDetail = (index: number) => {
-  invoice.value.invoiceSurcharges!.splice(index, 1)
-  invoice.value.surcharge = invoice.value.invoiceSurcharges!.reduce(
-    (acc, cur) => acc + cur.money,
-    0
-  )
+  visit.value.visitSurchargeList!.splice(index, 1)
+  visit.value.surcharge = visit.value.visitSurchargeList!.reduce((acc, cur) => {
+    return acc + cur.money
+  }, 0)
 }
 
 const handleAddSurchargeDetail = () => {
-  const existKey = invoice.value.invoiceSurcharges!.map((i) => i.key)
+  const existKey = visit.value.visitSurchargeList!.map((i) => i.key)
   existKey.push(UNKNOWN_KEY)
   const allKey = Object.keys(settingStore.INVOICE_SURCHARGE_DETAIL)
   const key = allKey.find((i) => !existKey.includes(i)) || UNKNOWN_KEY
   const name = settingStore.INVOICE_SURCHARGE_DETAIL[key]
-  const newSurcharge = new InvoiceSurcharge()
+  const newSurcharge = new VisitSurcharge()
   newSurcharge.key = key
   newSurcharge.name = name || ''
   newSurcharge.money = 0
-  invoice.value.invoiceSurcharges!.push(newSurcharge)
+  visit.value.visitSurchargeList!.push(newSurcharge)
 }
 
 const handleChangeInvoiceSurcharge = (data: number) => {
-  invoice.value.surcharge = data
+  visit.value.surcharge = data
 
   let totalKnownMoney = 0
   let indexOther = -1
-  for (let i = 0; i < invoice.value.invoiceSurcharges!.length; i++) {
-    const item = invoice.value.invoiceSurcharges![i]
+  for (let i = 0; i < visit.value.visitSurchargeList!.length; i++) {
+    const item = visit.value.visitSurchargeList![i]
     if (item.key !== UNKNOWN_KEY) totalKnownMoney += item.money
     else indexOther = i
   }
 
   // nếu có other thì cập nhật money của other
   if (indexOther !== -1) {
-    invoice.value.invoiceSurcharges![indexOther].money = data - totalKnownMoney
+    visit.value.visitSurchargeList![indexOther].money = data - totalKnownMoney
   } else {
     // nếu không có other thì thêm mới other
-    const other = InvoiceSurcharge.blank()
+    const other = VisitSurcharge.blank()
     other.key = UNKNOWN_KEY
     other.name = settingStore.INVOICE_SURCHARGE_DETAIL[UNKNOWN_KEY]
     other.money = data - totalKnownMoney
-    invoice.value.invoiceSurcharges!.push(other)
+    visit.value.visitSurchargeList!.push(other)
   }
 }
 </script>
@@ -74,19 +72,18 @@ const handleChangeInvoiceSurcharge = (data: number) => {
         <div></div>
       </template>
       <template #title>
-        <div style="max-width: 100vw;">
+        <div style="max-width: 100vw">
           <div class="flex">
             <div style="width: 160px; font-size: 13px">Loại phụ phí</div>
             <div style="flex: 1; font-size: 13px">Số tiền</div>
           </div>
           <div class="flex flex-col gap-2 mt-2">
             <div
-              v-for="(surcharge, index) in invoice.invoiceSurcharges"
+              v-for="(surcharge, index) in visit.visitSurchargeList"
               :key="index"
-              class="flex items-stretch"
-            >
+              class="flex items-stretch">
               <VueSelect
-                v-model:value="invoice.invoiceSurcharges![index].key"
+                v-model:value="visit.visitSurchargeList![index].key"
                 style="width: 160px"
                 :options="
                   [
@@ -98,16 +95,16 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                       ? []
                       : [{ value: surcharge.key, text: surcharge.name }]),
                   ].reverse()
-                "
-              />
+                " />
               <div style="flex: 1">
                 <InputMoney
                   :value="surcharge.money"
-                  @update:value="(data) => handleChangeMoneyInvoiceSurchargeDetail(data, index)"
-                />
+                  @update:value="(data) => handleChangeMoneyInvoiceSurchargeDetail(data, index)" />
               </div>
               <div style="width: 60px">
-                <VueButton color="red" danger @click="handleDeleteSurchargeDetail(index)"> Xóa </VueButton>
+                <VueButton color="red" danger @click="handleDeleteSurchargeDetail(index)">
+                  Xóa
+                </VueButton>
               </div>
             </div>
           </div>
@@ -118,24 +115,23 @@ const handleChangeInvoiceSurcharge = (data: number) => {
             <div style="width: 160px">Tổng phụ phí:</div>
             <div style="flex: 1">
               <b class="ml-3" style="font-size: 16px">
-                {{ formatMoney(invoice.surcharge) }}
+                {{ formatMoney(visit.surcharge) }}
               </b>
             </div>
           </div>
         </div>
       </template>
       <div>
-        <span class="mr-2"> Phụ phí</span>
+        <span class="mr-2">Phụ phí</span>
         <ExclamationCircleOutlined />
       </div>
     </a-popconfirm>
   </td>
   <td>
     <InputMoney
-      :value="invoice.surcharge"
+      :value="visit.surcharge"
       class="input-payment"
       style="width: 100%"
-      @update:value="handleChangeInvoiceSurcharge"
-    />
+      @update:value="handleChangeInvoiceSurcharge" />
   </td>
 </template>

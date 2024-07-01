@@ -15,7 +15,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { VisitStatus } from '../../../modules/visit'
 import { timeToText } from '../../../utils'
-import VisitStatusTag from '../VisitStatusTag.vue'
+import VisitStatusTag from '../ClinicStatusTag.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalVisitPayment from './modal/ModalVisitPayment.vue'
 import { visit } from './visit.ref'
@@ -74,7 +74,7 @@ const updateCustomer = () => {}
         <div>
           <VueButton
             v-if="
-              [VisitStatus.Scheduled, VisitStatus.Waiting, VisitStatus.InProgress].includes(
+              [VisitStatus.Draft, VisitStatus.Waiting, VisitStatus.InProgress].includes(
                 visit.visitStatus
               )
             "

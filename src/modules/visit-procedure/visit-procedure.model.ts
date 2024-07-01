@@ -1,113 +1,53 @@
-import {
-  Expose,
-  Type,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import { Procedure } from '../procedure'
 import type { DiscountType } from '../enum'
+import { Procedure } from '../procedure'
 
 export class VisitProcedure {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   visitId: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   customerId: number
-
-  @Expose()
   procedureId: number
-
-  @Expose()
   quantity: number
-
-  @Expose()
   expectedPrice: number // Giá dự kiến
-
-  @Expose()
   discountMoney: number // tiền giảm giá
-
-  @Expose()
   discountPercent: number // % giảm giá
-
-  @Expose()
   discountType: DiscountType // Loại giảm giá
-
-  @Expose()
   actualPrice: number // Giá thực tế
-
-  @Expose()
   createdAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Procedure)
   procedure?: Procedure
 
-  static toBasic(root: VisitProcedure) {
+  static init(): VisitProcedure {
     const ins = new VisitProcedure()
-    Object.assign(ins, root)
-    delete ins.procedure
+    ins.id = 0
+    ins.quantity = 0
+    ins.expectedPrice = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.actualPrice = 0
     return ins
   }
 
-  static fromPlain(dto: Record<string, any>): VisitProcedure {
-    return plainToInstance(VisitProcedure, dto, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static blank(): VisitProcedure {
+    const ins = VisitProcedure.init()
+    ins.procedure = Procedure.init()
+    return ins
   }
 
-  static fromPlains(dto: Record<string, any>[]): VisitProcedure[] {
-    return plainToInstance(VisitProcedure, dto, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromInstance(instance: VisitProcedure): VisitProcedure {
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static toPlain(
-    instance: VisitProcedure,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static toPlains(
-    instances: VisitProcedure[],
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instances.map((i) => VisitProcedure.toPlain(i, type))
-  }
-
-  static clone(root: VisitProcedure): VisitProcedure {
-    const result = new VisitProcedure()
-    Object.assign(result, root)
-
-    if (root.procedure) {
-      result.procedure = new Procedure()
-      Object.assign(result.procedure, root.procedure)
+  static from(source: VisitProcedure) {
+    const target = new VisitProcedure()
+    Object.assign(target, source)
+    if (Object.prototype.hasOwnProperty.call(source, 'procedure')) {
+      if (!source.procedure) {
+        target.procedure = source.procedure
+      } else {
+        const procedure = new Procedure()
+        Object.assign(procedure, source.procedure)
+        target.procedure = procedure
+      }
     }
-    return result
+    return target
   }
 
-  static cloneList(roots: VisitProcedure[]): VisitProcedure[] {
-    return roots.map((i) => VisitProcedure.clone(i))
+  static fromList(sourceList: VisitProcedure[]): VisitProcedure[] {
+    return sourceList.map((i) => VisitProcedure.from(i))
   }
 }

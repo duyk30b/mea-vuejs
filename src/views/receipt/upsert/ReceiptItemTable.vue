@@ -46,23 +46,20 @@ const openModalProductDetail = (product?: Product) => {
               <a
                 v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
-                @click="openModalProductDetail(receiptItem?.product)"
-              >
+                @click="openModalProductDetail(receiptItem?.product)">
                 <FileSearchOutlined />
               </a>
             </div>
             <div
               v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
-              style="font-size: 0.8rem"
-            >
+              style="font-size: 0.8rem">
               {{ receiptItem?.product?.substance }}
             </div>
             <div
               v-if="
                 settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
               "
-              style="font-size: 0.8rem"
-            >
+              style="font-size: 0.8rem">
               S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
               {{ timeToText(receiptItem.batch?.expiryDate) }}
             </div>
@@ -121,23 +118,20 @@ const openModalProductDetail = (product?: Product) => {
                 <a
                   v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="openModalProductDetail(receiptItem?.product)"
-                >
+                  @click="openModalProductDetail(receiptItem?.product)">
                   <FileSearchOutlined />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
-                style="font-size: 0.8rem"
-              >
+                style="font-size: 0.8rem">
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
                 v-if="
                   settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
                 "
-                style="font-size: 0.8rem"
-              >
+                style="font-size: 0.8rem">
                 S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
                 {{ timeToText(receiptItem.batch?.expiryDate) }}
               </div>
@@ -148,21 +142,18 @@ const openModalProductDetail = (product?: Product) => {
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity--"
-              >
+                @click="receipt.receiptItems![index].unitQuantity--">
                 <font-awesome-icon :icon="['fas', 'minus']" />
               </div>
               <div style="width: calc(100% - 60px); min-width: 50px">
                 <InputNumber
                   v-model:value="receipt.receiptItems![index].unitQuantity"
-                  :textAlign="'right'"
-                />
+                  :textAlign="'right'" />
               </div>
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity++"
-              >
+                @click="receipt.receiptItems![index].unitQuantity++">
                 <font-awesome-icon :icon="['fas', 'plus']" />
               </div>
             </div>
@@ -185,7 +176,7 @@ const openModalProductDetail = (product?: Product) => {
         <tr>
           <td colspan="100" class="text-right">
             <span class="mr-10">Tổng tiền hàng:</span>
-            <span class="mr-20"> {{ formatMoney(receipt.itemsActualMoney) }} </span>
+            <span class="mr-20">{{ formatMoney(receipt.itemsActualMoney) }}</span>
           </td>
         </tr>
       </tbody>

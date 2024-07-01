@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{ visitStatus: VisitStatus }>(), {
 </script>
 
 <template>
-  <a-tag v-if="visitStatus === VisitStatus.Scheduled" color="cyan">
+  <a-tag v-if="visitStatus === VisitStatus.Draft" color="cyan">
     <template #icon>
       <CustomerServiceOutlined />
     </template>

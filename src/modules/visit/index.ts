@@ -1,3 +1,5 @@
+export * from './visit-action.api'
+export * from './visit-clinic.api'
 export * from './visit.api'
 export * from './visit.dto'
 export * from './visit.model'

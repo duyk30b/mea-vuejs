@@ -57,6 +57,7 @@ const startFetchData = async (receiptId: number) => {
         distributorPayments: true,
       },
     })
+    console.log('🚀 ~ file: ReceiptDetail.vue:60 ~ startFetchData ~ receipt.value:', receipt.value)
   } catch (error) {
     console.log('🚀 ~ file: ReceiptDetail.vue:58 ~ startFetchData ~ error:', error)
   }
@@ -256,20 +257,21 @@ const openModalDistributorDetail = (data?: Distributor) => {
 <template>
   <ModalReceiptDetailSettingScreen
     v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
-    ref="modalReceiptDetailSettingScreen"
-  />
+    ref="modalReceiptDetailSettingScreen" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptPayment ref="modalReceiptPayment" @success="startFetchData(receipt.id)" />
 
   <div class="page-header">
     <div class="page-header-content">
-      <AuditOutlined /> Thông tin phiếu nhập hàng
+      <AuditOutlined />
+      Thông tin phiếu nhập hàng
       <span v-if="receipt.deletedAt" style="color: var(--text-red)">(Đơn đã bị xóa)</span>
       <a-button
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="primary"
-        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
-      >
+        @click="
+          $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
+        ">
         <template #icon>
           <PlusOutlined />
         </template>
@@ -283,7 +285,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -331,9 +333,9 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <VueButton
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         class="ml-auto"
-        @click="startCopy"
-      >
-        <CopyOutlined /> Copy phiếu
+        @click="startCopy">
+        <CopyOutlined />
+        Copy phiếu
       </VueButton>
       <VueButton
         v-if="
@@ -341,12 +343,10 @@ const openModalDistributorDetail = (data?: Distributor) => {
           [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
         "
         color="blue"
-        @click="startEdit"
-      >
+        @click="startEdit">
         <ExceptionOutlined />
         Sửa phiếu
       </VueButton>
-
       <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
@@ -355,19 +355,21 @@ const openModalDistributorDetail = (data?: Distributor) => {
                 settingStore.SCREEN_RECEIPT_DETAIL.process.forceEdit &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
-              key="EDIT_RECEIPT"
-            >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Sửa phiếu </span>
+              key="EDIT_RECEIPT">
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Sửa phiếu
+              </span>
             </a-menu-item>
             <a-menu-item
               v-if="
                 permissionIdMap[PermissionId.RECEIPT_REFUND_PREPAYMENT] &&
                 [ReceiptStatus.Prepayment].includes(receipt.status)
               "
-              key="REFUND_PREPAYMENT"
-            >
+              key="REFUND_PREPAYMENT">
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" /> Hoàn trả tiền tạm ứng
+                <FileSyncOutlined class="mr-2" />
+                Hoàn trả tiền tạm ứng
               </span>
             </a-menu-item>
             <a-menu-item
@@ -375,18 +377,22 @@ const openModalDistributorDetail = (data?: Distributor) => {
                 permissionIdMap[PermissionId.RECEIPT_RETURN_PRODUCT] &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
-              key="RETURN_PRODUCT"
-            >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
+              key="RETURN_PRODUCT">
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Hoàn trả
+              </span>
             </a-menu-item>
             <a-menu-item
               v-if="
                 permissionIdMap[PermissionId.RECEIPT_DELETE] &&
                 [ReceiptStatus.Draft, ReceiptStatus.Refund].includes(receipt.status)
               "
-              key="DELETE"
-            >
-              <span class="text-red-500"> <DeleteOutlined class="mr-2" /> Xóa phiếu </span>
+              key="DELETE">
+              <span class="text-red-500">
+                <DeleteOutlined class="mr-2" />
+                Xóa phiếu
+              </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -407,14 +413,12 @@ const openModalDistributorDetail = (data?: Distributor) => {
         v-if="
           permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
           [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
-        "
-      >
+        ">
         <VueButton
           v-if="receipt.paid == receipt.totalMoney"
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit"
-        >
+          @click="sendProductAndDebit">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -428,8 +432,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPayment)"
-        >
+          @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPayment)">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -443,8 +446,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit"
-        >
+          @click="sendProductAndDebit">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -455,13 +457,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <template
         v-if="
           permissionIdMap[PermissionId.RECEIPT_PAY_DEBT] && receipt.status === ReceiptStatus.Debt
-        "
-      >
+        ">
         <VueButton
           color="blue"
           :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"
-        >
+          @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)">
           <template #icon>
             <FileDoneOutlined />
           </template>

@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{ width?: number | string; height?: numbe
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 -960 960 960"
+    style="vertical-align: middle"
     :width="width"
     :height="height"
     fill="currentColor">

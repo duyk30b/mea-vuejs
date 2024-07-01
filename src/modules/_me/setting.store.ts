@@ -4,7 +4,7 @@ import { formatNumber } from '../../utils'
 export const useSettingStore = defineStore('setting-store', {
   state: () => {
     return {
-      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
       // isMobile: window.innerWidth <= 768,
       GOOGLE_DRIVER: { email: '' },
       SYSTEM_SETTING: {
@@ -217,6 +217,7 @@ export const useSettingStore = defineStore('setting-store', {
           hintUsage: false,
           expectedPrice: true,
           costPrice: true,
+          costPriceAverage: true,
           quantity: true,
           discount: true,
           actualPrice: true,

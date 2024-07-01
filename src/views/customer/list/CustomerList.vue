@@ -149,26 +149,24 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <ModalCustomerPayDebt
     ref="modalCustomerPayDebt"
-    @success="handleModalDistributorPayDebtSuccess"
-  />
+    @success="handleModalDistributorPayDebtSuccess" />
   <ModalCustomerListSettingScreen
     v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
-    ref="modalCustomerListSettingScreen"
-  />
+    ref="modalCustomerListSettingScreen" />
 
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ContactsOutlined /> Danh sách khách hàng</div>
-      <a-button
+      <div class="hidden md:block">
+        <ContactsOutlined />
+        Danh sách khách hàng
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-        type="primary"
-        @click="modalCustomerUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalCustomerUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
@@ -177,7 +175,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -203,8 +201,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="(e) => startSearch()"
-          />
+            @update:value="(e) => startSearch()" />
         </div>
       </div>
     </div>
@@ -220,16 +217,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
           </tr>
         </thead>
@@ -257,16 +251,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             @dblclick="
               permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
                 modalCustomerUpsert?.openModal(customer)
-            "
-          >
+            ">
             <td style="border-right: none">
               <div class="font-medium text-justify">
                 {{ customer.fullName }}
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
-                  @click="modalCustomerDetail?.openModal(customer.id)"
-                >
+                  @click="modalCustomerDetail?.openModal(customer.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -279,34 +271,31 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
                 <div
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
-                  class="text-center"
-                >
+                  class="text-center">
                   {{ customer.gender ? 'Nam' : 'Nữ' }}
                 </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
-                class="text-xs italic"
-              >
+                class="text-xs italic">
                 {{ customer.note }}
               </div>
             </td>
             <td
               v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none"
-            >
+              style="white-space: nowrap; border-left: none; border-right: none">
               <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
               <div
-                v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0"
-              >
+                v-if="
+                  permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0
+                ">
                 <a-button
                   type="default"
                   size="small"
-                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
-                >
+                  @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)">
                   Trả nợ
                 </a-button>
               </div>
@@ -321,8 +310,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
 
@@ -335,32 +325,26 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
               Họ Tên &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'fullName'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
@@ -371,24 +355,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
-              "
-            >
+              ">
               Sửa
             </th>
           </tr>
@@ -419,15 +399,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
-                  @click="modalCustomerDetail?.openModal(customer.id)"
-                >
+                  @click="modalCustomerDetail?.openModal(customer.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
-                class="text-xs italic"
-              >
+                class="text-xs italic">
                 {{ customer.note }}
               </div>
             </td>
@@ -452,8 +430,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       permissionIdMap[PermissionId.CUSTOMER_PAYMENT_PAY_DEBT] && customer.debt != 0
                     "
                     size="small"
-                    @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)"
-                  >
+                    @click="modalCustomerPayDebt?.openModal(customer.id!, customer.debt)">
                     Trả nợ
                   </VueButton>
                 </div>
@@ -481,13 +458,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
-              class="text-center"
-            >
+              class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalCustomerUpsert?.openModal(customer)"
-              >
+                @click="modalCustomerUpsert?.openModal(customer)">
                 <FormOutlined />
               </a>
             </td>
@@ -501,8 +476,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

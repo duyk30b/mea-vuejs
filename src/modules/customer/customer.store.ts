@@ -53,13 +53,13 @@ export const useCustomerStore = defineStore('customer-store', {
         total: result.total,
         page: result.page,
         limit: result.limit,
-        data: Customer.fromObjects(result.data),
+        data: Customer.fromList(result.data),
       }
     },
 
     async getOne(id: number) {
       const customer = await CustomerDB.findOneByKey(id)
-      return customer ? Customer.fromObject(customer) : null
+      return customer ? Customer.from(customer) : null
     },
 
     async createOne(instance: Customer) {
@@ -97,7 +97,7 @@ export const useCustomerStore = defineStore('customer-store', {
         $OR: [{ phone: { LIKE: text } }, { fullName: { LIKE: text } }],
         deletedAt: { IS_NULL: true },
       })
-      return Customer.fromObjects(objects)
+      return Customer.fromList(objects)
     },
   },
 })

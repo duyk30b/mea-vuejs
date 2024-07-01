@@ -1,15 +1,12 @@
 <script lang="ts" setup>
-import { LoadingOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { Table } from '@ckeditor/ckeditor5-table'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { BasicEditor } from '../../../ckeditor/class-editor'
 import ImageUpload from '../../../common/ImageUpload.vue'
+import VueButton from '../../../common/VueButton.vue'
 import { InputText } from '../../../common/vue-form'
-import { VisitApi } from '../../../modules/visit'
+import { ImageHost } from '../../../modules/image/image.model'
 import { VisitDiagnosis, VisitDiagnosisApi } from '../../../modules/visit-diagnosis'
 import { visit } from './visit.ref'
-import { ImageHost } from '../../../modules/image/image.model'
-import VueButton from '../../../common/VueButton.vue'
 
 const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
 
@@ -24,6 +21,11 @@ const vitalSigns = ref<{
   weight?: number // Cân nặng
 }>({})
 const saveLoading = ref(false)
+const hasChangeImage = ref(false)
+
+onMounted(async () => {
+  console.log('🚀 ~ file: ClinicDiagnosis.vue ~ onMounted')
+})
 
 watch(
   () => visit.value.visitDiagnosis!.reason,
@@ -50,16 +52,32 @@ watch(
   (newValue, oldValue) => (vitalSigns.value = JSON.parse(newValue || JSON.stringify({}))),
   { immediate: true }
 )
+watch(
+  () => visit.value.visitDiagnosis!.imageIds,
+  (newValue, oldValue) => (hasChangeImage.value = false),
+  { immediate: true }
+)
 
-const disabledButton = computed(() => {
+const hasChangeData = computed(() => {
+  if (visit.value.visitDiagnosis!.reason !== visitDiagnosis.value.reason) {
+    return true
+  }
+  if (visit.value.visitDiagnosis!.healthHistory !== visitDiagnosis.value.healthHistory) {
+    return true
+  }
+  if (visit.value.visitDiagnosis!.summary !== visitDiagnosis.value.summary) {
+    return true
+  }
+  if (visit.value.visitDiagnosis!.vitalSigns !== visitDiagnosis.value.vitalSigns) {
+    return true
+  }
+  if (visit.value.visitDiagnosis!.diagnosis !== visitDiagnosis.value.diagnosis) {
+    return true
+  }
+  if (hasChangeImage.value) {
+    return true
+  }
   return false
-  // return (
-  //   visit.value.visitDiagnosis!.reason === visitDiagnosis.value.reason &&
-  //   visit.value.visitDiagnosis!.healthHistory === visitDiagnosis.value.healthHistory &&
-  //   visit.value.visitDiagnosis!.summary === visitDiagnosis.value.summary &&
-  //   visit.value.visitDiagnosis!.vitalSigns === JSON.stringify(vitalSigns.value) &&
-  //   visit.value.visitDiagnosis!.diagnosis === visitDiagnosis.value.diagnosis
-  // )
 })
 
 const saveVisitDiagnosis = async () => {
@@ -187,7 +205,8 @@ const saveVisitDiagnosis = async () => {
               enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
               id: i.id,
             }))
-        " />
+        "
+        @changeImage="hasChangeImage = true" />
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
@@ -199,7 +218,7 @@ const saveVisitDiagnosis = async () => {
       <div></div>
       <VueButton
         color="blue"
-        :disabled="disabledButton"
+        :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
         @click="saveVisitDiagnosis">

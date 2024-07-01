@@ -7,16 +7,8 @@ import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { Radiology, RadiologyApi } from '../../modules/radiology'
-import ModalRadiologyUpsert from './upsert/ModalRadiologyUpsert.vue'
 import { customFilter } from '../../utils'
-import {
-  CheckCircleOutlined,
-  FileSearchOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  NodeIndexOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import ModalRadiologyUpsert from './upsert/ModalRadiologyUpsert.vue'
 
 const modalRadiologyUpsert = ref<InstanceType<typeof ModalRadiologyUpsert>>()
 

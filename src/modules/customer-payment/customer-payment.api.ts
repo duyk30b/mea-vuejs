@@ -50,7 +50,7 @@ export class CustomerPaymentApi {
     const response = await AxiosInstance.post('/customer-payment/pay-debt', body)
     const { data } = response.data as BaseResponse<{ customer: any }>
 
-    const customer = Customer.fromPlain(data.customer)
+    const customer = Customer.from(data.customer)
 
     return { customer }
   }

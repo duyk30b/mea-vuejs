@@ -1,21 +1,10 @@
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer'
-import { FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import { BaseModel } from '../base.model'
-
-export class Radiology extends BaseModel {
-  @Expose()
-  name: string // Tên dịch vụ
-
-  @Expose()
+export class Radiology {
+  id: number
+  name: string // Tên
   price: number // Giá dự kiến
-
-  @Expose()
-  default: string // Tóm tăt bệnh án
-
-  @Expose({ groups: [FROM_PLAIN] })
+  descriptionDefault: string
+  resultDefault: string
   updatedAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
   static init() {
@@ -30,39 +19,13 @@ export class Radiology extends BaseModel {
     return ins
   }
 
-  static toBasic(root: Radiology) {
-    const ins = new Radiology()
-    Object.assign(ins, root)
-    return ins
+  static from(source: Radiology) {
+    const target = new Radiology()
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlain(plain: Record<string, any>): Radiology {
-    return plainToInstance(Radiology, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromPlains(plains: Record<string, any>[]): Radiology[] {
-    return plainToInstance(Radiology, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static toPlain(
-    instance: Radiology,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Radiology') {
-      throw new Error('Radiology.fromInstance error: Instance must be from class Radiology')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
+  static fromList(sourceList: Radiology[]): Radiology[] {
+    return sourceList.map((i) => Radiology.from(i))
   }
 }

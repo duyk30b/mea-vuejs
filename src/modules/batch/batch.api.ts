@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -12,7 +11,7 @@ export class BatchApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Batch.fromPlains(data),
+      data: Batch.fromList(data),
     }
   }
 
@@ -23,7 +22,7 @@ export class BatchApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Batch.fromPlains(data),
+      data: Batch.fromList(data),
     }
   }
 
@@ -32,20 +31,37 @@ export class BatchApi {
 
     const response = await AxiosInstance.get(`/batch/detail/${id}`, { params })
     const { data } = response.data as BaseResponse
-    return Batch.fromPlain(data)
+    return Batch.from(data)
   }
 
   static async createOne(instance: Batch) {
-    const plain = Batch.toPlain(instance, USER_CREATE)
+    const plain = Batch.from(instance)
     const response = await AxiosInstance.post('/batch/create', plain)
     const { data } = response.data as BaseResponse
-    return Batch.fromPlain(data)
+    return Batch.from(data)
   }
 
-  static async updateOne(id: number, instance: Batch) {
-    const plain = Batch.toPlain(instance, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/batch/update/${id}`, plain)
+  static async updateOne(id: number, batch: Batch) {
+    const response = await AxiosInstance.patch(`/batch/update/${id}`, {
+      lotNumber: batch.lotNumber,
+      expiryDate: batch.expiryDate,
+      wholesalePrice: batch.wholesalePrice,
+      retailPrice: batch.retailPrice,
+    })
     const { data } = response.data as BaseResponse
-    return Batch.fromPlain(data)
+    return Batch.from(data)
+  }
+
+  static async findOrCreate(batch: Batch) {
+    const response = await AxiosInstance.post('/batch/find-or-create', {
+      productId: batch.productId,
+      lotNumber: batch.lotNumber,
+      expiryDate: batch.expiryDate,
+      costPrice: batch.costPrice,
+      wholesalePrice: batch.wholesalePrice,
+      retailPrice: batch.retailPrice,
+    })
+    const { data } = response.data as BaseResponse<{ batch: any }>
+    return Batch.from(data.batch)
   }
 }

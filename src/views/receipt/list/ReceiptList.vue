@@ -17,6 +17,7 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import VueButton from '../../../common/VueButton.vue'
+import { IconVisibility } from '../../../common/icon-google'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
@@ -117,9 +118,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <AuditOutlined class="mr-1" /> Danh sách phiếu nhập hàng
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
+        <AuditOutlined class="mr-1" />
+        Danh sách phiếu nhập hàng
       </div>
       <div>
         <VueButton
@@ -127,9 +128,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           class="btn btn-blue"
           @click="
             $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
-          "
-        >
-          <PlusOutlined /> Tạo phiếu nhập hàng mới
+          ">
+          <PlusOutlined />
+          Tạo phiếu nhập hàng mới
         </VueButton>
       </div>
     </div>
@@ -157,8 +158,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-          />
+            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
         </div>
       </div>
       <div style="flex: 1; flex-basis: 250px">
@@ -174,8 +174,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Hoàn thành', value: ReceiptStatus.Success },
               { text: 'Hoàn trả', value: ReceiptStatus.Refund },
             ]"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
     </div>
@@ -197,15 +196,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <tr
               v-for="(receipt, index) in receipts"
               :key="index"
-              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
-            >
+              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })">
               <td>
                 <div class="font-medium text-justify">
                   {{ receipt.distributor?.fullName }}
                   <a
                     class="text-base"
-                    @click="modalDistributorDetail?.openModal(receipt.distributorId)"
-                  >
+                    @click="modalDistributorDetail?.openModal(receipt.distributorId)">
                     <FileSearchOutlined class="ml-1" />
                   </a>
                 </div>
@@ -234,8 +231,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
 
@@ -248,22 +246,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th>Thời gian</th>
             <th>Nhà cung cấp</th>
             <th>Tổng Tiền</th>
             <th>Trạng thái</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -271,7 +265,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(receipt, index) in receipts" :key="index">
-            <td class="text-center">RC{{ receipt.id }}</td>
+            <td class="text-center">
+              <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
+                RC{{ receipt.id }}
+                <span class="text-lg ml-1">
+                  <IconVisibility />
+                </span>
+              </router-link>
+            </td>
             <td class="text-center">
               {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
@@ -288,17 +289,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.totalMoney) }}</div>
-              <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
+              <div v-if="receipt.debt" class="text-xs italic">
+                Nợ: {{ formatMoney(receipt.debt) }}
+              </div>
             </td>
             <td class="text-center">
               <ReceiptStatusTag :status="receipt.status" />
-            </td>
-            <td v-if="permissionIdMap[PermissionId.RECEIPT_READ]" class="text-center">
-              <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
-                <span style="color: #eca52b" class="text-xl">
-                  <FormOutlined />
-                </span>
-              </router-link>
             </td>
           </tr>
         </tbody>
@@ -310,8 +306,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

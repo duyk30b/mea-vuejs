@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { CloseOutlined, ExclamationCircleOutlined, SisternodeOutlined } from '@ant-design/icons-vue'
+import { ExclamationCircleOutlined, SisternodeOutlined } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 import { createVNode, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
-import { InputMoney, InputText } from '../../../common/vue-form'
+import { IconClose } from '../../../common/icon'
+import { InputMoney, InputOptions, InputText } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useProcedureStore } from '../../../modules/procedure'
-import { Procedure } from '../../../modules/procedure/procedure.model'
-import { convertViToEn } from '../../../utils'
+import { Procedure, useProcedureStore } from '../../../modules/procedure'
+import { customFilter } from '../../../utils'
 import ModalDataProcedure from './ModalDataProcedure.vue'
 
 const emit = defineEmits<{
@@ -28,28 +28,9 @@ const showModal = ref(false)
 const procedure = ref(Procedure.blank())
 const saveLoading = ref(false)
 
-// const product = ref(Product.blank())
-// const productList = ref<Product[]>([])
-
-// const consumableList = ref<{ product?: Product, quantity: number }[]>([])
-
 const openModal = async (instance?: Procedure) => {
   showModal.value = true
-  procedure.value = instance ? Procedure.toBasic(instance) : Procedure.blank()
-
-  // if (procedure.value.consumableHint) {
-  //   const consumableHint = JSON.parse(procedure.value.consumableHint) as { productId: number, quantity: number }[]
-  //   if (Array.isArray(consumableHint)) {
-  //     const productListResponse = await ProductApi.getManyByIds(consumableHint.map((i) => i.productId))
-  //     consumableList.value = consumableHint.map((i) => {
-  //       const productFind = productListResponse.find((j) => j.id === i.productId)
-  //       return {
-  //         product: productFind,
-  //         quantity: i.quantity,
-  //       }
-  //     })
-  //   }
-  // }
+  procedure.value = instance ? Procedure.from(instance) : Procedure.blank()
 }
 
 const closeModal = () => {
@@ -60,8 +41,6 @@ const closeModal = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
-  // const consumableHint = consumableList.value.map((i) => ({ productId: i.product!.id, quantity: i.quantity }))
-  // procedure.value.consumableHint = JSON.stringify(consumableHint)
   try {
     if (!procedure.value.id) {
       const response = await procedureStore.createOne(procedure.value)
@@ -81,7 +60,7 @@ const handleSave = async () => {
 const handleDelete = async () => {
   try {
     await procedureStore.deleteOne(procedure.value.id)
-    emit('success', Procedure.toBasic(procedure.value), 'DELETE')
+    emit('success', Procedure.from(procedure.value), 'DELETE')
     closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
@@ -100,28 +79,6 @@ const clickDelete = () => {
   })
 }
 
-const filterOption = (input: string, option: any) => {
-  const inputText = convertViToEn(input).toLowerCase()
-  const optionLabel = convertViToEn(option.label).toLowerCase()
-  return optionLabel.indexOf(inputText) >= 0
-}
-
-// const searchingProduct = async (text: string) => {
-//   productList.value = []
-//   if (text) {
-//     productList.value = await ProductApi.search(
-//       text,
-//       { productBatches: true },
-//       { overdue: true, quantityZero: true }
-//     )
-//   }
-// }
-
-// const selectProduct = (p: Product) => {
-//   consumableList.value.push({ product: p, quantity: 1 })
-//   product.value = Product.blank()
-// }
-
 defineExpose({ openModal })
 </script>
 
@@ -136,49 +93,48 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDataProcedure?.openModal()"
-        >
+          @click="modalDataProcedure?.openModal()">
           <SisternodeOutlined />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
       <div class="p-4">
-        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div class="w-[100px] flex-none">Tên dịch vụ</div>
-          <div class="flex-auto">
+        <div class="">
+          <div class="">Tên dịch vụ</div>
+          <div class="">
             <InputText v-model:value="procedure.name" required />
           </div>
         </div>
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div class="w-[100px] flex-none">Nhóm</div>
-          <a-select
-            v-model:value="procedure.group"
-            :filter-option="filterOption"
-            class="flex-auto"
-            show-search
-            :options="
-              Object.entries(settingStore.PROCEDURE_GROUP).map(([value, label]) => ({
-                value,
-                label,
-              }))
-            "
-          />
+        <div class="mt-3">
+          <div class="">Nhóm</div>
+          <div>
+            <InputOptions
+              v-model:value="procedure.group"
+              :options="
+                Object.entries(settingStore.PROCEDURE_GROUP).map(([value, text]) => ({
+                  value,
+                  text,
+                }))
+              "
+              :logic-filter="(item: any, text: string) => customFilter(item?.text, text)" />
+          </div>
         </div>
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Giá dịch vụ</div>
-          <div style="flex: 1">
+        <div class="mt-3">
+          <div>Giá dịch vụ</div>
+          <div>
             <InputMoney v-model:value="procedure.price" :min="0" style="width: 100%" />
           </div>
         </div>
         <div class="mt-4 flex items-center">
-          <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(procedure.isActive)"
-            @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)"
-          />
+          <div class="">Active</div>
+          <div class="ml-4">
+            <a-switch
+              :checked="Boolean(procedure.isActive)"
+              @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)" />
+          </div>
           <div v-if="!procedure.isActive" class="ml-4">Dịch vụ này tạm thời không thể sử dụng</div>
         </div>
 
@@ -229,8 +185,7 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.PROCEDURE_DELETE] && procedure.id"
             color="red"
             icon="trash"
-            @click="clickDelete"
-          >
+            @click="clickDelete">
             Xóa
           </VueButton>
           <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
@@ -245,6 +200,5 @@ defineExpose({ openModal })
   </VueModal>
   <ModalDataProcedure
     v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
-    ref="modalDataProcedure"
-  />
+    ref="modalDataProcedure" />
 </template>

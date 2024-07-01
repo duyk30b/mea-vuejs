@@ -17,12 +17,12 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { VisitApi, VisitStatus } from '../../../modules/visit'
 import { DTimer, timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import VisitStatusTag from '../VisitStatusTag.vue'
-import ModalVisitCreate from './ModalVisitCreate.vue'
+import VisitStatusTag from '../ClinicStatusTag.vue'
+import ModalClinicVisitCreate from './ModalClinicVisitCreate.vue'
 import VueButton from '../../../common/VueButton.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalVisitCreate = ref<InstanceType<typeof ModalVisitCreate>>()
+const modalClinicVisitCreate = ref<InstanceType<typeof ModalClinicVisitCreate>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -153,30 +153,32 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {}
-const handleModalVisitCreateSuccess = async () => {
+const handleModalClinicVisitCreateSuccess = async () => {
   // reload bằng lắng nghe event socket
   // await startFetchData()
 }
 </script>
 
 <template>
-  <ModalVisitCreate ref="modalVisitCreate" @success="handleModalVisitCreateSuccess" />
+  <ModalClinicVisitCreate
+    ref="modalClinicVisitCreate"
+    @success="handleModalClinicVisitCreateSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <ScheduleOutlined class="mr-1" /> Danh sách khám
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
+        <ScheduleOutlined class="mr-1" />
+        Danh sách khám
       </div>
       <div>
         <VueButton
           v-if="permissionIdMap[PermissionId.VISIT_CREATE]"
           color="blue"
-          @click="modalVisitCreate?.openModal()"
-        >
-          <PlusOutlined /> KHÁM MỚI
+          @click="modalClinicVisitCreate?.openModal()">
+          <PlusOutlined />
+          KHÁM MỚI
         </VueButton>
       </div>
     </div>
@@ -205,11 +207,11 @@ const handleModalVisitCreateSuccess = async () => {
             :maxHeight="260"
             placeholder="Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
-            @update:text="searchingCustomer"
-          >
+            @update:text="searchingCustomer">
             <template #option="{ item: { data } }">
               <div>
-                <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                <b>{{ data.fullName }}</b>
+                - {{ data.phone }} -
                 {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
@@ -228,8 +230,7 @@ const handleModalVisitCreateSuccess = async () => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-          />
+            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
         </div>
       </div>
 
@@ -245,9 +246,7 @@ const handleModalVisitCreateSuccess = async () => {
               { value: VisitStatus.Debt, text: 'Nợ' },
               { value: VisitStatus.Completed, text: 'Hoàn thành' },
             ]"
-            @update:value="handleSelectCheckupStatus"
-          >
-          </VueSelect>
+            @update:value="handleSelectCheckupStatus"></VueSelect>
         </div>
       </div>
     </div>
@@ -261,16 +260,13 @@ const handleModalVisitCreateSuccess = async () => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="">T.T</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
@@ -278,18 +274,15 @@ const handleModalVisitCreateSuccess = async () => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th style="min-width: 150px;">Khách hàng</th>
+            <th style="min-width: 150px">Khách hàng</th>
             <th>Chẩn đoán</th>
             <th>Thanh toán</th>
           </tr>
@@ -315,10 +308,10 @@ const handleModalVisitCreateSuccess = async () => {
           <tr v-for="(visit, index) in visitStore.visitList" :key="index">
             <td class="text-center">
               <div class="flex gap-4 justify-center">
-                <router-link :to="{ name: 'VisitDetail', params: { id: visit.id } }">
+                <router-link :to="{ name: 'ClinicDetailContainer', params: { id: visit.id } }">
                   <div class="flex justify-center items-center gap-2">
-                    <span> VS{{ visit.id }} </span>
-                    <span class="text-lg"> <ReadOutlined /> </span>
+                    <span>VS{{ visit.id }}</span>
+                    <span class="text-lg"><ReadOutlined /></span>
                   </div>
                 </router-link>
               </div>
@@ -357,8 +350,9 @@ const handleModalVisitCreateSuccess = async () => {
           v-model:pageSize="visitStore.paginationMeta.limit"
           :total="visitStore.paginationMeta.total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

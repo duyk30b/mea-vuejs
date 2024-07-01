@@ -1,8 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   ProductDetailQuery,
   ProductGetQuery,
@@ -19,7 +16,7 @@ export class ProductApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Product.fromPlains(data),
+      data: Product.fromList(data),
     }
   }
 
@@ -30,7 +27,7 @@ export class ProductApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Product.fromPlains(data),
+      data: Product.fromList(data),
     }
   }
 
@@ -45,26 +42,54 @@ export class ProductApi {
     const params = ProductGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/product/detail/${id}`, { params })
     const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    return Product.from(data)
   }
 
-  static async createOne(instance: Product) {
-    const plain = Product.toPlain(instance, USER_CREATE)
-    const response = await AxiosInstance.post('/product/create', plain)
+  static async createOne(product: Product) {
+    const response = await AxiosInstance.post('/product/create', {
+      brandName: product.brandName,
+      substance: product.substance,
+      costPrice: product.costPrice,
+      wholesalePrice: product.wholesalePrice,
+      retailPrice: product.retailPrice,
+      group: product.group,
+      unit: product.unit,
+      route: product.route,
+      source: product.source,
+      image: product.image,
+      hintUsage: product.hintUsage,
+      hasManageQuantity: product.hasManageQuantity,
+      hasManageBatches: product.hasManageBatches,
+      isActive: product.isActive,
+    })
     const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    return Product.from(data)
   }
 
-  static async updateOne(id: number, instance: Product) {
-    const plain = Product.toPlain(instance, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/product/update/${id}`, plain)
+  static async updateOne(id: number, product: Product) {
+    const response = await AxiosInstance.patch(`/product/update/${id}`, {
+      brandName: product.brandName,
+      substance: product.substance,
+      costPrice: product.costPrice,
+      wholesalePrice: product.wholesalePrice,
+      retailPrice: product.retailPrice,
+      group: product.group,
+      unit: product.unit,
+      route: product.route,
+      source: product.source,
+      image: product.image,
+      hintUsage: product.hintUsage,
+      hasManageQuantity: product.hasManageQuantity,
+      hasManageBatches: product.hasManageBatches,
+      isActive: product.isActive,
+    })
     const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    return Product.from(data)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/product/delete/${id}`)
     const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    return Product.from(data)
   }
 }

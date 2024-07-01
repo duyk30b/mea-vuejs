@@ -3,32 +3,29 @@ import {
   AuditOutlined,
   ContactsOutlined,
   ContainerOutlined,
-  DeploymentUnitOutlined,
   DisconnectOutlined,
   LoginOutlined,
-  NodeIndexOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import { h, onBeforeMount, ref } from 'vue'
+import { h, onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconFluidMed, IconRadiology, IconStethoscope } from '../../../common/icon-google'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
-import VueTabPanel from '../../../common/vue-tabs/VueTabPanel.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitApi, VisitClinicApi, VisitStatus } from '../../../modules/visit'
 import { VisitDiagnosis } from '../../../modules/visit-diagnosis'
-import VisitDiagnosisManageView from './VisitDiagnosisManageView.vue'
-import VisitInformation from './VisitInformation.vue'
-import VisitSummaryView from './VisitSummaryView.vue'
-import VisitPrescriptionManageView from './VisitPrescriptionManageView.vue'
-import VisitProcedureManageView from './VisitProcedureManageView.vue'
+import ClinicDiagnosis from './ClinicDiagnosis.vue'
+import VisitInformation from './ClinicInformation.vue'
+import ClinicPrescription from './ClinicPrescription.vue'
+import ClinicProcedure from './ClinicProcedure.vue'
+import ClinicRadiology from './ClinicRadiology.vue'
+import ClinicSummary from './ClinicSummary.vue'
 import { visit } from './visit.ref'
-import { IconFluidMed, IconRadiology, IconStethoscope } from '../../../common/icon-google'
-import VisitRadiologyManageView from './VisitRadiologyManageView.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -36,14 +33,13 @@ const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
-const tabsKey = ref<'diagnosis' | 'procedure' | 'prescription' | 'payment'>('diagnosis')
 
 const startFetchData = async (visitId: number) => {
   try {
     const visitData = await VisitApi.detail(visitId, {
       relation: {
         customer: true,
-        customerPayments: true, // query khi bật modal thanh toán
+        customerPaymentList: true, // query khi bật modal thanh toán
         visitDiagnosis: true,
         visitProductList: true,
         visitProcedureList: true,
@@ -79,20 +75,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await VisitApi.startCheckup({ visitId: visit.value.id })
+  await VisitClinicApi.startCheckup({ visitId: visit.value.id })
 }
 
 const startCloseVisit = async () => {
-  await VisitApi.close(visit.value.id)
+  await VisitActionApi.close(visit.value.id)
 }
 
 const clickCloseVisit = () => {
-  if (visit.value.paid > visit.value.totalMoney) {
-    return Modal.warning({
-      title: 'Khách hàng còn thừa tiền tạm ứng',
-      content: h('div', {}, [h('p', 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ')]),
-    })
-  }
   if (
     (!visit.value.isSent && visit.value.productsMoney > 0) ||
     !!(visit.value.visitProductList || []).find((i) => !i.isSent && i.quantity)
@@ -103,6 +93,22 @@ const clickCloseVisit = () => {
         h('p', 'Cần xuất thuốc trước khi đóng phiếu khám'),
         h('p', 'Khách hàng không lấy thuốc có thể chọn số lượng mua = 0'),
       ]),
+      okType: 'default',
+      okText: 'Hủy',
+    })
+  }
+  if ((visit.value.visitRadiologyList || []).find((i) => i.startedAt == null)) {
+    return Modal.warning({
+      title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
+      content: h('div', {}, [h('p', 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám')]),
+      okType: 'default',
+      okText: 'Hủy',
+    })
+  }
+  if (visit.value.paid > visit.value.totalMoney) {
+    return Modal.warning({
+      title: 'Khách hàng còn thừa tiền tạm ứng',
+      content: h('div', {}, [h('p', 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ')]),
       okType: 'default',
       okText: 'Hủy',
     })
@@ -150,9 +156,9 @@ const clickCloseVisit = () => {
   </div>
   <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
     <div style="flex-basis: 600px; flex-grow: 2; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
-      <VueTabs :tabStart="tabsKey" @changeTab="handleChangeTabs">
+      <VueTabs :tabStart="String(route.name)" @changeTab="handleChangeTabs">
         <template #menu>
-          <VueTabMenu tabKey="diagnosis">
+          <VueTabMenu tabKey="ClinicDiagnosis" @active="router.push({ name: 'ClinicDiagnosis' })">
             <IconStethoscope />
             Khám
           </VueTabMenu>
@@ -162,48 +168,55 @@ const clickCloseVisit = () => {
                 visit.visitStatus
               )
             ">
-            <VueTabMenu tabKey="procedure">
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.VISIT_PROCEDURES]"
+              :tabKey="ClinicProcedure.__name!"
+              @active="router.push({ name: ClinicProcedure.__name })">
               <IconFluidMed />
               Dịch vụ
             </VueTabMenu>
-            <VueTabMenu tabKey="radiology">
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.VISIT_RADIOLOGY]"
+              :tabKey="ClinicRadiology.__name!"
+              @active="router.push({ name: ClinicRadiology.__name })">
               <IconRadiology />
               CĐHA
             </VueTabMenu>
-            <VueTabMenu tabKey="prescription">
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.VISIT_PRESCRIPTION]"
+              :tabKey="ClinicPrescription.__name!"
+              @active="router.push({ name: ClinicPrescription.__name })">
               <DisconnectOutlined />
               Đơn thuốc
             </VueTabMenu>
-            <VueTabMenu tabKey="payment">
+            <VueTabMenu
+              :tabKey="ClinicSummary.__name!"
+              @active="router.push({ name: ClinicSummary.__name })">
               <AuditOutlined />
               Tổng kết
             </VueTabMenu>
           </template>
         </template>
-        <template #panel>
-          <VueTabPanel tabKey="diagnosis">
-            <VisitDiagnosisManageView />
-          </VueTabPanel>
-          <VueTabPanel tabKey="procedure">
-            <VisitProcedureManageView />
-          </VueTabPanel>
-          <VueTabPanel tabKey="radiology">
-            <VisitRadiologyManageView />
-          </VueTabPanel>
-          <VueTabPanel tabKey="prescription">
-            <VisitPrescriptionManageView />
-          </VueTabPanel>
-          <VueTabPanel tabKey="payment" destroy-on-in-active>
-            <VisitSummaryView />
-          </VueTabPanel>
-        </template>
       </VueTabs>
+      <RouterView v-slot="{ Component }">
+        <KeepAlive
+          :include="
+            [
+              ClinicDiagnosis.__name,
+              ClinicProcedure.__name,
+              ClinicRadiology.__name,
+              ClinicPrescription.__name,
+            ].join(',')
+          ">
+          <component :is="Component" />
+        </KeepAlive>
+      </RouterView>
     </div>
     <div style="flex-basis: 300px; flex-grow: 1" class="">
       <VisitInformation />
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
-          v-if="[VisitStatus.Scheduled, VisitStatus.Waiting].includes(visit.visitStatus)"
+          v-if="[VisitStatus.Draft, VisitStatus.Waiting].includes(visit.visitStatus)"
           color="blue"
           size="default"
           @click="startCheckup">

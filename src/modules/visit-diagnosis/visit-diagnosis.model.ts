@@ -1,42 +1,15 @@
-import {
-  Expose,
-  Transform,
-  TransformationType,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
-import { FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import type { Image } from '../image/image.model'
+import { Image } from '../image/image.model'
 
 export class VisitDiagnosis {
-  @Expose({ groups: [FROM_PLAIN] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   visitId: number
-
-  @Expose()
   reason: string // Lý do vào khám
-
-  @Expose()
   healthHistory: string // Tóm tăt bệnh án
-
-  @Expose()
   summary: string // Tóm tăt bệnh án
-
-  @Expose()
   diagnosis: string // Chẩn đoán
-
-  @Expose()
   vitalSigns: string
-
-  @Expose()
   imageIds: string
-
-  @Expose({ groups: [FROM_PLAIN] })
   imageList: Image[]
-
-  @Expose({ groups: [FROM_PLAIN] }) // update cùng API tạo sửa đơn thuốc
   advice?: string // Lời nhắc
 
   static init(): VisitDiagnosis {
@@ -56,28 +29,16 @@ export class VisitDiagnosis {
     return ins
   }
 
-  static fromPlain(plain: Record<string, any>): VisitDiagnosis {
-    return plainToInstance(VisitDiagnosis, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static toPlain(
-    instance: VisitDiagnosis,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static clone(root: VisitDiagnosis): VisitDiagnosis {
-    const result = new VisitDiagnosis()
-    Object.assign(result, root)
-    return result
+  static from(source: VisitDiagnosis) {
+    const target = new VisitDiagnosis()
+    Object.assign(target, source)
+    if (source.imageList) {
+      target.imageList = source.imageList.map((i) => {
+        const image = new Image()
+        Object.assign(image, i)
+        return image
+      })
+    }
+    return target
   }
 }

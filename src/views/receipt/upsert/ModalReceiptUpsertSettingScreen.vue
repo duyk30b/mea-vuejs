@@ -70,7 +70,7 @@ const handleSave = async () => {
     await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
-    meStore.distributorDefault = Distributor.toBasic(distributorDefault.value)
+    meStore.distributorDefault = Distributor.from(distributorDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -123,8 +123,7 @@ defineExpose({ openModal })
                       <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
                       <div class="pl-7">
                         <a-radio-group
-                          v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem"
-                        >
+                          v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem">
                           <a-radio style="display: flex; line-height: 36px" :value="false">
                             Cộng gộp số lượng
                           </a-radio>
@@ -140,7 +139,8 @@ defineExpose({ openModal })
                     <td>
                       <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
                         Hiển thị chi tiết sản phẩm (
-                        <FileSearchOutlined /> )
+                        <FileSearchOutlined />
+                        )
                       </a-checkbox>
                     </td>
                   </tr>
@@ -191,11 +191,11 @@ defineExpose({ openModal })
                           :max-height="180"
                           placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                           @selectItem="({ data }) => selectDistributor(data)"
-                          @update:text="searchingDistributor"
-                        >
+                          @update:text="searchingDistributor">
                           <template #option="{ item: { data } }">
                             <div>
-                              <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                              <b>{{ data.fullName }}</b>
+                              - {{ data.phone }} -
                               {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                             </div>
                             <div>

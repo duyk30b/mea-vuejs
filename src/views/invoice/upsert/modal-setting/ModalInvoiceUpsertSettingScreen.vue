@@ -69,7 +69,7 @@ const handleSave = async () => {
     await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
-    meStore.customerDefault = Customer.toBasic(customerDefault.value)
+    meStore.customerDefault = Customer.from(customerDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -106,8 +106,7 @@ defineExpose({ openModal })
                   <tr>
                     <td>
                       <a-checkbox
-                        v-model:checked="settingDisplay.invoiceItemInput.negativeQuantity"
-                      >
+                        v-model:checked="settingDisplay.invoiceItemInput.negativeQuantity">
                         Được phép xuất số lượng nhiều hơn số lượng tồn (số lượng tồn có thể là số
                         âm)
                       </a-checkbox>
@@ -117,8 +116,7 @@ defineExpose({ openModal })
                     <td>
                       <div>
                         <a-checkbox
-                          v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"
-                        >
+                          v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch">
                           Lựa chọn thêm sau khi tìm kiếm
                         </a-checkbox>
                       </div>
@@ -126,16 +124,14 @@ defineExpose({ openModal })
                         <div class="pt-2">
                           <a-checkbox
                             v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
-                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                          >
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
                             Chỉnh sửa hướng dẫn sử dụng
                           </a-checkbox>
                         </div>
                         <div class="pt-3">
                           <a-checkbox
                             v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
-                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                          >
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
                             Hiển thị giá bán niêm yết
                           </a-checkbox>
                         </div>
@@ -145,24 +141,31 @@ defineExpose({ openModal })
                             :disabled="
                               !settingDisplay.invoiceItemInput.customAfterSearch ||
                               !settingDisplay.invoiceItemInput.expectedPrice
-                            "
-                          >
+                            ">
                             Thêm lựa chọn giá bán = giá nhập
                           </a-checkbox>
                         </div>
                         <div class="pt-3">
                           <a-checkbox
+                            v-model:checked="settingDisplay.invoiceItemInput.costPriceAverage"
+                            :disabled="
+                              !settingDisplay.invoiceItemInput.customAfterSearch ||
+                              !settingDisplay.invoiceItemInput.expectedPrice
+                            ">
+                            Thêm lựa chọn giá bán = giá vốn trung bình
+                          </a-checkbox>
+                        </div>
+                        <div class="pt-3">
+                          <a-checkbox
                             v-model:checked="settingDisplay.invoiceItemInput.discount"
-                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                          >
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
                             Chỉnh sửa chiết khấu
                           </a-checkbox>
                         </div>
                         <div class="pt-3">
                           <a-checkbox
                             v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
-                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                          >
+                            :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
                             Chỉnh sửa giá bán thực tế
                           </a-checkbox>
                         </div>
@@ -187,8 +190,7 @@ defineExpose({ openModal })
                       <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
                       <div class="pl-7">
                         <a-radio-group
-                          v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem"
-                        >
+                          v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem">
                           <a-radio style="display: flex; line-height: 36px" :value="false">
                             Cộng gộp số lượng
                           </a-radio>
@@ -221,7 +223,8 @@ defineExpose({ openModal })
                     <td>
                       <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.detail">
                         Hiển thị chi tiết sản phẩm (
-                        <FileSearchOutlined /> )
+                        <FileSearchOutlined />
+                        )
                       </a-checkbox>
                     </td>
                   </tr>
@@ -263,9 +266,8 @@ defineExpose({ openModal })
                   <tr>
                     <td>
                       <a-checkbox
-                        v-model:checked="settingDisplay.invoiceItemsTable.editActualPrice"
-                      >
-                        Cho phép sửa đơn giá
+                        v-model:checked="settingDisplay.invoiceItemsTable.editActualPrice">
+                        Sửa đơn giá trong bảng danh sách
                       </a-checkbox>
                     </td>
                   </tr>
@@ -301,11 +303,11 @@ defineExpose({ openModal })
                           :maxHeight="180"
                           placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                           @selectItem="({ data }) => selectCustomer(data)"
-                          @update:text="searchingCustomer"
-                        >
+                          @update:text="searchingCustomer">
                           <template #option="{ item: { data } }">
                             <div>
-                              <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                              <b>{{ data.fullName }}</b>
+                              - {{ data.phone }} -
                               {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                             </div>
                             <div>

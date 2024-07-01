@@ -1,63 +1,25 @@
-import { Expose, Type, plainToInstance } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
 import type { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { Radiology } from '../radiology'
 import { User } from '../user'
 
 export class VisitRadiology {
-  @Expose()
   id: number
-
-  @Expose()
   visitId: number
-
-  @Expose()
   customerId: number
-
-  @Expose()
   radiologyId: number
-
-  @Expose()
   doctorId: number
-
-  @Expose()
   expectedPrice: number
-
-  @Expose()
   discountMoney: number
-
-  @Expose()
   discountPercent: number
-
-  @Expose()
   discountType: DiscountType
-
-  @Expose()
   actualPrice: number
-
-  @Expose()
   description: string
-
-  @Expose()
   result: string
-
-  @Expose()
   startedAt: number
-
-  @Expose()
   imageIds: string
-
-  @Expose()
-  @Type(() => Image)
   imageList: Image[]
-
-  @Expose()
-  @Type(() => Radiology)
   radiology?: Radiology
-
-  @Expose()
-  @Type(() => User)
   doctor?: User
 
   static init(): VisitRadiology {
@@ -73,6 +35,41 @@ export class VisitRadiology {
     return ins
   }
 
+  static from(source: VisitRadiology) {
+    const target = new VisitRadiology()
+    Object.assign(target, source)
+    if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
+      if (!source.radiology) {
+        target.radiology = source.radiology
+      } else {
+        const radiology = new Radiology()
+        Object.assign(radiology, source.radiology)
+        target.radiology = radiology
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'doctor')) {
+      if (!source.doctor) {
+        target.doctor = source.doctor
+      } else {
+        const doctor = new User()
+        Object.assign(doctor, source.doctor)
+        target.doctor = doctor
+      }
+    }
+    if (source.imageList) {
+      target.imageList = source.imageList.map((i) => {
+        const image = new Image()
+        Object.assign(image, i)
+        return image
+      })
+    }
+    return target
+  }
+
+  static fromList(sourceList: VisitRadiology[]): VisitRadiology[] {
+    return sourceList.map((i) => VisitRadiology.from(i))
+  }
+
   static toBasic(root: VisitRadiology) {
     const ins = new VisitRadiology()
     Object.assign(ins, root)
@@ -83,36 +80,5 @@ export class VisitRadiology {
 
   static toBasics(roots: VisitRadiology[]): VisitRadiology[] {
     return roots.map((i) => VisitRadiology.toBasic(i))
-  }
-
-  static fromPlain(plain: Record<string, any>): VisitRadiology {
-    return plainToInstance(VisitRadiology, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromPlains(plains: Record<string, any>[]): VisitRadiology[] {
-    return plains.map((i) => VisitRadiology.fromPlain(i))
-  }
-
-  static clone(root: VisitRadiology): VisitRadiology {
-    const result = VisitRadiology.toBasic(root)
-    if (Object.prototype.hasOwnProperty.call(root, 'radiology')) {
-      result.radiology = root.radiology ? Radiology.toBasic(root.radiology) : root.radiology
-    }
-    if (Object.prototype.hasOwnProperty.call(root, 'doctor')) {
-      result.doctor = root.doctor ? User.toBasic(root.doctor) : root.doctor
-    }
-
-    if (root.imageList) {
-      result.imageList = Image.toBasics(root.imageList)
-    }
-    return result
-  }
-
-  static cloneList(roots: VisitRadiology[]): VisitRadiology[] {
-    return roots.map((i) => VisitRadiology.clone(i))
   }
 }

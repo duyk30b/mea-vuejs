@@ -65,8 +65,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <MedicalIcon />
       </template>
       <template #title> Phòng khám </template>
-      <a-menu-item v-if="permissionIdMap[PermissionId.VISIT_READ]" key="VisitList">
-        <router-link :to="{ name: 'VisitList' }"> Danh sách khám </router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.VISIT_READ]" key="ClinicVisitList">
+        <router-link :to="{ name: 'ClinicVisitList' }"> Danh sách khám </router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.RADIOLOGY_READ]" key="RadiologyList">
         <router-link :to="{ name: 'RadiologyList' }"> CĐHA </router-link>

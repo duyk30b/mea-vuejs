@@ -1,62 +1,25 @@
-import {
-  Expose,
-  Type,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-} from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import { BatchMovement } from '../batch-movement/batch-movement.model'
 import type { DiscountType } from '../enum'
 import { Product } from '../product'
-import { VisitBatch } from '../visit-batch'
+import type { VisitBatch } from '../visit-batch'
 
 export class VisitProduct {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   visitId: number
-
-  @Expose()
   productId: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   isSent: number
-
-  @Expose()
   unitRate: number
-
-  @Expose()
   quantityPrescription: number
-
-  @Expose()
   quantity: number
-
-  @Expose()
   costAmount: number // Tổng giá cost
-
-  @Expose()
   expectedPrice: number // Giá dự kiến
-
-  @Expose()
   discountMoney: number // tiền giảm giá
-
-  @Expose()
   discountPercent: number // % giảm giá
-
-  @Expose()
   discountType: DiscountType // Loại giảm giá
-
-  @Expose()
   actualPrice: number // Giá thực tế
+  hintUsage: string | null // Hướng dẫn sử dụng
 
-  @Expose() // Hướng dẫn sử dụng
-  hintUsage: string | null
-
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Product)
   product?: Product | null
+  visitBatchList?: VisitBatch[]
 
   get unitName() {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
@@ -103,88 +66,40 @@ export class VisitProduct {
   }
 
   static init(): VisitProduct {
-    const instance = new VisitProduct()
-    instance.id = 0
-    instance.quantity = 0
-    instance.unitRate = 1
-    instance.quantityPrescription = 0
-    instance.hintUsage = ''
-    return instance
-  }
-
-  static blank(): VisitProduct {
-    const instance = VisitProduct.init()
-    return instance
-  }
-
-  static toBasic(root: VisitProduct) {
     const ins = new VisitProduct()
-    Object.assign(ins, root)
-    delete ins.product
+    ins.id = 0
+    ins.quantity = 0
+    ins.quantityPrescription = 0
+    ins.unitRate = 1
+    ins.expectedPrice = 0
+    ins.actualPrice = 0
+    ins.hintUsage = ''
     return ins
   }
 
-  static fromPlain(dto: Record<string, any>): VisitProduct {
-    return plainToInstance(VisitProduct, dto, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static blank(): VisitProduct {
+    const ins = VisitProduct.init()
+    ins.product = Product.init()
+    ins.visitBatchList = []
+    return ins
   }
 
-  static fromPlains(dto: Record<string, any>[]): VisitProduct[] {
-    return plainToInstance(VisitProduct, dto, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromInstance(instance: VisitProduct): VisitProduct {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_VisitProduct') {
-      throw new Error('VisitProduct.fromInstance error: Instance must be from class VisitProduct')
+  static from(source: VisitProduct) {
+    const target = new VisitProduct()
+    Object.assign(target, source)
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      if (!source.product) {
+        target.product = source.product
+      } else {
+        const product = new Product()
+        Object.assign(product, source.product)
+        target.product = product
+      }
     }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
+    return target
   }
 
-  static fromInstances(instances: VisitProduct[]): VisitProduct[] {
-    return instances.map((i) => VisitProduct.fromInstance(i))
-  }
-
-  static toPlain(
-    instance: VisitProduct,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static toPlains(
-    instances: VisitProduct[],
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instances.map((i) => VisitProduct.toPlain(i, type))
-  }
-
-  static clone(root: VisitProduct): VisitProduct {
-    const result = new VisitProduct()
-    Object.assign(result, root)
-
-    if (root.product) {
-      result.product = new Product()
-      Object.assign(result.product, root.product)
-    }
-    return result
-  }
-
-  static cloneList(roots: VisitProduct[]): VisitProduct[] {
-    return roots.map((i) => VisitProduct.clone(i))
+  static fromList(sourceList: VisitProduct[]): VisitProduct[] {
+    return sourceList.map((i) => VisitProduct.from(i))
   }
 }

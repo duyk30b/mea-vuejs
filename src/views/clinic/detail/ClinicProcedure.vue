@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { DeleteOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -9,11 +9,10 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../../modules/procedure'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitStatus } from '../../../modules/visit'
 import { VisitProcedure } from '../../../modules/visit-procedure'
 import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
 import { visit } from './visit.ref'
-import { IconDelete } from '../../../common/icon-google'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
@@ -30,7 +29,7 @@ const visitProcedureList = ref<VisitProcedure[]>([])
 watch(
   () => visit.value.visitProcedureList!,
   (newValue: VisitProcedure[]) => {
-    visitProcedureList.value = VisitProcedure.cloneList(newValue || [])
+    visitProcedureList.value = VisitProcedure.fromList(newValue || [])
   },
   { immediate: true }
 )
@@ -43,6 +42,7 @@ const disabledButton = computed(() => {
 })
 
 onMounted(async () => {
+  console.log('🚀 ~ file: ClinicProcedure.vue ~ onMounted')
   try {
     await procedureStore.refreshDB()
   } catch (error: any) {
@@ -84,7 +84,7 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const saveVisitProcedureList = async () => {
-  await VisitApi.replaceVisitProcedureList({
+  await VisitActionApi.replaceVisitProcedureList({
     visitId: visit.value.id,
     customerId: visit.value.customerId || 0,
     visitProcedureList: visitProcedureList.value,

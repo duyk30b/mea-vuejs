@@ -25,7 +25,7 @@ export class DistributorPaymentApi {
   static async payDebt(body: DistributorPaymentPayDebtBody) {
     const response = await AxiosInstance.post('/distributor-payment/pay-debt', body)
     const { data, meta } = response.data as BaseResponse<{ distributor: any }>
-    const distributor = Distributor.fromPlain(data.distributor)
+    const distributor = Distributor.from(data.distributor)
 
     return { distributor }
   }

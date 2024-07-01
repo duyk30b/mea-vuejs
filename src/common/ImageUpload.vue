@@ -5,6 +5,10 @@ import { ref } from 'vue'
 
 const imageListContainerRef = ref<HTMLElement>()
 
+const emit = defineEmits<{
+  (e: 'changeImage'): void
+}>()
+
 const props = withDefaults(
   defineProps<{
     height?: number
@@ -74,6 +78,7 @@ const handleAddImage = (e: Event) => {
       }
     }
   }
+  emit('changeImage')
 }
 
 const scrollImages = (direction: number) => {
@@ -113,10 +118,12 @@ const handleChangeImage = (e: Event, index: number) => {
     }
   }
   reader.readAsDataURL(file)
+  emit('changeImage')
 }
 
 const handleRemoveImage = (index: number) => {
   imageDataList.value.splice(index, 1)
+  emit('changeImage')
 }
 
 const openModal = (index: number) => {

@@ -6,8 +6,8 @@ import VueModal from '../../../../common/VueModal.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Batch } from '../../../../modules/batch'
+import { VisitActionApi } from '../../../../modules/visit'
 import type { VisitProduct } from '../../../../modules/visit-product'
-import { VisitApi } from '../../../../modules/visit/visit.api'
 import { arrayToKeyArray, timeToText } from '../../../../utils'
 import { visit } from '../visit.ref'
 
@@ -134,7 +134,7 @@ const startReturn = async () => {
   try {
     if (!validateQuantity()) return
 
-    await VisitApi.returnProductList({
+    await VisitActionApi.returnProductList({
       visitId: visit.value.id,
       visitProductReturnList: visitProductReturnList.value
         .filter((i) => i.quantityReturn > 0)

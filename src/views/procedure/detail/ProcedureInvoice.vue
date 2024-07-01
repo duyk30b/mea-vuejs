@@ -104,8 +104,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             <div
               v-if="invoiceItem.discountMoney"
               class="text-xs italic line-through"
-              style="color: var(--text-red)"
-            >
+              style="color: var(--text-red)">
               {{ formatMoney(invoiceItem.expectedPrice) }}
             </div>
             {{ formatMoney(invoiceItem.actualPrice) }}
@@ -122,8 +121,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         v-model:pageSize="limit"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
 </template>

@@ -1,55 +1,62 @@
 import { ref, watchEffect } from 'vue'
 import { DiscountType } from '../../../modules/enum'
 import { Invoice } from '../../../modules/invoice'
+import { Visit } from '../../../modules/visit'
 
 const invoice = ref<Invoice>(Invoice.blank())
 
+export const visit = ref<Visit>(Visit.blank())
+
 watchEffect(() => {
-  const totalCostAmount = invoice.value.invoiceItems!.reduce((acc, item) => {
-    let itemCost = 0
-    if (item.productId) {
-      if (item.product!.quantity <= 0) {
-        itemCost = (item.product?.costPrice || 0) * item.quantity
-      } else {
-        itemCost = (item.product!.costAmount * item.quantity) / item.product!.quantity
-      }
+  const totalCostAmount = visit.value.visitProductList!.reduce((acc, item) => {
+    let itemCostAmount = 0
+    if (item.product!.quantity <= 0) {
+      itemCostAmount = (item.product?.costPrice || 0) * item.quantity
+    } else {
+      itemCostAmount = (item.product!.costAmount * item.quantity) / item.product!.quantity
     }
-    const itemCostAmount = Math.floor(itemCost / 10) * 10
-    item.costAmount = itemCostAmount
+    const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
+    item.costAmount = itemCostAmountFix
     return acc + item.costAmount
   }, 0)
 
-  const itemsActualMoney = invoice.value.invoiceItems!.reduce((acc, item) => {
+  const productsMoney = visit.value.visitProductList!.reduce((acc, item) => {
     return acc + item.actualPrice * item.quantity
   }, 0)
+  const proceduresMoney = visit.value.visitProcedureList!.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
+  }, 0)
+
+  const itemsActualMoney = productsMoney + proceduresMoney
 
   let discountMoney = 0
   let discountPercent = 0
   let discountType: DiscountType = DiscountType.VND
-  if (invoice.value.discountType === DiscountType.VND) {
-    discountMoney = invoice.value.discountMoney || 0
+  if (visit.value.discountType === DiscountType.VND) {
+    discountMoney = visit.value.discountMoney || 0
     discountPercent =
       itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
     discountType = DiscountType.VND
   }
-  if (invoice.value.discountType === DiscountType.Percent) {
-    discountPercent = invoice.value.discountPercent || 0
+  if (visit.value.discountType === DiscountType.Percent) {
+    discountPercent = visit.value.discountPercent || 0
     discountMoney = Math.floor((itemsActualMoney * discountPercent) / 100)
     discountType = DiscountType.Percent
   }
 
-  const surcharge = invoice.value.surcharge || 0
-  const expense = invoice.value.expense || 0
+  const surcharge = visit.value.surcharge || 0
+  const expense = visit.value.expense || 0
   const totalMoney = itemsActualMoney - discountMoney + surcharge
   const profit = totalMoney - totalCostAmount - expense
 
-  invoice.value.totalCostAmount = totalCostAmount
-  invoice.value.itemsActualMoney = itemsActualMoney
-  invoice.value.discountMoney = discountMoney
-  invoice.value.discountPercent = discountPercent
-  invoice.value.discountType = discountType
-  invoice.value.totalMoney = totalMoney
-  invoice.value.profit = profit
+  visit.value.totalCostAmount = totalCostAmount
+  visit.value.productsMoney = productsMoney
+  visit.value.proceduresMoney = proceduresMoney
+  visit.value.discountMoney = discountMoney
+  visit.value.discountPercent = discountPercent
+  visit.value.discountType = discountType
+  visit.value.totalMoney = totalMoney
+  visit.value.profit = profit
 })
 
 export { invoice }

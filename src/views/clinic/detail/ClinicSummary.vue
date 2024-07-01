@@ -18,7 +18,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { DiscountType, PaymentViewType } from '../../../modules/enum'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitApi, VisitStatus } from '../../../modules/visit'
 import { VisitBatchApi } from '../../../modules/visit-batch'
 import { VisitProcedure } from '../../../modules/visit-procedure'
 import { VisitProduct } from '../../../modules/visit-product'
@@ -67,6 +67,7 @@ const visitBatchUnsentListMap = ref<
 // visitBatchList cần được query khi không có
 // Nếu có rồi mà thay đổi thì được update qua socket
 onMounted(async () => {
+  console.log('🚀 ~ file: ClinicSummary.vue: ~ onMounted')
   if (!visit.value.visitBatchList) {
     const hasIsSent = visit.value.visitProductList!.some((i) => i.isSent === 1)
     if (!hasIsSent) return
@@ -88,7 +89,7 @@ watch(
       return
     }
     sendProductWaiting.value = true
-    visitProductList.value = VisitProduct.cloneList(newValue || [])
+    visitProductList.value = VisitProduct.fromList(newValue || [])
 
     const visitProductUnsentHasBatches = visitProductList.value.filter((i) => {
       return !i.isSent && i.product?.hasManageQuantity && i.product?.hasManageBatches
@@ -124,14 +125,14 @@ watch(
 watch(
   () => visit.value.visitProcedureList,
   (newValue, oldValue) => {
-    visitProcedureList.value = VisitProcedure.cloneList(newValue || [])
+    visitProcedureList.value = VisitProcedure.fromList(newValue || [])
   },
   { immediate: true }
 )
 watch(
   () => visit.value.visitRadiologyList,
   (newValue, oldValue) => {
-    visitRadiologyList.value = VisitRadiology.cloneList(newValue || [])
+    visitRadiologyList.value = VisitRadiology.fromList(newValue || [])
   },
   { immediate: true }
 )
@@ -254,7 +255,7 @@ const handleChangeVisitProductDiscountPercent = (discountPercent: number, index:
 const saveVisitItems = async () => {
   saveLoading.value = true
   try {
-    await VisitApi.updateVisitItemsMoney({
+    await VisitActionApi.updateVisitItemsMoney({
       visitId: visit.value.id,
       visitProductList: visitProductList.value.filter((item, index) => {
         return JSON.stringify(item) != JSON.stringify(visit.value.visitProductList![index])
@@ -339,7 +340,7 @@ const sendProductList = async () => {
       return AlertStore.addError('Không có hàng chưa gửi')
     }
 
-    await VisitApi.sendProductList({
+    await VisitActionApi.sendProductList({
       visitId: visit.value.id,
       visitProductSendList,
       visitBatchSendList: Object.values(visitBatchUnsentListMap.value)
@@ -464,7 +465,7 @@ const startPrint = async () => {
 }
 
 const startReopenVisit = async () => {
-  await VisitApi.reopen(visit.value.id)
+  await VisitActionApi.reopen(visit.value.id)
 }
 
 const clickReopenVisit = () => {
@@ -523,7 +524,7 @@ const handleMenuActionClick = (menu: { key: string }) => {
     </VueButton>
     <VueButton
       v-if="
-        [VisitStatus.Scheduled, VisitStatus.Waiting, VisitStatus.InProgress].includes(
+        [VisitStatus.Draft, VisitStatus.Waiting, VisitStatus.InProgress].includes(
           visit.visitStatus
         ) && visit.paid > visit.totalMoney
       "

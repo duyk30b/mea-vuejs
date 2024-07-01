@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { FileDoneOutlined, FormOutlined } from '@ant-design/icons-vue'
+import { FileDoneOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
+import { IconEditSquare } from '../../../common/icon-google'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
@@ -63,10 +64,9 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
 
 <template>
   <ModalBatchUpdate
-    v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
+    v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
     ref="modalBatchUpdate"
-    @success="handleModalBatchUpdateSuccess"
-  />
+    @success="handleModalBatchUpdateSuccess" />
   <div>
     <table class="w-full">
       <tr>
@@ -82,14 +82,17 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
         <td class="px-2">
-          <b>{{ product.unitQuantity }}</b> {{ product.unitDefaultName }}
+          <b>{{ product.unitQuantity }}</b>
+          {{ product.unitDefaultName }}
           <span v-if="product.unitDefaultRate != 1" class="ml-2">
-            (<b>{{ product.quantity }}</b> {{ product.unitBasicName }})
+            (
+            <b>{{ product.quantity }}</b>
+            {{ product.unitBasicName }})
           </span>
         </td>
       </tr>
       <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Giá nhập lần cuối</td>
+        <td class="px-2 py-1 whitespace-nowrap">Giá nhập</td>
         <td class="px-2 font-medium">
           {{ formatMoney(product.unitCostPrice) }}
         </td>
@@ -187,22 +190,34 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
           <tr v-for="(batch, index) in product.batchList || []" :key="index">
             <td>
               <div>Mã: {{ batch.id }}</div>
-              <div>S.Lô: {{ batch.lotNumber }}</div>
-              <div>HSD: {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}</div>
+              <div class="flex justify-between">
+                <div v-if="batch.lotNumber">S.Lô: {{ batch.lotNumber }}</div>
+                <div v-if="batch.expiryDate">
+                  HSD:
+                  <span style="font-weight: 500">
+                    {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex justify-between">
+                <div>
+                  G.Nhập:
+                  <span style="font-weight: 500">{{ formatMoney(batch.costPrice) }}</span>
+                </div>
+                <span>G.Sỉ: {{ formatMoney(batch.wholesalePrice) }}</span>
+                <span>G.Lẻ: {{ formatMoney(batch.retailPrice) }}</span>
+              </div>
             </td>
             <td class="text-right whitespace-nowrap">
               {{ batch.quantity }}
             </td>
-            <td class="text-center">
-              <div class="flex flex-col">
-                <a
-                  v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
-                  style="color: #eca52b"
-                  class="text-base"
-                  @click="modalBatchUpdate?.openModal(product, batch)"
-                >
-                  <FormOutlined />
-                </a>
+            <td>
+              <div
+                v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
+                style="color: #eca52b"
+                class="mx-1 text-xl flex items-center cursor-pointer justify-center"
+                @click="modalBatchUpdate?.openModal(batch)">
+                <IconEditSquare />
               </div>
             </td>
           </tr>
@@ -214,12 +229,13 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
         <thead>
           <tr>
             <th>Mã</th>
-            <th>Số lô</th>
-            <th>HSD</th>
-            <th>SL</th>
+            <th>Lô-HSD</th>
             <th>Đ.Vị</th>
-            <th v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]">G.Nhập</th>
-            <th>Sửa</th>
+            <th>SL</th>
+            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
+            <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
+            <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
+            <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
           </tr>
         </thead>
         <tbody>
@@ -229,32 +245,36 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
           <tr v-for="(batch, index) in product.batchList || []" :key="index">
             <td class="text-center">PB{{ batch.id }}</td>
             <td class="text-center">
-              {{ batch.lotNumber }}
-            </td>
-            <td class="text-center">
-              {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-            </td>
-            <td class="text-center">
-              {{ batch.unitQuantity }}
+              <div class="flex justify-between gap-2">
+                <div v-if="batch.lotNumber" class="flex-1">{{ batch.lotNumber }} -</div>
+                <div v-if="batch.expiryDate" class="flex-1 text-center">
+                  {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+                </div>
+              </div>
             </td>
             <td class="text-center">
               {{ batch.product?.unitDefaultName }}
             </td>
-            <td
-              v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE]"
-              class="text-right"
-            >
+            <td class="text-center">
+              {{ batch.unitQuantity }}
+            </td>
+            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
               {{ formatMoney(batch.unitCostPrice) }}
             </td>
-            <td class="text-center">
-              <a
-                v-if="permissionIdMap[PermissionId.PRODUCT_BATCH_UPDATE]"
+            <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
+              {{ formatMoney(batch.unitWholesalePrice) }}
+            </td>
+            <td v-if="settingStore.SYSTEM_SETTING.retailPrice" class="text-right">
+              {{ formatMoney(batch.unitRetailPrice) }}
+            </td>
+            <td>
+              <div
+                v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
                 style="color: #eca52b"
-                class="mx-1 text-xl"
-                @click="modalBatchUpdate?.openModal(product, batch)"
-              >
-                <FormOutlined />
-              </a>
+                class="mx-1 text-xl flex items-center cursor-pointer justify-center"
+                @click="modalBatchUpdate?.openModal(batch)">
+                <IconEditSquare />
+              </div>
             </td>
           </tr>
         </tbody>

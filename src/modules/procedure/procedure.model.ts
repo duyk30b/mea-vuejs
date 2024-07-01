@@ -1,27 +1,10 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
-import { BaseModel } from '../base.model'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-
-export class Procedure extends BaseModel {
-  @Expose()
+export class Procedure {
+  id: number
   name: string // Tên dịch vụ
-
-  @Expose()
   group: string // Nhóm dịch vụ ...
-
-  @Expose()
   price: number // Giá dự kiến
-
-  @Expose()
-  consumableHint: string // Gợi ý vậy tư tiêu hao
-
-  @Expose()
   isActive: 1 | 0 // Trạng thái
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
   static init() {
@@ -37,43 +20,13 @@ export class Procedure extends BaseModel {
     return ins
   }
 
-  static toBasic(root: Procedure) {
+  static from(source: Procedure) {
     const ins = new Procedure()
-    Object.assign(ins, root)
+    Object.assign(ins, source)
     return ins
   }
 
-  static toBasics(objects: Procedure[]): Procedure[] {
-    return objects.map((i) => Procedure.toBasic(i))
-  }
-
-  static fromPlain(plain: Record<string, any>): Procedure {
-    return plainToInstance(Procedure, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromPlains(plains: Record<string, any>[]): Procedure[] {
-    return plainToInstance(Procedure, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static toPlain(
-    instance: Procedure,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
-      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
+  static fromList(sourceList: Procedure[]): Procedure[] {
+    return sourceList.map((i) => Procedure.from(i))
   }
 }

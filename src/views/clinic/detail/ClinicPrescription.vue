@@ -1,11 +1,5 @@
 <script lang="ts" setup>
-import {
-  DeleteOutlined,
-  PlusOutlined,
-  PrinterOutlined,
-  SaveOutlined,
-  ShoppingCartOutlined,
-} from '@ant-design/icons-vue'
+import { DeleteOutlined, PlusOutlined, ShoppingCartOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { BasicEditor } from '../../../ckeditor/class-editor'
 import VueButton from '../../../common/VueButton.vue'
@@ -16,7 +10,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../modules/product'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitStatus } from '../../../modules/visit'
 import { VisitProduct } from '../../../modules/visit-product'
 import { customFilter } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
@@ -44,7 +38,7 @@ const advice = ref('')
 watch(
   () => visit.value.visitProductList,
   (newValue, oldValue) => {
-    visitProductList.value = VisitProduct.cloneList(newValue || [])
+    visitProductList.value = VisitProduct.fromList(newValue || [])
   },
   { immediate: true }
 )
@@ -63,6 +57,7 @@ const disabledButton = computed(() => {
 })
 
 onMounted(async () => {
+  console.log('🚀 ~ file: ClinicPrescription.vue ~ onMounted')
   try {
     await productStore.refreshDB()
   } catch (error: any) {
@@ -84,7 +79,7 @@ const searchingProduct = async (text: string) => {
 
 const selectProduct = async (productData?: Product) => {
   if (productData) {
-    product.value = Product.clone(productData)
+    product.value = Product.from(productData)
     unitRate.value = productData.unitDefaultRate
     hintUsage.value = productData.hintUsage
   } else {
@@ -100,7 +95,7 @@ const addPrescriptionItem = () => {
   const visitProduct = VisitProduct.blank()
   visitProduct.productId = product.value.id
   visitProduct.isSent = 0
-  visitProduct.product = Product.clone(product.value)
+  visitProduct.product = Product.from(product.value)
   visitProduct.unitRate = unitRate.value
   visitProduct.quantityPrescription = quantity.value
   visitProduct.quantity = quantity.value
@@ -165,7 +160,7 @@ const startPrint = async () => {
 }
 
 const saveVisitProducts = async () => {
-  await VisitApi.replaceVisitPrescription({
+  await VisitActionApi.replaceVisitPrescription({
     visitId: visit.value.id,
     visitProductList: visitProductList.value.filter((i) => !i.isSent),
     advice: advice.value,
@@ -180,8 +175,7 @@ const saveVisitProducts = async () => {
       <span>
         <a
           v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
-          @click="modalProductUpsert?.openModalFromInvoice()"
-        >
+          @click="modalProductUpsert?.openModalFromInvoice()">
           Thêm thuốc mới
         </a>
       </span>
@@ -196,18 +190,18 @@ const saveVisitProducts = async () => {
         placeholder="Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
         :disabled="[VisitStatus.Completed, VisitStatus.Debt].includes(visit.visitStatus)"
         @selectItem="({ data }) => selectProduct(data)"
-        @update:text="searchingProduct"
-      >
+        @update:text="searchingProduct">
         <template #option="{ item: { data } }">
           <div>
-            <b>{{ data.brandName }}</b> -
+            <b>{{ data.brandName }}</b>
+            -
             <span style="font-weight: 700" :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
               {{ data.unitQuantity }}
             </span>
             {{ data.unitDefaultName }}
-            - Giá <span style="font-weight: 600">{{ formatMoney(data.unitRetailPrice) }}</span> /{{
-              data.unitDefaultName
-            }}
+            - Giá
+            <span style="font-weight: 600">{{ formatMoney(data.unitRetailPrice) }}</span>
+            /{{ data.unitDefaultName }}
           </div>
           <div>{{ data.substance }}</div>
         </template>
@@ -216,15 +210,17 @@ const saveVisitProducts = async () => {
 
     <div class="mt-4">
       <div class="flex flex-wrap item-center gap-2">
-        <span> Số lượng </span>
+        <span>Số lượng</span>
         <span v-if="unitRate !== 1">
-          (Quy đổi: <b>{{ quantity }}</b> {{ product?.unitBasicName }})
+          (Quy đổi:
+          <b>{{ quantity }}</b>
+          {{ product?.unitBasicName }})
         </span>
         <span
           v-if="product.id && product?.hasManageQuantity"
-          :class="quantity > (product?.quantity || 0) ? 'text-red-500 font-bold' : ''"
-        >
-          ( Tồn kho: <b>{{ Number((product?.quantity / unitRate).toFixed(3)) }}</b>
+          :class="quantity > (product?.quantity || 0) ? 'text-red-500 font-bold' : ''">
+          ( Tồn kho:
+          <b>{{ Number((product?.quantity / unitRate).toFixed(3)) }}</b>
           {{ product.getUnitNameByRate(unitRate) }}
           - Giá {{ formatMoney(product.retailPrice * unitRate) }})
         </span>
@@ -235,17 +231,14 @@ const saveVisitProducts = async () => {
             v-model:value="unitRate"
             :disabled="product.unitObject.length <= 1"
             :options="product.unitObject.map((i) => ({ value: i.rate, text: i.name, data: i }))"
-            required
-          >
-          </VueSelect>
+            required></VueSelect>
         </div>
         <div class="flex-1">
           <InputNumber
             :value="quantity / unitRate"
             required
             :validate="{ gt: 0 }"
-            @update:value="(value) => (quantity = value * unitRate)"
-          />
+            @update:value="(value) => (quantity = value * unitRate)" />
         </div>
       </div>
     </div>
@@ -258,17 +251,15 @@ const saveVisitProducts = async () => {
           ...settingStore.PRODUCT_HINT_USAGE,
         ]"
         :maxHeight="320"
-        :logic-filter="(item: any, text: string) => customFilter(item, text)"
-      >
-      </InputHint>
+        :logic-filter="(item: any, text: string) => customFilter(item, text)"></InputHint>
     </div>
     <div class="mt-4 flex justify-center">
       <VueButton
         :disabled="[VisitStatus.Completed, VisitStatus.Debt].includes(visit.visitStatus)"
         color="blue"
-        type="submit"
-      >
-        <PlusOutlined /> Thêm vào đơn
+        type="submit">
+        <PlusOutlined />
+        Thêm vào đơn
       </VueButton>
     </div>
   </form>
@@ -304,11 +295,10 @@ const saveVisitProducts = async () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0 || !!visit.isSent"
-                  @click="changeItemPosition(index, -1)"
-                >
+                  @click="changeItemPosition(index, -1)">
                   <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
                 </button>
-                <span> {{ index + 1 }} </span>
+                <span>{{ index + 1 }}</span>
                 <button
                   style="
                     border: none;
@@ -319,8 +309,7 @@ const saveVisitProducts = async () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === visitProductList.length - 1 || !!visit.isSent"
-                  @click="changeItemPosition(index, 1)"
-                >
+                  @click="changeItemPosition(index, 1)">
                   <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
                 </button>
               </div>
@@ -336,8 +325,7 @@ const saveVisitProducts = async () => {
                   visitProduct.isSent ||
                   [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
                 "
-                class="text-center"
-              >
+                class="text-center">
                 {{ visitProduct.unitQuantityPrescription }}
               </div>
               <div v-else class="flex items-center justify-between">
@@ -345,8 +333,7 @@ const saveVisitProducts = async () => {
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="visitProduct.quantityPrescription <= 0 || !!visitProduct.isSent"
-                  @click="changeQuantityTable(index, visitProduct.unitQuantityPrescription - 1)"
-                >
+                  @click="changeQuantityTable(index, visitProduct.unitQuantityPrescription - 1)">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
@@ -354,15 +341,13 @@ const saveVisitProducts = async () => {
                     :value="visitProduct.unitQuantityPrescription"
                     textAlign="right"
                     :disabled="!!visitProduct.isSent"
-                    @update:value="(value) => changeQuantityTable(index, value)"
-                  />
+                    @update:value="(value) => changeQuantityTable(index, value)" />
                 </div>
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="!!visitProduct.isSent"
-                  @click="changeQuantityTable(index, visitProduct.unitQuantityPrescription + 1)"
-                >
+                  @click="changeQuantityTable(index, visitProduct.unitQuantityPrescription + 1)">
                   <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
               </div>
@@ -385,8 +370,7 @@ const saveVisitProducts = async () => {
                   )
                 "
                 class="text-red-500"
-                @click="visitProductList!.splice(index, 1)"
-              >
+                @click="visitProductList!.splice(index, 1)">
                 <DeleteOutlined />
               </a>
               <a-tooltip v-if="visitProduct.isSent">
@@ -424,14 +408,13 @@ const saveVisitProducts = async () => {
     </div>
   </div>
   <div class="mt-4 flex gap-4">
-    <VueButton color="blue" icon="print" @click="startPrint"> In đơn thuốc</VueButton>
+    <VueButton color="blue" icon="print" @click="startPrint">In đơn thuốc</VueButton>
     <VueButton
       color="blue"
       class="ml-auto"
       :disabled="disabledButton"
       icon="save"
-      @click="saveVisitProducts"
-    >
+      @click="saveVisitProducts">
       Lưu lại
     </VueButton>
   </div>

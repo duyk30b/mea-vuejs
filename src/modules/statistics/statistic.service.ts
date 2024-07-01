@@ -29,7 +29,7 @@ export class StatisticService {
       sumCostAmount: i.sumCostAmount as number,
       sumQuantity: i.sumQuantity as number,
       sumProfit: i.sumProfit as number,
-      product: Product.fromPlain(i.product),
+      product: Product.from(i.product),
     }))
   }
 
@@ -68,7 +68,7 @@ export class StatisticService {
       procedureId: i.procedureId as number,
       sumQuantity: i.sumQuantity as number,
       sumActualMoney: i.sumActualMoney as number,
-      procedure: Procedure.fromPlain(i.procedure),
+      procedure: Procedure.from(i.procedure),
     }))
   }
 
@@ -86,7 +86,7 @@ export class StatisticService {
       procedureId: i.procedureId as number,
       sumQuantity: i.sumQuantity as number,
       sumActualMoney: i.sumActualMoney as number,
-      procedure: Procedure.fromPlain(i.procedure),
+      procedure: Procedure.from(i.procedure),
     }))
   }
 
@@ -108,7 +108,7 @@ export class StatisticService {
       sumProfit: i.sumProfit as number,
       sumDebt: i.sumDebt as number,
       countInvoice: i.countInvoice as number,
-      customer: Customer.fromPlain(i.customer),
+      customer: Customer.from(i.customer),
     }))
   }
 
@@ -128,7 +128,7 @@ export class StatisticService {
       sumProfit: i.sumProfit as number,
       sumDebt: i.sumDebt as number,
       countVisit: i.countVisit as number,
-      customer: Customer.fromPlain(i.customer),
+      customer: Customer.from(i.customer),
     }))
   }
 

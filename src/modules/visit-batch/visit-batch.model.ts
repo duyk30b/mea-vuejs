@@ -1,53 +1,44 @@
-import { Expose, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
 import { BaseModel } from '../base.model'
 import { Batch } from '../batch/batch.model'
-import { VisitProduct } from '../visit-product'
 
-export class VisitBatch extends BaseModel {
-  @Expose()
+export class VisitBatch {
+  id: number
   visitId: number
-
-  @Expose()
   productId: number
-
-  @Expose()
   batchId: number
-
-  @Expose()
   visitProductId: number
-
-  @Expose()
   quantity: number
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Batch)
   batch?: Batch
 
-  @Expose({ toClassOnly: true })
-  @Type(() => VisitProduct)
-  visitProduct?: VisitProduct
-
-  static fromPlain(plain: Record<string, any>): VisitBatch {
-    return plainToInstance(VisitBatch, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static init(): VisitBatch {
+    const ins = new VisitBatch()
+    ins.id = 0
+    ins.quantity = 0
+    return ins
   }
 
-  static fromPlains(plains: Record<string, any>[]): VisitBatch[] {
-    return plainToInstance(VisitBatch, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static blank(): VisitBatch {
+    const ins = VisitBatch.init()
+    ins.batch = Batch.init()
+    return ins
   }
 
-  static toPlain(instance: VisitBatch): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static from(source: VisitBatch) {
+    const target = new VisitBatch()
+    Object.assign(target, source)
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      if (!source.batch) {
+        target.batch = source.batch
+      } else {
+        const batch = new Batch()
+        Object.assign(batch, source.batch)
+        target.batch = batch
+      }
+    }
+    return target
+  }
+
+  static fromList(sourceList: VisitBatch[]): VisitBatch[] {
+    return sourceList.map((i) => VisitBatch.from(i))
   }
 }

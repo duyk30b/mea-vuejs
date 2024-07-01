@@ -1,25 +1,20 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  LoadingOutlined,
-  SaveOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
+import { CloseOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import VueModal from '../../../common/VueModal.vue'
 import { InputDate, InputHint, InputOptions, InputText } from '../../../common/vue-form'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { VisitApi } from '../../../modules/visit/visit.api'
 import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { convertViToEn, customFilter, timeToText } from '../../../utils'
-import ModalVisitCreateSettingScreen from './ModalVisitCreateSettingScreen.vue'
-import VueButton from '../../../common/VueButton.vue'
+import { VisitClinicApi } from '../../../modules/visit'
+import { customFilter, timeToText } from '../../../utils'
+import ModalClinicVisitCreateSetting from './ModalClinicVisitCreateSetting.vue'
 
-const modalVisitCreateSettingScreen = ref<InstanceType<typeof ModalVisitCreateSettingScreen>>()
+const modalClinicVisitCreateSetting = ref<InstanceType<typeof ModalClinicVisitCreateSetting>>()
 const visitCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
@@ -64,12 +59,12 @@ const handleRegisterVisit = async () => {
   saveLoading.value = true
   try {
     if (!customer.value.id) {
-      await VisitApi.registerWithNewCustomer({
+      await VisitClinicApi.registerWithNewCustomer({
         customer: customer.value,
         registeredAt: Date.now(),
       })
     } else {
-      await VisitApi.registerWithExistCustomer({
+      await VisitClinicApi.registerWithExistCustomer({
         customerId: customer.value.id,
         registeredAt: Date.now(),
       })
@@ -90,8 +85,8 @@ const handleUpdateCustomer = async () => {
   }
   if (!customer.value.id) return
   const data = await customerStore.updateOne(customer.value.id, customer.value)
-  customer.value = Customer.fromInstance(data)
-  rootCustomer.value = Customer.fromInstance(data)
+  customer.value = Customer.from(data)
+  rootCustomer.value = Customer.from(data)
 }
 
 const handleChangeProvince = async (province: string) => {
@@ -125,8 +120,8 @@ const handleChangeDistrict = async (district: string) => {
 const selectCustomer = async (data: Customer) => {
   try {
     if (data) {
-      customer.value = Customer.fromInstance(data)
-      rootCustomer.value = Customer.fromInstance(data)
+      customer.value = Customer.from(data)
+      rootCustomer.value = Customer.from(data)
 
       if (data.addressProvince) {
         districtList.value = await AddressInstance.getDistrictsByProvince(data.addressProvince)
@@ -188,8 +183,7 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalVisitCreateSettingScreen?.openModal()"
-        >
+          @click="modalClinicVisitCreateSetting?.openModal()">
           <SettingOutlined />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -214,11 +208,11 @@ defineExpose({ openModal })
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"
-              @update:text="searchingCustomer"
-            >
+              @update:text="searchingCustomer">
               <template #option="{ item: { data } }">
                 <div>
-                  <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                  <b>{{ data.fullName }}</b>
+                  - {{ data.phone }} -
                   {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div>{{ data.addressString }}</div>
@@ -234,30 +228,26 @@ defineExpose({ openModal })
               v-model:value="customer.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (customer.phone = e.replace(/ /g, ''))"
-            />
+              @update:value="(e) => (customer.phone = e.replace(/ /g, ''))" />
           </div>
         </div>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.birthday"
-          style="flex-grow: 1; flex-basis: 250px"
-        >
+          style="flex-grow: 1; flex-basis: 250px">
           <div>Ngày sinh</div>
           <div>
             <InputDate
               v-model:value="customer.birthday"
               format="DD/MM/YYYY"
               type-parser="number"
-              class="w-full"
-            />
+              class="w-full" />
           </div>
         </div>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.identityCard"
-          style="flex-grow: 1; flex-basis: 250px"
-        >
+          style="flex-grow: 1; flex-basis: 250px">
           <div style="width: 100px; flex: none">Số CCCD</div>
           <div class="flex-auto">
             <InputText v-model:value="customer.identityCard" placeholder="Số căn cước" />
@@ -266,13 +256,12 @@ defineExpose({ openModal })
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender"
-          style="flex-grow: 1; flex-basis: 150px"
-        >
+          style="flex-grow: 1; flex-basis: 150px">
           <div>Giới tính</div>
           <div>
             <a-radio-group v-model:value="customer.gender">
-              <a-radio :value="1"> Nam </a-radio>
-              <a-radio :value="0"> Nữ </a-radio>
+              <a-radio :value="1">Nam</a-radio>
+              <a-radio :value="0">Nữ</a-radio>
             </a-radio-group>
           </div>
         </div>
@@ -280,8 +269,7 @@ defineExpose({ openModal })
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
           class="grow basis-[80%]"
-          style="margin-bottom: -1rem"
-        >
+          style="margin-bottom: -1rem">
           Địa chỉ
         </div>
         <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
@@ -291,8 +279,7 @@ defineExpose({ openModal })
             :maxHeight="180"
             placeholder="Thành Phố / Tỉnh"
             :logic-filter="(item: string, text: string) => customFilter(item, text)"
-            @update:value="handleChangeProvince"
-          />
+            @update:value="handleChangeProvince" />
         </div>
         <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
           <InputHint
@@ -301,8 +288,7 @@ defineExpose({ openModal })
             :options="districtList"
             :logic-filter="(item: string, text: string) => customFilter(item, text)"
             placeholder="Quận / Huyện"
-            @update:value="handleChangeDistrict"
-          />
+            @update:value="handleChangeDistrict" />
         </div>
         <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[250px]">
           <InputHint
@@ -310,15 +296,13 @@ defineExpose({ openModal })
             :maxHeight="180"
             :options="wardList"
             placeholder="Phường / Xã"
-            :logic-filter="(item: string, text: string) => customFilter(item, text)"
-          />
+            :logic-filter="(item: string, text: string) => customFilter(item, text)" />
         </div>
 
         <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address" class="grow basis-[80%]">
           <InputText
             v-model:value="customer.addressStreet"
-            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-          />
+            placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
         </div>
 
         <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative" class="grow basis-[80%]">
@@ -326,8 +310,7 @@ defineExpose({ openModal })
           <div>
             <InputText
               v-model:value="customer.relative"
-              placeholder="Tên người thân, số điện thoại"
-            />
+              placeholder="Tên người thân, số điện thoại" />
           </div>
         </div>
 
@@ -342,15 +325,16 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex flex-wrap gap-4">
           <VueButton class="mr-auto btn" type="reset" @click="closeModal">
-            <CloseOutlined /> Hủy bỏ
+            <CloseOutlined />
+            Hủy bỏ
           </VueButton>
           <VueButton
             v-if="!!customer.id"
             color="blue"
             :disabled="disabledUpdateCustomer"
-            @click="handleUpdateCustomer"
-          >
-            <SaveOutlined /> Cập nhật thông tin
+            @click="handleUpdateCustomer">
+            <SaveOutlined />
+            Cập nhật thông tin
           </VueButton>
           <VueButton class="btn btn-blue" type="submit" :loading="saveLoading">
             <template #icon>
@@ -362,10 +346,9 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalVisitCreateSettingScreen
+  <ModalClinicVisitCreateSetting
     v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
-    ref="modalVisitCreateSettingScreen"
-  />
+    ref="modalClinicVisitCreateSetting" />
 </template>
 
 <style lang="scss">

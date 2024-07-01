@@ -2,8 +2,9 @@ import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } fr
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
 import { clinicRouter } from './clinic.router'
-import { warehouseRouter } from './warehouse.router'
+import { invoiceRouter } from './invoice.router'
 import { statisticRouter } from './statistic.router'
+import { warehouseRouter } from './warehouse.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -27,38 +28,9 @@ const Router = createRouter({
           meta: { title: 'Trang chủ' },
         },
         clinicRouter,
+        invoiceRouter,
         warehouseRouter,
         statisticRouter,
-        {
-          path: 'invoice',
-          name: 'Invoice',
-          redirect: () => ({ name: 'InvoiceList' }),
-          children: [
-            {
-              path: 'list',
-              name: 'InvoiceList',
-              meta: { title: 'Hóa đơn' },
-              component: () => import('../views/invoice/list/InvoiceList.vue'),
-            },
-            {
-              path: 'detail/:id',
-              name: 'InvoiceDetail',
-              meta: { title: 'Hóa đơn' },
-              component: () => import('../views/invoice/detail/InvoiceDetail.vue'),
-            },
-            {
-              path: 'upsert/:id?',
-              name: 'InvoiceUpsert',
-              component: () => import('../views/invoice/upsert/InvoiceUpsert.vue'),
-              meta: {
-                title: (route: RouteLocationNormalizedLoaded) => {
-                  if (route.query?.mode === 'UPDATE') return 'Hóa đơn'
-                  return 'Hóa đơn'
-                },
-              },
-            },
-          ],
-        },
         {
           path: 'customer',
           name: 'Customer',

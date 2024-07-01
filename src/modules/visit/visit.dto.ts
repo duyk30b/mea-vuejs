@@ -6,11 +6,13 @@ export class VisitGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
-    customerPayments?: boolean
+    customerPaymentList?: boolean
     visitProductList?: boolean
     visitProcedureList?: boolean
     visitRadiologyList?: boolean
     visitDiagnosis?: boolean
+    visitSurchargeList?: boolean
+    visitExpenseList?: boolean
   }
 
   filter?: {

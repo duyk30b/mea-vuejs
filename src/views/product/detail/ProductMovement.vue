@@ -107,7 +107,7 @@ watch(
 
 const selectBatch = async (data?: Batch) => {
   if (data) {
-    currentBatch.value = Batch.fromInstance(data)
+    currentBatch.value = Batch.from(data)
     await startFetchBatchMovements()
   } else {
     currentBatch.value = Batch.blank()
@@ -163,12 +163,11 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           :maxHeight="260"
           placeholder="Chọn lô hàng"
           @selectItem="({ data }) => selectBatch(data)"
-          @update:text="searchingBatch"
-        >
+          @update:text="searchingBatch">
           <template #option="{ item: { data } }">
             <div>
-              <b>{{ data.batch }}</b> {{ timeToText(data.expiryDate) }} - ({{ data.quantity }}
-              {{ product.unitBasicName }})
+              <b>{{ data.batch }}</b>
+              {{ timeToText(data.expiryDate) }} - ({{ data.quantity }} {{ product.unitBasicName }})
             </div>
           </template>
         </InputOptions>
@@ -187,8 +186,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             { value: VoucherType.Invoice, text: 'Bán hàng' },
             { value: VoucherType.Visit, text: 'Phòng Khám' },
           ]"
-          @selectItem="startFetchMovements"
-        />
+          @selectItem="startFetchMovements" />
       </div>
     </div>
   </div>
@@ -196,7 +194,11 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
     <table>
       <thead>
         <tr>
-          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
           <th>Số lượng</th>
         </tr>
       </thead>
@@ -258,15 +260,15 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           </td>
           <td>
             <div class="flex justify-between">
-              <span v-if="movement.quantity > 0">Nhập: </span>
-              <span v-if="movement.quantity < 0">Xuất: </span>
-              <span class="font-bold"> {{ movement.unitQuantity }} </span>
+              <span v-if="movement.quantity > 0">Nhập:</span>
+              <span v-if="movement.quantity < 0">Xuất:</span>
+              <span class="font-bold">{{ movement.unitQuantity }}</span>
               <span v-if="movement.unitRate !== 1">
                 &nbsp;{{ movement.unitName }} ({{ movement.quantity }} {{ product.unitBasicName }})
               </span>
             </div>
             <div class="flex justify-between">
-              <span>Giá: </span>
+              <span>Giá:</span>
               <span>
                 {{ formatMoney(movement.unitActualPrice) }}
                 <span v-if="movement.unitName">/ {{ movement.unitName }}</span>
@@ -278,10 +280,10 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
             </div>
             <div v-if="!currentBatch.id" class="flex justify-between">
               <span>Vốn:</span>
-              <span
-                >{{ formatMoney((movement as ProductMovement).openCostAmount) }} ➞
-                {{ formatMoney((movement as ProductMovement).closeCostAmount) }}</span
-              >
+              <span>
+                {{ formatMoney((movement as ProductMovement).openCostAmount) }} ➞
+                {{ formatMoney((movement as ProductMovement).closeCostAmount) }}
+              </span>
             </div>
           </td>
         </tr>
@@ -294,15 +296,18 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         size="small"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
   <div v-if="!isMobile" class="table-wrapper mt-4">
     <table>
       <thead>
         <tr>
-          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
           <th>Nhập/Xuất</th>
           <th>Tồn kho ({{ product.unitBasicName }})</th>
           <th>Giá</th>
@@ -400,14 +405,13 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
                 font-style: italic;
                 white-space: nowrap;
                 color: var(--text-red);
-              "
-            >
+              ">
               {{ formatMoney(movement.unitExpectedPrice) }}
-              <span v-if="movement.unitRate !== 1"> / {{ movement.unitName }} </span>
+              <span v-if="movement.unitRate !== 1">/ {{ movement.unitName }}</span>
             </div>
             <div>
               {{ formatMoney(movement.unitActualPrice) }}
-              <span v-if="movement.unitRate !== 1"> / {{ movement.unitName }} </span>
+              <span v-if="movement.unitRate !== 1">/ {{ movement.unitName }}</span>
             </div>
             <div v-if="movement.unitRate !== 1" class="text-xs">
               ({{ formatMoney(movement.actualPrice) }} / {{ product.unitBasicName }})
@@ -426,8 +430,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         v-model:pageSize="limit"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
 </template>

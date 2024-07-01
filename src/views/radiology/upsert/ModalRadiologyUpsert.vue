@@ -18,7 +18,7 @@ const saveLoading = ref(false)
 const openModal = async (instance?: Radiology) => {
   showModal.value = true
   if (instance) {
-    radiology.value = Radiology.toBasic(instance)
+    radiology.value = Radiology.from(instance)
   }
 }
 
@@ -79,9 +79,15 @@ defineExpose({ openModal })
           </div>
         </div>
         <div class="mt-3">
-          <div>Mô tả ban đầu</div>
+          <div>Mô tả mặc định</div>
           <div class="description">
-            <ckeditor v-model="radiology.default" :editor="BasicEditor"></ckeditor>
+            <ckeditor v-model="radiology.descriptionDefault" :editor="BasicEditor"></ckeditor>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div>Kết luận mặc định</div>
+          <div>
+            <InputText v-model:value="radiology.resultDefault" />
           </div>
         </div>
       </div>

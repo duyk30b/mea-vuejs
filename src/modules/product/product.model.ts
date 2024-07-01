@@ -1,75 +1,28 @@
-import {
-  Expose,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-  Type,
-} from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
+import { useSettingStore } from '../_me/setting.store'
 import { Batch } from '../batch/batch.model'
 import type { UnitType } from '../enum'
-import { useSettingStore } from '../_me/setting.store'
 
 export class Product {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose()
   brandName: string // Tên biệt dược
-
-  @Expose()
   substance: string // Hoạt chất
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   quantity: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   costAmount: number // Tổng vốn
-
-  @Expose()
   costPrice: number // Giá nhập
-
-  @Expose()
   wholesalePrice: number // Giá bán sỉ
-
-  @Expose()
   retailPrice: number // Giá bán lẻ
-
-  @Expose()
   hasManageQuantity: 0 | 1
-
-  @Expose()
   hasManageBatches: 0 | 1
-
-  @Expose()
   group: string // Nhóm sản phẩm: kháng sinh, dinh dưỡng ...
-
-  @Expose()
   unit: string
-
-  @Expose()
   route: string // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
-
-  @Expose()
   source: string // Nguồn gốc: ... Ấn Độ, Ý, Pháp, ...
-
-  @Expose()
   image: string
-
-  @Expose()
   hintUsage: string // Gợi ý cách sử dụng
-
-  @Expose()
   isActive: 1 | 0 // Trạng thái
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   updatedAt: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   deletedAt: number | null
 
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Batch)
   batchList?: Batch[]
 
   get unitObject(): UnitType[] {
@@ -133,6 +86,11 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
+  get costPriceAverage() {
+    if (this.quantity === 0) return this.costPrice
+    return Math.floor(this.costAmount / this.quantity)
+  }
+
   public getUnitNameByRate(rate: number) {
     return this.unitObject?.find((u) => u.rate === rate)?.name || ''
   }
@@ -160,75 +118,20 @@ export class Product {
     return ins
   }
 
-  static toBasic(root: Product) {
-    const ins = new Product()
-    Object.assign(ins, root)
-    delete ins.batchList
-    return ins
-  }
-
-  static toBasics(roots: Product[]) {
-    return roots.map((i) => Product.toBasic(i))
-  }
-
-  static fromObject(object: Partial<Product>) {
-    const ins = new Product()
-    Object.assign(ins, object)
-    return ins
-  }
-
-  static fromObjects(objects: Partial<Product>[]): Product[] {
-    return objects.map((i) => Product.fromObject(i))
-  }
-
-  static fromPlain(plain: Record<string, any>): Product {
-    return plainToInstance(Product, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromPlains(plains: Record<string, any>[]): Product[] {
-    return plainToInstance(Product, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromInstance(instance: Product): Product {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
-      throw new Error('Product.fromInstance error: Instance must be from class Product')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static toPlain(
-    instance: Product,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Product') {
-      throw new Error('Product.fromInstance error: Instance must be from class Product')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static clone(instance: Product): Product {
-    const product = Product.fromInstance(instance)
-    if (instance.batchList) {
-      product.batchList = instance.batchList.map((batch) => {
-        return Batch.fromInstance(batch)
+  static from(source: Product) {
+    const target = new Product()
+    Object.assign(target, source)
+    if (source.batchList) {
+      target.batchList = source.batchList.map((i) => {
+        const batch = new Batch()
+        Object.assign(batch, i)
+        return batch
       })
     }
-    return product
+    return target
+  }
+
+  static fromList(sourceList: Product[]): Product[] {
+    return sourceList.map((i) => Product.from(i))
   }
 }

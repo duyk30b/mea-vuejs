@@ -7,4 +7,4 @@ export { default as IconFluidMed } from './IconFluidMed.vue'
 export { default as IconMedicalService } from './IconMedicalService.vue'
 export { default as IconRadiology } from './IconRadiology.vue'
 export { default as IconStethoscope } from './IconStethoscope.vue'
-
+export { default as IconVisibility } from './IconVisibility.vue'

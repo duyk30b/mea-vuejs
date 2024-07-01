@@ -11,7 +11,7 @@ export class VisitBatchApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: VisitBatch.fromPlains(data),
+      data: VisitBatch.fromList(data),
     }
   }
 }

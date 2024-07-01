@@ -44,7 +44,7 @@ const wardList = ref<string[]>([])
 const openModal = async (instance?: Distributor) => {
   try {
     showModal.value = true
-    distributor.value = instance ? Distributor.toBasic(instance) : Distributor.blank()
+    distributor.value = instance ? Distributor.from(instance) : Distributor.blank()
 
     provinceList.value = await AddressInstance.getAllProvinces()
     if (instance?.addressProvince) {
@@ -157,8 +157,7 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDistributorUpsertSettingScreen?.openModal()"
-        >
+          @click="modalDistributorUpsertSettingScreen?.openModal()">
           <!-- <SettingOutlined /> -->
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
@@ -180,8 +179,7 @@ defineExpose({ openModal })
               v-model:value="distributor.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))"
-            />
+              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))" />
           </div>
         </div>
 
@@ -195,8 +193,7 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 placeholder="Thành Phố / Tỉnh"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                @update:value="handleChangeProvince"
-              />
+                @update:value="handleChangeProvince" />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -205,8 +202,7 @@ defineExpose({ openModal })
                 :options="districtList"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
                 placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict"
-              />
+                @update:value="handleChangeDistrict" />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -214,15 +210,13 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 :options="wardList"
                 placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              />
+                :logic-filter="(item: string, text: string) => customFilter(item, text)" />
             </div>
 
             <div class="grow basis-[80%]">
               <InputText
                 v-model:value="distributor.addressStreet"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-              />
+                placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
             </div>
           </div>
         </div>
@@ -238,8 +232,7 @@ defineExpose({ openModal })
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(distributor.isActive)"
-            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)"
-          />
+            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)" />
           <div v-if="!distributor.isActive" class="ml-4">
             Tạm thời không thể nhập hàng từ nhà cung cấp này
           </div>
@@ -252,8 +245,7 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
             color="red"
             type="button"
-            @click="clickDelete"
-          >
+            @click="clickDelete">
             Xóa
           </VueButton>
           <VueButton class="ml-auto" type="reset" @click="handleClose">
@@ -271,6 +263,5 @@ defineExpose({ openModal })
   </VueModal>
   <ModalDistributorUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
-    ref="modalDistributorUpsertSettingScreen"
-  />
+    ref="modalDistributorUpsertSettingScreen" />
 </template>

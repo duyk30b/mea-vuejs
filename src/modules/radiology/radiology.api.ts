@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import {
   RadiologyDetailQuery,
   RadiologyGetQuery,
@@ -18,7 +17,7 @@ export class RadiologyApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Radiology.fromPlains(data),
+      data: Radiology.fromList(data),
     }
   }
 
@@ -29,7 +28,7 @@ export class RadiologyApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Radiology.fromPlains(data),
+      data: Radiology.fromList(data),
     }
   }
 
@@ -37,7 +36,7 @@ export class RadiologyApi {
     async (params: RadiologyListQuery): Promise<Radiology[]> => {
       const response = await AxiosInstance.get('/radiology/list', { params })
       const { data } = response.data as BaseResponse
-      return Radiology.fromPlains(data)
+      return Radiology.fromList(data)
     },
     200
   )
@@ -46,27 +45,35 @@ export class RadiologyApi {
     const params = RadiologyGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/radiology/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse
-    return Radiology.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ radiology: any }>
+    return Radiology.from(data.radiology)
   }
 
-  static async createOne(instance: Radiology) {
-    const plain = Radiology.toPlain(instance, USER_CREATE)
-    const response = await AxiosInstance.post('/radiology/create', plain)
-    const { data } = response.data as BaseResponse
-    return Radiology.fromPlain(data)
+  static async createOne(radiology: Radiology) {
+    const response = await AxiosInstance.post('/radiology/create', {
+      name: radiology.name,
+      price: radiology.price,
+      descriptionDefault: radiology.descriptionDefault,
+      resultDefault: radiology.resultDefault,
+    })
+    const { data } = response.data as BaseResponse<{ radiology: any }>
+    return Radiology.from(data.radiology)
   }
 
-  static async updateOne(id: number, instance: Radiology) {
-    const plain = Radiology.toPlain(instance, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/radiology/update/${id}`, plain)
-    const { data } = response.data as BaseResponse
-    return Radiology.fromPlain(data)
+  static async updateOne(id: number, radiology: Radiology) {
+    const response = await AxiosInstance.patch(`/radiology/update/${id}`, {
+      name: radiology.name,
+      price: radiology.price,
+      descriptionDefault: radiology.descriptionDefault,
+      resultDefault: radiology.resultDefault,
+    })
+    const { data } = response.data as BaseResponse<{ radiology: any }>
+    return Radiology.from(data.radiology)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/radiology/delete/${id}`)
-    const { data } = response.data as BaseResponse
-    return Radiology.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ radiology: any }>
+    return Radiology.from(data.radiology)
   }
 }

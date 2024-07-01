@@ -23,9 +23,10 @@ const saveLoading = ref(false)
 
 const openModal = async (instance: VisitRadiology) => {
   showModal.value = true
-  visitRadiology.value = VisitRadiology.clone(instance)
+  visitRadiology.value = VisitRadiology.from(instance)
   if (instance.startedAt == null) {
-    visitRadiology.value.description = instance.radiology?.default || ''
+    visitRadiology.value.description = instance.radiology?.descriptionDefault || ''
+    visitRadiology.value.result = instance.radiology?.resultDefault || ''
     startedAt.value = dayjs(new Date())
   } else {
     startedAt.value = dayjs(new Date(instance.startedAt))

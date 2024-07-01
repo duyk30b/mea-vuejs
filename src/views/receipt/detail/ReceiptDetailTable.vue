@@ -48,15 +48,13 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(receiptItem.productId)"
-                >
+                  @click="modalProductDetail?.openModal(receiptItem.productId)">
                   <FileSearchOutlined />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
-                style="font-size: 0.8rem"
-              >
+                style="font-size: 0.8rem">
                 {{ receiptItem!.product!.substance }}
               </div>
               <div
@@ -64,8 +62,7 @@ const colspan = computed(() => {
                   settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch && receiptItem.batchId
                 "
                 class="flex flex-wrap"
-                style="font-size: 0.8rem"
-              >
+                style="font-size: 0.8rem">
                 <span class="mr-2">S.Lô {{ receiptItem!.batch?.lotNumber }}</span>
                 <span>- HSD {{ timeToText(receiptItem.batch?.expiryDate) }}</span>
               </div>
@@ -119,31 +116,36 @@ const colspan = computed(() => {
           v-if="
             settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
             receipt.paid !== receipt.totalMoney
-          "
-        >
+          ">
           <td
             v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)"
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.Prepayment)"
-          >
-            <a> <span class="mr-1">Đã tạm ứng</span> <ExclamationCircleOutlined /> </a>
+            @click="showModalReceiptPayment(PaymentViewType.Prepayment)">
+            <a>
+              <span class="mr-1">Đã tạm ứng</span>
+              <ExclamationCircleOutlined />
+            </a>
           </td>
           <td
             v-else-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.PayDebt)"
-          >
-            <a> <span class="mr-1"> Đã thanh toán </span><ExclamationCircleOutlined /></a>
+            @click="showModalReceiptPayment(PaymentViewType.PayDebt)">
+            <a>
+              <span class="mr-1">Đã thanh toán</span>
+              <ExclamationCircleOutlined />
+            </a>
           </td>
           <td
             v-else
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.Success)"
-          >
-            <a><span class="mr-1"> Đã thanh toán </span> <ExclamationCircleOutlined /></a>
+            @click="showModalReceiptPayment(PaymentViewType.Success)">
+            <a>
+              <span class="mr-1">Đã thanh toán</span>
+              <ExclamationCircleOutlined />
+            </a>
           </td>
           <td colspan="2" class="text-right">
             {{ formatMoney(receipt.paid) }}
@@ -152,8 +154,7 @@ const colspan = computed(() => {
         <tr
           v-if="
             settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.totalMoney - receipt.paid
-          "
-        >
+          ">
           <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)">
             <td class="text-right" :colspan="colspan">Còn thiếu</td>
             <td colspan="2" class="text-right font-medium">

@@ -53,7 +53,7 @@ export const useProductStore = defineStore('product-store', {
         },
         sort: sort || { id: 'DESC' },
       })
-      const productList = Product.fromObjects(productPagination.data)
+      const productList = Product.fromList(productPagination.data)
 
       if (relation?.batchList) {
         // TODO
@@ -63,7 +63,7 @@ export const useProductStore = defineStore('product-store', {
         //   quantity: filter?.batches?.quantity,
         //   expiryDate: filter?.batches?.expiryDate,
         // })
-        // const batchList = Batch.fromObjects(batchObjects)
+        // const batchList = Batch.fromList(batchObjects)
         // const productBatchMap = arrayToKeyArray(batchList, 'productId')
         // productList.forEach((i) => {
         //   i.batches = productBatchMap[i.id] || []
@@ -91,12 +91,12 @@ export const useProductStore = defineStore('product-store', {
         },
         sort,
       })
-      return Product.fromObjects(objects)
+      return Product.fromList(objects)
     },
 
     async getOne(id: number) {
       const product = await ProductDB.findOneByKey(id)
-      return product ? Product.fromObject(product) : null
+      return product ? Product.from(product) : null
     },
 
     async createOne(instance: Product) {
@@ -127,7 +127,7 @@ export const useProductStore = defineStore('product-store', {
         isActive: 1,
         deletedAt: { IS_NULL: true },
       })
-      return Product.fromObjects(objects)
+      return Product.fromList(objects)
     },
   },
 })

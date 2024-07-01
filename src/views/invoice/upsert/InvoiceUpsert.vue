@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { NodeIndexOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
@@ -22,15 +23,20 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { timeToText } from '../../../utils'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import InvoiceExpenses from './InvoiceExpenses.vue'
+import InvoiceItemProcedure from './InvoiceItemProcedure.vue'
+import InvoiceItemProduct from './InvoiceItemProduct.vue'
 import InvoiceItemTable from './InvoiceItemTable.vue'
 import InvoiceSurcharges from './InvoiceSurcharges.vue'
-import InvoiceItemContainer from './invoice-item-create/InvoiceItemContainer.vue'
-import { EInvoiceSave, EInvoiceUpsertMode, invoice } from './invoice-upsert.ref'
+import { EInvoiceSave, EInvoiceUpsertMode, invoice, visit } from './invoice-upsert.ref'
 import ModalDataInvoice from './modal-setting/ModalDataInvoice.vue'
 import ModalInvoiceUpsertSettingScreen from './modal-setting/ModalInvoiceUpsertSettingScreen.vue'
-import { nextTick } from 'vue'
+import { VisitApi } from '../../../modules/visit'
+import { VisitExpense } from '../../../modules/visit-expense/visit-expense.model'
+import { VisitSurcharge } from '../../../modules/visit-surcharge/visit-surcharge.model'
 
 const modalInvoiceUpsertSettingScreen = ref<InstanceType<typeof ModalInvoiceUpsertSettingScreen>>()
+const invoiceItemProcedure = ref<InstanceType<typeof InvoiceItemProcedure>>()
+const invoiceItemProduct = ref<InstanceType<typeof InvoiceItemProduct>>()
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalDataInvoice = ref<InstanceType<typeof ModalDataInvoice>>()
@@ -45,6 +51,9 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 
+const defaultTabsKey = localStorage.getItem('INVOICE_VISIT_UPSERT_TABS') || 'product'
+const tabsKey = ref<'product' | 'procedure'>(defaultTabsKey as any)
+
 const mode = ref<EInvoiceUpsertMode>(EInvoiceUpsertMode.CREATE)
 
 const customer = ref<Customer>(Customer.blank())
@@ -56,35 +65,36 @@ const saveLoading = ref(false)
 
 onBeforeMount(async () => {
   try {
-    const invoiceId = Number(route.params.id)
+    const visitId = Number(route.params.id)
     const customerId = Number(route.query.customer_id)
     let customerDefault = Customer.blank()
     if (route.query.mode) {
       mode.value = route.query.mode as any
     }
-    if (invoiceId) {
-      const invoiceResponse = await InvoiceApi.detail(invoiceId, {
+    if (visitId) {
+      const visitResponse = await VisitApi.detail(visitId, {
         relation: {
           customer: true,
-          invoiceItems: true,
-          invoiceExpenses: true,
-          invoiceSurcharges: true,
+          visitProductList: true,
+          visitProcedureList: true,
+          visitSurchargeList: true,
+          visitExpenseList: true,
         },
       })
 
-      invoice.value = invoiceResponse
-      customerDefault = invoiceResponse.customer!
+      visit.value = visitResponse
+      customerDefault = visitResponse.customer!
 
-      if (invoice.value.invoiceExpenses!.length === 0) {
-        invoice.value.invoiceExpenses!.push(InvoiceExpense.blank())
+      if (visit.value.visitExpenseList!.length === 0) {
+        visit.value.visitExpenseList!.push(VisitExpense.blank())
       }
-      if (invoice.value.invoiceSurcharges!.length === 0) {
-        invoice.value.invoiceSurcharges!.push(InvoiceSurcharge.blank())
+      if (visit.value.visitSurchargeList!.length === 0) {
+        visit.value.visitSurchargeList!.push(VisitSurcharge.blank())
       }
       if (mode.value === EInvoiceUpsertMode.CREATE || mode.value === EInvoiceUpsertMode.COPY) {
         time.value = dayjs(new Date())
       } else if (mode.value === EInvoiceUpsertMode.UPDATE) {
-        time.value = dayjs(new Date(invoice.value.startedAt))
+        time.value = dayjs(new Date(visit.value.startedAt || Date.now()))
       }
     } else if (customerId) {
       customerDefault = await CustomerApi.detail(customerId)
@@ -93,8 +103,8 @@ onBeforeMount(async () => {
     }
 
     customer.value = customerDefault
-    invoice.value.customer = customerDefault
-    invoice.value.customerId = customerDefault.id
+    visit.value.customer = customerDefault
+    visit.value.customerId = customerDefault.id
 
     nextTick(() => {
       inputOptionsCustomer.value?.setItem({
@@ -109,6 +119,16 @@ onBeforeMount(async () => {
 })
 
 const handleDocumentKeyup = (e: KeyboardEvent) => {
+  if (e.key === 'F3') {
+    e.preventDefault()
+    if (tabsKey.value === 'product') {
+      tabsKey.value = 'procedure'
+      nextTick(() => invoiceItemProcedure.value?.focus())
+    } else if (tabsKey.value === 'procedure') {
+      tabsKey.value = 'product'
+      nextTick(() => invoiceItemProduct.value?.focus())
+    }
+  }
   if (e.key === 'F4') {
     e.preventDefault()
     inputOptionsCustomer.value?.focus()
@@ -146,18 +166,18 @@ const createCustomer = (instance?: Customer) => {
 }
 
 const selectCustomer = (data?: Customer) => {
-  invoice.value.customerId = data?.id || 0
-  invoice.value.customer = data
+  visit.value.customerId = data?.id || 0
+  visit.value.customer = data
   customer.value = data || Customer.blank()
 }
 
 const handleChangeInvoiceDiscountMoney = (data: number) => {
-  invoice.value.discountMoney = data
-  invoice.value.discountType = DiscountType.VND
+  visit.value.discountMoney = data
+  visit.value.discountType = DiscountType.VND
 }
 const handleChangeInvoiceDiscountPercent = (data: number) => {
-  invoice.value.discountPercent = data
-  invoice.value.discountType = DiscountType.Percent
+  visit.value.discountPercent = data
+  visit.value.discountType = DiscountType.Percent
 }
 
 const saveInvoice = async (type: EInvoiceSave) => {
@@ -199,7 +219,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
         await InvoiceApi.createQuickInvoice(invoice.value)
         invoice.value = Invoice.blank()
 
-        const customerRes = Customer.fromPlain(meStore.customerDefault)
+        const customerRes = Customer.from(meStore.customerDefault)
         customer.value = customerRes
         invoice.value.customer = customerRes
         invoice.value.customerId = customerRes.id
@@ -269,6 +289,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalDataInvoice.value?.openModal()
   }
 }
+
+const handleChangeTabs = (activeKey: any) => {
+  tabsKey.value = activeKey
+  localStorage.setItem('INVOICE_VISIT_UPSERT_TABS', activeKey)
+}
 </script>
 
 <template>
@@ -292,8 +317,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -304,7 +329,28 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex flex-wrap gap-4">
       <div style="flex-basis: 600px; flex-grow: 2" class="">
         <div class="bg-white p-4">
-          <InvoiceItemContainer :invoice="invoice" @addInvoiceItem="handleAddInvoiceItem" />
+          <VueTabs :tabStart="tabsKey" @changeTab="handleChangeTabs">
+            <template #menu>
+              <VueTabMenu v-if="permissionIdMap[PermissionId.PRODUCT_READ]" tabKey="product">
+                Hàng hóa ({{ visit.visitProductList!.length }})
+              </VueTabMenu>
+              <VueTabMenu v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" tabKey="procedure">
+                Dịch vụ ({{ visit.visitProcedureList!.length }})
+              </VueTabMenu>
+            </template>
+            <template #panel>
+              <VueTabPanel tabKey="product">
+                <div class="mt-2">
+                  <InvoiceItemProduct ref="invoiceItemProduct" />
+                </div>
+              </VueTabPanel>
+              <VueTabPanel tabKey="procedure">
+                <div class="mt-2">
+                  <InvoiceItemProcedure ref="invoiceItemProcedure" />
+                </div>
+              </VueTabPanel>
+            </template>
+          </VueTabs>
         </div>
         <div class="bg-white mt-4">
           <InvoiceItemTable />
@@ -314,14 +360,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div class="bg-white p-4">
           <div class="flex justify-between">
             <span>
-              Tên KH (nợ cũ: <b>{{ formatMoney(customer.debt) }}</b>
+              Tên KH (nợ cũ:
+              <b>{{ formatMoney(customer.debt) }}</b>
               )
             </span>
             <span>
               <a
                 v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-                @click="modalCustomerUpsert?.openModal()"
-              >
+                @click="modalCustomerUpsert?.openModal()">
                 Thêm khách hàng mới
               </a>
             </span>
@@ -335,16 +381,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               :disabled="mode == EInvoiceUpsertMode.UPDATE"
               required
               @selectItem="({ data }) => selectCustomer(data)"
-              @update:text="searchingCustomer"
-            >
+              @update:text="searchingCustomer">
               <template #option="{ item: { data } }">
                 <div>
-                  <b>{{ data.fullName }}</b> - {{ data.phone }} -
+                  <b>{{ data.fullName }}</b>
+                  - {{ data.phone }} -
                   {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div>
-                  {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
-                </div>
+                <div>{{ data.addressString }}</div>
               </template>
             </InputOptions>
           </div>
@@ -362,8 +406,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       v-model:value="time"
                       show-time
                       placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'"
-                    />
+                      :format="'DD/MM/YYYY HH:mm:ss'" />
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
@@ -371,7 +414,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     Tiền hàng
                   </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(invoice.itemsActualMoney) }}
+                    {{ formatMoney(visit.productsMoney + visit.proceduresMoney) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
@@ -386,36 +429,34 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       </template>
                       <template #title>
                         <div>
-                          Chiết khấu (Tiền hàng: <b>{{ formatMoney(invoice.itemsActualMoney) }}</b
-                          >)
+                          Chiết khấu (Tiền hàng:
+                          <b>{{ formatMoney(visit.productsMoney + visit.proceduresMoney) }}</b>
+                          )
                         </div>
                         <div class="mt-2">
                           <div>
                             <InputMoney
-                              :value="invoice.discountMoney"
+                              :value="visit.discountMoney"
                               append="VNĐ"
                               style="width: 100%"
-                              @update:value="handleChangeInvoiceDiscountMoney"
-                            />
+                              @update:value="handleChangeInvoiceDiscountMoney" />
                           </div>
                           <div class="mt-2">
                             <InputNumber
-                              :value="invoice.discountPercent"
+                              :value="visit.discountPercent"
                               append="%"
-                              @update:value="handleChangeInvoiceDiscountPercent"
-                            />
+                              @update:value="handleChangeInvoiceDiscountPercent" />
                           </div>
                         </div>
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success"> {{ invoice.discountPercent || 0 }}% </a-tag>
+                          <a-tag color="success">{{ visit.discountPercent || 0 }}%</a-tag>
                         </div>
                         <div
                           class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
-                        >
-                          {{ formatMoney(invoice.discountMoney) }}
+                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd">
+                          {{ formatMoney(visit.discountMoney) }}
                         </div>
                       </div>
                     </a-popconfirm>
@@ -429,9 +470,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <td></td>
                 </tr>
                 <tr>
-                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">Tổng tiền</td>
+                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
+                    Tổng tiền
+                  </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(invoice.totalMoney) }}
+                    {{ formatMoney(visit.totalMoney) }}
                   </td>
                 </tr>
               </tbody>
@@ -454,13 +497,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
                   <td class="font-bold whitespace-nowrap">Tiền lãi</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(invoice.profit) }}
+                    {{ formatMoney(visit.profit) }}
                   </td>
                 </tr>
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <a-input v-model:value="invoice.note" class="input-payment" />
+                    <a-input v-model:value="visit.note" class="input-payment" />
                   </td>
                 </tr>
               </tbody>
@@ -474,15 +517,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE] &&
               settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew
             "
-            class="mt-4 w-full flex flex-col px-1"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
               type="button"
               :loading="saveLoading"
               size="large"
-              @click="saveInvoice(EInvoiceSave.CREATE_QUICK_AND_NEW)"
-            >
+              @click="saveInvoice(EInvoiceSave.CREATE_QUICK_AND_NEW)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -495,15 +536,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT] &&
               settingStore.SCREEN_INVOICE_UPSERT.save.createDraft
             "
-            class="mt-4 w-full flex flex-col px-1"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
               :loading="saveLoading"
               :size="'large'"
               type="button"
-              @click="saveInvoice(EInvoiceSave.CREATE_DRAFT)"
-            >
+              @click="saveInvoice(EInvoiceSave.CREATE_DRAFT)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -518,15 +557,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
               [InvoiceStatus.Draft].includes(invoice.status)
             "
-            class="mt-4 w-full flex flex-col px-1"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)"
-            >
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -539,15 +576,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
               [InvoiceStatus.Prepayment].includes(invoice.status)
             "
-            class="mt-4 w-full flex flex-col px-1"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)"
-            >
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -560,15 +595,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS] &&
               [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
             "
-            class="mt-4 w-full flex flex-col px-1"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS)"
-            >
+              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -582,14 +615,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-tabs-tab) {
-  border-top: 5px solid #d6d6d6 !important;
-
-  &.ant-tabs-tab-active {
-    border-top-color: #1890ff !important;
-  }
-}
-
 .table-payment {
   td {
     padding: 6px 0;

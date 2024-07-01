@@ -60,12 +60,6 @@
   "liveServer.settings.port": 5501,
   "liveServer.settings.root": "/dist/",
   "liveServer.settings.CustomBrowser": "chrome",
-  "liveServer.settings.https": {
-    "enable": true,
-    "key": "/Users/duyk3/.vscode/https/key.pem",
-    "cert": "/Users/duyk3/.vscode/https/cert.pem",
-    "passphrase": ""
-  },
   "editor.linkedEditing": true,
   "explorer.compactFolders": false
 }

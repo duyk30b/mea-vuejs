@@ -1,308 +1,65 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Upload Ảnh</title>
+  <title>Vue - Router</title>
   <style>
-    .container {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      background-color: #f9f9f9;
-    }
-
-    .input-text {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    .image-upload-wrapper {
-      position: relative;
-    }
-
-    .image-upload-container {
-      display: flex;
-      overflow-x: hidden;
-      margin-bottom: 20px;
-      scroll-behavior: smooth;
-    }
-
-    .image-upload {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      overflow: hidden;
-      margin-right: 10px;
-      flex: 0 0 auto;
-    }
-
-    .image-upload input {
-      display: none;
-    }
-
-    .image-preview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .change-image {
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(255, 255, 255, 0.8);
-      border: none;
-      cursor: pointer;
-    }
-
-    .remove-image {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background-color: rgba(255, 255, 255, 0.8);
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    .add-image {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    .save-button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .scroll-button {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background-color: rgba(255, 255, 255, 0.8);
-      border: none;
-      cursor: pointer;
-      padding: 10px;
-      font-size: 18px;
-      z-index: 1;
-    }
-
-    .scroll-left {
-      left: 0;
-    }
-
-    .scroll-right {
-      right: 0;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.8);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      position: relative;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
-
-    .modal-content img {
-      max-width: 90%;
-      max-height: 80vh;
-    }
-
-    .close,
-    .prev,
-    .next {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background-color: rgba(255, 255, 255, 0.8);
-      border: none;
-      cursor: pointer;
-      padding: 10px;
-      font-size: 18px;
-    }
-
-    .close {
-      right: 10px;
-      top: 10px;
-      transform: none;
-    }
-
-    .prev {
-      left: 10px;
-    }
-
-    .next {
-      right: 10px;
+    p {
+      font-family: monospace;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 
 <body>
-
-  <div class="container">
-    <form id="uploadForm" method="POST" action="https://localhost:3000/upload" enctype="multipart/form-data">
-      <input type="text" class="input-text" name="textData" placeholder="Nhập thông tin" required>
-      <div class="image-upload-wrapper">
-        <button type="button" class="scroll-button scroll-left" onclick="scrollImages(-1)">&#10094;</button>
-        <div class="image-upload-container" id="imageUploadContainer">
-          <div class="image-upload add-image" onclick="document.getElementById('fileInput').click()">
-            <input type="file" id="fileInput" accept="image/*" multiple onchange="addImages(this)">
-            +
-          </div>
-        </div>
-        <button type="button" class="scroll-button scroll-right" onclick="scrollImages(1)">&#10095;</button>
-      </div>
-      <button type="submit" class="save-button">Save</button>
-    </form>
+  <div id="app">
+    <nav>
+      <router-link to="/">Home</router-link> -
+      <router-link to="/user/1/details">User</router-link> -
+      <router-link to="/about">About</router-link> -
+      <router-link to="/xxx">xxx</router-link>
+    </nav>
+    <router-view></router-view>
   </div>
 
-  <div class="modal" id="imageModal">
-    <div class="modal-content">
-      <button class="close" onclick="closeModal()">&times;</button>
-      <button class="prev" onclick="changeImage(-1)">&#10094;</button>
-      <img id="modalImage" src="" alt="">
-      <button class="next" onclick="changeImage(1)">&#10095;</button>
-    </div>
-  </div>
+  <script src="https://unpkg.com/vue@3.2.41/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/vue-router@4.1.6/dist/vue-router.global.js"></script>
 
   <script>
-    let currentImageIndex = 0
-    let imageFiles = []
-    let modalImageFiles = []
+    const Home = { template: '<h2>Home Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
+    const About = { template: '<h2>About Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
+    const NotFound = { template: '<h2>NotFound Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
 
-    function addImages(input) {
-      const files = Array.from(input.files)
-      const imageUploadContainer = document.getElementById('imageUploadContainer')
-      files.forEach(file => {
-        const reader = new FileReader()
-        reader.onload = function (e) {
-          const imageContainer = document.createElement('div')
-          imageContainer.classList.add('image-upload')
-          imageContainer.innerHTML = `
-                    <img class="image-preview" src="${e.target.result}" alt="" onclick="openModal(${modalImageFiles.length})">
-                    <button type="button" class="change-image" onclick="changeImageFile(${modalImageFiles.length}, this)">Change</button>
-                    <input type="file" accept="image/*" onchange="previewChangedImage(this, ${modalImageFiles.length})" style="display: none;">
-                    <button type="button" class="remove-image" onclick="removeImage(${modalImageFiles.length}, this)">&times;</button>
-                `
-          imageUploadContainer.insertBefore(imageContainer, document.querySelector('.add-image'))
-          imageFiles.push(file)
-          modalImageFiles.push(e.target.result)
-        }
-        reader.readAsDataURL(file)
-      })
-    }
+    const User = { template: '<h2>User Page</h2><router-view></router-view>' }
+    const UserDetails = { template: '<h3>User Details</h3><p>{{JSON.stringify($route, null, 4)}}</p>' }
 
-    function previewChangedImage(input, index) {
-      const file = input.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = function (e) {
-          const imagePreview = input.previousElementSibling.previousElementSibling.previousElementSibling
-          imagePreview.src = e.target.result
-          imageFiles[index] = file
-          modalImageFiles[index] = e.target.result
-        }
-        reader.readAsDataURL(file)
-      }
-    }
+    const router = VueRouter.createRouter({
+      history: VueRouter.createWebHistory(),
+      routes: [
+        { path: '/', component: Home },
+        {
+          path: '/user/:id',
+          component: User,
+          children: [
+            {
+              path: 'details',
+              component: UserDetails,
+            },
+          ]
+        },
+        { path: '/about', component: About },
+        { path: '/layzy-component', component: () => import('./views/UserDetails') },
+        { path: '/:pathMatch(.*)', component: NotFound },
+      ],
+    })
 
-    function changeImageFile(index, button) {
-      const fileInput = button.nextElementSibling
-      fileInput.click()
-    }
-
-    function removeImage(index, button) {
-      imageFiles.splice(index, 1)
-      modalImageFiles.splice(index, 1)
-      button.parentElement.remove()
-      document.querySelectorAll('.image-preview').forEach((img, idx) => {
-        img.setAttribute('onclick', `openModal(${idx})`)
-        img.nextElementSibling.setAttribute('onclick', `changeImageFile(${idx}, this)`)
-        img.nextElementSibling.nextElementSibling.setAttribute('onchange', `previewChangedImage(this, ${idx})`)
-        img.nextElementSibling.nextElementSibling.nextElementSibling.setAttribute('onclick', `removeImage(${idx}, this)`)
-      })
-    }
-
-    function openModal(index) {
-      currentImageIndex = index
-      document.getElementById('modalImage').src = modalImageFiles[index]
-      document.getElementById('imageModal').style.display = 'flex'
-    }
-
-    function closeModal() {
-      document.getElementById('imageModal').style.display = 'none'
-    }
-
-    function changeImage(step) {
-      currentImageIndex = (currentImageIndex + step + modalImageFiles.length) % modalImageFiles.length
-      document.getElementById('modalImage').src = modalImageFiles[currentImageIndex]
-    }
-
-    function scrollImages(direction) {
-      const container = document.getElementById('imageUploadContainer')
-      container.scrollLeft += direction * 220 // Adjusted value for faster scroll
-    }
-
-    document.getElementById('uploadForm').addEventListener('submit', function (e) {
-      e.preventDefault()
-      const formData = new FormData()
-      const textData = document.querySelector('.input-text').value
-      formData.append('textData', textData)
-      imageFiles.forEach((file, index) => {
-        formData.append(`images[]`, file)
-      })
-
-      fetch('https://localhost:3000/upload', {
-        method: 'POST',
-        body: formData
-      })
-        .then(response => {
-          if (response.ok) {
-            alert('Upload thành công!')
-          } else {
-            alert('Upload thất bại.')
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error)
-          alert('Đã xảy ra lỗi.')
-        })
-    });
+    const app = Vue.createApp({})
+    app.use(router)
+    app.mount("#app")
   </script>
-
 </body>
 
 </html>

@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { IconDelete } from '../../../common/icon-google'
 import { InputMoney, InputNumber } from '../../../common/vue-form'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
-import { InvoiceItem, InvoiceItemType } from '../../../modules/invoice-item/invoice-item.model'
 import type { Procedure } from '../../../modules/procedure'
 import type { Product } from '../../../modules/product'
-import { useSettingStore } from '../../../modules/_me/setting.store'
+import type { VisitProduct } from '../../../modules/visit-product'
 import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
-import { invoice } from './invoice-upsert.ref'
+import { invoice, visit } from './invoice-upsert.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -18,44 +19,91 @@ const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const handleChangeUnitDiscountMoney = (data: number, index: number) => {
-  const discountMoney = data / invoice.value.invoiceItems![index].unitRate
-  const expectedPrice = invoice.value.invoiceItems![index].expectedPrice || 0
-  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
-  const actualPrice = expectedPrice - discountMoney
-  invoice.value.invoiceItems![index].discountMoney = discountMoney
-  invoice.value.invoiceItems![index].discountPercent = discountPercent
-  invoice.value.invoiceItems![index].actualPrice = actualPrice
-  invoice.value.invoiceItems![index].discountType = DiscountType.VND
-}
-
-const handleChangeDiscountPercent = (discountPercent: number, index: number) => {
-  const expectedPrice = invoice.value.invoiceItems![index].expectedPrice || 0
-  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
-  const actualPrice = expectedPrice - discountMoney
-  invoice.value.invoiceItems![index].discountPercent = discountPercent
-  invoice.value.invoiceItems![index].discountMoney = discountMoney
-  invoice.value.invoiceItems![index].actualPrice = actualPrice
-  invoice.value.invoiceItems![index].discountType = DiscountType.Percent
-}
-
 const handleChangeHintUsage = (data: string, index: number) => {
   invoice.value.invoiceItems![index].hintUsage = data
 }
 
-const handleChangeUnitActualPrice = (data: number, index: number) => {
-  const actualPrice = data / invoice.value.invoiceItems![index].unitRate
-  const expectedPrice = invoice.value.invoiceItems![index].expectedPrice
-  const discountMoney = expectedPrice - actualPrice
-  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
-  invoice.value.invoiceItems![index].discountPercent = discountPercent
-  invoice.value.invoiceItems![index].discountMoney = discountMoney
-  invoice.value.invoiceItems![index].actualPrice = actualPrice
-  invoice.value.invoiceItems![index].discountType = DiscountType.VND
+const overQuantityVisitProduct = (visitProduct: VisitProduct): boolean => {
+  if (visitProduct.product?.hasManageQuantity) {
+    if (!visitProduct.product!.hasManageBatches) {
+      return visitProduct.quantity >= visitProduct.product!.quantity
+    } else {
+      return visitProduct.quantity >= visitProduct.visitBatchList![0].batch!.quantity
+    }
+  }
+  return false
 }
 
-const handleChangeInvoiceItemQuantity = (quantity: number, index: number) => {
-  invoice.value.invoiceItems![index].unitQuantity = quantity
+const handleChangeVisitProductUnitDiscountMoney = (data: number, index: number) => {
+  const discountMoney = data / visit.value.visitProductList![index].unitRate
+  const expectedPrice = visit.value.visitProductList![index].expectedPrice || 0
+  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
+  const actualPrice = expectedPrice - discountMoney
+  visit.value.visitProductList![index].discountMoney = discountMoney
+  visit.value.visitProductList![index].discountPercent = discountPercent
+  visit.value.visitProductList![index].actualPrice = actualPrice
+  visit.value.visitProductList![index].discountType = DiscountType.VND
+}
+
+const handleChangeVisitProductDiscountPercent = (discountPercent: number, index: number) => {
+  const expectedPrice = visit.value.visitProductList![index].expectedPrice || 0
+  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
+  const actualPrice = expectedPrice - discountMoney
+  visit.value.visitProductList![index].discountPercent = discountPercent
+  visit.value.visitProductList![index].discountMoney = discountMoney
+  visit.value.visitProductList![index].actualPrice = actualPrice
+  visit.value.visitProductList![index].discountType = DiscountType.Percent
+}
+
+const handleChangeVisitProductUnitActualPrice = (data: number, index: number) => {
+  const actualPrice = data / visit.value.visitProductList![index].unitRate
+  const expectedPrice = visit.value.visitProductList![index].expectedPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  visit.value.visitProductList![index].discountPercent = discountPercent
+  visit.value.visitProductList![index].discountMoney = discountMoney
+  visit.value.visitProductList![index].actualPrice = actualPrice
+  visit.value.visitProductList![index].discountType = DiscountType.VND
+}
+
+const handleChangeVisitProductQuantity = (quantity: number, index: number) => {
+  visit.value.visitProductList![index].unitQuantity = quantity
+}
+
+const handleChangeVisitProcedureDiscountMoney = (data: number, index: number) => {
+  const discountMoney = data
+  const expectedPrice = visit.value.visitProcedureList![index].expectedPrice || 0
+  const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
+  const actualPrice = expectedPrice - discountMoney
+  visit.value.visitProcedureList![index].discountMoney = discountMoney
+  visit.value.visitProcedureList![index].discountPercent = discountPercent
+  visit.value.visitProcedureList![index].actualPrice = actualPrice
+  visit.value.visitProcedureList![index].discountType = DiscountType.VND
+}
+
+const handleChangeVisitProcedureDiscountPercent = (discountPercent: number, index: number) => {
+  const expectedPrice = visit.value.visitProcedureList![index].expectedPrice || 0
+  const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
+  const actualPrice = expectedPrice - discountMoney
+  visit.value.visitProcedureList![index].discountPercent = discountPercent
+  visit.value.visitProcedureList![index].discountMoney = discountMoney
+  visit.value.visitProcedureList![index].actualPrice = actualPrice
+  visit.value.visitProcedureList![index].discountType = DiscountType.Percent
+}
+
+const handleChangeVisitProcedureActualPrice = (data: number, index: number) => {
+  const actualPrice = data
+  const expectedPrice = visit.value.visitProcedureList![index].expectedPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  visit.value.visitProcedureList![index].discountPercent = discountPercent
+  visit.value.visitProcedureList![index].discountMoney = discountMoney
+  visit.value.visitProcedureList![index].actualPrice = actualPrice
+  visit.value.visitProcedureList![index].discountType = DiscountType.VND
+}
+
+const handleChangeVisitProcedureQuantity = (quantity: number, index: number) => {
+  visit.value.visitProcedureList![index].quantity = quantity
 }
 
 const openModalProductDetail = (product?: Product) => {
@@ -64,21 +112,6 @@ const openModalProductDetail = (product?: Product) => {
 
 const openModalProcedureDetail = (procedure?: Procedure) => {
   if (procedure) modalProcedureDetail.value?.openModal(procedure.id)
-}
-
-const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
-  if (invoiceItem.procedureId) return false
-  if (invoiceItem.batchId) {
-    return invoiceItem.quantity >= invoiceItem.batch!.quantity
-  }
-  if (!invoiceItem.batchId && invoiceItem.productId) {
-    if (invoiceItem.product?.hasManageQuantity) {
-      return invoiceItem.quantity > invoiceItem.product!.quantity
-    } else {
-      return false
-    }
-  }
-  return false
 }
 </script>
 
@@ -99,78 +132,60 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoice.invoiceItems!.length === 0">
+          <tr v-if="visit.visitProductList!.length == 0 && visit.visitProcedureList!.length == 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoice.invoiceItems || []" :key="index">
+          <tr v-for="(visitProduct, index) in visit.visitProductList || []" :key="index">
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               {{ index + 1 }}
             </td>
             <td>
-              <div v-if="invoiceItem.productId">
-                <div class="font-medium text-justify">
-                  {{ invoiceItem.product!.brandName }}
-                  <a
-                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
-                    class="ml-1"
-                    @click="openModalProductDetail(invoiceItem.product)"
-                  >
-                    <FileSearchOutlined />
-                  </a>
-                </div>
-                <div
-                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
-                  style="font-size: 0.8rem"
-                  class="text-justify"
-                >
-                  {{ invoiceItem.product!.substance }}
-                </div>
-                <div
-                  v-if="
-                    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
-                  "
-                  class="flex gap-2 flex-wrap"
-                  style="font-size: 0.8rem"
-                >
-                  Số Lô: {{ invoiceItem.batch?.lotNumber }} - HSD:
-                  {{ timeToText(invoiceItem.batch!.expiryDate, 'DD/MM/YY') }}
-                </div>
-                <div
-                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
-                  style="font-size: 0.8rem"
-                  class="flex gap-2"
-                  contenteditable="true"
-                  placeholder="Hướng dẫn sử dụng ..."
-                  @input="(e) => handleChangeHintUsage((e.target as HTMLElement)?.innerText, index)"
-                >
-                  {{ invoiceItem.hintUsage }}
-                </div>
+              <div class="font-medium text-justify">
+                {{ visitProduct.product!.brandName }}
+                <a
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="openModalProductDetail(visitProduct.product!)">
+                  <FileSearchOutlined />
+                </a>
               </div>
-              <div v-if="invoiceItem.procedureId">
-                <div class="font-medium text-justify">
-                  {{ invoiceItem.procedure!.name }}
-                  <a
-                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
-                    class="ml-1"
-                    @click="openModalProcedureDetail(invoiceItem.procedure)"
-                  >
-                    <FileSearchOutlined />
-                  </a>
-                </div>
+              <div
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                style="font-size: 0.8rem"
+                class="text-justify">
+                {{ visitProduct.product!.substance }}
+              </div>
+              <div
+                v-if="
+                  settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch &&
+                  visitProduct.product?.hasManageBatches
+                "
+                style="font-size: 0.8rem"
+                class="flex gap-2">
+                S.Lô {{ visitProduct.visitBatchList![0].batch?.lotNumber }}
+                {{ timeToText(visitProduct.visitBatchList![0].batch!.expiryDate) }}
+              </div>
+              <div
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                style="font-size: 0.8rem"
+                class="flex gap-2"
+                contenteditable="true"
+                placeholder="Hướng dẫn sử dụng ..."
+                @input="(e) => handleChangeHintUsage((e.target as HTMLElement)?.innerText, index)">
+                {{ visitProduct.hintUsage }}
               </div>
               <div class="flex gap-2" style="font-size: 0.8rem">
                 <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
                   NY:
                   <span class="font-medium">
-                    {{ formatMoney(invoiceItem.unitExpectedPrice) }}
+                    {{ formatMoney(visitProduct.unitExpectedPrice) }}
                   </span>
                   <span
                     v-if="
                       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
-                      invoiceItem.unitName
-                    "
-                  >
-                    /{{ invoiceItem.unitName }}
+                      visitProduct.unitName
+                    ">
+                    /{{ visitProduct.unitName }}
                   </span>
                 </div>
                 <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
@@ -185,54 +200,53 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                     <template #title>
                       <div>
                         Chiết khấu (Tiền hàng:
-                        <b>{{ formatMoney(invoiceItem.expectedPrice * invoiceItem.unitRate) }}</b
-                        >)
+                        <b>{{ formatMoney(visitProduct.expectedPrice * visitProduct.unitRate) }}</b>
+                        )
                       </div>
                       <div class="mt-2">
                         <div>
                           <InputMoney
-                            :value="invoiceItem.unitDiscountMoney"
+                            :value="visitProduct.unitDiscountMoney"
                             :append="'VNĐ'"
-                            @update:value="(e: number) => handleChangeUnitDiscountMoney(e, index)"
-                          />
+                            @update:value="
+                              (e: number) => handleChangeVisitProductUnitDiscountMoney(e, index)
+                            " />
                         </div>
                         <div class="mt-2">
                           <InputNumber
-                            :value="invoiceItem.discountPercent"
+                            :value="visitProduct.discountPercent"
                             append="%"
-                            @update:value="(e: number) => handleChangeDiscountPercent(e, index)"
-                          />
+                            @update:value="
+                              (e: number) => handleChangeVisitProductDiscountPercent(e, index)
+                            " />
                         </div>
                       </div>
                     </template>
                     <a-tag
-                      v-if="invoiceItem.discountType === 'VNĐ'"
+                      v-if="visitProduct.discountType === 'VNĐ'"
                       color="success"
-                      style="cursor: pointer; margin-top: -10px"
-                    >
-                      {{ formatMoney(invoiceItem.unitDiscountMoney) }}
+                      style="cursor: pointer; margin-top: -10px">
+                      {{ formatMoney(visitProduct.unitDiscountMoney) }}
                     </a-tag>
                     <a-tag
-                      v-if="invoiceItem.discountType === '%'"
+                      v-if="visitProduct.discountType === '%'"
                       color="success"
-                      style="cursor: pointer; margin-top: -10px"
-                    >
-                      {{ invoiceItem.discountPercent || 0 }}%
+                      style="cursor: pointer; margin-top: -10px">
+                      {{ visitProduct.discountPercent || 0 }}%
                     </a-tag>
                   </a-popconfirm>
                 </div>
                 <div>
                   - ĐG:
                   <span class="font-medium">
-                    {{ formatMoney(invoiceItem.unitActualPrice) }}
+                    {{ formatMoney(visitProduct.unitActualPrice) }}
                   </span>
                   <span
                     v-if="
                       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit &&
-                      invoiceItem.unitName
-                    "
-                  >
-                    /{{ invoiceItem.unitName }}
+                      visitProduct.unitName
+                    ">
+                    /{{ visitProduct.unitName }}
                   </span>
                 </div>
               </div>
@@ -263,10 +277,9 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   class="disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="
                     !settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
-                    overQuantityInvoiceItem(invoice.invoiceItems![index])
+                    overQuantityVisitProduct(visitProduct)
                   "
-                  @click="invoice.invoiceItems![index].quantity += invoiceItem.unitRate"
-                >
+                  @click="visitProduct.unitQuantity++">
                   <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
                 </button>
                 <div
@@ -274,37 +287,172 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                   contenteditable="true"
                   @input="
                     (e) =>
-                      handleChangeInvoiceItemQuantity(
+                      handleChangeVisitProductQuantity(
                         Number((e.target as HTMLElement)?.innerText) || 0,
                         index
                       )
-                  "
-                >
-                  {{ invoiceItem.quantity / invoiceItem.unitRate }}
+                  ">
+                  {{ visitProduct.unitQuantity }}
                 </div>
                 <button
                   style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
                   class="disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  :disabled="invoiceItem.quantity == 0"
-                  @click="invoice.invoiceItems![index].quantity -= invoiceItem.unitRate"
-                >
+                  :disabled="visitProduct.unitQuantity == 0"
+                  @click="visitProduct.unitQuantity--">
                   <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
                 </button>
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
+              {{ formatMoney(visitProduct.actualPrice * visitProduct.quantity) }}
             </td>
             <td class="text-center">
-              <a class="text-red-500" @click="invoice.invoiceItems!.splice(index, 1)">
-                <DeleteOutlined />
+              <a class="text-red-500 text-xl" @click="visit.visitProductList!.splice(index, 1)">
+                <IconDelete />
               </a>
             </td>
           </tr>
+          <tr v-for="(visitProcedure, index) in visit.visitProcedureList || []" :key="index">
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ index + 1 }}
+            </td>
+            <td>
+              <div class="font-medium text-justify">
+                {{ visitProcedure.procedure!.name }}
+                <a
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="openModalProcedureDetail(visitProcedure.procedure)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
+              <div class="flex gap-2" style="font-size: 0.8rem">
+                <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.expectedPrice">
+                  NY:
+                  <span class="font-medium">
+                    {{ formatMoney(visitProcedure.expectedPrice) }}
+                  </span>
+                </div>
+                <div v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">
+                  - CK:
+                  <a-popconfirm>
+                    <template #cancelButton>
+                      <div></div>
+                    </template>
+                    <template #okButton>
+                      <div></div>
+                    </template>
+                    <template #title>
+                      <div>
+                        Chiết khấu (Tiền hàng:
+                        <b>
+                          {{ formatMoney(visitProcedure.expectedPrice) }}
+                        </b>
+                        )
+                      </div>
+                      <div class="mt-2">
+                        <div>
+                          <InputMoney
+                            :value="visitProcedure.discountMoney"
+                            :append="'VNĐ'"
+                            @update:value="
+                              (e: number) => handleChangeVisitProcedureDiscountMoney(e, index)
+                            " />
+                        </div>
+                        <div class="mt-2">
+                          <InputNumber
+                            :value="visitProcedure.discountPercent"
+                            append="%"
+                            @update:value="
+                              (e: number) => handleChangeVisitProcedureDiscountPercent(e, index)
+                            " />
+                        </div>
+                      </div>
+                    </template>
+                    <a-tag
+                      v-if="visitProcedure.discountType === 'VNĐ'"
+                      color="success"
+                      style="cursor: pointer; margin-top: -10px">
+                      {{ formatMoney(visitProcedure.discountMoney) }}
+                    </a-tag>
+                    <a-tag
+                      v-if="visitProcedure.discountType === '%'"
+                      color="success"
+                      style="cursor: pointer; margin-top: -10px">
+                      {{ visitProcedure.discountPercent || 0 }}%
+                    </a-tag>
+                  </a-popconfirm>
+                </div>
+                <div>
+                  - ĐG:
+                  <span class="font-medium">
+                    {{ formatMoney(visitProcedure.actualPrice) }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td class="text-center whitespace-nowrap">
+              <!-- <div class="flex items-center justify-between">
+                <div
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                  @click="invoice.invoiceItems![index].unitQuantity--"
+                >
+                  <font-awesome-icon :icon="['fas', 'minus']" />
+                </div>
+                <div style="width: calc(100% - 60px)">
+                  <InputNumber v-model:value="invoiceItem.unitQuantity" textAlign="right" />
+                </div>
+                <div
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
+                  @click="invoice.invoiceItems![index].unitQuantity++"
+                >
+                  <font-awesome-icon :icon="['fas', 'plus']" />
+                </div>
+              </div> -->
+              <div>
+                <button
+                  style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                  class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  @click="visitProcedure.quantity++">
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
+                <div
+                  style="font-size: 1.1rem"
+                  contenteditable="true"
+                  @input="
+                    (e) =>
+                      handleChangeVisitProcedureQuantity(
+                        Number((e.target as HTMLElement)?.innerText) || 0,
+                        index
+                      )
+                  ">
+                  {{ visitProcedure.quantity }}
+                </div>
+                <button
+                  style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                  class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  :disabled="visitProcedure.quantity == 0"
+                  @click="visitProcedure.quantity--">
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              {{ formatMoney(visitProcedure.actualPrice * visitProcedure.quantity) }}
+            </td>
+            <td class="text-center">
+              <a class="text-red-500 text-xl" @click="visit.visitProcedureList!.splice(index, 1)">
+                <IconDelete />
+              </a>
+            </td>
+          </tr>
+
           <tr>
-            <td colspan="2" class="text-right">Tổng tiền hàng:</td>
+            <td colspan="2" class="text-right">Tổng tiền:</td>
             <td colspan="2" class="text-right">
-              {{ formatMoney(invoice.itemsActualMoney) }}
+              {{ formatMoney(visit.productsMoney + visit.proceduresMoney) }}
             </td>
             <td></td>
           </tr>
@@ -317,8 +465,8 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
           <tr>
             <th>#</th>
             <th>Tên</th>
-            <th>Số lượng</th>
             <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit">Đ.Vị</th>
+            <th>Số lượng</th>
             <th v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đơn giá</th>
             <th>Tổng tiền</th>
@@ -326,103 +474,82 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoice.invoiceItems!.length == 0">
+          <tr v-if="visit.visitProductList!.length == 0 && visit.visitProcedureList!.length == 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
+          <tr v-for="(visitProduct, index) in visit.visitProductList || []" :key="index">
             <td class="text-center">
               {{ index + 1 }}
             </td>
             <td>
-              <div v-if="invoiceItem.productId">
-                <div style="font-weight: 500" class="text-justify">
-                  {{ invoiceItem.product!.brandName }}
-                  <a
-                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
-                    class="ml-1"
-                    @click="openModalProductDetail(invoiceItem.product)"
-                  >
-                    <FileSearchOutlined />
-                  </a>
-                </div>
-                <div
-                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
-                  class="text-justify"
-                  style="font-size: 0.8rem"
-                >
-                  {{ invoiceItem.product!.substance }}
-                </div>
-                <div
-                  v-if="
-                    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch && invoiceItem.batchId
-                  "
-                  style="font-size: 0.8rem"
-                  class="flex gap-2"
-                >
-                  Số lô {{ invoiceItem.batch?.lotNumber }} - HSD
-                  {{ timeToText(invoiceItem.batch!.expiryDate) }}
-                </div>
-                <div
-                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
-                  placeholder="Hướng dẫn sử dụng ..."
-                  contenteditable="true"
-                  style="font-size: 0.8rem"
-                  @input="(e) => handleChangeHintUsage((e.target as HTMLElement)?.innerText, index)"
-                >
-                  {{ invoiceItem.hintUsage }}
-                </div>
+              <div style="font-weight: 500" class="text-justify">
+                {{ visitProduct.product!.brandName }}
+                <a
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="openModalProductDetail(visitProduct.product!)">
+                  <FileSearchOutlined />
+                </a>
               </div>
-              <div v-if="invoiceItem.type === InvoiceItemType.Procedure">
-                <div style="font-weight: 500">
-                  {{ invoiceItem.procedure!.name }}
-                  <a
-                    v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
-                    class="ml-1"
-                    @click="openModalProcedureDetail(invoiceItem.procedure)"
-                  >
-                    <FileSearchOutlined />
-                  </a>
-                </div>
+              <div
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.substance"
+                class="text-justify"
+                style="font-size: 0.8rem">
+                {{ visitProduct.product!.substance }}
               </div>
+              <div
+                v-if="
+                  settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch &&
+                  visitProduct.product?.hasManageBatches
+                "
+                style="font-size: 0.8rem"
+                class="flex gap-2">
+                S.Lô {{ visitProduct.visitBatchList![0].batch?.lotNumber }}
+                {{ timeToText(visitProduct.visitBatchList![0].batch!.expiryDate) }}
+              </div>
+              <div
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
+                placeholder="Hướng dẫn sử dụng ..."
+                contenteditable="true"
+                style="font-size: 0.8rem"
+                @input="(e) => handleChangeHintUsage((e.target as HTMLElement)?.innerText, index)">
+                {{ visitProduct.hintUsage }}
+              </div>
+            </td>
+            <td
+              v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
+              class="text-center"
+              style="width: 20px">
+              {{ visitProduct.unitName }}
             </td>
             <td style="width: 150px">
               <div class="flex items-center justify-between">
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  :disabled="invoiceItem.quantity === 0"
-                  @click="invoice.invoiceItems![index].unitQuantity--"
-                >
+                  :disabled="visitProduct.quantity === 0"
+                  @click="visitProduct.unitQuantity--">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
-                  <InputNumber v-model:value="invoiceItem.unitQuantity" textAlign="right" />
+                  <InputNumber v-model:value="visitProduct.unitQuantity" textAlign="right" />
                 </div>
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="
                     !settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity &&
-                    overQuantityInvoiceItem(invoice.invoiceItems![index])
+                    overQuantityVisitProduct(visitProduct)
                   "
-                  @click="invoice.invoiceItems![index].unitQuantity++"
-                >
+                  @click="visitProduct.unitQuantity++">
                   <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
               </div>
             </td>
             <td
-              v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit"
-              class="text-center"
-              style="width: 20px"
-            >
-              {{ invoiceItem.unitName || 'Lần' }}
-            </td>
-            <td
               v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
               class="text-center"
-              style="width: 40px"
-            >
+              style="width: 40px">
               <a-popconfirm>
                 <template #cancelButton>
                   <div></div>
@@ -433,72 +560,184 @@ const overQuantityInvoiceItem = (invoiceItem: InvoiceItem): boolean => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>{{ formatMoney(invoiceItem.unitExpectedPrice) }}</b
-                    >)
+                    <b>{{ formatMoney(visitProduct.unitExpectedPrice) }}</b>
+                    )
                   </div>
                   <div class="mt-2">
                     <div>
                       <InputMoney
-                        :value="invoiceItem.unitDiscountMoney"
+                        :value="visitProduct.unitDiscountMoney"
                         append="VNĐ"
-                        @update:value="(e: number) => handleChangeUnitDiscountMoney(e, index)"
-                      />
+                        @update:value="
+                          (e: number) => handleChangeVisitProductUnitDiscountMoney(e, index)
+                        " />
                     </div>
                     <div class="mt-2">
                       <div class="w-full">
                         <InputNumber
-                          :value="invoiceItem.discountPercent"
+                          :value="visitProduct.discountPercent"
                           append="%"
-                          @update:value="(e: number) => handleChangeDiscountPercent(e, index)"
-                        />
+                          @update:value="
+                            (e: number) => handleChangeVisitProductDiscountPercent(e, index)
+                          " />
                       </div>
                     </div>
                   </div>
                 </template>
                 <a-tag
-                  v-if="invoiceItem.discountType === 'VNĐ'"
+                  v-if="visitProduct.discountType === 'VNĐ'"
                   color="success"
-                  style="cursor: pointer"
-                >
-                  {{ formatMoney(invoiceItem.unitDiscountMoney) }}
+                  style="cursor: pointer">
+                  {{ formatMoney(visitProduct.unitDiscountMoney) }}
                 </a-tag>
                 <a-tag
-                  v-if="invoiceItem.discountType === '%'"
+                  v-if="visitProduct.discountType === '%'"
                   color="success"
-                  style="cursor: pointer"
-                >
-                  {{ invoiceItem.discountPercent || 0 }}%
+                  style="cursor: pointer">
+                  {{ visitProduct.discountPercent || 0 }}%
+                </a-tag>
+              </a-popconfirm>
+            </td>
+
+            <td class="text-center">
+              <div v-if="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice">
+                <div v-if="visitProduct.discountMoney" class="text-xs italic text-red-500">
+                  <del>{{ formatMoney(visitProduct.unitExpectedPrice) }}</del>
+                </div>
+                <div>{{ formatMoney(visitProduct.unitActualPrice) }}</div>
+              </div>
+              <div v-else class="w-full">
+                <InputMoney
+                  text-align="right"
+                  :value="visitProduct.unitActualPrice"
+                  @update:value="
+                    (e: number) => handleChangeVisitProductUnitActualPrice(e, index)
+                  " />
+              </div>
+            </td>
+            <td class="text-right">
+              {{ formatMoney(visitProduct.actualPrice * visitProduct.quantity) }}
+            </td>
+            <td class="text-center" style="width: 20px">
+              <a class="text-red-500 text-xl" @click="visit.visitProductList!.splice(index, 1)">
+                <IconDelete />
+              </a>
+            </td>
+          </tr>
+          <tr v-for="(visitProcedure, index) in visit.visitProcedureList" :key="index">
+            <td class="text-center">{{ index + 1 }}</td>
+            <td :colspan="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit ? '2' : '1'">
+              <div style="font-weight: 500">
+                {{ visitProcedure.procedure!.name }}
+                <a
+                  v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.detail"
+                  class="ml-1"
+                  @click="openModalProcedureDetail(visitProcedure.procedure)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
+            </td>
+            <td style="width: 150px">
+              <div class="flex items-center justify-between">
+                <button
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  :disabled="visitProcedure.quantity === 0"
+                  @click="visitProcedure.quantity--">
+                  <font-awesome-icon :icon="['fas', 'minus']" />
+                </button>
+                <div style="width: calc(100% - 60px); min-width: 50px">
+                  <InputNumber v-model:value="visitProcedure.quantity" textAlign="right" />
+                </div>
+                <button
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  @click="visitProcedure.quantity++">
+                  <font-awesome-icon :icon="['fas', 'plus']" />
+                </button>
+              </div>
+            </td>
+            <td
+              v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.discount"
+              class="text-center"
+              style="width: 40px">
+              <a-popconfirm>
+                <template #cancelButton>
+                  <div></div>
+                </template>
+                <template #okButton>
+                  <div></div>
+                </template>
+                <template #title>
+                  <div>
+                    Chiết khấu (Tiền hàng:
+                    <b>{{ formatMoney(visitProcedure.expectedPrice) }}</b>
+                    )
+                  </div>
+                  <div class="mt-2">
+                    <div>
+                      <InputMoney
+                        :value="visitProcedure.discountMoney"
+                        append="VNĐ"
+                        @update:value="
+                          (e: number) => handleChangeVisitProcedureDiscountMoney(e, index)
+                        " />
+                    </div>
+                    <div class="mt-2">
+                      <div class="w-full">
+                        <InputNumber
+                          :value="visitProcedure.discountPercent"
+                          append="%"
+                          @update:value="
+                            (e: number) => handleChangeVisitProcedureDiscountPercent(e, index)
+                          " />
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <a-tag
+                  v-if="visitProcedure.discountType === 'VNĐ'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ formatMoney(visitProcedure.discountMoney) }}
+                </a-tag>
+                <a-tag
+                  v-if="visitProcedure.discountType === '%'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ visitProcedure.discountPercent || 0 }}%
                 </a-tag>
               </a-popconfirm>
             </td>
             <td class="text-center">
               <div v-if="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.editActualPrice">
-                <div v-if="invoiceItem.discountMoney" class="text-xs italic text-red-500">
-                  <del>{{ formatMoney(invoiceItem.unitExpectedPrice) }}</del>
+                <div v-if="visitProcedure.discountMoney" class="text-xs italic text-red-500">
+                  <del>{{ formatMoney(visitProcedure.expectedPrice) }}</del>
                 </div>
-                <div>{{ formatMoney(invoiceItem.unitActualPrice) }}</div>
+                <div>{{ formatMoney(visitProcedure.actualPrice) }}</div>
               </div>
               <div v-else class="w-full">
                 <InputMoney
                   text-align="right"
-                  :value="invoiceItem.unitActualPrice"
-                  @update:value="(e: number) => handleChangeUnitActualPrice(e, index)"
-                />
+                  :value="visitProcedure.actualPrice"
+                  @update:value="(e: number) => handleChangeVisitProcedureActualPrice(e, index)" />
               </div>
             </td>
             <td class="text-right">
-              {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
+              {{ formatMoney(visitProcedure.actualPrice * visitProcedure.quantity) }}
             </td>
             <td class="text-center" style="width: 20px">
-              <a class="text-red-500 text-xl" @click="invoice.invoiceItems!.splice(index, 1)">
-                <DeleteOutlined />
+              <a class="text-red-500 text-xl" @click="visit.visitProcedureList!.splice(index, 1)">
+                <IconDelete />
               </a>
             </td>
           </tr>
           <tr>
             <td colspan="100" class="text-right">
-              <span class="mr-10">Tổng tiền hàng:</span>
-              <span class="mr-20"> {{ formatMoney(invoice.itemsActualMoney) }} </span>
+              <span class="mr-10">Tổng tiền:</span>
+              <span class="mr-20">
+                {{ formatMoney(visit.productsMoney + visit.proceduresMoney) }}
+              </span>
             </td>
           </tr>
         </tbody>

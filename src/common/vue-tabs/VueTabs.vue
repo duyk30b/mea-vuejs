@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide } from 'vue'
+import { ref, provide, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -20,9 +20,15 @@ const props = withDefaults(
     tabStart: 0,
   }
 )
-
 const emit = defineEmits<{ (e: 'changeTab', value: string | number): void }>()
 const tabSelect = ref<string | number>(props.tabStart)
+watch(
+  () => props.tabStart,
+  (newVal) => {
+    tabSelect.value = newVal
+  },
+  { immediate: true }
+)
 
 const listenTabChange = (value: string | number) => {
   tabSelect.value = value
@@ -39,6 +45,7 @@ provide('tabSelect', tabSelect)
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    padding: 0 4px;
     border-bottom: 1px solid #cdcdcd;
   }
   .tab-panel {

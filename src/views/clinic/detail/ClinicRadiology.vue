@@ -11,11 +11,11 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Radiology, RadiologyApi } from '../../../modules/radiology'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitStatus } from '../../../modules/visit'
 import { VisitRadiology } from '../../../modules/visit-radiology'
 import { customFilter } from '../../../utils'
 import ModalRadiologyUpsert from '../../radiology/upsert/ModalRadiologyUpsert.vue'
-import ModalVisitRadiologyResult from './modal/ModalVisitRadiologyResult.vue'
+import ModalVisitRadiologyResult from './modal/ModalClinicRadiologyResult.vue'
 import { visit } from './visit.ref'
 
 const modalRadiologyUpsert = ref<InstanceType<typeof ModalRadiologyUpsert>>()
@@ -35,7 +35,7 @@ const visitRadiologyList = ref<VisitRadiology[]>([])
 watch(
   () => visit.value.visitRadiologyList!,
   (newValue: VisitRadiology[]) => {
-    visitRadiologyList.value = VisitRadiology.cloneList(newValue || [])
+    visitRadiologyList.value = VisitRadiology.fromList(newValue || [])
   },
   { immediate: true, deep: true }
 )
@@ -48,6 +48,7 @@ const disabledButton = computed(() => {
 })
 
 onMounted(async () => {
+  console.log('🚀 ~ file: ClinicRadiology.vue ~ onMounted')
   try {
     const response = await RadiologyApi.list({})
     radiologyAll = response.data
@@ -87,7 +88,7 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const saveVisitRadiologyList = async () => {
-  await VisitApi.replaceVisitRadiologyList({
+  await VisitActionApi.replaceVisitRadiologyList({
     visitId: visit.value.id,
     customerId: visit.value.customerId || 0,
     visitRadiologyList: visitRadiologyList.value.filter((i) => i.startedAt == null),

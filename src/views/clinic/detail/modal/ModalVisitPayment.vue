@@ -8,8 +8,7 @@ import { InputMoney, InputNumber } from '../../../../common/vue-form'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CustomerPaymentApi } from '../../../../modules/customer-payment/customer-payment.api'
 import { PaymentViewType, VoucherType } from '../../../../modules/enum'
-import { VisitStatus } from '../../../../modules/visit'
-import { VisitApi } from '../../../../modules/visit/visit.api'
+import { VisitActionApi, VisitStatus } from '../../../../modules/visit'
 import { timeToText } from '../../../../utils'
 import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
 import { visit } from '../visit.ref'
@@ -31,7 +30,7 @@ const openModal = async (view: PaymentViewType) => {
   paymentView.value = view
   money.value = 0
   showModal.value = true
-  visit.value.customerPayments = await CustomerPaymentApi.list({
+  visit.value.customerPaymentList = await CustomerPaymentApi.list({
     filter: {
       customerId: visit.value.customerId,
       voucherId: visit.value.id,
@@ -51,7 +50,7 @@ const closeModal = () => {
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    await VisitApi.prepayment(visit.value.id, money.value)
+    await VisitActionApi.prepayment(visit.value.id, money.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -67,7 +66,7 @@ const startRefundOverpaid = async () => {
   }
   paymentLoading.value = true
   try {
-    await VisitApi.refundOverpaid(visit.value.id, money.value)
+    await VisitActionApi.refundOverpaid(visit.value.id, money.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -80,7 +79,7 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    await VisitApi.payDebt(visit.value.id, money.value)
+    await VisitActionApi.payDebt(visit.value.id, money.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -123,7 +122,7 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(customerPayment, index) in visit.customerPayments" :key="index">
+              <tr v-for="(customerPayment, index) in visit.customerPaymentList" :key="index">
                 <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-center">
                   {{ timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YY') }}
