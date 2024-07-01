@@ -6,7 +6,7 @@ import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item
 import { Procedure } from '../../../modules/procedure'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
-import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
+import InvoiceStatusTag from '../../invoice/InvoiceVisitStatusTag.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),

@@ -2,15 +2,15 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 
-export class VisitClinicApi {
+export class ClinicVisitApi {
   static async registerWithExistCustomer(body: { customerId: number; registeredAt: number }) {
-    const response = await AxiosInstance.post('/visit/clinic/register-with-exist-customer', body)
+    const response = await AxiosInstance.post('/clinic-visit/register-with-exist-customer', body)
     const { data } = response.data as BaseResponse<{ visit: any }>
   }
 
   static async registerWithNewCustomer(body: { customer: Customer; registeredAt: number }) {
     const { customer } = body
-    const response = await AxiosInstance.post('/visit/clinic/register-with-new-customer', {
+    const response = await AxiosInstance.post('/clinic-visit/register-with-new-customer', {
       registeredAt: body.registeredAt,
       customer: {
         fullName: customer.fullName,
@@ -32,7 +32,7 @@ export class VisitClinicApi {
   }
 
   static async startCheckup(params: { visitId: number }) {
-    const response = await AxiosInstance.post(`visit/clinic/start-checkup/${params.visitId}`)
+    const response = await AxiosInstance.post(`/clinic-visit/start-checkup/${params.visitId}`)
     const { data } = response.data as BaseResponse<{ visitBasic: any }>
   }
 }

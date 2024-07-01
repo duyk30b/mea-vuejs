@@ -137,15 +137,13 @@ defineExpose({ focus })
     :tabindex="disabled ? -1 : 0"
     @focusin="showOptions = true"
     @blur="showOptions = false"
-    @keydown="handleKeydown"
-  >
+    @keydown="handleKeydown">
     <div class="input-area">
       <input
         ref="inputRef"
         :required="required"
         :value="Object.keys(itemSelected).length || ''"
-        disabled
-      />
+        disabled />
       <div class="mask" @click="showOptions = true">
         <slot name="text" :content="itemSelected">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
@@ -176,14 +174,12 @@ defineExpose({ focus })
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in options"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click.stop="handleSelectItem(index)"
-      >
+        @click.stop="handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}
@@ -195,6 +191,7 @@ defineExpose({ focus })
 </template>
 <style lang="scss" scoped>
 .vue-input {
+  cursor: pointer;
   .input-area {
     .mask {
       position: absolute;

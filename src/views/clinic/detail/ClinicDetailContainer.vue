@@ -17,7 +17,7 @@ import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { VisitActionApi, VisitApi, VisitClinicApi, VisitStatus } from '../../../modules/visit'
+import { VisitActionApi, VisitApi, ClinicVisitApi, VisitStatus } from '../../../modules/visit'
 import { VisitDiagnosis } from '../../../modules/visit-diagnosis'
 import ClinicDiagnosis from './ClinicDiagnosis.vue'
 import VisitInformation from './ClinicInformation.vue'
@@ -75,7 +75,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await VisitClinicApi.startCheckup({ visitId: visit.value.id })
+  await ClinicVisitApi.startCheckup({ visitId: visit.value.id })
 }
 
 const startCloseVisit = async () => {

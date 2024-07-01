@@ -6,7 +6,7 @@ import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
 import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
-import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
+import InvoiceStatusTag from '../../invoice/InvoiceVisitStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),

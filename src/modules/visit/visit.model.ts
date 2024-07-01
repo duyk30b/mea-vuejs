@@ -1,6 +1,6 @@
 import { Customer } from '../customer'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
-import type { DiscountType } from '../enum'
+import { DiscountType } from '../enum'
 import { VisitBatch } from '../visit-batch'
 import { VisitDiagnosis } from '../visit-diagnosis'
 import { VisitExpense } from '../visit-expense/visit-expense.model'
@@ -15,6 +15,7 @@ export enum VisitStatus {
   InProgress = 3, // Đang khám,
   Debt = 4, // Nợ
   Completed = 5,
+  Cancel = 6,
 }
 
 export enum VisitType {
@@ -59,6 +60,20 @@ export class Visit {
   static init(): Visit {
     const ins = new Visit()
     ins.id = 0
+    ins.visitStatus = VisitStatus.Draft
+    ins.totalCostAmount = 0
+    ins.proceduresMoney = 0
+    ins.productsMoney = 0
+    ins.radiologyMoney = 0
+    ins.discountMoney = 0
+    ins.discountPercent = 0
+    ins.discountType = DiscountType.Percent
+    ins.surcharge = 0
+    ins.totalMoney = 0
+    ins.expense = 0
+    ins.profit = 0
+    ins.paid = 0
+    ins.debt = 0
     return ins
   }
 

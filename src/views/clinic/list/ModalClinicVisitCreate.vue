@@ -10,7 +10,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore } from '../../../modules/customer'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { VisitClinicApi } from '../../../modules/visit'
+import { ClinicVisitApi } from '../../../modules/visit'
 import { customFilter, timeToText } from '../../../utils'
 import ModalClinicVisitCreateSetting from './ModalClinicVisitCreateSetting.vue'
 
@@ -59,12 +59,12 @@ const handleRegisterVisit = async () => {
   saveLoading.value = true
   try {
     if (!customer.value.id) {
-      await VisitClinicApi.registerWithNewCustomer({
+      await ClinicVisitApi.registerWithNewCustomer({
         customer: customer.value,
         registeredAt: Date.now(),
       })
     } else {
-      await VisitClinicApi.registerWithExistCustomer({
+      await ClinicVisitApi.registerWithExistCustomer({
         customerId: customer.value.id,
         registeredAt: Date.now(),
       })

@@ -7,7 +7,7 @@ export const clinicRouter: RouteRecordRaw = {
     {
       path: 'visit',
       name: 'Visit',
-      redirect: () => ({ name: 'VisitList' }),
+      redirect: () => ({ name: 'ClinicVisitList' }),
       children: [
         {
           path: 'list',

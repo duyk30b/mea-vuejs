@@ -1,5 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate } from '../_base/base-condition'
+import type { VisitStatus, VisitType } from './visit.model'
 
 export class VisitGetQuery {
   page: number
@@ -18,7 +19,10 @@ export class VisitGetQuery {
   filter?: {
     customerId?: number
     registeredAt?: ConditionDate
+    startedAt?: ConditionDate
     updatedAt?: ConditionDate
+    visitStatus?: VisitStatus
+    visitType?: VisitType
   }
 
   sort?: {

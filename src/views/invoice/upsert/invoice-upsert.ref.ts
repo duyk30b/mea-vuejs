@@ -26,8 +26,11 @@ watchEffect(() => {
   const proceduresMoney = visit.value.visitProcedureList!.reduce((acc, item) => {
     return acc + item.actualPrice * item.quantity
   }, 0)
+  const radiologyMoney = (visit.value.visitRadiologyList || []).reduce((acc, item) => {
+    return acc + item.actualPrice
+  }, 0)
 
-  const itemsActualMoney = productsMoney + proceduresMoney
+  const itemsActualMoney = productsMoney + proceduresMoney + radiologyMoney
 
   let discountMoney = 0
   let discountPercent = 0
@@ -52,6 +55,7 @@ watchEffect(() => {
   visit.value.totalCostAmount = totalCostAmount
   visit.value.productsMoney = productsMoney
   visit.value.proceduresMoney = proceduresMoney
+  visit.value.radiologyMoney = radiologyMoney
   visit.value.discountMoney = discountMoney
   visit.value.discountPercent = discountPercent
   visit.value.discountType = discountType

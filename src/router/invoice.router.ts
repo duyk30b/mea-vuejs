@@ -5,26 +5,26 @@ export const invoiceRouter: RouteRecordRaw = {
   name: 'Invoice',
   children: [
     {
-      path: 'invoice',
-      name: 'Invoice',
-      redirect: () => ({ name: 'InvoiceList' }),
+      path: 'visit',
+      name: 'InvoiceVisit',
+      redirect: () => ({ name: 'InvoiceVisitList' }),
       children: [
         {
           path: 'list',
-          name: 'InvoiceList',
+          name: 'InvoiceVisitList',
           meta: { title: 'Hóa đơn' },
-          component: () => import('../views/invoice/list/InvoiceList.vue'),
+          component: () => import('../views/invoice/list/InvoiceVisitList.vue'),
         },
         {
           path: 'detail/:id',
-          name: 'InvoiceDetail',
+          name: 'InvoiceVisitDetail',
           meta: { title: 'Hóa đơn' },
-          component: () => import('../views/invoice/detail/InvoiceDetail.vue'),
+          component: () => import('../views/invoice/detail/InvoiceVisitDetail.vue'),
         },
         {
           path: 'upsert/:id?',
-          name: 'InvoiceUpsert',
-          component: () => import('../views/invoice/upsert/InvoiceUpsert.vue'),
+          name: 'InvoiceVisitUpsert',
+          component: () => import('../views/invoice/upsert/InvoiceVisitUpsert.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
               if (route.query?.mode === 'UPDATE') return 'Hóa đơn'

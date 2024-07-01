@@ -72,16 +72,16 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'RadiologyList' }"> CĐHA </router-link>
       </a-menu-item>
     </a-sub-menu>
-    <a-sub-menu v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="Invoice">
+    <a-sub-menu v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="InvoiceVisit">
       <template #icon>
         <StoreIcon />
       </template>
       <template #title> Bán hàng </template>
-      <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]" key="InvoiceUpsert">
-        <router-link :to="{ name: 'InvoiceUpsert' }"> Tạo hóa đơn </router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]" key="InvoiceVisitUpsert">
+        <router-link :to="{ name: 'InvoiceVisitUpsert' }"> Tạo hóa đơn </router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="InvoiceList">
-        <router-link :to="{ name: 'InvoiceList' }"> Danh sách hóa đơn </router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.INVOICE_READ]" key="InvoiceVisitList">
+        <router-link :to="{ name: 'InvoiceVisitList' }"> Danh sách hóa đơn </router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-menu-item v-if="permissionIdMap[PermissionId.CUSTOMER_READ]" key="Customer">

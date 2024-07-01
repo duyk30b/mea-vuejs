@@ -13,7 +13,7 @@ import { Customer, CustomerApi, useCustomerStore } from '../../../modules/custom
 import { DiscountType } from '../../../modules/enum'
 import { Invoice, InvoiceApi } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Visit, VisitApi, VisitStatus } from '../../../modules/visit'
+import { InvoiceVisitApi, Visit, VisitApi, VisitStatus } from '../../../modules/visit'
 import { VisitExpense } from '../../../modules/visit-expense/visit-expense.model'
 import { VisitSurcharge } from '../../../modules/visit-surcharge/visit-surcharge.model'
 import { timeToText } from '../../../utils'
@@ -192,7 +192,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
 
   try {
     saveLoading.value = true
-    visit.value.startedAt = time.value.valueOf()
+    visit.value.registeredAt = time.value.valueOf()
     visit.value.visitSurchargeList = visit.value.visitSurchargeList!.filter((i) => {
       i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
       return i.money != 0
@@ -204,8 +204,9 @@ const saveInvoice = async (type: EInvoiceSave) => {
 
     switch (type) {
       case EInvoiceSave.CREATE_DRAFT: {
-        const response = await InvoiceApi.createDraft(invoice.value)
-        router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
+        const response = await InvoiceVisitApi.createDraft(visit.value)
+        return
+        router.push({ name: 'InvoiceDetail', params: { id: response!.visitId } })
         break
       }
       case EInvoiceSave.CREATE_QUICK_AND_NEW: {

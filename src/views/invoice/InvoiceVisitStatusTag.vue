@@ -1,42 +1,42 @@
 <script setup lang="ts">
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
-import { InvoiceStatus } from '../../modules/invoice'
+import { VisitStatus } from '../../modules/visit'
 
-const props = withDefaults(defineProps<{ status: InvoiceStatus }>(), {
-  status: InvoiceStatus.Draft,
+const props = withDefaults(defineProps<{ visitStatus: VisitStatus }>(), {
+  visitStatus: VisitStatus.Draft,
 })
 </script>
 
 <template>
-  <a-tag v-if="status === InvoiceStatus.Draft" color="warning">
+  <a-tag v-if="visitStatus === VisitStatus.Draft" color="warning">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
     Nháp
   </a-tag>
-  <a-tag v-if="status === InvoiceStatus.Prepayment" color="processing">
+  <a-tag v-if="visitStatus === VisitStatus.InProgress" color="processing">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
-    Tạm ứng
+    Chờ thục hiện
   </a-tag>
-  <a-tag v-if="status === InvoiceStatus.Debt" color="error">
+  <a-tag v-if="visitStatus === VisitStatus.Debt" color="error">
     <template #icon>
       <ExclamationCircleOutlined />
     </template>
     Nợ
   </a-tag>
-  <a-tag v-if="status === InvoiceStatus.Success" color="success">
+  <a-tag v-if="visitStatus === VisitStatus.Completed" color="success">
     <template #icon>
       <CheckCircleOutlined />
     </template>
     Hoàn thành
   </a-tag>
 
-  <a-tag v-if="status === InvoiceStatus.Refund" color="default">
+  <a-tag v-if="visitStatus === VisitStatus.Cancel" color="default">
     <template #icon>
       <StopOutlined />
     </template>
-    Hoàn trả
+    Hủy
   </a-tag>
 </template>

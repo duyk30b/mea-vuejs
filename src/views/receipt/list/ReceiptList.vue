@@ -29,7 +29,7 @@ const { permissionIdMap } = meStore
 
 const receipts = ref<Receipt[]>([])
 
-const loadingComponent = ref(false)
+const dataLoading = ref(false)
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('RECEIPT_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
@@ -42,7 +42,7 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    loadingComponent.value = true
+    dataLoading.value = true
 
     const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
     const toTime = timeRanger.value?.[1].endOf('day').toISOString()
@@ -63,7 +63,7 @@ const startFetchData = async () => {
 
     receipts.value = data
     total.value = meta.total
-    loadingComponent.value = false
+    dataLoading.value = false
   } catch (error) {
     console.log('🚀 ~ file: ReceiptList.vue:52 ~ error:', error)
   }
@@ -189,7 +189,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <th>T.Thái</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="dataLoading">
+            <tr>
+              <td colspan="100">
+                <div class="vue-skeleton-loading"></div>
+                <div class="vue-skeleton-loading mt-2"></div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="100">
+                <div class="vue-skeleton-loading"></div>
+                <div class="vue-skeleton-loading mt-2"></div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
             <tr v-if="receipts.length === 0">
               <td colspan="20" class="text-center">Không có dữ liệu</td>
             </tr>
@@ -260,7 +274,21 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Trạng thái</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="dataLoading">
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="100">
+              <div class="vue-skeleton-loading"></div>
+              <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <tr v-if="receipts.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
