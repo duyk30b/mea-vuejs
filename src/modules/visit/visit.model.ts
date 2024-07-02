@@ -10,9 +10,9 @@ import { VisitRadiology } from '../visit-radiology'
 import { VisitSurcharge } from '../visit-surcharge/visit-surcharge.model'
 
 export enum VisitStatus {
-  Draft = 1, // Hẹn khám
+  Draft = 1, // Hẹn khám --- Nháp
   Waiting = 2, // Đợi khám
-  InProgress = 3, // Đang khám,
+  InProgress = 3, // Đang khám --- Tạm ứng,
   Debt = 4, // Nợ
   Completed = 5,
   Cancel = 6,

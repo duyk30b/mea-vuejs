@@ -28,7 +28,7 @@ export const invoiceVisitHtmlContent = (visit: Visit) => {
           </small></i></del></div>`
       }
       return `<tr>
-      <td style="text-align: center">${index + 1}</td>
+      <td style="text-align: center"></td>
       <td colspan="${showUnit ? 2 : 1}"> ${procedureName} </td>
       <td style="text-align: center">${item.quantity}</td>
       <td style="text-align: right">
@@ -57,7 +57,7 @@ export const invoiceVisitHtmlContent = (visit: Visit) => {
         colUnit = ` <td style="text-align: center">${item.unitName}</td>`
       }
       return `<tr>
-      <td style="text-align: center">${index + 1}</td>
+      <td style="text-align: center"></td>
       <td>${productName}</td>
       ${colUnit}
       <td style="text-align: center">${item.quantity / item.unitRate}</td>
@@ -102,36 +102,45 @@ export const invoiceVisitHtmlContent = (visit: Visit) => {
   <head>
     <title>&nbsp;</title>
     <style>
-      #print-invoice-demo-body * {
+      #print-container * {
         all: revert;
         font-family: 'Arial', sans-serif;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
-      #print-invoice-demo-body table.information td {
+      #print-container table.information td {
         border: 0;
         padding: 0.5em 0;
         vertical-align: top;
       }
-      #print-invoice-demo-body table.data {
+      #print-container table.data {
         margin-top: 0.5rem;
         width: 100%;
         border-collapse: collapse;
         border-spacing: 0;
       }
-      #print-invoice-demo-body table.data th {
+      #print-container table.data tbody {
+        counter-reset: rowNumber 0;
+      }
+      #print-container table.data tbody tr {
+        counter-increment: rowNumber 1;
+      }
+      #print-container table.data tbody tr td:first-child::before {
+        content: counter(rowNumber);
+      }
+      #print-container table.data th {
         padding: 0.5rem;
         border: 1px solid #cdcdcd;
       }
-      #print-invoice-demo-body table.data td {
+      #print-container table.data td {
         padding: 0.5rem;
         border: 1px solid #cdcdcd;
       }
     </style>
   </head>
   <body>
-    <div id="print-invoice-demo-body" style="width: 760px; background-color: white; padding: 10px">
+    <div id="print-container" style="width: 760px; background-color: white; padding: 10px">
       <div>
         <table style="width: 100%">
           <tr>

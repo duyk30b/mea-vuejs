@@ -19,7 +19,13 @@
     }
 
     & > tbody {
+      counter-reset: rowNumber 0;
       & > tr {
+        counter-increment: rowNumber 1;
+        td.auto-index:first-child::before {
+          content: counter(rowNumber);
+        }
+
         &:nth-child(even) {
           background-color: var(--color-table-td-even-bg);
         }

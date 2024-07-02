@@ -2,6 +2,7 @@
 import {
   CopyOutlined,
   DeleteOutlined,
+  CloseCircleOutlined,
   ExceptionOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
@@ -22,7 +23,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { VisitApi, VisitStatus } from '../../../modules/visit'
+import { Visit, VisitApi, VisitStatus } from '../../../modules/visit'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
@@ -68,28 +69,28 @@ const startFetchData = async (visitId: number) => {
 }
 
 onBeforeMount(async () => {
-  const invoiceId = Number(route.params.id)
-  if (invoiceId) {
-    await startFetchData(invoiceId)
+  const visitId = Number(route.params.id)
+  if (visitId) {
+    await startFetchData(visitId)
   }
 })
 
 onUnmounted(() => {
-  invoice.value = Invoice.blank()
+  visit.value = Visit.blank()
 })
 
 const startEdit = () => {
   router.push({
-    name: 'InvoiceUpsert',
-    params: { id: invoice.value.id },
+    name: 'InvoiceVisitUpsert',
+    params: { id: visit.value.id },
     query: { mode: EInvoiceUpsertMode.UPDATE },
   })
 }
 
 const startCopy = () => {
   router.push({
-    name: 'InvoiceUpsert',
-    params: { id: invoice.value.id },
+    name: 'InvoiceVisitUpsert',
+    params: { id: visit.value.id },
     query: { mode: EInvoiceUpsertMode.COPY },
   })
 }
@@ -99,7 +100,7 @@ const destroyDraft = async () => {
     loadingProcess.value = true
     await InvoiceApi.destroyDraft(invoice.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
-    router.push({ name: 'InvoiceList' })
+    router.push({ name: 'InvoiceVisitList' })
   } catch (error) {
     console.log('🚀 ~ destroyDraft ~ error:', error)
   } finally {
@@ -287,7 +288,7 @@ const openModalInvoiceVisitPreview = () => {
       </span>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
+          v-if="permissionIdMap[PermissionId.INVOICE_DRAFT]"
           color="blue"
           icon="plus"
           @click="
@@ -374,7 +375,7 @@ const openModalInvoiceVisitPreview = () => {
       </VueButton>
       <VueButton icon="print" @click="startPrint">In</VueButton>
       <VueButton
-        v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
+        v-if="permissionIdMap[PermissionId.INVOICE_DRAFT]"
         class="ml-auto"
         @click="startCopy">
         <CopyOutlined />
@@ -382,8 +383,8 @@ const openModalInvoiceVisitPreview = () => {
       </VueButton>
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.INVOICE_UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT] &&
-          [InvoiceStatus.Draft, InvoiceStatus.Prepayment].includes(invoice.status)
+          permissionIdMap[PermissionId.INVOICE_DRAFT] &&
+          [VisitStatus.Draft].includes(visit.visitStatus)
         "
         color="blue"
         @click="startEdit">
@@ -397,18 +398,20 @@ const openModalInvoiceVisitPreview = () => {
             <a-menu-item
               v-if="
                 settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
-                [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
+                [VisitStatus.InProgress, VisitStatus.Debt, VisitStatus.Completed].includes(
+                  visit.visitStatus
+                )
               "
               key="EDIT_INVOICE">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
-                Sửa đơn
+                Sửa đơn (force)
               </span>
             </a-menu-item>
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.INVOICE_REFUND_PREPAYMENT] &&
-                [InvoiceStatus.Prepayment].includes(invoice.status)
+                permissionIdMap[PermissionId.INVOICE_REFUND_OVERPAID] &&
+                [VisitStatus.InProgress].includes(visit.visitStatus)
               "
               key="REFUND_PREPAYMENT">
               <span class="text-red-500">
@@ -419,23 +422,36 @@ const openModalInvoiceVisitPreview = () => {
             <a-menu-item
               v-if="
                 permissionIdMap[PermissionId.INVOICE_RETURN_PRODUCT] &&
-                [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
+                [VisitStatus.Debt, VisitStatus.Completed].includes(visit.visitStatus)
               "
               key="RETURN_PRODUCT">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
-                Hoàn trả
+                Hoàn trả hàng
               </span>
             </a-menu-item>
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.INVOICE_DELETE] &&
-                [InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)
+                permissionIdMap[PermissionId.INVOICE_DRAFT] &&
+                [VisitStatus.Draft].includes(visit.visitStatus)
               "
               key="DELETE">
               <span class="text-red-500">
                 <DeleteOutlined class="mr-2" />
                 Xóa đơn
+              </span>
+            </a-menu-item>
+            <a-menu-item
+              v-if="
+                permissionIdMap[PermissionId.INVOICE_CANCEL] &&
+                [VisitStatus.InProgress, VisitStatus.Debt, VisitStatus.Completed].includes(
+                  visit.visitStatus
+                )
+              "
+              key="DELETE">
+              <span class="text-red-500">
+                <CloseCircleOutlined class="mr-2" />
+                Hủy đơn
               </span>
             </a-menu-item>
           </a-menu>

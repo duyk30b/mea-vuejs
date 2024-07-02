@@ -91,9 +91,7 @@ defineExpose({ openModal })
             </thead>
             <tbody>
               <tr v-for="(visitProcedure, index) in visit.visitProcedureList" :key="index">
-                <td class="text-center">
-                  {{ index + 1 }}
-                </td>
+                <td class="auto-index text-center"></td>
                 <td
                   :colspan="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit ? '2' : '1'"
                   class="text-justify">
@@ -122,9 +120,7 @@ defineExpose({ openModal })
                 </td>
               </tr>
               <tr v-for="(visitProduct, index) in visit.visitProductList" :key="index">
-                <td class="text-center">
-                  {{ index + 1 }}
-                </td>
+                <td class="auto-index text-center"></td>
                 <td>
                   <div class="text-justify">
                     {{ visitProduct.product!.brandName }}
@@ -240,7 +236,15 @@ defineExpose({ openModal })
 <style lang="scss" scoped>
 table.invoice-visit-preview {
   width: 100%;
-
+  tbody {
+    counter-reset: rowNumber 0;
+    tr {
+      counter-increment: rowNumber 1;
+      td.auto-index:first-child::before {
+        content: counter(rowNumber);
+      }
+    }
+  }
   td,
   th {
     padding: 0.2em 0.5em;
