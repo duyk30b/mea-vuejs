@@ -265,7 +265,7 @@ const colspan = computed(() => {
                 "
                 style="font-size: 0.8rem"
                 class="flex gap-2">
-                Số lô {{ visitProduct.batch!.lotNumber }} - HSD
+                Lô {{ visitProduct.batch!.lotNumber }} - HSD
                 {{ timeToText(visitProduct.batch!.expiryDate) }}
               </div>
               <div

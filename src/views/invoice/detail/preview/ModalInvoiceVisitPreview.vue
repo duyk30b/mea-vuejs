@@ -8,6 +8,7 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Invoice } from '../../../../modules/invoice'
 import { timeToText } from '../../../../utils'
 import ModalInvoicePreviewSettingScreen from './ModalInvoicePreviewSettingScreen.vue'
+import { Visit } from '../../../../modules/visit'
 
 const modalInvoicePreviewSettingScreen =
   ref<InstanceType<typeof ModalInvoicePreviewSettingScreen>>()
@@ -17,16 +18,16 @@ const meStore = useMeStore()
 const { formatMoney } = settingStore
 
 const showModal = ref(false)
-const invoice = ref(Invoice.blank())
+const visit = ref(Visit.blank())
 
-const openModal = async (data: Invoice) => {
+const openModal = async (data: Visit) => {
   showModal.value = true
-  invoice.value = data
+  visit.value = data
 }
 
 const handleClose = () => {
   showModal.value = false
-  invoice.value = Invoice.blank()
+  visit.value = Visit.blank()
 }
 
 const colspan = computed(() => {
@@ -44,8 +45,7 @@ defineExpose({ openModal })
         <div
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalInvoicePreviewSettingScreen?.openModal()"
-        >
+          @click="modalInvoicePreviewSettingScreen?.openModal()">
           <SettingOutlined />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
@@ -60,8 +60,8 @@ defineExpose({ openModal })
             <div>{{ meStore.organization.phone }}</div>
           </div>
           <div class="flex flex-col items-center">
-            <div>Mã KH: C{{ invoice.customerId }}</div>
-            <div>Mã HĐ: IV{{ invoice.id }}</div>
+            <div>Mã KH: C{{ visit.customerId }}</div>
+            <div>Mã HĐ: VS{{ visit.id }}</div>
           </div>
         </div>
         <div style="text-align: center; font-size: 1.2rem; font-weight: bold; line-height: 2.5">
@@ -70,15 +70,15 @@ defineExpose({ openModal })
         <div>
           <div class="flex">
             <div style="width: 6rem">Khách hàng:</div>
-            <div>{{ invoice.customer?.fullName }}</div>
+            <div>{{ visit.customer?.fullName }}</div>
           </div>
           <div class="flex">
             <div style="width: 6rem">Địa chỉ:</div>
-            <div>{{ invoice.customer?.addressString }}</div>
+            <div>{{ visit.customer?.addressString }}</div>
           </div>
         </div>
         <div>
-          <table class="invoice-preview mt-2">
+          <table class="invoice-visit-preview mt-2">
             <thead>
               <tr>
                 <th>#</th>
@@ -90,74 +90,95 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(invoiceItem, index) in invoice.invoiceItems" :key="index">
+              <tr v-for="(visitProcedure, index) in visit.visitProcedureList" :key="index">
+                <td class="text-center">
+                  {{ index + 1 }}
+                </td>
+                <td
+                  :colspan="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit ? '2' : '1'"
+                  class="text-justify">
+                  {{ visitProcedure.procedure!.name }}
+                </td>
+                <td class="text-center">{{ visitProcedure.quantity }}</td>
+                <td class="text-right">
+                  <div
+                    v-if="
+                      settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
+                      visitProcedure.discountMoney != 0
+                    "
+                    style="color: rgb(255, 102, 0)">
+                    <del>
+                      <i>
+                        <small>
+                          {{ formatMoney(visitProcedure.expectedPrice) }}
+                        </small>
+                      </i>
+                    </del>
+                  </div>
+                  <div>{{ formatMoney(visitProcedure.actualPrice) }}</div>
+                </td>
+                <td class="text-right">
+                  {{ formatMoney(visitProcedure.actualPrice * visitProcedure.quantity) }}
+                </td>
+              </tr>
+              <tr v-for="(visitProduct, index) in visit.visitProductList" :key="index">
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
                 <td>
                   <div class="text-justify">
-                    <span v-if="invoiceItem.productId">
-                      {{ invoiceItem.product!.brandName }}
-                    </span>
-                    <span v-if="invoiceItem.procedureId">
-                      {{ invoiceItem.procedure!.name }}
-                    </span>
+                    {{ visitProduct.product!.brandName }}
                   </div>
-                  <div v-if="invoiceItem.productId">
+                  <div v-if="visitProduct.productId">
                     <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
-                      style="font-size: 0.8rem"
-                    >
-                      {{ invoiceItem.product!.substance }}
+                      style="font-size: 0.8rem">
+                      {{ visitProduct.product!.substance }}
                     </div>
                     <div
                       v-if="
                         settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
-                        invoiceItem.batchId
+                        visitProduct.batchId
                       "
                       style="font-size: 0.8rem"
-                      class="flex gap-2"
-                    >
-                      Lô {{ invoiceItem.batch!.lotNumber }} - HSD
-                      {{ timeToText(invoiceItem.batch!.expiryDate) }}
+                      class="flex gap-2">
+                      Lô {{ visitProduct.batch!.lotNumber }} - HSD
+                      {{ timeToText(visitProduct.batch!.expiryDate) }}
                     </div>
                     <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
-                      style="font-size: 0.8rem; font-style: italic"
-                    >
-                      {{ invoiceItem.hintUsage }}
+                      style="font-size: 0.8rem; font-style: italic">
+                      {{ visitProduct.hintUsage }}
                     </div>
                   </div>
                 </td>
                 <td
                   v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
-                  class="text-center"
-                >
-                  {{ invoiceItem.unitName || 'Lần' }}
+                  class="text-center">
+                  {{ visitProduct.unitName || 'Lần' }}
                 </td>
                 <td class="text-center">
-                  {{ invoiceItem.quantity }}
+                  {{ visitProduct.quantity }}
                 </td>
                 <td class="text-right">
                   <div
                     v-if="
                       settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
-                      invoiceItem.discountMoney != 0
+                      visitProduct.discountMoney != 0
                     "
-                    style="color: rgb(255, 102, 0)"
-                  >
-                    <del
-                      ><i
-                        ><small>
-                          {{ formatMoney(invoiceItem.expectedPrice) }}
-                        </small></i
-                      ></del
-                    >
+                    style="color: rgb(255, 102, 0)">
+                    <del>
+                      <i>
+                        <small>
+                          {{ formatMoney(visitProduct.expectedPrice) }}
+                        </small>
+                      </i>
+                    </del>
                   </div>
-                  <div>{{ formatMoney(invoiceItem.actualPrice) }}</div>
+                  <div>{{ formatMoney(visitProduct.actualPrice) }}</div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(invoiceItem.actualPrice * invoiceItem.quantity) }}
+                  {{ formatMoney(visitProduct.actualPrice * visitProduct.quantity) }}
                 </td>
               </tr>
               <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney">
@@ -166,20 +187,24 @@ defineExpose({ openModal })
                 </td>
                 <td :colspan="2" style="text-align: right">
                   <b>
-                    {{ formatMoney(invoice.itemsActualMoney) }}
+                    {{
+                      formatMoney(
+                        visit.proceduresMoney + visit.proceduresMoney + visit.radiologyMoney
+                      )
+                    }}
                   </b>
                 </td>
               </tr>
               <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount">
                 <td :colspan="colspan" style="text-align: right">Chiết khấu</td>
                 <td :colspan="2" style="text-align: right">
-                  {{ formatMoney(invoice.discountMoney) }}
+                  {{ formatMoney(visit.discountMoney) }}
                 </td>
               </tr>
               <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge">
                 <td :colspan="colspan" style="text-align: right">Phụ phí</td>
                 <td :colspan="2" style="text-align: right">
-                  {{ formatMoney(invoice.surcharge) }}
+                  {{ formatMoney(visit.surcharge) }}
                 </td>
               </tr>
               <tr>
@@ -188,7 +213,7 @@ defineExpose({ openModal })
                 </td>
                 <td :colspan="2" style="text-align: right">
                   <b>
-                    {{ formatMoney(invoice.totalMoney) }}
+                    {{ formatMoney(visit.totalMoney) }}
                   </b>
                 </td>
               </tr>
@@ -197,7 +222,7 @@ defineExpose({ openModal })
         </div>
         <div class="flex justify-end mt-4">
           Ngày tạo đơn:
-          {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(visit.registeredAt, 'hh:mm DD/MM/YY') }}
         </div>
       </div>
 
@@ -213,7 +238,7 @@ defineExpose({ openModal })
 </template>
 
 <style lang="scss" scoped>
-table.invoice-preview {
+table.invoice-visit-preview {
   width: 100%;
 
   td,

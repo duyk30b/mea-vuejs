@@ -31,7 +31,7 @@ import InvoiceVisitDetailTable from './InvoiceVisitDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
 import { invoice, visit } from './invoice-detail.ref'
-import ModalInvoicePreview from './preview/ModalInvoicePreview.vue'
+import ModalInvoiceVisitPreview from './preview/ModalInvoiceVisitPreview.vue'
 import { invoiceHtmlContent } from './preview/invoice-html-content'
 import { PaymentViewType } from '../../../modules/enum'
 import { InvoiceVisitApi, VisitApi, VisitStatus } from '../../../modules/visit'
@@ -39,7 +39,7 @@ import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalInvoicePreview = ref<InstanceType<typeof ModalInvoicePreview>>()
+const modalInvoiceVisitPreview = ref<InstanceType<typeof ModalInvoiceVisitPreview>>()
 const modalInvoicePayment = ref<InstanceType<typeof ModalInvoicePayment>>()
 
 const settingStore = useSettingStore()
@@ -270,14 +270,14 @@ const startPrint = () => {
   pri.print()
 }
 
-const openModalInvoicePreview = () => {
-  modalInvoicePreview.value?.openModal(invoice.value)
+const openModalInvoiceVisitPreview = () => {
+  modalInvoiceVisitPreview.value?.openModal(visit.value)
 }
 </script>
 
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalInvoicePreview ref="modalInvoicePreview" />
+  <ModalInvoiceVisitPreview ref="modalInvoiceVisitPreview" />
   <ModalInvoicePayment ref="modalInvoicePayment" />
   <ModalInvoiceDetailSettingScreen ref="modalInvoiceDetailSettingScreen" />
 
@@ -371,7 +371,7 @@ const openModalInvoicePreview = () => {
 
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
-      <VueButton @click="openModalInvoicePreview">
+      <VueButton @click="openModalInvoiceVisitPreview">
         <EyeOutlined />
         Xem
       </VueButton>
