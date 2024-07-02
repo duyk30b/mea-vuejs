@@ -205,8 +205,12 @@ const saveInvoice = async (type: EInvoiceSave) => {
     switch (type) {
       case EInvoiceSave.CREATE_DRAFT: {
         const response = await InvoiceVisitApi.createDraft(visit.value)
-        return
-        router.push({ name: 'InvoiceDetail', params: { id: response!.visitId } })
+        router.push({ name: 'InvoiceVisitDetail', params: { id: response!.visitId } })
+        break
+      }
+      case EInvoiceSave.UPDATE_DRAFT: {
+        const response = await InvoiceVisitApi.updateDraft(visit.value.id, visit.value)
+        router.push({ name: 'InvoiceVisitDetail', params: { id: response!.visitId } })
         break
       }
       case EInvoiceSave.CREATE_QUICK_AND_NEW: {
@@ -226,14 +230,7 @@ const saveInvoice = async (type: EInvoiceSave) => {
         AlertStore.add({ type: 'success', message: 'Tạo đơn thành công', time: 500 })
         break
       }
-      case EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT: {
-        const response = await InvoiceApi.updateInvoiceDraftAndInvoicePrepayment(
-          invoice.value.id,
-          invoice.value
-        )
-        router.push({ name: 'InvoiceDetail', params: { id: response!.invoiceId } })
-        break
-      }
+
       case EInvoiceSave.UPDATE_INVOICE_DEBT_AND_INVOICE_SUCCESS: {
         const response = await InvoiceApi.updateInvoiceDebtAndInvoiceSuccess(
           invoice.value.id,
@@ -525,7 +522,7 @@ const handleChangeTabs = (activeKey: any) => {
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)">
+              @click="saveInvoice(EInvoiceSave.UPDATE_DRAFT)">
               <template #icon>
                 <SaveOutlined />
               </template>
@@ -541,7 +538,7 @@ const handleChangeTabs = (activeKey: any) => {
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveInvoice(EInvoiceSave.UPDATE_INVOICE_DRAFT_AND_INVOICE_PREPAYMENT)">
+              @click="saveInvoice(EInvoiceSave.UPDATE_DRAFT)">
               <template #icon>
                 <SaveOutlined />
               </template>

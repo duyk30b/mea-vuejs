@@ -23,7 +23,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Visit, VisitApi, VisitStatus } from '../../../modules/visit'
+import { InvoiceVisitApi, Visit, VisitApi, VisitStatus } from '../../../modules/visit'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
@@ -98,7 +98,7 @@ const startCopy = () => {
 const destroyDraft = async () => {
   try {
     loadingProcess.value = true
-    await InvoiceApi.destroyDraft(invoice.value.id!)
+    await InvoiceVisitApi.destroyDraft(visit.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'InvoiceVisitList' })
   } catch (error) {
@@ -248,10 +248,11 @@ const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'EDIT_INVOICE') startEdit()
   if (menu.key === 'REFUND_PREPAYMENT') clickRefundPrepayment()
   if (menu.key === 'RETURN_PRODUCT') clickReturnProduct()
-  if (menu.key === 'DELETE') {
-    if (invoice.value.status === InvoiceStatus.Draft) {
+  if (menu.key === 'DESTROY') clickDestroyDraft()
+  if (menu.key === 'CANCEL') {
+    if (visit.value.visitStatus === VisitStatus.Draft) {
       clickDestroyDraft()
-    } else if (invoice.value.status === InvoiceStatus.Refund) {
+    } else if (visit.value.visitStatus === VisitStatus.Cancel) {
       clickSoftDeleteRefund()
     }
   }
@@ -435,7 +436,7 @@ const openModalInvoiceVisitPreview = () => {
                 permissionIdMap[PermissionId.INVOICE_DRAFT] &&
                 [VisitStatus.Draft].includes(visit.visitStatus)
               "
-              key="DELETE">
+              key="DESTROY">
               <span class="text-red-500">
                 <DeleteOutlined class="mr-2" />
                 Xóa đơn
@@ -448,7 +449,7 @@ const openModalInvoiceVisitPreview = () => {
                   visit.visitStatus
                 )
               "
-              key="DELETE">
+              key="CANCEL">
               <span class="text-red-500">
                 <CloseCircleOutlined class="mr-2" />
                 Hủy đơn

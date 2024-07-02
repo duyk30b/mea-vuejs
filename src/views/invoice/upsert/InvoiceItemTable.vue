@@ -136,9 +136,9 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(visitProcedure, index) in visit.visitProcedureList || []" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
+            <td
+              class="auto-index text-center whitespace-nowrap"
+              style="padding: 0.5rem 0.2rem"></td>
             <td>
               <div class="font-medium text-justify">
                 {{ visitProcedure.procedure!.name }}
@@ -272,9 +272,9 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
           </tr>
           <tr v-for="(visitProduct, index) in visit.visitProductList || []" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
+            <td
+              class="auto-index text-center whitespace-nowrap"
+              style="padding: 0.5rem 0.2rem"></td>
             <td>
               <div class="font-medium text-justify">
                 {{ visitProduct.product!.brandName }}
@@ -447,7 +447,6 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
               </a>
             </td>
           </tr>
-
           <tr>
             <td colspan="2" class="text-right">Tổng tiền:</td>
             <td colspan="2" class="text-right">
@@ -477,7 +476,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(visitProcedure, index) in visit.visitProcedureList" :key="index">
-            <td class="text-center">{{ index + 1 }}</td>
+            <td class="auto-index text-center"></td>
             <td :colspan="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit ? '2' : '1'">
               <div style="font-weight: 500">
                 {{ visitProcedure.procedure!.name }}
@@ -585,9 +584,7 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
           </tr>
           <tr v-for="(visitProduct, index) in visit.visitProductList || []" :key="index">
-            <td class="text-center">
-              {{ index + 1 }}
-            </td>
+            <td class="auto-index text-center"></td>
             <td>
               <div style="font-weight: 500" class="text-justify">
                 {{ visitProduct.product!.brandName }}

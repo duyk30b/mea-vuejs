@@ -46,9 +46,9 @@ const colspan = computed(() => {
         </thead>
         <tbody>
           <tr v-for="(visitProcedure, index) in visit.visitProcedureList || []" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
+            <td
+              class="auto-index text-center whitespace-nowrap"
+              style="padding: 0.5rem 0.2rem"></td>
             <td>
               <div class="font-medium text-justify">
                 {{ visitProcedure.procedure!.name }}
@@ -95,9 +95,9 @@ const colspan = computed(() => {
             </td>
           </tr>
           <tr v-for="(visitProduct, index) in visit.visitProductList || []" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
+            <td
+              class="auto-index text-center whitespace-nowrap"
+              style="padding: 0.5rem 0.2rem"></td>
             <td>
               <div class="font-medium text-justify">
                 {{ visitProduct.product!.brandName }}
