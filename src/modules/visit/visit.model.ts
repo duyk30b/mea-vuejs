@@ -128,11 +128,7 @@ export class Visit {
       })
     }
     if (source.visitProductList) {
-      target.visitProductList = source.visitProductList.map((i) => {
-        const visitProduct = new VisitProduct()
-        Object.assign(visitProduct, i)
-        return visitProduct
-      })
+      target.visitProductList = VisitProduct.fromList(source.visitProductList)
     }
     if (source.visitProcedureList) {
       target.visitProcedureList = source.visitProcedureList.map((i) => {

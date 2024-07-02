@@ -1,10 +1,11 @@
+import type { Batch } from '../batch'
 import type { DiscountType } from '../enum'
 import { Product } from '../product'
-import type { VisitBatch } from '../visit-batch'
 
 export class VisitProduct {
   id: number
   visitId: number
+  batchId: number
   productId: number
   isSent: number
   unitRate: number
@@ -19,7 +20,7 @@ export class VisitProduct {
   hintUsage: string | null // Hướng dẫn sử dụng
 
   product?: Product | null
-  visitBatchList?: VisitBatch[]
+  batch?: Batch | null
 
   get unitName() {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
@@ -68,6 +69,8 @@ export class VisitProduct {
   static init(): VisitProduct {
     const ins = new VisitProduct()
     ins.id = 0
+    ins.productId = 0
+    ins.batchId = 0
     ins.quantity = 0
     ins.quantityPrescription = 0
     ins.unitRate = 1
@@ -80,7 +83,6 @@ export class VisitProduct {
   static blank(): VisitProduct {
     const ins = VisitProduct.init()
     ins.product = Product.init()
-    ins.visitBatchList = []
     return ins
   }
 

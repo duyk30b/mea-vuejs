@@ -27,13 +27,15 @@ import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import InvoiceStatusTag from '../InvoiceVisitStatusTag.vue'
 import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.ref'
-import InvoiceDetailTable from './InvoiceDetailTable.vue'
+import InvoiceVisitDetailTable from './InvoiceVisitDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
-import { invoice } from './invoice-detail.ref'
+import { invoice, visit } from './invoice-detail.ref'
 import ModalInvoicePreview from './preview/ModalInvoicePreview.vue'
 import { invoiceHtmlContent } from './preview/invoice-html-content'
 import { PaymentViewType } from '../../../modules/enum'
+import { InvoiceVisitApi, VisitApi, VisitStatus } from '../../../modules/visit'
+import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -51,15 +53,16 @@ const router = useRouter()
 const loadingProcess = ref(false)
 const loadingRefund = ref(false)
 
-const startFetchData = async (invoiceId: number) => {
+const startFetchData = async (visitId: number) => {
   try {
-    invoice.value = await InvoiceApi.detail(invoiceId, {
+    visit.value = await VisitApi.detail(visitId, {
       relation: {
         customer: true,
-        customerPayments: true,
-        invoiceItems: true,
-        invoiceSurcharges: true,
-        invoiceExpenses: true,
+        customerPaymentList: true,
+        visitProductList: true,
+        visitProcedureList: true,
+        visitSurchargeList: true,
+        visitExpenseList: true,
       },
     })
   } catch (error) {
@@ -280,17 +283,19 @@ const openModalInvoicePreview = () => {
 
   <div class="page-header">
     <div class="page-header-content">
-      <ScheduleOutlined /> Thông tin hóa đơn
-      <span v-if="invoice.deletedAt" style="color: var(--text-red)">(Đơn đã bị xóa)</span>
+      <ScheduleOutlined />
+      Thông tin hóa đơn
+      <span v-if="visit.visitStatus === VisitStatus.Cancel" style="color: var(--text-red)">
+        (Đơn đã bị hủy)
+      </span>
       <div>
         <VueButton
           v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
           color="blue"
+          icon="plus"
           @click="
-            $router.push({ name: 'InvoiceUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })
-          "
-        >
-          <PlusOutlined />
+            $router.push({ name: 'InvoiceVisitUpsert', query: { mode: EInvoiceUpsertMode.CREATE } })
+          ">
           Tạo hóa đơn mới
         </VueButton>
       </div>
@@ -302,7 +307,7 @@ const openModalInvoicePreview = () => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -314,43 +319,42 @@ const openModalInvoicePreview = () => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Khách hàng</td>
         <td class="font-medium px-2 py-1">
-          {{ invoice.customer?.fullName }}
-          <a class="ml-1" @click="modalCustomerDetail?.openModal(invoice.customerId)">
+          {{ visit.customer?.fullName }}
+          <a class="ml-1" @click="modalCustomerDetail?.openModal(visit.customerId)">
             <FileSearchOutlined />
           </a>
         </td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Mã đơn</td>
-        <td class="px-2 py-1">IV{{ invoice.id }}</td>
+        <td class="px-2 py-1">IV{{ visit.id }}</td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Thời gian tạo</td>
         <td class="px-2 py-1">
-          {{ timeToText(invoice.startedAt, 'hh:mm DD/MM/YY') }}
+          {{ timeToText(visit.registeredAt, 'hh:mm DD/MM/YY') }}
         </td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap" style="vertical-align: top">Trạng thái</td>
         <td class="px-2 py-1">
-          <InvoiceStatusTag :status="invoice.status" />
+          <InvoiceVisitStatusTag :visitStatus="visit.visitStatus" />
         </td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Chi phí</td>
         <td class="px-2 py-1">
-          {{ formatMoney(invoice.expense) }}
+          {{ formatMoney(visit.expense) }}
           <span
             v-if="
-              (invoice.invoiceExpenses || []).length > 1 ||
-              ((invoice.invoiceExpenses || []).length == 1 &&
-                invoice.invoiceExpenses![0].key !== '_unknown')
+              (visit.visitExpenseList || []).length > 1 ||
+              ((visit.visitExpenseList || []).length == 1 &&
+                visit.visitExpenseList![0].key !== '_unknown')
             "
-            class="ml-2"
-          >
+            class="ml-2">
             (
             {{
-              invoice.invoiceExpenses!.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ')
+              visit.visitExpenseList!.map((i) => `${i.name}: ${formatMoney(i.money)}`).join(' - ')
             }}
             )
           </span>
@@ -359,7 +363,7 @@ const openModalInvoicePreview = () => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap align-top">Ghi chú</td>
         <td class="px-2 py-1">
-          {{ invoice.note }}
+          {{ visit.note }}
         </td>
       </tr>
     </table>
@@ -371,15 +375,11 @@ const openModalInvoicePreview = () => {
         <EyeOutlined />
         Xem
       </VueButton>
-      <VueButton @click="startPrint">
-        <PrinterOutlined />
-        In
-      </VueButton>
+      <VueButton icon="print" @click="startPrint">In</VueButton>
       <VueButton
         v-if="permissionIdMap[PermissionId.INVOICE_CREATE_DRAFT]"
         class="ml-auto"
-        @click="startCopy"
-      >
+        @click="startCopy">
         <CopyOutlined />
         Copy đơn
       </VueButton>
@@ -389,8 +389,7 @@ const openModalInvoicePreview = () => {
           [InvoiceStatus.Draft, InvoiceStatus.Prepayment].includes(invoice.status)
         "
         color="blue"
-        @click="startEdit"
-      >
+        @click="startEdit">
         <ExceptionOutlined />
         Sửa đơn
       </VueButton>
@@ -403,19 +402,21 @@ const openModalInvoicePreview = () => {
                 settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
                 [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
               "
-              key="EDIT_INVOICE"
-            >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Sửa đơn </span>
+              key="EDIT_INVOICE">
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Sửa đơn
+              </span>
             </a-menu-item>
             <a-menu-item
               v-if="
                 permissionIdMap[PermissionId.INVOICE_REFUND_PREPAYMENT] &&
                 [InvoiceStatus.Prepayment].includes(invoice.status)
               "
-              key="REFUND_PREPAYMENT"
-            >
+              key="REFUND_PREPAYMENT">
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" /> Hoàn trả tiền tạm ứng
+                <FileSyncOutlined class="mr-2" />
+                Hoàn trả tiền tạm ứng
               </span>
             </a-menu-item>
             <a-menu-item
@@ -423,18 +424,22 @@ const openModalInvoicePreview = () => {
                 permissionIdMap[PermissionId.INVOICE_RETURN_PRODUCT] &&
                 [InvoiceStatus.Debt, InvoiceStatus.Success].includes(invoice.status)
               "
-              key="RETURN_PRODUCT"
-            >
-              <span class="text-red-500"> <FileSyncOutlined class="mr-2" /> Hoàn trả </span>
+              key="RETURN_PRODUCT">
+              <span class="text-red-500">
+                <FileSyncOutlined class="mr-2" />
+                Hoàn trả
+              </span>
             </a-menu-item>
             <a-menu-item
               v-if="
                 permissionIdMap[PermissionId.INVOICE_DELETE] &&
                 [InvoiceStatus.Draft, InvoiceStatus.Refund].includes(invoice.status)
               "
-              key="DELETE"
-            >
-              <span class="text-red-500"> <DeleteOutlined class="mr-2" /> Xóa đơn </span>
+              key="DELETE">
+              <span class="text-red-500">
+                <DeleteOutlined class="mr-2" />
+                Xóa đơn
+              </span>
             </a-menu-item>
           </a-menu>
         </template>
@@ -447,7 +452,8 @@ const openModalInvoicePreview = () => {
     </div>
 
     <div class="mt-2">
-      <InvoiceDetailTable @showInvoicePayment="(view) => modalInvoicePayment?.openModal(view)" />
+      <InvoiceVisitDetailTable
+        @showInvoicePayment="(view) => modalInvoicePayment?.openModal(view)" />
     </div>
 
     <div class="flex justify-center gap-4 my-4">
@@ -455,14 +461,12 @@ const openModalInvoicePreview = () => {
         v-if="
           permissionIdMap[PermissionId.INVOICE_SEND_PRODUCT] &&
           [InvoiceStatus.Draft, InvoiceStatus.Prepayment].includes(invoice.status)
-        "
-      >
+        ">
         <VueButton
           v-if="invoice.paid == invoice.totalMoney"
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit"
-        >
+          @click="sendProductAndDebit">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -476,8 +480,7 @@ const openModalInvoicePreview = () => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="modalInvoicePayment?.openModal(PaymentViewType.SendProductAndPayment)"
-        >
+          @click="modalInvoicePayment?.openModal(PaymentViewType.SendProductAndPayment)">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -491,8 +494,7 @@ const openModalInvoicePreview = () => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit"
-        >
+          @click="sendProductAndDebit">
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -503,13 +505,11 @@ const openModalInvoicePreview = () => {
       <template
         v-if="
           permissionIdMap[PermissionId.INVOICE_PAY_DEBT] && invoice.status === InvoiceStatus.Debt
-        "
-      >
+        ">
         <VueButton
           color="blue"
           :loading="loadingProcess"
-          @click="modalInvoicePayment?.openModal(PaymentViewType.PayDebt)"
-        >
+          @click="modalInvoicePayment?.openModal(PaymentViewType.PayDebt)">
           <template #icon>
             <FileDoneOutlined />
           </template>

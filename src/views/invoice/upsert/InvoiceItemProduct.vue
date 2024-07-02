@@ -108,22 +108,14 @@ const createVisitProduct = (instance?: Product) => {
     vp.hintUsage = instance?.hintUsage || ''
 
     vp.product = Product.from(instance)
-    vp.visitBatchList = []
   }
   visitProduct.value = vp
 }
 
 const createVisitBatch = (instance?: Batch) => {
   if (!instance) return
-
-  const vb = VisitBatch.blank()
-  vb.productId = instance.productId
-  vb.batchId = instance.id
-  vb.visitProductId = 0 // chỗ này để back-end xử lý
-  vb.quantity = 0
-
-  vb.batch = Batch.from(instance)
-  visitProduct.value.visitBatchList![0] = vb
+  visitProduct.value.batchId = instance.id
+  visitProduct.value.batch = Batch.from(instance)
 }
 
 const handleChangeInvoiceProductSellType = (
@@ -186,8 +178,7 @@ const clear = () => {
 }
 
 const addVisitProduct = () => {
-  const { product, quantity, visitBatchList } = visitProduct.value
-  const batch = visitBatchList?.[0]?.batch
+  const { product, quantity, batch } = visitProduct.value
   if (!visitProduct.value.productId) {
     AlertStore.addError('Lỗi: Chưa chọn sản phẩm')
     return inputOptionsProduct.value?.focus()
@@ -197,7 +188,7 @@ const addVisitProduct = () => {
   }
   if (product?.hasManageQuantity) {
     if (product.hasManageBatches) {
-      if (visitBatchList?.length == 0) {
+      if (!batch) {
         return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
       }
       if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.negativeQuantity) {
@@ -223,16 +214,13 @@ const addVisitProduct = () => {
   if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
     visit.value.visitProductList?.push(visitProduct.value)
   } else {
-    let exist: VisitProduct | null | undefined
-    if (!product?.hasManageBatches) {
-      exist = visit.value.visitProductList?.find((i) => {
+    const exist = visit.value.visitProductList?.find((i) => {
+      if (i.batchId) {
+        return i.productId === product!.id && i.batchId == batch!.id
+      } else {
         return i.productId === product!.id
-      })
-    } else {
-      exist = visit.value.visitProductList?.find((i) => {
-        return i.productId === product!.id && i.visitBatchList?.[0]?.batchId === batch?.id
-      })
-    }
+      }
+    })
     if (exist) {
       exist.quantity += quantity
     } else {
@@ -408,14 +396,12 @@ defineExpose({ focus })
           <span
             v-if="visitProduct.product?.hasManageBatches"
             :class="
-              visitProduct.quantity > (visitProduct.visitBatchList![0]?.batch?.quantity || 0)
+              visitProduct.quantity > (visitProduct.batch?.quantity || 0)
                 ? 'text-red-500 font-bold'
                 : ''
             ">
             (tồn:
-            <b>
-              {{ (visitProduct.visitBatchList![0]?.batch?.quantity || 0) / visitProduct.unitRate }}
-            </b>
+            <b>{{ (visitProduct.batch?.quantity || 0) / visitProduct.unitRate }}</b>
             )
           </span>
           <span v-if="visitProduct.unitRate !== 1" style="margin-left: auto">

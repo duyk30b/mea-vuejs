@@ -23,6 +23,7 @@ export class InvoiceVisitApi {
       },
       visitProductDraftList: (visit.visitProductList || []).map((i) => ({
         productId: i.productId,
+        batchId: i.batchId,
         unitRate: i.unitRate,
         quantity: i.quantity,
         costAmount: i.costAmount,
@@ -32,10 +33,6 @@ export class InvoiceVisitApi {
         discountType: i.discountType,
         actualPrice: i.actualPrice,
         hintUsage: i.hintUsage,
-        visitBatchDraftList: (i.visitBatchList || []).map((j) => ({
-          batchId: j.batchId,
-          quantity: j.quantity,
-        })),
       })),
       visitProcedureDraftList: (visit.visitProcedureList || []).map((i) => ({
         procedureId: i.procedureId,
@@ -65,9 +62,25 @@ export class InvoiceVisitApi {
     const response = await AxiosInstance.patch(
       `/invoice-visit/update-invoice-draft-and-invoice-prepayment/${visitId}`,
       {
-        visitDraftInsert: [],
+        visitDraftInsert: {
+          customerId: visit.customerId,
+          totalCostAmount: visit.totalCostAmount,
+          proceduresMoney: visit.proceduresMoney,
+          productsMoney: visit.productsMoney,
+          radiologyMoney: visit.radiologyMoney,
+          discountMoney: visit.discountMoney,
+          discountPercent: visit.discountPercent,
+          discountType: visit.discountType,
+          surcharge: visit.surcharge,
+          totalMoney: visit.totalMoney,
+          expense: visit.expense,
+          profit: visit.profit,
+          note: visit.note,
+          registeredAt: visit.registeredAt,
+        },
         visitProductDraftList: (visit.visitProductList || []).map((i) => ({
           productId: i.productId,
+          batchId: i.batchId,
           unitRate: i.unitRate,
           quantity: i.quantity,
           costAmount: i.costAmount,
@@ -77,10 +90,6 @@ export class InvoiceVisitApi {
           discountType: i.discountType,
           actualPrice: i.actualPrice,
           hintUsage: i.hintUsage,
-          visitBatchDraftList: (i.visitBatchList || []).map((j) => ({
-            batchId: j.batchId,
-            quantity: j.quantity,
-          })),
         })),
         visitProcedureDraftList: (visit.visitProcedureList || []).map((i) => ({
           procedureId: i.procedureId,
