@@ -2,7 +2,6 @@
 import { DownloadOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
 import type { Invoice } from '../../../../modules/invoice'
-import { invoiceHtmlContent } from './invoice-html-content'
 
 const showModal = ref(false)
 
@@ -13,7 +12,7 @@ const svgDivHtml = ref<string>()
 
 const openModal = async (value: Invoice) => {
   showModal.value = true
-  svgDivHtml.value = invoiceHtmlContent(value)
+  // svgDivHtml.value = invoiceVisitHtmlContent(value)
 
   nextTick(() => {
     const svgDemoContentDiv = document.getElementById('svg-demo-content-div') as HTMLElement
@@ -70,7 +69,7 @@ defineExpose({ openModal })
         </a-button>
 
         <div>
-          <a-button @click="showModal = false"> Đóng </a-button>
+          <a-button @click="showModal = false">Đóng</a-button>
         </div>
       </div>
     </template>
@@ -81,8 +80,7 @@ defineExpose({ openModal })
             id="svg-demo-content-div"
             xmlns="http://www.w3.org/1999/xhtml"
             style="height: 100%; overflow: auto"
-            v-html="svgDivHtml"
-          />
+            v-html="svgDivHtml" />
         </foreignObject>
       </svg>
     </div>

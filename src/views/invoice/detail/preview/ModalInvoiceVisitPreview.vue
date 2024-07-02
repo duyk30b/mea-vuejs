@@ -189,7 +189,7 @@ defineExpose({ openModal })
                   <b>
                     {{
                       formatMoney(
-                        visit.proceduresMoney + visit.proceduresMoney + visit.radiologyMoney
+                        visit.proceduresMoney + visit.productsMoney + visit.radiologyMoney
                       )
                     }}
                   </b>

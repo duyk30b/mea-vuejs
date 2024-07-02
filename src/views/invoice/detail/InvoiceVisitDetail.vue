@@ -9,8 +9,6 @@ import {
   FileSearchOutlined,
   FileSyncOutlined,
   MoreOutlined,
-  PlusOutlined,
-  PrinterOutlined,
   ScheduleOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
@@ -21,21 +19,20 @@ import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PaymentViewType } from '../../../modules/enum'
 import { Invoice, InvoiceApi, InvoiceStatus } from '../../../modules/invoice'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { VisitApi, VisitStatus } from '../../../modules/visit'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import InvoiceStatusTag from '../InvoiceVisitStatusTag.vue'
+import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
 import { EInvoiceUpsertMode } from '../upsert/invoice-upsert.ref'
 import InvoiceVisitDetailTable from './InvoiceVisitDetailTable.vue'
 import ModalInvoiceDetailSettingScreen from './ModalInvoiceDetailSettingScreen.vue'
 import ModalInvoicePayment from './ModalInvoicePayment.vue'
 import { invoice, visit } from './invoice-detail.ref'
 import ModalInvoiceVisitPreview from './preview/ModalInvoiceVisitPreview.vue'
-import { invoiceHtmlContent } from './preview/invoice-html-content'
-import { PaymentViewType } from '../../../modules/enum'
-import { InvoiceVisitApi, VisitApi, VisitStatus } from '../../../modules/visit'
-import InvoiceVisitStatusTag from '../InvoiceVisitStatusTag.vue'
+import { invoiceVisitHtmlContent } from './preview/invoice-visit-html-content'
 
 const modalInvoiceDetailSettingScreen = ref<InstanceType<typeof ModalInvoiceDetailSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -263,7 +260,7 @@ const startPrint = () => {
   const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
   const pri = iframePrint.contentWindow as Window
   pri.document.open()
-  const content = invoiceHtmlContent(invoice.value)
+  const content = invoiceVisitHtmlContent(visit.value)
   pri.document.write(content)
   pri.document.close()
   pri.focus()

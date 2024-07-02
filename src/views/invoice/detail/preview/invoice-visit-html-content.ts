@@ -1,0 +1,194 @@
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import type { Invoice } from '../../../../modules/invoice'
+import type { Visit } from '../../../../modules/visit'
+import { timeToText } from '../../../../utils'
+
+export const invoiceVisitHtmlContent = (visit: Visit) => {
+  const settingStore = useSettingStore()
+  const meStore = useMeStore()
+  const { formatMoney } = settingStore
+  const showSubstance = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance
+  const showBatch = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch
+  const showExpiryDate = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expiryDate
+  const showUnit = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit
+  const showExpectedPrice = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice
+  const showHintUsage = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage
+  const showItemsActualMoney = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney
+  const showSurcharge = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge
+  const showDiscount = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount
+
+  const rowVisitProcedureList = visit
+    .visitProcedureList!.map((item, index) => {
+      const procedureName = `<div style="font-weight: 500;">${item.procedure!.name}</div>`
+      let expectedPrice = ''
+      if (showExpectedPrice && item.discountMoney) {
+        expectedPrice = `<div style="color:red"><del><i><small>
+            ${formatMoney(item.expectedPrice)}
+          </small></i></del></div>`
+      }
+      return `<tr>
+      <td style="text-align: center">${index + 1}</td>
+      <td colspan="${showUnit ? 2 : 1}"> ${procedureName} </td>
+      <td style="text-align: center">${item.quantity}</td>
+      <td style="text-align: right">
+        ${expectedPrice}
+        <div>${formatMoney(item.actualPrice)}</div>
+      </td>
+      <td style="text-align: right">${formatMoney(item.quantity * item.actualPrice)}</td>
+    </tr>`
+    })
+    .join('')
+
+  const rowVisitProductList = visit
+    .visitProductList!.map((item, index) => {
+      let productName = `<div style="font-weight: 500;">${item.product!.brandName}</div>`
+      if (showSubstance && item.product?.substance) {
+        productName += `<div style="font-size: 0.9em">${item.product?.substance}</div>`
+      }
+      let expectedPrice = ''
+      if (showExpectedPrice && item.discountMoney) {
+        expectedPrice = `<div style="color:red"><del><i><small>
+            ${formatMoney(item.expectedPrice * item.unitRate)}
+          </small></i></del></div>`
+      }
+      let colUnit = ''
+      if (showUnit) {
+        colUnit = ` <td style="text-align: center">${item.unitName}</td>`
+      }
+      return `<tr>
+      <td style="text-align: center">${index + 1}</td>
+      <td>${productName}</td>
+      ${colUnit}
+      <td style="text-align: center">${item.quantity / item.unitRate}</td>
+      <td style="text-align: right">
+        ${expectedPrice}
+        <div>${formatMoney(item.actualPrice * item.unitRate)}</div>
+      </td>
+      <td style="text-align: right">${formatMoney(item.quantity * item.actualPrice)}</td>
+    </tr>`
+    })
+    .join('')
+
+  let itemsActualMoney = ''
+  if (showItemsActualMoney) {
+    itemsActualMoney = `<tr>
+      <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tiền hàng</b></td>
+      <td colspan="2" style="text-align: right">
+        <b>
+        ${formatMoney(visit.productsMoney + visit.proceduresMoney + visit.radiologyMoney)}
+        </b>
+      </td>
+    </tr>`
+  }
+
+  let discount = ''
+  if (showDiscount) {
+    discount = `<tr>
+      <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Chiết khấu</td>
+      <td colspan="2" style="text-align: right">${formatMoney(visit.discountMoney)}</td>
+    </tr>`
+  }
+
+  let surcharge = ''
+  if (showSurcharge) {
+    surcharge = `<tr>
+      <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Phụ phí</td>
+      <td colspan="2" style="text-align: right">${formatMoney(visit.surcharge)}</td>
+    </tr>`
+  }
+
+  return `
+  <head>
+    <title>&nbsp;</title>
+    <style>
+      #print-invoice-demo-body * {
+        all: revert;
+        font-family: 'Arial', sans-serif;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      #print-invoice-demo-body table.information td {
+        border: 0;
+        padding: 0.5em 0;
+        vertical-align: top;
+      }
+      #print-invoice-demo-body table.data {
+        margin-top: 0.5rem;
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      #print-invoice-demo-body table.data th {
+        padding: 0.5rem;
+        border: 1px solid #cdcdcd;
+      }
+      #print-invoice-demo-body table.data td {
+        padding: 0.5rem;
+        border: 1px solid #cdcdcd;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="print-invoice-demo-body" style="width: 760px; background-color: white; padding: 10px">
+      <div>
+        <table style="width: 100%">
+          <tr>
+            <td style="width: 50%">
+              <p>${meStore.organization.name} </p>
+              <p>${meStore.organization.phone} </p>
+            </td>
+            <td style="width: 50%; text-align:right">
+              <p>Mã KH: C${visit.customerId}  </p>
+              <p>Mã HĐ: IV${visit.id}  </p>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align: center; font-size: 1.8rem; font-weight: bold; line-height: 2.5">HÓA ĐƠN</div>
+        <table class="information">
+          <tr>
+            <td style="width: 100px">Khách hàng: </td>
+            <td>${visit.customer?.fullName} </td>
+          </tr>
+          <tr>
+            <td>Địa chỉ: </td>
+            <td>  ${visit.customer?.addressString} </td>
+          </tr>
+        </table>
+        <table class="data">
+          <thead>
+            <tr>
+              <th style="width: 20px">#</th>
+              <th>Tên</th>
+              ${showUnit ? '<th>Đ.Vị</th>' : ''}
+              <th>SL</th>
+              <th>Đ.Giá</th>
+              <th>T.Tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowVisitProcedureList}
+            ${rowVisitProductList}
+            ${itemsActualMoney}
+            ${discount}
+            ${surcharge}
+            <tr>
+              <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tổng tiền</b></td>
+              <td colspan="2" style="text-align: right"><b>${formatMoney(visit.totalMoney)}</b></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="text-align:right; font-style:italic; margin-top: 1rem">
+          ${timeToText(visit.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
+        </div>
+        <table style="width: 100%; margin-top: 0.5rem">
+          <tr>
+            <td style="width: 50%; text-align: center"> Khách hàng </td>
+            <td style="width: 50%; text-align: center"> Người thu tiền</td>
+          </tr>
+        </table>
+      </div> 
+    </div>
+  </body>`
+}
