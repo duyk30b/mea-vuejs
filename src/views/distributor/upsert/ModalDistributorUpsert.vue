@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  ExclamationCircleOutlined,
-  SaveOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
-import { Modal, type SelectProps } from 'ant-design-vue'
-import { createVNode, ref } from 'vue'
-import VueModal from '../../../common/VueModal.vue'
+import { CloseOutlined } from '@ant-design/icons-vue'
+import { ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputHint, InputText } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useDistributorStore } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { convertViToEn, customFilter, sleep } from '../../../utils'
-import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import VueButton from '../../../common/VueButton.vue'
+import { customFilter } from '../../../utils'
+import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
 
 const modalDistributorUpsertSettingScreen =
   ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
@@ -28,8 +24,8 @@ const emit = defineEmits<{
 }>()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -44,7 +40,7 @@ const wardList = ref<string[]>([])
 const openModal = async (instance?: Distributor) => {
   try {
     showModal.value = true
-    distributor.value = instance ? Distributor.toBasic(instance) : Distributor.blank()
+    distributor.value = instance ? Distributor.from(instance) : Distributor.blank()
 
     provinceList.value = await AddressInstance.getAllProvinces()
     if (instance?.addressProvince) {
@@ -104,14 +100,12 @@ const clickDelete = () => {
       time: 2000,
     })
   }
-  Modal.confirm({
+  ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa nhà cung cấp này',
-    icon: createVNode(ExclamationCircleOutlined),
     content: 'Nhà cung cấp đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       await handleDelete()
     },
-    onCancel() {},
   })
 }
 
@@ -154,15 +148,14 @@ defineExpose({ openModal })
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
+          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDistributorUpsertSettingScreen?.openModal()"
-        >
-          <!-- <SettingOutlined /> -->
+          @click="modalDistributorUpsertSettingScreen?.openModal()">
+          <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -180,12 +173,11 @@ defineExpose({ openModal })
               v-model:value="distributor.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))"
-            />
+              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))" />
           </div>
         </div>
 
-        <div v-if="screenStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
+        <div v-if="settingStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
           <div>Địa chỉ</div>
           <div class="flex gap-4 flex-wrap">
             <div style="flex: 1; flex-basis: 200px">
@@ -195,8 +187,7 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 placeholder="Thành Phố / Tỉnh"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                @update:value="handleChangeProvince"
-              />
+                @update:value="handleChangeProvince" />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -205,8 +196,7 @@ defineExpose({ openModal })
                 :options="districtList"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
                 placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict"
-              />
+                @update:value="handleChangeDistrict" />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -214,15 +204,13 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 :options="wardList"
                 placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              />
+                :logic-filter="(item: string, text: string) => customFilter(item, text)" />
             </div>
 
             <div class="grow basis-[80%]">
               <InputText
                 v-model:value="distributor.addressStreet"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-              />
+                placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
             </div>
           </div>
         </div>
@@ -238,8 +226,7 @@ defineExpose({ openModal })
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(distributor.isActive)"
-            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)"
-          />
+            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)" />
           <div v-if="!distributor.isActive" class="ml-4">
             Tạm thời không thể nhập hàng từ nhà cung cấp này
           </div>
@@ -252,8 +239,7 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
             color="red"
             type="button"
-            @click="clickDelete"
-          >
+            @click="clickDelete">
             Xóa
           </VueButton>
           <VueButton class="ml-auto" type="reset" @click="handleClose">
@@ -262,10 +248,7 @@ defineExpose({ openModal })
             </template>
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>
         </div>
@@ -273,7 +256,6 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalDistributorUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
-    ref="modalDistributorUpsertSettingScreen"
-  />
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    ref="modalDistributorUpsertSettingScreen" />
 </template>

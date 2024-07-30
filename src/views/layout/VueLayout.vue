@@ -56,7 +56,7 @@ const setSideCollapsed = (value: boolean) => {
           <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333"><strong>MEA-v4.0</strong>©2023 - Hotline: 0376.899.866</span>
+          <span style="color: #333"><strong>MEA-v5.0</strong>©2020 - Hotline: 0376.899.866</span>
         </a-layout-footer>
       </a-layout>
     </a-layout>

@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueModal from '../../common/VueModal.vue'
-import { InputMoney, InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
-import { useCustomerStore, type Customer } from '../../modules/customer'
-import { CustomerPaymentApi } from '../../modules/customer-payment/customer-payment.api'
-import type { Invoice } from '../../modules/invoice'
-import type { Visit } from '../../modules/visit'
-import { timeToText } from '../../utils'
 import VueButton from '../../common/VueButton.vue'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { InputMoney, InputText } from '../../common/vue-form'
+import { useSettingStore } from '../../modules/_me/setting.store'
+import { Customer, useCustomerStore } from '../../modules/customer'
+import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { timeToText } from '../../utils'
+import { VoucherType } from '../../modules/enum'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -21,34 +21,36 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const customerStore = useCustomerStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const openDebt = ref(0)
 const money = ref(0)
 const note = ref('')
-const customerId = ref(0)
-const invoicePaymentList = ref<{ invoice: Invoice; money: number }[]>([])
-const visitPaymentList = ref<{ visit: Visit; money: number }[]>([])
+const customer = ref<Customer>(Customer.blank())
+const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (customerIdProp: number, openDebtProp: number) => {
-  money.value = 0
-  note.value = ''
-  openDebt.value = openDebtProp
-  customerId.value = customerIdProp
+const openModal = async (customerProp: Customer) => {
+  customer.value = Customer.from(customerProp)
   showModal.value = true
-  nextTick(() => inputMoneyPay.value?.focus())
+  if (!isMobile) {
+    nextTick(() => inputMoneyPay.value?.focus())
+  }
   try {
     dataLoading.value = true
-    const response = await CustomerPaymentApi.voucherDebtList(customerIdProp)
-    invoicePaymentList.value = response.invoiceBasicList.map((i) => ({ invoice: i, money: 0 }))
-    visitPaymentList.value = response.visitBasicList.map((i) => ({ visit: i, money: 0 }))
+    const response = await TicketApi.list({
+      filter: {
+        customerId: customerProp.id,
+        ticketStatus: TicketStatus.Debt,
+      },
+      sort: { id: 'ASC' },
+    })
+    ticketPaymentList.value = response.map((i) => ({ ticket: i, money: 0 }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:56 ~ openModal ~ error:', error)
+    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:52 ~ openModal ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -56,7 +58,10 @@ const openModal = async (customerIdProp: number, openDebtProp: number) => {
 
 const closeModal = () => {
   showModal.value = false
-  invoicePaymentList.value = []
+  ticketPaymentList.value = []
+  money.value = 0
+  note.value = ''
+  customer.value = Customer.blank()
 }
 
 const handleSave = async () => {
@@ -66,15 +71,13 @@ const handleSave = async () => {
       return message.error('Số tiền trả nợ phải khác 0')
     }
     const data = await customerStore.payDebt({
-      customerId: customerId.value,
+      customerId: customer.value.id,
       note: note.value,
-      invoicePaymentList: invoicePaymentList.value
-        .map((i) => ({ invoiceId: i.invoice.id, money: i.money }))
-        .filter((i) => i.money > 0),
-      visitPaymentList: visitPaymentList.value
-        .map((i) => ({ visitId: i.visit.id, money: i.money }))
+      ticketPaymentList: ticketPaymentList.value
+        .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
         .filter((i) => i.money > 0),
     })
+    AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', data)
     showModal.value = false
   } catch (error) {
@@ -84,36 +87,31 @@ const handleSave = async () => {
   }
 }
 
-const openBlankInvoiceDetail = (invoiceId: number) => {
+const openBlankTicketOrderDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'InvoiceDetail',
-    params: { id: invoiceId },
+    name: 'TicketOrderDetail',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
 
-const openBlankVisitDetail = (visitId: number) => {
+const openBlankTicketClinicDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'VisitDetail',
-    params: { id: visitId },
+    name: 'TicketClinicSummary',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
 
 const handleClickPayAllDebt = () => {
-  money.value = openDebt.value
+  money.value = customer.value.debt
   calculatorEachVoucherPayment()
 }
 
 const calculatorEachVoucherPayment = () => {
   let totalMoney = money.value
-  invoicePaymentList.value.forEach((item) => {
-    let number = Math.min(totalMoney, item.invoice.debt)
-    item.money = number
-    totalMoney = totalMoney - number
-  })
-  visitPaymentList.value.forEach((item) => {
-    let number = Math.min(totalMoney, item.visit.debt)
+  ticketPaymentList.value.forEach((item) => {
+    let number = Math.min(totalMoney, item.ticket.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -127,7 +125,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
-          {{ 'Trả nợ' }}
+          {{ customer.fullName + ': Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />
@@ -160,74 +158,71 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody>
-              <tr v-for="(invoicePayment, index) in invoicePaymentList" :key="index">
+              <tr v-for="(ticketPayment, index) in ticketPaymentList" :key="index">
                 <td>
-                  <div>
-                    <a @click="openBlankInvoiceDetail(invoicePayment.invoice.id)">
-                      IV{{ invoicePayment.invoice.id }}
+                  <div v-if="ticketPayment.ticket.voucherType === VoucherType.Order">
+                    <a @click="openBlankTicketOrderDetail(ticketPayment.ticket.id)">
+                      TO{{ ticketPayment.ticket.id }}
                     </a>
                   </div>
-                  <div>{{ timeToText(invoicePayment.invoice.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(invoicePayment.invoice.debt) }}
-                </td>
-                <td class="text-right">
-                  {{ formatMoney(invoicePayment.money) }}
-                </td>
-              </tr>
-              <tr v-for="(visitPayment, index) in visitPaymentList" :key="index">
-                <td>
-                  <div>
-                    <a @click="openBlankVisitDetail(visitPayment.visit.id)">
-                      VS{{ visitPayment.visit.id }}
+                  <div v-if="ticketPayment.ticket.voucherType === VoucherType.Clinic">
+                    <a @click="openBlankTicketClinicDetail(ticketPayment.ticket.id)">
+                      TC{{ ticketPayment.ticket.id }}
                     </a>
                   </div>
-                  <div>{{ timeToText(visitPayment.visit.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
+                  <div>{{ timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(visitPayment.visit.debt) }}
+                  {{ formatMoney(ticketPayment.ticket.debt) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(visitPayment.money) }}
+                  {{ formatMoney(ticketPayment.money) }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none">Công nợ:</div>
-          <div style="font-size: 16px; padding-left: 12px">{{ formatMoney(openDebt) }}</div>
-        </div>
-        <div class="w-full flex items-center mt-3">
-          <div style="width: 100px; flex: none">Số tiền trả:</div>
-          <div class="flex-1">
-            <InputMoney
-              ref="inputMoneyPay"
-              v-model:value="money"
-              :validate="{ lte: openDebt, gt: 0 }"
-              required
-              @update:value="calculatorEachVoucherPayment"
-            />
-          </div>
-          <VueButton color="blue" @click="handleClickPayAllDebt"> Tất cả </VueButton>
-        </div>
-        <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none">Ghi chú:</div>
-          <InputText v-model:value="note" />
+        <div class="mt-4">
+          <table style="width: 100%">
+            <tr>
+              <td style="width: 30%; text-align: right">Công nợ:</td>
+              <td style="font-size: 16px; text-align: right; padding-right: 12px">
+                {{ formatMoney(customer.debt) }}
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 30%; text-align: right">Số tiền trả:</td>
+              <td style="padding: 1rem 0 1rem 1rem">
+                <div class="flex">
+                  <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
+                  <InputMoney
+                    ref="inputMoneyPay"
+                    v-model:value="money"
+                    textAlign="right"
+                    :validate="{ lte: customer.debt, gt: 0 }"
+                    required
+                    @update:value="calculatorEachVoucherPayment" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 30%; text-align: right">Còn nợ:</td>
+              <td style="font-size: 16px; text-align: right; padding-right: 12px">
+                {{ formatMoney(customer.debt - money) }}
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 30%; text-align: right">Ghi chú:</td>
+              <td style="padding: 1rem 0 0 1rem"><InputText v-model:value="note" /></td>
+            </tr>
+          </table>
         </div>
       </div>
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <VueButton type="reset" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
-          <VueButton type="submit" color="blue" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton type="submit" color="blue" :loading="saveLoading" icon="save">
             Xác nhận trả nợ
           </VueButton>
         </div>

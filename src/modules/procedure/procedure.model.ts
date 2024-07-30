@@ -1,27 +1,10 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
-import { BaseModel } from '../base.model'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-
-export class Procedure extends BaseModel {
-  @Expose()
+export class Procedure {
+  id: number
   name: string // Tên dịch vụ
-
-  @Expose()
   group: string // Nhóm dịch vụ ...
-
-  @Expose()
   price: number // Giá dự kiến
-
-  @Expose()
-  consumableHint: string // Gợi ý vậy tư tiêu hao
-
-  @Expose()
   isActive: 1 | 0 // Trạng thái
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   deletedAt: number
 
   static init() {
@@ -37,65 +20,26 @@ export class Procedure extends BaseModel {
     return ins
   }
 
-  static toBasic(root: Procedure) {
-    const ins = new Procedure()
-    Object.assign(ins, root)
-    return ins
-  }
-
-  static fromObject(object: Partial<Procedure>) {
-    const ins = new Procedure()
-    Object.assign(ins, object)
-    return ins
-  }
-
-  static fromObjects(objects: Partial<Procedure>[]): Procedure[] {
-    return objects.map((i) => Procedure.fromObject(i))
-  }
-
-  static fromPlain(plain: Record<string, any>): Procedure {
-    return plainToInstance(Procedure, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source?: Procedure) {
+    const target = new Procedure()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): Procedure[] {
-    return plainToInstance(Procedure, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: Procedure[]): Procedure[] {
+    return sources.map((i) => Procedure.basic(i))
   }
 
-  static fromInstance(instance: Procedure): Procedure {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
-      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
+  static from(source?: Procedure) {
+    const target = Procedure.basic(source)
+    return target
   }
 
-  static toPlain(
-    instance: Procedure,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Procedure') {
-      throw new Error('Procedure.fromInstance error: Instance must be from class Procedure')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static clone(instance: Procedure): Procedure {
-    const procedure = Procedure.fromInstance(instance)
-    return procedure
+  static fromList(sourceList: Procedure[]): Procedure[] {
+    return sourceList.map((i) => Procedure.from(i))
   }
 }

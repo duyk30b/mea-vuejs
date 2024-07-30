@@ -52,28 +52,36 @@ export const socketInit = () => {
     SocketService.listenProcedureUpsert(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_CREATE, (data) => {
-    SocketService.listenVisitCreate(data)
+  SocketBase.on(SOCKET_EVENT.SETTING_RELOAD, (data) => {
+    SocketService.listenSettingReload(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_UPDATE, (data) => {
-    SocketService.listenVisitUpdate(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CREATE, (data) => {
+    SocketService.listenTicketClinicCreate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_UPDATE_VISIT_DIAGNOSIS, (data) => {
-    SocketService.listenVisitUpdateVisitDiagnosis(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE, (data) => {
+    SocketService.listenTicketClinicUpdate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_REPLACE_VISIT_PRODUCT_LIST, (data) => {
-    SocketService.listenVisitReplaceVisitProductList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_DIAGNOSIS, (data) => {
+    SocketService.listenTicketClinicUpdateTicketDiagnosis(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_REPLACE_VISIT_BATCH_LIST, (data) => {
-    SocketService.listenVisitReplaceVisitBatchList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY, (data) => {
+    SocketService.listenTicketClinicUpdateTicketRadiology(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.VISIT_REPLACE_VISIT_PROCEDURE_LIST, (data) => {
-    SocketService.listenVisitReplaceVisitProcedureList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PROCEDURE_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProcedureList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketRadiologyList(data)
   })
 }
 

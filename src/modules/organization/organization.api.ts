@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import type { ScreenSettingKey } from '../_me/store.variable'
 import { Organization } from './organization.model'
 
 export class OrganizationApi {
@@ -17,13 +16,5 @@ export class OrganizationApi {
     const { data } = response.data as BaseResponse
 
     return Organization.fromPlain(data)
-  }
-
-  static async saveSettings(type: ScreenSettingKey, plain: string) {
-    const response = await AxiosInstance.post(`/organization/settings/upsert/${type}`, {
-      data: plain,
-    })
-    const { data } = response.data as BaseResponse
-    return data
   }
 }

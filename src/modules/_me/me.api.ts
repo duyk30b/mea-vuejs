@@ -1,7 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { Customer } from '../customer'
-import { Distributor } from '../distributor'
 import { Organization } from '../organization'
 import { Permission } from '../permission/permission.model'
 import { Role } from '../role'
@@ -15,10 +13,8 @@ export class MeApi {
       user: User.fromPlain(data.user),
       organization: Organization.fromPlain(data.organization),
       role: Role.fromPlain(data.role),
-      screenSettings: data.screenSettings as Record<string, any>,
-      distributorDefault: Distributor.fromPlain(data.distributorDefault),
-      customerDefault: Customer.fromPlain(data.customerDefault),
-      permissions: Permission.fromPlains(data.permissions),
+      settingMap: data.settingMap as Record<string, any>,
+      permissionList: Permission.fromPlains(data.permissionList),
     }
   }
 

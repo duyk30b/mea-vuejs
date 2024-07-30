@@ -55,7 +55,7 @@ export const useBatchStore = defineStore('batch-store', {
           deletedAt: { IS_NULL: true },
         })
 
-        productList = Product.fromObjects(productObjects)
+        productList = Product.fromList(productObjects)
         productIdList = productList.map((i) => i.id)
       }
 
@@ -71,7 +71,7 @@ export const useBatchStore = defineStore('batch-store', {
         sort: sort || { id: 'DESC' },
       })
 
-      const productBatchList = Batch.fromObjects(productBatchPagination.data)
+      const productBatchList = Batch.fromList(productBatchPagination.data)
       if (relation?.product) {
         const productMap = arrayToKeyValue(productList, 'id')
         productBatchList.forEach((i) => {
@@ -95,10 +95,11 @@ export const useBatchStore = defineStore('batch-store', {
           expiryDate: filter?.expiryDate,
           quantity: filter?.quantity,
           productId: filter?.productId,
+          $OR: filter?.$OR,
         },
         sort,
       })
-      return Batch.fromObjects(objects)
+      return Batch.fromList(objects)
     },
 
     async getOne(params: BatchGetOneQuery) {
@@ -108,13 +109,10 @@ export const useBatchStore = defineStore('batch-store', {
         expiryDate: filter?.expiryDate,
         quantity: filter?.quantity,
       })
-      return object ? Batch.fromObject(object) : null
+      return object ? Batch.from(object) : null
     },
 
     async createOne(instance: Batch) {
-      if (!instance.lotNumber && instance.expiryDate) {
-        instance.lotNumber = DTimer.timeToText(instance.expiryDate, 'DDMMYYYY')
-      }
       const response = await BatchApi.createOne(instance)
       await BatchDB.insertOne(response)
       this.timeSync = Date.now()
@@ -135,14 +133,14 @@ export const useBatchStore = defineStore('batch-store', {
         isActive: 1,
         deletedAt: { IS_NULL: true },
       })
-      const productList = Product.fromObjects(productObjects)
+      const productList = Product.fromList(productObjects)
       const productIdList = productList.map((i) => i.id)
 
       const productBatchObjects = await BatchDB.findManyBy({
         productId: { IN: productIdList },
         quantity: options?.quantity || undefined,
       })
-      const productBatchList = Batch.fromObjects(productBatchObjects)
+      const productBatchList = Batch.fromList(productBatchObjects)
       const productMap = arrayToKeyValue(productList, 'id')
       productBatchList.forEach((i) => {
         i.product = productMap[i.productId]

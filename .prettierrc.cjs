@@ -8,6 +8,8 @@ const config = {
   singleQuote: true,
   printWidth: 100,
   quoteProps: 'consistent',
+  htmlWhitespaceSensitivity: 'ignore',
+  bracketSameLine: true,
 }
 
 module.exports = config

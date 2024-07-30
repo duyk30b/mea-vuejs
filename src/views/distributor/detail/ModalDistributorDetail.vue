@@ -7,23 +7,25 @@ import {
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
-import VueModal from '../../../common/VueModal.vue'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
 import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+import VueButton from '../../../common/VueButton.vue'
 
 const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }>()
 
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
 const distributorPaymentHistory = ref<InstanceType<typeof DistributorPaymentHistory>>()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const distributorStore = useDistributorStore()
@@ -55,10 +57,12 @@ defineExpose({ openModal })
 </script>
 
 <template>
+  <ModalDistributorPayDebt
+    ref="modalDistributorPayDebt"
+    @success="handleModalDistributorPayDebtSuccess" />
   <VueModal
     v-model:show="showModal"
-    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
-  >
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
@@ -69,84 +73,69 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4 distributor-detail">
-        <a-tabs
-          v-model:activeKey="activeTab"
-          type="card"
-          :tabBarGutter="10"
-          :destroyInactiveTabPane="true"
-        >
-          <a-tab-pane key="info">
-            <template #tab>
-              <span> <UserOutlined />Thông tin cá nhân </span>
-            </template>
-            <DistributorInfo :distributor="distributor" />
-          </a-tab-pane>
-          <a-tab-pane
-            v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
-            key="debts-history"
-          >
-            <template #tab>
-              <span> <DollarOutlined />Thanh toán </span>
-            </template>
-            <div class="flex justify-between items-end">
-              <div>
-                Khách hàng: <b>{{ distributor.fullName }}</b> - Công nợ hiện tại:
-                <b> {{ formatMoney(distributor.debt) }} </b>
+      <div class="p-4">
+        <VueTabs v-model:tabShow="activeTab">
+          <template #menu>
+            <VueTabMenu tabKey="info">
+              <UserOutlined />
+              Thông tin cá nhân
+            </VueTabMenu>
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
+              tabKey="debts-history">
+              <DollarOutlined />
+              Thanh toán
+            </VueTabMenu>
+            <VueTabMenu v-if="permissionIdMap[PermissionId.RECEIPT_READ]" tabKey="receipts-history">
+              <DeploymentUnitOutlined />
+              Lịch sử nhập hàng
+            </VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel tabKey="info">
+              <div class="mt-4">
+                <DistributorInfo :distributor="distributor" />
               </div>
-              <div>
-                <a-button
-                  v-if="
-                    permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
-                    distributor.debt != 0
-                  "
-                  type="primary"
-                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
-                >
-                  <template #icon>
-                    <PlusOutlined />
-                  </template>
-                  Trả nợ
-                </a-button>
+            </VueTabPanel>
+            <VueTabPanel tabKey="debts-history">
+              <div class="mt-4 flex justify-between items-end">
+                <div>
+                  Khách hàng:
+                  <b>{{ distributor.fullName }}</b>
+                  - Công nợ hiện tại:
+                  <b>{{ formatMoney(distributor.debt) }}</b>
+                </div>
+                <div>
+                  <VueButton
+                    v-if="
+                      permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                      distributor.debt != 0
+                    "
+                    color="blue"
+                    icon="plus"
+                    @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
+                    Trả nợ
+                  </VueButton>
+                </div>
               </div>
-            </div>
-            <DistributorPaymentHistory ref="distributorPaymentHistory" :distributor="distributor" />
-          </a-tab-pane>
-          <a-tab-pane v-if="permissionIdMap[PermissionId.RECEIPT_READ]" key="receipts-history">
-            <template #tab>
-              <span> <DeploymentUnitOutlined />Lịch sử nhập hàng </span>
-            </template>
-            <DistributorReceiptHistory :distributor="distributor" />
-          </a-tab-pane>
-        </a-tabs>
+              <DistributorPaymentHistory
+                ref="distributorPaymentHistory"
+                :distributor="distributor" />
+            </VueTabPanel>
+            <VueTabPanel tabKey="receipts-history">
+              <DistributorReceiptHistory :distributor="distributor" />
+            </VueTabPanel>
+          </template>
+        </VueTabs>
       </div>
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <a-button @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Đóng
-          </a-button>
+          <VueButton icon="close" @click="closeModal">Đóng</VueButton>
         </div>
       </div>
     </div>
   </VueModal>
-  <ModalDistributorPayDebt
-    ref="modalDistributorPayDebt"
-    @success="handleModalDistributorPayDebtSuccess"
-  />
 </template>
 
-<style lang="scss">
-.distributor-detail {
-  .ant-tabs-tab {
-    border-top: 5px solid #d6d6d6 !important;
-
-    &.ant-tabs-tab-active {
-      border-top-color: #1890ff !important;
-    }
-  }
-}
-</style>
+<style lang="scss" scoped></style>

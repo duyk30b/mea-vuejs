@@ -46,7 +46,7 @@ const startResetPassword = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem"> Đổi mật khẩu </a-divider>
+      <a-divider style="font-size: 1.5rem">Đổi mật khẩu</a-divider>
       <br />
       <a-form
         :model="formState"
@@ -55,37 +55,32 @@ const startResetPassword = async () => {
         :wrapper-col="{ span: 20 }"
         autocomplete="off"
         @finish="startResetPassword"
-        @finishFailed="onFinishFailed"
-      >
+        @finishFailed="onFinishFailed">
         <a-form-item
           label="Cơ sở"
           name="orgPhone"
-          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
-        >
+          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]">
           <a-input v-model:value="formState.orgPhone" disabled />
         </a-form-item>
 
         <a-form-item
           label="Tài khoản"
           name="username"
-          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]">
           <a-input v-model:value="formState.username" disabled />
         </a-form-item>
 
         <a-form-item
           label="Mật khẩu"
           name="password"
-          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]">
           <a-input-password v-model:value="formState.password" />
         </a-form-item>
 
         <a-form-item
           label="Mật khẩu"
           name="passwordRepeat"
-          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]">
           <a-input-password v-model:value="formState.passwordRepeat" />
         </a-form-item>
 
@@ -98,7 +93,10 @@ const startResetPassword = async () => {
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
+      <p>
+        HOTLINE:
+        <a href="tel:0376899866" class="hotline">0376.899.866</a>
+      </p>
     </div>
   </div>
 </template>
@@ -107,8 +105,9 @@ const startResetPassword = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url('@/assets/image/background-login.jpg');
+  // background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
+  background-color: #3b6fba;
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 10%;

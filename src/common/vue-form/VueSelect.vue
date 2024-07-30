@@ -7,7 +7,7 @@ import IconTriangleDown from '../icon/IconTriangleDown.vue'
 
 const props = withDefaults(
   defineProps<{
-    value?: string | number | boolean | null
+    value?: any
     options: { value: any; text?: string; data?: any }[]
     disabled?: boolean
     placeholder?: string
@@ -27,7 +27,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'update:value', value: string | number | boolean | null | undefined): void
+  (e: 'update:value', value: any): void
   (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
 }>()
 
@@ -137,15 +137,13 @@ defineExpose({ focus })
     :tabindex="disabled ? -1 : 0"
     @focusin="showOptions = true"
     @blur="showOptions = false"
-    @keydown="handleKeydown"
-  >
+    @keydown="handleKeydown">
     <div class="input-area">
       <input
         ref="inputRef"
         :required="required"
         :value="Object.keys(itemSelected).length || ''"
-        disabled
-      />
+        disabled />
       <div class="mask" @click="showOptions = true">
         <slot name="text" :content="itemSelected">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
@@ -159,7 +157,8 @@ defineExpose({ focus })
       </div>
     </div>
     <div class="icon-append">
-      <template v-if="iconClear">
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
         <IconClearCircle class="icon-clear-focus" @click="handleClear" />
@@ -167,20 +166,20 @@ defineExpose({ focus })
       <template v-else>
         <IconTriangleDown v-if="!showOptions" />
         <IconTriangleUp v-if="showOptions" />
-      </template>
+      </template> -->
+      <IconTriangleDown v-if="!showOptions" />
+      <IconTriangleUp v-if="showOptions" />
     </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in options"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click.stop="handleSelectItem(index)"
-      >
+        @click.stop="handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}
@@ -192,6 +191,7 @@ defineExpose({ focus })
 </template>
 <style lang="scss" scoped>
 .vue-input {
+  cursor: pointer;
   .input-area {
     .mask {
       position: absolute;

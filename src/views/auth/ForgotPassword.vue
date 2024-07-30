@@ -36,7 +36,7 @@ const startSendEmail = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem"> QUÊN MẬT KHẨU </a-divider>
+      <a-divider style="font-size: 1.5rem">QUÊN MẬT KHẨU</a-divider>
       <br />
       <a-form
         :model="formState"
@@ -45,29 +45,25 @@ const startSendEmail = async () => {
         :wrapper-col="{ span: 20 }"
         autocomplete="off"
         @finish="startSendEmail"
-        @finishFailed="onFinishFailed"
-      >
+        @finishFailed="onFinishFailed">
         <a-form-item
           label="ID Cơ sở"
           name="orgPhone"
-          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
-        >
+          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]">
           <a-input v-model:value="formState.orgPhone" />
         </a-form-item>
 
         <a-form-item
           label="Gmail Cơ sở"
           name="email"
-          :rules="[{ required: true, message: 'Email không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Email không được để trống!' }]">
           <a-input v-model:value="formState.email" />
         </a-form-item>
 
         <a-form-item
           label="Tài khoản"
           name="username"
-          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]">
           <a-input v-model:value="formState.username" />
         </a-form-item>
 
@@ -85,7 +81,10 @@ const startSendEmail = async () => {
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
+      <p>
+        HOTLINE:
+        <a href="tel:0376899866" class="hotline">0376.899.866</a>
+      </p>
     </div>
   </div>
 </template>
@@ -94,8 +93,9 @@ const startSendEmail = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url('@/assets/image/background-login.jpg');
+  // background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
+  background-color: #3b6fba;
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 10%;

@@ -48,13 +48,13 @@ export const useProcedureStore = defineStore('procedure-store', {
         total: result.total,
         page: result.page,
         limit: result.limit,
-        data: Procedure.fromObjects(result.data),
+        data: Procedure.fromList(result.data),
       }
     },
 
     async getOne(id: number) {
       const procedure = await ProcedureDB.findOneByKey(id)
-      return procedure ? Procedure.fromObject(procedure) : null
+      return procedure ? Procedure.from(procedure) : null
     },
 
     async createOne(instance: Procedure) {
@@ -82,7 +82,7 @@ export const useProcedureStore = defineStore('procedure-store', {
         name: { LIKE: text },
         deletedAt: { IS_NULL: true },
       })
-      return Procedure.fromObjects(objects)
+      return Procedure.fromList(objects as unknown as Procedure[])
     },
   },
 })

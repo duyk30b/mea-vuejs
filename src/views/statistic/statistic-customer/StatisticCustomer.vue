@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ShopOutlined } from '@ant-design/icons-vue'
-import TopCustomerBestInvoice from './TopCustomerBestInvoice.vue'
-import TopCustomerBestVisit from './TopCustomerBestVisit.vue'
+import TopCustomerBestInvoice from './TopCustomerBestTicket.vue'
 import TopCustomerDebt from './TopCustomerDebt.vue'
 </script>
 
@@ -10,7 +9,7 @@ import TopCustomerDebt from './TopCustomerDebt.vue'
     <div class="page-header-content">
       <div class="md:block">
         <ShopOutlined />
-        <span class="ml-2"> Báo cáo khách hàng </span>
+        <span class="ml-2">Báo cáo khách hàng</span>
       </div>
     </div>
   </div>
@@ -26,9 +25,7 @@ import TopCustomerDebt from './TopCustomerDebt.vue'
         <div style="flex: 1; min-height: 500px">
           <TopCustomerBestInvoice />
         </div>
-        <div style="flex: 1; min-height: 500px">
-          <TopCustomerBestVisit />
-        </div>
+        <div style="flex: 1; min-height: 500px"></div>
       </div>
     </div>
   </div>

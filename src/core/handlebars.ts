@@ -1,7 +1,7 @@
 import Handlebars from 'handlebars'
 import type { UnitType } from '../modules/enum'
-import type { VisitProduct } from '../modules/visit-product'
 import { formatNumber, formatPhone, timeToText } from '../utils'
+import type { TicketProduct } from '../modules/ticket-product'
 
 Handlebars.registerHelper('plus', (a: number, b: number) => a + b)
 Handlebars.registerHelper('minus', (a: number, b: number) => a - b)
@@ -38,9 +38,9 @@ Handlebars.registerHelper('getGenderText', (gender: number) => {
   return ''
 })
 
-Handlebars.registerHelper('getUnitNameByVisitProduct', (visitProduct: VisitProduct) => {
-  const unitObject: UnitType[] = JSON.parse(visitProduct.product?.unit || '[]')
-  const unitCurrent = unitObject.find((i) => i.rate === visitProduct.unitRate)
+Handlebars.registerHelper('getUnitNameByTicketProduct', (ticketProduct: TicketProduct) => {
+  const unitObject: UnitType[] = JSON.parse(ticketProduct.product?.unit || '[]')
+  const unitCurrent = unitObject.find((i) => i.rate === ticketProduct.unitRate)
   return unitCurrent?.name || ''
 })
 

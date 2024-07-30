@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { Modal } from 'ant-design-vue'
-import { createVNode, ref } from 'vue'
-import VueModal from '../../common/VueModal.vue'
+import { ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose } from '../../common/icon'
 import { InputDate, InputText, VueSelect } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../common/vue-modal/vue-modal.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { RoleApi, type Role } from '../../modules/role'
 import { User, UserApi } from '../../modules/user'
 
@@ -12,8 +13,8 @@ const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const showModal = ref(false)
 const user = ref<User>(User.blank())
@@ -69,14 +70,12 @@ const handleDelete = async () => {
 }
 
 const clickDelete = () => {
-  Modal.confirm({
-    title: 'Bạn có chắc chắn muốn xóa khách hàng này',
-    icon: createVNode(ExclamationCircleOutlined),
-    content: 'Khách hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa tài khoản này',
+    content: 'Tài khoản đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       await handleDelete()
     },
-    onCancel() {},
   })
 }
 
@@ -91,7 +90,7 @@ defineExpose({ openModal })
           {{ user.id ? 'Cập nhật thông tin tài khoản' : 'Tạo tài khoản mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -102,8 +101,7 @@ defineExpose({ openModal })
             <VueSelect
               v-model:value="user.roleId"
               :options="roles.map((i) => ({ text: i.name, value: i.id }))"
-              :disabled="!!user.id && [0, 1].includes(user.roleId)"
-            />
+              :disabled="!!user.id && [0, 1].includes(user.roleId)" />
           </div>
         </div>
 
@@ -117,8 +115,7 @@ defineExpose({ openModal })
         <div
           v-if="!user.id"
           class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'"
-        >
+          :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Password</div>
           <div class="flex-auto">
             <InputText v-model:value="user.password" required />
@@ -139,8 +136,7 @@ defineExpose({ openModal })
               v-model:value="user.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (user.phone = e.replace(/ /g, ''))"
-            />
+              @update:value="(e) => (user.phone = e.replace(/ /g, ''))" />
           </div>
         </div>
 
@@ -151,8 +147,7 @@ defineExpose({ openModal })
               v-model:value="user.birthday"
               format="DD/MM/YYYY"
               type-parser="number"
-              class="w-full"
-            />
+              class="w-full" />
           </div>
         </div>
 
@@ -160,8 +155,8 @@ defineExpose({ openModal })
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1"> Nam </a-radio>
-              <a-radio :value="0"> Nữ </a-radio>
+              <a-radio :value="1">Nam</a-radio>
+              <a-radio :value="0">Nữ</a-radio>
             </a-radio-group>
           </div>
         </div>
@@ -170,27 +165,19 @@ defineExpose({ openModal })
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)"
-          />
+            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)" />
           <div v-if="!user.isActive" class="ml-4">Tài khoản này tạm thời không thể sử dụng</div>
         </div>
       </div>
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <!-- <a-button danger @click="clickDelete">Xóa</a-button> -->
-          <a-button class="ml-auto" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <VueButton icon="close" type="reset" class="ml-auto" @click="closeModal">
             Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          </VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

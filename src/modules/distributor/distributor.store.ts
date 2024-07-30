@@ -53,13 +53,13 @@ export const useDistributorStore = defineStore('distributor-store', {
         total: result.total,
         page: result.page,
         limit: result.limit,
-        data: Distributor.toBasics(result.data),
+        data: Distributor.fromList(result.data),
       }
     },
 
     async getOne(id: number) {
       const distributor = await DistributorDB.findOneByKey(id)
-      return distributor ? Distributor.toBasic(distributor) : null
+      return distributor ? Distributor.from(distributor) : null
     },
 
     async createOne(instance: Distributor) {
@@ -97,7 +97,7 @@ export const useDistributorStore = defineStore('distributor-store', {
         $OR: [{ fullName: { LIKE: text } }, { phone: { LIKE: text } }],
         deletedAt: { IS_NULL: true },
       })
-      return Distributor.toBasics(objects)
+      return Distributor.fromList(objects)
     },
   },
 })

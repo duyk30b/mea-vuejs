@@ -168,7 +168,12 @@ const setScrollOption = (type: 'ArrowUp' | 'ArrowDown') => {
   })
 }
 
-const focus = () => inputRef.value?.focus()
+const focus = () => {
+  if (inputRef.value) {
+    inputRef.value.focus()
+    inputRef.value.selectionStart = inputRef.value.selectionEnd = inputRef.value.value.length
+  }
+}
 const clear = () => {
   itemSelected.value = null
   searchText.value = ''
@@ -193,26 +198,24 @@ defineExpose({ focus, clear, setItem })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
-        @focusin="showOptions = true"
-      />
+        @focusin="showOptions = true" />
     </div>
     <div class="icon-append">
       <IconSearch class="icon-blur" />
-      <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" />
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
+      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" /> -->
     </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in optionsFilter"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click="handleSelectItem(index)"
-      >
+        @click="handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">{{ item.text }}</div>
         </slot>

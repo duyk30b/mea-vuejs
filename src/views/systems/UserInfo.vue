@@ -6,12 +6,12 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
 import { useMeStore } from '../../modules/_me/me.store'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 const meStore = useMeStore()
@@ -51,7 +51,7 @@ const disableButtonSave = computed(() => {
       </div>
     </div>
   </div>
-  <div class="mx-4 mt-4 p-6 bg-white">
+  <div class="mx-4 mt-4 px-4 pt-2 bg-white">
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Họ Tên</div>
@@ -66,8 +66,8 @@ const disableButtonSave = computed(() => {
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Mật khẩu</div>
         <div style="display: flex; width: 100%">
-          <InputText value="********************" style="width: calc(100% - 150px)" />
-          <VueButton color="blue" style="width: 150px" @click="modalChangePassword?.openModal(user)"
+          <InputText value="********************" style="width: calc(100% - 120px)" />
+          <VueButton color="blue" style="width: 120px" @click="modalChangePassword?.openModal(user)"
             >Đổi mật khẩu
           </VueButton>
         </div>
@@ -96,10 +96,7 @@ const disableButtonSave = computed(() => {
       </div>
 
       <div class="my-8 text-center flex justify-center">
-        <VueButton color="blue" :disabled="disableButtonSave" @click="saveUser">
-          <template #icon>
-            <SaveOutlined />
-          </template>
+        <VueButton color="blue" :disabled="disableButtonSave" icon="save" @click="saveUser">
           Lưu lại
         </VueButton>
       </div>

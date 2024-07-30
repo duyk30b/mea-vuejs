@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
@@ -15,8 +15,8 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const customerPaymentList = ref<CustomerPayment[]>([])
 const page = ref(1)
@@ -28,6 +28,7 @@ const startFetchData = async () => {
     const { data, meta } = await CustomerPaymentApi.pagination({
       page: page.value,
       limit: limit.value,
+      relation: { ticket: true },
       filter: { customerId: props.customer.id! },
       sort: { id: 'DESC' },
     })
@@ -56,18 +57,18 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankInvoiceDetail = async (invoiceId: number) => {
+const openBlankTicketOrderDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'InvoiceDetail',
-    params: { id: invoiceId },
+    name: 'TicketOrderDetail',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
 
-const openBlankVisitDetail = async (visitId: number) => {
+const openBlankTicketClinicDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'VisitDetail',
-    params: { id: visitId },
+    name: 'TicketClinicSummary',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
@@ -90,14 +91,22 @@ defineExpose({ startFetchData })
         </tr>
         <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
           <td>
-            <div v-if="customerPayment.voucherType === VoucherType.Invoice">
-              <a @click="openBlankInvoiceDetail(customerPayment.voucherId)">
-                IV{{ customerPayment.voucherId }}
+            <div
+              v-if="customerPayment.ticket!.voucherType === VoucherType.Order"
+              style="font-size: 0.8rem">
+              <a
+                style="margin-right: 0.5em"
+                @click="openBlankTicketOrderDetail(customerPayment.ticketId)">
+                TO{{ customerPayment.ticketId }}
               </a>
             </div>
-            <div v-if="customerPayment.voucherType === VoucherType.Visit">
-              <a @click="openBlankVisitDetail(customerPayment.voucherId)">
-                VS{{ customerPayment.voucherId }}
+            <div
+              v-if="customerPayment.ticket!.voucherType === VoucherType.Clinic"
+              style="font-size: 0.8rem">
+              <a
+                style="margin-right: 0.5em"
+                @click="openBlankTicketClinicDetail(customerPayment.ticketId)">
+                TC{{ customerPayment.ticketId }}
               </a>
             </div>
             <div style="white-space: nowrap">
@@ -115,19 +124,19 @@ defineExpose({ startFetchData })
           </td>
           <td class="text-right">
             <div class="flex justify-between item-center" style="white-space: nowrap">
-              <span> T.Toán: </span>
+              <span>T.Toán:</span>
               <span>{{ formatMoney(customerPayment.paid) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Ghi nợ: </span>
+              <span>Ghi nợ:</span>
               <span>{{ formatMoney(customerPayment.debit) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Nợ: </span>
+              <span>Nợ:</span>
               <span>
                 {{ formatMoney(customerPayment.openDebt) }} ➞
-                {{ formatMoney(customerPayment.closeDebt) }}</span
-              >
+                {{ formatMoney(customerPayment.closeDebt) }}
+              </span>
             </div>
           </td>
         </tr>
@@ -149,14 +158,22 @@ defineExpose({ startFetchData })
         </tr>
         <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
           <td>
-            <div v-if="customerPayment.voucherType === VoucherType.Invoice">
-              <a @click="openBlankInvoiceDetail(customerPayment.voucherId)">
-                IV{{ customerPayment.voucherId }}
+            <div
+              v-if="customerPayment.ticket!.voucherType === VoucherType.Order"
+              style="font-size: 0.8rem">
+              <a
+                style="margin-right: 0.5em"
+                @click="openBlankTicketOrderDetail(customerPayment.ticketId)">
+                TO{{ customerPayment.ticketId }}
               </a>
             </div>
-            <div v-if="customerPayment.voucherType === VoucherType.Visit">
-              <a @click="openBlankVisitDetail(customerPayment.voucherId)">
-                VS{{ customerPayment.voucherId }}
+            <div
+              v-if="customerPayment.ticket!.voucherType === VoucherType.Clinic"
+              style="font-size: 0.8rem">
+              <a
+                style="margin-right: 0.5em"
+                @click="openBlankTicketClinicDetail(customerPayment.ticketId)">
+                TC{{ customerPayment.ticketId }}
               </a>
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
@@ -191,8 +208,7 @@ defineExpose({ startFetchData })
         v-model:pageSize="limit"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
 </template>

@@ -3,10 +3,10 @@ import {
   AccountBookOutlined,
   CheckCircleOutlined,
   FormOutlined,
-  MinusCircleOutlined,
-  PlusOutlined,
+  MinusCircleOutlined
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
@@ -71,13 +71,13 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
   <ModalRootUserUpsert ref="modalRootUserUpsert" @success="handleModalRootUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><AccountBookOutlined /> Danh sách User</div>
-      <a-button type="primary" @click="modalRootUserUpsert?.openModal()">
-        <template #icon>
-          <PlusOutlined />
-        </template>
+      <div class="hidden md:block">
+        <AccountBookOutlined />
+        Danh sách User
+      </div>
+      <VueButton color="blue" icon="plus" @click="modalRootUserUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -119,18 +119,18 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
                   <span v-else>
                     <font-awesome-icon :icon="['fas', 'desktop']" />
                   </span>
-                  <span class="ml-2">{{ device.os }}</span> / <span>{{ device.browser }}</span>
+                  <span class="ml-2">{{ device.os }}</span>
+                  /
+                  <span>{{ device.browser }}</span>
                 </div>
                 <div>IP: {{ device.ip }}</div>
                 <div>Time: {{ new Date(parseInt(device.code, 36)).toISOString() }}</div>
                 <div>
-                  <a-button
-                    type="default"
+                  <VueButton
                     size="small"
-                    @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })"
-                  >
+                    @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })">
                     Đăng xuất
-                  </a-button>
+                  </VueButton>
                 </div>
               </div>
             </td>
@@ -152,8 +152,7 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalRootUserUpsert?.openModal(user)"
-              >
+                @click="modalRootUserUpsert?.openModal(user)">
                 <FormOutlined />
               </a>
             </td>
@@ -167,8 +166,9 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

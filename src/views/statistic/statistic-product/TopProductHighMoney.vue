@@ -3,12 +3,12 @@ import type { ChartData, ChartOptions } from 'chart.js'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { StatisticService } from '../../../modules/statistics'
 
-const screenStore = useScreenStore()
-const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = screenStore
+const settingStore = useSettingStore()
+const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = settingStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
@@ -91,27 +91,22 @@ const startFetchData = async () => {
   }
 }
 
-const handleChangeTypeHighMoney = async (value: any) => {
-  typeHighMoney.value = value
-  await startFetchData()
-}
-
 onBeforeMount(async () => await startFetchData())
 </script>
 
 <template>
   <div class="flex flex-col" style="height: 100%">
     <div style="height: 80px" class="flex items-center gap-4">
-      <span style="font-size: 18px; font-weight: 500"> Hàng tồn giá trị cao: </span>
+      <span style="font-size: 18px; font-weight: 500">Hàng tồn giá trị cao:</span>
       <div style="width: 120px">
         <VueSelect
           v-model:value="typeHighMoney"
           :options="[
             { text: 'Tiền vốn', value: 'costAmount' },
             { text: 'Tiền bán', value: 'sumRetailMoney' },
+            // { text: 'Số lượng', value: 'quantity' },
           ]"
-          @update:value="startFetchData"
-        />
+          @update:value="startFetchData" />
       </div>
     </div>
     <div class="flex-1">

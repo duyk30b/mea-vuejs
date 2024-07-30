@@ -103,6 +103,20 @@ export class User {
     return ins
   }
 
+  static basic(source: User) {
+    const target = new User()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
+    })
+    Object.assign(target, source)
+    return target
+  }
+
+  static basicList(sources: User[]): User[] {
+    return sources.map((i) => User.basic(i))
+  }
+
   static toBasic(root: User) {
     const ins = new User()
     Object.assign(ins, root)

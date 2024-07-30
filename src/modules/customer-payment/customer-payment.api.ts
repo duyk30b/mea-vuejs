@@ -1,8 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer/customer.model'
-import { Invoice } from '../invoice'
-import { Visit } from '../visit'
 import {
   CustomerPaymentGetQuery,
   CustomerPaymentListQuery,
@@ -19,7 +17,7 @@ export class CustomerPaymentApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: CustomerPayment.fromPlains(data),
+      data: CustomerPayment.fromList(data),
     }
   }
 
@@ -28,29 +26,14 @@ export class CustomerPaymentApi {
 
     const response = await AxiosInstance.get('/customer-payment/list', { params })
     const { data } = response.data as BaseResponse
-    return CustomerPayment.fromPlains(data)
-  }
-
-  static async voucherDebtList(customerId: number) {
-    const response = await AxiosInstance.get('/customer-payment/voucher-debt-list', {
-      params: { customerId },
-    })
-
-    const { data } = response.data as BaseResponse<{
-      invoiceBasicList: any[]
-      visitBasicList: any[]
-    }>
-    return {
-      invoiceBasicList: Invoice.toBasics(data.invoiceBasicList),
-      visitBasicList: Visit.toBasics(data.visitBasicList),
-    }
+    return CustomerPayment.fromList(data)
   }
 
   static async payDebt(body: CustomerPaymentPayDebtBody) {
     const response = await AxiosInstance.post('/customer-payment/pay-debt', body)
     const { data } = response.data as BaseResponse<{ customer: any }>
 
-    const customer = Customer.fromPlain(data.customer)
+    const customer = Customer.from(data.customer)
 
     return { customer }
   }

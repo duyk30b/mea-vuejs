@@ -2,14 +2,15 @@
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import VueModal from '../../../common/VueModal.vue'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
+import VueButton from '../../../common/VueButton.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_DISTRIBUTOR_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_DISTRIBUTOR_UPSERT))
 )
@@ -29,7 +30,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_DISTRIBUTOR_UPSERT, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_DISTRIBUTOR_UPSERT, settingData)
     message.success('Cập nhật cài đặt thành công')
     store.SCREEN_DISTRIBUTOR_UPSERT = JSON.parse(settingData)
 
@@ -55,7 +56,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
+      <div class="p-4 table-wrapper">
         <table>
           <thead>
             <tr>
@@ -74,20 +75,12 @@ defineExpose({ openModal })
         </table>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
-            <template #icon>
-              <PlusOutlined />
-            </template>
-            Hủy bỏ
-          </a-button>
-          <a-button type="primary" @click="handleSave">
-            <template #icon>
-              <PlusOutlined />
-            </template>
+      <div class="p-4 mt-2">
+        <div class="flex gap-4">
+          <VueButton icon="close" class="ml-auto" @click="handleClose">Hủy bỏ</VueButton>
+          <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </div>

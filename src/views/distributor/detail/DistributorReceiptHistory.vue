@@ -2,11 +2,12 @@
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
 import { ReceiptApi, type Receipt } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import ReceiptStatusTag from '../../../views/receipt/ReceiptStatusTag.vue'
+import VueButton from '../../../common/VueButton.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -14,8 +15,8 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 
 const receipts = ref<Receipt[]>([])
 const page = ref(1)
@@ -72,18 +73,17 @@ const openBlankReceiptUpsert = (distributorId: number) => {
 </script>
 
 <template>
-  <div>
+  <div class="mt-4">
     <div class="flex justify-between items-end">
       <div>
-        NCC: <b>{{ distributor.fullName }}</b> - {{ distributor.phone }}
+        NCC:
+        <b>{{ distributor.fullName }}</b>
+        - {{ distributor.phone }}
       </div>
       <div>
-        <a-button type="primary" @click="openBlankReceiptUpsert(distributor.id)">
-          <template #icon>
-            <PlusOutlined />
-          </template>
+        <VueButton icon="plus" color="blue" @click="openBlankReceiptUpsert(distributor.id)">
           Phiếu nhập mới
-        </a-button>
+        </VueButton>
       </div>
     </div>
     <div class="table-wrapper mt-4 w-full">
@@ -101,7 +101,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
           <tr v-for="(receipt, index) in receipts" :key="index">
             <td>
               <div>
-                <a @click="openBlankReceiptDetail(receipt.id)"> RC{{ receipt.id }} </a>
+                <a @click="openBlankReceiptDetail(receipt.id)">RC{{ receipt.id }}</a>
                 <span class="ml-2">
                   <ReceiptStatusTag :status="receipt.status" />
                 </span>
@@ -115,9 +115,9 @@ const openBlankReceiptUpsert = (distributorId: number) => {
                 {{ formatMoney(receipt.totalMoney) }}
               </div>
               <div v-if="receipt.debt">
-                <i
-                  ><small>Nợ: {{ formatMoney(receipt.debt) }}</small></i
-                >
+                <i>
+                  <small>Nợ: {{ formatMoney(receipt.debt) }}</small>
+                </i>
               </div>
             </td>
           </tr>
@@ -129,8 +129,9 @@ const openBlankReceiptUpsert = (distributorId: number) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

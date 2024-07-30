@@ -4,16 +4,16 @@ import {
   FileSearchOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
-  ShopOutlined,
+  ShopOutlined
 } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeMount, onMounted, ref, watch } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore, type Product } from '../../../modules/product'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
@@ -26,9 +26,9 @@ const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSe
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const productStore = useProductStore()
-const { formatMoney, isMobile } = screenStore
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const { timeSync: productTimeSync } = storeToRefs(productStore)
@@ -148,34 +148,33 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
   <ModalProductListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
-    ref="modalProductListSettingScreen"
-  />
+    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    ref="modalProductListSettingScreen" />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductDetail ref="modalProductDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ShopOutlined /> Tồn kho</div>
-      <a-button
+      <div class="hidden md:block">
+        <ShopOutlined />
+        Tồn kho
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
-        type="primary"
-        @click="modalProductUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalProductUpsert?.openModal()">
         Thêm Sản Phẩm
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -190,8 +189,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <InputText
             v-model:value="searchText"
             placeholder="Tìm kiếm bằng tên hoặc hoạt chất"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
 
@@ -202,13 +200,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="group"
             :options="[
               { value: '', text: 'Tất cả' },
-              ...Object.entries(screenStore.PRODUCT_GROUP).map(([value, text]) => ({
+              ...Object.entries(settingStore.PRODUCT_GROUP).map(([value, text]) => ({
                 value,
                 text,
               })),
             ]"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
       <div style="flex: 1; flex-basis: 250px">
@@ -221,47 +218,39 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
     </div>
     <div v-if="isMobile" class="page-main-list">
       <div
         class="py-2 px-4 flex justify-between text-white font-bold"
-        style="background-color: var(--color-table-thead-bg)"
-      >
+        style="background-color: var(--color-table-thead-bg)">
         <div class="cursor-pointer" @click="changeSort('brandName')">
           Tên hàng &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'brandName'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'brandName' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'brandName' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
         <div class="cursor-pointer" @click="changeSort('quantity')">
           Số lượng &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'quantity'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'quantity' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'quantity' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
       </div>
       <div v-if="dataLoading">
@@ -280,8 +269,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div
           v-if="productList.length === 0"
           class="p-2 text-center"
-          style="border: 1px solid #cdcdcd"
-        >
+          style="border: 1px solid #cdcdcd">
           Không có dữ liệu
         </div>
         <div
@@ -292,51 +280,48 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
           @dblclick="
             permissionIdMap[PermissionId.PRODUCT_UPDATE] && modalProductUpsert?.openModal(product)
-          "
-        >
+          ">
           <div class="flex items-center">
             <div class="flex-1">
               <div class="flex gap-2">
                 <div class="font-medium text-justify">
                   {{ product.brandName }}
                 </div>
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.detail">
-                  <a @click="modalProductDetail?.openModal(product.id)">
+                <div v-if="settingStore.SCREEN_PRODUCT_LIST.detail">
+                  <a @click="modalProductDetail?.openModal(product)">
                     <FileSearchOutlined />
                   </a>
                 </div>
               </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" class="text-xs">
+              <div v-if="settingStore.SCREEN_PRODUCT_LIST.substance" class="text-xs">
                 {{ product.substance }}
               </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
-                {{ screenStore.PRODUCT_GROUP[product.group!] }}
+              <div v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
+                {{ settingStore.PRODUCT_GROUP[product.group!] }}
               </div>
               <div class="flex text-xs">
                 <div
                   v-if="
-                    permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                    screenStore.SCREEN_PRODUCT_LIST.costPrice
+                    permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                    settingStore.SCREEN_PRODUCT_LIST.costPrice
                   "
-                  style="width: 25%"
-                >
+                  style="width: 25%">
                   N: {{ formatMoney(product.unitCostPrice) }}
                 </div>
-                <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" style="width: 25%">
+                <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" style="width: 25%">
                   S: {{ formatMoney(product.unitWholesalePrice) }}
                 </div>
-                <div v-if="screenStore.SYSTEM_SETTING.retailPrice" style="width: 25%">
+                <div v-if="settingStore.SYSTEM_SETTING.retailPrice" style="width: 25%">
                   L: {{ formatMoney(product.unitRetailPrice) }}
                 </div>
               </div>
             </div>
-            <div v-if="screenStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
-              <span class="ml-1 text-xs"> {{ product.unitDefaultName }} </span>
+            <div v-if="settingStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
+              <span class="ml-1 text-xs">{{ product.unitDefaultName }}</span>
             </div>
             <div
               style="width: 40px; font-size: 16px; font-weight: 500; text-align: right"
-              :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''"
-            >
+              :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''">
               {{ product.unitQuantity || 0 }}
             </div>
           </div>
@@ -350,8 +335,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
 
@@ -364,68 +350,57 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="cursor-pointer" @click="changeSort('brandName')">
               Tên &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'brandName'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'brandName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'brandName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
             <th class="cursor-pointer" @click="changeSort('quantity')">
               SL &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'quantity'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'quantity' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'quantity' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th
               v-if="
-                permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                screenStore.SCREEN_PRODUCT_LIST.costPrice
-              "
-            >
+                permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                settingStore.SCREEN_PRODUCT_LIST.costPrice
+              ">
               G.Nhập
             </th>
-            <th v-if="screenStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
-            <th v-if="screenStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.isActive">Trạng thái</th>
+            <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
+            <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.isActive">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-                screenStore.SCREEN_PRODUCT_LIST.action
-              "
-            >
+                settingStore.SCREEN_PRODUCT_LIST.action
+              ">
               Sửa
             </th>
           </tr>
@@ -454,21 +429,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ product.brandName }}
                 <a
-                  v-if="screenStore.SCREEN_PRODUCT_LIST.detail"
+                  v-if="settingStore.SCREEN_PRODUCT_LIST.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(product.id)"
-                >
+                  @click="modalProductDetail?.openModal(product)">
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
+              <div v-if="settingStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
                 {{ product.substance }}
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-center">
-              {{ screenStore.PRODUCT_GROUP[product.group!] }}
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-center">
+              {{ settingStore.PRODUCT_GROUP[product.group!] }}
             </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
               {{ product.unitDefaultName }}
             </td>
             <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
@@ -476,20 +450,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td
               v-if="
-                permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                screenStore.SCREEN_PRODUCT_LIST.costPrice
+                permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                settingStore.SCREEN_PRODUCT_LIST.costPrice
               "
-              class="text-right"
-            >
+              class="text-right">
               {{ formatMoney(product.unitCostPrice || 0) }}
             </td>
-            <td v-if="screenStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
+            <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
               {{ formatMoney(product.unitWholesalePrice || 0) }}
             </td>
-            <td v-if="screenStore.SYSTEM_SETTING.retailPrice" class="text-right">
+            <td v-if="settingStore.SYSTEM_SETTING.retailPrice" class="text-right">
               {{ formatMoney(product.unitRetailPrice) }}
             </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
               <a-tag v-if="product.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -506,15 +479,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td
               v-if="
                 permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-                screenStore.SCREEN_PRODUCT_LIST.action
+                settingStore.SCREEN_PRODUCT_LIST.action
               "
-              class="text-center"
-            >
+              class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalProductUpsert?.openModal(product)"
-              >
+                @click="modalProductUpsert?.openModal(product)">
                 <FormOutlined />
               </a>
             </td>
@@ -528,8 +499,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

@@ -60,12 +60,16 @@
         <tr>
           <td> Họ tên: </td>
           <td> {{ visit.customer.fullName }} </td>
-          <td> - Ngày sinh: {{ timeToText visit.startedAt 'DD/MM/YYYY' }} </td>
+          <td style="white-space: no-wrap; padding-left: 48px;">
+            - Ngày sinh: {{ timeToText visit.startedAt 'DD/MM/YYYY' }}
+          </td>
         </tr>
         <tr>
           <td> SĐT : </td>
           <td> {{ formatPhone visit.customer.phone }} </td>
-          <td style="white-space: no-wrap;"> - Giới tính: {{ getGenderText visit.customer.gender }} </td>
+          <td style="white-space: no-wrap; padding-left: 48px;">
+            - Giới tính: {{ getGenderText visit.customer.gender }}
+          </td>
         </tr>
         <tr>
           <td>Địa chỉ: </td>
@@ -94,11 +98,41 @@
             <th>T.Tiền</th>
           </tr>
         </thead>
-        <tr>
-          <th colspan="6" style="text-align: left; text-transform: uppercase;">I. Dịch vụ thủ thuật</th>
-        </tr>
-        </thead>
+
         <tbody>
+          <tr>
+            <th colspan="6" style="text-align: left; text-transform: uppercase;">I. Thuốc - Vật tư</th>
+          </tr>
+          {{#each visit.visitProductList}}
+          <tr>
+            <td>{{ plus @index 1 }}</td>
+            <td>
+              <div>{{ this.product.brandName }}</div>
+              <div style="font-size: 0.9rem; font-style: italic;">{{ this.product.substance }}</div>
+            </td>
+            <td style="text-align: center;">{{ getUnitNameByVisitProduct this }}</td>
+            <td style="text-align: center;">{{ this.quantity }}</td>
+            <td style="text-align: right;">
+              {{#if (boolean this.discountMoney 0)}}
+              <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
+                {{ formatNumber this.expectedPrice }}
+              </div>
+              {{/if}}
+              <div>{{ formatNumber this.actualPrice }}</div>
+            </td>
+            <td style="text-align: right;">{{ formatNumber (multiply this.actualPrice this.quantity) }}</td>
+          </tr>
+          {{/each}}
+          <tr>
+            <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền thuốc - vật tư </td>
+            <td style="text-align: right; font-weight: bold">{{ formatNumber visit.productsMoney }}</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <th colspan="6" style="text-align: left; text-transform: uppercase;">II. Dịch vụ thủ thuật</th>
+          </tr>
           {{#each visit.visitProcedureList}}
           <tr>
             <td>{{ plus @index 1 }}</td>
@@ -124,39 +158,43 @@
             </td>
           </tr>
         </tbody>
-        <tr>
-          <th colspan="6" style="text-align: left; text-transform: uppercase;">II. Thuốc - Vật tư</th>
-        </tr>
+
         <tbody>
-          {{#each visit.visitProductList}}
+          <tr>
+            <th colspan="6" style="text-align: left; text-transform: uppercase;">III. CHẨN ĐOÁN HÌNH ẢNH</th>
+          </tr>
+          {{#each visit.visitRadiologyList}}
           <tr>
             <td>{{ plus @index 1 }}</td>
-            <td>
-              <div>{{ this.product.brandName }}</div>
-              <div style="font-size: 0.9rem; font-style: italic;">{{ this.product.substance }}</div>
-            </td>
-            <td style="text-align: center;">{{ getUnitNameByVisitProduct this }}</td>
-            <td style="text-align: center;">{{ this.quantity }}</td>
+            <td colspan="3">{{ this.radiology.name }}</td>
             <td style="text-align: right;">
               {{#if (boolean this.discountMoney 0)}}
               <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
                 {{ formatNumber this.expectedPrice }}
               </div>
               {{/if}}
-              <div>{{ formatNumber this.actualPrice }}</div>
+              <div> {{ formatNumber this.actualPrice }} </div>
             </td>
-            <td style="text-align: right;">{{ formatNumber (multiply this.actualPrice this.quantity) }}</td>
+            <td style="text-align: right;">{{ formatNumber this.actualPrice }}</td>
           </tr>
           {{/each}}
           <tr>
-            <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền thuốc - vật tư </td>
-            <td style="text-align: right; font-weight: bold">{{ formatNumber visit.productsMoney }}</td>
+            <td colspan="5" style="text-align: right; text-transform: uppercase;">
+              Tổng tiền chẩn đoán hình ảnh
+            </td>
+            <td style="text-align: right; font-weight: bold">
+              {{ formatNumber visit.radiologyMoney }}
+            </td>
           </tr>
+        </tbody>
+
+        <tbody>
           <tr>
             <td colspan="5" style="text-align: right; text-transform: uppercase; font-weight: bold">Tổng tiền </td>
             <td style="text-align: right; font-weight: bold">{{ formatNumber visit.totalMoney }}</td>
           </tr>
         </tbody>
+
       </table>
       <div style="text-align:right; font-style:italic; margin-top: 1rem">
         {{ timeToText visit.startedAt 'DD/MM/YYYY'}}

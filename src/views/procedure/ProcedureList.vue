@@ -1,33 +1,32 @@
 <script setup lang="ts">
 import {
   CheckCircleOutlined,
-  FileSearchOutlined,
   FormOutlined,
   MinusCircleOutlined,
   NodeIndexOutlined,
-  PlusOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconFileSearch, IconSetting } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { InputText, VueSelect } from '../../common/vue-form'
 import { useMeStore } from '../../modules/_me/me.store'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
-import ModalSettingDataProcedure from './components/ModalDataProcedure.vue'
+import ModalDataProcedure from './components/ModalDataProcedure.vue'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
 import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
-import { InputText } from '../../common/vue-form'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
-const modalSettingDataProcedure = ref<InstanceType<typeof ModalSettingDataProcedure>>()
+const modalDataProcedure = ref<InstanceType<typeof ModalDataProcedure>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const procedureStore = useProcedureStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -40,7 +39,7 @@ const limit = ref(Number(localStorage.getItem('PROCEDURE_PAGINATION_LIMIT')) || 
 const total = ref(0)
 
 const searchText = ref('')
-const group = ref<string>()
+const group = ref<string>('')
 const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'id' | 'name' | 'price' | ''>('')
@@ -100,10 +99,6 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleSelectStatus = async (value: 'true' | 'false' | '') => {
-  await startSearch()
-}
-
 const changeSort = async (column: 'id' | 'name' | 'price') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
@@ -139,7 +134,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalProcedureListSettingScreen.value?.openModal()
   }
   if (menu.key === 'data-setting') {
-    modalSettingDataProcedure.value?.openModal()
+    modalDataProcedure.value?.openModal()
   }
 }
 </script>
@@ -147,31 +142,31 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
-  <ModalSettingDataProcedure ref="modalSettingDataProcedure" />
+  <ModalDataProcedure ref="modalDataProcedure" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><NodeIndexOutlined />Danh sách dịch vụ</div>
-      <a-button
+      <div class="hidden md:block">
+        <NodeIndexOutlined />
+        Danh sách dịch vụ
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
-        type="primary"
-        @click="modalProcedureUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalProcedureUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -189,82 +184,68 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn nhóm</div>
-        <a-select
-          v-model:value="group"
-          allow-clear
-          class="w-full"
-          placeholder="Tất cả"
-          @change="startSearch"
-        >
-          <a-select-option :value="undefined"> Tất cả </a-select-option>
-          <a-select-option
-            v-for="(text, value) in screenStore.PROCEDURE_GROUP"
-            :key="value"
-            :value="value"
-          >
-            {{ text }}
-          </a-select-option>
-        </a-select>
+        <div>
+          <VueSelect
+            v-model:value="group"
+            :options="[
+              { value: '', text: 'Tất cả' },
+              ...Object.entries(settingStore.PROCEDURE_GROUP).map(([value, text]) => {
+                return { value, text }
+              }),
+            ]"
+            @update:value="startSearch" />
+        </div>
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
-        <a-select
-          v-model:value="isActive"
-          allow-clear
-          class="w-full"
-          placeholder="Tất cả"
-          @change="handleSelectStatus"
-        >
-          <a-select-option value=""> Tất cả </a-select-option>
-          <a-select-option :value="1"> Active </a-select-option>
-          <a-select-option :value="0"> Inactive </a-select-option>
-        </a-select>
+        <div>
+          <VueSelect
+            v-model:value="isActive"
+            :options="[
+              { text: 'Tất cả', value: '' },
+              { text: 'Active', value: 1 },
+              { text: 'Inactive', value: 0 },
+            ]"
+            @update:value="startSearch" />
+        </div>
       </div>
     </div>
     <div v-if="isMobile" class="page-main-list table-wrapper">
       <div
         class="py-2 px-4 flex justify-between text-white font-bold"
-        style="background-color: var(--color-table-thead-bg)"
-      >
+        style="background-color: var(--color-table-thead-bg)">
         <div class="cursor-pointer" @click="changeSort('name')">
           Tên dịch vụ &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'name'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'name' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'name' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
         <div class="cursor-pointer" @click="changeSort('price')">
           Giá &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'price'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'price' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'price' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
       </div>
       <div
         v-if="procedureList.length === 0"
         class="p-2 text-center"
-        style="border: 1px solid #cdcdcd"
-      >
+        style="border: 1px solid #cdcdcd">
         Không có dữ liệu
       </div>
       <div
@@ -273,21 +254,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         class="px-4 py-2 flex items-center justify-between gap-4"
         style="border-bottom: 1px solid #cdcdcd"
         :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
-        @dblclick="modalProcedureUpsert?.openModal(procedure)"
-      >
+        @dblclick="modalProcedureUpsert?.openModal(procedure)">
         <div>
           <div class="flex gap-2">
             <div class="font-medium text-justify">
               {{ procedure.name }}
             </div>
-            <div v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail">
-              <a class="text-base" @click="modalProcedureDetail?.openModal(procedure.id)">
-                <FileSearchOutlined />
+            <div v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail">
+              <a
+                class="text-base"
+                style="line-height: 0"
+                @click="modalProcedureDetail?.openModal(procedure)">
+                <IconFileSearch />
               </a>
             </div>
           </div>
-          <div v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group">
-            {{ screenStore.PROCEDURE_GROUP[procedure.group] }}
+          <div v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">
+            {{ settingStore.PROCEDURE_GROUP[procedure.group] }}
           </div>
         </div>
         <div>
@@ -301,8 +284,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
     <div v-else class="page-main-table table-wrapper">
@@ -314,57 +298,47 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="cursor-pointer" @click="changeSort('name')">
               Tên thủ thuật &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'name'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'name' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'name' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
+            <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               Giá tiền&nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'price'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'price' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'price' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
+            <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
-                screenStore.SCREEN_PROCEDURE_LIST.table.action
-              "
-            >
+                settingStore.SCREEN_PROCEDURE_LIST.table.action
+              ">
               Thao tác
             </th>
           </tr>
@@ -378,20 +352,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               {{ procedure.name }}
               <a
-                v-if="screenStore.SCREEN_PROCEDURE_LIST.table.detail"
+                v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure.id)"
-              >
-                <FileSearchOutlined />
+                @click="modalProcedureDetail?.openModal(procedure!)">
+                <IconFileSearch />
               </a>
             </td>
-            <td v-if="screenStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
-              {{ screenStore.PROCEDURE_GROUP[procedure.group] }}
+            <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
+              {{ settingStore.PROCEDURE_GROUP[procedure.group] }}
             </td>
             <td class="text-right">
               {{ formatMoney(procedure.price) }}
             </td>
-            <td v-if="screenStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
+            <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
               <a-tag v-if="procedure.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -408,15 +381,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td
               v-if="
                 permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
-                screenStore.SCREEN_PROCEDURE_LIST.table.action
+                settingStore.SCREEN_PROCEDURE_LIST.table.action
               "
-              class="text-center"
-            >
+              class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalProcedureUpsert?.openModal(procedure)"
-              >
+                @click="modalProcedureUpsert?.openModal(procedure)">
                 <FormOutlined />
               </a>
             </td>
@@ -430,8 +401,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

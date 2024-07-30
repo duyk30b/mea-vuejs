@@ -5,10 +5,10 @@ import { MeaDatabase } from '../core/indexed-db/database'
 import { LocalStorageService } from '../core/local-storage.service'
 import { MeService } from '../modules/_me/me.service'
 import { useMeStore } from '../modules/_me/me.store'
-import { useScreenStore } from '../modules/_me/screen.store'
+import { useSettingStore } from '../modules/_me/setting.store'
 import VueLayout from './layout/VueLayout.vue'
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const loaded = ref(false)
 
 onBeforeMount(async () => {

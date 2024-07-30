@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { InvoiceItemApi } from '../../../modules/invoice-item/invoice-item.api'
-import { InvoiceItemType, type InvoiceItem } from '../../../modules/invoice-item/invoice-item.model'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { VoucherType } from '../../../modules/enum'
+import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
 import { timeToText } from '../../../utils'
-import InvoiceStatusTag from '../../../views/invoice/InvoiceStatusTag.vue'
+import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
+import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -14,30 +15,29 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const invoiceItems = ref<InvoiceItem[]>([])
+const ticketProcedureList = ref<TicketProcedure[]>([])
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('CUSTOMER_PROCEDURE_HISTORY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await InvoiceItemApi.pagination({
+    const { data, meta } = await TicketProcedureApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
         customerId: props.customer.id!,
-        type: InvoiceItemType.Procedure,
       },
       relation: {
         procedure: true,
-        invoice: { customer: false },
+        ticket: true,
       },
       sort: { id: 'DESC' },
     })
-    invoiceItems.value = data
+    ticketProcedureList.value = data
     total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerProductHistory copy.vue:37 ~ error:', error)
@@ -57,25 +57,35 @@ watch(
   () => props.customer.id,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else invoiceItems.value = []
+    else ticketProcedureList.value = []
   },
   { immediate: true }
 )
 
-const openBlankInvoiceDetail = (invoiceId: number) => {
+const openBlankTicketOrderDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'InvoiceDetail',
-    params: { id: invoiceId },
+    name: 'TicketOrderDetail',
+    params: { id: ticketId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankTicketClinicDetail = async (ticketId: number) => {
+  let route = router.resolve({
+    name: 'TicketClinicSummary',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
 </script>
 
 <template>
-  <div>
+  <div class="mt-4">
     <div class="flex justify-between items-end">
       <div>
-        Khách hàng: <b>{{ customer.fullName }}</b> - {{ customer.phone }}
+        Khách hàng:
+        <b>{{ customer.fullName }}</b>
+        - {{ customer.phone }}
       </div>
       <div></div>
     </div>
@@ -83,49 +93,61 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
       <table>
         <thead>
           <tr>
-            <th>Sản phẩm</th>
+            <th>Dịch vụ</th>
             <th>SL</th>
             <th>ĐG</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoiceItems.length === 0">
+          <tr v-if="ticketProcedureList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
+          <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
             <td>
               <div class="font-medium">
-                {{ invoiceItem.procedure!.name }}
+                {{ ticketProcedure.procedure!.name }}
               </div>
-              <div style="font-size: 0.8rem">
-                ĐH
-                <a class="mr-2" @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
-                  IV{{ invoiceItem.invoice!.id }}
+              <div
+                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Order"
+                style="font-size: 0.8rem">
+                <a
+                  style="margin-right: 0.5em"
+                  @click="openBlankTicketOrderDetail(ticketProcedure.ticketId)">
+                  TO{{ ticketProcedure.ticketId }}
                 </a>
-                <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
+                <TicketOrderStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
+              </div>
+              <div
+                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Clinic"
+                style="font-size: 0.8rem">
+                <a
+                  style="margin-right: 0.5em"
+                  @click="openBlankTicketClinicDetail(ticketProcedure.ticketId)">
+                  TC{{ ticketProcedure.ticketId }}
+                </a>
+                <TicketClinicStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                TG {{ timeToText(invoiceItem.invoice?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ timeToText(ticketProcedure.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
-              {{ invoiceItem.quantity }}
+              {{ ticketProcedure.quantity }}
             </td>
             <td class="text-right">
               <div
-                v-if="invoiceItem.discountMoney"
+                v-if="ticketProcedure.discountMoney"
                 style="
                   color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                "
-              >
-                {{ formatMoney(invoiceItem.expectedPrice) }}
+                ">
+                {{ formatMoney(ticketProcedure.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
-                {{ formatMoney(invoiceItem.actualPrice) }}
+                {{ formatMoney(ticketProcedure.actualPrice) }}
               </div>
             </td>
           </tr>
@@ -138,8 +160,9 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
     <div v-else class="table-wrapper mt-4 w-full">
@@ -153,42 +176,53 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="invoiceItems.length === 0">
+          <tr v-if="ticketProcedureList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(invoiceItem, index) in invoiceItems" :key="index">
+          <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
             <td>
-              <div>
-                <a @click="openBlankInvoiceDetail(invoiceItem.invoice!.id)">
-                  IV{{ invoiceItem.invoice!.id }}
+              <div
+                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Order"
+                style="font-size: 0.8rem">
+                <a
+                  style="margin-right: 0.5em"
+                  @click="openBlankTicketOrderDetail(ticketProcedure.ticketId)">
+                  TO{{ ticketProcedure.ticketId }}
                 </a>
-                <span class="ml-2">
-                  <InvoiceStatusTag :status="invoiceItem.invoice!.status" />
-                </span>
+                <TicketOrderStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
+              </div>
+              <div
+                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Clinic"
+                style="font-size: 0.8rem">
+                <a
+                  style="margin-right: 0.5em"
+                  @click="openBlankTicketClinicDetail(ticketProcedure.ticketId)">
+                  TC{{ ticketProcedure.ticketId }}
+                </a>
+                <TicketClinicStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(invoiceItem.invoice?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
-            <td>{{ invoiceItem.procedure?.name }}</td>
+            <td>{{ ticketProcedure.procedure?.name }}</td>
             <td class="text-center">
-              {{ invoiceItem.quantity }}
+              {{ ticketProcedure.quantity }}
             </td>
             <td class="text-right">
               <div
-                v-if="invoiceItem.discountMoney"
+                v-if="ticketProcedure.discountMoney"
                 style="
                   color: var(--text-red);
                   font-size: 0.8rem;
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                "
-              >
-                {{ formatMoney(invoiceItem.expectedPrice) }}
+                ">
+                {{ formatMoney(ticketProcedure.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
-                {{ formatMoney(invoiceItem.actualPrice) }}
+                {{ formatMoney(ticketProcedure.actualPrice) }}
               </div>
             </td>
           </tr>
@@ -200,8 +234,9 @@ const openBlankInvoiceDetail = (invoiceId: number) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

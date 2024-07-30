@@ -12,7 +12,7 @@ import { onBeforeMount, onMounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useDistributorStore, type Distributor } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { formatPhone } from '../../../utils'
@@ -21,6 +21,7 @@ import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconPlus } from '../../../common/icon'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -29,8 +30,8 @@ const modalDistributorListSettingScreen =
   ref<InstanceType<typeof ModalDistributorListSettingScreen>>()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -148,37 +149,35 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalDistributorUpsert
     ref="modalDistributorUpsert"
-    @success="handleModalDistributorUpsertSuccess"
-  />
+    @success="handleModalDistributorUpsertSuccess" />
   <ModalDistributorDetail ref="modalDistributorDetail" @update_distributor="updateDistributor" />
   <ModalDistributorPayDebt
     ref="modalDistributorPayDebt"
-    @success="handleModalDistributorPayDebtSuccess"
-  />
+    @success="handleModalDistributorPayDebtSuccess" />
   <ModalDistributorListSettingScreen ref="modalDistributorListSettingScreen" />
 
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ApartmentOutlined /> Danh sách nhà cung cấp</div>
+      <div class="hidden md:block">
+        <ApartmentOutlined />
+        Danh sách nhà cung cấp
+      </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
         color="blue"
-        @click="modalDistributorUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        icon="plus"
+        @click="modalDistributorUpsert?.openModal()">
         Thêm mới
       </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -204,8 +203,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="(e) => startSearch()"
-          />
+            @update:value="(e) => startSearch()" />
         </div>
       </div>
     </div>
@@ -215,22 +213,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <thead>
           <tr>
             <th>Tên NCC</th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
           </tr>
         </thead>
@@ -244,33 +239,29 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             @dblclick="
               permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] &&
                 modalDistributorUpsert?.openModal(distributor)
-            "
-          >
+            ">
             <td style="border-right: none">
               <div class="font-medium text-justify">
                 {{ distributor.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
+                  v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="text-base"
-                  @click="modalDistributorDetail?.openModal(distributor.id)"
-                >
+                  @click="modalDistributorDetail?.openModal(distributor.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
-              <div v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
+              <div v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
                 {{ distributor.addressString }}
               </div>
               <div
-                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
-                class="text-xs italic"
-              >
+                v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                class="text-xs italic">
                 {{ distributor.note }}
               </div>
             </td>
             <td
-              v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none"
-            >
+              v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone"
+              style="white-space: nowrap; border-left: none; border-right: none">
               <a :href="'tel:' + distributor.phone">{{ formatPhone(distributor.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
@@ -280,12 +271,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
                   distributor.debt != 0
                 "
-                class="flex justify-end"
-              >
+                class="flex justify-end">
                 <VueButton
                   size="small"
-                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
-                >
+                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
                   Trả nợ
                 </VueButton>
               </div>
@@ -300,8 +289,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
 
@@ -314,58 +304,48 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
               Họ Tên&nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'fullName'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               Nợ &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'debt'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.isActive">Trạng thái</th>
+            <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive">Trạng thái</th>
             <th
               v-if="
-                screenStore.SCREEN_DISTRIBUTOR_LIST.action &&
+                settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
-              "
-            >
+              ">
               Sửa
             </th>
           </tr>
@@ -394,24 +374,22 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ distributor.fullName }}
                 <a
-                  v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.detail"
+                  v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="ml-1"
-                  @click="modalDistributorDetail?.openModal(distributor.id)"
-                >
+                  @click="modalDistributorDetail?.openModal(distributor.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
               <div
-                v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
-                class="text-xs italic"
-              >
+                v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
+                class="text-xs italic">
                 {{ distributor.note }}
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
               {{ distributor.phone }}
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.address">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">
               {{ distributor.addressString }}
             </td>
             <td class="text-right">
@@ -423,8 +401,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       distributor.debt != 0
                     "
                     size="small"
-                    @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)"
-                  >
+                    @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)">
                     Trả nợ
                   </VueButton>
                 </div>
@@ -433,7 +410,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </div>
               </div>
             </td>
-            <td v-if="screenStore.SCREEN_DISTRIBUTOR_LIST.isActive" class="text-center">
+            <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive" class="text-center">
               <a-tag v-if="distributor.isActive" color="success">
                 <template #icon>
                   <CheckCircleOutlined />
@@ -449,16 +426,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td
               v-if="
-                screenStore.SCREEN_DISTRIBUTOR_LIST.action &&
+                settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
               "
-              class="text-center"
-            >
+              class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalDistributorUpsert?.openModal(distributor)"
-              >
+                @click="modalDistributorUpsert?.openModal(distributor)">
                 <FormOutlined />
               </a>
             </td>
@@ -472,8 +447,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

@@ -10,7 +10,6 @@ import { BaseModel } from '../base.model'
 import { Customer } from '../customer'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { DiscountType } from '../enum'
-import { InvoiceItem } from '../invoice-item/invoice-item.model'
 import { InvoiceExpense } from './invoice-expense.model'
 import { InvoiceSurcharge } from './invoice-surcharge.model'
 
@@ -75,10 +74,6 @@ export class Invoice extends BaseModel {
   deletedAt: number
 
   @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => InvoiceItem)
-  invoiceItems?: InvoiceItem[]
-
-  @Expose({ groups: [FROM_PLAIN] })
   @Type(() => InvoiceSurcharge)
   invoiceSurcharges?: InvoiceSurcharge[] // Phụ phí chi tiết
 
@@ -114,7 +109,6 @@ export class Invoice extends BaseModel {
 
   static blank(): Invoice {
     const ins = Invoice.init()
-    ins.invoiceItems = []
     ins.customerPayments = []
     ins.customer = Customer.init()
     ins.invoiceExpenses = [InvoiceExpense.init()]
@@ -125,7 +119,6 @@ export class Invoice extends BaseModel {
   static toBasic(root: Invoice) {
     const ins = new Invoice()
     Object.assign(ins, root)
-    delete ins.invoiceItems
     delete ins.invoiceSurcharges
     delete ins.invoiceExpenses
     delete ins.customer

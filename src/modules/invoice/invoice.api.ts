@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
-import { InvoiceItem } from '../invoice-item/invoice-item.model'
 import { InvoiceExpense } from './invoice-expense.model'
 import { InvoiceSurcharge } from './invoice-surcharge.model'
 import {
@@ -44,7 +43,6 @@ export class InvoiceApi {
   static async createDraft(instance: Invoice) {
     const body = {
       invoice: Invoice.toPlain(instance, 'USER_CREATE'),
-      invoiceItemList: InvoiceItem.toPlains(instance.invoiceItems || [], 'USER_CREATE'),
       invoiceSurchargeList: InvoiceSurcharge.toPlains(
         instance.invoiceSurcharges || [],
         'USER_CREATE'
@@ -67,7 +65,7 @@ export class InvoiceApi {
     const { data } = response.data as BaseResponse<{ invoiceBasic: any; customerPayments: any[] }>
     return {
       invoiceBasic: Invoice.toBasic(data.invoiceBasic || {}),
-      customerPayments: CustomerPayment.toBasics(data.customerPayments || []),
+      customerPayments: CustomerPayment.fromList(data.customerPayments || []),
     }
   }
 
@@ -76,7 +74,7 @@ export class InvoiceApi {
     const { data } = response.data as BaseResponse<{ invoiceBasic: any; customerPayments: any[] }>
     return {
       invoiceBasic: Invoice.toBasic(data.invoiceBasic || {}),
-      customerPayments: CustomerPayment.toBasics(data.customerPayments || []),
+      customerPayments: CustomerPayment.fromList(data.customerPayments || []),
     }
   }
 
@@ -87,7 +85,7 @@ export class InvoiceApi {
     const { data } = response.data as BaseResponse<{ invoiceBasic: any; customerPayments: any[] }>
     return {
       invoiceBasic: Invoice.toBasic(data.invoiceBasic || {}),
-      customerPayments: CustomerPayment.toBasics(data.customerPayments || []),
+      customerPayments: CustomerPayment.fromList(data.customerPayments || []),
     }
   }
 
@@ -96,7 +94,7 @@ export class InvoiceApi {
     const { data } = response.data as BaseResponse<{ invoiceBasic: any; customerPayments: any[] }>
     return {
       invoiceBasic: Invoice.toBasic(data.invoiceBasic || {}),
-      customerPayments: CustomerPayment.toBasics(data.customerPayments || []),
+      customerPayments: CustomerPayment.fromList(data.customerPayments || []),
     }
   }
 
@@ -105,7 +103,7 @@ export class InvoiceApi {
     const { data } = response.data as BaseResponse<{ invoiceBasic: any; customerPayments: any[] }>
     return {
       invoiceBasic: Invoice.toBasic(data.invoiceBasic || {}),
-      customerPayments: CustomerPayment.toBasics(data.customerPayments || []),
+      customerPayments: CustomerPayment.fromList(data.customerPayments || []),
     }
   }
 
@@ -126,7 +124,6 @@ export class InvoiceApi {
   static async createQuickInvoice(instance: Invoice) {
     const body = {
       invoice: Invoice.toPlain(instance, 'USER_CREATE'),
-      invoiceItemList: InvoiceItem.toPlains(instance.invoiceItems || [], 'USER_CREATE'),
       invoiceSurchargeList: InvoiceSurcharge.toPlains(
         instance.invoiceSurcharges || [],
         'USER_CREATE'
@@ -141,7 +138,6 @@ export class InvoiceApi {
   static async updateInvoiceDraftAndInvoicePrepayment(invoiceId: number, instance: Invoice) {
     const body = {
       invoice: Invoice.toPlain(instance, 'USER_UPDATE'),
-      invoiceItemList: InvoiceItem.toPlains(instance.invoiceItems || [], 'USER_UPDATE'),
       invoiceSurchargeList: InvoiceSurcharge.toPlains(
         instance.invoiceSurcharges || [],
         'USER_UPDATE'
@@ -159,7 +155,6 @@ export class InvoiceApi {
   static async updateInvoiceDebtAndInvoiceSuccess(invoiceId: number, instance: Invoice) {
     const body = {
       invoice: Invoice.toPlain(instance, 'USER_CREATE'),
-      invoiceItemList: InvoiceItem.toPlains(instance.invoiceItems || [], 'USER_CREATE'),
       invoiceSurchargeList: InvoiceSurcharge.toPlains(
         instance.invoiceSurcharges || [],
         'USER_CREATE'

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView, useRouter } from 'vue-router'
-import VueAlert from './common/vue-alert/VueAlert.vue'
+import VueAlertStore from './common/vue-alert/VueAlertStore.vue'
+import VueModalStore from './common/vue-modal/VueModalStore.vue'
 import { useMeStore } from './modules/_me/me.store'
 
 const meStore = useMeStore()
@@ -16,7 +17,8 @@ meStore.$subscribe((mutation, state) => {
   <Suspense>
     <RouterView />
   </Suspense>
-  <VueAlert />
+  <VueAlertStore />
+  <VueModalStore />
   <iframe id="iframe-print" style="display: none" />
 </template>
 <style scoped></style>

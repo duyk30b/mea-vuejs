@@ -3,15 +3,16 @@ import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/VueModal.vue'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { InputText } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const GROUP = ref<typeof store.PRODUCT_GROUP>(JSON.parse(JSON.stringify(store.PRODUCT_GROUP)))
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
@@ -21,7 +22,7 @@ const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref('1')
+const activeTab = ref('group')
 
 const openModal = async () => {
   showModal.value = true
@@ -39,25 +40,25 @@ const handleSave = async () => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_GROUP, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_GROUP, data)
       store.PRODUCT_GROUP = JSON.parse(data)
     }
     if (activeTab.value === '2') {
       const data = JSON.stringify(UNIT.value.filter((i) => !!i))
       UNIT.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_UNIT, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_UNIT, data)
       store.PRODUCT_UNIT = JSON.parse(data)
     }
     if (activeTab.value === '3') {
       const data = JSON.stringify(ROUTE.value.filter((i) => !!i))
       ROUTE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_ROUTE, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_ROUTE, data)
       store.PRODUCT_ROUTE = JSON.parse(data)
     }
     if (activeTab.value === '4') {
       const data = JSON.stringify(HINT_USAGE.value.filter((i) => !!i))
       HINT_USAGE.value = JSON.parse(data)
-      await OrganizationService.saveSettings(ScreenSettingKey.PRODUCT_HINT_USAGE, data)
+      await OrganizationService.saveSettings(SettingKey.PRODUCT_HINT_USAGE, data)
       store.PRODUCT_HINT_USAGE = JSON.parse(data)
     }
 
@@ -93,82 +94,83 @@ defineExpose({ openModal })
       </div>
 
       <div class="px-4 mt-4 modal-data-product-tabs">
-        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-          <a-tab-pane key="1" tab="Nhóm hàng">
-            <div class="w-full">
-              <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
-              <div v-for="(r, key) in GROUP" :key="key">
-                <div class="py-2 flex items-center gap-4">
-                  <InputText v-model:value="GROUP[key]" :prepend="key" style="flex: 1" />
-                  <a style="color: var(--text-red)" @click="delete GROUP[key]"> Xóa </a>
+        <VueTabs v-model:tabShow="activeTab">
+          <template #menu>
+            <VueTabMenu tabKey="group">Nhóm hàng</VueTabMenu>
+            <VueTabMenu tabKey="unit">Đơn vị</VueTabMenu>
+            <VueTabMenu tabKey="route">Đường dùng</VueTabMenu>
+            <VueTabMenu tabKey="hint-usage">Cách sử dụng</VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel tabKey="group">
+              <div class="mt-4 w-full">
+                <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
+                <div v-for="(r, key) in GROUP" :key="key">
+                  <div class="py-2 flex items-center gap-4">
+                    <InputText v-model:value="GROUP[key]" :prepend="key" style="flex: 1" />
+                    <a style="color: var(--text-red)" @click="delete GROUP[key]">Xóa</a>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="py-2 flex justify-center">
-              <VueButton color="blue" @click="GROUP[Date.now().toString(36)] = ''">
-                Thêm mới
-              </VueButton>
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="2" tab="Đơn vị">
-            <div class="w-full">
-              <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
-              <div v-for="(u, i) in UNIT" :key="i">
-                <div class="py-2 flex gap-4">
-                  <InputText v-model:value="UNIT[i]" :prepend="i.toString()" style="flex: 1" />
-                  <a style="color: var(--text-red)" @click="UNIT.splice(i, 1)"> Xóa </a>
+              <div class="py-2 flex justify-center">
+                <VueButton color="blue" @click="GROUP[Date.now().toString(36)] = ''">
+                  Thêm mới
+                </VueButton>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel tabKey="unit">
+              <div class="mt-4 w-full">
+                <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+                <div v-for="(u, i) in UNIT" :key="i">
+                  <div class="py-2 flex gap-4">
+                    <InputText v-model:value="UNIT[i]" :prepend="i.toString()" style="flex: 1" />
+                    <a style="color: var(--text-red)" @click="UNIT.splice(i, 1)">Xóa</a>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="py-2 flex justify-center">
-              <VueButton color="blue" @click="UNIT.push('')"> Thêm mới </VueButton>
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="3" tab="Đường dùng">
-            <div class="w-full">
-              <div class="text-center font-bold">Danh sách đường dùng</div>
-              <div v-for="(r, i) in ROUTE" :key="i">
-                <div class="py-2 flex gap-4">
-                  <InputText v-model:value="ROUTE[i]" :prepend="i.toString()" style="flex: 1" />
-                  <a style="color: var(--text-red)" @click="ROUTE.splice(i, 1)"> Xóa </a>
+              <div class="py-2 flex justify-center">
+                <VueButton color="blue" @click="UNIT.push('')">Thêm mới</VueButton>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel tabKey="route">
+              <div class="mt-4 w-full">
+                <div class="text-center font-bold">Danh sách đường dùng</div>
+                <div v-for="(r, i) in ROUTE" :key="i">
+                  <div class="py-2 flex gap-4">
+                    <InputText v-model:value="ROUTE[i]" :prepend="i.toString()" style="flex: 1" />
+                    <a style="color: var(--text-red)" @click="ROUTE.splice(i, 1)">Xóa</a>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="py-2 flex justify-center">
-              <VueButton color="blue" @click="ROUTE.push('')"> Thêm mới </VueButton>
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="4" tab="Cách sử dụng">
-            <div class="w-full">
-              <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
-              <div v-for="(u, i) in HINT_USAGE" :key="i">
-                <div class="py-2 flex gap-4">
-                  <InputText
-                    v-model:value="HINT_USAGE[i]"
-                    :prepend="i.toString()"
-                    style="flex: 1"
-                  />
-                  <a style="color: var(--text-red)" @click="HINT_USAGE.splice(i, 1)"> Xóa </a>
+              <div class="py-2 flex justify-center">
+                <VueButton color="blue" @click="ROUTE.push('')">Thêm mới</VueButton>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel tabKey="hint-usage">
+              <div class="mt-4 w-full">
+                <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+                <div v-for="(u, i) in HINT_USAGE" :key="i">
+                  <div class="py-2 flex gap-4">
+                    <InputText
+                      v-model:value="HINT_USAGE[i]"
+                      :prepend="i.toString()"
+                      style="flex: 1" />
+                    <a style="color: var(--text-red)" @click="HINT_USAGE.splice(i, 1)">Xóa</a>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="py-2 flex justify-center">
-              <VueButton color="blue" @click="HINT_USAGE.push('')"> Thêm mới </VueButton>
-            </div>
-          </a-tab-pane>
-        </a-tabs>
+              <div class="py-2 flex justify-center">
+                <VueButton color="blue" @click="HINT_USAGE.push('')">Thêm mới</VueButton>
+              </div>
+            </VueTabPanel>
+          </template>
+        </VueTabs>
       </div>
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton class="ml-auto" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
-          <VueButton color="blue" :loading="saveLoading" @click="handleSave">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>
         </div>
@@ -185,12 +187,6 @@ defineExpose({ openModal })
     &.ant-tabs-tab-active {
       border-top-color: #1890ff !important;
     }
-  }
-}
-
-.table-payment {
-  td {
-    padding: 6px 0;
   }
 }
 </style>

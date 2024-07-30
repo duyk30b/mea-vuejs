@@ -4,9 +4,9 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { UserApi, type User } from '../../modules/user'
@@ -73,17 +73,17 @@ const deviceLogout = async (userId: number, code: string) => {
   <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ApartmentOutlined /> Danh sách tài khoản </div>
-      <a-button
+      <div class="hidden md:block">
+        <ApartmentOutlined />
+        Danh sách tài khoản
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.USER_CREATE]"
-        type="primary"
-        @click="modalUserUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalUserUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -120,15 +120,13 @@ const deviceLogout = async (userId: number, code: string) => {
                   <font-awesome-icon :icon="['fas', 'desktop']" />
                 </span>
                 <span class="ml-2">{{ device.os }}</span>
-                / <span>{{ device.browser }}</span> - <span>{{ device.ip }}</span>
-                <a-button
-                  class="ml-2"
-                  type="default"
-                  size="small"
-                  @click="deviceLogout(user.id!, device.code)"
-                >
+                /
+                <span>{{ device.browser }}</span>
+                -
+                <span>{{ device.ip }}</span>
+                <VueButton class="ml-2" size="small" @click="deviceLogout(user.id!, device.code)">
                   Đăng xuất
-                </a-button>
+                </VueButton>
               </div>
             </td>
             <td class="text-center">
@@ -160,8 +158,9 @@ const deviceLogout = async (userId: number, code: string) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

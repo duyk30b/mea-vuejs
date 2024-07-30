@@ -16,7 +16,7 @@ export class BatchMovementApi {
 
     return {
       meta,
-      data: BatchMovement.fromPlains(data),
+      data: BatchMovement.fromList(data),
     }
   }
 
@@ -27,7 +27,7 @@ export class BatchMovementApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: BatchMovement.fromPlains(data),
+      data: BatchMovement.fromList(data),
     }
   }
 }

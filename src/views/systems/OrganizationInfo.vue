@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import type { SelectProps } from 'ant-design-vue'
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import { IconSetting } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputHint, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
-import { useScreenStore } from '../../modules/_me/screen.store'
-import { Organization, OrganizationService } from '../../modules/organization'
-import { convertViToEn, customFilter } from '../../utils'
 import { useMeStore } from '../../modules/_me/me.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
+import { Organization, OrganizationService } from '../../modules/organization'
+import { customFilter } from '../../utils'
 
-const orgStore = useScreenStore()
+const orgStore = useSettingStore()
 const meStore = useMeStore()
 const { isMobile } = orgStore
 
@@ -96,7 +95,8 @@ const disableButtonSave = computed(() => {
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
-        <SettingOutlined style="margin-right: 1rem" />Thông tin cơ sở
+        <IconSetting style="margin-right: 1rem" />
+        Thông tin cơ sở
       </div>
     </div>
   </div>
@@ -127,8 +127,7 @@ const disableButtonSave = computed(() => {
               placeholder="Thành Phố / Tỉnh"
               :maxHeight="180"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              @update:value="handleChangeProvince"
-            />
+              @update:value="handleChangeProvince" />
           </div>
           <div style="flex: 1; flex-basis: 200px">
             <InputHint
@@ -137,8 +136,7 @@ const disableButtonSave = computed(() => {
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
               placeholder="Quận / Huyện"
               :maxHeight="180"
-              @update:value="handleChangeDistrict"
-            />
+              @update:value="handleChangeDistrict" />
           </div>
           <div style="flex: 1; flex-basis: 200px">
             <InputHint
@@ -146,8 +144,7 @@ const disableButtonSave = computed(() => {
               :options="wardList"
               placeholder="Phường / Xã"
               :maxHeight="180"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-            />
+              :logic-filter="(item: string, text: string) => customFilter(item, text)" />
           </div>
         </div>
       </div>
@@ -156,8 +153,7 @@ const disableButtonSave = computed(() => {
         <div style="width: 120px; flex: none"></div>
         <InputText
           v-model:value="organization.addressStreet"
-          placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-        />
+          placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
       </div>
 
       <div class="my-8 text-center flex justify-center">
@@ -165,11 +161,8 @@ const disableButtonSave = computed(() => {
           :disabled="disableButtonSave"
           color="blue"
           :loading="saveLoading"
-          @click="saveOrganization"
-        >
-          <template #icon>
-            <SaveOutlined />
-          </template>
+          icon="save"
+          @click="saveOrganization">
           Lưu lại
         </VueButton>
       </div>

@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { LocalStorageService } from '../../core/local-storage.service'
-import { Customer } from '../customer'
-import { Distributor } from '../distributor'
+import { Customer, useCustomerStore } from '../customer'
+import { Distributor, useDistributorStore } from '../distributor'
 import { Organization } from '../organization'
 import type { PermissionId } from '../permission/permission.enum'
 import type { Permission } from '../permission/permission.model'
 import { Role } from '../role'
 import { User } from '../user/user.model'
+import { useSettingStore } from './setting.store'
 
 export const useMeStore = defineStore('me-store', {
   state: () => {
@@ -24,6 +25,31 @@ export const useMeStore = defineStore('me-store', {
   },
 
   actions: {
+    async getDistributorDefault() {
+      const distributorIdDefault = useSettingStore().SCREEN_RECEIPT_UPSERT.distributor.idDefault
+      if (distributorIdDefault) {
+        if (!this.distributorDefault.id) {
+          const data = await useDistributorStore().getOne(distributorIdDefault)
+          if (data) {
+            this.distributorDefault = data
+          }
+        }
+      }
+      return this.distributorDefault
+    },
+
+    async getCustomerDefault() {
+      const customerIdDefault = useSettingStore().SCREEN_INVOICE_UPSERT.customer.idDefault
+      if (customerIdDefault) {
+        if (!this.customerDefault.id) {
+          const data = await useCustomerStore().getOne(customerIdDefault)
+          if (data) {
+            this.customerDefault = data
+          }
+        }
+      }
+      return this.customerDefault
+    },
     checkPermission(permissionId: PermissionId) {
       // const permission = this.permissionMap[permissionId]
       // const pathIdArr = permission.pathId.split('.').map((i) => Number(i))

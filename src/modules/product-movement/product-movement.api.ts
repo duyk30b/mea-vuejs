@@ -15,7 +15,7 @@ export class ProductMovementApi {
 
     return {
       meta,
-      data: ProductMovement.fromPlains(data),
+      data: ProductMovement.fromList(data),
     }
   }
 }

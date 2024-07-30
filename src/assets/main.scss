@@ -4,13 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "./variables";
+@import './variables';
 
-@import "./basic/reset.scss";
-@import "./basic/base.scss";
+@import './basic/reset.scss';
 
-@import "./components/table";
-@import "./components/skeleton";
+@import './components/table';
+@import './components/skeleton';
 
 body {
   font-family: 'Roboto', sans-serif !important;
@@ -55,7 +54,6 @@ body {
     border-color: #446797 !important;
   }
 }
-
 
 .page-header {
   margin: 1rem 1rem 0 1rem;

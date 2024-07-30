@@ -60,12 +60,16 @@
         <tr>
           <td> Họ tên: </td>
           <td> {{ visit.customer.fullName }} </td>
-          <td> - Ngày sinh: {{ timeToText visit.startedAt 'DD/MM/YYYY' }} </td>
+          <td style="white-space: no-wrap; padding-left: 48px;">
+            - Ngày sinh: {{ timeToText visit.startedAt 'DD/MM/YYYY' }}
+          </td>
         </tr>
         <tr>
           <td> SĐT : </td>
           <td> {{ formatPhone visit.customer.phone }} </td>
-          <td style="white-space: no-wrap;"> - Giới tính: {{ getGenderText visit.customer.gender }} </td>
+          <td style="white-space: no-wrap; padding-left: 48px;">
+            - Giới tính: {{ getGenderText visit.customer.gender }}
+          </td>
         </tr>
         <tr>
           <td>Địa chỉ: </td>

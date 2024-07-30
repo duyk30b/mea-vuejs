@@ -102,8 +102,9 @@ const startLoginDemo = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url('@/assets/image/background-login.jpg');
+  // background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
+  background-color: #3b6fba;
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 10%;

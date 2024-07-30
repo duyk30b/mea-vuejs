@@ -33,10 +33,10 @@ const props = withDefaults(defineProps<{ status: ReceiptStatus }>(), {
     Hoàn thành
   </a-tag>
 
-  <a-tag v-if="status === ReceiptStatus.Refund" color="default">
+  <a-tag v-if="status === ReceiptStatus.Cancelled" color="default">
     <template #icon>
       <StopOutlined />
     </template>
-    Hoàn trả
+    Hủy
   </a-tag>
 </template>

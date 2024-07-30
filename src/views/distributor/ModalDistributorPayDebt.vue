@@ -3,9 +3,9 @@ import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueModal from '../../common/VueModal.vue'
+import VueModal from '../../common/vue-modal/VueModal.vue'
 import { InputMoney, InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
@@ -20,8 +20,8 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const openDebt = ref(0)
 const money = ref<number>(0)
@@ -39,7 +39,9 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
   openDebt.value = openDebtProp
   distributorId.value = distributorIdProp
   showModal.value = true
-  nextTick(() => inputMoneyPay.value?.focus())
+  if (!isMobile) {
+    nextTick(() => inputMoneyPay.value?.focus())
+  }
   try {
     dataLoading.value = true
     const receiptDebtList = await ReceiptApi.list({
@@ -180,10 +182,9 @@ defineExpose({ openModal })
               v-model:value="money"
               :validate="{ lte: openDebt, gt: 0 }"
               required
-              @update:value="calculatorEachReceiptPayment"
-            />
+              @update:value="calculatorEachReceiptPayment" />
           </div>
-          <VueButton color="blue" @click="handleClickPayAllDebt"> Tất cả </VueButton>
+          <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
         </div>
         <div class="flex items-center mt-3">
           <div style="width: 100px; flex: none">Ghi chú:</div>
