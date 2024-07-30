@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { onBeforeMount, ref } from 'vue'
+import { ScheduleOutlined } from '@ant-design/icons-vue'
+import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../common/VueButton.vue'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { usePermissionStore } from '../../modules/permission/permission.store'
 import { Role, RoleApi } from '../../modules/role'
+import { useMeStore } from '../../modules/_me/me.store'
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const permissionStore = usePermissionStore()
-const { formatMoney, isMobile } = screenStore
+const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +23,13 @@ const role = ref<Role>(Role.blank())
 const saveLoading = ref(false)
 const loadingData = ref(false)
 const permissionIds = ref<number[]>([])
+
+const treeSelectRole = computed(() => {
+  const organizationPermissionIds: number[] = JSON.parse(meStore.organization.permissionIds)
+  return permissionStore.permissionGroup().filter((i) => {
+    return organizationPermissionIds.includes(i.rootId)
+  })
+})
 
 const startFetchData = async (roleId: number) => {
   try {
@@ -49,8 +59,8 @@ const handleSave = async () => {
       await RoleApi.createOne(role.value)
     } else {
       await RoleApi.updateOne(role.value.id, role.value)
+      AlertStore.addSuccess('Cập nhật vai trò thành công')
     }
-    message.success('Cập nhật vai trò thành công')
     router.push({ name: 'RoleList' })
   } catch (error) {
     console.log('🚀 ~ handleSave ~ error:', error)
@@ -62,7 +72,10 @@ const handleSave = async () => {
 
 <template>
   <div class="page-header">
-    <div class="page-header-content"><ScheduleOutlined /> Thông tin vai trò</div>
+    <div class="page-header-content">
+      <ScheduleOutlined />
+      Thông tin vai trò
+    </div>
   </div>
 
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
@@ -75,8 +88,7 @@ const handleSave = async () => {
         <div class="w-[100px] flex-none">Active</div>
         <a-switch
           :checked="Boolean(role.isActive)"
-          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)"
-        />
+          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)" />
         <div v-if="!role.isActive" class="ml-4">Tất cả user thuộc vai trò này tạm thời bị khóa</div>
       </div>
     </div>
@@ -94,17 +106,10 @@ const handleSave = async () => {
         :selectable="false"
         virtual
         :height="500"
-        :tree-data="permissionStore.permissionGroup()"
-      >
-      </a-tree>
+        :tree-data="treeSelectRole"></a-tree>
     </div>
     <div class="mt-8">
-      <a-button type="primary" htmlType="submit" :loading="saveLoading">
-        <template #icon>
-          <PlusOutlined />
-        </template>
-        Lưu lại
-      </a-button>
+      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
     </div>
   </form>
 </template>

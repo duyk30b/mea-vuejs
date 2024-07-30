@@ -15,6 +15,7 @@ const props = withDefaults(
     clearAfterSelected?: boolean
     noClearTextWhenNotSelected?: boolean
     logicFilter?: Function
+    messageNoResult?: string
   }>(),
   {
     value: null,
@@ -26,6 +27,7 @@ const props = withDefaults(
     clearAfterSelected: false,
     noClearTextWhenNotSelected: false,
     logicFilter: () => true,
+    messageNoResult: 'Không tìm thấy kết quả phù hợp',
   }
 )
 
@@ -33,6 +35,8 @@ const emit = defineEmits<{
   (e: 'update:text', value: string): void
   (e: 'update:value', value: string | number | boolean | null): void
   (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
+  (e: 'onFocusin'): void
+  (e: 'onFocusinFirst'): void
 }>()
 
 const inputRef = ref<HTMLInputElement>()
@@ -43,6 +47,8 @@ const indexFocus = ref<number>(-1)
 const showOptions = ref<boolean>(false)
 const itemSelected = ref<any>(null)
 
+const optionsStringify = ref<string>('')
+
 const optionsFilter = computed(() => {
   return props.options.filter((item) => {
     return props.logicFilter(item, searchText.value || '')
@@ -50,22 +56,45 @@ const optionsFilter = computed(() => {
 })
 
 watch(
+  () => props.options, // mục đích của watch value là để tìm và show ra text
+  (newOptions: { value: any; text: string; data?: any }[]) => {
+    if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
+    const optionsStringifyNew = JSON.stringify(newOptions)
+    if (optionsStringify.value === optionsStringifyNew) return
+
+    optionsStringify.value = optionsStringifyNew
+
+    const findIndex = newOptions.findIndex((item) => item.value === props.value)
+    if (findIndex === -1) {
+      itemSelected.value = {}
+      searchText.value = ''
+      emit('update:text', '')
+    } else {
+      const item = newOptions[findIndex]
+      itemSelected.value = item
+      searchText.value = item.text
+      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
+      emit('update:text', item.text)
+    }
+  },
+  { immediate: true }
+)
+
+watch(
   () => props.value, // mục đích của watch value là để tìm và show ra text
   (newVal) => {
-    if (newVal != null) {
-      const optionsWatch = props.options.filter((item) => props.logicFilter(item, searchText.value))
-      const findIndex = optionsWatch.findIndex((item) => item.value === newVal)
-      if (findIndex === -1) {
-        itemSelected.value = {}
-        searchText.value = ''
-        emit('update:text', '')
-      } else {
-        const item = optionsWatch[findIndex]
-        itemSelected.value = item
-        searchText.value = item.text
-        // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
-        emit('update:text', item.text)
-      }
+    if (newVal == null) return
+    const findIndex = props.options.findIndex((item) => item.value === newVal)
+    if (findIndex === -1) {
+      itemSelected.value = {}
+      searchText.value = ''
+      emit('update:text', '')
+    } else {
+      const item = props.options[findIndex]
+      itemSelected.value = item
+      searchText.value = item.text
+      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
+      emit('update:text', item.text)
     }
   },
   { immediate: true }
@@ -168,7 +197,12 @@ const setScrollOption = (type: 'ArrowUp' | 'ArrowDown') => {
   })
 }
 
-const focus = () => inputRef.value?.focus()
+const focus = () => {
+  if (inputRef.value) {
+    inputRef.value.focus()
+    inputRef.value.selectionStart = inputRef.value.selectionEnd = inputRef.value.value.length
+  }
+}
 const clear = () => {
   itemSelected.value = null
   searchText.value = ''
@@ -176,6 +210,16 @@ const clear = () => {
 const setItem = (item: { text?: string; value?: any; data: any }) => {
   searchText.value = item.text || ''
   itemSelected.value = item.data || 0
+}
+
+let focusFirst = true
+const onFocusin = () => {
+  showOptions.value = true
+  emit('onFocusin')
+  if (focusFirst) {
+    emit('onFocusinFirst')
+    focusFirst = false
+  }
 }
 
 defineExpose({ focus, clear, setItem })
@@ -193,29 +237,33 @@ defineExpose({ focus, clear, setItem })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
-        @focusin="showOptions = true"
-      />
+        @focusin="onFocusin" />
     </div>
     <div class="icon-append">
       <IconSearch class="icon-blur" />
-      <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" />
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
+      <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
     </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in optionsFilter"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click="handleSelectItem(index)"
-      >
+        @click="handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">{{ item.text }}</div>
         </slot>
+      </div>
+      <div
+        v-if="!!messageNoResult && !optionsFilter.length && searchText"
+        class="item-option"
+        style="font-style: italic">
+        {{ messageNoResult }}
       </div>
     </div>
   </div>

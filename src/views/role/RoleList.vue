@@ -4,13 +4,12 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { RoleApi, type Role } from '../../modules/role'
-import { PermissionId } from '../../modules/permission/permission.enum'
+import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { RoleApi, type Role } from '../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -33,7 +32,7 @@ const startFetchData = async () => {
     roleList.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: RoleList.vue:32 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: RoleList.vue:35 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -61,17 +60,17 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 <template>
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ApartmentOutlined class="mr-1" /> Danh sách vai trò</div>
-      <a-button
+      <div class="hidden md:block">
+        <ApartmentOutlined class="mr-1" />
+        Danh sách vai trò
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.ROLE_CREATE]"
-        type="primary"
-        @click="$router.push({ name: 'RoleUpsert' })"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="$router.push({ name: 'RoleUpsert' })">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -112,8 +111,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })"
-              >
+                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })">
                 <FormOutlined />
               </a>
             </td>
@@ -127,8 +125,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

@@ -1,37 +1,16 @@
-import {
-  Expose,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-  Type,
-} from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { Product } from '../product/product.model'
 
 export class Batch {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE] })
   productId: number
-
-  @Expose()
   lotNumber: string // Lô sản phẩm
-
-  @Expose()
   expiryDate?: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE, USER_CREATE, USER_UPDATE] })
   costPrice: number // Giá nhập
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
+  wholesalePrice: number
+  retailPrice: number
   quantity: number
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
 
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Product)
   product?: Product
 
   get unitQuantity() {
@@ -42,8 +21,24 @@ export class Batch {
     return this.costPrice * this.product!.unitDefaultRate
   }
 
+  get unitWholesalePrice() {
+    return this.wholesalePrice * this.product!.unitDefaultRate
+  }
+
+  get unitRetailPrice() {
+    return this.retailPrice * this.product!.unitDefaultRate
+  }
+
   set unitCostPrice(data) {
     this.costPrice = data / this.product!.unitDefaultRate
+  }
+
+  set unitWholesalePrice(data: number) {
+    this.wholesalePrice = data / this.product!.unitDefaultRate
+  }
+
+  set unitRetailPrice(data: number) {
+    this.retailPrice = data / this.product!.unitDefaultRate
   }
 
   static init() {
@@ -51,6 +46,8 @@ export class Batch {
     ins.id = 0
     ins.lotNumber = ''
     ins.costPrice = 0
+    ins.wholesalePrice = 0
+    ins.retailPrice = 0
     ins.quantity = 0
     return ins
   }
@@ -61,80 +58,29 @@ export class Batch {
     return ins
   }
 
-  static toBasic(root: Batch) {
-    const ins = new Batch()
-    Object.assign(ins, root)
-    delete ins.product
-    return ins
-  }
-
-  static toBasics(roots: Batch[]) {
-    return roots.map((i) => Batch.toBasic(i))
-  }
-
-  // lấy từ 1 object có cấu trúc giống 100%, nhưng nó chỉ là object, ko phải class như object lấy từ indexedDB
-  static fromObject(object: Partial<Batch>) {
-    const ins = new Batch()
-    Object.assign(ins, object)
-    return ins
-  }
-
-  static fromObjects(objects: Partial<Batch>[]) {
-    return objects.map((i) => Batch.fromObject(i))
-  }
-
-  // lấy từ giá trị cơ bản từ API
-  static fromPlain(plain: Record<string, any> = {}): Batch {
-    return plainToInstance(Batch, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: Batch) {
+    const target = new Batch()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): Batch[] {
-    return plainToInstance(Batch, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: Batch[]): Batch[] {
+    return sources.map((i) => Batch.basic(i))
   }
 
-  // lấy từ 1 instance khác
-  static fromInstance(instance: Batch): Batch {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Batch') {
-      throw new Error('Batch.fromInstance error: Instance must be from class Batch')
+  static from(source: Batch) {
+    const target = Batch.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      target.product = source.product ? Product.basic(source.product) : source.product
     }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
+    return target
   }
 
-  static fromInstances(instances: Batch[]): Batch[] {
-    return instances.map((i) => Batch.fromInstance(i))
-  }
-
-  static toPlain(
-    instance: Batch,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Batch') {
-      throw new Error('Batch.fromInstance error: Instance must be from class Batch')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static clone(instance: Batch): Batch {
-    const batch = Batch.fromInstance(instance)
-    if (instance.product) {
-      batch.product = Product.fromInstance(instance.product)
-    }
-    return batch
+  static fromList(sourceList: Batch[]): Batch[] {
+    return sourceList.map((i) => Batch.from(i))
   }
 }

@@ -1,28 +1,27 @@
 <script setup lang="ts">
-import { SaveOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { FileSearchOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { Distributor, DistributorApi, useDistributorStore } from '../../../modules/distributor'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { Distributor, DistributorApi, DistributorService } from '../../../modules/distributor'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useProductStore } from '../../../modules/product'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
+import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
-import VueButton from '../../../common/VueButton.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
-
+const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalReceiptUpsertSettingScreen = ref<InstanceType<typeof ModalReceiptUpsertSettingScreen>>()
 const receiptUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -38,17 +37,15 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 const router = useRouter()
 const route = useRoute()
 
-const productStore = useProductStore()
-const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney } = screenStore
+const { formatMoney, isMobile } = settingStore
 
 const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 
 const distributor = ref<Distributor>(Distributor.blank())
-const distributorList = ref<Distributor[]>([])
+const distributorOptions = ref<{ value: number; text: string; data: Distributor }[]>([])
 
 const time = ref<Dayjs>(dayjs())
 
@@ -65,7 +62,7 @@ onBeforeMount(async () => {
     const receiptResponse = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: true,
+        receiptItems: { product: true, batch: true },
       },
     })
 
@@ -80,7 +77,7 @@ onBeforeMount(async () => {
   } else if (distributorId) {
     distributorDefault = await DistributorApi.detail(distributorId)
   } else {
-    distributorDefault = Distributor.toBasic(meStore.distributorDefault)
+    distributorDefault = await DistributorService.getDistributorDefault()
   }
 
   distributor.value = distributorDefault
@@ -98,7 +95,6 @@ onBeforeMount(async () => {
 onMounted(async () => {
   try {
     window.addEventListener('keydown', handleDocumentKeyup)
-    await distributorStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -108,12 +104,24 @@ onUnmounted(() => {
   receipt.value = Receipt.blank()
 })
 
+const handleFocusFirstSearchDistributor = async () => {
+  await DistributorService.getAll()
+}
+const handleFocusSearchDistributor = async () => {
+  await searchingDistributor('')
+}
+
 const searchingDistributor = async (text: string) => {
   distributor.value.id = 0
-  if (text) {
-    distributorList.value = await distributorStore.search(text)
+  if (!text && isMobile) {
+    distributorOptions.value = []
   } else {
-    distributorList.value = []
+    const distributorList = await DistributorService.search(text || '')
+    distributorOptions.value = distributorList.map((i) => ({
+      value: i.id,
+      text: i.fullName,
+      data: i,
+    }))
   }
 }
 
@@ -127,7 +135,7 @@ const createDistributor = (instance?: Distributor) => {
 }
 
 const selectDistributor = (data?: Distributor) => {
-  const snapDistributor = data ? Distributor.toBasic(data) : Distributor.blank()
+  const snapDistributor = data ? Distributor.from(data) : Distributor.blank()
   distributor.value = snapDistributor
   receipt.value.distributorId = snapDistributor.id!
   receipt.value.distributor = snapDistributor
@@ -167,35 +175,8 @@ const saveReceipt = async (type: EReceiptSave) => {
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
-      case EReceiptSave.CREATE_QUICK_AND_NEW: {
-        const response = await ReceiptApi.createQuickReceipt(receipt.value)
-        receipt.value = Receipt.blank()
-
-        const distributorRes = Distributor.fromPlain(meStore.distributorDefault)
-        distributor.value = distributorRes
-        receipt.value.distributor = distributorRes
-        receipt.value.distributorId = distributorRes.id
-        inputOptionsDistributor.value?.setItem({
-          text: distributorRes.fullName,
-          value: distributorRes.id,
-          data: distributorRes,
-        })
-        AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
-        break
-      }
-      case EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT: {
-        const response = await ReceiptApi.updateReceiptDraftAndReceiptPrepayment(
-          receipt.value.id,
-          receipt.value
-        )
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
-        break
-      }
-      case EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS: {
-        const response = await ReceiptApi.updateReceiptDebtAndReceiptSuccess(
-          receipt.value.id,
-          receipt.value
-        )
+      case EReceiptSave.UPDATE_DRAFT_PREPAYMENT: {
+        const response = await ReceiptApi.updateDraftPrepayment(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -210,8 +191,8 @@ const saveReceipt = async (type: EReceiptSave) => {
 }
 
 const handleAddReceiptItem = (ri: ReceiptItem) => {
-  const receiptItem = ReceiptItem.clone(ri)
-  if (screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
+  const receiptItem = ReceiptItem.from(ri)
+  if (settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
     receipt.value.receiptItems!.unshift(receiptItem)
   } else {
     const exist = receipt.value.receiptItems?.find((i) => {
@@ -230,10 +211,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalReceiptUpsertSettingScreen.value?.openModal()
   }
 }
+
+const openModalDistributorDetail = (data?: Distributor) => {
+  if (data) modalDistributorDetail.value?.openModal(data.id)
+}
 </script>
 
 <template>
   <ModalDistributorUpsert ref="modalDistributorUpsert" @success="createDistributor" />
+  <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
     <div class="page-header-content">
@@ -245,13 +231,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -259,8 +245,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   </div>
 
   <div class="mt-4 md:mx-4">
-    <div class="flex flex-col md:flex-row gap-4">
-      <div class="md:w-2/3">
+    <div class="flex flex-wrap gap-4">
+      <div style="flex-basis: 600px; flex-grow: 2">
         <div class="bg-white p-4">
           <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
         </div>
@@ -268,38 +254,45 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <ReceiptItemTable />
         </div>
       </div>
-      <form ref="receiptUpsertForm" class="md:w-1/3">
+      <form ref="receiptUpsertForm" style="flex-basis: 300px; flex-grow: 1">
         <div class="bg-white p-4">
           <div class="flex justify-between">
-            <span>
+            <div>
               Tên NCC (nợ cũ:
-              <b> {{ formatMoney(distributor.debt) }} </b>
+              <b>{{ formatMoney(distributor.debt) }}</b>
               )
-            </span>
-            <span>
+              <a
+                v-if="!!distributor.id"
+                class="ml-1"
+                @click="openModalDistributorDetail(receipt.distributor)">
+                <FileSearchOutlined />
+              </a>
+            </div>
+            <div>
               <a
                 v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
-                @click="modalDistributorUpsert?.openModal()"
-              >
+                @click="modalDistributorUpsert?.openModal()">
                 Thêm NCC mới
               </a>
-            </span>
+            </div>
           </div>
 
           <div style="height: 40px">
             <InputOptions
               ref="inputOptionsDistributor"
-              :options="distributorList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
+              :options="distributorOptions"
               :max-height="260"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               :disabled="mode === EReceiptUpsertMode.UPDATE"
               required
-              @selectItem="({ data }) => createDistributor(data)"
-              @update:text="searchingDistributor"
-            >
+              @onFocusinFirst="handleFocusFirstSearchDistributor"
+              @onFocusin="handleFocusSearchDistributor"
+              @selectItem="({ data }) => selectDistributor(data)"
+              @update:text="searchingDistributor">
               <template #option="{ item: { data } }">
                 <div>
-                  <b>{{ data.fullName }}</b> - {{ data.phone }}
+                  <b>{{ data.fullName }}</b>
+                  - {{ data.phone }}
                 </div>
                 <div>{{ data.address }}</div>
               </template>
@@ -313,25 +306,25 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <table class="table w-full mt-2 table-payment">
               <tbody>
                 <tr>
-                  <td>Thời gian</td>
+                  <td style="white-space: nowrap; padding-right: 10px">Thời gian</td>
                   <td>
                     <a-date-picker
                       v-model:value="time"
                       show-time
                       placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'"
-                      style="width: 100%"
-                    />
+                      :format="'DD/MM/YYYY HH:mm:ss'" />
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
-                  <td class="font-bold" style="width: 120px">Tiền hàng</td>
+                <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
+                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
+                    Tiền hàng
+                  </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.itemsActualMoney) }}
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
-                  <td>Chiết khấu</td>
+                <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
+                  <td style="white-space: nowrap; padding-right: 10px">Chiết khấu</td>
                   <td class="cursor-pointer" style="font-size: 16px">
                     <a-popconfirm>
                       <template #cancelButton>
@@ -342,8 +335,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       </template>
                       <template #title>
                         <div>
-                          Chiết khấu (Tiền hàng: <b>{{ formatMoney(receipt.itemsActualMoney) }}</b
-                          >)
+                          Chiết khấu (Tiền hàng:
+                          <b>{{ formatMoney(receipt.itemsActualMoney) }}</b>
+                          )
                         </div>
                         <div class="mt-2">
                           <div>
@@ -351,34 +345,31 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                               :value="receipt.discountMoney"
                               append="VNĐ"
                               style="width: 100%"
-                              @update:value="handleChangeReceiptDiscountMoney"
-                            />
+                              @update:value="handleChangeReceiptDiscountMoney" />
                           </div>
                           <div class="mt-2">
                             <InputNumber
                               :value="receipt.discountPercent"
                               append="%"
-                              @update:value="handleChangeReceiptDiscountPercent"
-                            />
+                              @update:value="handleChangeReceiptDiscountPercent" />
                           </div>
                         </div>
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success"> {{ receipt.discountPercent || 0 }}% </a-tag>
+                          <a-tag color="success">{{ receipt.discountPercent || 0 }}%</a-tag>
                         </div>
                         <div
                           class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
-                        >
+                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd">
                           {{ formatMoney(receipt.discountMoney) }}
                         </div>
                       </div>
                     </a-popconfirm>
                   </td>
                 </tr>
-                <tr v-if="screenStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
-                  <td>Phụ phí</td>
+                <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
+                  <td style="white-space: nowrap; padding-right: 10px">Phụ phí</td>
                   <td>
                     <InputMoney v-model:value="receipt.surcharge" class="input-payment" />
                   </td>
@@ -388,7 +379,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   <td></td>
                 </tr>
                 <tr>
-                  <td class="font-bold">Tổng tiền</td>
+                  <td style="white-space: nowrap; padding-right: 10px" class="font-bold">
+                    Tổng tiền
+                  </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.totalMoney) }}
                   </td>
@@ -401,43 +394,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT] &&
-              screenStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndNew
+              permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
+              settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
-            class="mt-4"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
-              style="width: 100%"
               color="blue"
-              type="button"
               :loading="saveLoading"
               size="large"
-              @click="saveReceipt(EReceiptSave.CREATE_QUICK_AND_NEW)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
-              Lưu và Tạo phiếu mới
-            </VueButton>
-          </div>
-          <div
-            v-if="
-              permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
-              screenStore.SCREEN_RECEIPT_UPSERT.save.createDraft
-            "
-            class="mt-4"
-          >
-            <VueButton
-              style="width: 100%"
-              color="blue"
-              :loading="saveLoading"
-              :size="'large'"
+              icon="save"
               type="button"
-              @click="saveReceipt(EReceiptSave.CREATE_DRAFT)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
+              @click="saveReceipt(EReceiptSave.CREATE_DRAFT)">
               Lưu nháp
             </VueButton>
           </div>
@@ -446,66 +413,35 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
-            class="mt-4"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               size="large"
+              icon="save"
               type="button"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
               Cập nhật phiếu nháp
             </VueButton>
           </div>
 
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Prepayment].includes(receipt.status)
             "
-            class="mt-4"
-          >
+            class="mt-4 w-full flex flex-col px-1">
             <VueButton
-              style="width: 100%"
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
+              icon="save"
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
               Cập nhật phiếu tạm ứng
-            </VueButton>
-          </div>
-
-          <div
-            v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS] &&
-              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
-            "
-            class="mt-4"
-          >
-            <VueButton
-              style="width: 100%"
-              color="blue"
-              :loading="saveLoading"
-              size="large"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS)"
-            >
-              <template #icon>
-                <SaveOutlined />
-              </template>
-              Cập nhật phiếu đã nhập
             </VueButton>
           </div>
         </template>

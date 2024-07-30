@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { RoleGetQuery, RoleListQuery, RolePaginationQuery } from './role.dto'
 import { Role } from './role.model'
 
@@ -12,7 +11,7 @@ export class RoleApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Role.fromPlains(data),
+      data: Role.fromList(data),
     }
   }
 
@@ -21,35 +20,42 @@ export class RoleApi {
 
     const response = await AxiosInstance.get('/role/list', { params })
     const { data } = response.data as BaseResponse
-    return Role.fromPlains(data)
+    return Role.fromList(data)
   }
 
   static async detail(id: number): Promise<Role> {
     const response = await AxiosInstance.get(`/role/detail/${id}`)
-    const { data } = response.data as BaseResponse
-    return Role.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ role: any }>
+
+    return Role.from(data.role)
   }
 
-  static async createOne(instance: Role) {
-    const plain = Role.toPlain(instance, USER_CREATE)
-    const response = await AxiosInstance.post('/role/create', plain)
-    const { data } = response.data as BaseResponse
+  static async createOne(role: Role) {
+    const response = await AxiosInstance.post('/role/create', {
+      name: role.name,
+      permissionIds: role.permissionIds,
+      isActive: role.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ role: any }>
 
-    return Role.fromPlain(data)
+    return Role.from(data.role)
   }
 
-  static async updateOne(id: number, instance: Role) {
-    const plain = Role.toPlain(instance, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/role/update/${id}`, plain)
-    const { data } = response.data as BaseResponse
+  static async updateOne(id: number, role: Role) {
+    const response = await AxiosInstance.patch(`/role/update/${id}`, {
+      name: role.name,
+      permissionIds: role.permissionIds,
+      isActive: role.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ role: any }>
 
-    return Role.fromPlain(data)
+    return Role.from(data.role)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/role/delete/${id}`)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<{ roleId: number }>
 
-    return Role.fromPlain(data)
+    return data
   }
 }

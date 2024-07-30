@@ -1,44 +1,34 @@
+import ckeditor5 from '@ckeditor/vite-plugin-ckeditor5'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
-import ckeditor5 from '@ckeditor/vite-plugin-ckeditor5'
-import { copy } from 'rollup-plugin-copy'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue(), ckeditor5({ theme: require.resolve('@ckeditor/ckeditor5-theme-lark') })],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: {
-    // Cấu hình resolve để chạy plugin sau khi build hoàn tất
-    resolve: {
-      alias: {
-        // Đảm bảo plugin sẽ được chạy sau khi build hoàn tất
-        alias: 'ignored',
-        plugins: [
-          {
-            name: 'copy-template-files',
-            async writeBundle() {
-              const srcDir = 'src/template'
-              const destDir = 'dist/template'
-
-              try {
-                // Đọc danh sách file từ thư mục src/template
-                const files = await fs.readdir(srcDir)
-
-                // Duyệt qua từng file và sao chép vào thư mục build output
-                for (const file of files) {
-                  const srcFile = path.join(srcDir, file)
-                  const destFile = path.join(destDir, file)
-                  await fs.copyFile(srcFile, destFile)
-                }
-
-                console.log('Đã sao chép các file từ src/template vào dist/template')
-              } catch (error) {
-                console.error('Lỗi khi sao chép các file:', error)
-              }
-            },
-          },
-        ],
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/@ckeditor') || id.includes('node_modules/ckeditor5')) {
+            return 'vendor_ckeditor'
+          } else if (id.includes('node_modules/ant-design-vue')) {
+            return 'vendor_ant_design_vue'
+          } else if (id.includes('node_modules/@ant-design/icons')) {
+            return 'vendor_ant_design_icon'
+          } else if (id.includes('node_modules/lodash')) {
+            return 'vendor_lodash'
+          } else if (id.includes('node_modules/monaco-editor')) {
+            return 'vendor_monaco_editor'
+          } else if (id.includes('node_modules')) {
+            return 'vendor'
+          } else if (id.includes('src/modules')) {
+            // return 'src_modules'
+          } else if (id.includes('src/common')) {
+            return 'src_common'
+          }
+        },
       },
     },
   },

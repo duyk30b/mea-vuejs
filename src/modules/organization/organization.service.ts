@@ -1,27 +1,35 @@
 import { useMeStore } from '../_me/me.store'
-import type { ScreenSettingKey } from '../_me/store.variable'
+import type { SettingKey } from '../_me/store.variable'
+import { SettingApi } from '../setting/setting.api'
 import { OrganizationApi } from './organization.api'
 import { Organization } from './organization.model'
 
 export class OrganizationService {
   static async info() {
-    try {
-      const organization = await OrganizationApi.info()
-      useMeStore().organization = Organization.toBasic(organization)
-      return organization
-    } catch (error) {
-      console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
-      return Organization.blank()
-    }
-  }
-
-  static async updateInfo(plain: Partial<Organization>) {
-    const organization = await OrganizationApi.updateInfo(plain)
-    useMeStore().organization = Organization.toBasic(organization)
+    const organization = await OrganizationApi.info()
+    useMeStore().organization = Organization.from(organization)
     return organization
   }
 
-  static async saveSettings(type: ScreenSettingKey, plain: string) {
-    return await OrganizationApi.saveSettings(type, plain)
+  static async updateInfo(body: Organization) {
+    const organization = await OrganizationApi.updateInfo(body)
+    useMeStore().organization = Organization.from(organization)
+    return organization
+  }
+
+  static async updateInfoAndLogo(body: Organization, file: File) {
+    const organization = await OrganizationApi.updateInfoAndLogo(body, file)
+    useMeStore().organization = Organization.from(organization)
+    return organization
+  }
+
+  static async changeEmail(email: string) {
+    const organization = await OrganizationApi.changeEmail(email)
+    useMeStore().organization = Organization.from(organization)
+    return organization
+  }
+
+  static async saveSettings(type: SettingKey, plain: string) {
+    return await SettingApi.saveSettings(type, plain)
   }
 }

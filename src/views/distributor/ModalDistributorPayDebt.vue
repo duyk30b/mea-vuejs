@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueModal from '../../common/VueModal.vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose } from '../../common/icon'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
-import { useScreenStore } from '../../modules/_me/screen.store'
-import { Distributor, useDistributorStore } from '../../modules/distributor'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { useSettingStore } from '../../modules/_me/setting.store'
+import { Distributor, DistributorService } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
-import VueButton from '../../common/VueButton.vue'
-import { nextTick } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -19,9 +18,8 @@ const emit = defineEmits<{
 }>()
 const router = useRouter()
 
-const distributorStore = useDistributorStore()
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const openDebt = ref(0)
 const money = ref<number>(0)
@@ -39,7 +37,9 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
   openDebt.value = openDebtProp
   distributorId.value = distributorIdProp
   showModal.value = true
-  nextTick(() => inputMoneyPay.value?.focus())
+  if (!isMobile) {
+    nextTick(() => inputMoneyPay.value?.focus())
+  }
   try {
     dataLoading.value = true
     const receiptDebtList = await ReceiptApi.list({
@@ -59,15 +59,18 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
 const closeModal = () => {
   showModal.value = false
   receiptPayments.value = []
+  money.value = 0
+  note.value = ''
+  distributorId.value = 0
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
     if (money.value === 0) {
-      return message.error('Số tiền trả nợ phải khác 0')
+      return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await distributorStore.payDebt({
+    const data = await DistributorService.payDebt({
       distributorId: distributorId.value,
       note: note.value,
       receiptPayments: receiptPayments.value
@@ -78,9 +81,9 @@ const handleSave = async () => {
         .filter((i) => i.money > 0),
     })
     emit('success', data)
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:64 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalDistributorUpsert.vue:87 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -119,7 +122,7 @@ defineExpose({ openModal })
           {{ 'Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -180,10 +183,9 @@ defineExpose({ openModal })
               v-model:value="money"
               :validate="{ lte: openDebt, gt: 0 }"
               required
-              @update:value="calculatorEachReceiptPayment"
-            />
+              @update:value="calculatorEachReceiptPayment" />
           </div>
-          <VueButton color="blue" @click="handleClickPayAllDebt"> Tất cả </VueButton>
+          <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
         </div>
         <div class="flex items-center mt-3">
           <div style="width: 100px; flex: none">Ghi chú:</div>
@@ -193,14 +195,8 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <VueButton type="reset" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
-          <VueButton type="submit" color="blue" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton type="submit" icon="save" color="blue" :loading="saveLoading">
             Xác nhận trả nợ
           </VueButton>
         </div>

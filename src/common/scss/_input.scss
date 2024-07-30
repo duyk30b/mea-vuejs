@@ -16,29 +16,26 @@
   &:not(.disabled):hover {
     border-color: #40a9ff;
 
-    .icon-append {
-      .icon-blur {
-        display: none !important;
-      }
+    // đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input)
+    // .icon-append {
+    //   .icon-blur {
+    //     display: none !important;
+    //   }
 
-      .icon-clear-hover {
-        display: block !important;
-      }
+    //   .icon-clear-hover {
+    //     display: block !important;
+    //   }
 
-      .icon-hover {
-        display: block !important;
-      }
+    //   &:hover {
+    //     .icon-clear-hover {
+    //       display: none !important;
+    //     }
 
-      &:hover {
-        .icon-clear-hover {
-          display: none !important;
-        }
-
-        .icon-clear-focus {
-          display: block !important;
-        }
-      }
-    }
+    //     .icon-clear-blur {
+    //       display: block !important;
+    //     }
+    //   }
+    // }
   }
 
   &.disabled {
@@ -101,20 +98,23 @@
       display: block;
     }
 
-    .icon-hover {
-      display: none;
-    }
-
     .icon-clear-hover {
       display: none;
     }
 
-    .icon-clear-focus {
-      display: none;
+    .icon-clear-blur {
+      display: block;
     }
 
     &:hover {
       cursor: pointer;
+      .icon-clear-hover {
+        display: block;
+      }
+
+      .icon-clear-blur {
+        display: none;
+      }
     }
   }
 
@@ -128,8 +128,6 @@
     color: #777;
     font-size: 0.8em;
   }
-
-
 
   .prepend {
     padding: 0 12px;

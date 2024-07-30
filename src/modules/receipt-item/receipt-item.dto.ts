@@ -4,12 +4,13 @@ export class ReceiptItemGetQuery {
   page: number
   limit?: number
   relation?: {
-    receipt?: boolean | { distributor?: boolean }
+    receipt?: false | { distributor?: boolean }
     batch?: boolean
     product?: boolean
   }
 
   filter?: {
+    distributorId?: number
     receiptId?: number
     productId?: number
     batchId?: number
@@ -31,19 +32,3 @@ export class ReceiptItemGetQuery {
 export class ReceiptItemPaginationQuery extends ReceiptItemGetQuery {}
 export class ReceiptItemListQuery extends OmitClass(ReceiptItemGetQuery, ['page']) {}
 export class ReceiptItemDetailQuery extends PickClass(ReceiptItemGetQuery, ['relation']) {}
-
-export class ProductAndBatchUpsertBody {
-  product?: {
-    productId: number
-    costPrice: number
-    retailPrice: number
-    wholesalePrice: number
-  }
-
-  batch?: {
-    productId: number
-    lotNumber: string
-    expiryDate?: number
-    costPrice: number
-  }
-}

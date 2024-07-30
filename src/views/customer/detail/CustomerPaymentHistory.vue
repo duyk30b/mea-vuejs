@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
-import { timeToText } from '../../../utils'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { DTimer, formatPhone } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
-import { VoucherType } from '../../../modules/enum'
+import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
+import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
+
+const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
+
+const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -15,8 +23,10 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const customerPaymentList = ref<CustomerPayment[]>([])
 const page = ref(1)
@@ -28,6 +38,7 @@ const startFetchData = async () => {
     const { data, meta } = await CustomerPaymentApi.pagination({
       page: page.value,
       limit: limit.value,
+      relation: { ticket: true },
       filter: { customerId: props.customer.id! },
       sort: { id: 'DESC' },
     })
@@ -56,143 +67,143 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankInvoiceDetail = async (invoiceId: number) => {
-  let route = router.resolve({
-    name: 'InvoiceDetail',
-    params: { id: invoiceId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankVisitDetail = async (visitId: number) => {
-  let route = router.resolve({
-    name: 'VisitDetail',
-    params: { id: visitId },
-  })
-  window.open(route.href, '_blank')
+const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) => {
+  emit('update_customer', data.customer)
+  await startFetchData()
 }
 
 defineExpose({ startFetchData })
 </script>
 
 <template>
-  <div class="mt-4 w-full table-wrapper">
-    <table v-if="isMobile">
-      <thead>
-        <tr>
-          <th>Hóa đơn</th>
-          <th>Tiền</th>
-        </tr>
-      </thead>
-      <tbody style="font-size: 0.8rem">
-        <tr v-if="customerPaymentList.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
-        </tr>
-        <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
-          <td>
-            <div v-if="customerPayment.voucherType === VoucherType.Invoice">
-              <a @click="openBlankInvoiceDetail(customerPayment.voucherId)">
-                IV{{ customerPayment.voucherId }}
-              </a>
-            </div>
-            <div v-if="customerPayment.voucherType === VoucherType.Visit">
-              <a @click="openBlankVisitDetail(customerPayment.voucherId)">
-                VS{{ customerPayment.voucherId }}
-              </a>
-            </div>
-            <div style="white-space: nowrap">
-              {{ timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
-            </div>
-            <div>
+  <div class="mt-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <span>
+        KH:
+        <b>{{ customer.fullName }}</b>
+      </span>
+      <span>
+        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+      </span>
+      <span>
+        - Công nợ hiện tại:
+        <b>{{ formatMoney(customer.debt) }}</b>
+      </span>
+      <div class="ml-auto">
+        <VueButton
+          v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
+          color="blue"
+          icon="dollar"
+          @click="modalCustomerPayDebt?.openModal(customer)">
+          Trả nợ
+        </VueButton>
+      </div>
+    </div>
+
+    <div class="mt-4 w-full table-wrapper">
+      <table v-if="isMobile">
+        <thead>
+          <tr>
+            <th>Hóa đơn</th>
+            <th>Tiền</th>
+          </tr>
+        </thead>
+        <tbody style="font-size: 0.8rem">
+          <tr v-if="customerPaymentList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
+            <td>
+              <LinkAndStatusTicket :ticket="customerPayment.ticket!" />
+              <div style="white-space: nowrap">
+                {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+              <div>
+                <CustomerPaymentTypeTag :paymentType="customerPayment.paymentType" />
+              </div>
+              <div v-if="customerPayment.note">
+                {{ customerPayment.note }}
+              </div>
+              <div v-if="customerPayment.description">
+                {{ customerPayment.description }}
+              </div>
+            </td>
+            <td class="text-right">
+              <div class="flex justify-between item-center" style="white-space: nowrap">
+                <span>T.Toán:</span>
+                <span>{{ formatMoney(customerPayment.paid) }}</span>
+              </div>
+              <div class="flex justify-between item-center">
+                <span>Ghi nợ:</span>
+                <span>{{ formatMoney(customerPayment.debit) }}</span>
+              </div>
+              <div class="flex justify-between item-center">
+                <span>Nợ:</span>
+                <span>
+                  {{ formatMoney(customerPayment.openDebt) }} ➞
+                  {{ formatMoney(customerPayment.closeDebt) }}
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table v-if="!isMobile">
+        <thead>
+          <tr>
+            <th>Hóa đơn</th>
+            <th>Loại</th>
+            <th>Thanh toán</th>
+            <th>Ghi nợ</th>
+            <th>Công nợ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="customerPaymentList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
+            <td>
+              <LinkAndStatusTicket
+                :ticketId="customerPayment.ticketId"
+                :ticket="customerPayment.ticket!" />
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </td>
+            <td class="px-4">
               <CustomerPaymentTypeTag :paymentType="customerPayment.paymentType" />
-            </div>
-            <div v-if="customerPayment.note">
-              {{ customerPayment.note }}
-            </div>
-            <div v-if="customerPayment.description">
-              {{ customerPayment.description }}
-            </div>
-          </td>
-          <td class="text-right">
-            <div class="flex justify-between item-center" style="white-space: nowrap">
-              <span> T.Toán: </span>
-              <span>{{ formatMoney(customerPayment.paid) }}</span>
-            </div>
-            <div class="flex justify-between item-center">
-              <span> Ghi nợ: </span>
-              <span>{{ formatMoney(customerPayment.debit) }}</span>
-            </div>
-            <div class="flex justify-between item-center">
-              <span> Nợ: </span>
-              <span>
-                {{ formatMoney(customerPayment.openDebt) }} ➞
-                {{ formatMoney(customerPayment.closeDebt) }}</span
-              >
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <table v-if="!isMobile">
-      <thead>
-        <tr>
-          <th>Hóa đơn</th>
-          <th>Loại</th>
-          <th>Thanh toán</th>
-          <th>Ghi nợ</th>
-          <th>Công nợ</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="customerPaymentList.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
-        </tr>
-        <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
-          <td>
-            <div v-if="customerPayment.voucherType === VoucherType.Invoice">
-              <a @click="openBlankInvoiceDetail(customerPayment.voucherId)">
-                IV{{ customerPayment.voucherId }}
-              </a>
-            </div>
-            <div v-if="customerPayment.voucherType === VoucherType.Visit">
-              <a @click="openBlankVisitDetail(customerPayment.voucherId)">
-                VS{{ customerPayment.voucherId }}
-              </a>
-            </div>
-            <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
-            </div>
-          </td>
-          <td class="px-4">
-            <CustomerPaymentTypeTag :paymentType="customerPayment.paymentType" />
-            <div v-if="customerPayment.description" style="font-size: 0.8rem">
-              {{ customerPayment.description }}
-            </div>
-            <div v-if="customerPayment.note" style="font-size: 0.8rem">
-              {{ customerPayment.note }}
-            </div>
-          </td>
-          <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(customerPayment.paid) }}
-          </td>
-          <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(customerPayment.debit) }}
-          </td>
-          <td class="text-right">
-            {{ formatMoney(customerPayment.openDebt) }} ➞
-            {{ formatMoney(customerPayment.closeDebt) }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="mt-4 mb-2 flex justify-end">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
-        :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+              <div v-if="customerPayment.description" style="font-size: 0.8rem">
+                {{ customerPayment.description }}
+              </div>
+              <div v-if="customerPayment.note" style="font-size: 0.8rem">
+                {{ customerPayment.note }}
+              </div>
+            </td>
+            <td style="white-space: nowrap; text-align: right">
+              {{ formatMoney(customerPayment.paid) }}
+            </td>
+            <td style="white-space: nowrap; text-align: right">
+              {{ formatMoney(customerPayment.debit) }}
+            </td>
+            <td class="text-right">
+              {{ formatMoney(customerPayment.openDebt) }} ➞
+              {{ formatMoney(customerPayment.closeDebt) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 mb-2 flex justify-end">
+        <a-pagination
+          v-model:current="page"
+          v-model:pageSize="limit"
+          :total="total"
+          show-size-changer
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
+      </div>
     </div>
   </div>
+  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
 </template>

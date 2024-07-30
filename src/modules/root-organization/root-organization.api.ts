@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Organization } from '../organization'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   RootOrganizationGetQuery,
   type RootOrganizationPaginationQuery,
@@ -15,37 +14,56 @@ export class RootOrganizationApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Organization.fromPlains(data),
+      data: Organization.fromList(data),
     }
   }
 
-  static async createOne(instance: Organization) {
-    const plain = Organization.toPlain(instance, 'ROOT_CREATE')
+  static async createOne(organization: Organization) {
+    const response = await AxiosInstance.post('/root/organization/create', {
+      phone: organization.phone,
+      email: organization.email,
+      emailVerify: organization.emailVerify,
+      level: organization.level,
+      name: organization.name,
+      dataVersion: organization.dataVersion,
+      addressProvince: organization.addressProvince || '',
+      addressDistrict: organization.addressDistrict || '',
+      addressWard: organization.addressWard || '',
+      addressStreet: organization.addressStreet || '',
+      permissionIds: organization.permissionIds,
+      isActive: organization.isActive,
+      note: organization.note,
+      expiryDate: organization.expiryDate,
+    })
+    const { data } = response.data as BaseResponse<{ organization: any }>
 
-    const response = await AxiosInstance.post('/root/organization/create', plain)
-    const { data } = response.data as BaseResponse
-
-    return Organization.fromPlain(data)
+    return Organization.from(data.organization)
   }
 
-  static async updateOne(id: number, instance: Organization) {
-    const plain = Organization.toPlain(instance, 'ROOT_UPDATE')
+  static async updateOne(id: number, organization: Organization) {
+    const response = await AxiosInstance.patch(`/root/organization/update/${id}`, {
+      phone: organization.phone,
+      email: organization.email,
+      emailVerify: organization.emailVerify,
+      level: organization.level,
+      name: organization.name,
+      dataVersion: organization.dataVersion,
+      addressProvince: organization.addressProvince || '',
+      addressDistrict: organization.addressDistrict || '',
+      addressWard: organization.addressWard || '',
+      addressStreet: organization.addressStreet || '',
+      permissionIds: organization.permissionIds,
+      isActive: organization.isActive,
+      note: organization.note,
+      expiryDate: organization.expiryDate,
+    })
+    const { data } = response.data as BaseResponse<{ organization: any }>
 
-    const response = await AxiosInstance.patch(`/root/organization/update/${id}`, plain)
-    const { data } = response.data as BaseResponse
-
-    return Organization.fromPlain(data)
+    return Organization.from(data.organization)
   }
 
-  static async clearOne(id: number) {
-    const response = await AxiosInstance.put(`/root/organization/clear/${id}`)
-    const { data } = response.data as BaseResponse
-
-    return data
-  }
-
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/root/organization/delete/${id}`)
+  static async clearOne(oid: number, body: { tableNameList: string[] }) {
+    const response = await AxiosInstance.put(`/root/organization/clear/${oid}`, body)
     const { data } = response.data as BaseResponse
 
     return data

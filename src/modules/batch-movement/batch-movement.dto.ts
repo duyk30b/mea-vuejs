@@ -9,8 +9,7 @@ export class BatchMovementGetQuery {
     batch?: boolean
     product?: boolean
     receipt?: boolean
-    invoice?: boolean
-    visit?: boolean
+    ticket?: boolean
     distributor?: boolean
     customer?: boolean
   }

@@ -4,18 +4,16 @@ import type { PaymentType, VoucherType } from '../enum'
 export interface CustomerPaymentPayDebtBody {
   customerId: number
   note: string
-  invoicePaymentList: { invoiceId: number; money: number }[]
-  visitPaymentList: { visitId: number; money: number }[]
+  ticketPaymentList: { ticketId: number; money: number }[]
 }
 
 export class CustomerPaymentGetQuery {
   page: number
   limit?: number
-  relation?: {}
+  relation?: { ticket?: boolean; customer?: boolean }
   filter: {
     customerId?: number
-    voucherId?: number
-    voucherType?: VoucherType
+    ticketId?: number
     paymentType?: PaymentType
   }
 

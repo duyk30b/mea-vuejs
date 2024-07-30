@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { IconFileSearch, IconTrash } from '../../../common/icon'
 import { InputNumber } from '../../../common/vue-form'
-import type { Product } from '../../../modules/product'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const openModalProductDetail = (product?: Product) => {
-  if (product) modalProductDetail.value?.openModal(product.id)
+const changeItemPosition = (index: number, count: number) => {
+  const temp = receipt.value.receiptItems![index]
+  receipt.value.receiptItems![index] = receipt.value.receiptItems![index + count]
+  receipt.value.receiptItems![index + count] = temp
 }
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <div>Danh sách hàng trong phiếu</div>
+  <div>Giỏ hàng ({{ receipt.receiptItems?.length || 0 }})</div>
   <div v-if="isMobile" class="table-wrapper mt-2">
     <table>
       <thead>
@@ -38,33 +39,60 @@ const openModalProductDetail = (product?: Product) => {
         </tr>
         <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
+            <div class="flex flex-col items-center">
+              <button
+                type="button"
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-bottom: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === 0"
+                @click="changeItemPosition(index, -1)">
+                <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+              </button>
+              <span>{{ index + 1 }}</span>
+              <button
+                type="button"
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-top: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                @click="changeItemPosition(index, 1)">
+                <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+              </button>
+            </div>
           </td>
           <td>
             <div class="font-medium">
               {{ receiptItem?.product?.brandName }}
               <a
-                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
-                @click="openModalProductDetail(receiptItem?.product)"
-              >
-                <FileSearchOutlined />
+                @click="modalProductDetail?.openModal(receiptItem?.product!)">
+                <IconFileSearch />
               </a>
             </div>
             <div
-              v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
-              style="font-size: 0.8rem"
-            >
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+              style="font-size: 0.8rem">
               {{ receiptItem?.product?.substance }}
             </div>
             <div
-              v-if="
-                screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
-              "
-              style="font-size: 0.8rem"
-            >
-              S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
-              {{ timeToText(receiptItem.batch?.expiryDate) }}
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
+              style="font-size: 0.8rem">
+              <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+              <div v-if="receiptItem.expiryDate">
+                - HSD {{ timeToText(receiptItem.expiryDate) }}
+              </div>
             </div>
           </td>
           <td class="text-center whitespace-nowrap">
@@ -86,7 +114,7 @@ const openModalProductDetail = (product?: Product) => {
           </td>
           <td class="text-center">
             <a class="text-red-500" @click="receipt.receiptItems!.splice(index, 1)">
-              <DeleteOutlined />
+              <IconTrash />
             </a>
           </td>
         </tr>
@@ -100,7 +128,7 @@ const openModalProductDetail = (product?: Product) => {
           <th>#</th>
           <th>Sản phẩm</th>
           <th>S.Lượng</th>
-          <th v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
+          <th v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
           <th>G.Nhập</th>
           <th>T.Tiền</th>
           <th>Action</th>
@@ -111,35 +139,62 @@ const openModalProductDetail = (product?: Product) => {
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
         <tr v-for="(receiptItem, index) in receipt.receiptItems" :key="index">
-          <td class="text-center">
-            {{ index + 1 }}
+          <td>
+            <div class="flex flex-col items-center">
+              <button
+                type="button"
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-bottom: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === 0"
+                @click="changeItemPosition(index, -1)">
+                <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+              </button>
+              <span>{{ index + 1 }}</span>
+              <button
+                type="button"
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-top: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                @click="changeItemPosition(index, 1)">
+                <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+              </button>
+            </div>
           </td>
           <td style="min-width: 150px">
             <div>
               <div class="font-bold">
                 {{ receiptItem?.product?.brandName }}
                 <a
-                  v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
+                  v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="openModalProductDetail(receiptItem?.product)"
-                >
-                  <FileSearchOutlined />
+                  @click="modalProductDetail?.openModal(receiptItem?.product!)">
+                  <IconFileSearch />
                 </a>
               </div>
               <div
-                v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
-                style="font-size: 0.8rem"
-              >
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.substance"
+                style="font-size: 0.8rem">
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
-                v-if="
-                  screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
-                "
-                style="font-size: 0.8rem"
-              >
-                S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
-                {{ timeToText(receiptItem.batch?.expiryDate) }}
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
+                style="font-size: 0.8rem">
+                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+                <div v-if="receiptItem.expiryDate">
+                  - HSD {{ timeToText(receiptItem.expiryDate) }}
+                </div>
               </div>
             </div>
           </td>
@@ -148,26 +203,23 @@ const openModalProductDetail = (product?: Product) => {
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity--"
-              >
+                @click="receipt.receiptItems![index].unitQuantity--">
                 <font-awesome-icon :icon="['fas', 'minus']" />
               </div>
               <div style="width: calc(100% - 60px); min-width: 50px">
                 <InputNumber
                   v-model:value="receipt.receiptItems![index].unitQuantity"
-                  :textAlign="'right'"
-                />
+                  :textAlign="'right'" />
               </div>
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity++"
-              >
+                @click="receipt.receiptItems![index].unitQuantity++">
                 <font-awesome-icon :icon="['fas', 'plus']" />
               </div>
             </div>
           </td>
-          <td v-if="screenStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
+          <td v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
             {{ receiptItem.unitName }}
           </td>
           <td class="text-right">
@@ -178,14 +230,14 @@ const openModalProductDetail = (product?: Product) => {
           </td>
           <td class="text-center">
             <a class="text-red-500 text-xl" @click="receipt.receiptItems!.splice(index, 1)">
-              <DeleteOutlined />
+              <IconTrash />
             </a>
           </td>
         </tr>
         <tr>
           <td colspan="100" class="text-right">
             <span class="mr-10">Tổng tiền hàng:</span>
-            <span class="mr-20"> {{ formatMoney(receipt.itemsActualMoney) }} </span>
+            <span class="mr-20">{{ formatMoney(receipt.itemsActualMoney) }}</span>
           </td>
         </tr>
       </tbody>

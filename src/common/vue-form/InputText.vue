@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { IconEye } from '../icon'
+
 const props = withDefaults(
   defineProps<{
     value: string | null
+    type?: 'text' | 'password' | 'email'
+    name?: string
     prepend?: string
     append?: string
     disabled?: boolean
@@ -11,9 +15,12 @@ const props = withDefaults(
     placeholder?: string
     pattern?: string
     title?: string
+    autocomplete?: 'on' | 'off'
   }>(),
   {
     value: '',
+    type: 'text',
+    name: undefined,
     prepend: undefined,
     append: undefined,
     disabled: false,
@@ -23,6 +30,7 @@ const props = withDefaults(
     placeholder: undefined,
     pattern: undefined,
     title: undefined,
+    autocomplete: undefined,
   }
 )
 const emit = defineEmits<{ (e: 'update:value', value: string): void }>()
@@ -40,6 +48,7 @@ const handleInput = (e: Event) => {
       <input
         ref="inputRef"
         :value="value"
+        :name="name"
         :style="{ textAlign }"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -47,9 +56,22 @@ const handleInput = (e: Event) => {
         :maxlength="maxlength"
         :pattern="pattern"
         :title="title"
-        @input="handleInput"
-      />
+        :type="type"
+        @input="handleInput" />
+      <!-- <div v-if="type === 'password'" class="password-toggle">
+        <IconEye />
+      </div> -->
     </div>
     <div v-if="append" class="append">{{ append }}</div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.password-toggle {
+  line-height: 0;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+</style>

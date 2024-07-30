@@ -1,75 +1,29 @@
-import { Expose, instanceToInstance, instanceToPlain, plainToInstance } from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import type { EGender } from '../enum'
 
 export class Customer {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose()
   fullName: string
-
-  @Expose()
+  customerSourceId: number
   phone?: string
-
-  @Expose()
   birthday?: number
-
-  @Expose()
+  yearOfBirth?: number
   gender?: EGender
-
-  @Expose() // số căn cước
-  identityCard?: string
-
-  @Expose()
   addressProvince: string
-
-  @Expose()
   addressDistrict: string
-
-  @Expose()
   addressWard: string
-
-  @Expose()
   addressStreet: string
-
-  @Expose() // người thân
-  relative?: string
-
-  @Expose()
+  relative?: string // người thân
   healthHistory?: string // Tiền sử bệnh
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   debt: number
-
-  @Expose()
   note: string
-
-  @Expose()
   isActive: 1 | 0 // Trạng thái
-
-  @Expose({ groups: [FROM_PLAIN] })
   updatedAt: number
-
-  @Expose({ groups: [FROM_PLAIN] })
-  deletedAt: number
-
-  get addressString() {
-    return [this.addressWard, this.addressDistrict, this.addressProvince]
-      .filter((i) => !!i)
-      .join(' - ')
-      .replace('Tỉnh', '')
-      .replace('Thành phố', '')
-      .replace('Quận ', '')
-      .replace('Huyện ', '')
-      .replace('Phường ', '')
-      .replace('Xã ', '')
-  }
 
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0
     ins.isActive = 1
+    ins.customerSourceId = 0
     ins.debt = 0
     return ins
   }
@@ -79,64 +33,38 @@ export class Customer {
     return ins
   }
 
-  static toBasic(root: Customer) {
-    const ins = new Customer()
-    Object.assign(ins, root)
-    return ins
+  static example(): Customer {
+    const customer = Customer.blank()
+    customer.fullName = 'Nguyễn Văn A'
+    customer.birthday = new Date('1990-09-04').getTime()
+    customer.gender = 1
+    customer.phone = '0968123456'
+    customer.addressProvince = 'Hà Nội'
+    customer.addressDistrict = 'Long Biên'
+    customer.addressWard = 'Thạch Bàn'
+    return customer
   }
 
-  static fromObject(object: Partial<Customer>) {
-    const ins = new Customer()
-    Object.assign(ins, object)
-    return ins
-  }
-
-  static fromObjects(objects: Partial<Customer>[]): Customer[] {
-    return objects.map((i) => Customer.fromObject(i))
-  }
-
-  static fromPlain(plain: Record<string, any> = {}): Customer {
-    return plainToInstance(Customer, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: Customer) {
+    const target = new Customer()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): Customer[] {
-    return plainToInstance(Customer, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: Customer[]): Customer[] {
+    return sources.map((i) => Customer.basic(i))
   }
 
-  static fromInstance(instance: Customer): Customer {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
-      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
-    }
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
+  static from(source: Customer) {
+    const target = Customer.basic(source)
+    return target
   }
 
-  static fromInstances(instances: Customer[]): Customer[] {
-    return instances.map((i) => Customer.fromInstance(i))
-  }
-
-  static toPlain(
-    instance: Customer,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    if (import.meta.env.MODE === 'development' && instance?.constructor.name !== '_Customer') {
-      throw new Error('Customer.fromInstance error: Instance must be from class Customer')
-    }
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
+  static fromList(sourceList: Customer[]): Customer[] {
+    return sourceList.map((i) => Customer.from(i))
   }
 }

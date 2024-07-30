@@ -2,32 +2,34 @@
 import { reactive, ref } from 'vue'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { AuthService } from '../../modules/auth/auth.service'
+import { InputText } from '../../common/vue-form'
+import VueButton from '../../common/VueButton.vue'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { AuthApi } from '../../modules/auth/auth.api'
 
-const message = ref<string>('')
 const btnDisable = ref<boolean>(false)
 
 const formState = reactive({
-  orgPhone: LocalStorageService.getOrgPhone(),
-  email: '',
+  organizationPhone: LocalStorageService.getOrgPhone(),
+  organizationEmail: '',
   username: '',
 })
-
-const onFinishFailed = (errorInfo: any) => {
-  console.log('Failed:', errorInfo)
-}
 
 const loading = ref(false)
 
 const startSendEmail = async () => {
-  loading.value = true
-  const response = await AuthService.forgotPassword({
-    orgPhone: formState.orgPhone,
-    email: formState.email,
-    username: formState.username,
-  })
-  if (response?.data) {
-    message.value = response.message
-    btnDisable.value = true
+  try {
+    loading.value = true
+    await AuthApi.forgotPassword({
+      organizationPhone: formState.organizationPhone,
+      organizationEmail: formState.organizationEmail,
+      username: formState.username,
+    })
+    AlertStore.addSuccess('Gửi email kích hoạt thành công, vui lòng kiểm tra email !')
+  } catch (error: any) {
+    const message = error?.response?.data?.message || error.message || error?.config.signal?.reason
+    AlertStore.addError(message)
+  } finally {
     loading.value = false
   }
 }
@@ -35,57 +37,51 @@ const startSendEmail = async () => {
 
 <template>
   <div class="wrapper">
-    <div class="login-card">
-      <a-divider style="font-size: 1.5rem"> QUÊN MẬT KHẨU </a-divider>
-      <br />
-      <a-form
-        :model="formState"
-        name="basic"
-        :label-col="{ span: 4 }"
-        :wrapper-col="{ span: 20 }"
-        autocomplete="off"
-        @finish="startSendEmail"
-        @finishFailed="onFinishFailed"
-      >
-        <a-form-item
-          label="ID Cơ sở"
-          name="orgPhone"
-          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
-        >
-          <a-input v-model:value="formState.orgPhone" />
-        </a-form-item>
-
-        <a-form-item
-          label="Gmail Cơ sở"
-          name="email"
-          :rules="[{ required: true, message: 'Email không được để trống!' }]"
-        >
-          <a-input v-model:value="formState.email" />
-        </a-form-item>
-
-        <a-form-item
-          label="Tài khoản"
-          name="username"
-          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
-        >
-          <a-input v-model:value="formState.username" />
-        </a-form-item>
-
-        <div class="flex justify-end">
+    <div class="form-card pt-4 pb-10 px-4">
+      <a-divider style="font-size: 1.5rem">QUÊN MẬT KHẨU</a-divider>
+      <form @submit.prevent="startSendEmail">
+        <div class="mt-4">
+          <div>ID cơ cở</div>
+          <div>
+            <InputText
+              v-model:value="formState.organizationPhone"
+              name="organization_phone"
+              autocomplete="on"
+              required
+              pattern="[0][356789][0-9]{8}" />
+          </div>
+        </div>
+        <div class="mt-4">
+          <div>Gmail cơ sở</div>
+          <div>
+            <InputText
+              v-model:value="formState.organizationEmail"
+              name="email"
+              type="email"
+              autocomplete="on"
+              required />
+          </div>
+        </div>
+        <div class="mt-4">
+          <div>Tài khoản</div>
+          <div><InputText v-model:value="formState.username" name="username" required /></div>
+        </div>
+        <div class="flex justify-end mt-4">
           <a @click="$router.push({ name: 'Login' })">Đăng nhập</a>
         </div>
-
-        <div>{{ message }}</div>
-        <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button type="primary" html-type="submit" :loading="loading" :disabled="btnDisable">
+        <div class="flex justify-center">
+          <VueButton color="blue" type="submit" :loading="loading" :disabled="btnDisable">
             Gửi Email
-          </a-button>
-        </a-form-item>
-      </a-form>
+          </VueButton>
+        </div>
+      </form>
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
+      <p>
+        HOTLINE:
+        <a href="tel:0376899866" class="hotline">0376.899.866</a>
+      </p>
     </div>
   </div>
 </template>
@@ -94,17 +90,17 @@ const startSendEmail = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url('@/assets/image/background-login.jpg');
+  // background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
+  background-color: #3b6fba;
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 10%;
 
-  .login-card {
+  .form-card {
     max-width: 600px;
     width: 90%;
     margin: 0 auto;
-    padding: 20px;
     border-radius: 10px;
     box-shadow:
       0px 3px 5px rgba(0, 0, 0, 0.02),

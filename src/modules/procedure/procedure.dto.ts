@@ -1,14 +1,17 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate } from '../_base/base-condition'
+import type { ConditionDate, ConditionString } from '../_base/base-condition'
 
 export class ProcedureGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: {
+    procedureGroup?: boolean
+  }
+
   filter?: {
+    name?: ConditionString
     isActive?: 1 | 0
-    searchText?: string
-    group?: string
+    procedureGroupId?: number
     updatedAt?: ConditionDate
   }
 

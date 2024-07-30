@@ -7,13 +7,14 @@ import IconTriangleDown from '../icon/IconTriangleDown.vue'
 
 const props = withDefaults(
   defineProps<{
-    value?: string | number | boolean | null
-    options: { value: any; text?: string; data?: any }[]
+    value?: any
+    options: { value: any; text?: string; data?: any; disabled?: boolean }[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
     required?: boolean
     iconClear?: boolean
+    addOther?: boolean
   }>(),
   {
     value: null,
@@ -23,11 +24,12 @@ const props = withDefaults(
     maxHeight: 300,
     required: false,
     iconClear: false,
+    addOther: false,
   }
 )
 
 const emit = defineEmits<{
-  (e: 'update:value', value: string | number | boolean | null | undefined): void
+  (e: 'update:value', value: any): void
   (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
 }>()
 
@@ -37,12 +39,17 @@ const showOptions = ref<boolean>(false)
 const itemSelected = ref<{ value?: any; text?: any; data?: any }>({})
 
 const optionsElement = ref<HTMLElement>()
+const optionsStringify = ref<string>('')
 
 watch(
   () => props.value, // mục đích của watch value là để tìm và show ra text
   (newValue) => {
     const index = props.options.findIndex((item) => {
-      return item.value === newValue
+      if (typeof item.value === 'object') {
+        return JSON.stringify(item.value) === JSON.stringify(newValue)
+      } else {
+        return item.value === newValue
+      }
     })
     indexFocus.value = index
     itemSelected.value = index !== -1 ? props.options[index] : {}
@@ -53,14 +60,33 @@ watch(
 watch(
   () => props.options, // mục đích của watch value là để tìm và show ra text
   (newOptions) => {
+    if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
+    const optionsStringifyNew = JSON.stringify(newOptions)
+    if (optionsStringify.value === optionsStringifyNew) return
+    optionsStringify.value = optionsStringifyNew
+
     const index = newOptions.findIndex((item) => {
-      return item.value === props.value
+      if (typeof item.value === 'object') {
+        return JSON.stringify(item.value) === JSON.stringify(props.value)
+      } else {
+        return item.value === props.value
+      }
     })
     indexFocus.value = index
     itemSelected.value = index !== -1 ? newOptions[index] : {}
   },
   { immediate: true }
 )
+
+const handleFocusin = () => {
+  if (props.disabled) return
+  showOptions.value = true
+}
+
+const handleClickMask = () => {
+  if (props.disabled) return
+  showOptions.value = true
+}
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Tab' || e.key === 'Escape') {
@@ -135,18 +161,16 @@ defineExpose({ focus })
   <div
     :class="{ 'vue-input': true, disabled }"
     :tabindex="disabled ? -1 : 0"
-    @focusin="showOptions = true"
+    @focusin="handleFocusin"
     @blur="showOptions = false"
-    @keydown="handleKeydown"
-  >
+    @keydown="handleKeydown">
     <div class="input-area">
       <input
         ref="inputRef"
         :required="required"
         :value="Object.keys(itemSelected).length || ''"
-        disabled
-      />
-      <div class="mask" @click="showOptions = true">
+        disabled />
+      <div class="mask" @click="handleClickMask">
         <slot name="text" :content="itemSelected">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
             {{
@@ -158,40 +182,53 @@ defineExpose({ focus })
         </slot>
       </div>
     </div>
-    <div class="icon-append">
-      <template v-if="iconClear">
+    <div v-if="!disabled" class="icon-append">
+      <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
+      <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
-        <IconClearCircle class="icon-clear-focus" @click="handleClear" />
+        <IconClearCircle class="icon-clear-blur" @click="handleClear" />
       </template>
       <template v-else>
         <IconTriangleDown v-if="!showOptions" />
         <IconTriangleUp v-if="showOptions" />
-      </template>
+      </template> -->
+      <IconTriangleDown v-if="!showOptions" />
+      <IconTriangleUp v-if="showOptions" />
     </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in options"
         :key="index"
+        :style="
+          !item.disabled
+            ? 'cursor: pointer'
+            : 'cursor: not-allowed; background-color: #eeeeee; opacity: 0.6;'
+        "
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click.stop="handleSelectItem(index)"
-      >
+        @click.stop="!item.disabled && handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}
           </div>
         </slot>
       </div>
+      <div v-if="addOther" class="item-option">
+        <slot name="addOther"></slot>
+      </div>
     </div>
   </div>
 </template>
 <style lang="scss" scoped>
 .vue-input {
+  cursor: pointer;
+  &.disabled {
+    cursor: not-allowed;
+  }
   .input-area {
     .mask {
       position: absolute;

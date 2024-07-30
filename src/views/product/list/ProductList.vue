@@ -1,39 +1,42 @@
 <script setup lang="ts">
 import {
   CheckCircleOutlined,
-  FileSearchOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
   ShopOutlined,
 } from '@ant-design/icons-vue'
-import { storeToRefs } from 'pinia'
-import { onBeforeMount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconDownload, IconFileSearch, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { BatchService } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useProductStore, type Product } from '../../../modules/product'
+import { ProductApi, ProductService, type Product } from '../../../modules/product'
+import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import { DTimer, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
+import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 
-const screenStore = useScreenStore()
-const productStore = useProductStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { timeSync: productTimeSync } = storeToRefs(productStore)
 
 const productList = ref<Product[]>([])
+const productGroupAll = ref<ProductGroup[]>([])
 
 const dataLoading = ref(false)
 
@@ -42,23 +45,22 @@ const limit = ref(Number(localStorage.getItem('PRODUCT_PAGINATION_LIMIT')) || 10
 const total = ref(0)
 
 const searchText = ref('')
-const group = ref<string>('')
+const productGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'expiryDate' | 'id' | 'brandName' | 'quantity' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-watch(productTimeSync, async () => {
-  startFetchData()
-})
+const productGroupMap = computed(() => arrayToKeyValue(productGroupAll.value, 'id'))
 
 const startFetchData = async () => {
   try {
-    const data = await productStore.pagination({
+    const { data, meta } = await ProductService.pagination({
+      relation: { batchList: true },
       page: page.value,
       limit: limit.value,
       filter: {
-        group: group.value ? group.value : undefined,
+        productGroupId: productGroupId.value ? productGroupId.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
       },
@@ -67,34 +69,37 @@ const startFetchData = async () => {
             id: sortColumn.value === 'id' ? sortValue.value : undefined,
             brandName: sortColumn.value === 'brandName' ? sortValue.value : undefined,
             quantity: sortColumn.value === 'quantity' ? sortValue.value : undefined,
+            expiryDate: sortColumn.value === 'expiryDate' ? sortValue.value : undefined,
           }
         : undefined,
     })
-    productList.value = data.data
-    total.value = data.total
+    productList.value = data
+    total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: ProductList.vue:59 ~ error:', error)
+    console.log('🚀 ~ file: ProductList.vue:86 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
   try {
-    dataLoading.value = true
-    await startFetchData()
+    productGroupAll.value = await ProductGroupService.list({})
   } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
+    console.log('🚀 ~ file: ProductList.vue:107 ~ onBeforeMount ~ error:', error)
   }
 })
 
 onMounted(async () => {
   try {
-    const productList = await productStore.refreshDB()
-    if (productList?.length) {
+    const { numberChange } = await ProductService.refreshDB()
+    await BatchService.refreshDB()
+    if (numberChange) {
       await startFetchData()
     }
   } catch (error: any) {
+    console.log('🚀 ~ file: ProductList.vue:102 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
@@ -130,7 +135,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalProductUpsertSuccess = async (
   data: Product,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY'
 ) => {
   await startFetchData()
 }
@@ -142,43 +147,74 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'data-setting') {
     modalDataProduct.value?.openModal()
   }
+  if (menu.key === 'PRODUCT_GROUP_MANAGER') {
+    modalProductGroupManager.value?.openModal()
+  }
 }
+
+const handleModalProductGroupManagerSuccess = async () => {
+  productGroupAll.value = await ProductGroupService.list({})
+}
+
+const downloadExcelProductList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await ProductApi.downloadExcelProductList()
+    },
+  })
+}
+
+const closeExpiryDate = computed(() => {
+  return Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
+})
 </script>
 
 <template>
   <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
   <ModalProductListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]"
-    ref="modalProductListSettingScreen"
-  />
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalProductListSettingScreen" />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductDetail ref="modalProductDetail" />
+  <ModalProductGroupManager
+    ref="modalProductGroupManager"
+    @success="handleModalProductGroupManagerSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ShopOutlined /> Tồn kho</div>
-      <a-button
+      <div class="hidden md:block">
+        <ShopOutlined />
+        Tồn kho
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
-        type="primary"
-        @click="modalProductUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalProductUpsert?.openModal()">
         Thêm Sản Phẩm
-      </a-button>
+      </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_SCREEN]" trigger="click">
-        <span>
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            <a-menu-item key="data-setting"> Cài đặt dữ liệu </a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
+    <div class="flex mr-2 gap-8">
+      <div style="cursor: pointer">
+        <IconDownload width="20" height="20" @click="downloadExcelProductList" />
+      </div>
+      <span style="cursor: pointer">
+        <a-dropdown
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          trigger="click">
+          <span>
+            <IconSetting width="20" height="20" />
+          </span>
+          <template #overlay>
+            <a-menu @click="handleMenuSettingClick">
+              <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+              <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
+              <a-menu-item key="PRODUCT_GROUP_MANAGER">Quản lý nhóm sản phẩm</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </span>
     </div>
   </div>
 
@@ -190,25 +226,20 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <InputText
             v-model:value="searchText"
             placeholder="Tìm kiếm bằng tên hoặc hoạt chất"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn nhóm hàng</div>
+        <div>Chọn nhóm sản phẩm</div>
         <div>
           <VueSelect
-            v-model:value="group"
+            v-model:value="productGroupId"
             :options="[
-              { value: '', text: 'Tất cả' },
-              ...Object.entries(screenStore.PRODUCT_GROUP).map(([value, text]) => ({
-                value,
-                text,
-              })),
+              { value: 0, text: 'Tất cả' },
+              ...productGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
       <div style="flex: 1; flex-basis: 250px">
@@ -221,47 +252,52 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="startSearch"
-          />
+            @update:value="startSearch" />
         </div>
       </div>
     </div>
     <div v-if="isMobile" class="page-main-list">
       <div
-        class="py-2 px-4 flex justify-between text-white font-bold"
-        style="background-color: var(--color-table-thead-bg)"
-      >
+        class="py-2 px-4 flex gap-4 text-white font-bold"
+        style="background-color: var(--color-table-thead-bg)">
         <div class="cursor-pointer" @click="changeSort('brandName')">
           Tên hàng &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'brandName'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'brandName' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'brandName' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
-        <div class="cursor-pointer" @click="changeSort('quantity')">
+        <div class="cursor-pointer" @click="changeSort('expiryDate')">
+          HSD &nbsp;
+          <font-awesome-icon
+            v-if="sortColumn !== 'expiryDate'"
+            :icon="['fas', 'sort']"
+            style="opacity: 0.4" />
+          <font-awesome-icon
+            v-if="sortColumn === 'expiryDate' && sortValue === 'ASC'"
+            :icon="['fas', 'sort-up']" />
+          <font-awesome-icon
+            v-if="sortColumn === 'expiryDate' && sortValue === 'DESC'"
+            :icon="['fas', 'sort-down']" />
+        </div>
+        <div class="cursor-pointer ml-auto" @click="changeSort('quantity')">
           Số lượng &nbsp;
           <font-awesome-icon
             v-if="sortColumn !== 'quantity'"
             :icon="['fas', 'sort']"
-            style="opacity: 0.4"
-          />
+            style="opacity: 0.4" />
           <font-awesome-icon
             v-if="sortColumn === 'quantity' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']"
-          />
+            :icon="['fas', 'sort-up']" />
           <font-awesome-icon
             v-if="sortColumn === 'quantity' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']"
-          />
+            :icon="['fas', 'sort-down']" />
         </div>
       </div>
       <div v-if="dataLoading">
@@ -280,63 +316,106 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div
           v-if="productList.length === 0"
           class="p-2 text-center"
-          style="border: 1px solid #cdcdcd"
-        >
+          style="border: 1px solid #cdcdcd">
           Không có dữ liệu
         </div>
         <div
-          v-for="(product, index) in productList"
-          :key="index"
+          v-for="(product, productIndex) in productList"
+          :key="productIndex"
           class="px-4 py-2"
           style="border-bottom: 1px solid #cdcdcd"
-          :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
+          :style="{
+            backgroundColor: productIndex % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '',
+          }"
           @dblclick="
-            permissionIdMap[PermissionId.PRODUCT_UPDATE] && modalProductUpsert?.openModal(product)
-          "
-        >
+            permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+              modalProductUpsert?.openModal(product.id)
+          ">
           <div class="flex items-center">
             <div class="flex-1">
               <div class="flex gap-2">
                 <div class="font-medium text-justify">
                   {{ product.brandName }}
                 </div>
-                <div v-if="screenStore.SCREEN_PRODUCT_LIST.detail">
-                  <a @click="modalProductDetail?.openModal(product.id)">
-                    <FileSearchOutlined />
+                <div v-if="settingStore.SCREEN_PRODUCT_LIST.detail">
+                  <a @click="modalProductDetail?.openModal(product)">
+                    <IconFileSearch />
                   </a>
                 </div>
               </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" class="text-xs">
+              <div v-if="settingStore.SCREEN_PRODUCT_LIST.substance" class="text-xs">
                 {{ product.substance }}
               </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
-                {{ screenStore.PRODUCT_GROUP[product.group!] }}
+              <div v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
+                {{ productGroupMap[product.productGroupId]?.name }}
               </div>
-              <div class="flex text-xs">
+              <template v-if="!product.batchList?.length">
+                <div class="flex text-xs gap-2">
+                  <div v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber && product.lotNumber">
+                    S.Lô {{ product.lotNumber }}
+                  </div>
+                  <div
+                    v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate && product.expiryDate"
+                    :style="
+                      product.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''
+                    ">
+                    - HSD {{ DTimer.timeToText(product.expiryDate) }}
+                  </div>
+                </div>
+                <div class="flex text-xs">
+                  <div
+                    v-if="
+                      permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                      settingStore.SCREEN_PRODUCT_LIST.costPrice
+                    "
+                    style="width: 25%">
+                    N: {{ formatMoney(product.unitCostPrice) }}
+                  </div>
+                  <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" style="width: 25%">
+                    S: {{ formatMoney(product.unitWholesalePrice) }}
+                  </div>
+                  <div v-if="settingStore.SYSTEM_SETTING.retailPrice" style="width: 25%">
+                    L: {{ formatMoney(product.unitRetailPrice) }}
+                  </div>
+                </div>
+              </template>
+              <template v-if="product.batchList?.length">
                 <div
-                  v-if="
-                    permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                    screenStore.SCREEN_PRODUCT_LIST.costPrice
-                  "
-                  style="width: 25%"
-                >
-                  N: {{ formatMoney(product.unitCostPrice) }}
+                  v-for="(batch, batchIndex) in product.batchList"
+                  :key="batchIndex"
+                  class="flex flex-wrap text-xs">
+                  <div style="width: 10%; font-weight: 500">
+                    ({{ formatMoney(batch.unitQuantity) }})
+                  </div>
+                  <div
+                    style="width: 35%"
+                    :style="
+                      batch.expiryDate && batch.expiryDate < closeExpiryDate
+                        ? 'color:red; font-weight:500'
+                        : ''
+                    ">
+                    - HSD {{ DTimer.timeToText(batch.expiryDate) }}
+                  </div>
+                  <div
+                    v-if="
+                      permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                      settingStore.SCREEN_PRODUCT_LIST.costPrice
+                    "
+                    style="width: 22%">
+                    - N: {{ formatMoney(batch.unitCostPrice) }}
+                  </div>
+                  <div v-if="settingStore.SYSTEM_SETTING.retailPrice" style="width: 22%">
+                    - L: {{ formatMoney(batch.unitRetailPrice) }}
+                  </div>
                 </div>
-                <div v-if="screenStore.SYSTEM_SETTING.wholesalePrice" style="width: 25%">
-                  S: {{ formatMoney(product.unitWholesalePrice) }}
-                </div>
-                <div v-if="screenStore.SYSTEM_SETTING.retailPrice" style="width: 25%">
-                  L: {{ formatMoney(product.unitRetailPrice) }}
-                </div>
-              </div>
+              </template>
             </div>
-            <div v-if="screenStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
-              <span class="ml-1 text-xs"> {{ product.unitDefaultName }} </span>
+            <div v-if="settingStore.SCREEN_PRODUCT_LIST.unit" style="width: 50px">
+              <span class="ml-1 text-xs">{{ product.unitDefaultName }}</span>
             </div>
             <div
               style="width: 40px; font-size: 16px; font-weight: 500; text-align: right"
-              :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''"
-            >
+              :class="(product.unitQuantity || 0) <= 0 ? 'text-red-500' : ''">
               {{ product.unitQuantity || 0 }}
             </div>
           </div>
@@ -350,8 +429,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
 
@@ -364,68 +444,74 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <font-awesome-icon
                 v-if="sortColumn !== 'id'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th class="cursor-pointer" @click="changeSort('brandName')">
               Tên &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'brandName'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'brandName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'brandName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber">Số lô</th>
+            <th
+              v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
+              class="cursor-pointer"
+              @click="changeSort('expiryDate')">
+              HSD &nbsp;
+              <font-awesome-icon
+                v-if="sortColumn !== 'expiryDate'"
+                :icon="['fas', 'sort']"
+                style="opacity: 0.4" />
+              <font-awesome-icon
+                v-if="sortColumn === 'expiryDate' && sortValue === 'ASC'"
+                :icon="['fas', 'sort-up']" />
+              <font-awesome-icon
+                v-if="sortColumn === 'expiryDate' && sortValue === 'DESC'"
+                :icon="['fas', 'sort-down']" />
+            </th>
             <th class="cursor-pointer" @click="changeSort('quantity')">
               SL &nbsp;
               <font-awesome-icon
                 v-if="sortColumn !== 'quantity'"
                 :icon="['fas', 'sort']"
-                style="opacity: 0.4"
-              />
+                style="opacity: 0.4" />
               <font-awesome-icon
                 v-if="sortColumn === 'quantity' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']"
-              />
+                :icon="['fas', 'sort-up']" />
               <font-awesome-icon
                 v-if="sortColumn === 'quantity' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']"
-              />
+                :icon="['fas', 'sort-down']" />
             </th>
             <th
               v-if="
-                permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                screenStore.SCREEN_PRODUCT_LIST.costPrice
-              "
-            >
+                permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                settingStore.SCREEN_PRODUCT_LIST.costPrice
+              ">
               G.Nhập
             </th>
-            <th v-if="screenStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
-            <th v-if="screenStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
-            <th v-if="screenStore.SCREEN_PRODUCT_LIST.isActive">Trạng thái</th>
+            <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
+            <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.isActive">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-                screenStore.SCREEN_PRODUCT_LIST.action
-              "
-            >
+                settingStore.SCREEN_PRODUCT_LIST.action
+              ">
               Sửa
             </th>
           </tr>
@@ -448,77 +534,192 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr v-if="productList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(product, index) in productList" :key="index">
-            <td class="text-center">PR{{ product.id }}</td>
-            <td>
-              <div>
-                {{ product.brandName }}
-                <a
-                  v-if="screenStore.SCREEN_PRODUCT_LIST.detail"
-                  class="ml-1"
-                  @click="modalProductDetail?.openModal(product.id)"
-                >
-                  <FileSearchOutlined />
-                </a>
-              </div>
-              <div v-if="screenStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
-                {{ product.substance }}
-              </div>
-            </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.group" class="text-center">
-              {{ screenStore.PRODUCT_GROUP[product.group!] }}
-            </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
-              {{ product.unitDefaultName }}
-            </td>
-            <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
-              {{ product.unitQuantity || 0 }}
-            </td>
-            <td
-              v-if="
-                permissionIdMap[PermissionId.PRODUCT_BATCH_READ_COST_PRICE] &&
-                screenStore.SCREEN_PRODUCT_LIST.costPrice
-              "
-              class="text-right"
-            >
-              {{ formatMoney(product.unitCostPrice || 0) }}
-            </td>
-            <td v-if="screenStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
-              {{ formatMoney(product.unitWholesalePrice || 0) }}
-            </td>
-            <td v-if="screenStore.SYSTEM_SETTING.retailPrice" class="text-right">
-              {{ formatMoney(product.unitRetailPrice) }}
-            </td>
-            <td v-if="screenStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
-              <a-tag v-if="product.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
-            </td>
-            <td
-              v-if="
-                permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-                screenStore.SCREEN_PRODUCT_LIST.action
-              "
-              class="text-center"
-            >
-              <a
-                style="color: #eca52b"
-                class="text-xl"
-                @click="modalProductUpsert?.openModal(product)"
-              >
-                <FormOutlined />
-              </a>
-            </td>
-          </tr>
+          <template v-for="(product, productIndex) in productList" :key="productIndex">
+            <template v-if="product.batchList?.length">
+              <tr v-for="(batch, batchIndex) in product.batchList" :key="batchIndex">
+                <td
+                  v-if="batchIndex === 0"
+                  class="text-center"
+                  :rowspan="product.batchList.length || 1">
+                  SP{{ product.id }}
+                </td>
+                <td v-if="batchIndex === 0" :rowspan="product.batchList.length || 1">
+                  <div>
+                    {{ product.brandName }}
+                    <a
+                      v-if="settingStore.SCREEN_PRODUCT_LIST.detail"
+                      class="ml-1"
+                      @click="modalProductDetail?.openModal(product)">
+                      <IconFileSearch />
+                    </a>
+                  </div>
+                  <div v-if="settingStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
+                    {{ product.substance }}
+                  </div>
+                </td>
+                <td
+                  v-if="batchIndex === 0 && settingStore.SCREEN_PRODUCT_LIST.group"
+                  :rowspan="product.batchList.length || 1"
+                  class="text-center">
+                  {{ productGroupMap[product.productGroupId!]?.name }}
+                </td>
+                <td
+                  v-if="settingStore.SCREEN_PRODUCT_LIST.unit && batchIndex === 0"
+                  :rowspan="product.batchList.length || 1"
+                  class="text-center">
+                  {{ product.unitDefaultName }}
+                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
+                  {{ batch.lotNumber }}
+                </td>
+                <td
+                  v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
+                  class="text-center"
+                  :style="
+                    batch.expiryDate && batch.expiryDate < closeExpiryDate
+                      ? 'color:red; font-weight:500'
+                      : ''
+                  ">
+                  {{ batch.expiryDate ? DTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') : '' }}
+                </td>
+
+                <td class="text-center" :class="(batch.quantity || 0) <= 0 ? 'text-red-500' : ''">
+                  {{ batch.unitQuantity || 0 }}
+                </td>
+                <td
+                  v-if="
+                    permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                    settingStore.SCREEN_PRODUCT_LIST.costPrice
+                  "
+                  class="text-right">
+                  {{ formatMoney(batch.unitCostPrice || 0) }}
+                </td>
+                <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
+                  {{ formatMoney(batch.unitWholesalePrice || 0) }}
+                </td>
+                <td v-if="settingStore.SYSTEM_SETTING.retailPrice" class="text-right">
+                  {{ formatMoney(batch.unitRetailPrice) }}
+                </td>
+                <td
+                  v-if="settingStore.SCREEN_PRODUCT_LIST.isActive && batchIndex == 0"
+                  :rowspan="product.batchList.length || 1"
+                  class="text-center">
+                  <a-tag v-if="product.isActive" color="success">
+                    <template #icon>
+                      <CheckCircleOutlined />
+                    </template>
+                    Active
+                  </a-tag>
+                  <a-tag v-else color="warning">
+                    <template #icon>
+                      <MinusCircleOutlined />
+                    </template>
+                    Inactive
+                  </a-tag>
+                </td>
+                <td
+                  v-if="
+                    permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                    settingStore.SCREEN_PRODUCT_LIST.action &&
+                    batchIndex == 0
+                  "
+                  :rowspan="product.batchList.length || 1"
+                  class="text-center">
+                  <a
+                    style="color: #eca52b"
+                    class="text-xl"
+                    @click="modalProductUpsert?.openModal(product.id)">
+                    <FormOutlined />
+                  </a>
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+              <tr>
+                <td class="text-center">SP{{ product.id }}</td>
+                <td>
+                  <div>
+                    {{ product.brandName }}
+                    <a
+                      v-if="settingStore.SCREEN_PRODUCT_LIST.detail"
+                      class="ml-1"
+                      @click="modalProductDetail?.openModal(product)">
+                      <IconFileSearch />
+                    </a>
+                  </div>
+                  <div v-if="settingStore.SCREEN_PRODUCT_LIST.substance" style="font-size: 0.8rem">
+                    {{ product.substance }}
+                  </div>
+                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-center">
+                  {{ productGroupMap[product.productGroupId!]?.name }}
+                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
+                  {{ product.unitDefaultName }}
+                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
+                  {{ product.lotNumber }}
+                </td>
+                <td
+                  v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
+                  class="text-center"
+                  :style="
+                    product.expiryDate && product.expiryDate < closeExpiryDate
+                      ? 'color:red; font-weight:500'
+                      : ''
+                  ">
+                  {{
+                    product.expiryDate ? DTimer.timeToText(product.expiryDate, 'DD/MM/YYYY') : ''
+                  }}
+                </td>
+
+                <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
+                  {{ product.unitQuantity || 0 }}
+                </td>
+                <td
+                  v-if="
+                    permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                    settingStore.SCREEN_PRODUCT_LIST.costPrice
+                  "
+                  class="text-right">
+                  {{ formatMoney(product.unitCostPrice || 0) }}
+                </td>
+                <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
+                  {{ formatMoney(product.unitWholesalePrice || 0) }}
+                </td>
+                <td v-if="settingStore.SYSTEM_SETTING.retailPrice" class="text-right">
+                  {{ formatMoney(product.unitRetailPrice) }}
+                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.isActive" class="text-center">
+                  <a-tag v-if="product.isActive" color="success">
+                    <template #icon>
+                      <CheckCircleOutlined />
+                    </template>
+                    Active
+                  </a-tag>
+                  <a-tag v-else color="warning">
+                    <template #icon>
+                      <MinusCircleOutlined />
+                    </template>
+                    Inactive
+                  </a-tag>
+                </td>
+                <td
+                  v-if="
+                    permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                    settingStore.SCREEN_PRODUCT_LIST.action
+                  "
+                  class="text-center">
+                  <a
+                    style="color: #eca52b"
+                    class="text-xl"
+                    @click="modalProductUpsert?.openModal(product.id)">
+                    <FormOutlined />
+                  </a>
+                </td>
+              </tr>
+            </template>
+          </template>
         </tbody>
       </table>
 
@@ -528,8 +729,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

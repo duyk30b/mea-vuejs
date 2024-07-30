@@ -3,10 +3,11 @@
   "files.eol": "\n",
   "workbench.tree.indent": 16,
   "editor.tabSize": 2,
+  "editor.inlayHints.fontSize": 10,
+  "editor.suggest.insertMode": "replace",
   "eslint.validate": ["javascript", "javascriptreact", "vue"],
   "workbench.editor.wrapTabs": true,
   "window.title": "${rootName}",
-  "editor.inlayHints.fontSize": 10,
   "workbench.colorCustomizations": {
     "editorInlayHint.background": "#4d4d4d99",
     "editorInlayHint.foreground": "#ffffffcc"
@@ -16,6 +17,9 @@
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "search.smartCase": true,
   "javascript.preferences.quoteStyle": "single",
@@ -43,8 +47,10 @@
     "materialdesignicons",
     "Medihome",
     "oneline",
+    "CĐHA",
     "pinia",
     "popconfirm",
+    "Pulmonology",
     "rushstack",
     "Sider",
     "srgb",
@@ -57,12 +63,6 @@
   "liveServer.settings.port": 5501,
   "liveServer.settings.root": "/dist/",
   "liveServer.settings.CustomBrowser": "chrome",
-  "liveServer.settings.https": {
-    "enable": true,
-    "key": "/Users/duyk3/.vscode/https/key.pem",
-    "cert": "/Users/duyk3/.vscode/https/cert.pem",
-    "passphrase": ""
-  },
   "editor.linkedEditing": true,
   "explorer.compactFolders": false
 }

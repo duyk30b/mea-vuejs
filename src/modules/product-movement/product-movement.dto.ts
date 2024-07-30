@@ -8,8 +8,7 @@ export class ProductMovementGetQuery {
   relation?: {
     product?: boolean
     receipt?: boolean
-    invoice?: boolean
-    visit?: boolean
+    ticket?: boolean
     distributor?: boolean
     customer?: boolean
   }

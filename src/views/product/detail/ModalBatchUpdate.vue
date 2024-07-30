@@ -1,41 +1,31 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/VueModal.vue'
+import { IconClose } from '../../../common/icon'
 import { InputDate, InputMoney, InputText } from '../../../common/vue-form'
-import { Batch, useBatchStore } from '../../../modules/batch'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { Batch, BatchService } from '../../../modules/batch'
 import { Product } from '../../../modules/product'
 
 const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE'): void }>()
-
-const batchStore = useBatchStore()
 
 const showModal = ref(false)
 const batch = ref(Batch.blank())
 const saveLoading = ref(false)
 
-const openModal = async (p: Product, b: Batch) => {
-  const batchDraft = Batch.fromInstance(b)
-  batchDraft.product = Product.fromInstance(p)
-  batch.value = batchDraft
+const openModal = async (b: Batch) => {
+  batch.value = Batch.from(b)
   showModal.value = true
-}
-
-const refreshModal = () => {
-  batch.value = Batch.blank()
-  batch.value.product = Product.blank()
-  showModal.value = false
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    const batchDraft = await batchStore.updateOne(batch.value.id, batch.value)
+    const batchDraft = await BatchService.updateOne(batch.value.id, batch.value)
     emit('success', batchDraft, 'UPDATE')
-    showModal.value = false
+    handleClose()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalProductUpsert.vue:30 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -59,7 +49,7 @@ defineExpose({ openModal })
         </div>
 
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -91,20 +81,29 @@ defineExpose({ openModal })
         <div class="mt-2">
           <div>Giá nhập</div>
           <div>
-            <InputMoney v-model:value="batch.unitCostPrice" />
+            <InputMoney v-model:value="batch.unitCostPrice" disabled />
+          </div>
+        </div>
+        <div class="mt-2">
+          <div>Giá bán sỉ</div>
+          <div>
+            <InputMoney v-model:value="batch.unitWholesalePrice" />
+          </div>
+        </div>
+        <div class="mt-2">
+          <div>Giá bán lẻ</div>
+          <div>
+            <InputMoney v-model:value="batch.unitRetailPrice" />
           </div>
         </div>
       </div>
 
       <div class="pb-6 pt-4 px-4">
         <div class="flex gap-4">
-          <button class="btn ml-auto" type="reset" @click="handleClose">
-            <CloseOutlined /> Hủy bỏ
-          </button>
-          <VueButton color="blue" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton class="ml-auto" type="reset" icon="close" @click="handleClose">
+            Hủy bỏ
+          </VueButton>
+          <VueButton color="blue" icon="save" type="submit" :loading="saveLoading">
             Lưu lại
           </VueButton>
         </div>

@@ -3,23 +3,11 @@ export type LoginDto = {
   username: string
   password: string
 }
+export type LoginRootDto = LoginDto & { oid: number }
 
 export type RegisterDto = {
   phone: string
   email: string
   username: string
   password: string
-}
-
-export type ForgotPasswordDto = {
-  orgPhone: string
-  email: string
-  username: string
-}
-
-export type ResetPasswordDto = {
-  orgPhone: string
-  username: string
-  password: string
-  token: string
 }

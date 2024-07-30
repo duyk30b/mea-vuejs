@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { type AxiosRequestConfig } from 'axios'
 import { reactive } from 'vue'
 import { AlertStore } from '../common/vue-alert/vue-alert.store'
 import { CONFIG } from '../config'
@@ -9,6 +9,7 @@ import { AuthService } from '../modules/auth/auth.service'
 axios.defaults.headers.post['x-os'] = DeviceInstance.platform
 axios.defaults.headers.post['x-browser'] = DeviceInstance.browser
 axios.defaults.headers.post['x-mobile'] = DeviceInstance.mobile
+axios.defaults.headers.post['x-client-id'] = CONFIG.CLIENT_ID
 
 const AxiosLoading = reactive({ percent: 0, loading: true })
 
@@ -31,12 +32,12 @@ AxiosInstance.interceptors.request.use(
       LocalStorageService.getRefreshExp() - 60 * 1000 < Date.now()
     ) {
       await AuthService.logout()
-      controller.abort('Phiên đăng nhập đã hết hạn')
+      controller.abort()
       return config
     }
     // nếu accessToken sắp hết hạn (cho hết hạn trước 10s)
     if (LocalStorageService.getAccessExp() - 10 * 1000 < Date.now()) {
-      await AuthService.getAccessToken()
+      await AuthService.refreshToken()
     }
     if (!LocalStorageService.getAccessToken()) {
       controller.abort()
@@ -59,16 +60,24 @@ AxiosInstance.interceptors.response.use(
     return response
   },
   async (error: any) => {
-    if ([401].includes(error?.response?.status)) {
-      await AuthService.logout() // TODO nếu 401 thì refreshToken
+    if (error?.response?.status === 401) {
+      const originalRequest: AxiosRequestConfig = error.config
+      await AuthService.refreshToken()
+      if (!LocalStorageService.getAccessToken()) {
+        return Promise.reject()
+      }
+      originalRequest!.headers!['Authorization'] = `Bearer ${LocalStorageService.getAccessToken()}`
+      return AxiosInstance(originalRequest)
     }
-    if ([403].includes(error?.response?.status)) {
+    if (error?.response?.status === 403) {
       await AuthService.logout()
     }
     const message = error?.response?.data?.message || error.message || error?.config.signal?.reason
-    AlertStore.add({ type: 'error', message, time: 5000 })
-    AxiosLoading.percent = 0
-    AxiosLoading.loading = false
+    if (message !== 'canceled') {
+      AlertStore.add({ type: 'error', message, time: 5000 })
+      AxiosLoading.percent = 0
+      AxiosLoading.loading = false
+    }
 
     return Promise.reject(error)
   }

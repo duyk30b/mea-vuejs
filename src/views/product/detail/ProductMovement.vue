@@ -2,8 +2,8 @@
 import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { InputOptions, VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { InputText, VueSelect } from '../../../common/vue-form'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { BatchMovementApi } from '../../../modules/batch-movement/batch-movement.api'
 import type { BatchMovement } from '../../../modules/batch-movement/batch-movement.model'
@@ -11,20 +11,25 @@ import { VoucherType } from '../../../modules/enum'
 import { Product } from '../../../modules/product'
 import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
 import type { ProductMovement } from '../../../modules/product-movement/product-movement.model'
-import { customFilter, timeToText } from '../../../utils'
+import { timeToText } from '../../../utils'
+import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
+import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
 const router = useRouter()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const movements = ref<ProductMovement[] | BatchMovement[]>([])
+const typeHistory = ref<'PRODUCT' | 'BATCH'>('PRODUCT')
+
+const productMovementList = ref<ProductMovement[]>([])
+const batchMovementList = ref<BatchMovement[]>([])
 const batchAll = ref<Batch[]>([])
 const batchList = ref<Batch[]>([])
 
-const currentBatch = ref<Batch>(Batch.blank())
+const batchId = ref<number>(0)
 const voucherType = ref<VoucherType>()
 
 const page = ref(1)
@@ -38,16 +43,21 @@ const startFetchProductMovements = async () => {
       limit: limit.value,
       filter: {
         voucherType: voucherType.value != null ? voucherType.value : undefined,
-        productId: currentBatch.value?.id ? undefined : props.product.id,
+        productId: props.product.id,
       },
-      relation: { distributor: true, customer: true },
+      relation: {
+        ticket: true,
+        receipt: true,
+        distributor: true,
+        customer: true,
+      },
       sort: { id: 'DESC' },
     })
     data.forEach((i) => (i.product = props.product))
-    movements.value = data
+    productMovementList.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: ProductMovement.vue:35 ~ error:', error)
+    console.log('🚀 ~ file: ProductMovement.vue:53 ~ error:', error)
   }
 }
 
@@ -59,28 +69,33 @@ const startFetchBatchMovements = async () => {
       filter: {
         voucherType: voucherType.value != null ? voucherType.value : undefined,
         productId: props.product.id,
-        batchId: currentBatch.value.id,
+        batchId: batchId.value ? batchId.value : undefined,
       },
-      relation: { distributor: true, customer: true },
+      relation: {
+        ticket: true,
+        receipt: true,
+        distributor: true,
+        customer: true,
+      },
       sort: { id: 'DESC' },
     })
     data.forEach((i) => (i.product = props.product))
-    movements.value = data
+    batchMovementList.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: ProductMovement.vue:35 ~ error:', error)
+    console.log('🚀 ~ file: ProductMovement.vue:74 ~ error:', error)
   }
 }
 
-const startFetchMovements = async () => {
-  if (currentBatch.value.id) {
-    await startFetchBatchMovements()
-  } else {
+const startFetchData = async () => {
+  if (typeHistory.value === 'PRODUCT') {
     await startFetchProductMovements()
+  } else {
+    await startFetchBatchMovements()
   }
 }
 
-const startFetchBatches = async () => {
+const startFetchBatchList = async () => {
   if (!props.product.hasManageBatches) return
   try {
     const { data } = await BatchApi.list({
@@ -90,7 +105,7 @@ const startFetchBatches = async () => {
     batchAll.value = data
     batchList.value = data
   } catch (error) {
-    console.log('🚀 ~ file: ProductMovement.vue:47 ~ error:', error)
+    console.log('🚀 ~ file: ProductMovement.vue:96 ~ error:', error)
   }
 }
 
@@ -98,34 +113,15 @@ watch(
   () => props.product.id,
   async (newValue) => {
     if (newValue) {
-      await startFetchProductMovements()
-      await startFetchBatches()
-    } else movements.value = []
+      await startFetchData()
+      await startFetchBatchList()
+    } else {
+      productMovementList.value = []
+      batchMovementList.value = []
+    }
   },
   { immediate: true }
 )
-
-const selectBatch = async (data?: Batch) => {
-  if (data) {
-    currentBatch.value = Batch.fromInstance(data)
-    await startFetchBatchMovements()
-  } else {
-    currentBatch.value = Batch.blank()
-    await startFetchProductMovements()
-  }
-}
-
-const searchingBatch = async (text: string) => {
-  currentBatch.value.id = 0
-  if (text) {
-    batchList.value = batchAll.value.filter((b) => {
-      const expiryDate = timeToText(b.expiryDate, 'DD/MM/YYYY')
-      return customFilter(b.lotNumber, text, 2) || customFilter(expiryDate, text, 1)
-    })
-  } else {
-    batchList.value = [...batchAll.value]
-  }
-}
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
@@ -133,7 +129,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     limit.value = options.limit
     localStorage.setItem('PRODUCT_MOVEMENT_PAGINATION_LIMIT', String(options.limit))
   }
-  await startFetchMovements()
+  await startFetchData()
+}
+
+const handleChangeTypeHistory = async (value: 'PRODUCT' | 'BATCH') => {
+  await startFetchData()
 }
 
 const openBlankReceiptDetail = async (receiptId: number) => {
@@ -144,38 +144,65 @@ const openBlankReceiptDetail = async (receiptId: number) => {
   window.open(route.href, '_blank')
 }
 
-const openBlankInvoiceDetail = async (invoiceId: number) => {
+const openBlankTicketOrderDetail = async (ticketId: number) => {
   let route = router.resolve({
-    name: 'InvoiceDetail',
-    params: { id: invoiceId },
+    name: 'TicketOrderDetail',
+    params: { id: ticketId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankTicketClinicDetail = async (ticketId: number) => {
+  let route = router.resolve({
+    name: 'TicketClinicSummary',
+    params: { id: ticketId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankTicketEyeDetail = async (ticketId: number) => {
+  let route = router.resolve({
+    name: 'TicketEyeSummary',
+    params: { id: ticketId },
   })
   window.open(route.href, '_blank')
 }
 </script>
 
 <template>
-  <div class="flex justify-end gap-4 items-stretch">
-    <div v-if="product.hasManageBatches" style="flex: 1">
-      <span style="font-size: 0.8rem" class="whitespace-nowrap">Xem theo lô</span>
-      <div>
-        <InputOptions
-          :options="batchList.map((i) => ({ value: i.id, text: i.lotNumber, data: i }))"
-          :maxHeight="260"
-          placeholder="Chọn lô hàng"
-          @selectItem="({ data }) => selectBatch(data)"
-          @update:text="searchingBatch"
-        >
-          <template #option="{ item: { data } }">
-            <div>
-              <b>{{ data.batch }}</b> {{ timeToText(data.expiryDate) }} - ({{ data.quantity }}
-              {{ product.unitBasicName }})
-            </div>
-          </template>
-        </InputOptions>
+  <div class="mt-3 flex flex-wrap justify-end gap-4 items-stretch">
+    <div v-if="product.hasManageBatches" style="flex-basis: 500px; flex-grow: 1">
+      <span style="font-size: 0.8rem" class="whitespace-nowrap">Loại</span>
+      <div class="flex">
+        <div style="width: 180px">
+          <VueSelect
+            v-model:value="typeHistory"
+            :options="[
+              { value: 'PRODUCT', text: 'Xem sản phẩm' },
+              { value: 'BATCH', text: 'Xem lô hàng' },
+            ]"
+            @selectItem="({ value }) => handleChangeTypeHistory(value)"></VueSelect>
+        </div>
+        <div style="flex-grow: 1">
+          <InputText v-if="typeHistory === 'PRODUCT'" disabled :value="product.brandName" />
+          <VueSelect
+            v-if="typeHistory === 'BATCH'"
+            v-model:value="batchId"
+            :options="[
+              { value: 0, text: 'Tất cả' },
+              ...batchList.map((i) => ({
+                value: i.id,
+                text: `Lô ${timeToText(i.expiryDate)} - (${i.quantity} ${product.unitBasicName})`,
+              })),
+            ]"
+            :maxHeight="260"
+            placeholder="Chọn lô hàng"
+            @selectItem="startFetchData"></VueSelect>
+        </div>
       </div>
     </div>
 
-    <div style="flex: 1">
+    <div style="flex-basis: 300px; flex-grow: 1">
       <span style="font-size: 0.8rem">Chọn loại</span>
       <div>
         <VueSelect
@@ -184,69 +211,57 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           :options="[
             { value: null, text: 'Tất cả' },
             { value: VoucherType.Receipt, text: 'Nhập hàng' },
-            { value: VoucherType.Invoice, text: 'Bán hàng' },
-            { value: VoucherType.Visit, text: 'Phòng Khám' },
+            { value: VoucherType.Ticket, text: 'Bán hàng' },
           ]"
-          @selectItem="startFetchMovements"
-        />
+          @selectItem="startFetchData" />
       </div>
     </div>
   </div>
   <div v-if="isMobile" class="table-wrapper mt-2">
-    <table>
+    <table v-if="typeHistory === 'PRODUCT'">
       <thead>
         <tr>
-          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
           <th>Số lượng</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="movements.length === 0">
+        <tr v-if="productMovementList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(movement, index) in movements" :key="index">
+        <tr v-for="(productMovement, index) in productMovementList" :key="index">
           <td>
-            <div v-if="movement.voucherType === VoucherType.Receipt">
+            <div v-if="productMovement.voucherType === VoucherType.Receipt">
               <div>
-                <a @click="openBlankReceiptDetail(movement.voucherId)">
-                  RC{{ movement.voucherId }}
-                </a>
-              </div>
-              <div>
-                <a-tag color="green">{{ movement.distributor!.fullName }}</a-tag>
+                <a-tag color="green">{{ productMovement.distributor!.fullName }}</a-tag>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+              <div style="font-size: 0.8rem">
+                <a @click="openBlankReceiptDetail(productMovement.voucherId)">
+                  N{{ productMovement.voucherId }}
+                </a>
+                <span class="ml-2">
+                  <ReceiptStatusTag :receipt="productMovement.receipt" />
+                </span>
               </div>
             </div>
-            <div v-if="movement.voucherType === VoucherType.Invoice">
+            <div v-if="productMovement.voucherType === VoucherType.Ticket">
               <div>
-                <a @click="openBlankInvoiceDetail(movement.voucherId)">
-                  IV{{ movement.voucherId }}
-                </a>
-              </div>
-              <div>
-                <a-tag color="blue">{{ movement.customer!.fullName }}</a-tag>
+                <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
-            </div>
-            <div v-if="movement.voucherType === VoucherType.Visit">
-              <div>
-                <a @click="openBlankInvoiceDetail(movement.voucherId)">
-                  VS{{ movement.voucherId }}
-                </a>
-              </div>
-              <div>
-                <a-tag color="blue">{{ movement.customer!.fullName }}</a-tag>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
-              </div>
+              <LinkAndStatusTicket :ticket="productMovement.ticket!" />
             </div>
             <div>
-              <span v-if="movement.isRefund">
+              <span v-if="productMovement.isRefund">
                 <a-tag color="error">
                   <template #icon>
                     <MinusCircleOutlined />
@@ -258,30 +273,109 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
           </td>
           <td>
             <div class="flex justify-between">
-              <span v-if="movement.quantity > 0">Nhập: </span>
-              <span v-if="movement.quantity < 0">Xuất: </span>
-              <span class="font-bold"> {{ movement.unitQuantity }} </span>
-              <span v-if="movement.unitRate !== 1">
-                &nbsp;{{ movement.unitName }} ({{ movement.quantity }} {{ product.unitBasicName }})
+              <span v-if="productMovement.quantity > 0">Nhập:</span>
+              <span v-if="productMovement.quantity < 0">Xuất:</span>
+              <span class="font-bold">{{ productMovement.unitQuantity }}</span>
+              <span v-if="productMovement.unitRate !== 1">
+                &nbsp;{{ productMovement.unitName }} ({{ productMovement.quantity }}
+                {{ product.unitBasicName }})
               </span>
             </div>
             <div class="flex justify-between">
-              <span>Giá: </span>
+              <span>Giá:</span>
               <span>
-                {{ formatMoney(movement.unitActualPrice) }}
-                <span v-if="movement.unitName">/ {{ movement.unitName }}</span>
+                {{ formatMoney(productMovement.unitActualPrice) }}
+                <span v-if="productMovement.unitName">/ {{ productMovement.unitName }}</span>
               </span>
             </div>
             <div class="flex justify-between">
               <span>SL:</span>
-              <span>{{ movement.openQuantity }} ➞ {{ movement.closeQuantity }}</span>
+              <span>{{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}</span>
             </div>
-            <div v-if="!currentBatch.id" class="flex justify-between">
+            <div class="flex justify-between">
               <span>Vốn:</span>
-              <span
-                >{{ formatMoney((movement as ProductMovement).openCostAmount) }} ➞
-                {{ formatMoney((movement as ProductMovement).closeCostAmount) }}</span
-              >
+              <span>
+                {{ formatMoney(productMovement.openCostAmount) }} ➞
+                {{ formatMoney(productMovement.closeCostAmount) }}
+              </span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table v-if="typeHistory === 'BATCH'">
+      <thead>
+        <tr>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
+          <th>Số lượng</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="batchMovementList.length === 0">
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
+        </tr>
+        <tr v-for="(batchMovement, index) in batchMovementList" :key="index">
+          <td>
+            <div v-if="batchMovement.voucherType === VoucherType.Receipt">
+              <div>
+                <a-tag color="green">{{ batchMovement.distributor!.fullName }}</a-tag>
+              </div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ timeToText(batchMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+              <div style="font-size: 0.8rem">
+                <a @click="openBlankReceiptDetail(batchMovement.voucherId)">
+                  N{{ batchMovement.voucherId }}
+                </a>
+                <span class="ml-2">
+                  <ReceiptStatusTag :receipt="batchMovement.receipt" />
+                </span>
+              </div>
+            </div>
+            <div v-if="batchMovement.voucherType === VoucherType.Ticket">
+              <div>
+                <a-tag color="blue">{{ batchMovement.customer!.fullName }}</a-tag>
+              </div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ timeToText(batchMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+              <LinkAndStatusTicket :ticket="batchMovement.ticket!" />
+            </div>
+            <div>
+              <span v-if="batchMovement.isRefund">
+                <a-tag color="error">
+                  <template #icon>
+                    <MinusCircleOutlined />
+                  </template>
+                  Hoàn trả
+                </a-tag>
+              </span>
+            </div>
+          </td>
+          <td>
+            <div class="flex justify-between">
+              <span v-if="batchMovement.quantity > 0">Nhập:</span>
+              <span v-if="batchMovement.quantity < 0">Xuất:</span>
+              <span class="font-bold">{{ batchMovement.unitQuantity }}</span>
+              <span v-if="batchMovement.unitRate !== 1">
+                &nbsp;{{ batchMovement.unitName }} ({{ batchMovement.quantity }}
+                {{ product.unitBasicName }})
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span>Giá:</span>
+              <span>
+                {{ formatMoney(batchMovement.unitActualPrice) }}
+                <span v-if="batchMovement.unitName">/ {{ batchMovement.unitName }}</span>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span>SL:</span>
+              <span>{{ batchMovement.openQuantity }} ➞ {{ batchMovement.closeQuantity }}</span>
             </div>
           </td>
         </tr>
@@ -294,128 +388,191 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         size="small"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
   <div v-if="!isMobile" class="table-wrapper mt-4">
-    <table>
+    <table v-if="typeHistory === 'PRODUCT'">
       <thead>
         <tr>
-          <th><a-tag color="blue"> K.Hàng </a-tag>- <a-tag color="green"> NCC </a-tag></th>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
+          <th>Phiếu</th>
           <th>Nhập/Xuất</th>
           <th>Tồn kho ({{ product.unitBasicName }})</th>
           <th>Giá</th>
-          <th v-if="!currentBatch.id">Vốn</th>
+          <th>Vốn</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="movements.length === 0">
+        <tr v-if="productMovementList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(movement, index) in movements" :key="index">
+        <tr v-for="(productMovement, index) in productMovementList" :key="index">
           <td>
-            <div v-if="movement.voucherType === VoucherType.Receipt">
-              <div>
-                <a @click="openBlankReceiptDetail(movement.voucherId)">
-                  RC{{ movement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="green">{{ movement.distributor!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="movement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+            <div v-if="productMovement.voucherType === VoucherType.Receipt">
+              <a-tag color="green">{{ productMovement.distributor!.fullName }}</a-tag>
             </div>
-            <div v-if="movement.voucherType === VoucherType.Invoice">
-              <div>
-                <a @click="openBlankInvoiceDetail(movement.voucherId)">
-                  IV{{ movement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="blue">{{ movement.customer!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="movement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+            <div v-if="productMovement.voucherType === VoucherType.Ticket">
+              <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
             </div>
-            <div v-if="movement.voucherType === VoucherType.Visit">
-              <div>
-                <a @click="openBlankInvoiceDetail(movement.voucherId)">
-                  VS{{ movement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="blue">{{ movement.customer!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(movement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="movement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+          </td>
+          <td>
+            <div v-if="productMovement.voucherType === VoucherType.Receipt">
+              <a
+                style="font-size: 0.8rem"
+                @click="openBlankReceiptDetail(productMovement.voucherId)">
+                NH{{ productMovement.voucherId }}
+              </a>
+              <span class="ml-2">
+                <ReceiptStatusTag :receipt="productMovement.receipt" />
+              </span>
+            </div>
+            <div v-if="productMovement.voucherType === VoucherType.Ticket">
+              <LinkAndStatusTicket
+                :ticket="productMovement.ticket!"
+                :ticketId="productMovement.voucherId" />
+            </div>
+            <div style="font-size: 0.8rem; white-space: nowrap">
+              {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              <span v-if="productMovement.isRefund">
+                <a-tag color="error">
+                  <template #icon>
+                    <MinusCircleOutlined />
+                  </template>
+                  Hoàn trả
+                </a-tag>
+              </span>
             </div>
           </td>
           <td class="text-center">
             <div>
-              {{ movement.unitQuantity }}
-              <span v-if="movement.unitRate !== 1">
-                {{ movement.unitName }}
+              {{ productMovement.unitQuantity }}
+              <span v-if="productMovement.unitRate !== 1">
+                {{ productMovement.unitName }}
               </span>
             </div>
-            <div v-if="movement.unitRate !== 1" class="text-xs">
-              ({{ movement.quantity }} {{ product.unitBasicName }})
+            <div v-if="productMovement.unitRate !== 1" class="text-xs">
+              ({{ productMovement.quantity }} {{ product.unitBasicName }})
             </div>
           </td>
-          <td class="text-center">{{ movement.openQuantity }} ➞ {{ movement.closeQuantity }}</td>
+          <td class="text-center">
+            {{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}
+          </td>
           <td class="text-right">
             <div
-              v-if="movement.expectedPrice !== movement.actualPrice"
+              v-if="productMovement.expectedPrice !== productMovement.actualPrice"
               style="
                 font-size: 0.8rem;
                 text-decoration: line-through;
                 font-style: italic;
                 white-space: nowrap;
                 color: var(--text-red);
-              "
-            >
-              {{ formatMoney(movement.unitExpectedPrice) }}
-              <span v-if="movement.unitRate !== 1"> / {{ movement.unitName }} </span>
+              ">
+              {{ formatMoney(productMovement.unitExpectedPrice) }}
+              <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
             </div>
             <div>
-              {{ formatMoney(movement.unitActualPrice) }}
-              <span v-if="movement.unitRate !== 1"> / {{ movement.unitName }} </span>
+              {{ formatMoney(productMovement.unitActualPrice) }}
+              <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
             </div>
-            <div v-if="movement.unitRate !== 1" class="text-xs">
-              ({{ formatMoney(movement.actualPrice) }} / {{ product.unitBasicName }})
+            <div v-if="productMovement.unitRate !== 1" class="text-xs">
+              ({{ formatMoney(productMovement.actualPrice) }} / {{ product.unitBasicName }})
             </div>
           </td>
-          <td v-if="!currentBatch.id" class="text-center">
-            {{ formatMoney((movement as ProductMovement).openCostAmount) }} ➞
-            {{ formatMoney((movement as ProductMovement).closeCostAmount) }}
+          <td class="text-center">
+            {{ formatMoney(productMovement.openCostAmount) }} ➞
+            {{ formatMoney(productMovement.closeCostAmount) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <table v-if="typeHistory === 'BATCH'">
+      <thead>
+        <tr>
+          <th>
+            <a-tag color="blue">K.Hàng</a-tag>
+            -
+            <a-tag color="green">NCC</a-tag>
+          </th>
+          <th>Nhập/Xuất</th>
+          <th>Phiếu</th>
+          <th>Tồn kho ({{ product.unitBasicName }})</th>
+          <th>Giá</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="batchMovementList.length === 0">
+          <td colspan="20" class="text-center">Không có dữ liệu</td>
+        </tr>
+        <tr v-for="(batchMovement, index) in batchMovementList" :key="index">
+          <td>
+            <div v-if="batchMovement.voucherType === VoucherType.Receipt">
+              <a-tag color="green">{{ batchMovement.distributor!.fullName }}</a-tag>
+            </div>
+            <div v-if="batchMovement.voucherType === VoucherType.Ticket">
+              <a-tag color="blue">{{ batchMovement.customer!.fullName }}</a-tag>
+            </div>
+          </td>
+          <td>
+            <div v-if="batchMovement.voucherType === VoucherType.Receipt">
+              <a style="font-size: 0.8rem" @click="openBlankReceiptDetail(batchMovement.voucherId)">
+                NH{{ batchMovement.voucherId }}
+              </a>
+              <span class="ml-2"><ReceiptStatusTag :receipt="batchMovement.receipt" /></span>
+            </div>
+            <div v-if="batchMovement.voucherType === VoucherType.Ticket">
+              <LinkAndStatusTicket :ticket="batchMovement.ticket!" />
+            </div>
+            <div style="font-size: 0.8rem; white-space: nowrap">
+              {{ timeToText(batchMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              <span v-if="batchMovement.isRefund">
+                <a-tag color="error">
+                  <template #icon>
+                    <MinusCircleOutlined />
+                  </template>
+                  Hoàn trả
+                </a-tag>
+              </span>
+            </div>
+          </td>
+          <td class="text-center">
+            <div>
+              {{ batchMovement.unitQuantity }}
+              <span v-if="batchMovement.unitRate !== 1">
+                {{ batchMovement.unitName }}
+              </span>
+            </div>
+            <div v-if="batchMovement.unitRate !== 1" class="text-xs">
+              ({{ batchMovement.quantity }} {{ product.unitBasicName }})
+            </div>
+          </td>
+          <td class="text-center">
+            {{ batchMovement.openQuantity }} ➞ {{ batchMovement.closeQuantity }}
+          </td>
+          <td class="text-right">
+            <div
+              v-if="batchMovement.expectedPrice !== batchMovement.actualPrice"
+              style="
+                font-size: 0.8rem;
+                text-decoration: line-through;
+                font-style: italic;
+                white-space: nowrap;
+                color: var(--text-red);
+              ">
+              {{ formatMoney(batchMovement.unitExpectedPrice) }}
+              <span v-if="batchMovement.unitRate !== 1">/ {{ batchMovement.unitName }}</span>
+            </div>
+            <div>
+              {{ formatMoney(batchMovement.unitActualPrice) }}
+              <span v-if="batchMovement.unitRate !== 1">/ {{ batchMovement.unitName }}</span>
+            </div>
+            <div v-if="batchMovement.unitRate !== 1" class="text-xs">
+              ({{ formatMoney(batchMovement.actualPrice) }} / {{ product.unitBasicName }})
+            </div>
           </td>
         </tr>
       </tbody>
@@ -426,8 +583,7 @@ const openBlankInvoiceDetail = async (invoiceId: number) => {
         v-model:pageSize="limit"
         :total="total"
         show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-      />
+        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
     </div>
   </div>
 </template>

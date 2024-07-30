@@ -1,84 +1,33 @@
-import { Expose, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
-import { BaseModel } from '../base.model'
 import { Batch } from '../batch/batch.model'
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
 import type { VoucherType } from '../enum'
-import { Invoice } from '../invoice'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
-import { Visit } from '../visit'
+import { Ticket } from '../ticket'
 
-export class BatchMovement extends BaseModel {
-  @Expose({ toClassOnly: true })
+export class BatchMovement {
+  id: number
   productId: number
-
-  @Expose({ toClassOnly: true })
   batchId: number
-
-  @Expose()
   voucherType: VoucherType
-
-  @Expose()
   voucherId: number
-
-  @Expose()
   contactId: number
-
-  @Expose()
   isRefund: boolean
-
-  @Expose()
   openQuantity: number // Số lượng ban đầu
-
-  @Expose()
   quantity: number // Số lượng +/-
-
-  @Expose()
   unitRate: number
-
-  @Expose()
   closeQuantity: number // Số lượng sau thay đổi
-
-  @Expose()
   actualPrice: number // Giá
-
-  @Expose()
   expectedPrice: number // Giá
-
-  @Expose()
   costAmount: number // Vốn
-
-  @Expose()
   createdAt: number
 
-  @Expose({ toClassOnly: true })
-  @Type(() => Batch)
   batch?: Batch
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Product)
   product?: Product
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Receipt)
   receipt?: Receipt
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Invoice)
-  invoice?: Invoice
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Visit)
-  visit?: Visit
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Distributor)
   distributor?: Distributor
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Customer)
+  ticket?: Ticket
   customer?: Customer
 
   get unitQuantity() {
@@ -97,26 +46,46 @@ export class BatchMovement extends BaseModel {
     return this.product!.getUnitNameByRate(this.unitRate) || ''
   }
 
-  static fromPlain(plain: Record<string, any>): BatchMovement {
-    return plainToInstance(BatchMovement, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: BatchMovement) {
+    const target = new BatchMovement()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): BatchMovement[] {
-    return plainToInstance(BatchMovement, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: BatchMovement[]): BatchMovement[] {
+    return sources.map((i) => BatchMovement.basic(i))
   }
 
-  static toPlain(instance: BatchMovement): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static from(source: BatchMovement) {
+    const target = BatchMovement.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      target.product = source.product ? Product.basic(source.product) : source.product
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      target.batch = source.batch ? Batch.basic(source.batch) : source.batch
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
+      target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'distributor')) {
+      target.distributor = source.distributor
+        ? Distributor.basic(source.distributor)
+        : source.distributor
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
+      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
+      target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    return target
+  }
+
+  static fromList(sourceList: BatchMovement[]): BatchMovement[] {
+    return sourceList.map((i) => BatchMovement.from(i))
   }
 }

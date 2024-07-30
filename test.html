@@ -1,25 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monaco Editor Demo</title>
+    <style>
+        /* Set full screen for the editor */
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
-  <table>
-    <thead>
-      <tr>
-        <th>Tên sản phẩm</th>
-        <th>Giá sản phẩm</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Mỗi sản phẩm sẽ generate như sau -->
-      <tr>
-        <td>Sản phẩm 1</td>
-        <td>100000</td>
-      </tr>
-    </tbody>
-  </table>
+    <!-- Container for the Monaco Editor -->
+    <div id="container"></div>
+
+    <!-- Load Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>
+    <script>
+        // Load Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' }});
+        require(['vs/editor/editor.main'], function () {
+            // Create an instance of Monaco Editor
+            monaco.editor.create(document.getElementById('container'), {
+                value: [
+                    "<!DOCTYPE html>",
+                    "<html lang='en'>",
+                    "<head>",
+                    "    <meta charset='UTF-8'>",
+                    "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+                    "    <title>HTML Document</title>",
+                    "    <style>",
+                    "        /* Your CSS here */",
+                    "    </style>",
+                    "</head>",
+                    "<body>",
+                    "    <!-- Your HTML here -->",
+                    "</body>",
+                    "</html>"
+                ].join('\n'),
+                language: 'html', // Set language to HTML
+                theme: 'vs-light', // Dark theme
+                automaticLayout: true, // Auto adjust to window size
+            });
+        });
+    </script>
 </body>
 </html>

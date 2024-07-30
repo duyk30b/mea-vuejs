@@ -1,7 +1,6 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { AuthService } from '../../modules/auth/auth.service'
 
@@ -38,7 +37,7 @@ const startLogin = async () => {
 <template>
   <div class="wrapper">
     <div class="login-card">
-      <a-divider style="font-size: 1.5rem"> ĐĂNG KÝ TÀI KHOẢN </a-divider>
+      <a-divider style="font-size: 1.5rem">ĐĂNG KÝ TÀI KHOẢN</a-divider>
       <br />
       <a-form
         :model="formState"
@@ -47,48 +46,46 @@ const startLogin = async () => {
         :wrapper-col="{ span: 20 }"
         autocomplete="off"
         @finish="startLogin"
-        @finishFailed="onFinishFailed"
-      >
+        @finishFailed="onFinishFailed">
         <a-form-item
           label="ID Cơ sở"
           name="phone"
-          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]"
-        >
+          :rules="[{ required: true, message: 'Cần nhập SĐT cơ sở!' }]">
           <a-input v-model:value="formState.phone" />
         </a-form-item>
 
         <a-form-item
           label="Email Cơ sở"
           name="phone"
-          :rules="[{ required: true, message: 'Cần nhập Email!' }]"
-        >
+          :rules="[{ required: true, message: 'Cần nhập Email!' }]">
           <a-input v-model:value="formState.email" />
         </a-form-item>
 
         <a-form-item
           label="Tài khoản"
           name="username"
-          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Tên tài khoản không được để trống!' }]">
           <a-input v-model:value="formState.username" />
         </a-form-item>
 
         <a-form-item
           label="Mật khẩu"
           name="password"
-          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]"
-        >
+          :rules="[{ required: true, message: 'Mật khẩu không được để trống!' }]">
           <a-input-password v-model:value="formState.password" />
         </a-form-item>
 
         <a-form-item :wrapper-col="{ offset: 10, span: 4 }">
-          <a-button type="primary" html-type="submit" :loading="loading"> Đăng ký </a-button>
+          <a-button type="primary" html-type="submit" :loading="loading">Đăng ký</a-button>
         </a-form-item>
       </a-form>
     </div>
     <div class="company-text">
       <p>Công ty TNHH Công nghệ và TM MEDIHOME</p>
-      <p>HOTLINE: <a href="tel:0376899866" class="hotline">0376.899.866</a></p>
+      <p>
+        HOTLINE:
+        <a href="tel:0376899866" class="hotline">0376.899.866</a>
+      </p>
     </div>
   </div>
 </template>
@@ -97,8 +94,9 @@ const startLogin = async () => {
 .wrapper {
   width: 100vw;
   height: 100vh;
-  background-image: url('@/assets/image/background-login.jpg');
+  // background-image: url('@/assets/image/background-login.jpg');
   background-position: center;
+  background-color: #3b6fba;
   background-repeat: no-repeat;
   background-size: cover;
   padding-top: 10%;
@@ -129,4 +127,4 @@ const startLogin = async () => {
     }
   }
 }
-</style>
+</style> -->

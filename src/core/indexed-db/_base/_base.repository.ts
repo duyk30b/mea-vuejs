@@ -15,6 +15,33 @@ export class BaseRepository<
     this.storeName = options.storeName
   }
 
+  async truncate() {
+    const db = await this.baseDB.createConnection()
+    try {
+      const transaction = db!.transaction([this.storeName], 'readwrite')
+      const objectStore = transaction.objectStore(this.storeName)
+      const result = await new Promise((resolve, reject) => {
+        const clearRequest = objectStore.clear()
+
+        clearRequest.onsuccess = () => {
+          resolve(true)
+        }
+
+        clearRequest.onerror = (event) => {
+          reject((event.target as IDBRequest).error)
+        }
+      })
+
+      transaction.commit()
+      return result
+    } catch (error) {
+      console.log('🚀 ~ file: _base.repository.ts ~ truncate ~ error:', error)
+      throw error
+    } finally {
+      db.close()
+    }
+  }
+
   async findAll(condition: BaseCondition<_ENTITY> = {}): Promise<_ENTITY[]> {
     const db = await this.baseDB.createConnection()
     try {
@@ -63,8 +90,18 @@ export class BaseRepository<
       Object.entries(sort).forEach(([key, value]) => {
         if (!key || !value) return
         data.sort((a: any, b: any) => {
-          if (value === 'ASC') return a[key] < b[key] ? -1 : 1
-          if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+          if (value === 'ASC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] < b[key] ? -1 : 1
+          }
+          if (value === 'DESC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] > b[key] ? -1 : 1
+          }
+          // if (value === 'ASC') return a[key] < b[key] ? -1 : 1
+          // if (value === 'DESC') return a[key] > b[key] ? -1 : 1
           return a.id > b.id ? -1 : 1
         })
       })

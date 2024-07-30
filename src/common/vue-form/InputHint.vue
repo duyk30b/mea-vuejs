@@ -126,25 +126,22 @@ defineExpose({ focus, clear })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
-        @focusin="showOptions = true"
-      />
+        @focusin="showOptions = true" />
     </div>
     <div class="icon-append">
-      <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" />
+      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
+      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
     </div>
     <div
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }"
-    >
+      :style="{ maxHeight: `${maxHeight}px` }">
       <div
         v-for="(item, index) in optionsFilter"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click="handleSelectItem(index)"
-      >
+        @click="handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">{{ item }}</div>
         </slot>

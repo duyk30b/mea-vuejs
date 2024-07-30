@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { CloseOutlined, ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { Modal, message } from 'ant-design-vue'
-import { createVNode, ref } from 'vue'
-import VueModal from '../../common/VueModal.vue'
+import { ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose } from '../../common/icon'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputNumber, InputText } from '../../common/vue-form'
-import { User } from '../../modules/user'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../common/vue-modal/vue-modal.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
+import { User } from '../../modules/user'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const screenStore = useScreenStore()
-const { isMobile } = screenStore
+const settingStore = useSettingStore()
+const { isMobile } = settingStore
 
 const showModal = ref(false)
 const user = ref<User>(User.blank())
@@ -21,7 +23,12 @@ const saveLoading = ref(false)
 
 const openModal = async (instance?: User) => {
   showModal.value = true
-  user.value = instance ? User.fromInstance(instance) : User.blank()
+  if (instance) {
+    user.value = User.from(instance)
+  } else {
+    user.value = User.blank()
+    user.value.isAdmin = 1
+  }
 }
 
 const closeModal = () => {
@@ -32,10 +39,10 @@ const closeModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   if (!user.value.fullName) {
-    return message.error('Lỗi: Tên khách hàng không được bỏ trống')
+    return AlertStore.addError('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
-    if (user.value.id === null) {
+    if (!user.value.id) {
       const response = await RootUserApi.createOne(user.value)
       emit('success', response, 'CREATE')
     } else {
@@ -63,14 +70,12 @@ const handleDelete = async () => {
 }
 
 const clickDelete = () => {
-  Modal.confirm({
+  ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa khách hàng này',
-    icon: createVNode(ExclamationCircleOutlined),
     content: 'Khách hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       await handleDelete()
     },
-    onCancel() {},
   })
 }
 
@@ -82,10 +87,10 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ user.id !== null ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
+          {{ user.id ? 'Cập nhật thông tin User' : 'Tạo User mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -93,7 +98,7 @@ defineExpose({ openModal })
         <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Oid</div>
           <div class="flex-auto">
-            <InputNumber v-model:value="user.oid" :disabled="user.id !== null" required />
+            <InputNumber v-model:value="user.oid" :disabled="!!user.id" required />
           </div>
         </div>
 
@@ -125,15 +130,7 @@ defineExpose({ openModal })
               v-model:value="user.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e: string) => (user.phone = e.replace(/ /g, ''))"
-            />
-          </div>
-        </div>
-
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">RoleId</div>
-          <div class="flex-auto">
-            <InputNumber v-model:value="user.roleId" required />
+              @update:value="(e: string) => (user.phone = e.replace(/ /g, ''))" />
           </div>
         </div>
 
@@ -144,46 +141,43 @@ defineExpose({ openModal })
               v-model:value="user.birthday"
               format="DD/MM/YYYY"
               type-parser="number"
-              class="w-full"
-            />
+              class="w-full" />
           </div>
         </div>
 
-        <div class="mt-3 flex items-center">
+        <div class="mt-5 flex items-center">
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1"> Nam </a-radio>
-              <a-radio :value="0"> Nữ </a-radio>
+              <a-radio :value="1">Nam</a-radio>
+              <a-radio :value="0">Nữ</a-radio>
             </a-radio-group>
           </div>
         </div>
 
-        <div class="flex items-center mt-3">
+        <div class="flex items-center mt-5">
+          <div class="w-[100px] flex-none">Admin</div>
+          <a-switch
+            :checked="Boolean(user.isAdmin)"
+            @change="(checked: Boolean) => (user.isAdmin = checked ? 1 : 0)" />
+        </div>
+
+        <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)"
-          />
+            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)" />
           <div v-if="!user.isActive" class="ml-4">User này tạm thời không thể hoạt động</div>
         </div>
       </div>
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <!-- <a-button danger @click="clickDelete">Xóa</a-button> -->
-          <a-button class="ml-auto" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Hủy bỏ
-          </a-button>
-          <a-button type="primary" htmlType="submit" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <!-- <VueButton danger @click="clickDelete">Xóa</VueButton> -->
+          <VueButton class="ml-auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </form>

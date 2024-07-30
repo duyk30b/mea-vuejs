@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { CloseOutlined, PlusOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
-import VueModal from '../../../common/VueModal.vue'
+import VueButton from '../../../common/VueButton.vue'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useScreenStore()
+const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_CUSTOMER_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_CUSTOMER_UPSERT))
 )
@@ -29,8 +30,8 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_CUSTOMER_UPSERT, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    await OrganizationService.saveSettings(SettingKey.SCREEN_CUSTOMER_UPSERT, settingData)
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_CUSTOMER_UPSERT = JSON.parse(settingData)
 
     emit('success')
@@ -51,57 +52,60 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
-      <div class="p-4">
+      <div class="p-4 table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>Màn hình thêm/sửa khách hàng</th>
+              <th colspan="2">Màn hình thêm/sửa khách hàng</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.phone">
-                  Hiển thị số điện thoại
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
+              <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.birthday">
                   Hiển thị ngày sinh
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.gender">
-                  Hiển thị giới tính
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.gender">Hiển thị giới tính</a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.addressFull">
+                  Hiển thị điền địa chỉ đầy đủ (tỉnh, huyện, xã, đường)
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.identityCard">
-                  Hiển thị căn cước công dân
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.addressBasic">
+                  Hiển thị điền địa chỉ cơ bản
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.address">
-                  Hiển thị điền thông tin địa chỉ
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
+              <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.relative">
-                  Hiển thị điền thông tin người thân
+                  Hiển thị điền thông tin liên hệ khác
+                </a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.note">Hiển thị điền ghi chú</a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.customerSource">
+                  Hiển thị nguồn khách hàng
                 </a-checkbox>
               </td>
             </tr>
@@ -111,18 +115,8 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
-            <template #icon>
-              <PlusOutlined />
-            </template>
-            Hủy bỏ
-          </a-button>
-          <a-button type="primary" @click="handleSave">
-            <template #icon>
-              <PlusOutlined />
-            </template>
-            Lưu lại
-          </a-button>
+          <VueButton icon="close" @click="handleClose">Hủy bỏ</VueButton>
+          <VueButton color="blue" type="button" icon="plus" @click="handleSave">Lưu lại</VueButton>
         </div>
       </div>
     </div>

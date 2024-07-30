@@ -4,12 +4,14 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
+import { DTimer } from '../../utils'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -60,9 +62,14 @@ const handleModalRootUserUpsertSuccess = async (
   await startFetchData()
 }
 
-const deviceLogout = async (params: { userId: number; code: string; oid: number }) => {
-  const { userId, oid, code } = params
-  const result = await RootUserApi.deviceLogout({ userId, code, oid })
+const deviceLogout = async (params: { userId: number; refreshExp: number; oid: number }) => {
+  const { userId, oid, refreshExp } = params
+  const result = await RootUserApi.deviceLogout({ userId, refreshExp, oid })
+  await startFetchData()
+}
+
+const logoutAll = async () => {
+  const result = await RootUserApi.logoutAll()
   await startFetchData()
 }
 </script>
@@ -71,13 +78,15 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
   <ModalRootUserUpsert ref="modalRootUserUpsert" @success="handleModalRootUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><AccountBookOutlined /> Danh sách User</div>
-      <a-button type="primary" @click="modalRootUserUpsert?.openModal()">
-        <template #icon>
-          <PlusOutlined />
-        </template>
+      <div class="hidden md:block">
+        <AccountBookOutlined />
+        Danh sách User
+      </div>
+      <VueButton color="blue" icon="plus" @click="modalRootUserUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
+
+      <VueButton color="red" icon="send" @click="logoutAll">Đăng xuất tất cả</VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -88,12 +97,9 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
           <tr>
             <th>ID</th>
             <th>OID</th>
-            <th>Username</th>
-            <th>Password</th>
-            <th>OrgPhone</th>
-            <th>OrgEmail</th>
-            <th>OrgName</th>
+            <th>Login</th>
             <th>Thiết bị đăng nhập</th>
+            <th>Organization Note</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -105,11 +111,11 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
           <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">{{ user.id }}</td>
             <td class="text-center">{{ user.oid }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.password }}</td>
-            <td class="text-center">{{ user.organization?.phone }}</td>
-            <td>{{ user.organization?.email }}</td>
-            <td>{{ user.organization?.name }}</td>
+            <td>
+              <div>{{ user.organization?.phone }}</div>
+              <div>{{ user.username }}</div>
+              <div>{{ user.password }}</div>
+            </td>
             <td>
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
@@ -119,20 +125,36 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
                   <span v-else>
                     <font-awesome-icon :icon="['fas', 'desktop']" />
                   </span>
-                  <span class="ml-2">{{ device.os }}</span> / <span>{{ device.browser }}</span>
+                  <span class="ml-2">{{ device.os }}</span>
+                  /
+                  <span>{{ device.browser }}</span>
+                  -
+                  <span>Exp {{ DTimer.timeToText(device.refreshExp) }}</span>
                 </div>
-                <div>IP: {{ device.ip }}</div>
-                <div>Time: {{ new Date(parseInt(device.code, 36)).toISOString() }}</div>
-                <div>
-                  <a-button
-                    type="default"
+                <div style="white-space: nowrap">IP: {{ device.ip }}</div>
+                <div v-if="device.online !== true">
+                  <HistoryOutlined class="mr-1" />
+                  {{ DTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
+                </div>
+                <div class="flex gap-2">
+                  <VueButton
                     size="small"
-                    @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })"
-                  >
+                    @click="
+                      deviceLogout({
+                        userId: user.id!,
+                        refreshExp: device.refreshExp,
+                        oid: user.oid,
+                      })
+                    ">
                     Đăng xuất
-                  </a-button>
+                  </VueButton>
+                  <a-tag v-if="device.online === true" color="success">Online</a-tag>
+                  <a-tag v-else color="default">Offline</a-tag>
                 </div>
               </div>
+            </td>
+            <td>
+              {{ user.organization?.note }}
             </td>
             <td class="text-center">
               <a-tag v-if="user.isActive" color="success">
@@ -152,8 +174,7 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalRootUserUpsert?.openModal(user)"
-              >
+                @click="modalRootUserUpsert?.openModal(user)">
                 <FormOutlined />
               </a>
             </td>
@@ -167,8 +188,9 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

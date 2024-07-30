@@ -5,7 +5,7 @@ import { formatNumber } from '../../utils'
 
 const props = withDefaults(
   defineProps<{
-    value: number
+    value: number | string
     prepend?: string
     append?: string
     textAlign?: 'left' | 'right'
@@ -47,25 +47,25 @@ watchEffect(() => {
     let msg = ''
     ;['GT', 'gt', '>'].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
-      if (propsValid != null && !(props.value > propsValid)) {
+      if (propsValid != null && !(Number(props.value) > propsValid)) {
         msg = `Giá trị phải lớn hơn ${formatNumber({ number: propsValid })}`
       }
     })
     ;['GTE', 'gte', '>='].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
-      if (propsValid != null && !(props.value >= propsValid)) {
+      if (propsValid != null && !(Number(props.value) >= propsValid)) {
         msg = `Giá trị phải lớn hơn hoặc bằng ${formatNumber({ number: propsValid })}`
       }
     })
     ;['LT', 'lt', '<'].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
-      if (propsValid != null && !(props.value < propsValid)) {
+      if (propsValid != null && !(Number(props.value) < propsValid)) {
         msg = `Giá trị phải nhỏ hơn hoặc bằng ${formatNumber({ number: propsValid })}`
       }
     })
     ;['LTE', 'lte', '<='].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
-      if (propsValid != null && !(props.value <= propsValid)) {
+      if (propsValid != null && !(Number(props.value) <= propsValid)) {
         msg = `Giá trị phải nhỏ hơn hoặc bằng ${formatNumber({ number: propsValid })}`
       }
     })
@@ -144,8 +144,7 @@ defineExpose({ focus })
         :required="required"
         inputmode="decimal"
         @focus="handleFocus"
-        @input="handleInput"
-      />
+        @input="handleInput" />
     </div>
     <div v-if="append" class="append">
       {{ append }}

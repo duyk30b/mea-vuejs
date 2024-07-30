@@ -1,0 +1,372 @@
+<script setup lang="ts">
+import {
+  AuditOutlined,
+  ContactsOutlined,
+  ContainerOutlined,
+  DisconnectOutlined,
+  LoginOutlined,
+  OneToOneOutlined,
+} from '@ant-design/icons-vue'
+import { onBeforeMount, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
+import { IconSetting } from '../../../common/icon'
+import {
+  IconEyeGlasses,
+  IconFluidMed,
+  IconLabPanel,
+  IconRadiology,
+  IconStethoscope,
+} from '../../../common/icon-google'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
+import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { DeliveryStatus } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
+import {
+  TicketClinicApi,
+  ticketClinicRef,
+  ticketRefDeliveryStatus,
+  useTicketClinicStore,
+} from '../../../modules/ticket-clinic'
+import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
+import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
+import TicketClinicConsumable from './TicketClinicConsumable.vue'
+import TicketClinicDiagnosisGeneral from './TicketClinicDiagnosisGeneral.vue'
+import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
+import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
+import TicketClinicInformation from './TicketClinicInformation.vue'
+import TicketClinicLaboratory from './TicketClinicLaboratory.vue'
+import TicketClinicPrescription from './TicketClinicPrescription.vue'
+import TicketClinicProcedure from './TicketClinicProcedure.vue'
+import TicketClinicRadiology from './TicketClinicRadiology.vue'
+import TicketClinicSummary from './TicketClinicSummary.vue'
+import ModalTicketClinicDetailSettingData from './setting/ModalTicketClinicDetailSettingData.vue'
+import { Customer } from '../../../modules/customer'
+import TicketClinicDiagnosisObstetric from './TicketClinicDiagnosisObstetric.vue'
+
+const modalTicketClinicDetailSettingData =
+  ref<InstanceType<typeof ModalTicketClinicDetailSettingData>>()
+
+const route = useRoute()
+const router = useRouter()
+const meStore = useMeStore()
+const settingStore = useSettingStore()
+const ticketClinicStore = useTicketClinicStore()
+const { permissionIdMap } = meStore
+const { formatMoney } = settingStore
+const childComponent = ref<any>(null)
+
+onBeforeMount(async () => {
+  const ticketId = Number(route.params.id)
+  if (ticketId) {
+    await startFetchData(ticketId)
+  } else {
+    ticketClinicRef.value = Ticket.blank()
+    ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
+    ticketClinicRef.value.customer = Customer.init()
+  }
+})
+
+onUnmounted(async () => {
+  ticketClinicRef.value = Ticket.blank()
+})
+
+const startFetchData = async (ticketId: number) => {
+  try {
+    const ticketData = await ticketClinicStore.detail(ticketId, {
+      relation: {
+        customer: true,
+        customerPaymentList: false, // query khi bật modal thanh toán
+
+        ticketAttributeList: true,
+        // ticketProductList: true,
+        ticketProductConsumableList: { product: true, batch: true },
+        ticketProductPrescriptionList: { product: true, batch: true },
+        ticketProcedureList: { procedure: true },
+        ticketLaboratoryList: {},
+        ticketRadiologyList: { radiology: true },
+        ticketUserList: { user: true },
+        toAppointment: true,
+      },
+    })
+    if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
+    if (!ticketData.ticketProductList) ticketData.ticketProductList = []
+    if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
+    if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
+
+    if (!ticketData.ticketAttributeList) {
+      const healthHistory = ticketData.customer?.healthHistory || ''
+      ticketData.ticketAttributeList = [
+        {
+          key: 'healthHistory',
+          value: ticketData.customer?.healthHistory || '',
+          id: 0,
+          ticketId: ticketData.id,
+        },
+      ]
+      ticketData.ticketAttributeMap = { healthHistory }
+    }
+    ticketClinicRef.value = ticketData
+  } catch (error) {
+    console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
+  }
+}
+
+const handleMenuSettingClick = (menu: { key: string }) => {
+  if (menu.key === 'SETTING_DATA') {
+    modalTicketClinicDetailSettingData.value?.openModal()
+  }
+}
+
+const handleChangeTabs = (activeKey: any) => {}
+
+const startCheckup = async () => {
+  await TicketClinicApi.startCheckup({ ticketId: ticketClinicRef.value.id })
+}
+
+const startRegisterExecuting = async () => {
+  // if (childComponent.value?.getDataTicketDiagnosis) {
+  //   const data = childComponent.value.getDataTicketDiagnosis()
+  //   ticketDiagnosis = data.ticketDiagnosis || TicketDiagnosis.blank()
+  // }
+
+  // ticketClinicRef.value = await TicketClinicApi.registerExecuting({
+  //   customerId: ticketClinicRef.value.customerId,
+  //   ticketType: ticketClinicRef.value.ticketType,
+  //   registeredAt: Date.now(),
+  //   diagnosisBasic: {
+  //     reason: ticketDiagnosis?.reason || '',
+  //     healthHistory: ticketDiagnosis?.healthHistory || '',
+  //     general: ticketDiagnosis?.general || '',
+  //     regional: ticketDiagnosis?.regional || '',
+  //     summary: ticketDiagnosis?.summary || '',
+  //     diagnosis: ticketDiagnosis?.diagnosis || '',
+  //   },
+  // })
+  router.replace({
+    path: route.path.replace(/\/detail\/\d+/, `/detail/${ticketClinicRef.value.id}`),
+  })
+}
+
+const startCloseVisit = async () => {
+  await TicketClinicApi.close(ticketClinicRef.value.id)
+}
+
+const clickCloseVisit = () => {
+  if (ticketRefDeliveryStatus.value === DeliveryStatus.Pending) {
+    return ModalStore.alert({
+      title: 'Thuốc vẫn chưa xuất hết ?',
+      content: [
+        '- Cần xuất thuốc và vật tư trước khi đóng phiếu khám',
+        '- Khách hàng không lấy thuốc có thể chọn số lượng mua = 0',
+      ],
+    })
+  }
+  if (
+    (ticketClinicRef.value.ticketRadiologyList || []).find(
+      (i) => i.status == TicketRadiologyStatus.Pending
+    )
+  ) {
+    return ModalStore.alert({
+      title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
+      content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
+    })
+  }
+  // if (
+  //   (ticketClinicRef.value.ticketLaboratoryList || []).find(
+  //     (i) => i.status === TicketLaboratoryStatus.Pending
+  //   )
+  // ) {
+  //   return ModalStore.alert({
+  //     title: 'Phiếu xét nghiệm vẫn chưa được thực hiện ?',
+  //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
+  //   })
+  // }
+  if (ticketClinicRef.value.paid > ticketClinicRef.value.totalMoney) {
+    return ModalStore.alert({
+      title: 'Khách hàng còn thừa tiền tạm ứng',
+      content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
+    })
+  }
+
+  if (ticketClinicRef.value.debt) {
+    return ModalStore.confirm({
+      title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
+      content: [
+        '- Vẫn đóng phiếu khám.',
+        `- Ghi nợ khách hàng: ${formatMoney(ticketClinicRef.value?.debt || 0)}.`,
+      ],
+      okText: 'Xác nhận Đóng phiếu',
+      async onOk() {
+        await startCloseVisit()
+      },
+    })
+  }
+
+  startCloseVisit()
+}
+</script>
+
+<template>
+  <ModalTicketClinicDetailSettingData ref="modalTicketClinicDetailSettingData" />
+  <div class="page-header">
+    <div class="page-header-content">
+      <div class="md:block">
+        <ContactsOutlined />
+        <span class="ml-2">{{ ticketClinicRef.customer?.fullName }}</span>
+      </div>
+    </div>
+    <div class="page-header-setting">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
+        <span>
+          <IconSetting />
+        </span>
+        <template #overlay>
+          <a-menu @click="handleMenuSettingClick">
+            <!-- <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item> -->
+            <a-menu-item key="SETTING_DATA">Cài đặt dữ liệu</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
+  </div>
+  <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
+    <div style="flex-basis: 600px; flex-grow: 2; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
+      <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
+        <template #menu>
+          <VueTabMenu
+            v-if="ticketClinicRef.ticketType === TicketType.Clinic"
+            :tabKey="TicketClinicDiagnosisGeneral.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisGeneral.__name })">
+            <IconStethoscope />
+            Khám
+          </VueTabMenu>
+          <VueTabMenu
+            v-if="ticketClinicRef.ticketType === TicketType.Obstetric"
+            :tabKey="TicketClinicDiagnosisObstetric.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisObstetric.__name })">
+            <IconStethoscope />
+            Khám
+          </VueTabMenu>
+          <VueTabMenu
+            v-if="ticketClinicRef.ticketType === TicketType.Eye"
+            :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })">
+            <IconStethoscope />
+            Khám mắt
+          </VueTabMenu>
+          <template
+            v-if="
+              [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
+                ticketClinicRef.ticketStatus
+              )
+            ">
+            <VueTabMenu
+              v-if="ticketClinicRef.ticketType === TicketType.Eye"
+              :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
+              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })">
+              <IconEyeGlasses />
+              Đo thị lực
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicProcedure.__name!"
+              @active="router.push({ name: TicketClinicProcedure.__name })">
+              <IconFluidMed />
+              Dịch vụ
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicConsumable.__name!"
+              @active="router.push({ name: TicketClinicConsumable.__name })">
+              <OneToOneOutlined />
+              Vật tư
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicLaboratory.__name!"
+              @active="router.push({ name: TicketClinicLaboratory.__name })">
+              <IconLabPanel />
+              Xét nghiệm
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicRadiology.__name!"
+              @active="router.push({ name: TicketClinicRadiology.__name })">
+              <IconRadiology />
+              CĐHA
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicPrescription.__name!"
+              @active="router.push({ name: TicketClinicPrescription.__name })">
+              <DisconnectOutlined />
+              Đơn thuốc
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicSummary.__name!"
+              @active="router.push({ name: TicketClinicSummary.__name })">
+              <AuditOutlined />
+              Tổng kết
+            </VueTabMenu>
+          </template>
+        </template>
+      </VueTabs>
+      <RouterView v-slot="{ Component }">
+        <KeepAlive
+          :include="
+            [
+              TicketClinicDiagnosisGeneral.__name,
+              TicketClinicDiagnosisObstetric.__name,
+              TicketClinicDiagnosisEyeBasic.__name,
+              TicketClinicDiagnosisEyeSpecial.__name,
+              TicketClinicProcedure.__name,
+              TicketClinicConsumable.__name,
+              TicketClinicLaboratory.__name,
+              TicketClinicRadiology.__name,
+              TicketClinicPrescription.__name,
+            ].join(',')
+          ">
+          <component :is="Component" ref="childComponent" />
+        </KeepAlive>
+      </RouterView>
+    </div>
+    <div style="flex-basis: 300px; flex-grow: 1" class="">
+      <TicketClinicInformation />
+      <div class="mt-4 w-full flex flex-col px-1 gap-4">
+        <VueButton
+          v-if="
+            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Approved].includes(
+              ticketClinicRef.ticketStatus
+            ) &&
+            permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
+            !!ticketClinicRef.id
+          "
+          color="blue"
+          size="default"
+          @click="startCheckup">
+          <LoginOutlined />
+          VÀO KHÁM
+        </VueButton>
+        <VueButton
+          v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]"
+          color="blue"
+          size="default"
+          @click="startRegisterExecuting">
+          <LoginOutlined />
+          ĐĂNG KÝ KHÁM
+        </VueButton>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CLOSE]"
+          color="blue"
+          size="default"
+          :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"
+          @click="clickCloseVisit">
+          <ContainerOutlined />
+          ĐÓNG PHIẾU KHÁM
+        </VueButton>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped></style>

@@ -20,12 +20,6 @@ export enum EGender {
   Male = 1,
 }
 
-export enum ERole {
-  Root = 0,
-  Admin = 1,
-  User = 2,
-}
-
 export enum DiscountType {
   Percent = '%',
   VND = 'VNĐ',
@@ -41,30 +35,37 @@ export enum PaymentType {
 
 export type UnitType = { name: string; rate: number; default?: boolean }
 
-export enum MovementType {
-  Receipt = 1,
-  Invoice = 2,
-  Visit = 3,
-}
-
 export enum VoucherType {
   Receipt = 1,
-  Invoice = 2,
-  Visit = 3,
+  Ticket = 2,
 }
 
 export enum DeliveryStatus {
-  OutOfStock = 0,
-  Pending = 1,
-  Delivered = 2,
-  PartiallyReturned = 3,
-  FullyReturned = 4,
+  NoStock = 1, // không có hàng
+  Pending = 2,
+  Delivered = 3,
+  // Returned = 4,
+  // PartiallyReturned = 4,
+  // FullyReturned = 5,
 }
 
 export enum PaymentViewType {
   Prepayment = 1,
-  SendProductAndPayment = 2,
+  SendProductAndPaymentAndClose = 2,
   PayDebt = 3,
   RefundOverpaid = 4,
   Success = 5,
+}
+
+export enum AttributeInputType {
+  InputText = 'InputText',
+  InputNumber = 'InputNumber',
+  InputDate = 'InputDate',
+  Select = 'Select',
+}
+
+export enum AttributeLayoutType {
+  Table = 'Bảng',
+  InputAndLabelTop = 'Input và Nhãn bên trên',
+  InputAndLabelLeft = 'Input và Nhãn bên trái',
 }

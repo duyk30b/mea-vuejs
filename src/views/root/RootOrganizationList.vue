@@ -4,18 +4,19 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import VueButton from '../../common/VueButton.vue'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import type { Organization } from '../../modules/organization'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
+import { timeToText } from '../../utils'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const organizationList = ref<Organization[]>([])
 const dataLoading = ref(false)
@@ -57,10 +58,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalRootOrganizationUpsertSuccess = async (
-  data: Organization,
-  type: 'CREATE' | 'UPDATE' | 'CLEAR' | 'DELETE'
-) => {
+const handleModalRootOrganizationUpsertSuccess = async () => {
   await startFetchData()
 }
 </script>
@@ -68,17 +66,16 @@ const handleModalRootOrganizationUpsertSuccess = async (
 <template>
   <ModalRootOrganizationUpsert
     ref="modalRootOrganizationUpsert"
-    @success="handleModalRootOrganizationUpsertSuccess"
-  />
+    @success="handleModalRootOrganizationUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><AccountBookOutlined /> Danh sách cơ sở</div>
-      <a-button type="primary" @click="modalRootOrganizationUpsert?.openModal()">
-        <template #icon>
-          <PlusOutlined />
-        </template>
+      <div class="hidden md:block">
+        <AccountBookOutlined />
+        Danh sách cơ sở
+      </div>
+      <VueButton icon="plus" color="blue" @click="modalRootOrganizationUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -91,7 +88,8 @@ const handleModalRootOrganizationUpsertSuccess = async (
             <th>Phone</th>
             <th>Email</th>
             <th>Name</th>
-            <th>Address</th>
+            <th>ExpiryDate</th>
+            <th>Note</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -105,10 +103,8 @@ const handleModalRootOrganizationUpsertSuccess = async (
             <td class="text-center">{{ organization.phone }}</td>
             <td>{{ organization.email }}</td>
             <td>{{ organization.name }}</td>
-            <td>
-              {{ organization.addressProvince }} - {{ organization.addressDistrict }} -
-              {{ organization.addressWard }}
-            </td>
+            <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
+            <td>{{ organization.note }}</td>
             <td class="text-center">
               <a-tag v-if="organization.isActive" color="success">
                 <template #icon>
@@ -127,8 +123,7 @@ const handleModalRootOrganizationUpsertSuccess = async (
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalRootOrganizationUpsert?.openModal(organization)"
-              >
+                @click="modalRootOrganizationUpsert?.openModal(organization)">
                 <FormOutlined />
               </a>
             </td>
@@ -142,8 +137,9 @@ const handleModalRootOrganizationUpsertSuccess = async (
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

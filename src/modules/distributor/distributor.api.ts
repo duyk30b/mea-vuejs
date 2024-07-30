@@ -1,7 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   DistributorDetailQuery,
   DistributorGetQuery,
@@ -18,7 +16,7 @@ export class DistributorApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Distributor.fromPlains(data),
+      data: Distributor.fromList(data),
     }
   }
 
@@ -29,7 +27,7 @@ export class DistributorApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Distributor.fromPlains(data),
+      data: Distributor.fromList(data),
     }
   }
 
@@ -43,27 +41,43 @@ export class DistributorApi {
   static async detail(id: number, options: DistributorDetailQuery = {}): Promise<Distributor> {
     const params = DistributorGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/distributor/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.fromPlain(data)
+    const { data, meta } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
-  static async createOne(instance: Distributor) {
-    const plain = Distributor.toPlain(instance, 'USER_CREATE')
-    const response = await AxiosInstance.post('/distributor/create', plain)
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.fromPlain(data)
+  static async createOne(distributor: Distributor) {
+    const response = await AxiosInstance.post('/distributor/create', {
+      fullName: distributor.fullName,
+      phone: distributor.phone,
+      addressProvince: distributor.addressProvince,
+      addressDistrict: distributor.addressDistrict,
+      addressWard: distributor.addressWard,
+      addressStreet: distributor.addressStreet,
+      note: distributor.note,
+      isActive: distributor.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
-  static async updateOne(id: number, instance: Distributor) {
-    const plain = Distributor.toPlain(instance, 'USER_UPDATE')
-    const response = await AxiosInstance.patch(`/distributor/update/${id}`, plain)
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.fromPlain(data)
+  static async updateOne(id: number, distributor: Distributor) {
+    const response = await AxiosInstance.patch(`/distributor/update/${id}`, {
+      fullName: distributor.fullName,
+      phone: distributor.phone,
+      addressProvince: distributor.addressProvince,
+      addressDistrict: distributor.addressDistrict,
+      addressWard: distributor.addressWard,
+      addressStreet: distributor.addressStreet,
+      note: distributor.note,
+      isActive: distributor.isActive,
+    })
+    const { data } = response.data as BaseResponse
+    return Distributor.from(data)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/distributor/delete/${id}`)
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.fromPlain(data)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/distributor/destroy/${id}`)
+    const result = response.data as BaseResponse<{ distributorId?: number; countReceipt?: number }>
+    return result
   }
 }

@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { nextTick, ref } from 'vue'
-import VueModal from '../../../common/VueModal.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useScreenStore } from '../../../modules/_me/screen.store'
-import { ScreenSettingKey } from '../../../modules/_me/store.variable'
-import { Distributor, useDistributorStore } from '../../../modules/distributor'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { SettingKey } from '../../../modules/_me/store.variable'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
 import { DTimer } from '../../../utils'
+
+const TABS_KEY = {
+  RECEIPT_ITEMS: 'RECEIPT_ITEMS',
+  RECEIPT_PAYMENT: 'RECEIPT_PAYMENT',
+}
 
 const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const distributorStore = useDistributorStore()
-
-const store = useScreenStore()
+const store = useSettingStore()
 const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
@@ -25,10 +30,10 @@ const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref('1')
+const activeTab = ref(TABS_KEY.RECEIPT_ITEMS)
 
 const distributorList = ref<Distributor[]>([])
-const distributorDefault = ref<Distributor>(meStore.distributorDefault)
+const distributorDefault = ref<Distributor>(DistributorService.distributorDefault)
 
 const selectDistributor = async (data?: Distributor) => {
   settingDisplay.value.distributor.idDefault = data?.id || 0
@@ -37,7 +42,7 @@ const selectDistributor = async (data?: Distributor) => {
 
 const searchingDistributor = async (text: string) => {
   if (text) {
-    distributorList.value = await distributorStore.search(text)
+    distributorList.value = await DistributorService.search(text)
   } else {
     distributorList.value = []
     settingDisplay.value.distributor.idDefault = 0
@@ -47,14 +52,6 @@ const searchingDistributor = async (text: string) => {
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
-
-  nextTick(() => {
-    inputOptionsDistributor.value?.setItem({
-      value: distributorDefault.value?.id || 0,
-      text: distributorDefault.value?.fullName || '',
-      data: distributorDefault,
-    })
-  })
 }
 
 const handleClose = () => {
@@ -65,16 +62,29 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(ScreenSettingKey.SCREEN_RECEIPT_UPSERT, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
-    meStore.distributorDefault = Distributor.toBasic(distributorDefault.value)
+    DistributorService.distributorDefault = Distributor.from(distributorDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:75 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
+  }
+}
+
+const handleUpdateTabShow = async (value: any) => {
+  if (value === TABS_KEY.RECEIPT_PAYMENT) {
+    distributorDefault.value = await DistributorService.getDistributorDefault()
+    nextTick(() => {
+      inputOptionsDistributor.value?.setItem({
+        value: distributorDefault.value.id,
+        text: distributorDefault.value.fullName,
+        data: distributorDefault.value,
+      })
+    })
   }
 }
 
@@ -87,187 +97,169 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
       <div class="px-6 mt-4 receipt-upsert-setting-screen-tabs">
-        <a-tabs v-model:activeKey="activeTab" type="card" :tabBarGutter="10">
-          <a-tab-pane key="1" tab="Cài đặt danh sách">
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Chọn sản phẩm</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.receiptItemInput.salePrice">
-                        Cập nhật giá bán
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                </tbody>
-                <thead>
-                  <tr>
-                    <th>Danh sách hàng trong phiếu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
-                      <div class="pl-7">
-                        <a-radio-group
-                          v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem"
-                        >
-                          <a-radio style="display: flex; line-height: 36px" :value="false">
-                            Cộng gộp số lượng
-                          </a-radio>
-                          <a-radio style="display: flex; line-height: 36px" :value="true">
-                            Không cộng gộp (VD: nhập 4 tặng 1 thì bản ghi số lượng 1 có thể điền đơn
-                            giá = 0)
-                          </a-radio>
-                        </a-radio-group>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
-                        Hiển thị chi tiết sản phẩm (
-                        <FileSearchOutlined /> )
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
-                        Hiển thị hoạt chất
-                      </a-checkbox>
-                    </td>
-                  </tr>
+        <VueTabs v-model:tabShow="activeTab" @update:tabShow="handleUpdateTabShow">
+          <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_ITEMS">Cài đặt danh sách</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_PAYMENT">Cài đặt phiếu</VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_ITEMS">
+              <div class="mt-4 table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Danh sách hàng trong phiếu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
+                        <div class="pl-7">
+                          <a-radio-group
+                            v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem">
+                            <a-radio style="display: flex; line-height: 36px" :value="false">
+                              Cộng gộp số lượng
+                            </a-radio>
+                            <a-radio style="display: flex; line-height: 36px" :value="true">
+                              Không cộng gộp (VD: nhập 4 tặng 1 thì bản ghi số lượng 1 có thể điền
+                              đơn giá = 0)
+                            </a-radio>
+                          </a-radio-group>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
+                          Hiển thị chi tiết sản phẩm (
+                          <IconFileSearch />
+                          )
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
+                          Hiển thị hoạt chất
+                        </a-checkbox>
+                      </td>
+                    </tr>
 
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
-                        Hiển thị số lô và HSD
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
-                        Hiển thị đơn vị
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </a-tab-pane>
-          <a-tab-pane key="2" tab="Cài đặt phiếu" forceRender>
-            <div class="table-wrapper">
-              <table class="">
-                <thead>
-                  <tr>
-                    <th>Thông tin thanh toán</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div>Nhà cung cấp mặc định</div>
-                      <div class="py-2">
-                        <InputOptions
-                          ref="inputOptionsDistributor"
-                          :options="
-                            distributorList.map((i) => ({ value: i.id, text: i.fullName, data: i }))
-                          "
-                          :max-height="260"
-                          placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-                          @selectItem="({ data }) => selectDistributor(data)"
-                          @update:text="searchingDistributor"
-                        >
-                          <template #option="{ item: { data } }">
-                            <div>
-                              <b>{{ data.fullName }}</b> - {{ data.phone }} -
-                              {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
-                            </div>
-                            <div>
-                              {{ data.addressWard }} - {{ data.addressDistrict }} -
-                              {{ data.addressProvince }}
-                            </div>
-                          </template>
-                        </InputOptions>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
-                        Hiển thị tiền hàng
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
-                        Hiển thị chiết khấu
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
-                        Hiển thị phụ phí
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                </tbody>
-                <thead>
-                  <tr>
-                    <th>Lưu lại</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.save.createBasicAndNew">
-                        Lưu và Tạo phiếu mới
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <a-checkbox v-model:checked="settingDisplay.save.createDraft">
-                        Lưu nháp
-                      </a-checkbox>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </a-tab-pane>
-        </a-tabs>
+                    <tr>
+                      <td>
+                        <a-checkbox
+                          v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate">
+                          Hiển thị số lô và HSD
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
+                          Hiển thị đơn vị
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_PAYMENT">
+              <div class="mt-4 table-wrapper">
+                <table class="">
+                  <thead>
+                    <tr>
+                      <th>Thông tin thanh toán</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div>Nhà cung cấp mặc định</div>
+                        <div class="py-2">
+                          <InputOptions
+                            ref="inputOptionsDistributor"
+                            :options="
+                              distributorList.map((i) => ({
+                                value: i.id,
+                                text: i.fullName,
+                                data: i,
+                              }))
+                            "
+                            :max-height="180"
+                            placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+                            @selectItem="({ data }) => selectDistributor(data)"
+                            @update:text="searchingDistributor">
+                            <template #option="{ item: { data } }">
+                              <div>
+                                <b>{{ data.fullName }}</b>
+                                - {{ data.phone }} -
+                                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                              </div>
+                              <div>
+                                {{ data.addressWard }} - {{ data.addressDistrict }} -
+                                {{ data.addressProvince }}
+                              </div>
+                            </template>
+                          </InputOptions>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                          Hiển thị tiền hàng
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                          Hiển thị chiết khấu
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                          Hiển thị phụ phí
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <thead>
+                    <tr>
+                      <th>Lưu lại</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.save.createDraft">
+                          Lưu nháp
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
+          </template>
+        </VueTabs>
       </div>
 
       <div class="p-6">
         <div class="flex justify-end gap-4">
-          <a-button @click="handleClose">
-            <template #icon>
-              <CloseOutlined />
-            </template>
-            Hủy bỏ
-          </a-button>
-          <a-button type="primary" :loading="saveLoading" @click="handleSave">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton icon="close" @click="handleClose">Hủy bỏ</VueButton>
+          <VueButton color="blue" :loading="saveLoading" icon="save" @click="handleSave">
             Lưu lại
-          </a-button>
+          </VueButton>
         </div>
       </div>
     </div>
@@ -282,12 +274,6 @@ defineExpose({ openModal })
     &.ant-tabs-tab-active {
       border-top-color: #1890ff !important;
     }
-  }
-}
-
-.table-payment {
-  td {
-    padding: 6px 0;
   }
 }
 </style>

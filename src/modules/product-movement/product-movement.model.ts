@@ -1,82 +1,32 @@
-import { Expose, instanceToPlain, plainToInstance, Type } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
-import { BaseModel } from '../base.model'
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
 import type { VoucherType } from '../enum'
-import { Invoice } from '../invoice'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
-import { Visit } from '../visit'
+import { Ticket } from '../ticket'
 
-export class ProductMovement extends BaseModel {
-  @Expose({ toClassOnly: true })
+export class ProductMovement {
+  id: number
   productId: number
-
-  @Expose()
   voucherId: number
-
-  @Expose()
   contactId: number
-
-  @Expose()
   voucherType: VoucherType
-
-  @Expose()
   isRefund: 0 | 1
-
-  @Expose()
   openQuantity: number // Số lượng ban đầu
-
-  @Expose()
   quantity: number // Số lượng +/-
-
-  @Expose()
   closeQuantity: number // Số lượng sau thay đổi
-
-  @Expose()
   unitRate: number
-
-  @Expose()
   actualPrice: number // Giá
-
-  @Expose()
   expectedPrice: number // Giá
-
-  @Expose()
   openCostAmount: number // Vốn
-
-  @Expose()
   costAmount: number // Vốn
-
-  @Expose()
   closeCostAmount: number // Vốn
-
-  @Expose()
   createdAt: number
 
-  @Expose({ toClassOnly: true })
-  @Type(() => Product)
   product?: Product
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Receipt)
   receipt?: Receipt
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Invoice)
-  invoice?: Invoice
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Visit)
-  visit?: Visit
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Distributor)
   distributor?: Distributor
-
-  @Expose({ toClassOnly: true })
-  @Type(() => Customer)
+  ticket?: Ticket
   customer?: Customer
 
   get unitQuantity() {
@@ -95,26 +45,43 @@ export class ProductMovement extends BaseModel {
     return this.product!.getUnitNameByRate(this.unitRate) || ''
   }
 
-  static fromPlain(plain: Record<string, any>): ProductMovement {
-    return plainToInstance(ProductMovement, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: ProductMovement) {
+    const target = new ProductMovement()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): ProductMovement[] {
-    return plainToInstance(ProductMovement, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: ProductMovement[]): ProductMovement[] {
+    return sources.map((i) => ProductMovement.basic(i))
   }
 
-  static toPlain(instance: ProductMovement): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static from(source: ProductMovement) {
+    const target = ProductMovement.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      target.product = source.product ? Product.basic(source.product) : source.product
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
+      target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'distributor')) {
+      target.distributor = source.distributor
+        ? Distributor.basic(source.distributor)
+        : source.distributor
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
+      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
+      target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    return target
+  }
+
+  static fromList(sourceList: ProductMovement[]): ProductMovement[] {
+    return sourceList.map((i) => ProductMovement.from(i))
   }
 }

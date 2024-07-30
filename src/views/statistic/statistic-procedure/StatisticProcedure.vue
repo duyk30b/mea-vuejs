@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ShopOutlined } from '@ant-design/icons-vue'
-import TopInvoiceProcedureBestSelling from './TopInvoiceProcedureBestSelling.vue'
-import TopVisitProcedureBestSelling from './TopVisitProcedureBestSelling.vue'
+import TopProcedureBestSelling from './TopProcedureBestSelling.vue'
 </script>
 
 <template>
@@ -9,7 +8,7 @@ import TopVisitProcedureBestSelling from './TopVisitProcedureBestSelling.vue'
     <div class="page-header-content">
       <div class="md:block">
         <ShopOutlined />
-        <span class="ml-2"> Báo cáo dịch vụ </span>
+        <span class="ml-2">Báo cáo dịch vụ</span>
       </div>
     </div>
   </div>
@@ -18,10 +17,7 @@ import TopVisitProcedureBestSelling from './TopVisitProcedureBestSelling.vue'
     <div class="p-4">
       <div class="flex flex-wrap items-stretch gap-20">
         <div style="flex: 1; min-height: 500px">
-          <TopInvoiceProcedureBestSelling />
-        </div>
-        <div style="flex: 1; min-height: 500px">
-          <TopVisitProcedureBestSelling />
+          <TopProcedureBestSelling />
         </div>
       </div>
     </div>

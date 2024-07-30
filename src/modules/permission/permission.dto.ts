@@ -1,4 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionNumber } from '../_base/base-condition'
 
 export class PermissionGetQuery {
   page?: number
@@ -6,7 +7,8 @@ export class PermissionGetQuery {
   relation?: {}
 
   filter?: {
-    level?: number
+    level?: ConditionNumber
+    rootId?: ConditionNumber
   }
 
   sort?: {

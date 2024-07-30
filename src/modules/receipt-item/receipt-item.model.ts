@@ -1,50 +1,23 @@
-import {
-  Expose,
-  instanceToInstance,
-  instanceToPlain,
-  plainToInstance,
-  Type,
-} from 'class-transformer'
-import { FROM_INSTANCE, FROM_PLAIN, USER_CREATE, USER_UPDATE } from '../_base/base-expose'
 import { Batch } from '../batch'
 import { Product } from '../product'
 import { Receipt } from '../receipt/receipt.model'
 
 export class ReceiptItem {
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   id: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   receiptId: number
-
-  @Expose({ groups: [FROM_PLAIN, FROM_INSTANCE] })
   distributorId: number
-
-  @Expose()
   productId: number
-
-  @Expose()
+  lotNumber: string // Lô sản phẩm
+  expiryDate?: number
   batchId: number
-
-  @Expose()
-  costPrice: number // Giá cost
-
-  @Expose()
+  costPrice: number 
+  retailPrice: number 
+  wholesalePrice: number 
   quantity: number = 0
-
-  @Expose()
   unitRate: number
 
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Receipt)
   receipt?: Receipt
-
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Batch)
   batch?: Batch
-
-  @Expose({ groups: [FROM_PLAIN] })
-  @Type(() => Product)
   product?: Product
 
   get unitName() {
@@ -59,6 +32,14 @@ export class ReceiptItem {
     return this.costPrice * this.unitRate
   }
 
+  get unitWholesalePrice() {
+    return this.wholesalePrice * this.unitRate
+  }
+
+  get unitRetailPrice() {
+    return this.retailPrice * this.unitRate
+  }
+
   set unitQuantity(data: number) {
     this.quantity = data * this.unitRate
   }
@@ -67,11 +48,25 @@ export class ReceiptItem {
     return this.costPrice * this.quantity
   }
 
+  set unitCostPrice(data: number) {
+    this.costPrice = data / this.unitRate
+  }
+
+  set unitWholesalePrice(data: number) {
+    this.wholesalePrice = data / this.unitRate
+  }
+
+  set unitRetailPrice(data: number) {
+    this.retailPrice = data / this.unitRate
+  }
+
   static init() {
     const ins = new ReceiptItem()
     ins.id = 0
     ins.quantity = 0
     ins.costPrice = 0
+    ins.wholesalePrice = 0
+    ins.retailPrice = 0
     ins.unitRate = 1
     return ins
   }
@@ -84,65 +79,40 @@ export class ReceiptItem {
     return ins
   }
 
-  static fromPlain(plain: Record<string, any>): ReceiptItem {
-    return plainToInstance(ReceiptItem, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static fromPlains(plains: Record<string, any>[]): ReceiptItem[] {
-    return plainToInstance(ReceiptItem, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
-  }
-
-  static toPlain(
-    instance: ReceiptItem,
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [type],
-    })
-  }
-
-  static toPlains(
-    instances: ReceiptItem[],
-    type: typeof USER_CREATE | typeof USER_UPDATE
-  ): Record<string, any> {
-    return instances.map((i) => ReceiptItem.toPlain(i, type))
-  }
-
-  static fromInstance(instance: ReceiptItem): ReceiptItem {
-    return instanceToInstance(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static fromInstances(instances: ReceiptItem[]): ReceiptItem[] {
-    return instanceToInstance(instances, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_INSTANCE],
-    })
-  }
-
-  static clone(root: ReceiptItem): ReceiptItem {
-    const ins = ReceiptItem.fromInstance(root)
-    if (root.batch) {
-      ins.batch = Batch.fromInstance(root.batch)
+  static from(source: ReceiptItem): ReceiptItem {
+    const target = new ReceiptItem()
+    Object.assign(target, source)
+    if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
+      if (!source.receipt) {
+        target.receipt = source.receipt
+      } else {
+        const receipt = new Receipt()
+        Object.assign(receipt, source.receipt)
+        target.receipt = receipt
+      }
     }
-    if (root.product) {
-      ins.product = Product.fromInstance(root.product)
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      if (!source.batch) {
+        target.batch = source.batch
+      } else {
+        const batch = new Batch()
+        Object.assign(batch, source.batch)
+        target.batch = batch
+      }
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'product')) {
+      if (!source.product) {
+        target.product = source.product
+      } else {
+        const product = new Product()
+        Object.assign(product, source.product)
+        target.product = product
+      }
+    }
+    return target
+  }
 
-    return ins
+  static fromList(sourceList: ReceiptItem[]): ReceiptItem[] {
+    return sourceList.map((i) => ReceiptItem.from(i))
   }
 }

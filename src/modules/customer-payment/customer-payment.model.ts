@@ -1,47 +1,30 @@
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
-import type { PaymentType, VoucherType } from '../enum'
+import { Customer } from '../customer/customer.model'
+import type { PaymentType } from '../enum'
+import { Ticket } from '../ticket'
 
 export class CustomerPayment {
-  @Expose({ name: 'id', toClassOnly: true })
   id: number
-
-  @Expose()
   customerId: number
-
-  @Expose()
-  voucherId: number
-
-  @Expose()
-  voucherType: VoucherType
-
-  @Expose()
+  ticketId: number
   createdAt: number
-
-  @Expose()
   paymentType: PaymentType
-
-  @Expose()
-  paid: number = 0 // Số tiền thanh toán
-
-  @Expose()
+  paid: number // Số tiền thanh toán
   debit: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
-
-  @Expose()
-  openDebt: number = 0 // Dư nợ đầu kỳ của khách hàng
-
-  @Expose() // openDebt + debit = closeDebt
-  closeDebt: number = 0 // Dư nợ cuối kỳ của khách hàng
-
-  @Expose()
+  openDebt: number // Dư nợ đầu kỳ của khách hàng
+  closeDebt: number // openDebt + debit = closeDebt // Dư nợ cuối kỳ của khách hàng
   note: string = ''
-
-  @Expose()
   description: string = ''
+
+  ticket?: Ticket
+  customer?: Customer
 
   static init(): CustomerPayment {
     const ins = new CustomerPayment()
     ins.id = 0
+    ins.paid = 0
+    ins.debit = 0
+    ins.openDebt = 0
+    ins.closeDebt = 0
     return ins
   }
 
@@ -50,36 +33,32 @@ export class CustomerPayment {
     return ins
   }
 
-  static toBasic(root: CustomerPayment) {
-    const ins = new CustomerPayment()
-    Object.assign(ins, root)
-    return ins
-  }
-
-  static toBasics(roots: CustomerPayment[]) {
-    return roots.map((i) => CustomerPayment.toBasic(i))
-  }
-
-  static fromPlain(plain: Record<string, any>): CustomerPayment {
-    return plainToInstance(CustomerPayment, plain, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: CustomerPayment) {
+    const target = new CustomerPayment()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
   }
 
-  static fromPlains(plains: Record<string, any>[]): CustomerPayment[] {
-    return plainToInstance(CustomerPayment, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
-    })
+  static basicList(sources: CustomerPayment[]): CustomerPayment[] {
+    return sources.map((i) => CustomerPayment.basic(i))
   }
 
-  static toPlain(instance: Partial<CustomerPayment>): Record<string, any> {
-    return instanceToPlain(instance, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-    })
+  static from(source: CustomerPayment) {
+    const target = CustomerPayment.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
+      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
+      target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    return target
+  }
+
+  static fromList(roots: CustomerPayment[]) {
+    return roots.map((i) => CustomerPayment.from(i))
   }
 }

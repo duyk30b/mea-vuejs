@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useScreenStore } from '../../modules/_me/screen.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import InputNumber from './InputNumber.vue'
 
 const props = withDefaults(defineProps<{ value: number }>(), {
@@ -8,12 +8,12 @@ const props = withDefaults(defineProps<{ value: number }>(), {
 })
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
-const screenStore = useScreenStore()
+const settingStore = useSettingStore()
 
 const inputNumber = ref<HTMLInputElement | null>(null)
 
 const handleUpdateValue = (v: number) => {
-  emit('update:value', v * screenStore.SYSTEM_SETTING.moneyDivisionFormat)
+  emit('update:value', v * settingStore.SYSTEM_SETTING.moneyDivisionFormat)
 }
 
 const focus = () => {
@@ -26,7 +26,7 @@ defineExpose({ focus })
 <template>
   <InputNumber
     ref="inputNumber"
-    :value="value / screenStore.SYSTEM_SETTING.moneyDivisionFormat"
+    :value="value / settingStore.SYSTEM_SETTING.moneyDivisionFormat"
     @update:value="handleUpdateValue"
   />
 </template>

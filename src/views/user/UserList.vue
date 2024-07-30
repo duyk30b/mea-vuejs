@@ -4,9 +4,9 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { UserApi, type User } from '../../modules/user'
@@ -30,7 +30,8 @@ const startFetchData = async () => {
     const { data, meta } = await UserApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { role: true },
+      relation: { userRoleList: true },
+      sort: { id: 'ASC' },
     })
     userList.value = data
     total.value = meta.total
@@ -63,8 +64,8 @@ const handleModalUserUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE
   await startFetchData()
 }
 
-const deviceLogout = async (userId: number, code: string) => {
-  const result = await UserApi.deviceLogout(userId, code)
+const deviceLogout = async (userId: number, refreshExp: number) => {
+  const result = await UserApi.deviceLogout(userId, refreshExp)
   await startFetchData()
 }
 </script>
@@ -73,17 +74,17 @@ const deviceLogout = async (userId: number, code: string) => {
   <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block"><ApartmentOutlined /> Danh sách tài khoản </div>
-      <a-button
+      <div class="hidden md:block">
+        <ApartmentOutlined />
+        Danh sách tài khoản
+      </div>
+      <VueButton
         v-if="permissionIdMap[PermissionId.USER_CREATE]"
-        type="primary"
-        @click="modalUserUpsert?.openModal()"
-      >
-        <template #icon>
-          <PlusOutlined />
-        </template>
+        color="blue"
+        icon="plus"
+        @click="modalUserUpsert?.openModal()">
         Thêm mới
-      </a-button>
+      </VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>
@@ -94,9 +95,9 @@ const deviceLogout = async (userId: number, code: string) => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Vai trò</th>
             <th>Username</th>
             <th>Họ Tên</th>
+            <th>Vai trò</th>
             <th v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
             <th v-if="permissionIdMap[PermissionId.USER_UPDATE]">Sửa</th>
@@ -108,27 +109,39 @@ const deviceLogout = async (userId: number, code: string) => {
           </tr>
           <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">U{{ user.id }}</td>
-            <td>{{ user.role?.name }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.fullName }}</td>
+            <td>
+              <a-tag v-if="user.isAdmin" color="cyan">Admin</a-tag>
+              <template v-else>
+                {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
+              </template>
+            </td>
             <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
-                <span v-if="device.mobile === 1">
-                  <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
-                </span>
-                <span v-else>
-                  <font-awesome-icon :icon="['fas', 'desktop']" />
-                </span>
-                <span class="ml-2">{{ device.os }}</span>
-                / <span>{{ device.browser }}</span> - <span>{{ device.ip }}</span>
-                <a-button
-                  class="ml-2"
-                  type="default"
-                  size="small"
-                  @click="deviceLogout(user.id!, device.code)"
-                >
-                  Đăng xuất
-                </a-button>
+                <div>
+                  <span v-if="device.mobile === 1">
+                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                  </span>
+                  <span v-else>
+                    <font-awesome-icon :icon="['fas', 'desktop']" />
+                  </span>
+                  <span class="ml-2">{{ device.os }}</span>
+                  /
+                  <span>{{ device.browser }}</span>
+                  -
+                  <span>{{ device.ip }}</span>
+                </div>
+                <div class="flex gap-2">
+                  <VueButton
+                    class="ml-2"
+                    size="small"
+                    @click="deviceLogout(user.id!, device.refreshExp)">
+                    Đăng xuất
+                  </VueButton>
+                  <a-tag v-if="device.online" color="success">Online</a-tag>
+                  <a-tag v-if="!device.online" color="default">Offline</a-tag>
+                </div>
               </div>
             </td>
             <td class="text-center">
@@ -146,7 +159,10 @@ const deviceLogout = async (userId: number, code: string) => {
               </a-tag>
             </td>
             <td v-if="permissionIdMap[PermissionId.USER_UPDATE]" class="text-center">
-              <a style="color: #eca52b" class="text-xl" @click="modalUserUpsert?.openModal(user)">
+              <a
+                style="color: #eca52b"
+                class="text-xl"
+                @click="modalUserUpsert?.openModal(user.id)">
                 <FormOutlined />
               </a>
             </td>
@@ -160,8 +176,9 @@ const deviceLogout = async (userId: number, code: string) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
       </div>
     </div>
   </div>

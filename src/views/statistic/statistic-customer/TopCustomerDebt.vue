@@ -2,11 +2,11 @@
 import { onBeforeMount, ref } from 'vue'
 import { Customer, CustomerApi } from '../../../modules/customer'
 import { StatisticService } from '../../../modules/statistics'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { formatPhone } from '../../../utils'
 
-const screenStore = useScreenStore()
-const { formatMoney, isMobile } = screenStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const loaded = ref(false)
 const customerList = ref<Customer[]>([])

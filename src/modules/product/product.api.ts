@@ -1,8 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   ProductDetailQuery,
   ProductGetQuery,
@@ -19,7 +16,7 @@ export class ProductApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: Product.fromPlains(data),
+      data: Product.fromList(data),
     }
   }
 
@@ -30,7 +27,7 @@ export class ProductApi {
     const { data, time } = response.data as BaseResponse
     return {
       time: new Date(time),
-      data: Product.fromPlains(data),
+      data: Product.fromList(data),
     }
   }
 
@@ -44,27 +41,91 @@ export class ProductApi {
   static async detail(id: number, options: ProductDetailQuery = {}): Promise<Product> {
     const params = ProductGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/product/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
-  static async createOne(instance: Product) {
-    const plain = Product.toPlain(instance, USER_CREATE)
-    const response = await AxiosInstance.post('/product/create', plain)
-    const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+  static async createOne(product: Product) {
+    const response = await AxiosInstance.post('/product/create', {
+      brandName: product.brandName,
+      substance: product.substance,
+      lotNumber: product.lotNumber || '',
+      expiryDate: product.expiryDate,
+      costPrice: product.costPrice,
+      wholesalePrice: product.wholesalePrice,
+      retailPrice: product.retailPrice,
+      productGroupId: product.productGroupId,
+      unit: product.unit,
+      route: product.route,
+      source: product.source,
+      image: product.image,
+      hintUsage: product.hintUsage,
+      hasManageQuantity: product.hasManageQuantity,
+      hasManageBatches: product.hasManageBatches,
+      isActive: product.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
-  static async updateOne(id: number, instance: Product) {
-    const plain = Product.toPlain(instance, USER_UPDATE)
-    const response = await AxiosInstance.patch(`/product/update/${id}`, plain)
-    const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+  static async updateOne(id: number, product: Product) {
+    const response = await AxiosInstance.patch(`/product/update/${id}`, {
+      brandName: product.brandName,
+      substance: product.substance,
+      lotNumber: product.lotNumber || '',
+      expiryDate: product.expiryDate,
+      costPrice: product.costPrice,
+      wholesalePrice: product.wholesalePrice,
+      retailPrice: product.retailPrice,
+      productGroupId: product.productGroupId,
+      unit: product.unit,
+      route: product.route,
+      source: product.source,
+      image: product.image,
+      hintUsage: product.hintUsage,
+      hasManageQuantity: product.hasManageQuantity,
+      hasManageBatches: product.hasManageBatches,
+      isActive: product.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
+  }
+
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/product/destroy/${id}`)
+    const result = response.data as BaseResponse<{
+      productId: number
+      countTicketProduct: number
+      countReceiptItem: number
+    }>
+    return result
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/product/delete/${id}`)
-    const { data } = response.data as BaseResponse
-    return Product.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
+  }
+
+  static async downloadExcelProductList() {
+    const response = await AxiosInstance.get(`/product/download-excel`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    const uint8Array = new Uint8Array(data.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: data.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = data.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
   }
 }

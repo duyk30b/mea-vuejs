@@ -1,4 +1,6 @@
+export * from './helpers/dom.helper'
 export * from './helpers/function.helper'
+export * from './helpers/image.helper'
 export * from './helpers/number.helper'
 export * from './helpers/object.helper'
 export * from './helpers/string.helper'

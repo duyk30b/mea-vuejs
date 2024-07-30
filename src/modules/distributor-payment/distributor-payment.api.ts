@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Distributor } from '../distributor/distributor.model'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   DistributorPaymentGetQuery,
   type DistributorPaymentPaginationQuery,
@@ -18,14 +17,14 @@ export class DistributorPaymentApi {
 
     return {
       meta,
-      data: DistributorPayment.fromPlains(data),
+      data: DistributorPayment.fromList(data),
     }
   }
 
   static async payDebt(body: DistributorPaymentPayDebtBody) {
     const response = await AxiosInstance.post('/distributor-payment/pay-debt', body)
     const { data, meta } = response.data as BaseResponse<{ distributor: any }>
-    const distributor = Distributor.fromPlain(data.distributor)
+    const distributor = Distributor.from(data.distributor)
 
     return { distributor }
   }

@@ -2,20 +2,20 @@ import axios from 'axios'
 import { CONFIG } from '../../config'
 import type { BaseResponse } from '../_base/base-dto'
 import { User } from '../user'
-import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto'
+import type { LoginDto, LoginRootDto, RegisterDto } from './auth.dto'
 
 export class AuthApi {
   static async register(body: RegisterDto) {
     const response = await axios.post(`${CONFIG.API_URL}/auth/register`, body)
     const { data } = response.data as BaseResponse<{
-      user: Record<string, any>
+      user: any
       accessToken: string
       accessExp: number
       refreshToken: string
       refreshExp: number
     }>
     return {
-      user: User.fromPlain(data.user),
+      user: User.from(data.user),
       accessToken: data.accessToken as string,
       accessExp: data.accessExp as number,
       refreshToken: data.refreshToken as string,
@@ -26,14 +26,32 @@ export class AuthApi {
   static async login(body: LoginDto) {
     const response = await axios.post(`${CONFIG.API_URL}/auth/login`, body)
     const { data } = response.data as BaseResponse<{
-      user: Record<string, any>
+      user: any
       accessToken: string
       accessExp: number
       refreshToken: string
       refreshExp: number
     }>
     return {
-      user: User.fromPlain(data.user),
+      user: User.from(data.user),
+      accessToken: data.accessToken as string,
+      accessExp: data.accessExp as number,
+      refreshToken: data.refreshToken as string,
+      refreshExp: data.refreshExp as number,
+    }
+  }
+
+  static async loginRoot(body: LoginRootDto) {
+    const response = await axios.post(`${CONFIG.API_URL}/auth/login-root`, body)
+    const { data } = response.data as BaseResponse<{
+      user: any
+      accessToken: string
+      accessExp: number
+      refreshToken: string
+      refreshExp: number
+    }>
+    return {
+      user: User.from(data.user),
       accessToken: data.accessToken as string,
       accessExp: data.accessExp as number,
       refreshToken: data.refreshToken as string,
@@ -44,14 +62,14 @@ export class AuthApi {
   static async loginDemo() {
     const response = await axios.post(`${CONFIG.API_URL}/auth/login-demo`)
     const { data } = response.data as BaseResponse<{
-      user: Record<string, any>
+      user: any
       accessToken: string
       accessExp: number
       refreshToken: string
       refreshExp: number
     }>
     return {
-      user: User.fromPlain(data.user),
+      user: User.from(data.user),
       accessToken: data.accessToken as string,
       accessExp: data.accessExp as number,
       refreshToken: data.refreshToken as string,
@@ -59,20 +77,30 @@ export class AuthApi {
     }
   }
 
-  static async forgotPassword(body: ForgotPasswordDto) {
+  static async forgotPassword(body: {
+    organizationPhone: string
+    organizationEmail: string
+    username: string
+  }) {
     const response = await axios.post(`${CONFIG.API_URL}/auth/forgot-password`, body)
     const { data, message } = response.data as BaseResponse<boolean>
     return { data, message }
   }
 
-  static async resetPassword(body: ResetPasswordDto) {
+  static async resetPassword(body: {
+    organizationPhone: string
+    username: string
+    password: string
+    token: string
+    updatedAt: number
+  }) {
     const response = await axios.post(`${CONFIG.API_URL}/auth/reset-password`, body)
     const { data } = response.data as BaseResponse<boolean>
     return data
   }
 
   static async refreshToken(refreshToken: string) {
-    const response = await axios.post(`${CONFIG.API_URL}/auth/refresh-password`, { refreshToken })
+    const response = await axios.post(`${CONFIG.API_URL}/auth/refresh-token`, { refreshToken })
     const { data } = response.data as BaseResponse<{ accessToken: string; accessExp: number }>
     return data
   }

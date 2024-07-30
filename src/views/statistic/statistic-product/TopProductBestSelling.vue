@@ -4,13 +4,13 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
-import { useScreenStore } from '../../../modules/_me/screen.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { StatisticService } from '../../../modules/statistics'
 import { DTimer } from '../../../utils'
 
-const screenStore = useScreenStore()
-const moneyDivision = screenStore.SYSTEM_SETTING.moneyDivisionFormat
-const { isMobile, formatMoney } = screenStore
+const settingStore = useSettingStore()
+const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
+const { isMobile, formatMoney } = settingStore
 
 const barData = reactive<ChartData<'bar', (number | [number, number] | null)[], unknown>>({
   labels: [],
@@ -188,7 +188,7 @@ onBeforeMount(async () => await startFetchData())
     >
       <div class="flex items-center gap-4">
         <span style="font-size: 18px; font-weight: 500">Hàng bán chạy nhất:</span>
-        <div style="width: 120px">
+        <div style="width: 140px">
           <VueSelect
             v-model:value="typeBestSelling"
             :options="[

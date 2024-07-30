@@ -1,16 +1,14 @@
 <script setup lang="ts">
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
-import { useScreenStore } from '../../../modules/_me/screen.store'
 import { formatPhone } from '../../../utils'
-import { useMeStore } from '../../../modules/_me/me.store'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
 })
 
-const screenStore = useScreenStore()
-const { formatMoney } = screenStore
-
+const settingStore = useSettingStore()
+const { formatMoney } = settingStore
 </script>
 
 <template>
@@ -23,7 +21,7 @@ const { formatMoney } = screenStore
     </tr>
     <tr>
       <td class="px-2 py-1 whitespace-nowrap">Mã NCC</td>
-      <td class="px-2">CM{{ distributor.id }}</td>
+      <td class="px-2">KH{{ distributor.id }}</td>
     </tr>
     <tr>
       <td class="px-2 py-1 whitespace-nowrap">Số điện thoại</td>

@@ -16,7 +16,7 @@ import {
 import { useMeStore } from '../modules/_me/me.store'
 import { PermissionId } from '../modules/permission/permission.enum'
 import TopCustomerDebt from './statistic/statistic-customer/TopCustomerDebt.vue'
-import TopBatchExpiryDate from './statistic/statistic-product/TopBatchExpiryDate.vue'
+import TopProductExpiryDate from './statistic/statistic-product/TopProductExpiryDate.vue'
 
 ChartJS.register(
   CategoryScale,
@@ -38,14 +38,12 @@ const { permissionIdMap } = meStore
   <div class="flex flex-wrap bg-white p-4 gap-8">
     <div
       v-if="permissionIdMap[PermissionId.STATISTIC_PRODUCT]"
-      style="flex-grow: 1; flex-basis: 400px"
-    >
-      <TopBatchExpiryDate />
+      style="flex-grow: 1; flex-basis: 400px">
+      <TopProductExpiryDate />
     </div>
     <div
       v-if="permissionIdMap[PermissionId.STATISTIC_CUSTOMER]"
-      style="flex-grow: 1; flex-basis: 400px"
-    >
+      style="flex-grow: 1; flex-basis: 400px">
       <TopCustomerDebt />
     </div>
   </div>

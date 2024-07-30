@@ -1,7 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { Customer } from '../customer'
-import { Distributor } from '../distributor'
 import { Organization } from '../organization'
 import { Permission } from '../permission/permission.model'
 import { Role } from '../role'
@@ -12,13 +10,12 @@ export class MeApi {
     const response = await AxiosInstance.get('/me/info')
     const { data } = response.data as BaseResponse
     return {
-      user: User.fromPlain(data.user),
-      organization: Organization.fromPlain(data.organization),
-      role: Role.fromPlain(data.role),
-      screenSettings: data.screenSettings as Record<string, any>,
-      distributorDefault: Distributor.fromPlain(data.distributorDefault),
-      customerDefault: Customer.fromPlain(data.customerDefault),
-      permissions: Permission.fromPlains(data.permissions),
+      organization: Organization.from(data.organization),
+      permissionAll: Permission.fromList(data.permissionAll),
+      permissionIds: data.permissionIds,
+      settingMap: data.settingMap as Record<string, any>,
+      user: User.from(data.user),
+      rootSetting: data.rootSetting,
     }
   }
 
@@ -32,11 +29,14 @@ export class MeApi {
   }
 
   static async updateInfo(user: User) {
-    const userDto = User.toPlain(user, 'USER_UPDATE')
+    const response = await AxiosInstance.patch('/me/update-info', {
+      fullName: user.fullName,
+      phone: user.phone,
+      birthday: user.birthday,
+      gender: user.gender,
+    })
+    const { data } = response.data as BaseResponse<{ user: any }>
 
-    const response = await AxiosInstance.patch('/me/update-info', userDto)
-    const { data } = response.data as BaseResponse
-
-    return User.fromPlain(data)
+    return User.from(data.user)
   }
 }
