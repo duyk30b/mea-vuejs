@@ -9,6 +9,7 @@ import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
+import type { User } from '../user'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -44,7 +45,9 @@ export class Ticket {
   startedAt: number | null // Giờ vào khám
   endedAt: number
   updatedAt: number | null // Giờ kết thúc khám
+
   customer?: Customer
+  user?: User
   customerPaymentList?: CustomerPayment[]
   ticketDiagnosis?: TicketDiagnosis
   ticketProductList?: TicketProduct[]

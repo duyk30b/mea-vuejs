@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { PlusOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -79,7 +77,9 @@ const selectProduct = async (productData?: Product) => {
     product.value = Product.from(productData)
 
     if (!productData.hasManageQuantity) {
-      return message.error(`Sản phẩm ${productData.brandName} không theo dõi số lượng tồn kho`)
+      return AlertStore.addError(
+        `Sản phẩm ${productData.brandName} không theo dõi số lượng tồn kho`
+      )
     }
 
     receiptItem.value.productId = productData.id
@@ -137,7 +137,7 @@ const selectBatch = (data?: Batch) => {
 
 const addReceiptItem = async () => {
   if (!receiptItem.value.quantity) {
-    return message.error('Lỗi: Số lượng phải lớn hơn 0')
+    return AlertStore.addError('Lỗi: Số lượng phải lớn hơn 0')
   }
   if (!receiptItem.value.productId) {
     return AlertStore.addError('Lỗi: Sản phẩm không hợp lệ')
@@ -375,10 +375,7 @@ const clear = () => {
     </div>
 
     <div class="mt-6 flex justify-center">
-      <VueButton type="submit" color="blue">
-        <PlusOutlined />
-        Thêm sản phẩm
-      </VueButton>
+      <VueButton type="submit" color="blue" icon="plus">Thêm sản phẩm</VueButton>
     </div>
   </form>
 </template>

@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue'
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { IconClose } from '../../../../common/icon'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
+
+const TABS_KEY = {
+  SURCHARGE: 'SURCHARGE',
+  EXPENSE: 'EXPENSE',
+}
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -21,7 +26,7 @@ const EXPENSE_DETAIL = ref<typeof store.INVOICE_EXPENSE_DETAIL>(
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref('surcharge')
+const activeTab = ref(TABS_KEY.SURCHARGE)
 
 const openModal = async () => {
   showModal.value = true
@@ -43,27 +48,28 @@ const disabledButtonSave = computed(() => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (activeTab.value === '1') {
+    if (activeTab.value === TABS_KEY.SURCHARGE) {
       Object.keys(SURCHARGE_DETAIL.value).forEach((key) => {
         if (!SURCHARGE_DETAIL.value[key]) delete SURCHARGE_DETAIL.value[key]
       })
       const data = JSON.stringify(SURCHARGE_DETAIL.value)
       await OrganizationService.saveSettings(SettingKey.INVOICE_SURCHARGE_DETAIL, data)
       store.INVOICE_SURCHARGE_DETAIL = JSON.parse(data)
-    }
-    if (activeTab.value === '2') {
+    } else if (activeTab.value === TABS_KEY.EXPENSE) {
       Object.keys(EXPENSE_DETAIL.value).forEach((key) => {
         if (!EXPENSE_DETAIL.value[key]) delete EXPENSE_DETAIL.value[key]
       })
       const data = JSON.stringify(EXPENSE_DETAIL.value)
       await OrganizationService.saveSettings(SettingKey.INVOICE_EXPENSE_DETAIL, data)
       store.INVOICE_EXPENSE_DETAIL = JSON.parse(data)
+    } else {
+      return AlertStore.addSuccess('Cập nhật cài đặt thất bại')
     }
 
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     emit('success')
   } catch (error) {
-    console.log('🚀 ~ file: ModalSettingDataProduct.vue:74 ~ handleSaveRoute ~ error:', error)
+    console.log('🚀 ~ file: ModalSettingDataProduct.vue:66 ~ handleSaveRoute ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -90,11 +96,11 @@ defineExpose({ openModal })
         <div class="modal-data-product-tabs">
           <VueTabs v-model:tabShow="activeTab">
             <template #menu>
-              <VueTabMenu tabKey="surcharge">Phụ phí</VueTabMenu>
-              <VueTabMenu tabKey="expense">Chi phí</VueTabMenu>
+              <VueTabMenu :tabKey="TABS_KEY.SURCHARGE">Phụ phí</VueTabMenu>
+              <VueTabMenu :tabKey="TABS_KEY.EXPENSE">Chi phí</VueTabMenu>
             </template>
             <template #panel>
-              <VueTabPanel tabKey="surcharge">
+              <VueTabPanel :tabKey="TABS_KEY.SURCHARGE">
                 <div class="w-full">
                   <details class="my-2">
                     <summary style="font-style: italic">Giải thích chi tiết về phụ phí</summary>
@@ -153,7 +159,7 @@ defineExpose({ openModal })
                   </VueButton>
                 </div>
               </VueTabPanel>
-              <VueTabPanel tabKey="expense">
+              <VueTabPanel :tabKey="TABS_KEY.EXPENSE">
                 <div class="w-full">
                   <details class="my-2">
                     <summary style="font-style: italic">Giải thích chi tiết về chi phí</summary>

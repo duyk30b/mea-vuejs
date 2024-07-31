@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  SettingOutlined
-} from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputHint, InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -70,7 +66,7 @@ const closeModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   if (!customer.value.fullName) {
-    return message.error('Lỗi: Tên khách hàng không được bỏ trống')
+    return AlertStore.addError('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
     if (!customer.value.id) {
@@ -158,10 +154,10 @@ defineExpose({ openModal })
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalCustomerUpsertSettingScreen?.openModal()">
-          <SettingOutlined />
+          <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -306,10 +302,7 @@ defineExpose({ openModal })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
+          <VueButton class="ml-auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>

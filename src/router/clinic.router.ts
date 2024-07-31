@@ -41,6 +41,12 @@ export const clinicRouter: RouteRecordRaw = {
               meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
             },
             {
+              path: 'consumable',
+              name: 'TicketClinicConsumable',
+              component: () => import('../views/ticket-clinic/detail/TicketClinicConsumable.vue'),
+              meta: { keepAlive: true, title: 'Vật tư' },
+            },
+            {
               path: 'prescription',
               name: 'TicketClinicPrescription',
               component: () => import('../views/ticket-clinic/detail/TicketClinicPrescription.vue'),

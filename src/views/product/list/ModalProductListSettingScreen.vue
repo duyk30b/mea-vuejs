@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { FileSearchOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { IconClose } from '../../../common/icon'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
@@ -32,7 +31,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_PRODUCT_LIST, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_PRODUCT_LIST = JSON.parse(settingData)
 
     emit('success')
@@ -68,7 +67,7 @@ defineExpose({ openModal })
               <td>
                 <a-checkbox v-model:checked="settingDisplay.detail">
                   Hiển thị nút xem chi tiết (
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                   )
                 </a-checkbox>
               </td>

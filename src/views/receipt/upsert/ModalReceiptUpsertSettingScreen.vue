@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { nextTick, ref } from 'vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { Distributor, useDistributorStore } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
 import { DTimer } from '../../../utils'
-import VueButton from '../../../common/VueButton.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+
+const TABS_KEY = {
+  RECEIPT_ITEMS: 'RECEIPT_ITEMS',
+  RECEIPT_PAYMENT: 'RECEIPT_PAYMENT',
+}
 
 const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 
@@ -27,7 +32,7 @@ const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref('1')
+const activeTab = ref(TABS_KEY.RECEIPT_ITEMS)
 
 const distributorList = ref<Distributor[]>([])
 const distributorDefault = ref<Distributor>(meStore.distributorDefault)
@@ -69,7 +74,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
     meStore.distributorDefault = Distributor.from(distributorDefault.value)
     emit('success')
@@ -90,18 +95,18 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
       <div class="px-6 mt-4 receipt-upsert-setting-screen-tabs">
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
-            <VueTabMenu tabKey="1">Cài đặt danh sách</VueTabMenu>
-            <VueTabMenu tabKey="2">Cài đặt phiếu</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_ITEMS">Cài đặt danh sách</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_PAYMENT">Cài đặt phiếu</VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="1">
+            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_ITEMS">
               <div class="mt-4 table-wrapper">
                 <table>
                   <thead>
@@ -145,7 +150,7 @@ defineExpose({ openModal })
                       <td>
                         <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
                           Hiển thị chi tiết sản phẩm (
-                          <FileSearchOutlined />
+                          <IconFileSearch />
                           )
                         </a-checkbox>
                       </td>
@@ -176,7 +181,7 @@ defineExpose({ openModal })
                 </table>
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="2">
+            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_PAYMENT">
               <div class="mt-4 table-wrapper">
                 <table class="">
                   <thead>
@@ -269,10 +274,7 @@ defineExpose({ openModal })
 
       <div class="p-6">
         <div class="flex justify-end gap-4">
-          <VueButton @click="handleClose">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
+          <VueButton icon="close" @click="handleClose">Hủy bỏ</VueButton>
           <VueButton color="blue" :loading="saveLoading" icon="save" @click="handleSave">
             Lưu lại
           </VueButton>

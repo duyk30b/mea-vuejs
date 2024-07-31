@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { MeApi } from '../../../modules/_me/me.api'
 import { AuthService } from '../../../modules/auth/auth.service'
 import { User } from '../../../modules/user'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { IconClose } from '../../../common/icon'
-import VueButton from '../../../common/VueButton.vue'
 
 const showModal = ref(false)
 const user = ref(User.blank())
@@ -32,10 +32,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (newPassword.value !== newPasswordRepeat.value) {
-      return message.error('Điền mật khẩu lần 2 không chính xác')
+      return AlertStore.addError('Điền mật khẩu lần 2 không chính xác')
     }
     await MeApi.changePassword(oldPassword.value, newPassword.value)
-    message.success('Đổi mật khẩu thành công')
+    AlertStore.addSuccess('Đổi mật khẩu thành công')
     AuthService.logout()
   } catch (error) {
     console.log('🚀 ~ file: ChangePassword.vue:38 ~ handleSave ~ error:', error)

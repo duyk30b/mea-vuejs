@@ -1,4 +1,3 @@
-// import { Expose, plainToInstance } from 'class-transformer'
 import { BaseModel } from '../base.model'
 // import type { ExpensesDetailType, SurchargeDetailType } from '../enum'
 

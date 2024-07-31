@@ -1,12 +1,33 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Ticket } from '../../../../modules/ticket'
+import { TicketProductType } from '../../../../modules/ticket-product'
 import { DTimer, formatPhone, timeToText } from '../../../../utils'
 
 export const ticketClinicInvoiceHtmlContent = (ticket: Ticket) => {
   const settingStore = useSettingStore()
   const meStore = useMeStore()
   const { formatMoney } = settingStore
+
+  const ticketPrescriptionList = (ticket.ticketProductList || []).filter((i) => {
+    return i.type === TicketProductType.Prescription
+  })
+  const ticketConsumableList = (ticket.ticketProductList || []).filter((i) => {
+    return i.type === TicketProductType.Consumable
+  })
+
+  const prescriptionMoney = ticketPrescriptionList.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
+  }, 0)
+  const consumableMoney = ticketConsumableList.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
+  }, 0)
+
+  // let ticketPrescriptionListHtml = ''
+  // if (ticket.ticketProductList?.filter(i=>i.type===Tic)) {
+
+  // }
+
   return `
   <head>
     <title>&nbsp;</title>
@@ -105,103 +126,163 @@ export const ticketClinicInvoiceHtmlContent = (ticket: Ticket) => {
               <th>T.Tiền</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <th colspan="6" style="text-align: left; text-transform: uppercase;">I. Thuốc - Vật tư</th>
-            </tr>
-            ${(ticket.ticketProductList || [])
-              .map((i, index) => {
-                return `
+            ${
+              ticketPrescriptionList.length
+                ? `
+              <tbody>
                 <tr>
-                  <td>${index + 1}</td>
-                  <td>
-                    <div style="font-weight: 600;">${i.product?.brandName}</div>
-                    <div style="font-size: 0.9rem">${i.product?.substance || ''}</div>
-                  </td>
-                  <td style="text-align: center;">${i.unitName}</td>
-                  <td style="text-align: center;">${i.unitQuantity}</td>
-                  <td style="text-align: right;">
-                    <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
-                      ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
-                    </div>
-                    <div>${formatMoney(i.actualPrice)}</div>
-                  </td>
-                  <td style="text-align: right;">${formatMoney(i.actualPrice * i.quantity)}</td>
+                  <th colspan="6" style="text-align: left; text-transform: uppercase;">Thuốc</th>
                 </tr>
+                ${ticketPrescriptionList
+                  .map((i, index) => {
+                    return `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td>
+                        <div style="font-weight: 600;">${i.product?.brandName}</div>
+                        <div style="font-size: 0.9rem">${i.product?.substance || ''}</div>
+                      </td>
+                      <td style="text-align: center;">${i.unitName}</td>
+                      <td style="text-align: center;">${i.unitQuantity}</td>
+                      <td style="text-align: right;">
+                        <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
+                          ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
+                        </div>
+                        <div>${formatMoney(i.actualPrice)}</div>
+                      </td>
+                      <td style="text-align: right;">${formatMoney(i.actualPrice * i.quantity)}</td>
+                    </tr>
+                  `
+                  })
+                  .join('')}
+                <tr>
+                  <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền thuốc </td>
+                  <td style="text-align: right; font-weight: bold">
+                    ${formatMoney(prescriptionMoney)}
+                  </td>
+                </tr>
+              </tbody>
               `
-              })
-              .join('')}
-            <tr>
-              <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền thuốc - vật tư </td>
-              <td style="text-align: right; font-weight: bold">
-                ${formatMoney(ticket.productsMoney)}
-              </td>
-            </tr>
-          </tbody>
+                : ``
+            }
 
-          <tbody>
-            <tr>
-              <th colspan="6" style="text-align: left; text-transform: uppercase;">II. Dịch vụ thủ thuật</th>
-            </tr>
-            ${(ticket.ticketProcedureList || [])
-              .map((i, index) => {
-                return `
+            ${
+              ticketConsumableList.length
+                ? `
+              <tbody>
                 <tr>
-                  <td>${index + 1}</td>
-                  <td colspan="2">${i.procedure?.name}</td>
-                  <td style="text-align: center;">${i.quantity}</td>
-                  <td style="text-align: right;">
-                    <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
-                      ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
-                    </div>
-                    <div>${formatMoney(i.actualPrice)}</div>
-                  </td>
-                  <td style="text-align: right;">${formatMoney(i.actualPrice * i.quantity)}</td>
+                  <th colspan="6" style="text-align: left; text-transform: uppercase;">VẬT TƯ</th>
                 </tr>
+                ${ticketConsumableList
+                  .map((i, index) => {
+                    return `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td>
+                        <div style="font-weight: 600;">${i.product?.brandName}</div>
+                        <div style="font-size: 0.9rem">${i.product?.substance || ''}</div>
+                      </td>
+                      <td style="text-align: center;">${i.unitName}</td>
+                      <td style="text-align: center;">${i.unitQuantity}</td>
+                      <td style="text-align: right;">
+                        <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
+                          ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
+                        </div>
+                        <div>${formatMoney(i.actualPrice)}</div>
+                      </td>
+                      <td style="text-align: right;">${formatMoney(i.actualPrice * i.quantity)}</td>
+                    </tr>
+                  `
+                  })
+                  .join('')}
+                <tr>
+                  <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền vật tư </td>
+                  <td style="text-align: right; font-weight: bold">
+                    ${formatMoney(consumableMoney)}
+                  </td>
+                </tr>
+              </tbody>
               `
-              })
-              .join('')}
-            <tr>
-              <td colspan="5" style="text-align: right; text-transform: uppercase;"> Tổng tiền dịch vụ - thủ thuật </td>
-              <td style="text-align: right; font-weight: bold">
-                ${formatMoney(ticket.proceduresMoney)}
-              </td>
-            </tr>
-          </tbody>
+                : ``
+            }
 
-          <tbody>
-            <tr>
-              <th colspan="6" style="text-align: left; text-transform: uppercase;">III. CHẨN ĐOÁN HÌNH ẢNH</th>
-            </tr>
-            ${(ticket.ticketRadiologyList || [])
-              .map((i, index) => {
-                return `
+            ${
+              ticket.ticketProcedureList!.length
+                ? `
+              <tbody>
                 <tr>
-                  <td>${index + 1}</td>
-                  <td colspan="3">${i.radiology?.name}</td>
-                  <td style="text-align: right;">
-                    <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
-                      ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
-                    </div>
-                    <div>${formatMoney(i.actualPrice)}</div>
-                  </td>
-                  <td style="text-align: right;">${formatMoney(i.actualPrice)}</td>
+                  <th colspan="6" style="text-align: left; text-transform: uppercase;">Dịch vụ thủ thuật</th>
                 </tr>
+                ${ticket
+                  .ticketProcedureList!.map((i, index) => {
+                    return `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td colspan="2">${i.procedure?.name}</td>
+                      <td style="text-align: center;">${i.quantity}</td>
+                      <td style="text-align: right;">
+                        <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
+                          ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
+                        </div>
+                        <div>${formatMoney(i.actualPrice)}</div>
+                      </td>
+                      <td style="text-align: right;">${formatMoney(i.actualPrice * i.quantity)}</td>
+                    </tr>
+                  `
+                  })
+                  .join('')}
+                <tr>
+                  <td colspan="5" style="text-align: right; text-transform: uppercase;"> Tổng tiền dịch vụ - thủ thuật </td>
+                  <td style="text-align: right; font-weight: bold">
+                    ${formatMoney(ticket.proceduresMoney)}
+                  </td>
+                </tr>
+              </tbody>
               `
-              })
-              .join('')}
-            <tr>
-              <td colspan="5" style="text-align: right; text-transform: uppercase;"> Tổng tiền chẩn đoán hình ảnh </td>
-              <td style="text-align: right; font-weight: bold">
-                ${formatMoney(ticket.radiologyMoney)}
-              </td>
-            </tr>
-          </tbody>
+                : ``
+            }
+
+            ${
+              ticket.ticketRadiologyList!.length
+                ? `
+              <tbody>
+                <tr>
+                  <th colspan="6" style="text-align: left; text-transform: uppercase;">CHẨN ĐOÁN HÌNH ẢNH</th>
+                </tr>
+                ${(ticket.ticketRadiologyList || [])
+                  .map((i, index) => {
+                    return `
+                    <tr>
+                      <td>${index + 1}</td>
+                      <td colspan="3">${i.radiology?.name}</td>
+                      <td style="text-align: right;">
+                        <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
+                          ${i.discountMoney ? formatMoney(i.expectedPrice) : ''}
+                        </div>
+                        <div>${formatMoney(i.actualPrice)}</div>
+                      </td>
+                      <td style="text-align: right;">${formatMoney(i.actualPrice)}</td>
+                    </tr>
+                  `
+                  })
+                  .join('')}
+                <tr>
+                  <td colspan="5" style="text-align: right; text-transform: uppercase;"> Tổng tiền chẩn đoán hình ảnh </td>
+                  <td style="text-align: right; font-weight: bold">
+                    ${formatMoney(ticket.radiologyMoney)}
+                  </td>
+                </tr>
+              </tbody>
+              `
+                : ``
+            }
 
           <tbody>
             <tr>
               <td colspan="5" style="text-align: right; text-transform: uppercase; font-weight: bold">Tổng tiền </td>
-              <td style="text-align: right; font-weight: bold">${formatMoney(ticket.totalMoney)}</td>
+              <td style="text-align: right; font-weight: bold">${formatMoney(
+                ticket.totalMoney
+              )}</td>
             </tr>
           </tbody>
         </table>

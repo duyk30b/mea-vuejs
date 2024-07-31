@@ -12,7 +12,7 @@ import { DeliveryStatus, DiscountType, PaymentViewType } from '../../../modules/
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
-import { TicketProduct } from '../../../modules/ticket-product'
+import { TicketProduct, TicketProductType } from '../../../modules/ticket-product'
 import { TicketRadiology } from '../../../modules/ticket-radiology'
 import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
@@ -81,6 +81,28 @@ const proceduresMoney = computed(() => {
 const radiologyMoney = computed(() => {
   return ticketRadiologyList.value.reduce((acc, item) => {
     return acc + item.actualPrice
+  }, 0)
+})
+
+const ticketPrescriptionList = computed(() => {
+  return ticketProductList.value.filter((item) => {
+    return item.type === TicketProductType.Prescription
+  }, 0)
+})
+const prescriptionMoney = computed(() => {
+  return ticketPrescriptionList.value.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
+  }, 0)
+})
+
+const ticketConsumableList = computed(() => {
+  return ticketProductList.value.filter((item) => {
+    return item.type === TicketProductType.Consumable
+  }, 0)
+})
+const consumableMoney = computed(() => {
+  return ticketConsumableList.value.reduce((acc, item) => {
+    return acc + item.actualPrice * item.quantity
   }, 0)
 })
 
@@ -271,30 +293,6 @@ const updateTicketProductQuantity = (ticketProductIndex: number, unitQuantity: n
   ticketProductCurrent.costAmount = itemCostAmountFix
 }
 
-const startPrint = async () => {
-  try {
-    // const response = await fetch('/template/visit-invoice.hbs')
-    // const templateHtml = await response.text()
-
-    // const templateCompile = Handlebars.compile(templateHtml)
-    // const content = templateCompile({
-    //   organization: meStore.organization,
-    //   visit: ticketClinic.value,
-    // })
-
-    const content = ticketClinicInvoiceHtmlContent(ticketClinic.value)
-    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(content)
-    pri.document.close()
-    pri.focus()
-    pri.print()
-  } catch (error) {
-    console.log('🚀 ~ file: VisitPrescription.vue:421 ~ startPrint ~ error:', error)
-  }
-}
-
 const startReopenVisit = async () => {
   await TicketClinicApi.reopen(ticketClinic.value.id)
 }
@@ -331,6 +329,30 @@ const handleMenuActionClick = (menu: { key: string }) => {
     clickReopenVisit()
   }
 }
+
+const startPrint = async () => {
+  try {
+    // const response = await fetch('/template/visit-invoice.hbs')
+    // const templateHtml = await response.text()
+
+    // const templateCompile = Handlebars.compile(templateHtml)
+    // const content = templateCompile({
+    //   organization: meStore.organization,
+    //   visit: ticketClinic.value,
+    // })
+
+    const content = ticketClinicInvoiceHtmlContent(ticketClinic.value)
+    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
+    const pri = iframePrint.contentWindow as Window
+    pri.document.open()
+    pri.document.write(content)
+    pri.document.close()
+    pri.focus()
+    pri.print()
+  } catch (error) {
+    console.log('🚀 ~ file: VisitPrescription.vue:421 ~ startPrint ~ error:', error)
+  }
+}
 </script>
 <template>
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
@@ -346,7 +368,7 @@ const handleMenuActionClick = (menu: { key: string }) => {
       :loading="sendProductLoading"
       icon="send"
       @click="startSendProduct">
-      <span class="font-bold">XUẤT THUỐC</span>
+      <span class="font-bold">XUẤT THUỐC - VẬT TƯ</span>
     </VueButton>
     <VueButton
       v-if="
@@ -366,7 +388,7 @@ const handleMenuActionClick = (menu: { key: string }) => {
             <a-menu-item key="RETURN_PRODUCT_LIST">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
-                Hoàn trả thuốc
+                Hoàn trả thuốc - vật tư
               </span>
             </a-menu-item>
             <a-menu-item
@@ -389,371 +411,502 @@ const handleMenuActionClick = (menu: { key: string }) => {
   </div>
   <div class="mt-4 table-wrapper">
     <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>THUỐC - VẬT TƯ</th>
-          <th>Đ.Vị</th>
-          <th>SL kê</th>
-          <th>SL mua</th>
-          <th>Giá</th>
-          <th>Chiết khấu</th>
-          <th>Tổng tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="(ticketProduct, ticketProductIndex) in ticketProductList || []"
-          :key="ticketProduct.id + '_' + ticketProductIndex">
-          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ ticketProductIndex + 1 }}
-          </td>
-          <td>
-            <div class="flex items-center gap-1" style="font-weight: 500">
-              <span>{{ ticketProduct.product?.brandName }}</span>
-              <a
-                style="line-height: 0"
-                @click="modalProductDetail?.openModal(ticketProduct.product!)">
-                <IconFileSearch />
-              </a>
-            </div>
-            <div v-if="ticketProduct.product?.substance" class="text-xs italic">
-              {{ ticketProduct.product.substance }}
-            </div>
-            <div v-if="ticketProduct.batchId" class="text-xs italic">
-              Lô {{ ticketProduct.batch?.lotNumber }} - HSD
-              {{ timeToText(ticketProduct.batch?.expiryDate) }}
-            </div>
-          </td>
-          <td class="text-center">{{ ticketProduct.unitName }}</td>
-          <td class="text-center">{{ ticketProduct.unitQuantityPrescription }}</td>
-          <td class="text-center" style="width: 150px">
-            <div
-              v-if="
-                ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
-                [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.ticketStatus)
-              "
-              class="text-center">
-              {{ ticketProduct.unitQuantity }}
-            </div>
-            <div v-else class="flex items-center justify-between">
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                :disabled="ticketProduct.quantity <= 0"
-                @click="
-                  updateTicketProductQuantity(ticketProductIndex, ticketProduct.unitQuantity - 1)
-                ">
-                <font-awesome-icon :icon="['fas', 'minus']" />
-              </button>
-              <div style="width: calc(100% - 60px); min-width: 50px">
-                <InputNumber
-                  :value="ticketProduct.unitQuantity"
-                  textAlign="right"
-                  @update:value="
-                    (value) => updateTicketProductQuantity(ticketProductIndex, value)
-                  " />
+      <template v-if="ticketPrescriptionList.length">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>THUỐC</th>
+            <th>Đ.Vị</th>
+            <th>SL kê</th>
+            <th>SL mua</th>
+            <th>Giá</th>
+            <th>Chiết khấu</th>
+            <th>Tổng tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(ticketProduct, ticketProductIndex) in ticketPrescriptionList"
+            :key="ticketProduct.id + '_' + ticketProductIndex">
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ ticketProductIndex + 1 }}
+            </td>
+            <td>
+              <div class="flex items-center gap-1" style="font-weight: 500">
+                <span>{{ ticketProduct.product?.brandName }}</span>
+                <a
+                  style="line-height: 0"
+                  @click="modalProductDetail?.openModal(ticketProduct.product!)">
+                  <IconFileSearch />
+                </a>
               </div>
-              <button
-                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                @click="
-                  updateTicketProductQuantity(ticketProductIndex, ticketProduct.unitQuantity + 1)
-                ">
-                <font-awesome-icon :icon="['fas', 'plus']" />
-              </button>
-            </div>
-          </td>
-          <td class="text-right whitespace-nowrap">
-            <div v-if="ticketProduct.discountMoney" class="text-xs italic text-red-500">
-              <del>{{ formatMoney(ticketProduct.unitExpectedPrice) }}</del>
-            </div>
-            <div>{{ formatMoney(ticketProduct.unitActualPrice) }}</div>
-          </td>
-          <td class="text-center" style="width: 40px">
-            <a-popconfirm>
-              <template #cancelButton>
-                <div></div>
-              </template>
-              <template #okButton>
-                <div></div>
-              </template>
-              <template #title>
-                <div>
-                  Chiết khấu (Tiền hàng:
-                  <b>
-                    {{ formatMoney(ticketProduct.unitExpectedPrice) }}
-                  </b>
-                  )
+              <div v-if="ticketProduct.product?.substance" class="text-xs italic">
+                {{ ticketProduct.product.substance }}
+              </div>
+              <div v-if="ticketProduct.batchId" class="text-xs italic">
+                Lô {{ ticketProduct.batch?.lotNumber }} - HSD
+                {{ timeToText(ticketProduct.batch?.expiryDate) }}
+              </div>
+            </td>
+            <td class="text-center">{{ ticketProduct.unitName }}</td>
+            <td class="text-center">{{ ticketProduct.unitQuantityPrescription }}</td>
+            <td class="text-center" style="width: 150px">
+              <div
+                v-if="
+                  ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.ticketStatus)
+                "
+                class="text-center">
+                {{ ticketProduct.unitQuantity }}
+              </div>
+              <div v-else class="flex items-center justify-between">
+                <button
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  :disabled="ticketProduct.quantity <= 0"
+                  @click="
+                    updateTicketProductQuantity(ticketProductIndex, ticketProduct.unitQuantity - 1)
+                  ">
+                  <font-awesome-icon :icon="['fas', 'minus']" />
+                </button>
+                <div style="width: calc(100% - 60px); min-width: 50px">
+                  <InputNumber
+                    :value="ticketProduct.unitQuantity"
+                    textAlign="right"
+                    @update:value="
+                      (value) => updateTicketProductQuantity(ticketProductIndex, value)
+                    " />
                 </div>
-                <div class="mt-2">
+                <button
+                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                  @click="
+                    updateTicketProductQuantity(ticketProductIndex, ticketProduct.unitQuantity + 1)
+                  ">
+                  <font-awesome-icon :icon="['fas', 'plus']" />
+                </button>
+              </div>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <div v-if="ticketProduct.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(ticketProduct.unitExpectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(ticketProduct.unitActualPrice) }}</div>
+            </td>
+            <td class="text-center" style="width: 40px">
+              <a-popconfirm>
+                <template #cancelButton>
+                  <div></div>
+                </template>
+                <template #okButton>
+                  <div></div>
+                </template>
+                <template #title>
                   <div>
-                    <InputNumber
-                      :value="ticketProduct.unitDiscountMoney"
-                      :disabled="
-                        ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(
-                          ticketClinic.ticketStatus
-                        )
-                      "
-                      append="VNĐ"
-                      @update:value="
-                        (e: number) => handleChangeTicketProductDiscountMoney(e, ticketProductIndex)
-                      " />
+                    Chiết khấu (Tiền hàng:
+                    <b>
+                      {{ formatMoney(ticketProduct.unitExpectedPrice) }}
+                    </b>
+                    )
                   </div>
                   <div class="mt-2">
-                    <div class="w-full">
+                    <div>
                       <InputNumber
-                        :value="ticketProduct.discountPercent"
-                        append="%"
+                        :value="ticketProduct.unitDiscountMoney"
                         :disabled="
                           ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
                           [TicketStatus.Debt, TicketStatus.Completed].includes(
                             ticketClinic.ticketStatus
                           )
                         "
+                        append="VNĐ"
                         @update:value="
                           (e: number) =>
-                            handleChangeTicketProductDiscountPercent(e, ticketProductIndex)
+                            handleChangeTicketProductDiscountMoney(e, ticketProductIndex)
                         " />
                     </div>
+                    <div class="mt-2">
+                      <div class="w-full">
+                        <InputNumber
+                          :value="ticketProduct.discountPercent"
+                          append="%"
+                          :disabled="
+                            ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
+                            [TicketStatus.Debt, TicketStatus.Completed].includes(
+                              ticketClinic.ticketStatus
+                            )
+                          "
+                          @update:value="
+                            (e: number) =>
+                              handleChangeTicketProductDiscountPercent(e, ticketProductIndex)
+                          " />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </template>
-              <a-tag
-                v-if="ticketProduct.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
-                {{ formatMoney(ticketProduct.unitDiscountMoney) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketProduct.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
-                {{ ticketProduct.discountPercent || 0 }}%
-              </a-tag>
-            </a-popconfirm>
-          </td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
-          </td>
-        </tr>
-        <tr>
-          <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(productsMoney) }}
-          </td>
-        </tr>
-      </tbody>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th colspan="3">DỊCH VỤ - THỦ THUẬT</th>
-          <th>SL</th>
-          <th>Giá</th>
-          <th>Chiết khấu</th>
-          <th>Tổng tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(ticketProcedure, index) in ticketProcedureList || []" :key="index">
-          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
-          </td>
-          <td colspan="3">
-            <div class="flex items-center gap-1">
-              <span>{{ ticketProcedure.procedure?.name }}</span>
-              <a
-                style="line-height: 0"
-                @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)">
-                <IconFileSearch />
-              </a>
-            </div>
-          </td>
-          <td class="text-center">{{ ticketProcedure.quantity }}</td>
-          <td class="text-right whitespace-nowrap">
-            <div v-if="ticketProcedure.discountMoney" class="text-xs italic text-red-500">
-              <del>{{ formatMoney(ticketProcedure.expectedPrice) }}</del>
-            </div>
-            <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
-          </td>
-
-          <td class="text-center" style="width: 40px">
-            <a-popconfirm>
-              <template #cancelButton>
-                <div></div>
-              </template>
-              <template #okButton>
-                <div></div>
-              </template>
-              <template #title>
-                <div>
-                  Chiết khấu (Tiền hàng:
-                  <b>
-                    {{ formatMoney(ticketProcedure.expectedPrice) }}
-                  </b>
-                  )
-                </div>
-                <div class="mt-2">
+                </template>
+                <a-tag
+                  v-if="ticketProduct.discountType === 'VNĐ'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ formatMoney(ticketProduct.unitDiscountMoney) }}
+                </a-tag>
+                <a-tag
+                  v-if="ticketProduct.discountType === '%'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ ticketProduct.discountPercent || 0 }}%
+                </a-tag>
+              </a-popconfirm>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
+            <td class="font-bold text-right whitespace-nowrap">
+              {{ formatMoney(prescriptionMoney) }}
+            </td>
+          </tr>
+        </tbody>
+      </template>
+      <template v-if="ticketConsumableList.length">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th colspan="2">VẬT TƯ</th>
+            <th>Đ.Vị</th>
+            <th>SL</th>
+            <th>Giá</th>
+            <th>Chiết khấu</th>
+            <th>Tổng tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(ticketProduct, ticketProductIndex) in ticketConsumableList"
+            :key="ticketProduct.id + '_' + ticketProductIndex">
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ ticketProductIndex + 1 }}
+            </td>
+            <td colspan="2">
+              <div class="flex items-center gap-1" style="font-weight: 500">
+                <span>{{ ticketProduct.product?.brandName }}</span>
+                <a
+                  style="line-height: 0"
+                  @click="modalProductDetail?.openModal(ticketProduct.product!)">
+                  <IconFileSearch />
+                </a>
+              </div>
+              <div v-if="ticketProduct.product?.substance" class="text-xs italic">
+                {{ ticketProduct.product.substance }}
+              </div>
+              <div v-if="ticketProduct.batchId" class="text-xs italic">
+                Lô {{ ticketProduct.batch?.lotNumber }} - HSD
+                {{ timeToText(ticketProduct.batch?.expiryDate) }}
+              </div>
+            </td>
+            <td class="text-center">{{ ticketProduct.unitName }}</td>
+            <td class="text-center" style="width: 150px">
+              <div class="text-center">
+                {{ ticketProduct.unitQuantity }}
+              </div>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <div v-if="ticketProduct.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(ticketProduct.unitExpectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(ticketProduct.unitActualPrice) }}</div>
+            </td>
+            <td class="text-center" style="width: 40px">
+              <a-popconfirm>
+                <template #cancelButton>
+                  <div></div>
+                </template>
+                <template #okButton>
+                  <div></div>
+                </template>
+                <template #title>
                   <div>
-                    <InputNumber
-                      :value="ticketProcedure.discountMoney"
-                      append="VNĐ"
-                      :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(
-                          ticketClinic.ticketStatus
-                        )
-                      "
-                      @update:value="
-                        (e: number) => handleChangeTicketProcedureDiscountMoney(e, index)
-                      " />
+                    Chiết khấu (Tiền hàng:
+                    <b>
+                      {{ formatMoney(ticketProduct.unitExpectedPrice) }}
+                    </b>
+                    )
                   </div>
                   <div class="mt-2">
-                    <div class="w-full">
+                    <div>
                       <InputNumber
-                        :value="ticketProcedure.discountPercent"
-                        append="%"
+                        :value="ticketProduct.unitDiscountMoney"
+                        :disabled="
+                          ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
+                          [TicketStatus.Debt, TicketStatus.Completed].includes(
+                            ticketClinic.ticketStatus
+                          )
+                        "
+                        append="VNĐ"
+                        @update:value="
+                          (e: number) =>
+                            handleChangeTicketProductDiscountMoney(e, ticketProductIndex)
+                        " />
+                    </div>
+                    <div class="mt-2">
+                      <div class="w-full">
+                        <InputNumber
+                          :value="ticketProduct.discountPercent"
+                          append="%"
+                          :disabled="
+                            ticketProduct.deliveryStatus === DeliveryStatus.Delivered ||
+                            [TicketStatus.Debt, TicketStatus.Completed].includes(
+                              ticketClinic.ticketStatus
+                            )
+                          "
+                          @update:value="
+                            (e: number) =>
+                              handleChangeTicketProductDiscountPercent(e, ticketProductIndex)
+                          " />
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <a-tag
+                  v-if="ticketProduct.discountType === 'VNĐ'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ formatMoney(ticketProduct.unitDiscountMoney) }}
+                </a-tag>
+                <a-tag
+                  v-if="ticketProduct.discountType === '%'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ ticketProduct.discountPercent || 0 }}%
+                </a-tag>
+              </a-popconfirm>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
+            <td class="font-bold text-right whitespace-nowrap">
+              {{ formatMoney(consumableMoney) }}
+            </td>
+          </tr>
+        </tbody>
+      </template>
+      <template v-if="ticketProcedureList.length">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th colspan="3">DỊCH VỤ - THỦ THUẬT</th>
+            <th>SL</th>
+            <th>Giá</th>
+            <th>Chiết khấu</th>
+            <th>Tổng tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(ticketProcedure, index) in ticketProcedureList || []" :key="index">
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ index + 1 }}
+            </td>
+            <td colspan="3">
+              <div class="flex items-center gap-1">
+                <span>{{ ticketProcedure.procedure?.name }}</span>
+                <a
+                  style="line-height: 0"
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)">
+                  <IconFileSearch />
+                </a>
+              </div>
+            </td>
+            <td class="text-center">{{ ticketProcedure.quantity }}</td>
+            <td class="text-right whitespace-nowrap">
+              <div v-if="ticketProcedure.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(ticketProcedure.expectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
+            </td>
+
+            <td class="text-center" style="width: 40px">
+              <a-popconfirm>
+                <template #cancelButton>
+                  <div></div>
+                </template>
+                <template #okButton>
+                  <div></div>
+                </template>
+                <template #title>
+                  <div>
+                    Chiết khấu (Tiền hàng:
+                    <b>
+                      {{ formatMoney(ticketProcedure.expectedPrice) }}
+                    </b>
+                    )
+                  </div>
+                  <div class="mt-2">
+                    <div>
+                      <InputNumber
+                        :value="ticketProcedure.discountMoney"
+                        append="VNĐ"
                         :disabled="
                           [TicketStatus.Debt, TicketStatus.Completed].includes(
                             ticketClinic.ticketStatus
                           )
                         "
                         @update:value="
-                          (e: number) => handleChangeTicketProcedureDiscountPercent(e, index)
+                          (e: number) => handleChangeTicketProcedureDiscountMoney(e, index)
                         " />
                     </div>
+                    <div class="mt-2">
+                      <div class="w-full">
+                        <InputNumber
+                          :value="ticketProcedure.discountPercent"
+                          append="%"
+                          :disabled="
+                            [TicketStatus.Debt, TicketStatus.Completed].includes(
+                              ticketClinic.ticketStatus
+                            )
+                          "
+                          @update:value="
+                            (e: number) => handleChangeTicketProcedureDiscountPercent(e, index)
+                          " />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </template>
-              <a-tag
-                v-if="ticketProcedure.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
-                {{ formatMoney(ticketProcedure.discountMoney) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketProcedure.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
-                {{ ticketProcedure.discountPercent || 0 }}%
-              </a-tag>
-            </a-popconfirm>
-          </td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
-          </td>
-        </tr>
-        <tr>
-          <td class="uppercase text-right" colspan="7">Tiền dịch vụ thủ thuật</td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(proceduresMoney) }}
-          </td>
-        </tr>
-      </tbody>
+                </template>
+                <a-tag
+                  v-if="ticketProcedure.discountType === 'VNĐ'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ formatMoney(ticketProcedure.discountMoney) }}
+                </a-tag>
+                <a-tag
+                  v-if="ticketProcedure.discountType === '%'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ ticketProcedure.discountPercent || 0 }}%
+                </a-tag>
+              </a-popconfirm>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="uppercase text-right" colspan="7">Tiền dịch vụ thủ thuật</td>
+            <td class="font-bold text-right whitespace-nowrap">
+              {{ formatMoney(proceduresMoney) }}
+            </td>
+          </tr>
+        </tbody>
+      </template>
+      <template v-if="ticketRadiologyList.length">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
+            <th>Giá</th>
+            <th>Chiết khấu</th>
+            <th>Tổng tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(ticketRadiology, index) in ticketRadiologyList || []" :key="index">
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ index + 1 }}
+            </td>
+            <td colspan="4">
+              <div class="flex items-center gap-1">
+                <span>{{ ticketRadiology.radiology?.name }}</span>
+                <a
+                  style="line-height: 0"
+                  @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)">
+                  <IconFileSearch />
+                </a>
+              </div>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
+            </td>
 
-      <thead>
-        <tr>
-          <th>#</th>
-          <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
-          <th>Giá</th>
-          <th>Chiết khấu</th>
-          <th>Tổng tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(ticketRadiology, index) in ticketRadiologyList || []" :key="index">
-          <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
-          </td>
-          <td colspan="4">
-            <div class="flex items-center gap-1">
-              <span>{{ ticketRadiology.radiology?.name }}</span>
-              <a
-                style="line-height: 0"
-                @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)">
-                <IconFileSearch />
-              </a>
-            </div>
-          </td>
-          <td class="text-right whitespace-nowrap">
-            <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
-              <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
-            </div>
-            <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
-          </td>
-
-          <td class="text-center" style="width: 40px">
-            <a-popconfirm>
-              <template #cancelButton>
-                <div></div>
-              </template>
-              <template #okButton>
-                <div></div>
-              </template>
-              <template #title>
-                <div>
-                  Chiết khấu (Tiền hàng:
-                  <b>
-                    {{ formatMoney(ticketRadiology.expectedPrice) }}
-                  </b>
-                  )
-                </div>
-                <div class="mt-2">
+            <td class="text-center" style="width: 40px">
+              <a-popconfirm>
+                <template #cancelButton>
+                  <div></div>
+                </template>
+                <template #okButton>
+                  <div></div>
+                </template>
+                <template #title>
                   <div>
-                    <InputNumber
-                      :value="ticketRadiology.discountMoney"
-                      append="VNĐ"
-                      :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(
-                          ticketClinic.ticketStatus
-                        )
-                      "
-                      @update:value="
-                        (e: number) => handleChangeTicketRadiologyDiscountMoney(e, index)
-                      " />
+                    Chiết khấu (Tiền hàng:
+                    <b>
+                      {{ formatMoney(ticketRadiology.expectedPrice) }}
+                    </b>
+                    )
                   </div>
                   <div class="mt-2">
-                    <div class="w-full">
+                    <div>
                       <InputNumber
-                        :value="ticketRadiology.discountPercent"
-                        append="%"
+                        :value="ticketRadiology.discountMoney"
+                        append="VNĐ"
                         :disabled="
                           [TicketStatus.Debt, TicketStatus.Completed].includes(
                             ticketClinic.ticketStatus
                           )
                         "
                         @update:value="
-                          (e: number) => handleChangeTicketRadiologyDiscountPercent(e, index)
+                          (e: number) => handleChangeTicketRadiologyDiscountMoney(e, index)
                         " />
                     </div>
+                    <div class="mt-2">
+                      <div class="w-full">
+                        <InputNumber
+                          :value="ticketRadiology.discountPercent"
+                          append="%"
+                          :disabled="
+                            [TicketStatus.Debt, TicketStatus.Completed].includes(
+                              ticketClinic.ticketStatus
+                            )
+                          "
+                          @update:value="
+                            (e: number) => handleChangeTicketRadiologyDiscountPercent(e, index)
+                          " />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </template>
-              <a-tag
-                v-if="ticketRadiology.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
-                {{ formatMoney(ticketRadiology.discountMoney) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketRadiology.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
-                {{ ticketRadiology.discountPercent || 0 }}%
-              </a-tag>
-            </a-popconfirm>
-          </td>
-          <td class="text-right whitespace-nowrap">
-            {{ formatMoney(ticketRadiology.actualPrice) }}
-          </td>
-        </tr>
-        <tr>
-          <td class="uppercase text-right" colspan="7">Tiền CHẨN ĐOÁN HÌNH ẢNH</td>
-          <td class="font-bold text-right whitespace-nowrap">
-            {{ formatMoney(radiologyMoney) }}
-          </td>
-        </tr>
-      </tbody>
+                </template>
+                <a-tag
+                  v-if="ticketRadiology.discountType === 'VNĐ'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ formatMoney(ticketRadiology.discountMoney) }}
+                </a-tag>
+                <a-tag
+                  v-if="ticketRadiology.discountType === '%'"
+                  color="success"
+                  style="cursor: pointer">
+                  {{ ticketRadiology.discountPercent || 0 }}%
+                </a-tag>
+              </a-popconfirm>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              {{ formatMoney(ticketRadiology.actualPrice) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="uppercase text-right" colspan="7">Tiền CHẨN ĐOÁN HÌNH ẢNH</td>
+            <td class="font-bold text-right whitespace-nowrap">
+              {{ formatMoney(radiologyMoney) }}
+            </td>
+          </tr>
+        </tbody>
+      </template>
       <tbody>
         <tr>
           <td class="uppercase text-right font-bold" colspan="7">Tổng tiền</td>

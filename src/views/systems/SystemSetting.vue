@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { onUnmounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import { IconSetting } from '../../common/icon'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { SettingKey } from '../../modules/_me/store.variable'
 import { OrganizationService } from '../../modules/organization'
@@ -27,7 +27,7 @@ const saveSystemSetting = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SYSTEM_SETTING, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     settingStore.SYSTEM_SETTING = JSON.parse(settingData)
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -51,7 +51,7 @@ const logoutGoogleDriver = async () => {
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
-        <SettingOutlined style="margin-right: 1rem" />
+        <IconSetting style="margin-right: 1rem" />
         Cài đặt
       </div>
     </div>

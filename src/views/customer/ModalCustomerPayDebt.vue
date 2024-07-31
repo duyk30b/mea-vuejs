@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
-import VueModal from '../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../common/icon'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
+import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, useCustomerStore } from '../../modules/customer'
+import { VoucherType } from '../../modules/enum'
 import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { timeToText } from '../../utils'
-import { VoucherType } from '../../modules/enum'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -68,7 +67,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (money.value === 0) {
-      return message.error('Số tiền trả nợ phải khác 0')
+      return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
     const data = await customerStore.payDebt({
       customerId: customer.value.id,
@@ -128,7 +127,7 @@ defineExpose({ openModal })
           {{ customer.fullName + ': Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 

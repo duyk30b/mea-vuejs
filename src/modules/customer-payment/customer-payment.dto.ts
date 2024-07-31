@@ -14,7 +14,6 @@ export class CustomerPaymentGetQuery {
   filter: {
     customerId?: number
     ticketId?: number
-    voucherType?: VoucherType
     paymentType?: PaymentType
   }
 

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import {
-  CloseOutlined,
   ContainerOutlined,
   DeploymentUnitOutlined,
   DollarOutlined,
   OneToOneOutlined,
-  PlusOutlined,
-  UserOutlined,
+  UserOutlined
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon'
 import { IconRadiology, IconStethoscope } from '../../../common/icon-google'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -25,7 +25,6 @@ import CustomerProductHistory from './CustomerProductHistory.vue'
 import CustomerRadiologyHistory from './CustomerRadiologyHistory.vue'
 import CustomerTicketClinicHistory from './CustomerTicketClinicHistory.vue'
 import CustomerTicketHistory from './CustomerTicketHistory.vue'
-import VueButton from '../../../common/VueButton.vue'
 
 const TABS_KEY = {
   INFO: 'CUSTOMER_INFO',
@@ -94,7 +93,7 @@ defineExpose({ openModal })
           Khách hàng: {{ customer.fullName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 

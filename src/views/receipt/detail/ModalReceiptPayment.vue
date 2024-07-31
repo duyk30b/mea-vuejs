@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../../common/icon'
 import { InputMoney } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import DistributorPaymentTypeTag from '../../../views/distributor/DistributorPaymentTypeTag.vue'
-import { PaymentViewType } from '../../../modules/enum'
-import { nextTick } from 'vue'
 import { receipt } from './receipt-detail.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
@@ -89,7 +87,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thông tin thanh toán</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -220,10 +218,7 @@ defineExpose({ openModal })
                 receipt.status
               )
             ">
-            <VueButton type="submit" color="blue" :loading="paymentLoading">
-              <template #icon>
-                <SaveOutlined />
-              </template>
+            <VueButton type="submit" color="blue" icon="save" :loading="paymentLoading">
               <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng</span>
               <span v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">
                 Nhập hàng và thanh toán
@@ -232,10 +227,7 @@ defineExpose({ openModal })
             </VueButton>
           </div>
           <div v-else>
-            <VueButton type="button" @click="closeModal">
-              <CloseOutlined />
-              Đóng lại
-            </VueButton>
+            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
           </div>
         </div>
       </form>

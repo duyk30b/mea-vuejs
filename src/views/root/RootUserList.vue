@@ -3,7 +3,7 @@ import {
   AccountBookOutlined,
   CheckCircleOutlined,
   FormOutlined,
-  MinusCircleOutlined
+  MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
@@ -65,6 +65,11 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
   const result = await RootUserApi.deviceLogout({ userId, code, oid })
   await startFetchData()
 }
+
+const logoutAll = async () => {
+  const result = await RootUserApi.logoutAll()
+  await startFetchData()
+}
 </script>
 
 <template>
@@ -78,6 +83,8 @@ const deviceLogout = async (params: { userId: number; code: string; oid: number 
       <VueButton color="blue" icon="plus" @click="modalRootUserUpsert?.openModal()">
         Thêm mới
       </VueButton>
+
+      <VueButton color="red" icon="send" @click="logoutAll">Đăng xuất tất cả</VueButton>
     </div>
     <div class="page-header-setting"></div>
   </div>

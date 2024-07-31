@@ -5,6 +5,7 @@ import {
   ContainerOutlined,
   DisconnectOutlined,
   LoginOutlined,
+  OneToOneOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -26,6 +27,7 @@ import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
 import { ticketClinic } from './ticket-clinic-detail.ref'
+import TicketClinicConsumable from './TicketClinicConsumable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -40,6 +42,7 @@ const startFetchData = async (ticketId: number) => {
     const ticketData = await ticketClinicStore.detail(ticketId, {
       relation: {
         customer: true,
+        user: true,
         customerPaymentList: false, // query khi bật modal thanh toán
         ticketDiagnosis: true,
         ticketProductList: true,
@@ -51,6 +54,9 @@ const startFetchData = async (ticketId: number) => {
       ticketData.ticketDiagnosis = TicketDiagnosis.blank()
       ticketData.ticketDiagnosis.ticketId = ticketId
     }
+    if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
+    if (!ticketData.ticketProductList) ticketData.ticketProductList = []
+    if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
     ticketClinic.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
@@ -88,7 +94,7 @@ const clickCloseVisit = () => {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
-        '- Cần xuất thuốc trước khi đóng phiếu khám',
+        '- Cần xuất thuốc và vật tư trước khi đóng phiếu khám',
         '- Khách hàng không lấy thuốc có thể chọn số lượng mua = 0',
       ],
     })
@@ -170,6 +176,12 @@ const clickCloseVisit = () => {
               Dịch vụ
             </VueTabMenu>
             <VueTabMenu
+              :tabKey="TicketClinicConsumable.__name!"
+              @active="router.push({ name: TicketClinicConsumable.__name })">
+              <OneToOneOutlined />
+              Vật tư
+            </VueTabMenu>
+            <VueTabMenu
               :tabKey="TicketClinicRadiology.__name!"
               @active="router.push({ name: TicketClinicRadiology.__name })">
               <IconRadiology />
@@ -196,6 +208,7 @@ const clickCloseVisit = () => {
             [
               TicketClinicDiagnosis.__name,
               TicketClinicProcedure.__name,
+              TicketClinicConsumable.__name,
               TicketClinicRadiology.__name,
               TicketClinicPrescription.__name,
             ].join(',')

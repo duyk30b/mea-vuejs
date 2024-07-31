@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { CloseOutlined, PlusOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { OrganizationService } from '../../../modules/organization'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
-import VueButton from '../../../common/VueButton.vue'
+import { OrganizationService } from '../../../modules/organization'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -31,7 +31,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_DISTRIBUTOR_UPSERT, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_DISTRIBUTOR_UPSERT = JSON.parse(settingData)
 
     emit('success')
@@ -52,7 +52,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 

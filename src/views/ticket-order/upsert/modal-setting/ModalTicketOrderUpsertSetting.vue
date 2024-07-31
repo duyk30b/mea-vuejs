@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { CloseOutlined, FileSearchOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { nextTick, ref } from 'vue'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { ref } from 'vue'
+import VueButton from '../../../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../../../common/icon'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../../common/vue-form'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, useCustomerStore } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
 import { DTimer } from '../../../../utils'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import VueButton from '../../../../common/VueButton.vue'
+
+const TABS_KEY = {
+  SELECT_ITEM: 'SELECT_ITEM',
+  TICKET_ITEMS: 'TICKET_ITEMS',
+  TICKET_PAYMENT: 'TICKET_PAYMENT',
+}
 
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 
@@ -27,7 +33,7 @@ const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref('1')
+const activeTab = ref(TABS_KEY.SELECT_ITEM)
 
 const customerList = ref<Customer[]>([])
 const customerDefault = ref<Customer>(meStore.customerDefault)
@@ -60,7 +66,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_UPSERT, settingData)
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
     meStore.customerDefault = Customer.from(customerDefault.value)
     emit('success')
@@ -90,19 +96,21 @@ defineExpose({ openModal })
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Cài đặt hiển thị</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
-            <VueTabMenu tabKey="1">Chọn sản phẩm</VueTabMenu>
-            <VueTabMenu tabKey="2">Danh sách sản phẩm</VueTabMenu>
-            <VueTabMenu tabKey="3" @active="handleActiveTabPaymentSetting">Thanh toán</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.SELECT_ITEM">Chọn sản phẩm</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.TICKET_ITEMS">Danh sách sản phẩm</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.TICKET_PAYMENT" @active="handleActiveTabPaymentSetting">
+              Thanh toán
+            </VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="1">
+            <VueTabPanel :tabKey="TABS_KEY.SELECT_ITEM">
               <div class="mt-4 table-wrapper">
                 <table class="">
                   <thead>
@@ -175,7 +183,7 @@ defineExpose({ openModal })
                 </table>
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="2">
+            <VueTabPanel :tabKey="TABS_KEY.TICKET_ITEMS">
               <div class="mt-4 table-wrapper">
                 <table class="">
                   <thead>
@@ -205,7 +213,7 @@ defineExpose({ openModal })
                       <td>
                         <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.detail">
                           Hiển thị chi tiết sản phẩm (
-                          <FileSearchOutlined />
+                          <IconFileSearch />
                           )
                         </a-checkbox>
                       </td>
@@ -265,7 +273,7 @@ defineExpose({ openModal })
                 </table>
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="3">
+            <VueTabPanel :tabKey="TABS_KEY.TICKET_PAYMENT">
               <div class="mt-4 table-wrapper">
                 <table class="">
                   <thead>

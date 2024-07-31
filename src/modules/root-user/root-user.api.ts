@@ -46,4 +46,10 @@ export class RootUserApi {
     const { data } = response.data as BaseResponse
     return data
   }
+
+  static async logoutAll() {
+    const response = await AxiosInstance.post(`/root/user/logout-all`)
+    const { data } = response.data as BaseResponse
+    return data
+  }
 }

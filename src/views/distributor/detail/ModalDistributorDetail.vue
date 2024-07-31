@@ -19,6 +19,12 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import VueButton from '../../../common/VueButton.vue'
 
+const TABS_KEY = {
+  INFO: 'INFO',
+  PAYMENT_HISTORY: 'PAYMENT_HISTORY',
+  RECEIPT_HISTORY: 'RECEIPT_HISTORY',
+}
+
 const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }>()
 
 const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>>()
@@ -32,7 +38,7 @@ const distributorStore = useDistributorStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref('info')
+const activeTab = ref(TABS_KEY.INFO)
 
 const distributor = ref<Distributor>(Distributor.blank())
 
@@ -76,28 +82,30 @@ defineExpose({ openModal })
       <div class="p-4">
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
-            <VueTabMenu tabKey="info">
+            <VueTabMenu :tabKey="TABS_KEY.INFO">
               <UserOutlined />
               Thông tin cá nhân
             </VueTabMenu>
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
-              tabKey="debts-history">
+              :tabKey="TABS_KEY.PAYMENT_HISTORY">
               <DollarOutlined />
               Thanh toán
             </VueTabMenu>
-            <VueTabMenu v-if="permissionIdMap[PermissionId.RECEIPT_READ]" tabKey="receipts-history">
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.RECEIPT_READ]"
+              :tabKey="TABS_KEY.RECEIPT_HISTORY">
               <DeploymentUnitOutlined />
               Lịch sử nhập hàng
             </VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="info">
+            <VueTabPanel :tabKey="TABS_KEY.INFO">
               <div class="mt-4">
                 <DistributorInfo :distributor="distributor" />
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="debts-history">
+            <VueTabPanel :tabKey="TABS_KEY.PAYMENT_HISTORY">
               <div class="mt-4 flex justify-between items-end">
                 <div>
                   Khách hàng:
@@ -122,7 +130,7 @@ defineExpose({ openModal })
                 ref="distributorPaymentHistory"
                 :distributor="distributor" />
             </VueTabPanel>
-            <VueTabPanel tabKey="receipts-history">
+            <VueTabPanel :tabKey="TABS_KEY.RECEIPT_HISTORY">
               <DistributorReceiptHistory :distributor="distributor" />
             </VueTabPanel>
           </template>

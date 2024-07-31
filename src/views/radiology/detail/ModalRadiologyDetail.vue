@@ -11,11 +11,16 @@ import { Radiology } from '../../../modules/radiology'
 import RadiologyInfo from './RadiologyInfo.vue'
 import RadiologyHistory from './RadiologyHistory.vue'
 
+const TABS_KEY = {
+  INFO: 'INFO',
+  HISTORY: 'HISTORY',
+}
+
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const tabShow = ref('info')
+const tabShow = ref(TABS_KEY.HISTORY)
 
 const radiology = ref<Radiology>(Radiology.blank())
 
@@ -47,13 +52,13 @@ defineExpose({ openModal })
       <div class="p-4">
         <VueTabs v-model:tabShow="tabShow">
           <template #menu>
-            <VueTabMenu tabKey="info">
+            <VueTabMenu :tabKey="TABS_KEY.INFO">
               <span>
                 <DeploymentUnitOutlined />
                 Thông tin
               </span>
             </VueTabMenu>
-            <VueTabMenu tabKey="history">
+            <VueTabMenu :tabKey="TABS_KEY.HISTORY">
               <span>
                 <DiffOutlined />
                 Lịch sử hóa đơn
@@ -61,12 +66,12 @@ defineExpose({ openModal })
             </VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="info">
+            <VueTabPanel :tabKey="TABS_KEY.INFO">
               <div class="mt-4">
                 <RadiologyInfo :radiology="radiology" />
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="history">
+            <VueTabPanel :tabKey="TABS_KEY.HISTORY">
               <div class="mt-4">
                 <RadiologyHistory :radiology="radiology" />
               </div>

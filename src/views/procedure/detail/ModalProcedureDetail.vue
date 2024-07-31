@@ -11,13 +11,18 @@ import { Procedure, useProcedureStore } from '../../../modules/procedure'
 import ProcedureInfo from './ProcedureInfo.vue'
 import ProcedureHistory from './ProcedureHistory.vue'
 
+const TABS_KEY = {
+  INFO: 'INFO',
+  PROCEDURE_HISTORY: 'PROCEDURE_HISTORY',
+}
+
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const procedureStore = useProcedureStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const tabShow = ref('info')
+const tabShow = ref(TABS_KEY.INFO)
 
 const procedure = ref<Procedure>(Procedure.blank())
 
@@ -49,13 +54,13 @@ defineExpose({ openModal })
       <div class="p-4">
         <VueTabs v-model:tabShow="tabShow">
           <template #menu>
-            <VueTabMenu tabKey="info">
+            <VueTabMenu :tabKey="TABS_KEY.INFO">
               <span>
                 <DeploymentUnitOutlined />
                 Thông tin
               </span>
             </VueTabMenu>
-            <VueTabMenu tabKey="history">
+            <VueTabMenu :tabKey="TABS_KEY.PROCEDURE_HISTORY">
               <span>
                 <DiffOutlined />
                 Lịch sử hóa đơn
@@ -63,12 +68,12 @@ defineExpose({ openModal })
             </VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="info">
+            <VueTabPanel :tabKey="TABS_KEY.INFO">
               <div class="mt-4">
                 <ProcedureInfo :procedure="procedure" />
               </div>
             </VueTabPanel>
-            <VueTabPanel tabKey="history">
+            <VueTabPanel :tabKey="TABS_KEY.PROCEDURE_HISTORY">
               <div class="mt-4">
                 <ProcedureHistory :procedure="procedure" />
               </div>

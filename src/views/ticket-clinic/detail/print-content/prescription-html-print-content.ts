@@ -1,6 +1,6 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
 import type { Ticket } from '../../../../modules/ticket'
-import type { TicketProduct } from '../../../../modules/ticket-product'
+import { TicketProductType } from '../../../../modules/ticket-product'
 import { DTimer, formatPhone, timeToText } from '../../../../utils'
 
 export const prescriptionHtmlContent = (ticket: Ticket) => {
@@ -103,6 +103,7 @@ export const prescriptionHtmlContent = (ticket: Ticket) => {
           </thead>
           <tbody>
             ${(ticket.ticketProductList || [])
+              .filter((i) => i.type === TicketProductType.Prescription)
               .map((i, index) => {
                 return `
                 <tr>
@@ -127,13 +128,18 @@ export const prescriptionHtmlContent = (ticket: Ticket) => {
 
         <table style="width: 100%; margin-top: 0.5rem">
           <tr>
-            <td style="width: 70%;">
+            <td style="width: 70%; vertical-align: top;">
               <div style="font-style: italic; text-decoration: underline;">Lời dặn: </div>
               <div style="padding-top: 10px;">
                 ${ticket.ticketDiagnosis?.advice}
               </div>
             </td>
-            <td style="width: 30%; text-align: center; vertical-align: top;"> Bác sĩ khám bệnh </td>
+            <td style="width: 30%; text-align: center; vertical-align: top;"> 
+              <div> Bác sĩ thực hiện </div>
+              <div style="margin-top: 100px">
+                ${ticket.user!.fullName}
+              </div>
+            </td>
           </tr>
         </table>
       </div> 

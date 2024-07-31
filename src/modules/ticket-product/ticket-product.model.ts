@@ -4,12 +4,17 @@ import { DeliveryStatus, DiscountType } from '../enum'
 import { Product } from '../product'
 import type { Ticket } from '../ticket/ticket.model'
 
+export enum TicketProductType {
+  Prescription = 1,
+  Consumable = 2,
+}
 export class TicketProduct {
   id: number
   ticketId: number
   customerId: number
   productId: number
   batchId: number
+  type: TicketProductType
   deliveryStatus: DeliveryStatus
   unitRate: number
   quantityPrescription: number

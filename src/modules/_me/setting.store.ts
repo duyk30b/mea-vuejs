@@ -10,7 +10,7 @@ export const useSettingStore = defineStore('setting-store', {
       SYSTEM_SETTING: {
         moneyDivisionFormat: 1,
         retailPrice: true,
-        wholesalePrice: true,
+        wholesalePrice: false,
         allowNegativeQuantity: false,
         hasManageQuantity: true,
         hasManageBatches: true,

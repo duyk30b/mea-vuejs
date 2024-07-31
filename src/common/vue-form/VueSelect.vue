@@ -62,6 +62,16 @@ watch(
   { immediate: true }
 )
 
+const handleFocusin = () => {
+  if (props.disabled) return
+  showOptions.value = true
+}
+
+const handleClickMask = () => {
+  if (props.disabled) return
+  showOptions.value = true
+}
+
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Tab' || e.key === 'Escape') {
     showOptions.value = false
@@ -135,7 +145,7 @@ defineExpose({ focus })
   <div
     :class="{ 'vue-input': true, disabled }"
     :tabindex="disabled ? -1 : 0"
-    @focusin="showOptions = true"
+    @focusin="handleFocusin"
     @blur="showOptions = false"
     @keydown="handleKeydown">
     <div class="input-area">
@@ -144,7 +154,7 @@ defineExpose({ focus })
         :required="required"
         :value="Object.keys(itemSelected).length || ''"
         disabled />
-      <div class="mask" @click="showOptions = true">
+      <div class="mask" @click="handleClickMask">
         <slot name="text" :content="itemSelected">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
             {{
@@ -156,7 +166,7 @@ defineExpose({ focus })
         </slot>
       </div>
     </div>
-    <div class="icon-append">
+    <div v-if="!disabled" class="icon-append">
       <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
       <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
@@ -192,6 +202,9 @@ defineExpose({ focus })
 <style lang="scss" scoped>
 .vue-input {
   cursor: pointer;
+  &.disabled {
+    cursor: not-allowed;
+  }
   .input-area {
     .mask {
       position: absolute;

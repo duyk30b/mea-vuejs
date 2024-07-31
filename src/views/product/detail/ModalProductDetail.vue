@@ -11,11 +11,16 @@ import { Product } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
 import ProductMovement from './ProductMovement.vue'
 
+const TABS_KEY = {
+  INFO: 'INFO',
+  MOVEMENT: 'MOVEMENT',
+}
+
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const showModal = ref(false)
-const tabShow = ref('info')
+const tabShow = ref(TABS_KEY.INFO)
 
 const product = ref<Product>(Product.blank())
 
@@ -49,20 +54,22 @@ defineExpose({ openModal })
       <div class="p-4">
         <VueTabs v-model:tabShow="tabShow">
           <template #menu>
-            <VueTabMenu tabKey="info">
+            <VueTabMenu :tabKey="TABS_KEY.INFO">
               <DeploymentUnitOutlined />
               Thông tin
             </VueTabMenu>
-            <VueTabMenu v-if="permissionIdMap[PermissionId.READ_MOVEMENT]" tabKey="movement">
+            <VueTabMenu
+              v-if="permissionIdMap[PermissionId.READ_MOVEMENT]"
+              :tabKey="TABS_KEY.MOVEMENT">
               <DiffOutlined />
               Nhập/Xuất
             </VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="info">
+            <VueTabPanel :tabKey="TABS_KEY.INFO">
               <ProductInfoAndBatchList :productId="product.id" />
             </VueTabPanel>
-            <VueTabPanel tabKey="movement">
+            <VueTabPanel :tabKey="TABS_KEY.MOVEMENT">
               <ProductMovement :product="product" />
             </VueTabPanel>
           </template>

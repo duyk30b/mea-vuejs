@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueModal from '../../common/vue-modal/VueModal.vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose } from '../../common/icon'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
+import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
-import VueButton from '../../common/VueButton.vue'
-import { nextTick } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -67,7 +66,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (money.value === 0) {
-      return message.error('Số tiền trả nợ phải khác 0')
+      return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
     const data = await distributorStore.payDebt({
       distributorId: distributorId.value,
@@ -121,7 +120,7 @@ defineExpose({ openModal })
           {{ 'Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -194,14 +193,8 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="flex justify-end gap-4">
-          <VueButton type="reset" @click="closeModal">
-            <CloseOutlined />
-            Hủy bỏ
-          </VueButton>
-          <VueButton type="submit" color="blue" :loading="saveLoading">
-            <template #icon>
-              <SaveOutlined />
-            </template>
+          <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton type="submit" icon="save" color="blue" :loading="saveLoading">
             Xác nhận trả nợ
           </VueButton>
         </div>

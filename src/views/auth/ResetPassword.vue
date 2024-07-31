@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { message } from 'ant-design-vue'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { AuthService } from '../../modules/auth/auth.service'
 
 const router = useRouter()
@@ -25,7 +25,7 @@ const startResetPassword = async () => {
   try {
     loading.value = true
     if (formState.passwordRepeat !== formState.password) {
-      return message.error('Điền mật khẩu lần 2 không chính xác')
+      return AlertStore.addError('Điền mật khẩu lần 2 không chính xác')
     }
     await AuthService.resetPassword({
       orgPhone: formState.orgPhone as string,
@@ -36,7 +36,7 @@ const startResetPassword = async () => {
     router.push({ name: 'Login' })
   } catch (error: any) {
     console.log('🚀 ~ file: Login.vue:34 ~ startResetPassword ~ error:', error)
-    message.error(error.message)
+    AlertStore.addError(error.message)
   } finally {
     loading.value = false
   }

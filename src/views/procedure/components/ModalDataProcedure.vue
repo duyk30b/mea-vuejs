@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+
+const TABS_KEY = {
+  GROUP: 'GROUP',
+}
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -17,7 +21,7 @@ const GROUP = ref<typeof store.PROCEDURE_GROUP>(JSON.parse(JSON.stringify(store.
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref('1')
+const activeTab = ref(TABS_KEY.GROUP)
 
 const openModal = async () => {
   showModal.value = true
@@ -27,16 +31,18 @@ const openModal = async () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (activeTab.value === '1') {
+    if (activeTab.value === TABS_KEY.GROUP) {
       Object.keys(GROUP.value).forEach((key) => {
         if (!GROUP.value[key]) delete GROUP.value[key]
       })
       const data = JSON.stringify(GROUP.value)
       await OrganizationService.saveSettings(SettingKey.PROCEDURE_GROUP, data)
       store.PROCEDURE_GROUP = JSON.parse(data)
+    } else {
+      return AlertStore.addError('Cập nhật thất bại')
     }
 
-    message.success('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công')
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -59,16 +65,16 @@ defineExpose({ openModal })
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">Cài đặt dữ liệu</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
       <div class="px-4 mt-4">
         <VueTabs :tabShow="activeTab">
           <template #menu>
-            <VueTabMenu tabKey="1">Nhóm dịch vụ</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.GROUP">Nhóm dịch vụ</VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel tabKey="1">
+            <VueTabPanel :tabKey="TABS_KEY.GROUP">
               <div class="w-full mt-4">
                 <div class="text-center text-lg uppercase" style="font-weight: 500">
                   Danh sách nhóm dịch vụ

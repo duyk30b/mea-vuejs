@@ -121,9 +121,7 @@ export const ticketRadiologyHtmlContent = (ticket: Ticket, ticketRadiology: Tick
               <div style="font-style: italic; font-size: 0.9rem;"> 
                 ${DTimer.timeToText(ticket.startedAt, 'Ngày DD tháng MM năm YYYY')}
                </div>
-              <div>
-                Bác sĩ thực hiện
-              </div>
+              <div> Bác sĩ thực hiện </div>
               <div style="margin-top: 100px">
                 ${ticketRadiology.doctor!.fullName}
               </div>

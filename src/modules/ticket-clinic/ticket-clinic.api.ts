@@ -214,6 +214,25 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse
   }
 
+  static async changeConsumable(body: { ticketId: number; ticketProductList: TicketProduct[] }) {
+    const { ticketId, ticketProductList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-consumable`, {
+      ticketProductList: ticketProductList.map((i) => ({
+        productId: i.productId,
+        batchId: i.batchId,
+        unitRate: i.unitRate,
+        quantity: i.quantity,
+        costAmount: i.costAmount,
+        expectedPrice: i.expectedPrice,
+        discountMoney: i.discountMoney,
+        discountPercent: i.discountPercent,
+        discountType: i.discountType,
+        actualPrice: i.actualPrice,
+      })),
+    })
+    const { data } = response.data as BaseResponse
+  }
+
   static async changeItemsMoney(body: {
     ticketId: number
     ticketProductList: TicketProduct[]

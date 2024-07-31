@@ -30,6 +30,11 @@ import ModalDataOrderTicket from './modal-setting/ModalDataOrderTicket.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
 import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
 
+const TABS_KEY = {
+  PRODUCT: 'PRODUCT',
+  PROCEDURE: 'PROCEDURE',
+}
+
 const ticketOrderSelectProcedure = ref<InstanceType<typeof TicketOrderSelectProcedure>>()
 const ticketOrderSelectProduct = ref<InstanceType<typeof TicketOrderSelectProduct>>()
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
@@ -48,8 +53,11 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 
-const defaultTabStart = localStorage.getItem('TICKET_ORDER_UPSERT_TAB_START') || 'product'
-const tabStart = ref<'product' | 'procedure'>(defaultTabStart as any)
+let defaultTabStart = localStorage.getItem('TICKET_ORDER_UPSERT_TAB_START') || TABS_KEY.PRODUCT
+if (![TABS_KEY.PRODUCT, TABS_KEY.PROCEDURE].includes(defaultTabStart)) {
+  defaultTabStart = TABS_KEY.PRODUCT
+}
+const tabStart = ref(defaultTabStart as any)
 
 const mode = ref<ETicketOrderUpsertMode>(ETicketOrderUpsertMode.CREATE)
 
@@ -123,11 +131,11 @@ onBeforeMount(async () => {
 const handleDocumentKeyup = (e: KeyboardEvent) => {
   if (e.key === 'F3') {
     e.preventDefault()
-    if (tabStart.value === 'product') {
-      tabStart.value = 'procedure'
+    if (tabStart.value === TABS_KEY.PRODUCT) {
+      tabStart.value = TABS_KEY.PROCEDURE
       nextTick(() => ticketOrderSelectProcedure.value?.focus())
-    } else if (tabStart.value === 'procedure') {
-      tabStart.value = 'product'
+    } else if (tabStart.value === TABS_KEY.PROCEDURE) {
+      tabStart.value = TABS_KEY.PRODUCT
       nextTick(() => ticketOrderSelectProduct.value?.focus())
     }
   }
@@ -360,20 +368,24 @@ const handleChangeTabs = (activeKey: any) => {
         <div class="bg-white p-4">
           <VueTabs :tabShow="tabStart" @update:tabShow="handleChangeTabs">
             <template #menu>
-              <VueTabMenu v-if="permissionIdMap[PermissionId.PRODUCT_READ]" tabKey="product">
+              <VueTabMenu
+                v-if="permissionIdMap[PermissionId.PRODUCT_READ]"
+                :tabKey="TABS_KEY.PRODUCT">
                 Hàng hóa ({{ ticket.ticketProductList!.length }})
               </VueTabMenu>
-              <VueTabMenu v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" tabKey="procedure">
+              <VueTabMenu
+                v-if="permissionIdMap[PermissionId.PROCEDURE_READ]"
+                :tabKey="TABS_KEY.PROCEDURE">
                 Dịch vụ ({{ ticket.ticketProcedureList!.length }})
               </VueTabMenu>
             </template>
             <template #panel>
-              <VueTabPanel tabKey="product">
+              <VueTabPanel :tabKey="TABS_KEY.PRODUCT">
                 <div class="mt-2">
                   <TicketOrderSelectProduct ref="ticketOrderSelectProduct" />
                 </div>
               </VueTabPanel>
-              <VueTabPanel tabKey="procedure">
+              <VueTabPanel :tabKey="TABS_KEY.PROCEDURE">
                 <div class="mt-2">
                   <TicketOrderSelectProcedure ref="ticketOrderSelectProcedure" />
                 </div>

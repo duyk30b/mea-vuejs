@@ -1,4 +1,3 @@
-<!-- VueTabMenu.vue -->
 <template>
   <div class="tab-menu-item" :class="tabSelect == tabKey ? 'active' : ''" @click="handleClick">
     <slot></slot>

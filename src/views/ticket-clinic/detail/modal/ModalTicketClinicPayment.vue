@@ -35,7 +35,6 @@ const openModal = async (view: PaymentViewType) => {
     filter: {
       customerId: ticketClinic.value.customerId,
       ticketId: ticketClinic.value.id,
-      voucherType: ticketClinic.value.voucherType,
     },
     sort: { id: 'ASC' },
   })
@@ -210,7 +209,7 @@ defineExpose({ openModal })
                   <div class="flex items-stretch pl-6">
                     <VueButton type="button" @click="money = ticketClinic.debt">Tất cả</VueButton>
                     <div class="flex-1">
-                      <InputNumber
+                      <InputMoney
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0, lte: ticketClinic.debt }"
@@ -251,7 +250,7 @@ defineExpose({ openModal })
                   <div class="flex items-stretch pl-6">
                     <VueButton type="button" @click="money = -ticketClinic.debt">Tất cả</VueButton>
                     <div class="flex-1">
-                      <InputNumber
+                      <InputMoney
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0, lte: -ticketClinic.debt }"

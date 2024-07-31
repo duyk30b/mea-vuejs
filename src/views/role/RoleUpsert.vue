@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { PlusOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../common/VueButton.vue'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../common/vue-form'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { usePermissionStore } from '../../modules/permission/permission.store'
 import { Role, RoleApi } from '../../modules/role'
-import VueButton from '../../common/VueButton.vue'
 
 const settingStore = useSettingStore()
 const permissionStore = usePermissionStore()
@@ -51,7 +51,7 @@ const handleSave = async () => {
     } else {
       await RoleApi.updateOne(role.value.id, role.value)
     }
-    message.success('Cập nhật vai trò thành công')
+    AlertStore.addSuccess('Cập nhật vai trò thành công')
     router.push({ name: 'RoleList' })
   } catch (error) {
     console.log('🚀 ~ handleSave ~ error:', error)
@@ -63,7 +63,10 @@ const handleSave = async () => {
 
 <template>
   <div class="page-header">
-    <div class="page-header-content"><ScheduleOutlined /> Thông tin vai trò</div>
+    <div class="page-header-content">
+      <ScheduleOutlined />
+      Thông tin vai trò
+    </div>
   </div>
 
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
@@ -76,8 +79,7 @@ const handleSave = async () => {
         <div class="w-[100px] flex-none">Active</div>
         <a-switch
           :checked="Boolean(role.isActive)"
-          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)"
-        />
+          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)" />
         <div v-if="!role.isActive" class="ml-4">Tất cả user thuộc vai trò này tạm thời bị khóa</div>
       </div>
     </div>
@@ -95,12 +97,10 @@ const handleSave = async () => {
         :selectable="false"
         virtual
         :height="500"
-        :tree-data="permissionStore.permissionGroup()"
-      >
-      </a-tree>
+        :tree-data="permissionStore.permissionGroup()"></a-tree>
     </div>
     <div class="mt-8">
-      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save"> Lưu lại </VueButton>
+      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
     </div>
   </form>
 </template>
