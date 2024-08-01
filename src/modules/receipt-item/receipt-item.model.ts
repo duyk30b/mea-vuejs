@@ -7,6 +7,8 @@ export class ReceiptItem {
   receiptId: number
   distributorId: number
   productId: number
+  lotNumber: string // Lô sản phẩm
+  expiryDate?: number
   batchId: number
   costPrice: number // Giá cost
   retailPrice: number // Giá cost

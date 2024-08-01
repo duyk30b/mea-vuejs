@@ -57,6 +57,14 @@ export class TicketProduct {
     return this.actualPrice * this.unitRate
   }
 
+  get lotNumber() {
+    return this.batch?.lotNumber || this.product?.lotNumber
+  }
+
+  get expiryDate() {
+    return this.batch?.expiryDate || this.product?.expiryDate
+  }
+
   set unitQuantity(data: number) {
     this.quantity = data * this.unitRate
   }

@@ -5,22 +5,22 @@ import {
   FileSearchOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconDownload, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { CustomerApi, useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { formatPhone, timeToText } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
-import VueButton from '../../../common/VueButton.vue'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -142,6 +142,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalCustomerListSettingScreen.value?.openModal()
   }
 }
+
+const downloadExcelCustomerList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await CustomerApi.downloadExcelCustomerList()
+    },
+  })
+}
 </script>
 
 <template>
@@ -168,17 +178,22 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
-        <span>
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
+    <div class="flex mr-2 gap-8">
+      <div style="cursor: pointer">
+        <IconDownload width="20" height="20" @click="downloadExcelCustomerList" />
+      </div>
+      <span style="cursor: pointer">
+        <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+          <span>
+            <IconSetting width="20" height="20" />
+          </span>
+          <template #overlay>
+            <a-menu @click="handleMenuSettingClick">
+              <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </span>
     </div>
   </div>
 

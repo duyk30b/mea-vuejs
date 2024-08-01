@@ -227,7 +227,8 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.invoiceItemsTable.batch">
+                        <a-checkbox
+                          v-model:checked="settingDisplay.invoiceItemsTable.lotNumberAndExpiryDate">
                           Hiển thị số lô và HSD
                         </a-checkbox>
                       </td>

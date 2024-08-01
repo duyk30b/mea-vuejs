@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import type { ReceiptItem } from '../receipt-item/receipt-item.model'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -52,14 +53,14 @@ export class BatchApi {
     return Batch.from(data)
   }
 
-  static async findOrCreate(batch: Batch) {
+  static async findOrCreate(receiptItem: ReceiptItem) {
     const response = await AxiosInstance.post('/batch/find-or-create', {
-      productId: batch.productId,
-      lotNumber: batch.lotNumber,
-      expiryDate: batch.expiryDate,
-      costPrice: batch.costPrice,
-      wholesalePrice: batch.wholesalePrice,
-      retailPrice: batch.retailPrice,
+      productId: receiptItem.productId,
+      lotNumber: receiptItem.lotNumber || '',
+      expiryDate: receiptItem.expiryDate,
+      costPrice: receiptItem.costPrice,
+      wholesalePrice: receiptItem.wholesalePrice,
+      retailPrice: receiptItem.retailPrice,
     })
     const { data } = response.data as BaseResponse<{ batch: any }>
     return Batch.from(data.batch)

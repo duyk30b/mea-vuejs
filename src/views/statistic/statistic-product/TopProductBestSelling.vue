@@ -188,7 +188,7 @@ onBeforeMount(async () => await startFetchData())
     >
       <div class="flex items-center gap-4">
         <span style="font-size: 18px; font-weight: 500">Hàng bán chạy nhất:</span>
-        <div style="width: 120px">
+        <div style="width: 140px">
           <VueSelect
             v-model:value="typeBestSelling"
             :options="[

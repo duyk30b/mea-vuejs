@@ -58,13 +58,13 @@ const colspan = computed(() => {
                 {{ receiptItem!.product!.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batch && receiptItem.batchId
-                "
-                class="flex flex-wrap"
+                v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.lotNumberAndExpiryDate"
+                class="flex flex-wrap gap-2"
                 style="font-size: 0.8rem">
-                <span class="mr-2">S.Lô {{ receiptItem!.batch?.lotNumber }}</span>
-                <span>- HSD {{ timeToText(receiptItem.batch?.expiryDate) }}</span>
+                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+                <div v-if="receiptItem.expiryDate">
+                  - HSD {{ timeToText(receiptItem.expiryDate) }}
+                </div>
               </div>
             </div>
           </td>

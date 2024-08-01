@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  SettingOutlined,
-  SisternodeOutlined
-} from '@ant-design/icons-vue'
+import { CloseOutlined, SettingOutlined, SisternodeOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
+  InputDate,
   InputHint,
   InputMoney,
   InputNumber,
@@ -170,6 +167,27 @@ defineExpose({ openModal, openModalFromTicket })
         </div>
 
         <div
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.route && !product.hasManageBatches"
+          class="grow basis-[40%]">
+          <div class="">Số lô</div>
+          <div>
+            <InputText v-model:value="product.lotNumber" />
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.expiryDate && !product.hasManageBatches"
+          class="grow basis-[40%]">
+          <div class="">Hạn sử dụng</div>
+          <div class="">
+            <InputDate
+              v-model:value="product.expiryDate"
+              format="DD/MM/YYYY"
+              type-parser="number" />
+          </div>
+        </div>
+
+        <div
           v-if="settingStore.SCREEN_PRODUCT_UPSERT.unit"
           :class="unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
           class="grow">
@@ -255,7 +273,7 @@ defineExpose({ openModal, openModalFromTicket })
         </div>
 
         <div v-if="settingStore.SCREEN_PRODUCT_UPSERT.route" class="grow basis-[40%]">
-          <div class="">Đường dùng {{ product.route }}</div>
+          <div class="">Đường dùng</div>
           <div>
             <InputHint
               v-model:value="product.route"
@@ -360,7 +378,7 @@ defineExpose({ openModal, openModalFromTicket })
               @change="(checked: Boolean) => (product.hasManageBatches = checked ? 1 : 0)" />
           </div>
           <div>
-            <span>Quản lý lô hàng và hạn sử dụng</span>
+            <span>Sản phẩm này có thể có nhiều lô hàng và nhiều hạn sử dụng khác nhau</span>
           </div>
         </div>
 

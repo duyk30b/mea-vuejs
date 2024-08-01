@@ -7,8 +7,9 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductApi } from '../../../modules/product'
-import { timeToText } from '../../../utils'
+import { DTimer } from '../../../utils'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
+import { computed } from 'vue'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 
@@ -60,6 +61,10 @@ const unitString = (data: Product) => {
 const handleZeroQuantity = async (value: 'true' | 'false') => {
   await startFetchData()
 }
+
+const closeExpiryDate = computed(() => {
+  return Date.now() + 6 * 30 * 24 * 60 * 60 * 1000
+})
 </script>
 
 <template>
@@ -79,6 +84,12 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
           {{ product.brandName }}
         </td>
       </tr>
+      <tr v-if="product.substance">
+        <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
+        <td class="px-2">
+          {{ product.substance }}
+        </td>
+      </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
         <td class="px-2">
@@ -92,43 +103,21 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
         </td>
       </tr>
       <tr v-if="!product.hasManageBatches">
-        <td class="px-2 py-1 whitespace-nowrap">Giá nhập</td>
+        <td class="px-2 py-1 whitespace-nowrap">Số lô</td>
         <td class="px-2">
-          {{ formatMoney(product.unitCostPrice) }}
+          {{ product.lotNumber }}
         </td>
       </tr>
-      <tr v-if="!product.hasManageBatches && settingStore.SYSTEM_SETTING.wholesalePrice">
-        <td class="px-2 py-1 whitespace-nowrap">Giá bán sỉ</td>
-        <td class="px-2">
-          {{ formatMoney(product.unitWholesalePrice) }}
-        </td>
-      </tr>
-      <tr v-if="!product.hasManageBatches && settingStore.SYSTEM_SETTING.retailPrice">
-        <td class="px-2 py-1 whitespace-nowrap">Giá bán lẻ</td>
-        <td class="px-2">
-          {{ formatMoney(product.unitRetailPrice) }}
-        </td>
-      </tr>
-      <tr v-if="settingStore.SYSTEM_SETTING.retailPrice">
-        <td class="px-2 py-1 whitespace-nowrap">Giá vốn trung bình</td>
-        <td class="px-2">
-          {{
-            formatMoney(
-              Math.floor((product.costAmount / (product.quantity || 1)) * product.unitDefaultRate)
-            )
-          }}
-        </td>
-      </tr>
-      <tr v-if="settingStore.SYSTEM_SETTING.retailPrice">
-        <td class="px-2 py-1 whitespace-nowrap">Tổng vốn</td>
-        <td class="px-2">
-          {{ formatMoney(product.costAmount) }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
-        <td class="px-2">
-          {{ product.substance }}
+      <tr v-if="!product.hasManageBatches">
+        <td class="px-2 py-1 whitespace-nowrap">HSD</td>
+        <td
+          class="px-2"
+          :style="
+            product.expiryDate && product.expiryDate < closeExpiryDate
+              ? 'color:red; font-weight:500'
+              : ''
+          ">
+          {{ product.expiryDate ? DTimer.timeToText(product.expiryDate) : '' }}
         </td>
       </tr>
       <tr>
@@ -165,6 +154,35 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
     </table>
   </div>
 
+  <div v-if="!product.hasManageBatches" class="table-wrapper mt-4">
+    <table>
+      <thead>
+        <tr>
+          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
+          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
+          <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
+          <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
+            {{ formatMoney(product.costAmount) }}
+          </td>
+          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
+            {{ formatMoney(product.unitCostPrice) }}
+          </td>
+          <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" style="text-align: center">
+            {{ formatMoney(product.unitWholesalePrice) }}
+          </td>
+          <td v-if="settingStore.SYSTEM_SETTING.retailPrice" style="text-align: center">
+            {{ formatMoney(product.unitRetailPrice) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div v-if="product.hasManageBatches" class="mt-6">
     <div class="flex justify-between items-end">
       <div style="font-size: 1.2rem">
@@ -196,18 +214,20 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
               <div>Mã: {{ batch.id }}</div>
               <div class="flex justify-between">
                 <div v-if="batch.lotNumber">S.Lô: {{ batch.lotNumber }}</div>
-                <div v-if="batch.expiryDate">
-                  HSD:
-                  <span style="font-weight: 500">
-                    {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-                  </span>
+                <div
+                  v-if="batch.expiryDate"
+                  :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''">
+                  HSD: {{ DTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
                 </div>
               </div>
-              <div class="flex justify-between">
-                <div>
-                  G.Nhập:
-                  <span style="font-weight: 500">{{ formatMoney(batch.costPrice) }}</span>
-                </div>
+              <div
+                v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
+                class="flex justify-between"
+                style="font-size: 0.9em">
+                <span>Vốn: {{ formatMoney(batch.costPrice * batch.quantity) }}</span>
+                <span>Nhập: {{ formatMoney(batch.costPrice) }}</span>
+              </div>
+              <div class="flex justify-between" style="font-size: 0.9em">
                 <span>G.Sỉ: {{ formatMoney(batch.wholesalePrice) }}</span>
                 <span>G.Lẻ: {{ formatMoney(batch.retailPrice) }}</span>
               </div>
@@ -236,6 +256,7 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
             <th>Lô-HSD</th>
             <th>Đ.Vị</th>
             <th>SL</th>
+            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
             <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
             <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
             <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
@@ -251,8 +272,11 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
             <td class="text-center">
               <div class="flex justify-between gap-2">
                 <div v-if="batch.lotNumber" class="flex-1">{{ batch.lotNumber }} -</div>
-                <div v-if="batch.expiryDate" class="flex-1 text-center">
-                  {{ timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+                <div
+                  v-if="batch.expiryDate"
+                  class="flex-1 text-center"
+                  :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''">
+                  {{ DTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
                 </div>
               </div>
             </td>
@@ -261,6 +285,9 @@ const handleZeroQuantity = async (value: 'true' | 'false') => {
             </td>
             <td class="text-center">
               {{ batch.unitQuantity }}
+            </td>
+            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
+              {{ formatMoney(batch.costPrice * batch.quantity) }}
             </td>
             <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
               {{ formatMoney(batch.unitCostPrice) }}

@@ -49,6 +49,8 @@ export class ProductApi {
     const response = await AxiosInstance.post('/product/create', {
       brandName: product.brandName,
       substance: product.substance,
+      lotNumber: product.lotNumber || '',
+      expiryDate: product.expiryDate,
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
@@ -70,6 +72,8 @@ export class ProductApi {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       brandName: product.brandName,
       substance: product.substance,
+      lotNumber: product.lotNumber || '',
+      expiryDate: product.expiryDate,
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
@@ -91,5 +95,27 @@ export class ProductApi {
     const response = await AxiosInstance.delete(`/product/delete/${id}`)
     const { data } = response.data as BaseResponse
     return Product.from(data)
+  }
+
+  static async downloadExcelProductList() {
+    const response = await AxiosInstance.get(`/product/download-excel`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    const uint8Array = new Uint8Array(data.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: data.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = data.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
   }
 }

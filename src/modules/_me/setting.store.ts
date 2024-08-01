@@ -12,8 +12,6 @@ export const useSettingStore = defineStore('setting-store', {
         retailPrice: true,
         wholesalePrice: false,
         allowNegativeQuantity: false,
-        hasManageQuantity: true,
-        hasManageBatches: true,
       },
 
       PRODUCT_GROUP: <Record<string, string>>{
@@ -76,6 +74,8 @@ export const useSettingStore = defineStore('setting-store', {
         detail: true,
         substance: true,
         group: true,
+        lotNumber: false,
+        expiryDate: true,
         unit: true,
         costPrice: true,
         isActive: true,
@@ -85,6 +85,8 @@ export const useSettingStore = defineStore('setting-store', {
       SCREEN_PRODUCT_UPSERT: {
         substance: true,
         unit: true,
+        lotNumber: true,
+        expiryDate: true,
         group: true,
         source: true,
         route: true,
@@ -136,7 +138,7 @@ export const useSettingStore = defineStore('setting-store', {
         receiptItemsTable: {
           substance: true,
           detail: true,
-          batch: true,
+          lotNumberAndExpiryDate: true,
           unit: true,
         },
         paymentInfo: {
@@ -153,14 +155,11 @@ export const useSettingStore = defineStore('setting-store', {
         },
       },
       SCREEN_RECEIPT_UPSERT: {
-        receiptItemInput: {
-          salePrice: true,
-        },
         receiptItemsTable: {
           allowDuplicateItem: true,
           detail: true,
           substance: true,
-          batch: true,
+          lotNumberAndExpiryDate: true,
           unit: true,
         },
         distributor: {
@@ -186,7 +185,7 @@ export const useSettingStore = defineStore('setting-store', {
         invoiceItemsTable: {
           detail: true,
           substance: true,
-          batch: true,
+          lotNumberAndExpiryDate: true,
           hintUsage: true,
           unit: true,
           discount: true,
@@ -238,7 +237,7 @@ export const useSettingStore = defineStore('setting-store', {
           detail: true,
           substance: true,
           unit: true,
-          batch: true,
+          lotNumberAndExpiryDate: true,
           hintUsage: false,
           discount: true,
           expectedPrice: true,

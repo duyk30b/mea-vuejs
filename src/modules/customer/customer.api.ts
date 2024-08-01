@@ -86,4 +86,26 @@ export class CustomerApi {
     const { data } = response.data as BaseResponse<{ customer: any }>
     return Customer.from(data.customer)
   }
+
+  static async downloadExcelCustomerList() {
+    const response = await AxiosInstance.get(`/customer/download-excel`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    const uint8Array = new Uint8Array(data.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: data.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = data.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
 }

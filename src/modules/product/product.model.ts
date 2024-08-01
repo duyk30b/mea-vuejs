@@ -1,4 +1,3 @@
-import { useSettingStore } from '../_me/setting.store'
 import { Batch } from '../batch/batch.model'
 import type { UnitType } from '../enum'
 
@@ -6,6 +5,8 @@ export class Product {
   id: number
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
+  lotNumber: string // Lô sản phẩm
+  expiryDate?: number
   quantity: number
   costAmount: number // Tổng vốn
   costPrice: number // Giá nhập
@@ -96,11 +97,10 @@ export class Product {
   }
 
   static init(): Product {
-    const settingStore = useSettingStore()
     const ins = new Product()
     ins.id = 0
-    ins.hasManageBatches = Number(settingStore.SYSTEM_SETTING.hasManageBatches) as 0 | 1
-    ins.hasManageQuantity = Number(settingStore.SYSTEM_SETTING.hasManageQuantity) as 0 | 1
+    ins.hasManageBatches = 0
+    ins.hasManageQuantity = 1
     ins.quantity = 0
     ins.costPrice = 0
     ins.wholesalePrice = 0

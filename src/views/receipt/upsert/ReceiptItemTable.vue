@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import { IconFileSearch, IconTrash } from '../../../common/icon'
 import { InputNumber } from '../../../common/vue-form'
-import type { Product } from '../../../modules/product'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
@@ -43,7 +42,7 @@ const { formatMoney, isMobile } = settingStore
                 v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                 class="ml-1"
                 @click="modalProductDetail?.openModal(receiptItem?.product!)">
-                <FileSearchOutlined />
+                <IconFileSearch />
               </a>
             </div>
             <div
@@ -52,12 +51,12 @@ const { formatMoney, isMobile } = settingStore
               {{ receiptItem?.product?.substance }}
             </div>
             <div
-              v-if="
-                settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
-              "
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
               style="font-size: 0.8rem">
-              S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
-              {{ timeToText(receiptItem.batch?.expiryDate) }}
+              <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+              <div v-if="receiptItem.expiryDate">
+                - HSD {{ timeToText(receiptItem.expiryDate) }}
+              </div>
             </div>
           </td>
           <td class="text-center whitespace-nowrap">
@@ -79,7 +78,7 @@ const { formatMoney, isMobile } = settingStore
           </td>
           <td class="text-center">
             <a class="text-red-500" @click="receipt.receiptItems!.splice(index, 1)">
-              <DeleteOutlined />
+              <IconTrash />
             </a>
           </td>
         </tr>
@@ -115,7 +114,7 @@ const { formatMoney, isMobile } = settingStore
                   v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.detail"
                   class="ml-1"
                   @click="modalProductDetail?.openModal(receiptItem?.product!)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div
@@ -124,12 +123,12 @@ const { formatMoney, isMobile } = settingStore
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batch && receiptItem.batchId
-                "
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
                 style="font-size: 0.8rem">
-                S.Lô {{ receiptItem?.batch?.lotNumber }} - HSD
-                {{ timeToText(receiptItem.batch?.expiryDate) }}
+                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+                <div v-if="receiptItem.expiryDate">
+                  - HSD {{ timeToText(receiptItem.expiryDate) }}
+                </div>
               </div>
             </div>
           </td>
@@ -165,7 +164,7 @@ const { formatMoney, isMobile } = settingStore
           </td>
           <td class="text-center">
             <a class="text-red-500 text-xl" @click="receipt.receiptItems!.splice(index, 1)">
-              <DeleteOutlined />
+              <IconTrash />
             </a>
           </td>
         </tr>

@@ -111,20 +111,6 @@ defineExpose({ openModal })
                 <table>
                   <thead>
                     <tr>
-                      <th>Chọn sản phẩm</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemInput.salePrice">
-                          Cập nhật giá bán
-                        </a-checkbox>
-                      </td>
-                    </tr>
-                  </tbody>
-                  <thead>
-                    <tr>
                       <th>Danh sách hàng trong phiếu</th>
                     </tr>
                   </thead>
@@ -165,7 +151,8 @@ defineExpose({ openModal })
 
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.batch">
+                        <a-checkbox
+                          v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate">
                           Hiển thị số lô và HSD
                         </a-checkbox>
                       </td>

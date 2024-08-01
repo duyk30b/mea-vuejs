@@ -118,10 +118,11 @@ defineExpose({ openModal })
                   </div>
                 </div>
               </div>
-              <div class="py-2 flex justify-center">
-                <VueButton color="blue" @click="GROUP[Date.now().toString(36)] = ''">
-                  Thêm mới
-                </VueButton>
+              <div class="py-2 flex">
+                <VueButton
+                  icon="plus"
+                  color="blue"
+                  @click="GROUP[Date.now().toString(36)] = ''"></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.UNIT">
@@ -134,8 +135,8 @@ defineExpose({ openModal })
                   </div>
                 </div>
               </div>
-              <div class="py-2 flex justify-center">
-                <VueButton color="blue" @click="UNIT.push('')">Thêm mới</VueButton>
+              <div class="py-2 flex">
+                <VueButton icon="plus" color="blue" @click="UNIT.push('')"></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.ROUTE">
@@ -148,8 +149,8 @@ defineExpose({ openModal })
                   </div>
                 </div>
               </div>
-              <div class="py-2 flex justify-center">
-                <VueButton color="blue" @click="ROUTE.push('')">Thêm mới</VueButton>
+              <div class="py-2 flex">
+                <VueButton icon="plus" color="blue" @click="ROUTE.push('')"></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.HINT_USAGE">
@@ -165,8 +166,8 @@ defineExpose({ openModal })
                   </div>
                 </div>
               </div>
-              <div class="py-2 flex justify-center">
-                <VueButton color="blue" @click="HINT_USAGE.push('')">Thêm mới</VueButton>
+              <div class="py-2 flex">
+                <VueButton icon="plus" color="blue" @click="HINT_USAGE.push('')"></VueButton>
               </div>
             </VueTabPanel>
           </template>

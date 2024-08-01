@@ -306,14 +306,13 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch &&
-                  ticketProduct.batchId
-                "
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.lotNumberAndExpiryDate"
                 style="font-size: 0.8rem"
                 class="flex gap-2">
-                S.Lô {{ ticketProduct.batch?.lotNumber }}
-                {{ timeToText(ticketProduct.batch!.expiryDate) }}
+                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
+                <div v-if="ticketProduct.expiryDate">
+                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
+                </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"
@@ -626,14 +625,13 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.batch &&
-                  ticketProduct.batchId
-                "
+                v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.lotNumberAndExpiryDate"
                 style="font-size: 0.8rem"
                 class="flex gap-2">
-                S.Lô {{ ticketProduct.batch?.lotNumber }}
-                {{ timeToText(ticketProduct.batch!.expiryDate) }}
+                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
+                <div v-if="ticketProduct.expiryDate">
+                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
+                </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.hintUsage"

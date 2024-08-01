@@ -26,7 +26,7 @@ import TicketOrderItemTable from './TicketOrderItemTable.vue'
 import TicketOrderSelectProcedure from './TicketOrderSelectProcedure.vue'
 import TicketOrderSelectProduct from './TicketOrderSelectProduct.vue'
 import TicketOrderSurchargeList from './TicketOrderSurchargeList.vue'
-import ModalDataOrderTicket from './modal-setting/ModalDataOrderTicket.vue'
+import ModalDataTicketOrder from './modal-setting/ModalDataTicketOrder.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
 import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
 
@@ -41,7 +41,7 @@ const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalTicketOrderUpsertSetting = ref<InstanceType<typeof ModalTicketOrderUpsertSetting>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalDataInvoice = ref<InstanceType<typeof ModalDataOrderTicket>>()
+const modalDataTicketOrder = ref<InstanceType<typeof ModalDataTicketOrder>>()
 const ticketUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const router = useRouter()
@@ -322,7 +322,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalTicketOrderUpsertSetting.value?.openModal()
   }
   if (menu.key === 'data-setting') {
-    modalDataInvoice.value?.openModal()
+    modalDataTicketOrder.value?.openModal()
   }
 }
 
@@ -336,7 +336,7 @@ const handleChangeTabs = (activeKey: any) => {
   <ModalTicketOrderUpsertSetting ref="modalTicketOrderUpsertSetting" />
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalDataOrderTicket ref="modalDataInvoice" />
+  <ModalDataTicketOrder ref="modalDataTicketOrder" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">

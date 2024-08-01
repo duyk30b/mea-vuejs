@@ -127,16 +127,6 @@ const logoutGoogleDriver = async () => {
                     Cho phép tồn kho có số lượng âm (xuất kho được phép nhiều hơn số lượng tồn)
                   </a-checkbox>
                 </div>
-                <div style="line-height: 32px">
-                  <a-checkbox v-model:checked="settingDisplay.hasManageQuantity">
-                    Sản phẩm mặc định có quản lý số lượng tồn kho
-                  </a-checkbox>
-                </div>
-                <div style="line-height: 32px">
-                  <a-checkbox v-model:checked="settingDisplay.hasManageBatches">
-                    Sản phẩm mặc định được quản lý theo lô
-                  </a-checkbox>
-                </div>
               </td>
             </tr>
           </tbody>

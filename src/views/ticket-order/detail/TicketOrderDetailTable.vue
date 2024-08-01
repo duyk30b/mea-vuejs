@@ -114,14 +114,13 @@ const colspan = computed(() => {
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch &&
-                  ticketProduct.batchId
-                "
+                v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.lotNumberAndExpiryDate"
                 class="flex gap-2 flex-wrap"
                 style="font-size: 0.8rem">
-                S.Lô {{ ticketProduct.batch!.lotNumber }}
-                {{ timeToText(ticketProduct.batch!.expiryDate, 'DD/MM/YY') }}
+                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
+                <div v-if="ticketProduct.expiryDate">
+                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
+                </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
@@ -256,14 +255,13 @@ const colspan = computed(() => {
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.batch &&
-                  ticketProduct.batchId
-                "
+                v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.lotNumberAndExpiryDate"
                 style="font-size: 0.8rem"
                 class="flex gap-2">
-                Lô {{ ticketProduct.batch!.lotNumber }} - HSD
-                {{ timeToText(ticketProduct.batch!.expiryDate) }}
+                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
+                <div v-if="ticketProduct.expiryDate">
+                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
+                </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"

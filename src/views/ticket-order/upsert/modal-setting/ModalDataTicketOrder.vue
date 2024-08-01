@@ -101,7 +101,7 @@ defineExpose({ openModal })
             </template>
             <template #panel>
               <VueTabPanel :tabKey="TABS_KEY.SURCHARGE">
-                <div class="w-full">
+                <div class="w-full mt-4">
                   <details class="my-2">
                     <summary style="font-style: italic">Giải thích chi tiết về phụ phí</summary>
                     <p class="mt-2 italic">
@@ -147,16 +147,17 @@ defineExpose({ openModal })
                           Xóa
                         </a>
                       </div>
+                      <div v-else class="flex items-center mx-2">
+                        <a style="opacity: 0">Xóa</a>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div class="py-2 flex justify-center">
+                <div class="py-2 flex">
                   <VueButton
                     color="blue"
                     icon="plus"
-                    @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''">
-                    Thêm mới
-                  </VueButton>
+                    @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
                 </div>
               </VueTabPanel>
               <VueTabPanel :tabKey="TABS_KEY.EXPENSE">
@@ -206,16 +207,17 @@ defineExpose({ openModal })
                           Xóa
                         </a>
                       </div>
+                      <div v-else class="flex items-center mx-2">
+                        <a style="opacity: 0">Xóa</a>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div class="py-2 flex justify-center">
+                <div class="py-2 flex">
                   <VueButton
                     color="blue"
                     icon="plus"
-                    @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''">
-                    Thêm mới
-                  </VueButton>
+                    @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
                 </div>
               </VueTabPanel>
             </template>
@@ -225,7 +227,6 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton @click="handleReload">Tải lại</VueButton>
           <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton
             :disabled="disabledButtonSave"

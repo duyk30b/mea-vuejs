@@ -86,10 +86,11 @@ defineExpose({ openModal })
                   </div>
                 </div>
               </div>
-              <div class="py-2 flex justify-center">
-                <VueButton color="blue" icon="plus" @click="GROUP[Date.now().toString(36)] = ''">
-                  Thêm mới
-                </VueButton>
+              <div class="py-2 flex">
+                <VueButton
+                  color="blue"
+                  icon="plus"
+                  @click="GROUP[Date.now().toString(36)] = ''"></VueButton>
               </div>
             </VueTabPanel>
           </template>

@@ -54,6 +54,8 @@ export class ReceiptApi {
       receiptItemList: (receipt.receiptItems || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        lotNumber: i.lotNumber || '',
+        expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
         wholesalePrice: i.wholesalePrice,
@@ -81,6 +83,8 @@ export class ReceiptApi {
       receiptItemList: (receipt.receiptItems || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        lotNumber: i.lotNumber || '',
+        expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
         wholesalePrice: i.wholesalePrice,
