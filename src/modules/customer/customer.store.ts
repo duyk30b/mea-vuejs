@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { useMeStore } from '../_me/me.store'
 import { CustomerPaymentApi } from '../customer-payment/customer-payment.api'
 import type { CustomerPaymentPayDebtBody } from '../customer-payment/customer-payment.dto'
 import { CustomerApi } from './customer.api'
@@ -19,19 +20,38 @@ export const useCustomerStore = defineStore('customer-store', {
     async refreshDB() {
       let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER')
       if (!refreshTime) {
-        refreshTime = { code: 'CUSTOMER', time: new Date(0).toISOString() }
+        refreshTime = {
+          code: 'CUSTOMER',
+          dataVersion: 0,
+          time: new Date(0).toISOString(),
+        }
       }
-      const lastTime = new Date(refreshTime.time)
-      const { data, time } = await CustomerApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-      if (data.length) {
-        await CustomerDB.upsertMany(data)
-        refreshTime.time = time.toISOString()
-        await RefreshTimeDB.upsertOne(refreshTime)
+      const dataVersion = useMeStore().organization.dataVersion
+
+      let apiResponse: { time: Date; data: Customer[] }
+      let hasChange = false
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        hasChange = true
+        await CustomerDB.truncate()
+        apiResponse = await CustomerApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await CustomerApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
       }
 
-      return data
+      if (apiResponse.data.length) {
+        await CustomerDB.upsertMany(apiResponse.data)
+      }
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
+
+      return {
+        hasChange: hasChange || !!apiResponse.data.length,
+      }
     },
 
     async pagination(params: CustomerPaginationQuery) {

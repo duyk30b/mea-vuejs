@@ -1,7 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   DistributorDetailQuery,
   DistributorGetQuery,

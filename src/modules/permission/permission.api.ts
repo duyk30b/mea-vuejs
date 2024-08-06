@@ -9,7 +9,7 @@ export class PermissionApi {
 
     const response = await AxiosInstance.get('/permission/list', { params })
     const { data } = response.data as BaseResponse
-    return Permission.fromPlains(data)
+    return Permission.fromList(data)
   }
 
   static async initData() {

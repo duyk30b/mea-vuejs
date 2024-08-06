@@ -7,11 +7,11 @@ import { useMeStore } from './modules/_me/me.store'
 const meStore = useMeStore()
 const router = useRouter()
 
-meStore.$subscribe((mutation, state) => {
-  if (state.user == null) {
-    router.push({ name: 'Login' })
-  }
-})
+// meStore.$subscribe((mutation, state) => {
+//   if (state.user == null) {
+//     router.push({ name: 'Login' })
+//   }
+// })
 </script>
 <template>
   <Suspense>

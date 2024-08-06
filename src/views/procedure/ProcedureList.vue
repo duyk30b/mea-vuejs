@@ -85,8 +85,8 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    const procedureList = await procedureStore.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (procedureList?.length) {
+    const { hasChange } = await procedureStore.refreshDB() // reload nếu có dữ liệu mới nhất
+    if (hasChange) {
       await startFetchData()
     }
   } catch (error: any) {

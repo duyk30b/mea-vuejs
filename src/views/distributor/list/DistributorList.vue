@@ -87,8 +87,8 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    const distributorList = await distributorStore.refreshDB()
-    if (distributorList?.length) {
+    const { hasChange } = await distributorStore.refreshDB()
+    if (hasChange) {
       await startFetchData()
     }
   } catch (error: any) {

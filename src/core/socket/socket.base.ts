@@ -24,6 +24,14 @@ export const socketInit = () => {
     SocketService.listenServerEmitDemo(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.ORGANIZATION_UPDATE, (data) => {
+    SocketService.listenOrganizationUpdate(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.SETTING_RELOAD, (data) => {
+    SocketService.listenSettingReload(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.DISTRIBUTOR_UPSERT, (data) => {
     SocketService.listenDistributorUpsert(data)
   })
@@ -50,10 +58,6 @@ export const socketInit = () => {
 
   SocketBase.on(SOCKET_EVENT.PROCEDURE_UPSERT, (data) => {
     SocketService.listenProcedureUpsert(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.SETTING_RELOAD, (data) => {
-    SocketService.listenSettingReload(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CREATE, (data) => {

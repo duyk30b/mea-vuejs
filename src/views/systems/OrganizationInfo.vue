@@ -8,7 +8,11 @@ import { AddressInstance } from '../../core/address.instance'
 import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization, OrganizationService } from '../../modules/organization'
+import { OrganizationApi } from '../../modules/organization/organization.api'
 import { customFilter } from '../../utils'
+import ModalChangeOrganizationEmail from './modal/ModalChangeOrganizationEmail.vue'
+
+const modalChangeOrganizationEmail = ref<InstanceType<typeof ModalChangeOrganizationEmail>>()
 
 const orgStore = useSettingStore()
 const meStore = useMeStore()
@@ -19,9 +23,10 @@ const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
 const organization = ref<Organization>(
-  Organization.toBasic(meStore.organization || Organization.blank())
+  Organization.from(meStore.organization || Organization.blank())
 )
 const saveLoading = ref(false)
+const sendEmailVerifyLoading = ref(false)
 
 onBeforeMount(async () => {
   organization.value = await OrganizationService.info()
@@ -89,9 +94,24 @@ const saveOrganization = async () => {
 const disableButtonSave = computed(() => {
   return JSON.stringify(organization.value) === JSON.stringify(meStore.organization)
 })
+
+const sendEmailVerify = async () => {
+  try {
+    sendEmailVerifyLoading.value = true
+    await OrganizationApi.sendEmailVerifyOrganizationEmail()
+    AlertStore.addSuccess('Gửi email thành công, vui lòng kiểm tra email !')
+  } catch (error: any) {
+    console.log('🚀 ~ file: OrganizationInfo.vue:99 ~ sendEmailVerify ~ error:', error)
+  } finally {
+    sendEmailVerifyLoading.value = false
+  }
+}
 </script>
 
 <template>
+  <ModalChangeOrganizationEmail
+    ref="modalChangeOrganizationEmail"
+    @success="(v) => (organization = v)" />
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
@@ -109,7 +129,20 @@ const disableButtonSave = computed(() => {
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Email</div>
-        <InputText disabled :value="organization.email" />
+        <div style="display: flex; width: 100%">
+          <InputText disabled :value="organization.email" style="width: calc(100% - 100px)" />
+          <VueButton
+            color="blue"
+            style="width: 100px"
+            @click="modalChangeOrganizationEmail?.openModal(organization)">
+            Đổi Email
+          </VueButton>
+        </div>
+      </div>
+      <div v-if="!organization.emailVerify && organization.email" class="flex justify-end">
+        <VueButton size="text" :loading="sendEmailVerifyLoading" @click="sendEmailVerify">
+          Email chưa được kích hoạt, gửi email kích hoạt ngay
+        </VueButton>
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">

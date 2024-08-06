@@ -126,13 +126,25 @@ const openModalProductDetail = (product?: Product) => {
 const openModalProcedureDetail = (procedure?: Procedure) => {
   if (procedure) modalProcedureDetail.value?.openModal(procedure)
 }
+
+const changeTicketProductPosition = (index: number, count: number) => {
+  const temp = ticket.value.ticketProductList![index]
+  ticket.value.ticketProductList![index] = ticket.value.ticketProductList![index + count]
+  ticket.value.ticketProductList![index + count] = temp
+}
+
+const changeTicketProcedurePosition = (index: number, count: number) => {
+  const temp = ticket.value.ticketProcedureList![index]
+  ticket.value.ticketProcedureList![index] = ticket.value.ticketProcedureList![index + count]
+  ticket.value.ticketProcedureList![index + count] = temp
+}
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <div class="py-4">
-    <div class="px-4">Danh sách sản phẩm trong phiếu</div>
+    <div class="px-4">Giỏ hàng</div>
     <div v-if="isMobile" class="mt-2 table-wrapper">
       <table>
         <thead>
@@ -150,9 +162,37 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(ticketProcedure, index) in ticket.ticketProcedureList || []" :key="index">
-            <td
-              class="auto-index text-center whitespace-nowrap"
-              style="padding: 0.5rem 0.2rem"></td>
+            <td style="padding: 0.5rem 0.2rem; white-space: nowrap">
+              <div class="flex flex-col items-center">
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-bottom: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === 0"
+                  @click="changeTicketProcedurePosition(index, -1)">
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
+                <span>{{ index + 1 }}</span>
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-top: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === (ticket.ticketProcedureList!.length || 0) - 1"
+                  @click="changeTicketProcedurePosition(index, 1)">
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
+            </td>
             <td>
               <div class="font-medium text-justify">
                 {{ ticketProcedure.procedure!.name }}
@@ -286,9 +326,37 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
           </tr>
           <tr v-for="(ticketProduct, index) in ticket.ticketProductList || []" :key="index">
-            <td
-              class="auto-index text-center whitespace-nowrap"
-              style="padding: 0.5rem 0.2rem"></td>
+            <td style="padding: 0.5rem 0.2rem; white-space: nowrap">
+              <div class="flex flex-col items-center">
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-bottom: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === 0"
+                  @click="changeTicketProductPosition(index, -1)">
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
+                <span>{{ index + 1 }}</span>
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-top: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === (ticket.ticketProductList!.length || 0) - 1"
+                  @click="changeTicketProductPosition(index, 1)">
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
+            </td>
             <td>
               <div class="font-medium text-justify">
                 {{ ticketProduct.product!.brandName }}
@@ -499,7 +567,37 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(ticketProcedure, index) in ticket.ticketProcedureList" :key="index">
-            <td class="auto-index text-center"></td>
+            <td>
+              <div class="flex flex-col items-center">
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-bottom: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === 0"
+                  @click="changeTicketProcedurePosition(index, -1)">
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
+                <span>{{ index + 1 }}</span>
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-top: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === (ticket.ticketProcedureList!.length || 0) - 1"
+                  @click="changeTicketProcedurePosition(index, 1)">
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
+            </td>
             <td :colspan="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.unit ? '2' : '1'">
               <div style="font-weight: 500">
                 {{ ticketProcedure.procedure!.name }}
@@ -607,7 +705,37 @@ const openModalProcedureDetail = (procedure?: Procedure) => {
             </td>
           </tr>
           <tr v-for="(ticketProduct, index) in ticket.ticketProductList || []" :key="index">
-            <td class="auto-index text-center"></td>
+            <td>
+              <div class="flex flex-col items-center">
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-bottom: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === 0"
+                  @click="changeTicketProductPosition(index, -1)">
+                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                </button>
+                <span>{{ index + 1 }}</span>
+                <button
+                  style="
+                    border: none;
+                    font-size: 1.2rem;
+                    line-height: 0.5;
+                    background: none;
+                    margin-top: -0.5rem;
+                  "
+                  class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                  :disabled="index === (ticket.ticketProductList!.length || 0) - 1"
+                  @click="changeTicketProductPosition(index, 1)">
+                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                </button>
+              </div>
+            </td>
             <td>
               <div style="font-weight: 500" class="text-justify">
                 {{ ticketProduct.product!.brandName }}

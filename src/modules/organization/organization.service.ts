@@ -8,7 +8,7 @@ export class OrganizationService {
   static async info() {
     try {
       const organization = await OrganizationApi.info()
-      useMeStore().organization = Organization.toBasic(organization)
+      useMeStore().organization = Organization.from(organization)
       return organization
     } catch (error) {
       console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
@@ -16,9 +16,15 @@ export class OrganizationService {
     }
   }
 
-  static async updateInfo(plain: Partial<Organization>) {
-    const organization = await OrganizationApi.updateInfo(plain)
-    useMeStore().organization = Organization.toBasic(organization)
+  static async updateInfo(body: Organization) {
+    const organization = await OrganizationApi.updateInfo(body)
+    useMeStore().organization = Organization.from(organization)
+    return organization
+  }
+
+  static async changeEmail(email: string) {
+    const organization = await OrganizationApi.changeEmail(email)
+    useMeStore().organization = Organization.from(organization)
     return organization
   }
 

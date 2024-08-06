@@ -103,9 +103,9 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    const productList = await productStore.refreshDB()
+    const { hasChange } = await productStore.refreshDB()
     await batchStore.refreshDB()
-    if (productList?.length) {
+    if (hasChange) {
       await startFetchData()
     }
   } catch (error: any) {

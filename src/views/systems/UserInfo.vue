@@ -10,12 +10,13 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
 
+const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
+
 const settingStore = useSettingStore()
 const { isMobile } = settingStore
 
-const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 const meStore = useMeStore()
-const user = ref<User>(User.toBasic(meStore.user || User.blank()))
+const user = ref<User>(User.from(meStore.user || User.blank()))
 const saveLoading = ref(false)
 
 onBeforeMount(async () => {
@@ -28,7 +29,7 @@ const saveUser = async () => {
     saveLoading.value = true
     const userData = await MeApi.updateInfo(user.value)
     user.value = userData
-    meStore.user = User.toBasic(userData)
+    meStore.user = User.from(userData)
     AlertStore.addSuccess('Cập nhật thông tin cá nhân thành công')
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -47,7 +48,8 @@ const disableButtonSave = computed(() => {
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
-        <SettingOutlined style="margin-right: 1rem" />Thông tin cá nhân
+        <SettingOutlined style="margin-right: 1rem" />
+        Thông tin cá nhân
       </div>
     </div>
   </div>
@@ -67,8 +69,11 @@ const disableButtonSave = computed(() => {
         <div style="width: 120px; flex: none">Mật khẩu</div>
         <div style="display: flex; width: 100%">
           <InputText value="********************" style="width: calc(100% - 120px)" />
-          <VueButton color="blue" style="width: 120px" @click="modalChangePassword?.openModal(user)"
-            >Đổi mật khẩu
+          <VueButton
+            color="blue"
+            style="width: 120px"
+            @click="modalChangePassword?.openModal(user)">
+            Đổi mật khẩu
           </VueButton>
         </div>
       </div>
@@ -80,8 +85,7 @@ const disableButtonSave = computed(() => {
             v-model:value="user.birthday"
             format="DD/MM/YYYY"
             type-parser="number"
-            class="w-full"
-          />
+            class="w-full" />
         </div>
       </div>
 
@@ -89,8 +93,8 @@ const disableButtonSave = computed(() => {
         <div style="width: 120px; flex: none">Giới tính</div>
         <div style="flex: 1">
           <a-radio-group v-model:value="user.gender">
-            <a-radio :value="1"> Nam </a-radio>
-            <a-radio :value="0"> Nữ </a-radio>
+            <a-radio :value="1">Nam</a-radio>
+            <a-radio :value="0">Nữ</a-radio>
           </a-radio-group>
         </div>
       </div>

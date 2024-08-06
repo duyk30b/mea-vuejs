@@ -1,7 +1,7 @@
-import { BaseModel } from '../base.model'
 import { UNKNOWN_KEY } from '../enum'
 
-export class TicketSurcharge extends BaseModel {
+export class TicketSurcharge {
+  id: number
   ticketId: number
   key: string
   name: string

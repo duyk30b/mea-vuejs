@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia'
-import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { arrayToKeyArray } from '../../utils'
-import { Batch } from '../batch'
+import { useMeStore } from '../_me/me.store'
 import { ProductApi } from './product.api'
 import type { ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
@@ -19,19 +17,38 @@ export const useProductStore = defineStore('product-store', {
     async refreshDB() {
       let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
       if (!refreshTime) {
-        refreshTime = { code: 'PRODUCT', time: new Date(0).toISOString() }
+        refreshTime = {
+          code: 'PRODUCT',
+          dataVersion: 0,
+          time: new Date(0).toISOString(),
+        }
       }
-      const lastTime = new Date(refreshTime.time)
-      const { data, time } = await ProductApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-      if (data.length) {
-        await ProductDB.upsertMany(data)
-        refreshTime.time = time.toISOString()
-        await RefreshTimeDB.upsertOne(refreshTime)
+      const dataVersion = useMeStore().organization.dataVersion
+
+      let apiResponse: { time: Date; data: Product[] }
+      let hasChange = false
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        hasChange = true
+        await ProductDB.truncate()
+        apiResponse = await ProductApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await ProductApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
       }
 
-      return data
+      if (apiResponse.data.length) {
+        await ProductDB.upsertMany(apiResponse.data)
+      }
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
+
+      return {
+        hasChange: hasChange || !!apiResponse.data.length,
+      }
     },
 
     async pagination(params: ProductPaginationQuery) {

@@ -6,7 +6,7 @@ const props = withDefaults(
     loading?: boolean
     disabled?: boolean
     color?: 'default' | 'green' | 'blue' | 'red'
-    size?: 'small' | 'default' | 'large'
+    size?: 'small' | 'default' | 'large' | 'text'
     type?: 'reset' | 'submit' | 'button'
     icon?: Object | '' | 'save' | 'print' | 'plus' | 'close' | 'trash' | 'dollar' | 'send'
   }>(),
@@ -119,6 +119,15 @@ const props = withDefaults(
     color: #888 !important;
     border: 1px solid #ccc !important;
     opacity: 0.7;
+  }
+
+  &.btn-size-text {
+    padding: 0 8px;
+    border: none;
+    color: #1890ff;
+    &:hover {
+      color: #40a9ff;
+    }
   }
 
   &.btn-size-small {

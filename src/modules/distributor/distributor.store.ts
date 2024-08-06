@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { DistributorDB } from '../../core/indexed-db/repository/distributor.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { useMeStore } from '../_me/me.store'
 import { DistributorPaymentApi } from '../distributor-payment/distributor-payment.api'
 import type { DistributorPaymentPayDebtBody } from '../distributor-payment/distributor-payment.dto'
 import { DistributorApi } from './distributor.api'
@@ -19,19 +20,38 @@ export const useDistributorStore = defineStore('distributor-store', {
     async refreshDB() {
       let refreshTime = await RefreshTimeDB.findOneByCode('DISTRIBUTOR')
       if (!refreshTime) {
-        refreshTime = { code: 'DISTRIBUTOR', time: new Date(0).toISOString() }
+        refreshTime = {
+          code: 'DISTRIBUTOR',
+          dataVersion: 0,
+          time: new Date(0).toISOString(),
+        }
       }
-      const lastTime = new Date(refreshTime.time)
-      const { data, time } = await DistributorApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-      if (data.length) {
-        await DistributorDB.upsertMany(data)
-        refreshTime.time = time.toISOString()
-        await RefreshTimeDB.upsertOne(refreshTime)
+      const dataVersion = useMeStore().organization.dataVersion
+
+      let apiResponse: { time: Date; data: Distributor[] }
+      let hasChange = false
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        hasChange = true
+        await DistributorDB.truncate()
+        apiResponse = await DistributorApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await DistributorApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
       }
 
-      return data
+      if (apiResponse.data.length) {
+        await DistributorDB.upsertMany(apiResponse.data)
+      }
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
+
+      return {
+        hasChange: hasChange || !!apiResponse.data.length,
+      }
     },
 
     async pagination(params: DistributorPaginationQuery) {

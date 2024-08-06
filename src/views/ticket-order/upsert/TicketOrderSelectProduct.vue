@@ -523,7 +523,7 @@ defineExpose({ focus })
     </div>
 
     <div class="grow basis-[90%] flex justify-center">
-      <VueButton color="blue" type="submit" icon="plus">Thêm vào đơn</VueButton>
+      <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>
 </template>

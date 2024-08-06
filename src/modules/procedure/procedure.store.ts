@@ -4,6 +4,7 @@ import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.rep
 import { ProcedureApi } from './procedure.api'
 import type { ProcedurePaginationQuery } from './procedure.dto'
 import { Procedure } from './procedure.model'
+import { useMeStore } from '../_me/me.store'
 
 export const useProcedureStore = defineStore('procedure-store', {
   state: () => {
@@ -17,19 +18,38 @@ export const useProcedureStore = defineStore('procedure-store', {
     async refreshDB() {
       let refreshTime = await RefreshTimeDB.findOneByCode('PROCEDURE')
       if (!refreshTime) {
-        refreshTime = { code: 'PROCEDURE', time: new Date(0).toISOString() }
+        refreshTime = {
+          code: 'PROCEDURE',
+          dataVersion: 0,
+          time: new Date(0).toISOString(),
+        }
       }
-      const lastTime = new Date(refreshTime.time)
-      const { data, time } = await ProcedureApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-      if (data.length) {
-        await ProcedureDB.upsertMany(data)
-        refreshTime.time = time.toISOString()
-        await RefreshTimeDB.upsertOne(refreshTime)
+      const dataVersion = useMeStore().organization.dataVersion
+
+      let apiResponse: { time: Date; data: Procedure[] }
+      let hasChange = false
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        hasChange = true
+        await ProcedureDB.truncate()
+        apiResponse = await ProcedureApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await ProcedureApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
       }
 
-      return data
+      if (apiResponse.data.length) {
+        await ProcedureDB.upsertMany(apiResponse.data)
+      }
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
+
+      return {
+        hasChange: hasChange || !!apiResponse.data.length,
+      }
     },
 
     async pagination(params: ProcedurePaginationQuery) {

@@ -63,8 +63,8 @@ const handleModalUserUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE
   await startFetchData()
 }
 
-const deviceLogout = async (userId: number, code: string) => {
-  const result = await UserApi.deviceLogout(userId, code)
+const deviceLogout = async (userId: number, refreshExp: number) => {
+  const result = await UserApi.deviceLogout(userId, refreshExp)
   await startFetchData()
 }
 </script>
@@ -113,20 +113,29 @@ const deviceLogout = async (userId: number, code: string) => {
             <td>{{ user.fullName }}</td>
             <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
-                <span v-if="device.mobile === 1">
-                  <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
-                </span>
-                <span v-else>
-                  <font-awesome-icon :icon="['fas', 'desktop']" />
-                </span>
-                <span class="ml-2">{{ device.os }}</span>
-                /
-                <span>{{ device.browser }}</span>
-                -
-                <span>{{ device.ip }}</span>
-                <VueButton class="ml-2" size="small" @click="deviceLogout(user.id!, device.code)">
-                  Đăng xuất
-                </VueButton>
+                <div>
+                  <span v-if="device.mobile === 1">
+                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                  </span>
+                  <span v-else>
+                    <font-awesome-icon :icon="['fas', 'desktop']" />
+                  </span>
+                  <span class="ml-2">{{ device.os }}</span>
+                  /
+                  <span>{{ device.browser }}</span>
+                  -
+                  <span>{{ device.ip }}</span>
+                </div>
+                <div class="flex gap-2">
+                  <VueButton
+                    class="ml-2"
+                    size="small"
+                    @click="deviceLogout(user.id!, device.refreshExp)">
+                    Đăng xuất
+                  </VueButton>
+                  <a-tag v-if="device.online" color="success">Online</a-tag>
+                  <a-tag v-if="!device.online" color="default">Offline</a-tag>
+                </div>
               </div>
             </td>
             <td class="text-center">

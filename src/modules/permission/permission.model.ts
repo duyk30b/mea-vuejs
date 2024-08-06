@@ -1,5 +1,3 @@
-import { Exclude, Expose, plainToInstance } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
 import type { PermissionId } from './permission.enum'
 
 export enum PermissionStatus {
@@ -9,35 +7,35 @@ export enum PermissionStatus {
 }
 
 export class Permission {
-  @Expose()
   id: PermissionId
-
-  @Expose()
   level: number
-
-  @Expose()
   code: keyof typeof PermissionId
-
-  @Expose()
   name: string
-
-  @Expose()
   parentId: PermissionId | 0
-
-  @Expose()
   rootId: PermissionId
-
-  @Expose()
   pathId: string
-
-  @Expose()
   isActive: 0 | 1
 
-  static fromPlains(plains: Record<string, any>[]): Permission[] {
-    return plainToInstance(Permission, plains, {
-      exposeUnsetFields: false,
-      excludeExtraneousValues: true,
-      groups: [FROM_PLAIN],
+  static basic(source: Permission) {
+    const target = new Permission()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
     })
+    Object.assign(target, source)
+    return target
+  }
+
+  static basicList(sources: Permission[]): Permission[] {
+    return sources.map((i) => Permission.basic(i))
+  }
+
+  static from(source: Permission) {
+    const target = Permission.basic(source)
+    return target
+  }
+
+  static fromList(sourceList: Permission[]): Permission[] {
+    return sourceList.map((i) => Permission.from(i))
   }
 }

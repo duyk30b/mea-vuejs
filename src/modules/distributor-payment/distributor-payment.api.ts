@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Distributor } from '../distributor/distributor.model'
-import type { ApiPaginationResponse } from '../pagination'
 import {
   DistributorPaymentGetQuery,
   type DistributorPaymentPaginationQuery,
@@ -18,7 +17,7 @@ export class DistributorPaymentApi {
 
     return {
       meta,
-      data: DistributorPayment.fromPlains(data),
+      data: DistributorPayment.fromList(data),
     }
   }
 

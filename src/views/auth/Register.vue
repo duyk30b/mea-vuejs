@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { LocalStorageService } from '../../core/local-storage.service'
@@ -127,4 +127,4 @@ const startLogin = async () => {
     }
   }
 }
-</style>
+</style> -->

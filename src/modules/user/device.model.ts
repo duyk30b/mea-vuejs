@@ -1,24 +1,24 @@
-import { Expose } from 'class-transformer'
-
 export default class Device {
-  @Expose()
   oid: number
-
-  @Expose()
   id: number
-
-  @Expose()
-  code: string
-
-  @Expose()
+  refreshExp: number
   ip: string
-
-  @Expose()
   os: string
-
-  @Expose()
   browser: string
-
-  @Expose()
   mobile: 1 | 0
+  online: boolean | number
+
+  static basic(source: Device) {
+    const target = new Device()
+    Object.keys(target).forEach((key) => {
+      const value = target[key as keyof typeof target]
+      if (value === undefined) delete target[key as keyof typeof target]
+    })
+    Object.assign(target, source)
+    return target
+  }
+
+  static basicList(sources: Device[]): Device[] {
+    return sources.map((i) => Device.basic(i))
+  }
 }

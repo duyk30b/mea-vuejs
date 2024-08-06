@@ -170,7 +170,7 @@ export class ReceiptApi {
     }>
     return {
       receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+      distributorPayments: DistributorPayment.fromList(data.distributorPayments || []),
     }
   }
 
@@ -182,7 +182,7 @@ export class ReceiptApi {
     }>
     return {
       receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+      distributorPayments: DistributorPayment.fromList(data.distributorPayments || []),
     }
   }
 
@@ -196,7 +196,7 @@ export class ReceiptApi {
     }>
     return {
       receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+      distributorPayments: DistributorPayment.fromList(data.distributorPayments || []),
     }
   }
 
@@ -208,7 +208,7 @@ export class ReceiptApi {
     }>
     return {
       receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+      distributorPayments: DistributorPayment.fromList(data.distributorPayments || []),
     }
   }
 
@@ -220,7 +220,7 @@ export class ReceiptApi {
     }>
     return {
       receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPayments: DistributorPayment.toBasics(data.distributorPayments || []),
+      distributorPayments: DistributorPayment.fromList(data.distributorPayments || []),
     }
   }
 

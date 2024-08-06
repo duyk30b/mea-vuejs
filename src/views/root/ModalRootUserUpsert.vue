@@ -23,7 +23,7 @@ const saveLoading = ref(false)
 
 const openModal = async (instance?: User) => {
   showModal.value = true
-  user.value = instance ? User.fromInstance(instance) : User.blank()
+  user.value = instance ? User.from(instance) : User.blank()
 }
 
 const closeModal = () => {

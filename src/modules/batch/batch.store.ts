@@ -2,8 +2,9 @@ import { defineStore } from 'pinia'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { DTimer, arrayToKeyValue } from '../../utils'
+import { arrayToKeyValue } from '../../utils'
 import type { ConditionNumber } from '../_base/base-condition'
+import { useMeStore } from '../_me/me.store'
 import { Product } from '../product/product.model'
 import { BatchApi } from './batch.api'
 import type { BatchGetOneQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
@@ -20,19 +21,38 @@ export const useBatchStore = defineStore('batch-store', {
     async refreshDB() {
       let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
       if (!refreshTime) {
-        refreshTime = { code: 'BATCH', time: new Date(0).toISOString() }
+        refreshTime = {
+          code: 'BATCH',
+          dataVersion: 0,
+          time: new Date(0).toISOString(),
+        }
       }
-      const lastTime = new Date(refreshTime.time)
-      const { data, time } = await BatchApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-      if (data.length) {
-        await BatchDB.upsertMany(data)
-        refreshTime.time = time.toISOString()
-        await RefreshTimeDB.upsertOne(refreshTime)
+      const dataVersion = useMeStore().organization.dataVersion
+
+      let apiResponse: { time: Date; data: Batch[] }
+      let hasChange = false
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        hasChange = true
+        await BatchDB.truncate()
+        apiResponse = await BatchApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await BatchApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
       }
 
-      return data
+      if (apiResponse.data.length) {
+        await BatchDB.upsertMany(apiResponse.data)
+      }
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
+
+      return {
+        hasChange: hasChange || !!apiResponse.data.length,
+      }
     },
 
     async pagination(params: BatchPaginationQuery) {

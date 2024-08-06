@@ -11,7 +11,7 @@ export class UserApi {
     const { data, meta } = response.data as BaseResponse
     return {
       meta,
-      data: User.fromPlains(data),
+      data: User.fromList(data),
     }
   }
 
@@ -20,37 +20,53 @@ export class UserApi {
 
     const response = await AxiosInstance.get('/user/list', { params })
     const { data } = response.data as BaseResponse
-    return User.fromPlains(data)
+    return User.fromList(data)
   }
 
   static async detail(id: number): Promise<User> {
     const response = await AxiosInstance.get(`/user/detail/${id}`)
-    const { data } = response.data as BaseResponse
-    return User.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ user: any }>
+    return User.from(data.user)
   }
 
-  static async createOne(instance: User) {
-    const plain = User.toPlain(instance, 'ADMIN_CREATE')
-    const response = await AxiosInstance.post('/user/create', plain)
-    const { data } = response.data as BaseResponse
-    return User.fromPlain(data)
+  static async createOne(user: User) {
+    const response = await AxiosInstance.post('/user/create', {
+      phone: user.phone,
+      username: user.username,
+      password: user.password,
+      roleId: user.roleId,
+      fullName: user.fullName,
+      birthday: user.birthday,
+      gender: user.gender,
+      isActive: user.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ user: any }>
+    return User.from(data.user)
   }
 
-  static async updateOne(id: number, instance: User) {
-    const plain = User.toPlain(instance, 'ADMIN_UPDATE')
-    const response = await AxiosInstance.patch(`/user/update/${id}`, plain)
-    const { data } = response.data as BaseResponse
-    return User.fromPlain(data)
+  static async updateOne(id: number, user: User) {
+    const response = await AxiosInstance.patch(`/user/update/${id}`, {
+      phone: user.phone,
+      username: user.username,
+      password: user.password,
+      roleId: user.roleId,
+      fullName: user.fullName,
+      birthday: user.birthday,
+      gender: user.gender,
+      isActive: user.isActive,
+    })
+    const { data } = response.data as BaseResponse<{ user: any }>
+    return User.from(data.user)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/user/delete/${id}`)
-    const { data } = response.data as BaseResponse
-    return User.fromPlain(data)
+    const { data } = response.data as BaseResponse<{ userId: number }>
+    return data
   }
 
-  static async deviceLogout(userId: number, code: string) {
-    const response = await AxiosInstance.post(`/user/device-logout/${userId}`, { code })
+  static async deviceLogout(userId: number, refreshExp: number) {
+    const response = await AxiosInstance.post(`/user/device-logout/${userId}`, { refreshExp })
     const { data } = response.data as BaseResponse
     return data
   }

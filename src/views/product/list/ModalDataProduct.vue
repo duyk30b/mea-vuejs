@@ -155,7 +155,7 @@ defineExpose({ openModal })
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.HINT_USAGE">
               <div class="mt-4 w-full">
-                <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>
+                <div class="text-center font-bold">Danh sách các cách sử dụng cơ bản</div>
                 <div v-for="(u, i) in HINT_USAGE" :key="i">
                   <div class="py-2 flex gap-4">
                     <InputText

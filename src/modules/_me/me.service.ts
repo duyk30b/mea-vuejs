@@ -6,13 +6,17 @@ import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'
 import { useMeStore } from './me.store'
-import { useSettingStore } from './setting.store'
+import { settingDefault, useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 
 export class MeService {
   static reCalculatorSetting(settingMap: Record<string, any>) {
     const settingStore = useSettingStore()
-    Object.keys(settingMap || {}).forEach((key) => {
+    Object.keys(settingDefault).forEach((key) => {
+      settingStore[key as keyof typeof SettingKey] = JSON.parse(
+        JSON.stringify(settingDefault[key as keyof typeof SettingKey])
+      )
+      if (settingMap[key] == null) return
       if (
         [
           SettingKey.GOOGLE_DRIVER,
@@ -87,14 +91,13 @@ export class MeService {
   }
 
   static async initData() {
-    const meStore = useMeStore()
     try {
       const { user, organization, role, permissionList, settingMap } = await MeApi.info()
 
       MeService.reCalculatorSetting(settingMap)
       MeService.reCalculatorPermission({ permissionList, user, role, organization })
     } catch (error) {
-      console.log('🚀 ~ file: organization.store.ts:19 ~ init ~ error:', error)
+      console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }
   }
 

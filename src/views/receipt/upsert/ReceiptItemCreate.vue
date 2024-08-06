@@ -366,7 +366,7 @@ const clear = () => {
     </div>
 
     <div class="mt-6 flex justify-center">
-      <VueButton type="submit" color="blue" icon="plus">Thêm sản phẩm</VueButton>
+      <VueButton type="submit" color="blue" icon="plus">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>
 </template>

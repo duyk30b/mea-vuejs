@@ -2,6 +2,8 @@
 const props = withDefaults(
   defineProps<{
     value: string | null
+    type?: 'text' | 'password' | 'email'
+    name?: string
     prepend?: string
     append?: string
     disabled?: boolean
@@ -11,9 +13,12 @@ const props = withDefaults(
     placeholder?: string
     pattern?: string
     title?: string
+    autocomplete?: 'on' | 'off'
   }>(),
   {
     value: '',
+    type: 'text',
+    name: undefined,
     prepend: undefined,
     append: undefined,
     disabled: false,
@@ -23,6 +28,7 @@ const props = withDefaults(
     placeholder: undefined,
     pattern: undefined,
     title: undefined,
+    autocomplete: undefined,
   }
 )
 const emit = defineEmits<{ (e: 'update:value', value: string): void }>()
@@ -40,6 +46,7 @@ const handleInput = (e: Event) => {
       <input
         ref="inputRef"
         :value="value"
+        :name="name"
         :style="{ textAlign }"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -47,8 +54,8 @@ const handleInput = (e: Event) => {
         :maxlength="maxlength"
         :pattern="pattern"
         :title="title"
-        @input="handleInput"
-      />
+        :type="type"
+        @input="handleInput" />
     </div>
     <div v-if="append" class="append">{{ append }}</div>
   </div>

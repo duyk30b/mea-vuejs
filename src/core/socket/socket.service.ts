@@ -1,13 +1,14 @@
 import { MeService } from '../../modules/_me/me.service'
+import { useMeStore } from '../../modules/_me/me.store'
 import { Batch, useBatchStore } from '../../modules/batch'
 import { Customer, useCustomerStore } from '../../modules/customer'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
+import { Organization } from '../../modules/organization'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
 import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { useTicketClinicStore } from '../../modules/ticket-clinic/ticket-clinic.store'
 import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
-import { useTicketOrderStore } from '../../modules/ticket-order/ticket-order.store'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
@@ -21,6 +22,15 @@ import { ProductDB } from '../indexed-db/repository/product.repository'
 export class SocketService {
   static listenServerEmitDemo(data: any) {
     console.log('🚀 ~ file: socket.service.ts:3 ~ listenServerEmitDemo ~ data:', data)
+  }
+
+  static async listenOrganizationUpdate(data: { organization: Organization }) {
+    const organization = Organization.from(data.organization)
+    useMeStore().organization = organization
+  }
+
+  static async listenSettingReload(data: any) {
+    await MeService.reloadSetting()
   }
 
   static async listenDistributorUpsert(data: { distributor: any }) {
@@ -63,10 +73,6 @@ export class SocketService {
     const procedure = Procedure.from(data.procedure)
     await ProcedureDB.upsertOne(procedure)
     useProcedureStore().timeSync = Date.now()
-  }
-
-  static async listenSettingReload(data: any) {
-    await MeService.reloadSetting()
   }
 
   static async listenTicketClinicCreate(data: { ticket: any }) {

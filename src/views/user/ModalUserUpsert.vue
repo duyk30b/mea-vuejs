@@ -25,7 +25,7 @@ let firstLoad = true
 
 const openModal = async (instance?: User) => {
   showModal.value = true
-  user.value = instance ? User.fromInstance(instance) : User.blank()
+  user.value = instance ? User.from(instance) : User.blank()
   if (firstLoad === true) {
     try {
       roles.value = await RoleApi.list({})

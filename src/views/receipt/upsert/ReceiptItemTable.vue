@@ -10,11 +10,17 @@ import { receipt } from './receipt-upsert.store'
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+
+const changeItemPosition = (index: number, count: number) => {
+  const temp = receipt.value.receiptItems![index]
+  receipt.value.receiptItems![index] = receipt.value.receiptItems![index + count]
+  receipt.value.receiptItems![index + count] = temp
+}
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <div>Danh sách hàng trong phiếu</div>
+  <div>Giỏ hàng ({{ receipt.receiptItems?.length || 0 }})</div>
   <div v-if="isMobile" class="table-wrapper mt-2">
     <table>
       <thead>
@@ -33,7 +39,35 @@ const { formatMoney, isMobile } = settingStore
         </tr>
         <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-            {{ index + 1 }}
+            <div class="flex flex-col items-center">
+              <button
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-bottom: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === 0"
+                @click="changeItemPosition(index, -1)">
+                <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+              </button>
+              <span>{{ index + 1 }}</span>
+              <button
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-top: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                @click="changeItemPosition(index, 1)">
+                <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+              </button>
+            </div>
           </td>
           <td>
             <div class="font-medium">
@@ -103,8 +137,36 @@ const { formatMoney, isMobile } = settingStore
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
         <tr v-for="(receiptItem, index) in receipt.receiptItems" :key="index">
-          <td class="text-center">
-            {{ index + 1 }}
+          <td>
+            <div class="flex flex-col items-center">
+              <button
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-bottom: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === 0"
+                @click="changeItemPosition(index, -1)">
+                <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+              </button>
+              <span>{{ index + 1 }}</span>
+              <button
+                style="
+                  border: none;
+                  font-size: 1.2rem;
+                  line-height: 0.5;
+                  background: none;
+                  margin-top: -0.5rem;
+                "
+                class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                @click="changeItemPosition(index, 1)">
+                <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+              </button>
+            </div>
           </td>
           <td style="min-width: 150px">
             <div>

@@ -4,12 +4,14 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
+import { DTimer } from '../../utils'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -60,9 +62,9 @@ const handleModalRootUserUpsertSuccess = async (
   await startFetchData()
 }
 
-const deviceLogout = async (params: { userId: number; code: string; oid: number }) => {
-  const { userId, oid, code } = params
-  const result = await RootUserApi.deviceLogout({ userId, code, oid })
+const deviceLogout = async (params: { userId: number; refreshExp: number; oid: number }) => {
+  const { userId, oid, refreshExp } = params
+  const result = await RootUserApi.deviceLogout({ userId, refreshExp, oid })
   await startFetchData()
 }
 
@@ -129,15 +131,28 @@ const logoutAll = async () => {
                   <span class="ml-2">{{ device.os }}</span>
                   /
                   <span>{{ device.browser }}</span>
+                  -
+                  <span>Exp {{ DTimer.timeToText(device.refreshExp) }}</span>
                 </div>
                 <div>IP: {{ device.ip }}</div>
-                <div>Time: {{ new Date(parseInt(device.code, 36)).toISOString() }}</div>
-                <div>
+                <div v-if="device.online !== true">
+                  <HistoryOutlined class="mr-1" />
+                  {{ new Date(device.online as number).toISOString() }}
+                </div>
+                <div class="flex gap-2">
                   <VueButton
                     size="small"
-                    @click="deviceLogout({ userId: user.id!, code: device.code, oid: user.oid })">
+                    @click="
+                      deviceLogout({
+                        userId: user.id!,
+                        refreshExp: device.refreshExp,
+                        oid: user.oid,
+                      })
+                    ">
                     Đăng xuất
                   </VueButton>
+                  <a-tag v-if="device.online === true" color="success">Online</a-tag>
+                  <a-tag v-else color="default">Offline</a-tag>
                 </div>
               </div>
             </td>

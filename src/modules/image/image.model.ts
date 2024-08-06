@@ -1,30 +1,14 @@
-import { Expose } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
-
 export enum ImageHost {
   GoogleDriver = 'GoogleDriver',
 }
 
 export class Image {
-  @Expose({ groups: [FROM_PLAIN] })
   id: number
-
-  @Expose()
   name: string
-
-  @Expose()
   mimeType: string
-
-  @Expose()
   hostType: ImageHost
-
-  @Expose()
   hostAccount: string
-
-  @Expose()
   hostId: string
-
-  @Expose()
   waitDelete: 0 | 1
 
   static init(): Image {

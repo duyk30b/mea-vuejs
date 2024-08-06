@@ -6,6 +6,7 @@ export type RefreshTimeCode = 'PROCEDURE' | 'PRODUCT' | 'BATCH' | 'CUSTOMER' | '
 
 export type RefreshTime = {
   code: RefreshTimeCode
+  dataVersion: number
   time: string
 }
 

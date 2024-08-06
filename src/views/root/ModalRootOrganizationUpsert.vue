@@ -39,7 +39,7 @@ const openModal = async (instance?: Organization) => {
   try {
     showModal.value = true
     if (instance) {
-      organization.value = instance ? Organization.toBasic(instance) : Organization.blank()
+      organization.value = instance ? Organization.from(instance) : Organization.blank()
       permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
       if (instance.addressProvince) {
         districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
@@ -198,6 +198,13 @@ defineExpose({ openModal })
           </div>
         </div>
 
+        <div class="flex items-center mt-3">
+          <div class="w-[100px] flex-none">Email Verify</div>
+          <a-switch
+            :checked="Boolean(organization.emailVerify)"
+            @change="(checked: Boolean) => (organization.emailVerify = checked ? 1 : 0)" />
+        </div>
+
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Name</div>
           <div class="flex-auto">
@@ -209,6 +216,13 @@ defineExpose({ openModal })
           <div style="width: 100px; flex: none">Level</div>
           <div class="flex-auto">
             <InputNumber v-model:value="organization.level" required />
+          </div>
+        </div>
+
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div style="width: 100px; flex: none">Data Version</div>
+          <div class="flex-auto">
+            <InputNumber v-model:value="organization.dataVersion" required />
           </div>
         </div>
 
