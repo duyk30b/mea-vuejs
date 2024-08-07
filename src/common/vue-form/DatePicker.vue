@@ -98,11 +98,62 @@ const selectDate = (time: number) => {
 
 <template>
   <div class="date-picker-container">
+    <template v-if="type === 'year'">
+      <div class="date-picker-header">
+        <div class="pick-arrow" @click="clickIncreaseYear(-25)">«</div>
+        <div class="month-year" @click.stop="type = 'year'">
+          {{ yearList[0] }} -
+          {{ yearList[yearList.length - 1] }}
+        </div>
+        <div class="pick-arrow" @click="clickIncreaseYear(25)">»</div>
+      </div>
+      <div class="date-picker-content grid-year">
+        <div
+          v-for="(year, index) in yearList"
+          :key="index"
+          class="grid-item item-year"
+          @click.stop="selectYear(year)">
+          <div
+            :class="{
+              'grid-item-inner': true,
+              'active': year === currentFullYear,
+            }">
+            {{ year }}
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-if="type === 'month'">
+      <div class="date-picker-header">
+        <div class="pick-arrow" @click="clickIncreaseYear(-10)">«</div>
+        <div class="pick-arrow" @click="clickIncreaseYear(-1)">‹</div>
+        <div class="month-year" @click.stop="type = 'year'">
+          {{ new Date(currentTime).getFullYear() }}
+        </div>
+        <div class="pick-arrow" @click="clickIncreaseYear(1)">›</div>
+        <div class="pick-arrow" @click="clickIncreaseYear(10)">»</div>
+      </div>
+      <div class="date-picker-content grid-month">
+        <div
+          v-for="(month, index) in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
+          :key="index"
+          class="grid-item item-month"
+          @click.stop="selectMonth(month)">
+          <div
+            :class="{
+              'grid-item-inner': true,
+              'active': month === currentMonth,
+            }">
+            {{ (month + 1).toString().padStart(2, '0') }}
+          </div>
+        </div>
+      </div>
+    </template>
     <template v-if="type === 'date'">
       <div class="date-picker-header">
         <div class="pick-arrow" @click="clickIncreaseYear(-1)">«</div>
         <div class="pick-arrow" @click="clickIncreaseMonth(-1)">‹</div>
-        <div class="month-year" @click.stop="type = 'year'">
+        <div class="month-year" @click.stop="type = 'month'">
           {{ (new Date(currentTime).getMonth() + 1).toString().padStart(2, '0') }} /
           {{ new Date(currentTime).getFullYear() }}
         </div>
@@ -121,71 +172,14 @@ const selectDate = (time: number) => {
           v-for="(date, index) in dateList"
           :key="index"
           class="grid-item item-date"
-          @click="selectDate(date.getTime())"
-        >
+          @click="selectDate(date.getTime())">
           <div
             :class="{
               'grid-item-inner': true,
               'active': date.getTime() === startOfDateValue,
               'outside': date.getTime() < startOfMonth || date.getTime() > endOfMonth,
-            }"
-          >
+            }">
             {{ date.getDate() }}
-          </div>
-        </div>
-      </div>
-    </template>
-    <template v-if="type === 'year'">
-      <div class="date-picker-header">
-        <div class="pick-arrow" @click="clickIncreaseYear(-25)">«</div>
-        <div class="month-year" @click.stop="type = 'month'">
-          {{ yearList[0] }} -
-          {{ yearList[yearList.length - 1] }}
-        </div>
-        <div class="pick-arrow" @click="clickIncreaseYear(25)">»</div>
-      </div>
-      <div class="date-picker-content grid-year">
-        <div
-          v-for="(year, index) in yearList"
-          :key="index"
-          class="grid-item item-year"
-          @click.stop="selectYear(year)"
-        >
-          <div
-            :class="{
-              'grid-item-inner': true,
-              'active': year === currentFullYear,
-            }"
-          >
-            {{ year }}
-          </div>
-        </div>
-      </div>
-    </template>
-    <template v-if="type === 'month'">
-      <div class="date-picker-header">
-        <div class="pick-arrow" @click="clickIncreaseYear(-10)">«</div>
-        <div class="pick-arrow" @click="clickIncreaseYear(-1)">‹</div>
-        <div class="month-year" @click.stop="type = 'date'">
-          {{ new Date(currentTime).getFullYear() }}
-        </div>
-        <div class="pick-arrow" @click="clickIncreaseYear(1)">›</div>
-        <div class="pick-arrow" @click="clickIncreaseYear(10)">»</div>
-      </div>
-      <div class="date-picker-content grid-month">
-        <div
-          v-for="(month, index) in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
-          :key="index"
-          class="grid-item item-month"
-          @click.stop="selectMonth(month)"
-        >
-          <div
-            :class="{
-              'grid-item-inner': true,
-              'active': month === currentMonth,
-            }"
-          >
-            {{ (month + 1).toString().padStart(2, '0') }}
           </div>
         </div>
       </div>

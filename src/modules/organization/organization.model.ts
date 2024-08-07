@@ -1,7 +1,7 @@
 import { User } from '../user'
 
 export class Organization {
-  id: number | null
+  id: number
   phone: string
   email: string
   emailVerify: 0 | 1
@@ -27,6 +27,7 @@ export class Organization {
     ins.level = 1
     ins.emailVerify = 0
     ins.dataVersion = 1
+    ins.isActive = 1
     return ins
   }
 

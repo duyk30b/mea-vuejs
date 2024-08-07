@@ -390,9 +390,7 @@ defineExpose({ openModal, openModalFromTicket })
           </div>
           <div>
             <span>Active</span>
-            <span v-if="!product.isActive">
-              ( Sản phẩm này tạm thời không thể nhập hàng và xuất hàng )
-            </span>
+            <span v-if="!product.isActive">( Ngừng kinh doanh )</span>
           </div>
         </div>
       </div>

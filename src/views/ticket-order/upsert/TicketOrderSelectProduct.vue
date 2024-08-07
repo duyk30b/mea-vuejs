@@ -19,6 +19,7 @@ import { TicketProduct } from '../../../modules/ticket-product'
 import { customFilter, timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
+import { computed } from 'vue'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -70,7 +71,7 @@ const selectProduct = async (instance?: Product) => {
     const batchListResponse = await batchStore.list({
       filter: {
         productId: instance.id,
-        quantity: { GT: 0 },
+        quantity: { NOT: 0 },
       },
     })
     batchListResponse.forEach((i) => (i.product = instance))
@@ -271,6 +272,10 @@ const addTicketProduct = () => {
   }
 }
 
+const closeExpiryDate = computed(() => {
+  return Date.now()
+})
+
 const focus = () => {
   inputOptionsProduct.value?.focus()
 }
@@ -337,9 +342,7 @@ defineExpose({ focus })
     <div v-if="product.hasManageBatches" style="flex-grow: 1; flex-basis: 80%">
       <div>
         Lô hàng
-        <span
-          v-if="batch?.expiryDate && batch?.expiryDate < Date.now()"
-          class="text-red-500 font-bold">
+        <span v-if="batch?.expiryDate && batch?.expiryDate < closeExpiryDate" class="text-red-500">
           (Hết hạn sử dụng)
         </span>
         <span v-if="product.id && !batchList.length" class="text-red-500 font-bold">
@@ -355,7 +358,11 @@ defineExpose({ focus })
           <template #option="{ item: { data } }">
             <div v-if="!data.id">Chưa chọn lô</div>
             <div v-if="data.id">
-              Lô {{ data.lotNumber }} {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              Lô {{ data.lotNumber }}
+              <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
+                {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              </span>
+              - Tồn
               <b>{{ data.unitQuantity }}</b>
               {{ product.unitDefaultName }} - G.Lẻ
               <b>{{ formatMoney(data.unitRetailPrice) }}</b>
@@ -364,7 +371,10 @@ defineExpose({ focus })
           <template #text="{ content: { data } }">
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
-              Lô {{ data.lotNumber }} {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              Lô {{ data.lotNumber }}
+              <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
+                {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              </span>
               <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>

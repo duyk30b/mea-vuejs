@@ -79,19 +79,19 @@ const handleSave = async () => {
     [...permissionIds.value].sort((a, b) => (a > b ? 1 : -1))
   )
   try {
-    if (organization.value.id === null) {
-      const response = await RootOrganizationApi.createOne(organization.value)
-      emit('success', response, 'CREATE')
-    } else {
+    if (organization.value.id) {
       const response = await RootOrganizationApi.updateOne(
         organization.value.id,
         organization.value
       )
       emit('success', response, 'UPDATE')
+    } else {
+      const response = await RootOrganizationApi.createOne(organization.value)
+      emit('success', response, 'CREATE')
     }
     showModal.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:94 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -172,7 +172,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ organization.id !== null ? 'Cập nhật thông tin cơ sở' : 'Tạo cơ sở mới' }}
+          {{ organization.id ? 'Cập nhật thông tin cơ sở' : 'Tạo cơ sở mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
