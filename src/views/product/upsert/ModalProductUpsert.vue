@@ -167,7 +167,7 @@ defineExpose({ openModal, openModalFromTicket })
         </div>
 
         <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.route && !product.hasManageBatches"
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.lotNumber && !product.hasManageBatches"
           class="grow basis-[40%]">
           <div class="">Số lô</div>
           <div>

@@ -25,6 +25,7 @@ export class MeService {
           SettingKey.PRODUCT_ROUTE,
           SettingKey.PRODUCT_HINT_USAGE,
           SettingKey.PROCEDURE_GROUP,
+          SettingKey.RADIOLOGY_GROUP,
           SettingKey.INVOICE_SURCHARGE_DETAIL,
           SettingKey.INVOICE_EXPENSE_DETAIL,
         ].includes(key as any)
