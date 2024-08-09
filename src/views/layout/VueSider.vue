@@ -68,7 +68,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'TicketClinicList' }">Danh sách khám</router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.RADIOLOGY_READ]" key="RadiologyList">
-        <router-link :to="{ name: 'RadiologyList' }">CĐHA</router-link>
+        <router-link :to="{ name: 'RadiologyList' }">Hẹn khám</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_ORDER_READ]" key="TicketOrder">
@@ -115,12 +115,22 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'Distributor' }">Nhà cung cấp</router-link>
       </a-menu-item>
     </a-sub-menu>
-    <a-menu-item v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" key="Procedure">
-      <PicCenterOutlined />
-      <span>
-        <router-link :to="{ name: 'Procedure' }">Dịch vụ</router-link>
-      </span>
-    </a-menu-item>
+    <a-sub-menu
+      v-if="
+        permissionIdMap[PermissionId.PROCEDURE_READ] || permissionIdMap[PermissionId.RADIOLOGY_READ]
+      "
+      key="Data">
+      <template #icon>
+        <PicCenterOutlined />
+      </template>
+      <template #title>Dữ liệu</template>
+      <a-menu-item v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" key="ProcedureList">
+        <router-link :to="{ name: 'ProcedureList' }">Dịch vụ</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.RADIOLOGY_READ]" key="RadiologyList">
+        <router-link :to="{ name: 'RadiologyList' }">Phiếu CĐHA</router-link>
+      </a-menu-item>
+    </a-sub-menu>
     <a-sub-menu
       v-if="
         permissionIdMap[PermissionId.STATISTIC_PRODUCT] ||

@@ -2,8 +2,9 @@ import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } fr
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
 import { clinicRouter } from './clinic.router'
-import { ticketOrderRouter } from './ticket-order.router'
+import { dataRouter } from './data.router'
 import { statisticRouter } from './statistic.router'
+import { ticketOrderRouter } from './ticket-order.router'
 import { warehouseRouter } from './warehouse.router'
 
 enum AuthLevel {
@@ -30,6 +31,7 @@ const Router = createRouter({
         clinicRouter,
         ticketOrderRouter,
         warehouseRouter,
+        dataRouter,
         statisticRouter,
         {
           path: 'customer',
@@ -41,19 +43,6 @@ const Router = createRouter({
               name: 'CustomerList',
               meta: { title: 'Khách Hàng' },
               component: () => import('../views/customer/list/CustomerList.vue'),
-            },
-          ],
-        },
-        {
-          path: 'procedure',
-          name: 'Procedure',
-          redirect: () => ({ name: 'ProcedureList' }),
-          children: [
-            {
-              path: 'list',
-              name: 'ProcedureList',
-              component: () => import('../views/procedure/ProcedureList.vue'),
-              meta: { title: 'Dịch vụ' },
             },
           ],
         },
