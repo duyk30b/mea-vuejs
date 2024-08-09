@@ -15,10 +15,10 @@ export enum AppointmentStatus {
 export class Appointment {
   id: number
   customerId: number
-  time: number
+  registeredAt: number
+  reason: string // Ghi chú
   appointmentType: AppointmentType
   appointmentStatus: AppointmentStatus
-  note: string // Ghi chú
 
   customer?: Customer
 
@@ -33,6 +33,7 @@ export class Appointment {
 
   static blank(): Appointment {
     const ins = Appointment.init()
+    ins.customer = Customer.init()
     return ins
   }
 

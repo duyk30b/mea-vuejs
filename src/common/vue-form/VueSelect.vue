@@ -8,7 +8,7 @@ import IconTriangleDown from '../icon/IconTriangleDown.vue'
 const props = withDefaults(
   defineProps<{
     value?: any
-    options: { value: any; text?: string; data?: any }[]
+    options: { value: any; text?: string; data?: any; disabled?: boolean }[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
@@ -42,7 +42,11 @@ watch(
   () => props.value, // mục đích của watch value là để tìm và show ra text
   (newValue) => {
     const index = props.options.findIndex((item) => {
-      return item.value === newValue
+      if (typeof newValue === 'object') {
+        return JSON.stringify(item.value) === JSON.stringify(newValue)
+      } else {
+        return item.value === newValue
+      }
     })
     indexFocus.value = index
     itemSelected.value = index !== -1 ? props.options[index] : {}
@@ -188,8 +192,13 @@ defineExpose({ focus })
       <div
         v-for="(item, index) in options"
         :key="index"
+        :style="
+          !item.disabled
+            ? 'cursor: pointer'
+            : 'cursor: not-allowed; background-color: #eeeeee; opacity: 0.6;'
+        "
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click.stop="handleSelectItem(index)">
+        @click.stop="!item.disabled && handleSelectItem(index)">
         <slot name="option" :item="item" :index="index">
           <div class="item-text">
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}

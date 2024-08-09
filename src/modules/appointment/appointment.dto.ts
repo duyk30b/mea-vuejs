@@ -11,14 +11,14 @@ export class AppointmentGetQuery {
 
   filter?: {
     customerId?: number
-    appointmentStatus?: AppointmentStatus
+    appointmentStatus?: AppointmentStatus | ConditionEnum<AppointmentStatus>
     appointmentType?: AppointmentType | ConditionEnum<AppointmentType>
-    time?: ConditionDate
+    registeredAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    time?: 'ASC' | 'DESC'
+    registeredAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<AppointmentGetQuery>) {

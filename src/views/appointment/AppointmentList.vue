@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import {
-  FileSearchOutlined,
-  PlusOutlined,
-  ReadOutlined,
-  ScheduleOutlined,
-} from '@ant-design/icons-vue'
-import dayjs, { type Dayjs } from 'dayjs'
+import { ScheduleOutlined } from '@ant-design/icons-vue'
+import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { useMeStore } from '../../modules/_me/me.store'
-import { DTimer } from '../../utils'
-import InputOptions from '../../common/vue-form/InputOptions.vue'
-import { useCustomerStore, type Customer } from '../../modules/customer'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../modules/appointment'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { VueSelect } from '../../common/vue-form'
+import InputOptions from '../../common/vue-form/InputOptions.vue'
+import { useMeStore } from '../../modules/_me/me.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../modules/appointment'
+import { useCustomerStore, type Customer } from '../../modules/customer'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { DTimer } from '../../utils'
+import ModalAppointmentRegister from './ModalAppointmentRegister.vue'
+import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
+import { IconFileSearch } from '../../common/icon'
+import AppointmentStatusTag from './AppointmentStatusTag.vue'
+import { IconEditSquare } from '../../common/icon-google'
+
+const modalAppointmentRegister = ref<InstanceType<typeof ModalAppointmentRegister>>()
+const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const customerStore = useCustomerStore()
 const meStore = useMeStore()
@@ -26,10 +29,11 @@ const appointmentList = ref<Appointment[]>([])
 const customerList = ref<Customer[]>([])
 const customerId = ref<number>()
 
-const startDate = DTimer.startOfDate(new Date())
-const endDate = DTimer.endOfDate(new Date())
-const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startDate), dayjs(endDate)])
-const appointmentStatus = ref<AppointmentStatus | null>(null)
+const timeRanger = ref<[Dayjs | null, Dayjs | null]>([null, null])
+const appointmentStatusList = ref<AppointmentStatus[]>([
+  AppointmentStatus.Waiting,
+  AppointmentStatus.Confirm,
+])
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('APPOINTMENT_PAGINATION_LIMIT')) || 10)
@@ -41,15 +45,15 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const fromTime = timeRanger.value?.[0].startOf('day').toDate()
-    const toTime = timeRanger.value?.[1].endOf('day').toDate()
+    const fromTime = timeRanger.value?.[0]?.startOf('day').toDate()
+    const toTime = timeRanger.value?.[1]?.endOf('day').toDate()
 
     const response = await AppointmentApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: { customer: true },
       filter: {
-        time:
+        registeredAt:
           fromTime && toTime
             ? {
                 GTE: fromTime ? fromTime : undefined,
@@ -57,9 +61,11 @@ const startFetchData = async () => {
               }
             : undefined,
         customerId: customerId.value ? customerId.value : undefined,
-        appointmentStatus: appointmentStatus.value ?? undefined,
+        appointmentStatus: appointmentStatusList.value.length
+          ? { IN: appointmentStatusList.value }
+          : undefined,
       },
-      sort: { time: 'DESC' },
+      sort: { registeredAt: 'ASC' },
     })
 
     appointmentList.value = response.data
@@ -128,9 +134,18 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   }
   await startFetchData()
 }
+
+const handleModalAppointmentRegisterSuccess = async () => {
+  // reload bằng lắng nghe event socket
+  await startFetchData()
+}
 </script>
 
 <template>
+  <ModalAppointmentRegister
+    ref="modalAppointmentRegister"
+    @success="handleModalAppointmentRegisterSuccess" />
+  <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
@@ -140,23 +155,16 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         Danh sách hẹn khám
       </div>
       <div>
-        <VueButton v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]" icon="plus" color="blue">
+        <VueButton
+          v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]"
+          icon="plus"
+          color="blue"
+          @click="modalAppointmentRegister?.openModal()">
           Tạo lịch hẹn mới
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <!-- <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer;">
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-          </a-menu>~~
-        </template>
-      </a-dropdown> -->
-    </div>
+    <div class="page-header-setting"></div>
   </div>
 
   <div class="page-main">
@@ -201,13 +209,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            v-model:value="appointmentStatus"
+            v-model:value="appointmentStatusList"
             :options="[
-              { value: null, text: 'Tất cả' },
-              { value: AppointmentStatus.Waiting, text: 'Nhắc khám lại' },
-              { value: AppointmentStatus.Confirm, text: 'KH xác nhận lịch' },
-              { value: AppointmentStatus.Completed, text: 'Hoàn thành (KH đã đến khám)' },
-              { value: AppointmentStatus.Cancelled, text: 'Hủy lịch' },
+              { value: [], text: 'Tất cả' },
+              { value: [AppointmentStatus.Waiting], text: 'Chờ xác nhận' },
+              { value: [AppointmentStatus.Confirm], text: 'Đã xác nhận' },
+              { value: [AppointmentStatus.Completed], text: 'Hoàn thành (KH đã đến khám)' },
+              { value: [AppointmentStatus.Cancelled], text: 'Hủy hẹn' },
             ]"
             @update:value="handleSelectAppointmentStatus" />
         </div>
@@ -218,6 +226,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
       <table>
         <thead>
           <tr>
+            <th>#</th>
+            <th>Trạng thái</th>
+            <th>Thời gian</th>
             <th>Khách hàng</th>
             <th>Lý do</th>
             <th>#</th>
@@ -234,6 +245,58 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <td colspan="100">
               <div class="vue-skeleton-loading"></div>
               <div class="vue-skeleton-loading mt-2"></div>
+            </td>
+          </tr>
+        </tbody>
+        <tbody v-if="!dataLoading">
+          <tr v-if="appointmentList.length === 0">
+            <td colspan="20" class="text-center">Không có lịch khám nào</td>
+          </tr>
+          <tr v-for="(appointment, index) in appointmentList" :key="index">
+            <td style="width: 100px">
+              <div class="flex justify-between">
+                <div>HK{{ appointment.id }}</div>
+                <div v-if="permissionIdMap[PermissionId.APPOINTMENT_UPDATE]">
+                  <a
+                    style="color: #eca52b"
+                    class="text-xl"
+                    @click="modalAppointmentRegister?.openModal(appointment)">
+                    <IconEditSquare />
+                  </a>
+                </div>
+              </div>
+            </td>
+            <td style="width: 200px">
+              <div class="flex justify-center">
+                <div>
+                  <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
+                </div>
+              </div>
+            </td>
+            <td class="text-center" style="width: 200px">
+              {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
+            </td>
+            <td>
+              <div>
+                {{ appointment.customer?.fullName }}
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(appointment.customer!)">
+                  <IconFileSearch />
+                </a>
+              </div>
+              <div v-if="appointment.customer?.note" class="text-xs italic">
+                {{ appointment.customer?.note }}
+              </div>
+            </td>
+            <td>{{ appointment.reason }}</td>
+            <td class="text-center">
+              <div v-if="permissionIdMap[PermissionId.APPOINTMENT_UPDATE]">
+                <a
+                  style="color: #eca52b"
+                  class="text-xl"
+                  @click="modalAppointmentRegister?.openModal(appointment)">
+                  <IconEditSquare />
+                </a>
+              </div>
             </td>
           </tr>
         </tbody>
