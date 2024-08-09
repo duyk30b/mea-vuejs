@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import {
-  FileSearchOutlined,
-  PlusOutlined,
-  ReadOutlined,
-  ScheduleOutlined,
-} from '@ant-design/icons-vue'
+import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -16,13 +12,12 @@ import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketApi, TicketStatus } from '../../../modules/ticket'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
-import { DTimer, timeToText } from '../../../utils'
+import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicCreate from './ModalTicketClinicCreate.vue'
-import { IconTrash } from '../../../common/icon'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -125,12 +120,12 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleSelectCheckupStatus = async () => {
+const handleSelectTicketStatus = async () => {
   await startSearch()
 }
 
 const handleChangeTime = async (value: any) => {
-  await startFetchData()
+  await startSearch()
 }
 
 const changeSort = async (column: 'id' | 'registeredAt') => {
@@ -190,8 +185,8 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         <VueButton
           v-if="permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW]"
           color="blue"
+          icon="plus"
           @click="modalTicketClinicCreate?.openModal()">
-          <PlusOutlined />
           KHÁM MỚI
         </VueButton>
       </div>
@@ -226,7 +221,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               <div>
                 <b>{{ data.fullName }}</b>
                 - {{ data.phone }} -
-                {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
+                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
                 {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
@@ -261,7 +256,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
-            @update:value="handleSelectCheckupStatus"></VueSelect>
+            @update:value="handleSelectTicketStatus" />
         </div>
       </div>
     </div>
@@ -339,7 +334,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               </div>
             </td>
             <td class="text-center">
-              {{ timeToText(ticket.startedAt || ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ DTimer.timeToText(ticket.startedAt || ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

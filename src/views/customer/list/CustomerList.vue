@@ -86,9 +86,6 @@ onBeforeMount(async () => {
 onMounted(async () => {
   try {
     const { hasChange } = await customerStore.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (hasChange) {
-      await startFetchData()
-    }
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
