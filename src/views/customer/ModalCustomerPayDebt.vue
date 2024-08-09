@@ -78,9 +78,9 @@ const handleSave = async () => {
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', data)
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:39 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:83 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
