@@ -16,6 +16,8 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
   const showItemsActualMoney = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.itemsActualMoney
   const showSurcharge = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.surcharge
   const showDiscount = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.discount
+  const showPaid = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.paid
+  const showDebt = settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.debt
 
   const rowTicketProcedureList = ticket
     .ticketProcedureList!.map((item, index) => {
@@ -94,6 +96,22 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
     surcharge = `<tr>
       <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Phụ phí</td>
       <td colspan="2" style="text-align: right">${formatMoney(ticket.surcharge)}</td>
+    </tr>`
+  }
+
+  let paid = ''
+  if (showPaid) {
+    paid = `<tr>
+      <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Đã thanh toán</td>
+      <td colspan="2" style="text-align: right">${formatMoney(ticket.paid)}</td>
+    </tr>`
+  }
+
+  let debt = ''
+  if (showDebt) {
+    debt = `<tr>
+      <td colspan="${showUnit ? 4 : 3}" style="text-align: right">Nợ</td>
+      <td colspan="2" style="text-align: right">${formatMoney(ticket.debt)}</td>
     </tr>`
   }
 
@@ -187,6 +205,8 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
                 ticket.totalMoney
               )}</b></td>
             </tr>
+            ${paid}
+            ${debt}
           </tbody>
         </table>
         <div style="text-align:right; font-style:italic; margin-top: 1rem">

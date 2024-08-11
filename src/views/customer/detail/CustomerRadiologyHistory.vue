@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { timeToText } from '../../../utils'
+import { DTimer, formatPhone } from '../../../utils'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
-import { IconVisibility } from '../../../common/icon-google'
+import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -86,13 +86,14 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 <template>
   <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
   <div class="mt-4">
-    <div class="flex justify-between items-end">
-      <div>
-        Khách hàng:
+    <div class="flex flex-wrap items-center gap-2">
+      <span>
+        KH:
         <b>{{ customer.fullName }}</b>
-        - {{ customer.phone }}
-      </div>
-      <div></div>
+      </span>
+      <span>
+        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+      </span>
     </div>
     <div v-if="isMobile" class="mt-4 w-full table-wrapper">
       <table>
@@ -120,7 +121,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                  TO{{ ticketRadiology.ticketId }}
+                  BH{{ ticketRadiology.ticketId }}
                 </a>
                 <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
               </div>
@@ -130,12 +131,12 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                  TC{{ ticketRadiology.ticketId }}
+                  KB{{ ticketRadiology.ticketId }}
                 </a>
                 <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-right">
@@ -190,7 +191,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                  TO{{ ticketRadiology.ticketId }}
+                  BH{{ ticketRadiology.ticketId }}
                 </a>
                 <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
               </div>
@@ -200,12 +201,12 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                  TC{{ ticketRadiology.ticketId }}
+                  KB{{ ticketRadiology.ticketId }}
                 </a>
                 <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

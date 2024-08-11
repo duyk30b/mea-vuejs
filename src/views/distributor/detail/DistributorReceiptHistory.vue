@@ -101,7 +101,7 @@ const openBlankReceiptUpsert = (distributorId: number) => {
           <tr v-for="(receipt, index) in receipts" :key="index">
             <td>
               <div>
-                <a @click="openBlankReceiptDetail(receipt.id)">RC{{ receipt.id }}</a>
+                <a @click="openBlankReceiptDetail(receipt.id)">NH{{ receipt.id }}</a>
                 <span class="ml-2">
                   <ReceiptStatusTag :status="receipt.status" />
                 </span>

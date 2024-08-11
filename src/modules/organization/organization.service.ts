@@ -6,14 +6,9 @@ import { Organization } from './organization.model'
 
 export class OrganizationService {
   static async info() {
-    try {
-      const organization = await OrganizationApi.info()
-      useMeStore().organization = Organization.from(organization)
-      return organization
-    } catch (error) {
-      console.log('🚀 ~ OrganizationService ~ info ~ error:', error)
-      return Organization.blank()
-    }
+    const organization = await OrganizationApi.info()
+    useMeStore().organization = Organization.from(organization)
+    return organization
   }
 
   static async updateInfo(body: Organization) {

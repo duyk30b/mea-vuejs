@@ -21,7 +21,7 @@ const { formatMoney } = settingStore
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Mã KH</td>
-        <td class="px-2">CM{{ customer.id }}</td>
+        <td class="px-2">KH{{ customer.id }}</td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Số điện thoại</td>

@@ -56,7 +56,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
+      <div class="p-4 table-wrapper">
         <table>
           <thead>
             <tr>
@@ -100,7 +100,7 @@ defineExpose({ openModal })
             <tr>
               <td>
                 <a-checkbox v-model:checked="settingDisplay.relative">
-                  Hiển thị điền thông tin người thân
+                  Hiển thị điền thông tin liên hệ khác
                 </a-checkbox>
               </td>
             </tr>

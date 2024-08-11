@@ -1,8 +1,6 @@
-import { Expose, instanceToPlain, plainToInstance } from 'class-transformer'
-import { FROM_PLAIN } from '../_base/base-expose'
-import type { PaymentType, VoucherType } from '../enum'
-import { Ticket } from '../ticket'
 import { Customer } from '../customer/customer.model'
+import type { PaymentType } from '../enum'
+import { Ticket } from '../ticket'
 
 export class CustomerPayment {
   id: number

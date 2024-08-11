@@ -103,7 +103,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <a
                 style="margin-right: 0.5em"
                 @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                TO{{ ticketRadiology.ticketId }}
+                BH{{ ticketRadiology.ticketId }}
               </a>
               <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
             </div>
@@ -113,7 +113,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <a
                 style="margin-right: 0.5em"
                 @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                TC{{ ticketRadiology.ticketId }}
+                KB{{ ticketRadiology.ticketId }}
               </a>
               <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
             </div>

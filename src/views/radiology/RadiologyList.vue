@@ -121,7 +121,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </VueButton>
     </div>
     <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
           <IconSetting />
         </span>

@@ -133,6 +133,20 @@ defineExpose({ openModal })
                 </a-checkbox>
               </td>
             </tr>
+            <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.paymentInfo.paid">
+                  Hiển thị tiền đã thanh toán
+                </a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">
+                  Hiển thị nợ
+                </a-checkbox>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>

@@ -2,22 +2,19 @@
 import {
   ContainerOutlined,
   DeploymentUnitOutlined,
-  DollarOutlined,
   OneToOneOutlined,
-  UserOutlined
+  UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose, IconDollar } from '../../../common/icon'
 import { IconRadiology, IconStethoscope } from '../../../common/icon-google'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
+import CustomerAppointmentHistory from './CustomerAppointmentHistory.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
 import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
@@ -28,6 +25,7 @@ import CustomerTicketHistory from './CustomerTicketHistory.vue'
 
 const TABS_KEY = {
   INFO: 'CUSTOMER_INFO',
+  APPOINTMENT_HISTORY: 'APPOINTMENT_HISTORY',
   TICKET_HISTORY: 'TICKET_HISTORY',
   TICKET_CLINIC_HISTORY: 'TICKET_CLINIC_HISTORY',
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
@@ -36,14 +34,10 @@ const TABS_KEY = {
   RADIOLOGY_HISTORY: 'RADIOLOGY_HISTORY',
 }
 
-const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>()
 
 const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
-const router = useRouter()
 
-const settingStore = useSettingStore()
-const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -64,20 +58,6 @@ const closeModal = () => {
 
 const handleUpdateTabShow = (value: any) => {
   localStorage.setItem('MODAL_CUSTOMER_DETAIL_TAB_SHOW', value)
-}
-
-const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) => {
-  customer.value = data.customer
-  customerPaymentHistory.value?.startFetchData()
-  emit('update_customer', data.customer)
-}
-
-const openBlankTicketOrderUpsert = (customerId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderUpsert',
-    query: { customer_id: customerId, mode: 'CREATE' },
-  })
-  window.open(route.href, '_blank')
 }
 
 defineExpose({ openModal })
@@ -105,6 +85,12 @@ defineExpose({ openModal })
               Thông tin
             </VueTabMenu>
             <VueTabMenu
+              v-if="permissionIdMap[PermissionId.APPOINTMENT_READ]"
+              :tabKey="TABS_KEY.APPOINTMENT_HISTORY">
+              <ContainerOutlined />
+              Lịch hẹn
+            </VueTabMenu>
+            <VueTabMenu
               v-if="
                 permissionIdMap[PermissionId.TICKET_ORDER_READ] ||
                 permissionIdMap[PermissionId.TICKET_CLINIC_READ]
@@ -122,7 +108,7 @@ defineExpose({ openModal })
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_READ]"
               :tabKey="TABS_KEY.PAYMENT_HISTORY">
-              <DollarOutlined />
+              <IconDollar />
               Thanh toán
             </VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRODUCT_HISTORY">
@@ -144,86 +130,20 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.INFO">
               <CustomerInfo :customer="customer" />
             </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.APPOINTMENT_HISTORY">
+              <CustomerAppointmentHistory :customer="customer" />
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.TICKET_HISTORY">
-              <div class="mt-4 flex flex-wrap justify-between items-center gap-2">
-                <div class="flex flex-wrap">
-                  <span class="mr-4">
-                    KH:
-                    <b>{{ customer.fullName }}</b>
-                  </span>
-                  <span>
-                    Công nợ hiện tại:
-                    <b>{{ formatMoney(customer.debt) }}</b>
-                  </span>
-                </div>
-                <div class="flex gap-4">
-                  <VueButton
-                    v-if="permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]"
-                    color="blue"
-                    icon="plus"
-                    @click="openBlankTicketOrderUpsert(customer.id!)">
-                    Bán hàng mới
-                  </VueButton>
-                  <VueButton
-                    v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
-                    color="blue"
-                    icon="dollar"
-                    @click="modalCustomerPayDebt?.openModal(customer)">
-                    Trả nợ
-                  </VueButton>
-                </div>
-              </div>
               <CustomerTicketHistory :customer="customer" />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.TICKET_CLINIC_HISTORY">
-              <div class="mt-4 flex flex-wrap justify-between items-center">
-                <div class="flex flex-wrap gap-4">
-                  <span>
-                    KH:
-                    <b>{{ customer.fullName }}</b>
-                  </span>
-                  <span>- {{ customer.phone }}</span>
-                  <span>- {{ customer.addressString }}</span>
-                  <span>
-                    - Công nợ hiện tại:
-                    <b>{{ formatMoney(customer.debt) }}</b>
-                  </span>
-                </div>
-                <div class="flex gap-4">
-                  <VueButton
-                    v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
-                    color="blue"
-                    icon="dollar"
-                    @click="modalCustomerPayDebt?.openModal(customer)">
-                    Trả nợ
-                  </VueButton>
-                </div>
-              </div>
               <CustomerTicketClinicHistory :customer="customer" />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PAYMENT_HISTORY">
-              <div class="mt-4 flex justify-between items-center">
-                <div class="flex flex-wrap">
-                  <span class="mr-4">
-                    KH:
-                    <b>{{ customer.fullName }}</b>
-                  </span>
-                  <span>
-                    Công nợ hiện tại:
-                    <b>{{ formatMoney(customer.debt) }}</b>
-                  </span>
-                </div>
-                <div>
-                  <VueButton
-                    v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
-                    color="blue"
-                    icon="dollar"
-                    @click="modalCustomerPayDebt?.openModal(customer)">
-                    Trả nợ
-                  </VueButton>
-                </div>
-              </div>
-              <CustomerPaymentHistory ref="customerPaymentHistory" :customer="customer" />
+              <CustomerPaymentHistory
+                ref="customerPaymentHistory"
+                :customer="customer"
+                @update_customer="(v) => emit('update_customer', v)" />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PRODUCT_HISTORY">
               <CustomerProductHistory :customer="customer" />
@@ -244,7 +164,6 @@ defineExpose({ openModal })
       </div>
     </div>
   </VueModal>
-  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
 </template>
 
 <style lang="scss"></style>

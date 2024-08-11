@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { timeToText } from '../../../utils'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
-import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
 import { VoucherType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
+import { DTimer, formatPhone } from '../../../utils'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
+import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -16,6 +19,8 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const ticketList = ref<Ticket[]>([])
 const page = ref(1)
@@ -71,60 +76,94 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
   })
   window.open(route.href, '_blank')
 }
+
+const openBlankTicketOrderUpsert = (customerId: number) => {
+  let route = router.resolve({
+    name: 'TicketOrderUpsert',
+    query: { customer_id: customerId, mode: 'CREATE' },
+  })
+  window.open(route.href, '_blank')
+}
 </script>
 
 <template>
-  <div class="mt-4 w-full table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          <th>Đơn hàng</th>
-          <th>Tiền</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="ticketList.length === 0">
-          <td colspan="20" class="text-center">Không có dữ liệu</td>
-        </tr>
-        <tr v-for="(ticket, index) in ticketList" :key="index">
-          <td>
-            <div v-if="ticket.voucherType === VoucherType.Order" style="font-size: 0.8rem">
-              <a style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
-                TO{{ ticket.id }}
-              </a>
-              <TicketOrderStatusTag :ticketStatus="ticket.ticketStatus" />
-            </div>
-            <div v-if="ticket.voucherType === VoucherType.Clinic" style="font-size: 0.8rem">
-              <a style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket.id)">
-                TC{{ ticket.id }}
-              </a>
-              <TicketClinicStatusTag :ticketStatus="ticket.ticketStatus" />
-            </div>
-            <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(ticket.startedAt, 'hh:mm DD/MM/YYYY') }}
-            </div>
-          </td>
-          <td class="text-right">
-            <div style="font-weight: 500">
-              {{ formatMoney(ticket.totalMoney) }}
-            </div>
-            <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
-              Nợ: {{ formatMoney(ticket.debt) }}
-            </div>
-            <div v-if="ticket.ticketStatus === TicketStatus.Approved" class="text-xs">
-              Đã thanh toán: {{ formatMoney(ticket.paid) }}
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="mt-4 float-right mb-2">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
-        :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+  <div class="mt-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <span>
+        KH:
+        <b>{{ customer.fullName }}</b>
+      </span>
+      <span>
+        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+      </span>
+      <span>
+        - Công nợ hiện tại:
+        <b>{{ formatMoney(customer.debt) }}</b>
+      </span>
+      <div class="ml-auto">
+        <VueButton
+          v-if="permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]"
+          color="blue"
+          icon="plus"
+          @click="openBlankTicketOrderUpsert(customer.id!)">
+          Bán hàng mới
+        </VueButton>
+      </div>
+    </div>
+    <div class="mt-4 w-full table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Đơn hàng</th>
+            <th>Tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="ticketList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(ticket, index) in ticketList" :key="index">
+            <td>
+              <div v-if="ticket.voucherType === VoucherType.Order" style="font-size: 0.8rem">
+                <a style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
+                  BH{{ ticket.id }}
+                </a>
+                <TicketOrderStatusTag :ticketStatus="ticket.ticketStatus" />
+              </div>
+              <div v-if="ticket.voucherType === VoucherType.Clinic" style="font-size: 0.8rem">
+                <a style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket.id)">
+                  KB{{ ticket.id }}
+                </a>
+                <TicketClinicStatusTag :ticketStatus="ticket.ticketStatus" />
+              </div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ DTimer.timeToText(ticket.startedAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </td>
+            <td class="text-right">
+              <div style="font-weight: 500">
+                {{ formatMoney(ticket.totalMoney) }}
+              </div>
+              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debt) }}
+              </div>
+              <div v-if="ticket.ticketStatus === TicketStatus.Approved" class="text-xs">
+                Đã thanh toán: {{ formatMoney(ticket.paid) }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 float-right mb-2">
+        <a-pagination
+          v-model:current="page"
+          v-model:pageSize="limit"
+          :total="total"
+          show-size-changer
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
+      </div>
     </div>
   </div>
 </template>

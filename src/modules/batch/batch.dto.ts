@@ -20,7 +20,7 @@ export class BatchGetQuery {
       isActive?: 1 | 0
       updatedAt?: ConditionDate
     }
-    $OR?: { expiryDate?: ConditionNumber }[]
+    $OR?: { expiryDate?: ConditionNumber; quantity?: ConditionNumber }[]
   }
 
   sort?: {

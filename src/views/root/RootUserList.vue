@@ -97,12 +97,9 @@ const logoutAll = async () => {
           <tr>
             <th>ID</th>
             <th>OID</th>
-            <th>Username</th>
-            <th>Password</th>
-            <th>OrgPhone</th>
-            <th>OrgEmail</th>
-            <th>OrgName</th>
+            <th>Login</th>
             <th>Thiết bị đăng nhập</th>
+            <th>Org Info</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -114,11 +111,11 @@ const logoutAll = async () => {
           <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">{{ user.id }}</td>
             <td class="text-center">{{ user.oid }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.password }}</td>
-            <td class="text-center">{{ user.organization?.phone }}</td>
-            <td>{{ user.organization?.email }}</td>
-            <td>{{ user.organization?.name }}</td>
+            <td>
+              <div>{{ user.organization?.phone }}</div>
+              <div>{{ user.username }}</div>
+              <div>{{ user.password }}</div>
+            </td>
             <td>
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
@@ -134,10 +131,10 @@ const logoutAll = async () => {
                   -
                   <span>Exp {{ DTimer.timeToText(device.refreshExp) }}</span>
                 </div>
-                <div>IP: {{ device.ip }}</div>
+                <div style="white-space: nowrap">IP: {{ device.ip }}</div>
                 <div v-if="device.online !== true">
                   <HistoryOutlined class="mr-1" />
-                  {{ new Date(device.online as number).toISOString() }}
+                  {{ DTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
                 </div>
                 <div class="flex gap-2">
                   <VueButton
@@ -155,6 +152,11 @@ const logoutAll = async () => {
                   <a-tag v-else color="default">Offline</a-tag>
                 </div>
               </div>
+            </td>
+            <td>
+              <div>{{ user.organization?.phone }}</div>
+              <div>{{ user.organization?.email }}</div>
+              <div>{{ user.organization?.name }}</div>
             </td>
             <td class="text-center">
               <a-tag v-if="user.isActive" color="success">

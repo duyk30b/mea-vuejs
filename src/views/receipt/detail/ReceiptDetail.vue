@@ -239,7 +239,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
 <template>
   <ModalReceiptDetailSettingScreen
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalReceiptDetailSettingScreen" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptPayment ref="modalReceiptPayment" @success="startFetchData(receipt.id)" />
@@ -261,7 +261,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>
@@ -287,7 +287,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
-        <td class="px-2 py-1">RC{{ receipt.id }}</td>
+        <td class="px-2 py-1">NH{{ receipt.id }}</td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>

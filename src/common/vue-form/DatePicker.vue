@@ -121,15 +121,13 @@ const selectDate = (time: number) => {
           v-for="(date, index) in dateList"
           :key="index"
           class="grid-item item-date"
-          @click="selectDate(date.getTime())"
-        >
+          @click="selectDate(date.getTime())">
           <div
             :class="{
               'grid-item-inner': true,
               'active': date.getTime() === startOfDateValue,
               'outside': date.getTime() < startOfMonth || date.getTime() > endOfMonth,
-            }"
-          >
+            }">
             {{ date.getDate() }}
           </div>
         </div>
@@ -149,14 +147,12 @@ const selectDate = (time: number) => {
           v-for="(year, index) in yearList"
           :key="index"
           class="grid-item item-year"
-          @click.stop="selectYear(year)"
-        >
+          @click.stop="selectYear(year)">
           <div
             :class="{
               'grid-item-inner': true,
               'active': year === currentFullYear,
-            }"
-          >
+            }">
             {{ year }}
           </div>
         </div>
@@ -177,14 +173,12 @@ const selectDate = (time: number) => {
           v-for="(month, index) in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]"
           :key="index"
           class="grid-item item-month"
-          @click.stop="selectMonth(month)"
-        >
+          @click.stop="selectMonth(month)">
           <div
             :class="{
               'grid-item-inner': true,
               'active': month === currentMonth,
-            }"
-          >
+            }">
             {{ (month + 1).toString().padStart(2, '0') }}
           </div>
         </div>

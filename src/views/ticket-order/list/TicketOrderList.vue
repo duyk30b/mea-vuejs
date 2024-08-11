@@ -150,7 +150,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 <template>
   <ModalTicketOrderListSetting
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketOrderListSetting" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
@@ -364,7 +364,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr v-for="(ticket, index) in ticketList" :key="index">
             <td class="text-center">
               <router-link :to="{ name: 'TicketOrderDetail', params: { id: ticket.id } }">
-                TO{{ ticket.id }}
+                BH{{ ticket.id }}
                 <span class="text-lg ml-1">
                   <IconVisibility />
                 </span>

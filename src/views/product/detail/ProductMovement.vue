@@ -219,7 +219,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Receipt">
               <div>
                 <a @click="openBlankReceiptDetail(productMovement.voucherId)">
-                  RC{{ productMovement.voucherId }}
+                  NH{{ productMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -232,7 +232,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Order">
               <div>
                 <a @click="openBlankTicketOrderDetail(productMovement.voucherId)">
-                  TO{{ productMovement.voucherId }}
+                  BH{{ productMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -245,7 +245,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Clinic">
               <div>
                 <a @click="openBlankTicketClinicDetail(productMovement.voucherId)">
-                  TC{{ productMovement.voucherId }}
+                  KB{{ productMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -318,7 +318,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Receipt">
               <div>
                 <a @click="openBlankReceiptDetail(batchMovement.voucherId)">
-                  RC{{ batchMovement.voucherId }}
+                  NH{{ batchMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -331,7 +331,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Order">
               <div>
                 <a @click="openBlankTicketOrderDetail(batchMovement.voucherId)">
-                  TO{{ batchMovement.voucherId }}
+                  BH{{ batchMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -344,7 +344,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Clinic">
               <div>
                 <a @click="openBlankTicketClinicDetail(batchMovement.voucherId)">
-                  TC{{ batchMovement.voucherId }}
+                  KB{{ batchMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -424,7 +424,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Receipt">
               <div>
                 <a @click="openBlankReceiptDetail(productMovement.voucherId)">
-                  RC{{ productMovement.voucherId }}
+                  NH{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="green">{{ productMovement.distributor!.fullName }}</a-tag>
@@ -445,7 +445,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Order">
               <div>
                 <a @click="openBlankTicketOrderDetail(productMovement.voucherId)">
-                  TO{{ productMovement.voucherId }}
+                  BH{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
@@ -466,7 +466,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="productMovement.voucherType === VoucherType.Clinic">
               <div>
                 <a @click="openBlankTicketClinicDetail(productMovement.voucherId)">
-                  TC{{ productMovement.voucherId }}
+                  KB{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
@@ -549,7 +549,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Receipt">
               <div>
                 <a @click="openBlankReceiptDetail(batchMovement.voucherId)">
-                  RC{{ batchMovement.voucherId }}
+                  NH{{ batchMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="green">{{ batchMovement.distributor!.fullName }}</a-tag>
@@ -570,7 +570,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Order">
               <div>
                 <a @click="openBlankTicketOrderDetail(batchMovement.voucherId)">
-                  TO{{ batchMovement.voucherId }}
+                  BH{{ batchMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ batchMovement.customer!.fullName }}</a-tag>
@@ -591,7 +591,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <div v-if="batchMovement.voucherType === VoucherType.Clinic">
               <div>
                 <a @click="openBlankTicketClinicDetail(batchMovement.voucherId)">
-                  TC{{ batchMovement.voucherId }}
+                  KB{{ batchMovement.voucherId }}
                 </a>
                 <span class="ml-2">
                   <a-tag color="blue">{{ batchMovement.customer!.fullName }}</a-tag>

@@ -76,7 +76,7 @@ const closeExpiryDate = computed(() => {
     <table class="w-full">
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Mã sản phẩm</td>
-        <td class="px-2 font-medium">PR{{ product.id }}</td>
+        <td class="px-2 font-medium">SP{{ product.id }}</td>
       </tr>
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Tên sản phẩm</td>

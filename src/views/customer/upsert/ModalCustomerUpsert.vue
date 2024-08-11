@@ -150,7 +150,7 @@ defineExpose({ openModal })
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalCustomerUpsertSettingScreen?.openModal()">
@@ -161,20 +161,19 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-4 mt-4">
-        <div class="flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">Họ Tên</div>
-          <div class="flex-auto">
+      <div class="px-4 mt-4 gap-4 flex flex-wrap">
+        <div style="flex-basis: 90%; flex-grow: 1">
+          <div>Họ Tên</div>
+          <div>
             <InputText v-model:value="customer.fullName" required />
           </div>
         </div>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.phone"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Số điện thoại</div>
-          <div class="flex-auto">
+          style="flex-basis: 300px; flex-grow: 1">
+          <div>Số điện thoại</div>
+          <div>
             <InputText
               v-model:value="customer.phone"
               pattern="[0][356789][0-9]{8}"
@@ -185,10 +184,9 @@ defineExpose({ openModal })
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.birthday"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Ngày sinh</div>
-          <div style="flex: 1">
+          style="flex-basis: 300px; flex-grow: 1">
+          <div>Ngày sinh</div>
+          <div>
             <InputDate
               v-model:value="customer.birthday"
               format="DD/MM/YYYY"
@@ -197,9 +195,20 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender" class="mt-3 flex items-center">
-          <div style="width: 100px; flex: none">Giới tính</div>
-          <div style="flex: 1">
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.identityCard"
+          style="flex-basis: 300px; flex-grow: 1">
+          <div>Số CCCD</div>
+          <div>
+            <InputText v-model:value="customer.identityCard" placeholder="Số căn cước" />
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.gender"
+          style="flex-basis: 300px; flex-grow: 1">
+          <div>Giới tính</div>
+          <div>
             <a-radio-group v-model:value="customer.gender">
               <a-radio :value="1">Nam</a-radio>
               <a-radio :value="0">Nữ</a-radio>
@@ -208,22 +217,11 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.identityCard"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Số CCCD</div>
-          <div class="flex-auto">
-            <InputText v-model:value="customer.identityCard" placeholder="Số căn cước" />
-          </div>
-        </div>
-
-        <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Địa chỉ</div>
-          <div class="flex-auto flex gap-4 flex-wrap">
-            <div style="flex: 1; flex-basis: 200px">
+          style="flex-basis: 80%; flex-grow: 1">
+          <div>Địa chỉ</div>
+          <div class="flex flex-wrap gap-4">
+            <div style="flex-basis: 300px; flex-grow: 1">
               <InputHint
                 v-model:value="customer.addressProvince"
                 :options="provinceList"
@@ -232,7 +230,7 @@ defineExpose({ openModal })
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
                 @update:value="handleChangeProvince" />
             </div>
-            <div style="flex: 1; flex-basis: 200px">
+            <div style="flex-basis: 300px; flex-grow: 1">
               <InputHint
                 v-model:value="customer.addressDistrict"
                 :maxHeight="180"
@@ -241,7 +239,7 @@ defineExpose({ openModal })
                 placeholder="Quận / Huyện"
                 @update:value="handleChangeDistrict" />
             </div>
-            <div style="flex: 1; flex-basis: 200px">
+            <div style="flex-basis: 300px; flex-grow: 1">
               <InputHint
                 v-model:value="customer.addressWard"
                 :maxHeight="180"
@@ -249,35 +247,28 @@ defineExpose({ openModal })
                 placeholder="Phường / Xã"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)" />
             </div>
-          </div>
-        </div>
 
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none"></div>
-          <div style="flex: 1">
-            <InputText
-              v-model:value="customer.addressStreet"
-              placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+            <div style="flex-basis: 300px; flex-grow: 1">
+              <InputText
+                v-model:value="customer.addressStreet"
+                placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+            </div>
           </div>
         </div>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Người thân</div>
-          <div style="flex: 1">
+          style="flex-basis: 300px; flex-grow: 1">
+          <div>Liên hệ khác</div>
+          <div>
             <InputText
               v-model:value="customer.relative"
               placeholder="Tên người thân, số điện thoại" />
           </div>
         </div>
 
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Ghi chú</div>
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div >Ghi chú</div>
           <div style="flex: 1">
             <InputText v-model:value="customer.note" />
           </div>
@@ -311,6 +302,6 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalCustomerUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerUpsertSettingScreen" />
 </template>

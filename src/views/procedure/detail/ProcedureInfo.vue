@@ -14,7 +14,7 @@ const { formatMoney } = settingStore
   <div>
     <p>
       <span class="inline-block w-40">Mã dịch vụ</span>
-      <span>PD{{ procedure!.id }}</span>
+      <span>DV{{ procedure!.id }}</span>
     </p>
     <p>
       <span class="inline-block w-40">Tên dịch vụ</span>

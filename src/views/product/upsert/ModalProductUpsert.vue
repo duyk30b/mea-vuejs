@@ -133,14 +133,14 @@ defineExpose({ openModal, openModalFromTicket })
           <span v-if="product.id">Sửa sản phẩm</span>
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDataProduct?.openModal()">
           <SisternodeOutlined />
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalProductUpsertSettingScreen?.openModal()">
@@ -167,7 +167,7 @@ defineExpose({ openModal, openModalFromTicket })
         </div>
 
         <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.route && !product.hasManageBatches"
+          v-if="settingStore.SCREEN_PRODUCT_UPSERT.lotNumber && !product.hasManageBatches"
           class="grow basis-[40%]">
           <div class="">Số lô</div>
           <div>
@@ -390,9 +390,7 @@ defineExpose({ openModal, openModalFromTicket })
           </div>
           <div>
             <span>Active</span>
-            <span v-if="!product.isActive">
-              ( Sản phẩm này tạm thời không thể nhập hàng và xuất hàng )
-            </span>
+            <span v-if="!product.isActive">( Ngừng kinh doanh )</span>
           </div>
         </div>
       </div>
@@ -417,7 +415,7 @@ defineExpose({ openModal, openModalFromTicket })
     </form>
   </VueModal>
   <ModalProductUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalProductUpsertSettingScreen" />
-  <ModalDataProduct v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" ref="modalDataProduct" />
+  <ModalDataProduct v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" ref="modalDataProduct" />
 </template>

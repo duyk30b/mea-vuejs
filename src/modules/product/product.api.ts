@@ -41,8 +41,8 @@ export class ProductApi {
   static async detail(id: number, options: ProductDetailQuery = {}): Promise<Product> {
     const params = ProductGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/product/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse
-    return Product.from(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
   static async createOne(product: Product) {
@@ -64,8 +64,8 @@ export class ProductApi {
       hasManageBatches: product.hasManageBatches,
       isActive: product.isActive,
     })
-    const { data } = response.data as BaseResponse
-    return Product.from(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
   static async updateOne(id: number, product: Product) {
@@ -87,14 +87,14 @@ export class ProductApi {
       hasManageBatches: product.hasManageBatches,
       isActive: product.isActive,
     })
-    const { data } = response.data as BaseResponse
-    return Product.from(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/product/delete/${id}`)
-    const { data } = response.data as BaseResponse
-    return Product.from(data)
+    const { data } = response.data as BaseResponse<{ product: any }>
+    return Product.from(data.product)
   }
 
   static async downloadExcelProductList() {

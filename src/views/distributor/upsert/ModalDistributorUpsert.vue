@@ -148,7 +148,7 @@ defineExpose({ openModal })
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDistributorUpsertSettingScreen?.openModal()">
@@ -256,6 +256,6 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalDistributorUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalDistributorUpsertSettingScreen" />
 </template>

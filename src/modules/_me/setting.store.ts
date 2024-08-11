@@ -82,9 +82,9 @@ export const settingDefault = {
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
     substance: true,
-    unit: true,
     lotNumber: true,
     expiryDate: true,
+    unit: true,
     group: true,
     source: true,
     route: true,
@@ -216,6 +216,8 @@ export const settingDefault = {
       itemsActualMoney: true,
       surcharge: true,
       discount: true,
+      paid: false,
+      debt: false,
     },
   },
   SCREEN_INVOICE_UPSERT: {

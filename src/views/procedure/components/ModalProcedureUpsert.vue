@@ -88,7 +88,7 @@ defineExpose({ openModal })
           {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDataProcedure?.openModal()">
@@ -197,6 +197,6 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalDataProcedure
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalDataProcedure" />
 </template>
