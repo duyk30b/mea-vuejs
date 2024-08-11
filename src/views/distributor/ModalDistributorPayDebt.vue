@@ -60,6 +60,9 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
 const closeModal = () => {
   showModal.value = false
   receiptPayments.value = []
+  money.value = 0
+  note.value = ''
+  distributorId.value = 0
 }
 
 const handleSave = async () => {
@@ -79,9 +82,9 @@ const handleSave = async () => {
         .filter((i) => i.money > 0),
     })
     emit('success', data)
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:64 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalDistributorUpsert.vue:87 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }

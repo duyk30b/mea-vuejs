@@ -4,6 +4,7 @@ import {
   CustomerServiceOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
+  InteractionOutlined,
 } from '@ant-design/icons-vue'
 import { TicketStatus } from '../../modules/ticket'
 
@@ -13,7 +14,7 @@ const props = defineProps<{ ticketStatus: TicketStatus }>()
 <template>
   <a-tag v-if="ticketStatus === TicketStatus.Schedule" color="cyan">
     <template #icon>
-      <CustomerServiceOutlined />
+      <InteractionOutlined />
     </template>
     Hẹn khám
   </a-tag>
@@ -25,7 +26,7 @@ const props = defineProps<{ ticketStatus: TicketStatus }>()
   </a-tag>
   <a-tag v-if="ticketStatus === TicketStatus.Approved" color="warning">
     <template #icon>
-      <CustomerServiceOutlined />
+      <ClockCircleOutlined />
     </template>
     Chờ khám
   </a-tag>

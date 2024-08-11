@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
-import { formatPhone, timeToText } from '../../../utils'
 import { TicketProduct, TicketProductApi } from '../../../modules/ticket-product'
+import { DTimer, formatPhone } from '../../../utils'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
 import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 
@@ -82,8 +82,8 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 
 <template>
   <div class="mt-4">
-    <div class="flex flex-wrap">
-      <span class="mr-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <span>
         KH:
         <b>{{ customer.fullName }}</b>
       </span>
@@ -115,7 +115,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketOrderDetail(ticketProduct.ticketId)">
-                  TO{{ ticketProduct.ticketId }}
+                  BH{{ ticketProduct.ticketId }}
                 </a>
                 <TicketOrderStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
               </div>
@@ -125,12 +125,12 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketClinicDetail(ticketProduct.ticketId)">
-                  TC{{ ticketProduct.ticketId }}
+                  KB{{ ticketProduct.ticketId }}
                 </a>
                 <TicketClinicStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(ticketProduct.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -190,7 +190,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketOrderDetail(ticketProduct.ticketId)">
-                  TO{{ ticketProduct.ticketId }}
+                  BH{{ ticketProduct.ticketId }}
                 </a>
                 <TicketOrderStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
               </div>
@@ -200,12 +200,12 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a
                   style="margin-right: 0.5em"
                   @click="openBlankTicketClinicDetail(ticketProduct.ticketId)">
-                  TC{{ ticketProduct.ticketId }}
+                  KB{{ ticketProduct.ticketId }}
                 </a>
                 <TicketClinicStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
               </div>
               <div style="font-size: 0.8rem">
-                {{ timeToText(ticketProduct.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

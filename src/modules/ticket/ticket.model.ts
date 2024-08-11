@@ -1,3 +1,4 @@
+import type { Appointment } from '../appointment'
 import { Customer } from '../customer'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { DeliveryStatus, DiscountType, VoucherType } from '../enum'
@@ -55,6 +56,7 @@ export class Ticket {
   ticketRadiologyList?: TicketRadiology[]
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
+  toAppointment?: Appointment
 
   static init(): Ticket {
     const ins = new Ticket()

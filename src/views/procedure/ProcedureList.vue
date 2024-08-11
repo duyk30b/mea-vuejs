@@ -159,7 +159,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </VueButton>
     </div>
     <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
           <IconSetting />
         </span>
@@ -348,7 +348,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(procedure, i) in procedureList" :key="i">
-            <td class="text-center">PD{{ procedure.id }}</td>
+            <td class="text-center">DV{{ procedure.id }}</td>
             <td>
               {{ procedure.name }}
               <a

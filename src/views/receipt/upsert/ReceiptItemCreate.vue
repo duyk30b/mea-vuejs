@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
@@ -96,7 +96,11 @@ const selectProduct = async (productData?: Product) => {
         filter: {
           productId: productData.id,
           // quantity: { NOT: 0 },
-          $OR: [{ expiryDate: { GT: Date.now() } }, { expiryDate: { IS_NULL: true } }],
+          $OR: [
+            { expiryDate: { GT: Date.now() } },
+            { expiryDate: { IS_NULL: true } },
+            { quantity: { NOT: 0 } },
+          ],
         },
         sort: { expiryDate: 'DESC' },
       })
@@ -167,6 +171,10 @@ const addReceiptItem = async () => {
   }
 }
 
+const closeExpiryDate = computed(() => {
+  return Date.now()
+})
+
 const clear = () => {
   product.value = Product.blank()
   receiptItem.value = ReceiptItem.blank()
@@ -233,7 +241,11 @@ const clear = () => {
             <template #option="{ item: { data } }">
               <div v-if="!data.id">Tự động chọn lô</div>
               <div v-if="data.id">
-                Lô {{ data.lotNumber }} {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+                Lô {{ data.lotNumber }}
+                <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
+                  {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+                </span>
+                - Tồn
                 <b>{{ data.unitQuantity }}</b>
                 {{ product.unitDefaultName }} - G.Nhập
                 <b>{{ formatMoney(data.unitCostPrice) }}</b>
@@ -242,7 +254,11 @@ const clear = () => {
             <template #text="{ content: { data } }">
               <div v-if="!data?.id">Tự động chọn lô</div>
               <div v-if="data?.id">
-                Lô {{ data.lotNumber }} {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+                Lô {{ data.lotNumber }}
+                <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
+                  {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+                </span>
+                - Tồn
                 <b>{{ data.unitQuantity }}</b>
                 {{ product.unitDefaultName }} - G.Nhập
                 <b>{{ formatMoney(data.unitCostPrice) }}</b>

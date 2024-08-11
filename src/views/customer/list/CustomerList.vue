@@ -161,7 +161,7 @@ const downloadExcelCustomerList = async () => {
     ref="modalCustomerPayDebt"
     @success="handleModalDistributorPayDebtSuccess" />
   <ModalCustomerListSettingScreen
-    v-if="permissionIdMap[PermissionId.SETTING_UPSERT]"
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen" />
 
   <div class="page-header">
@@ -183,7 +183,9 @@ const downloadExcelCustomerList = async () => {
         <IconDownload width="20" height="20" @click="downloadExcelCustomerList" />
       </div>
       <span style="cursor: pointer">
-        <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+        <a-dropdown
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          trigger="click">
           <span>
             <IconSetting width="20" height="20" />
           </span>
@@ -404,7 +406,7 @@ const downloadExcelCustomerList = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
-            <td class="text-center">CM{{ customer.id }}</td>
+            <td class="text-center">KH{{ customer.id }}</td>
             <td>
               <div>
                 {{ customer.fullName }}

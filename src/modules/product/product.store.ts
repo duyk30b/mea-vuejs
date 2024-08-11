@@ -5,6 +5,7 @@ import { useMeStore } from '../_me/me.store'
 import { ProductApi } from './product.api'
 import type { ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
+import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 
 export const useProductStore = defineStore('product-store', {
   state: () => {

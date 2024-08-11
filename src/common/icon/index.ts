@@ -1,4 +1,5 @@
 export { default as IconClose } from './IconClose.vue'
+export { default as IconClock } from './IconClock.vue'
 export { default as IconDollar } from './IconDollar.vue'
 export { default as IconDownload } from './IconDownload.vue'
 export { default as IconExclamationCircle } from './IconExclamationCircle.vue'

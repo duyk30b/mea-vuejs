@@ -16,15 +16,16 @@ export class TicketGetQuery {
     ticketDiagnosis?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
+    toAppointment?: boolean
   }
 
   filter?: {
     customerId?: number
+    ticketStatus?: TicketStatus | ConditionEnum<TicketStatus>
     voucherType?: VoucherType | ConditionEnum<VoucherType>
     registeredAt?: ConditionDate
     startedAt?: ConditionDate
     updatedAt?: ConditionDate
-    ticketStatus?: TicketStatus
   }
 
   sort?: {

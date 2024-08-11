@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import ImageUpload from '../../../common/ImageUpload.vue'
+import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
-import { timeToText } from '../../../utils'
-import { Ticket, TicketApi } from '../../../modules/ticket'
 import { VoucherType } from '../../../modules/enum'
 import { ImageHost } from '../../../modules/image/image.model'
-import ImageUpload from '../../../common/ImageUpload.vue'
+import { Ticket, TicketApi } from '../../../modules/ticket'
+import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
+import { DTimer, formatPhone } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
-import { IconVisibility } from '../../../common/icon-google'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
@@ -82,274 +82,286 @@ watch(
 
 <template>
   <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
-  <div class="flex flex-wrap mt-4 gap-2 p-2" style="background-color: var(--color-body-bg)">
-    <div class="grow w-full lg:w-[200px]" style="background-color: white">
-      <div class="text-center py-2 ticket-title-header">Lịch sử khám</div>
-      <div class="w-full" style="border: 1px solid #eee">
-        <div
-          v-for="ticketItem in ticketList"
-          :key="ticketItem.id"
-          class="ticket-title py-2 px-2"
-          :class="ticket.id === ticketItem.id ? 'active' : ''"
-          @click="clickTicketHistory(ticketItem)">
-          {{ timeToText(ticketItem.registeredAt, 'DD/MM/YY') }} -
-          {{ ticketItem.ticketDiagnosis?.diagnosis }}
+  <div class="mt-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <span>
+        KH:
+        <b>{{ customer.fullName }}</b>
+      </span>
+      <span>
+        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+      </span>
+      <div class="ml-auto"></div>
+    </div>
+
+    <div class="flex flex-wrap mt-4 gap-2 p-2" style="background-color: var(--color-body-bg)">
+      <div class="grow w-full lg:w-[200px]" style="background-color: white">
+        <div class="text-center py-2 ticket-title-header">Lịch sử khám</div>
+        <div class="w-full" style="border: 1px solid #eee">
+          <div
+            v-for="ticketItem in ticketList"
+            :key="ticketItem.id"
+            class="ticket-title py-2 px-2"
+            :class="ticket.id === ticketItem.id ? 'active' : ''"
+            @click="clickTicketHistory(ticketItem)">
+            {{ DTimer.timeToText(ticketItem.registeredAt, 'DD/MM/YY') }} -
+            {{ ticketItem.ticketDiagnosis?.diagnosis }}
+          </div>
+        </div>
+        <div class="mt-4 mb-2 flex justify-center">
+          <a-pagination
+            v-model:current="page"
+            v-model:pageSize="limit"
+            :total="total"
+            simple
+            @change="
+              (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+            " />
         </div>
       </div>
-      <div class="mt-4 mb-2 flex justify-center">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          simple
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
-    </div>
-    <div class="grow basis-[90%] lg:basis-[70%]">
-      <div v-if="!ticket.id" class="px-4 py-2 text-center italic" style="background-color: white">
-        Chưa chọn phiếu khám
-      </div>
-      <div v-else>
-        <div class="flex flex-wrap items-start gap-4 p-4" style="background-color: white">
-          <div style="flex-grow: 1">
-            <div>
-              <span class="mr-4" style="font-weight: 500">1. Lý do khám:</span>
-              {{ ticket.ticketDiagnosis?.reason }}
-            </div>
-            <div class="mt-4" style="font-weight: 500">2. Tiền sử:</div>
-            <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.healthHistory"></div>
-            <!-- <div class="mt-4" style="font-weight: 500">3. Chỉ số sinh tồn</div>
+      <div class="grow basis-[90%] lg:basis-[70%]">
+        <div v-if="!ticket.id" class="px-4 py-2 text-center italic" style="background-color: white">
+          Chưa chọn phiếu khám
+        </div>
+        <div v-else>
+          <div class="flex flex-wrap items-start gap-4 p-4" style="background-color: white">
+            <div style="flex-grow: 1">
+              <div>
+                <span class="mr-4" style="font-weight: 500">1. Lý do khám:</span>
+                {{ ticket.ticketDiagnosis?.reason }}
+              </div>
+              <div class="mt-4" style="font-weight: 500">2. Tiền sử:</div>
+              <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.healthHistory"></div>
+              <!-- <div class="mt-4" style="font-weight: 500">3. Chỉ số sinh tồn</div>
             <div>{{ JSON.stringify(ticket.ticketDiagnosis?.vitalSigns) }}</div> -->
-            <div class="mt-4" style="font-weight: 500">4. Tóm tắt:</div>
-            <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.summary"></div>
-            <div class="mt-4" style="font-weight: 500">5. Chẩn đoán:</div>
-            <div class="mt-2 ml-4">
-              {{ ticket.ticketDiagnosis?.diagnosis }}
+              <div class="mt-4" style="font-weight: 500">4. Tóm tắt:</div>
+              <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.summary"></div>
+              <div class="mt-4" style="font-weight: 500">5. Chẩn đoán:</div>
+              <div class="mt-2 ml-4">
+                {{ ticket.ticketDiagnosis?.diagnosis }}
+              </div>
+            </div>
+            <div class="py-2 px-2" style="border: 1px solid #d1d5db">
+              <table class="table-vital-signs">
+                <tr>
+                  <td class="title-vital-signs">Mạch</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.pulse" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">l/p</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">Nhiệt độ</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.temperature" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">°C</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">Huyết áp</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.bloodPressure" />
+                  </td>
+                  <td class="unit-vital-signs">mmHg</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">TS Thở</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.respiratoryRate" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">l/p</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">SpO2</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.spO2" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">%</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">Chiều cao</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.height" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">cm</td>
+                </tr>
+                <tr>
+                  <td class="title-vital-signs">Cân nặng</td>
+                  <td>:</td>
+                  <td class="input-vital-signs">
+                    <input disabled :value="vitalSigns.weight" type="number" />
+                  </td>
+                  <td class="unit-vital-signs">kg</td>
+                </tr>
+              </table>
             </div>
           </div>
-          <div class="py-2 px-2" style="border: 1px solid #d1d5db">
-            <table class="table-vital-signs">
+          <div class="mt-4 px-4 pt-2 pb-1" style="background-color: white">
+            <div style="font-style: italic; text-decoration: underline">Hình ảnh</div>
+            <ImageUpload
+              ref="imageUploadRef"
+              :height="100"
+              :editable="false"
+              :rootImageList="
+                (ticket.ticketDiagnosis?.imageList || [])
+                  .filter((i) => i.hostType === ImageHost.GoogleDriver)
+                  .map((i) => ({
+                    thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
+                    enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
+                    id: i.id,
+                  }))
+              " />
+          </div>
+          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+            <div class="mb-2" style="font-weight: 500">6. Dịch vụ:</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tên dịch vụ</th>
+                  <th>Số lượng</th>
+                  <th>Giá tiền</th>
+                </tr>
+              </thead>
+              <tbody style="background-color: white">
+                <tr
+                  v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
+                  :key="ticketProcedure.id">
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td>{{ ticketProcedure.procedure?.name }}</td>
+                  <td class="text-center">{{ ticketProcedure.quantity }}</td>
+                  <td class="text-right">
+                    <div
+                      v-if="ticketProcedure.discountMoney"
+                      style="
+                        color: var(--text-red);
+                        font-size: 0.8rem;
+                        text-decoration: line-through;
+                        font-style: italic;
+                        white-space: nowrap;
+                      ">
+                      {{ formatMoney(ticketProcedure.expectedPrice) }}
+                    </div>
+                    <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+            <div class="mb-2" style="font-weight: 500">7. CĐHA:</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th class="text-center font-bold">Tên phiếu</th>
+                  <th class="text-center font-bold">Chi tiết</th>
+                  <th class="text-center font-bold">Giá tiền</th>
+                </tr>
+              </thead>
+              <tbody style="background-color: white">
+                <tr
+                  v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
+                  :key="ticketRadiology.id">
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td>
+                    <div style="font-weight: 500">{{ ticketRadiology.radiology?.name }}</div>
+                    <div style="font-style: italic">{{ ticketRadiology.result }}</div>
+                  </td>
+                  <td class="text-center">
+                    <a @click="modalTicketRadiologyResult?.openModal(ticketRadiology, false)">
+                      <IconVisibility width="22" height="22" />
+                    </a>
+                  </td>
+                  <td class="text-right">
+                    <div
+                      v-if="ticketRadiology.discountMoney"
+                      style="
+                        color: var(--text-red);
+                        font-size: 0.8rem;
+                        text-decoration: line-through;
+                        font-style: italic;
+                        white-space: nowrap;
+                      ">
+                      {{ formatMoney(ticketRadiology.expectedPrice) }}
+                    </div>
+                    <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+            <div class="mb-2" style="font-weight: 500">8. Đơn thuốc:</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th class="text-center font-bold">Tên thuốc</th>
+                  <th class="text-center font-bold">Số lượng</th>
+                  <th class="text-center font-bold">Giá tiền</th>
+                </tr>
+              </thead>
+              <tbody style="background-color: white">
+                <tr
+                  v-for="(ticketProduct, index) in ticket.ticketProductList"
+                  :key="ticketProduct.id">
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td>
+                    <div>{{ ticketProduct.product?.brandName }}</div>
+                    <div style="font-size: 0.8rem; font-style: italic">
+                      {{ ticketProduct.hintUsage }}
+                    </div>
+                  </td>
+                  <td class="text-center">{{ ticketProduct.quantity }}</td>
+                  <td class="text-right">
+                    <div
+                      v-if="ticketProduct.discountMoney"
+                      style="
+                        color: var(--text-red);
+                        font-size: 0.8rem;
+                        text-decoration: line-through;
+                        font-style: italic;
+                        white-space: nowrap;
+                      ">
+                      {{ formatMoney(ticketProduct.expectedPrice) }}
+                    </div>
+                    <div>{{ formatMoney(ticketProduct.actualPrice) }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+            <div class="mb-2" style="font-weight: 500">9. Thanh toán:</div>
+            <table>
               <tr>
-                <td class="title-vital-signs">Mạch</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.pulse" type="number" />
-                </td>
-                <td class="unit-vital-signs">l/p</td>
+                <td>- Tổng chi phí:</td>
+                <td class="px-4">{{ formatMoney(ticket.totalMoney) }}</td>
               </tr>
               <tr>
-                <td class="title-vital-signs">Nhiệt độ</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.temperature" type="number" />
-                </td>
-                <td class="unit-vital-signs">°C</td>
+                <td>- Đã thanh toán:</td>
+                <td class="px-4">{{ formatMoney(ticket.paid) }}</td>
               </tr>
               <tr>
-                <td class="title-vital-signs">Huyết áp</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.bloodPressure" />
-                </td>
-                <td class="unit-vital-signs">mmHg</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">TS Thở</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.respiratoryRate" type="number" />
-                </td>
-                <td class="unit-vital-signs">l/p</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">SpO2</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.spO2" type="number" />
-                </td>
-                <td class="unit-vital-signs">%</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Chiều cao</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.height" type="number" />
-                </td>
-                <td class="unit-vital-signs">cm</td>
-              </tr>
-              <tr>
-                <td class="title-vital-signs">Cân nặng</td>
-                <td>:</td>
-                <td class="input-vital-signs">
-                  <input disabled :value="vitalSigns.weight" type="number" />
-                </td>
-                <td class="unit-vital-signs">kg</td>
+                <td>- Nợ:</td>
+                <td class="px-4">{{ formatMoney(ticket.debt) }}</td>
               </tr>
             </table>
           </div>
         </div>
-        <div class="mt-4 px-4 pt-2 pb-1" style="background-color: white">
-          <div style="font-style: italic; text-decoration: underline">Hình ảnh</div>
-          <ImageUpload
-            ref="imageUploadRef"
-            :height="100"
-            :editable="false"
-            :rootImageList="
-              (ticket.ticketDiagnosis?.imageList || [])
-                .filter((i) => i.hostType === ImageHost.GoogleDriver)
-                .map((i) => ({
-                  thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
-                  enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
-                  id: i.id,
-                }))
-            " />
-        </div>
-        <div class="mt-4 table-wrapper p-4" style="background-color: white">
-          <div class="mb-2" style="font-weight: 500">6. Dịch vụ:</div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Tên dịch vụ</th>
-                <th>Số lượng</th>
-                <th>Giá tiền</th>
-              </tr>
-            </thead>
-            <tbody style="background-color: white">
-              <tr
-                v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
-                :key="ticketProcedure.id">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td>{{ ticketProcedure.procedure?.name }}</td>
-                <td class="text-center">{{ ticketProcedure.quantity }}</td>
-                <td class="text-right">
-                  <div
-                    v-if="ticketProcedure.discountMoney"
-                    style="
-                      color: var(--text-red);
-                      font-size: 0.8rem;
-                      text-decoration: line-through;
-                      font-style: italic;
-                      white-space: nowrap;
-                    ">
-                    {{ formatMoney(ticketProcedure.expectedPrice) }}
-                  </div>
-                  <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="mt-4 table-wrapper p-4" style="background-color: white">
-          <div class="mb-2" style="font-weight: 500">7. CĐHA:</div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th class="text-center font-bold">Tên phiếu</th>
-                <th class="text-center font-bold">Chi tiết</th>
-                <th class="text-center font-bold">Giá tiền</th>
-              </tr>
-            </thead>
-            <tbody style="background-color: white">
-              <tr
-                v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
-                :key="ticketRadiology.id">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td>
-                  <div style="font-weight: 500">{{ ticketRadiology.radiology?.name }}</div>
-                  <div style="font-style: italic">{{ ticketRadiology.result }}</div>
-                </td>
-                <td class="text-center">
-                  <a @click="modalTicketRadiologyResult?.openModal(ticketRadiology, false)">
-                    <IconVisibility width="22" height="22" />
-                  </a>
-                </td>
-                <td class="text-right">
-                  <div
-                    v-if="ticketRadiology.discountMoney"
-                    style="
-                      color: var(--text-red);
-                      font-size: 0.8rem;
-                      text-decoration: line-through;
-                      font-style: italic;
-                      white-space: nowrap;
-                    ">
-                    {{ formatMoney(ticketRadiology.expectedPrice) }}
-                  </div>
-                  <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="mt-4 table-wrapper p-4" style="background-color: white">
-          <div class="mb-2" style="font-weight: 500">8. Đơn thuốc:</div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th class="text-center font-bold">Tên thuốc</th>
-                <th class="text-center font-bold">Số lượng</th>
-                <th class="text-center font-bold">Giá tiền</th>
-              </tr>
-            </thead>
-            <tbody style="background-color: white">
-              <tr
-                v-for="(ticketProduct, index) in ticket.ticketProductList"
-                :key="ticketProduct.id">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td>
-                  <div>{{ ticketProduct.product?.brandName }}</div>
-                  <div style="font-size: 0.8rem; font-style: italic">
-                    {{ ticketProduct.hintUsage }}
-                  </div>
-                </td>
-                <td class="text-center">{{ ticketProduct.quantity }}</td>
-                <td class="text-right">
-                  <div
-                    v-if="ticketProduct.discountMoney"
-                    style="
-                      color: var(--text-red);
-                      font-size: 0.8rem;
-                      text-decoration: line-through;
-                      font-style: italic;
-                      white-space: nowrap;
-                    ">
-                    {{ formatMoney(ticketProduct.expectedPrice) }}
-                  </div>
-                  <div>{{ formatMoney(ticketProduct.actualPrice) }}</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="mt-4 table-wrapper p-4" style="background-color: white">
-          <div class="mb-2" style="font-weight: 500">9. Thanh toán:</div>
-          <table>
-            <tr>
-              <td>- Tổng chi phí:</td>
-              <td class="px-4">{{ formatMoney(ticket.totalMoney) }}</td>
-            </tr>
-            <tr>
-              <td>- Đã thanh toán:</td>
-              <td class="px-4">{{ formatMoney(ticket.paid) }}</td>
-            </tr>
-            <tr>
-              <td>- Nợ:</td>
-              <td class="px-4">{{ formatMoney(ticket.debt) }}</td>
-            </tr>
-          </table>
-        </div>
       </div>
     </div>
   </div>
-  <div class="mt-4 w-full table-wrapper"></div>
 </template>
 
 <style lang="scss" scoped>

@@ -1,31 +1,27 @@
 <script setup lang="ts">
-import {
-  FileSearchOutlined,
-  PlusOutlined,
-  ReadOutlined,
-  ScheduleOutlined,
-} from '@ant-design/icons-vue'
+import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketApi, TicketStatus } from '../../../modules/ticket'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
-import { DTimer, timeToText } from '../../../utils'
+import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
-import ModalTicketClinicCreate from './ModalTicketClinicCreate.vue'
-import { IconTrash } from '../../../common/icon'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import ModalTicketClinicRegister from './ModalTicketClinicRegister.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
+const modalTicketClinicRegister = ref<InstanceType<typeof ModalTicketClinicRegister>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -125,12 +121,12 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleSelectCheckupStatus = async () => {
+const handleSelectTicketStatus = async () => {
   await startSearch()
 }
 
 const handleChangeTime = async (value: any) => {
-  await startFetchData()
+  await startSearch()
 }
 
 const changeSort = async (column: 'id' | 'registeredAt') => {
@@ -157,26 +153,32 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {}
-const handleModalTicketClinicCreateSuccess = async () => {
+const handleModalTicketClinicRegisterSuccess = async () => {
   // reload bằng lắng nghe event socket
   // await startFetchData()
 }
 
 const handleClickDestroyDraft = async (ticketId: number) => {
-  try {
-    await TicketClinicApi.destroyDraft(ticketId)
-    await startFetchData()
-    AlertStore.addSuccess('Xóa phiếu khám thành công')
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicList.vue:168 ~ handleClickDestroyDraft ~ error:', error)
-  }
+  ModalStore.confirm({
+    title: 'Bạn có chắc muốn xóa lượt khám này ?',
+    content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    onOk: async () => {
+      try {
+        await TicketClinicApi.destroyDraftSchedule(ticketId)
+        await startFetchData()
+        AlertStore.addSuccess('Xóa phiếu khám thành công')
+      } catch (error) {
+        console.log('🚀 ~ file: TicketClinicList.vue:171 ~ handleClickDestroyDraft ~ error:', error)
+      }
+    },
+  })
 }
 </script>
 
 <template>
-  <ModalTicketClinicCreate
-    ref="modalTicketClinicCreate"
-    @success="handleModalTicketClinicCreateSuccess" />
+  <ModalTicketClinicRegister
+    ref="modalTicketClinicRegister"
+    @success="handleModalTicketClinicRegisterSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -190,8 +192,8 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         <VueButton
           v-if="permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW]"
           color="blue"
-          @click="modalTicketClinicCreate?.openModal()">
-          <PlusOutlined />
+          icon="plus"
+          @click="modalTicketClinicRegister?.openModal()">
           KHÁM MỚI
         </VueButton>
       </div>
@@ -226,7 +228,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               <div>
                 <b>{{ data.fullName }}</b>
                 - {{ data.phone }} -
-                {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
+                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
                 {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
@@ -255,13 +257,14 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             v-model:value="ticketStatus"
             :options="[
               { value: null, text: 'Tất cả' },
-              { value: TicketStatus.Draft, text: 'Đợi khám' },
+              { value: TicketStatus.Schedule, text: 'Hẹn khám' },
+              { value: TicketStatus.Draft, text: 'Chờ khám' },
               { value: TicketStatus.Approved, text: 'Tạm ứng' },
               { value: TicketStatus.Executing, text: 'Đang khám' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
-            @update:value="handleSelectCheckupStatus"></VueSelect>
+            @update:value="handleSelectTicketStatus" />
         </div>
       </div>
     </div>
@@ -298,7 +301,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 :icon="['fas', 'sort-down']" />
             </th>
             <th style="min-width: 150px">Khách hàng</th>
-            <th>Chẩn đoán</th>
+            <th style="white-space: nowrap">Lý do / Chẩn đoán</th>
             <th>Thanh toán</th>
             <th></th>
           </tr>
@@ -327,7 +330,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 <router-link
                   :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }">
                   <div class="flex justify-center items-center gap-2">
-                    <span>TC{{ ticket.id }}</span>
+                    <span>KB{{ ticket.id }}</span>
                     <span class="text-lg"><ReadOutlined /></span>
                   </div>
                 </router-link>
@@ -339,7 +342,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               </div>
             </td>
             <td class="text-center">
-              {{ timeToText(ticket.startedAt || ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ DTimer.timeToText(ticket.startedAt || ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

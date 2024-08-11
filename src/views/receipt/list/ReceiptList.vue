@@ -295,7 +295,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr v-for="(receipt, index) in receipts" :key="index">
             <td class="text-center">
               <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
-                RC{{ receipt.id }}
+                NH{{ receipt.id }}
                 <span class="text-lg ml-1">
                   <IconVisibility />
                 </span>

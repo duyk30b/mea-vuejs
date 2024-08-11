@@ -29,7 +29,11 @@ const saveLoading = ref(false)
 const sendEmailVerifyLoading = ref(false)
 
 onBeforeMount(async () => {
-  organization.value = await OrganizationService.info()
+  try {
+    organization.value = await OrganizationService.info()
+  } catch (error) {
+    console.log('🚀 ~ file: OrganizationInfo.vue:36 ~ onBeforeMount ~ error:', error)
+  }
 })
 
 onMounted(async () => {

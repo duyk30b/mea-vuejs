@@ -78,9 +78,9 @@ const handleSave = async () => {
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
     emit('success', data)
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:39 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:83 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -161,12 +161,12 @@ defineExpose({ openModal })
                 <td>
                   <div v-if="ticketPayment.ticket.voucherType === VoucherType.Order">
                     <a @click="openBlankTicketOrderDetail(ticketPayment.ticket.id)">
-                      TO{{ ticketPayment.ticket.id }}
+                      BH{{ ticketPayment.ticket.id }}
                     </a>
                   </div>
                   <div v-if="ticketPayment.ticket.voucherType === VoucherType.Clinic">
                     <a @click="openBlankTicketClinicDetail(ticketPayment.ticket.id)">
-                      TC{{ ticketPayment.ticket.id }}
+                      KB{{ ticketPayment.ticket.id }}
                     </a>
                   </div>
                   <div>{{ timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}</div>

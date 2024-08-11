@@ -90,8 +90,18 @@ export class BaseRepository<
       Object.entries(sort).forEach(([key, value]) => {
         if (!key || !value) return
         data.sort((a: any, b: any) => {
-          if (value === 'ASC') return a[key] < b[key] ? -1 : 1
-          if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+          if (value === 'ASC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] < b[key] ? -1 : 1
+          }
+          if (value === 'DESC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] > b[key] ? -1 : 1
+          }
+          // if (value === 'ASC') return a[key] < b[key] ? -1 : 1
+          // if (value === 'DESC') return a[key] > b[key] ? -1 : 1
           return a.id > b.id ? -1 : 1
         })
       })

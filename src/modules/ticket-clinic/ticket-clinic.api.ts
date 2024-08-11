@@ -6,7 +6,12 @@ import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
 
 export class TicketClinicApi {
-  static async registerWithExistCustomer(body: { customerId: number; registeredAt: number }) {
+  static async registerWithExistCustomer(body: {
+    fromAppointmentId: number
+    customerId: number
+    registeredAt: number
+    reason: string
+  }) {
     const response = await AxiosInstance.post('/ticket-clinic/register-with-exist-customer', body)
     const { data } = response.data as BaseResponse<{ ticket: any }>
   }
@@ -330,8 +335,8 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse
   }
 
-  static async destroyDraft(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy-draft`)
+  static async destroyDraftSchedule(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy-draft-schedule`)
     const { data } = response.data as BaseResponse
   }
 }

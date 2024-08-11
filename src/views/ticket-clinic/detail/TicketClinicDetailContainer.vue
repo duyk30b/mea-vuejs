@@ -48,6 +48,7 @@ const startFetchData = async (ticketId: number) => {
         ticketProductList: true,
         ticketProcedureList: true,
         ticketRadiologyList: true,
+        toAppointment: true,
       },
     })
     if (!ticketData.ticketDiagnosis) {
@@ -140,7 +141,7 @@ const clickCloseVisit = () => {
       </div>
     </div>
     <div class="page-header-setting">
-      <!-- <a-dropdown v-if="permissionIdMap[PermissionId.SETTING_UPSERT]" trigger="click">
+      <!-- <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
           <SettingOutlined />
         </span>

@@ -63,15 +63,15 @@ export const clinicRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'radiology',
-      name: 'Radiology',
-      redirect: () => ({ name: 'RadiologyList' }),
+      path: 'appointment',
+      name: 'Appointment',
+      redirect: () => ({ name: 'AppointmentList' }),
       children: [
         {
           path: 'list',
-          name: 'RadiologyList',
-          component: () => import('../views/radiology/RadiologyList.vue'),
-          meta: { title: 'Chẩn đoán hình ảnh' },
+          name: 'AppointmentList',
+          component: () => import('../views/appointment/AppointmentList.vue'),
+          meta: { title: 'Hẹn khám' },
         },
       ],
     },
