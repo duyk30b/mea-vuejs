@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
+import { ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import dayjs, { type Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconTrash } from '../../../common/icon'
+import { IconFileSearch, IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -12,16 +12,15 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketApi, TicketStatus } from '../../../modules/ticket'
+import { TicketApi, TicketStatus, ticketPagination } from '../../../modules/ticket'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
-import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import TicketClinicStatusTag from '../TicketSpaStatusTag.vue'
-import ModalTicketClinicRegister from './ModalTicketSpaRegister.vue'
+import TicketSpaStatusTag from '../TicketSpaStatusTag.vue'
+import ModalTicketSpaRegister from './ModalTicketSpaRegister.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicRegister = ref<InstanceType<typeof ModalTicketClinicRegister>>()
+const modalTicketSpaRegister = ref<InstanceType<typeof ModalTicketSpaRegister>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -43,8 +42,6 @@ const ticketStatus = ref<TicketStatus | null>(null)
 const sortColumn = ref<'registeredAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const ticketClinicStore = useTicketClinicStore()
-
 const startFetchData = async () => {
   try {
     dataLoading.value = true
@@ -53,8 +50,8 @@ const startFetchData = async () => {
     const toTime = timeRanger.value?.[1].endOf('day').toDate()
 
     const { data, meta } = await TicketApi.pagination({
-      page: ticketClinicStore.paginationMeta.page,
-      limit: ticketClinicStore.paginationMeta.limit,
+      page: ticketPagination.value.meta.page,
+      limit: ticketPagination.value.meta.limit,
       relation: { customer: true, ticketDiagnosis: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
@@ -76,10 +73,8 @@ const startFetchData = async () => {
         : { registeredAt: 'DESC' },
     })
 
-    ticketClinicStore.ticketList = data
-    ticketClinicStore.paginationMeta.limit = meta.limit
-    ticketClinicStore.paginationMeta.page = meta.page
-    ticketClinicStore.paginationMeta.total = meta.total
+    ticketPagination.value.data = data
+    ticketPagination.value.meta = meta as any
   } catch (error) {
     console.log('🚀 ~ file: VisitList.vue:72 ~ startFetchData ~ error:', error)
   } finally {
@@ -117,7 +112,7 @@ const selectCustomer = async (data?: Customer) => {
 }
 
 const startSearch = async () => {
-  ticketClinicStore.paginationMeta.page = 1
+  ticketPagination.value.meta.page = 1
   await startFetchData()
 }
 
@@ -144,16 +139,18 @@ const changeSort = async (column: 'id' | 'registeredAt') => {
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
-  if (options.page) ticketClinicStore.paginationMeta.page = options.page
+  if (options.page) {
+    ticketPagination.value.meta.page = options.page
+  }
   if (options.limit) {
-    ticketClinicStore.paginationMeta.limit = options.limit
-    localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(options.limit))
+    ticketPagination.value.meta.limit = options.limit
+    localStorage.setItem('TICKET_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {}
-const handleModalTicketClinicRegisterSuccess = async () => {
+const handleModalTicketSpaRegisterSuccess = async () => {
   // reload bằng lắng nghe event socket
   // await startFetchData()
 }
@@ -176,9 +173,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
 </script>
 
 <template>
-  <ModalTicketClinicRegister
-    ref="modalTicketClinicRegister"
-    @success="handleModalTicketClinicRegisterSuccess" />
+  <ModalTicketSpaRegister
+    ref="modalTicketSpaRegister"
+    @success="handleModalTicketSpaRegisterSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -193,7 +190,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           v-if="permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW]"
           color="blue"
           icon="plus"
-          @click="modalTicketClinicRegister?.openModal()">
+          @click="modalTicketSpaRegister?.openModal()">
           ĐÓN TIẾP MỚI
         </VueButton>
       </div>
@@ -321,10 +318,10 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="ticketClinicStore.ticketList.length === 0">
+          <tr v-if="ticketPagination.data.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(ticket, index) in ticketClinicStore.ticketList" :key="index">
+          <tr v-for="(ticket, index) in ticketPagination.data" :key="index">
             <td class="text-center">
               <div class="flex gap-4 justify-center">
                 <router-link
@@ -338,7 +335,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             </td>
             <td class="text-center">
               <div>
-                <TicketClinicStatusTag :ticketStatus="ticket.ticketStatus" />
+                <TicketSpaStatusTag :ticketStatus="ticket.ticketStatus" />
               </div>
             </td>
             <td class="text-center">
@@ -348,7 +345,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               <div>
                 {{ ticket.customer?.fullName }}
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customer!)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
@@ -374,9 +371,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
       </table>
       <div class="mt-4 float-right mb-4">
         <a-pagination
-          v-model:current="ticketClinicStore.paginationMeta.page"
-          v-model:pageSize="ticketClinicStore.paginationMeta.limit"
-          :total="ticketClinicStore.paginationMeta.total"
+          v-model:current="ticketPagination.meta.page"
+          v-model:pageSize="ticketPagination.meta.limit"
+          :total="ticketPagination.meta.total"
           show-size-changer
           @change="
             (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
