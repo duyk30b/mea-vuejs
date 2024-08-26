@@ -59,11 +59,20 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <MedicalIcon />
       </template>
       <template #title>Phòng khám</template>
-      <a-menu-item key="ClinicVisitList">
+      <a-menu-item key="TicketClinicList">
         <router-link :to="{ name: 'TicketClinicList' }">Danh sách khám</router-link>
       </a-menu-item>
       <a-menu-item key="AppointmentList">
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
+      </a-menu-item>
+    </a-sub-menu>
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_TRADITIONAL_READ]" key="Clinic">
+      <template #icon>
+        <MedicalIcon />
+      </template>
+      <template #title>PK Đông Y</template>
+      <a-menu-item key="TicketTraditionalList">
+        <router-link :to="{ name: 'TicketTraditionalList' }">Danh sách khám</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_ORDER_READ]" key="TicketOrder">
@@ -181,7 +190,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item key="UserInfo">
         <router-link :to="{ name: 'UserInfo' }">Thông tin cá nhân</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" key="SystemSetting">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+        key="SystemSetting">
         <router-link :to="{ name: 'SystemSetting' }">Cài đặt</router-link>
       </a-menu-item>
     </a-sub-menu>
