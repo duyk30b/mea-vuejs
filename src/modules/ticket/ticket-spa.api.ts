@@ -48,7 +48,7 @@ export class TicketSpaApi {
     formData.append('vitalSigns', object.vitalSigns)
 
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-diagnosis`,
+      `/ticket-spa/${ticketId}/update-diagnosis`,
       formData,
       {
         headers: {
@@ -66,7 +66,7 @@ export class TicketSpaApi {
   }) {
     const { ticketId, customerId, ticketProcedureList } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/change-ticket-procedure-list`,
+      `/ticket-spa/${ticketId}/change-ticket-procedure-list`,
       {
         customerId: customerId,
         ticketProcedureList: ticketProcedureList.map((i) => ({
@@ -91,7 +91,7 @@ export class TicketSpaApi {
   }) {
     const { ticketId, customerId, ticketRadiologyList } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/change-ticket-radiology-list`,
+      `/ticket-spa/${ticketId}/change-ticket-radiology-list`,
       {
         customerId: customerId,
         ticketRadiologyList: ticketRadiologyList.map((i) => {
@@ -127,7 +127,7 @@ export class TicketSpaApi {
     formData.append('startedAt', ticketRadiology.startedAt.toString())
 
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketRadiology.ticketId}/create-ticket-radiology`,
+      `/ticket-spa/${ticketRadiology.ticketId}/create-ticket-radiology`,
       formData,
       {
         headers: {
@@ -158,7 +158,7 @@ export class TicketSpaApi {
     formData.append('filesPosition', JSON.stringify(filesPosition))
 
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketRadiology.ticketId}/update-ticket-radiology`,
+      `/ticket-spa/${ticketRadiology.ticketId}/update-ticket-radiology`,
       formData,
       {
         headers: {
@@ -176,7 +176,7 @@ export class TicketSpaApi {
     advice: string
   }) {
     const { ticketId, ticketProductList, advice } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-prescription`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/change-prescription`, {
       ticketProductList: ticketProductList.map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
@@ -198,7 +198,7 @@ export class TicketSpaApi {
 
   static async changeConsumable(body: { ticketId: number; ticketProductList: TicketProduct[] }) {
     const { ticketId, ticketProductList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-consumable`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/change-consumable`, {
       ticketProductList: ticketProductList.map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
@@ -223,7 +223,7 @@ export class TicketSpaApi {
   }) {
     const { ticketId, ticketProductList, ticketProcedureList, ticketRadiologyList } = body
 
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-items-money`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/change-items-money`, {
       ticketProductUpdateList: ticketProductList.map((item) => {
         return {
           ticketProductId: item.id,
@@ -262,7 +262,7 @@ export class TicketSpaApi {
 
   static async sendProduct(body: { ticketId: number }) {
     const { ticketId } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/send-product`)
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/send-product`)
     const { data } = response.data as BaseResponse
   }
 
@@ -276,7 +276,7 @@ export class TicketSpaApi {
     }[]
   }) {
     const { ticketId, returnList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/return-product`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/return-product`, {
       returnList,
     })
     const { data } = response.data as BaseResponse
@@ -284,36 +284,36 @@ export class TicketSpaApi {
   }
 
   static async prepayment(ticketId: number, money: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/prepayment`, { money })
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/prepayment`, { money })
     const { data } = response.data as BaseResponse
   }
 
   static async refundOverpaid(ticketId: number, money: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/refund-overpaid`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/refund-overpaid`, {
       money,
     })
     const { data } = response.data as BaseResponse
   }
 
   static async payDebt(ticketId: number, money: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/pay-debt`, {
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/pay-debt`, {
       money,
     })
     const { data } = response.data as BaseResponse
   }
 
   static async close(ticketId: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/close`)
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/close`)
     const { data } = response.data as BaseResponse
   }
 
   static async reopen(ticketId: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/reopen`)
+    const response = await AxiosInstance.post(`/ticket-spa/${ticketId}/reopen`)
     const { data } = response.data as BaseResponse
   }
 
   static async destroyDraftSchedule(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy-draft-schedule`)
+    const response = await AxiosInstance.delete(`/ticket-spa/${ticketId}/destroy-draft-schedule`)
     const { data } = response.data as BaseResponse
   }
 }

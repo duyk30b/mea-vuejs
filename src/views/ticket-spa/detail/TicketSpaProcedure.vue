@@ -10,9 +10,9 @@ import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Procedure, ProcedureType, useProcedureStore } from '../../../modules/procedure'
 import { TicketStatus, ticketRef } from '../../../modules/ticket'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
+import { TicketSpaApi } from '../../../modules/ticket/ticket-spa.api'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
@@ -117,7 +117,7 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const saveTicketProcedureList = async () => {
-  await TicketClinicApi.changeTicketProcedureList({
+  await TicketSpaApi.changeTicketProcedureList({
     ticketId: ticketRef.value.id,
     customerId: ticketRef.value.customerId || 0,
     ticketProcedureList: ticketProcedureList.value,

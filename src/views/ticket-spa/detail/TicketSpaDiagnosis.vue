@@ -5,9 +5,9 @@ import ImageUpload from '../../../common/ImageUpload.vue'
 import VueButton from '../../../common/VueButton.vue'
 import { InputText } from '../../../common/vue-form'
 import { ImageHost } from '../../../modules/image/image.model'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
-import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
 import { ticketRef } from '../../../modules/ticket'
+import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
+import { TicketSpaApi } from '../../../modules/ticket/ticket-spa.api'
 
 const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
 
@@ -92,7 +92,7 @@ const saveVisitDiagnosis = async () => {
       files: [],
     }
 
-    await TicketClinicApi.updateDiagnosis({
+    await TicketSpaApi.updateDiagnosis({
       ticketId: ticketRef.value.id,
       imageIdsKeep,
       files,
