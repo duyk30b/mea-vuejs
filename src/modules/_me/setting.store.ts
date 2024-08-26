@@ -216,6 +216,8 @@ export const settingDefault = {
       itemsActualMoney: true,
       surcharge: true,
       discount: true,
+      paid: false,
+      debt: false,
     },
   },
   SCREEN_INVOICE_UPSERT: {

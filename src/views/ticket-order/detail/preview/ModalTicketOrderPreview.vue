@@ -211,6 +211,18 @@ defineExpose({ openModal })
                   </b>
                 </td>
               </tr>
+              <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.paid">
+                <td :colspan="colspan" style="text-align: right">Đã thanh toán</td>
+                <td :colspan="2" style="text-align: right">
+                  {{ formatMoney(ticket.paid) }}
+                </td>
+              </tr>
+              <tr v-if="settingStore.SCREEN_INVOICE_PREVIEW.paymentInfo.debt">
+                <td :colspan="colspan" style="text-align: right">Nợ</td>
+                <td :colspan="2" style="text-align: right">
+                  {{ formatMoney(ticket.debt) }}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
