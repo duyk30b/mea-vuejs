@@ -76,7 +76,7 @@ const selectProcedure = (instance?: Procedure) => {
     ticketProcedure.value.expectedPrice = instance.price
     ticketProcedure.value.actualPrice = instance.price
     ticketProcedure.value.quantity = 1
-    ticketProcedure.value.createdAt = Date.now()
+    ticketProcedure.value.startedAt = Date.now()
 
     quantity.value = instance.quantityDefault
   } else {

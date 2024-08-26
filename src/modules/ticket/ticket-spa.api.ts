@@ -77,7 +77,6 @@ export class TicketSpaApi {
           discountPercent: i.discountPercent,
           discountType: i.discountType,
           actualPrice: i.actualPrice,
-          createdAt: i.createdAt,
         })),
       }
     )
@@ -109,7 +108,10 @@ export class TicketSpaApi {
     const { data } = response.data as BaseResponse
   }
 
-  static async createTicketRadiology(options: { ticketRadiology: TicketRadiology; files: File[] }) {
+  static async createTicketRadiologyCompleted(options: {
+    ticketRadiology: TicketRadiology
+    files: File[]
+  }) {
     const { ticketRadiology, files } = options
 
     const formData = new FormData()
@@ -127,7 +129,7 @@ export class TicketSpaApi {
     formData.append('startedAt', ticketRadiology.startedAt.toString())
 
     const response = await AxiosInstance.post(
-      `/ticket-spa/${ticketRadiology.ticketId}/create-ticket-radiology`,
+      `/ticket-spa/${ticketRadiology.ticketId}/create-ticket-radiology-completed`,
       formData,
       {
         headers: {
