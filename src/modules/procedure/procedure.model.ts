@@ -14,9 +14,13 @@ export class Procedure {
   quantityDefault: number
   gapHours: number
   price: number // Giá mặc định
+
   discountMoney: number // tiền giảm giá mặc định
   discountPercent: number // tiền giảm giá mặc định
   discountType: DiscountType // tiền giảm giá mặc định
+  discountStart: number | null
+  discountEnd: number | null
+
   saleBolusMoney: number // thưởng chốt sale
   saleBolusPercent: number // thưởng chốt sale
   saleBolusType: DiscountType // thưởng chốt sale
@@ -26,6 +30,7 @@ export class Procedure {
   secondaryBolusMoney: number // thưởng thợ phụ
   secondaryBolusPercent: number // thưởng thợ phụ
   secondaryBolusType: DiscountType // thưởng thợ phụ
+
   consumablesHint: string
   isActive: 1 | 0 // Trạng thái
   updatedAt: number

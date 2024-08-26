@@ -102,9 +102,12 @@ const selectDate = (time: number) => {
       <div class="date-picker-header">
         <div class="pick-arrow" @click="clickIncreaseYear(-1)">«</div>
         <div class="pick-arrow" @click="clickIncreaseMonth(-1)">‹</div>
-        <div class="month-year" @click.stop="type = 'year'">
-          {{ (new Date(currentTime).getMonth() + 1).toString().padStart(2, '0') }} /
-          {{ new Date(currentTime).getFullYear() }}
+        <div class="month-year">
+          <span @click.stop="type = 'month'">
+            {{ (new Date(currentTime).getMonth() + 1).toString().padStart(2, '0') }}
+          </span>
+          <span style="margin-left: 8px; margin-right: 8px;">/</span>
+          <span @click.stop="type = 'year'">{{ new Date(currentTime).getFullYear() }}</span>
         </div>
         <div class="pick-arrow" @click="clickIncreaseMonth(1)">›</div>
         <div class="pick-arrow" @click="clickIncreaseYear(1)">»</div>

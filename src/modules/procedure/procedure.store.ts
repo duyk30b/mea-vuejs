@@ -73,8 +73,10 @@ export const useProcedureStore = defineStore('procedure-store', {
     },
 
     async getOne(id: number) {
-      const procedure = await ProcedureDB.findOneByKey(id)
-      return procedure ? Procedure.from(procedure) : null
+      const procedure = await ProcedureApi.detail(id, {})
+      // const procedure = await ProcedureDB.findOneByKey(id)
+      await ProcedureDB.upsertOne(procedure)
+      return procedure
     },
 
     async createOne(procedureProp: Procedure) {

@@ -204,7 +204,7 @@ defineExpose({ focus, clear, setItem })
       <IconSearch class="icon-blur" />
       <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
       <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" /> -->
+      <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
     </div>
     <div
       v-if="showOptions"

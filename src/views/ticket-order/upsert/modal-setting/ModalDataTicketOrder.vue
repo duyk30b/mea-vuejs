@@ -93,136 +93,132 @@ defineExpose({ openModal })
       </div>
 
       <div class="mt-4 px-4 bg-white">
-        <div class="modal-data-product-tabs">
-          <VueTabs v-model:tabShow="activeTab">
-            <template #menu>
-              <VueTabMenu :tabKey="TABS_KEY.SURCHARGE">Phụ phí</VueTabMenu>
-              <VueTabMenu :tabKey="TABS_KEY.EXPENSE">Chi phí</VueTabMenu>
-            </template>
-            <template #panel>
-              <VueTabPanel :tabKey="TABS_KEY.SURCHARGE">
-                <div class="w-full mt-4">
-                  <details class="my-2">
-                    <summary style="font-style: italic">Giải thích chi tiết về phụ phí</summary>
-                    <p class="mt-2 italic">
-                      - Tiền
-                      <b>phụ phí</b>
-                      là tiền người mua cần phải trả thêm vào đơn hàng
-                    </p>
-                    <p>
-                      - Các phụ phí thường gặp như:
-                      <b>tiền vận chuyển</b>
-                      , tiền đóng gói, tiền tư vấn, ...
-                    </p>
-                    <p class="italic">- Công thức tính tổng tiền đơn hàng:</p>
-                    <div class="text-center">
-                      <span class="mx-2 font-bold">Tổng tiền</span>
-                      =
-                      <span class="mx-2">Tiền hàng</span>
-                      -
-                      <span class="mx-2">Chiết khấu</span>
-                      +
-                      <span class="mx-2 font-bold">Phụ phí</span>
-                    </div>
-                  </details>
-                  <div class="flex mt-4">
-                    <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
-                    <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên phụ phí</div>
+        <VueTabs v-model:tabShow="activeTab">
+          <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.SURCHARGE">Phụ phí</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.EXPENSE">Chi phí</VueTabMenu>
+          </template>
+          <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.SURCHARGE">
+              <div class="w-full mt-4">
+                <details class="my-2">
+                  <summary style="font-style: italic">Giải thích chi tiết về phụ phí</summary>
+                  <p class="mt-2 italic">
+                    - Tiền
+                    <b>phụ phí</b>
+                    là tiền người mua cần phải trả thêm vào đơn hàng
+                  </p>
+                  <p>
+                    - Các phụ phí thường gặp như:
+                    <b>tiền vận chuyển</b>
+                    , tiền đóng gói, tiền tư vấn, ...
+                  </p>
+                  <p class="italic">- Công thức tính tổng tiền đơn hàng:</p>
+                  <div class="text-center">
+                    <span class="mx-2 font-bold">Tổng tiền</span>
+                    =
+                    <span class="mx-2">Tiền hàng</span>
+                    -
+                    <span class="mx-2">Chiết khấu</span>
+                    +
+                    <span class="mx-2 font-bold">Phụ phí</span>
                   </div>
-                  <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
-                    <div class="py-2 flex items-stretch">
-                      <div
-                        class="flex justify-center items-center px-1"
-                        style="
-                          border: 1px solid #d9d9d9;
-                          border-right: none;
-                          width: 40px;
-                          background-color: #f7f7f7;
-                        ">
-                        <span>{{ index }}</span>
-                      </div>
-                      <a-input v-model:value="SURCHARGE_DETAIL[key]" style="flex: 1" />
-                      <div v-if="key !== '_unknown'" class="flex items-center mx-2">
-                        <a style="color: var(--text-red)" @click="delete SURCHARGE_DETAIL[key]">
-                          Xóa
-                        </a>
-                      </div>
-                      <div v-else class="flex items-center mx-2">
-                        <a style="opacity: 0">Xóa</a>
-                      </div>
+                </details>
+                <div class="flex mt-4">
+                  <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
+                  <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên phụ phí</div>
+                </div>
+                <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
+                  <div class="py-2 flex items-stretch">
+                    <div
+                      class="flex justify-center items-center px-1"
+                      style="
+                        border: 1px solid #d9d9d9;
+                        border-right: none;
+                        width: 40px;
+                        background-color: #f7f7f7;
+                      ">
+                      <span>{{ index }}</span>
+                    </div>
+                    <a-input v-model:value="SURCHARGE_DETAIL[key]" style="flex: 1" />
+                    <div v-if="key !== '_unknown'" class="flex items-center mx-2">
+                      <a style="color: var(--text-red)" @click="delete SURCHARGE_DETAIL[key]">
+                        Xóa
+                      </a>
+                    </div>
+                    <div v-else class="flex items-center mx-2">
+                      <a style="opacity: 0">Xóa</a>
                     </div>
                   </div>
                 </div>
-                <div class="py-2 flex">
-                  <VueButton
-                    color="blue"
-                    icon="plus"
-                    @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
-                </div>
-              </VueTabPanel>
-              <VueTabPanel :tabKey="TABS_KEY.EXPENSE">
-                <div class="w-full">
-                  <details class="my-2">
-                    <summary style="font-style: italic">Giải thích chi tiết về chi phí</summary>
-                    <p class="mt-2 italic">
-                      - Tiền
-                      <b>chi phí</b>
-                      là tiền người bán phải chịu khi tạo đơn hàng
-                    </p>
-                    <p>
-                      - Các chi phí thường gặp như:
-                      <b>tiền hoa hồng</b>
-                      , ...
-                    </p>
-                    <div class="italic">- Công thức tính lãi của đơn hàng:</div>
-                    <div class="text-center">
-                      <span class="mx-2 font-bold">Tổng tiền</span>
-                      =
-                      <span class="mx-2">Tiền cost</span>
-                      +
-                      <span class="mx-2">Chi phí</span>
-                      +
-                      <span class="mx-2 font-bold">Tiền lãi</span>
-                    </div>
-                  </details>
-                  <div class="flex mt-4">
-                    <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
-                    <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên chi phí</div>
+              </div>
+              <div class="py-2 flex">
+                <VueButton
+                  color="blue"
+                  icon="plus"
+                  @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.EXPENSE">
+              <div class="w-full">
+                <details class="my-2">
+                  <summary style="font-style: italic">Giải thích chi tiết về chi phí</summary>
+                  <p class="mt-2 italic">
+                    - Tiền
+                    <b>chi phí</b>
+                    là tiền người bán phải chịu khi tạo đơn hàng
+                  </p>
+                  <p>
+                    - Các chi phí thường gặp như:
+                    <b>tiền hoa hồng</b>
+                    , ...
+                  </p>
+                  <div class="italic">- Công thức tính lãi của đơn hàng:</div>
+                  <div class="text-center">
+                    <span class="mx-2 font-bold">Tổng tiền</span>
+                    =
+                    <span class="mx-2">Tiền cost</span>
+                    +
+                    <span class="mx-2">Chi phí</span>
+                    +
+                    <span class="mx-2 font-bold">Tiền lãi</span>
                   </div>
-                  <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">
-                    <div class="py-2 flex">
-                      <div
-                        class="flex justify-center items-center px-1"
-                        style="
-                          border: 1px solid #d9d9d9;
-                          border-right: none;
-                          width: 40px;
-                          background-color: #f7f7f7;
-                        ">
-                        <span>{{ index }}</span>
-                      </div>
-                      <a-input v-model:value="EXPENSE_DETAIL[key]" style="flex: 1" />
-                      <div v-if="key !== '_unknown'" class="flex items-center mx-2">
-                        <a style="color: var(--text-red)" @click="delete EXPENSE_DETAIL[key]">
-                          Xóa
-                        </a>
-                      </div>
-                      <div v-else class="flex items-center mx-2">
-                        <a style="opacity: 0">Xóa</a>
-                      </div>
+                </details>
+                <div class="flex mt-4">
+                  <div style="width: 90px; font-weight: 600; padding: 0 5px">ID</div>
+                  <div style="flex: 1; font-weight: 600; padding: 0 5px">Tên chi phí</div>
+                </div>
+                <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">
+                  <div class="py-2 flex">
+                    <div
+                      class="flex justify-center items-center px-1"
+                      style="
+                        border: 1px solid #d9d9d9;
+                        border-right: none;
+                        width: 40px;
+                        background-color: #f7f7f7;
+                      ">
+                      <span>{{ index }}</span>
+                    </div>
+                    <a-input v-model:value="EXPENSE_DETAIL[key]" style="flex: 1" />
+                    <div v-if="key !== '_unknown'" class="flex items-center mx-2">
+                      <a style="color: var(--text-red)" @click="delete EXPENSE_DETAIL[key]">Xóa</a>
+                    </div>
+                    <div v-else class="flex items-center mx-2">
+                      <a style="opacity: 0">Xóa</a>
                     </div>
                   </div>
                 </div>
-                <div class="py-2 flex">
-                  <VueButton
-                    color="blue"
-                    icon="plus"
-                    @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
-                </div>
-              </VueTabPanel>
-            </template>
-          </VueTabs>
-        </div>
+              </div>
+              <div class="py-2 flex">
+                <VueButton
+                  color="blue"
+                  icon="plus"
+                  @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
+              </div>
+            </VueTabPanel>
+          </template>
+        </VueTabs>
       </div>
 
       <div class="p-4 mt-2">
@@ -243,16 +239,6 @@ defineExpose({ openModal })
 </template>
 
 <style lang="scss">
-.modal-data-product-tabs {
-  .ant-tabs-tab {
-    border-top: 5px solid #d6d6d6 !important;
-
-    &.ant-tabs-tab-active {
-      border-top-color: #1890ff !important;
-    }
-  }
-}
-
 .table-payment {
   td {
     padding: 6px 0;

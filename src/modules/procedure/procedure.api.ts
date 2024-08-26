@@ -58,9 +58,13 @@ export class ProcedureApi {
       quantityDefault: procedure.quantityDefault,
       gapHours: procedure.gapHours,
       price: procedure.price, // Giá mặc định
+
       discountMoney: procedure.discountMoney, // tiền giảm giá mặc định
-      discountPercent: procedure.discountPercent, // tiền giảm giá mặc định
-      discountType: procedure.discountType, // tiền giảm giá mặc định
+      discountPercent: procedure.discountPercent,
+      discountType: procedure.discountType,
+      discountStart: procedure.discountStart != null ? procedure.discountStart : null,
+      discountEnd: procedure.discountEnd != null ? procedure.discountEnd : null,
+
       saleBolusMoney: procedure.saleBolusMoney, // thưởng chốt sale
       saleBolusPercent: procedure.saleBolusPercent, // thưởng chốt sale
       saleBolusType: procedure.saleBolusType, // thưởng chốt sale
@@ -87,9 +91,13 @@ export class ProcedureApi {
       quantityDefault: procedure.quantityDefault,
       gapHours: procedure.gapHours,
       price: procedure.price, // Giá mặc định
+
       discountMoney: procedure.discountMoney, // tiền giảm giá mặc định
-      discountPercent: procedure.discountPercent, // tiền giảm giá mặc định
-      discountType: procedure.discountType, // tiền giảm giá mặc định
+      discountPercent: procedure.discountPercent,
+      discountType: procedure.discountType,
+      discountStart: procedure.discountStart != null ? procedure.discountStart : null,
+      discountEnd: procedure.discountEnd != null ? procedure.discountEnd : null,
+
       saleBolusMoney: procedure.saleBolusMoney, // thưởng chốt sale
       saleBolusPercent: procedure.saleBolusPercent, // thưởng chốt sale
       saleBolusType: procedure.saleBolusType, // thưởng chốt sale
