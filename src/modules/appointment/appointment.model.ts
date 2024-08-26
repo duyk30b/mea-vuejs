@@ -1,9 +1,5 @@
 import { Customer } from '../customer'
-
-export enum AppointmentType {
-  CustomerInitiated = 1, // Đã lên lịch
-  Reminder = 2, // Hoàn thành
-}
+import type { VoucherType } from '../enum'
 
 export enum AppointmentStatus {
   Waiting = 1, // Đợi - Nhắc khám
@@ -20,7 +16,8 @@ export class Appointment {
   registeredAt: number
   reason: string // Ghi chú
   cancelReason: string // Ghi chú
-  appointmentType: AppointmentType
+
+  appointmentType: VoucherType
   appointmentStatus: AppointmentStatus
 
   customer?: Customer
@@ -29,7 +26,6 @@ export class Appointment {
     const ins = new Appointment()
     ins.id = 0
     ins.customerId = 0
-    ins.appointmentType = AppointmentType.Reminder
     ins.appointmentStatus = AppointmentStatus.Waiting
     return ins
   }

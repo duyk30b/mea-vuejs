@@ -67,7 +67,7 @@ const selectCustomer = async (customerSelect: Customer) => {
         appointmentList.value = await AppointmentApi.list({
           filter: {
             appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
-            appointmentType: VoucherType.Clinic,
+            appointmentType: VoucherType.Spa,
           },
         })
         loadAppointment = true
@@ -152,7 +152,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal">
     <form ref="ticketClinicCreateForm" class="bg-white" @submit.prevent="handleRegisterVisit">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Thêm phiếu khám mới</div>
+        <div class="flex-1 text-lg font-medium">Đón tiếp mới</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -214,7 +214,7 @@ defineExpose({ openModal })
         </div>
 
         <div class="grow basis-[80%]">
-          <div>Lý do khám</div>
+          <div>Lý do đến</div>
           <div>
             <InputText v-model:value="reason" />
           </div>
@@ -244,7 +244,7 @@ defineExpose({ openModal })
             type="submit"
             :loading="saveLoading"
             :disabled="!customer.id">
-            ĐĂNG KÝ KHÁM
+            TẠO MỚI
           </VueButton>
         </div>
       </div>

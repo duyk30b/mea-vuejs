@@ -33,7 +33,7 @@ export const ticketRouter: RouteRecordRaw[] = [
   },
   {
     path: 'clinic',
-    name: 'Clinic',
+    name: 'TicketClinic',
     children: [
       {
         path: 'ticket-clinic',
@@ -103,7 +103,7 @@ export const ticketRouter: RouteRecordRaw[] = [
           {
             path: 'list',
             name: 'AppointmentList',
-            component: () => import('../views/appointment/AppointmentList.vue'),
+            component: () => import('../views/ticket-clinic/appointment/AppointmentList.vue'),
             meta: { title: 'Hẹn khám' },
           },
         ],
@@ -131,6 +131,36 @@ export const ticketRouter: RouteRecordRaw[] = [
       //   path: 'upsert/:id?',
       //   name: 'TicketTraditionalUpsert',
       //   component: () => import('../views/ticket-traditional/upsert/TicketTraditionalUpsert.vue'),
+      //   meta: {
+      //     title: (route: RouteLocationNormalizedLoaded) => {
+      //       if (route.query?.mode === 'UPDATE') return 'Đông Y'
+      //       return 'Đông Y'
+      //     },
+      //   },
+      // },
+    ],
+  },
+  {
+    path: 'ticket-spa',
+    name: 'TicketSpa',
+    redirect: () => ({ name: 'TicketSpaList' }),
+    children: [
+      {
+        path: 'list',
+        name: 'TicketSpaList',
+        meta: { title: 'Đông Y' },
+        component: () => import('../views/ticket-spa/ticket-spa-list/TicketSpaList.vue'),
+      },
+      // {
+      //   path: 'detail/:id',
+      //   name: 'TicketSpaDetail',
+      //   meta: { title: 'Đông Y' },
+      //   component: () => import('../views/ticket-spa/detail/TicketSpaDetail.vue'),
+      // },
+      // {
+      //   path: 'upsert/:id?',
+      //   name: 'TicketSpaUpsert',
+      //   component: () => import('../views/ticket-spa/upsert/TicketSpaUpsert.vue'),
       //   meta: {
       //     title: (route: RouteLocationNormalizedLoaded) => {
       //       if (route.query?.mode === 'UPDATE') return 'Đông Y'

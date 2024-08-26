@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import dayjs, { Dayjs } from 'dayjs'
-import { ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../common/icon'
-import { InputHint, InputOptions, InputText, VueSelect } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import {
-  Appointment,
-  AppointmentApi,
-  AppointmentStatus,
-  AppointmentType,
-} from '../../modules/appointment'
-import { Customer, useCustomerStore } from '../../modules/customer'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { DTimer, customFilter } from '../../utils'
-import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../../common/icon'
+import { InputHint, InputOptions, VueSelect } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
+import { Customer, useCustomerStore } from '../../../modules/customer'
+import { VoucherType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { DTimer, customFilter } from '../../../utils'
+import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
@@ -82,7 +77,7 @@ const handleRegisterVisit = async () => {
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
-        appointmentType: AppointmentType.CustomerInitiated,
+        appointmentType: VoucherType.Clinic,
         appointmentStatus: appointment.value.appointmentStatus,
       })
     } else {

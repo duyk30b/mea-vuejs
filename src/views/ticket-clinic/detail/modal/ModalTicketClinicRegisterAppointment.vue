@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import dayjs, { Dayjs } from 'dayjs'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
-import { InputHint, type InputOptions } from '../../../../common/vue-form'
+import { InputHint } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Appointment, AppointmentApi, AppointmentType } from '../../../../modules/appointment'
+import { Appointment, AppointmentApi } from '../../../../modules/appointment'
+import { VoucherType } from '../../../../modules/enum'
 import { customFilter } from '../../../../utils'
 import { ticketClinic } from '../ticket-clinic-detail.ref'
 
@@ -50,7 +51,7 @@ const handleRegisterVisit = async () => {
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
-        appointmentType: AppointmentType.Reminder,
+        appointmentType: VoucherType.Clinic,
         appointmentStatus: appointment.value.appointmentStatus,
       })
     } else {

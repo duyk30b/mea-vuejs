@@ -46,6 +46,7 @@ export enum VoucherType {
   Order = 2,
   Clinic = 3,
   Traditional = 4,
+  Spa = 5,
 }
 
 export enum DeliveryStatus {
