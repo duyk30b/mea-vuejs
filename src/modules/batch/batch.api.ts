@@ -45,7 +45,7 @@ export class BatchApi {
   static async updateOne(id: number, batch: Batch) {
     const response = await AxiosInstance.patch(`/batch/update/${id}`, {
       lotNumber: batch.lotNumber,
-      expiryDate: batch.expiryDate,
+      expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       wholesalePrice: batch.wholesalePrice,
       retailPrice: batch.retailPrice,
     })

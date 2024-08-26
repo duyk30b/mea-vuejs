@@ -366,7 +366,7 @@ defineExpose({ openModal, openModalFromTicket })
             <span v-if="product.hasManageQuantity">
               ( Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất )
             </span>
-            <span v-if="!product.hasManageQuantity">( Sản phẩm này không có số lượng )</span>
+            <span v-if="!product.hasManageQuantity">( Sản phẩm này không quan tâm số lượng )</span>
           </div>
         </div>
 
@@ -417,5 +417,7 @@ defineExpose({ openModal, openModalFromTicket })
   <ModalProductUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalProductUpsertSettingScreen" />
-  <ModalDataProduct v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" ref="modalDataProduct" />
+  <ModalDataProduct
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalDataProduct" />
 </template>

@@ -364,6 +364,10 @@ defineExpose({ openModal })
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.DISCOUNT_AND_BOLUS">
               <div class="mt-4 flex flex-wrap gap-4">
+                <div class="font-bold" style="flex-grow: 1; flex-basis: 90%">
+                  <DoubleRightOutlined />
+                  <span class="ml-2">Khuyến mãi</span>
+                </div>
                 <div style="flex-grow: 1; flex-basis: 90%">
                   <div>
                     Khuyến mại (Giá dịch vụ:
@@ -402,7 +406,7 @@ defineExpose({ openModal })
                   </div>
                 </div>
                 <div style="flex-grow: 1; flex-basis: 300px">
-                  <div>Khuyến mại TỪ ngày</div>
+                  <div>Từ ngày</div>
                   <div>
                     <InputDate
                       v-model:value="procedure.discountStart"
@@ -412,7 +416,7 @@ defineExpose({ openModal })
                   </div>
                 </div>
                 <div style="flex-grow: 1; flex-basis: 300px">
-                  <div>Khuyến mại ĐẾN ngày</div>
+                  <div>Đến ngày</div>
                   <div>
                     <InputDate
                       v-model:value="procedure.discountEnd"
@@ -420,6 +424,11 @@ defineExpose({ openModal })
                       showTime
                       typeParser="number" />
                   </div>
+                </div>
+
+                <div class="mt-10 font-bold" style="flex-grow: 1; flex-basis: 90%">
+                  <DoubleRightOutlined />
+                  <span class="ml-2">Hoa hồng</span>
                 </div>
                 <div style="flex-grow: 1; flex-basis: 90%">
                   <div>Hoa hồng nhân viên chốt sale</div>
