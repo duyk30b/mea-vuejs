@@ -13,7 +13,6 @@ import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketApi, TicketStatus, ticketPagination } from '../../../modules/ticket'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketSpaStatusTag from '../TicketSpaStatusTag.vue'
@@ -161,11 +160,11 @@ const handleClickDestroyDraft = async (ticketId: number) => {
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        await TicketClinicApi.destroyDraftSchedule(ticketId)
+        // await TicketSpaApi.destroyDraftSchedule(ticketId)
         await startFetchData()
         AlertStore.addSuccess('Xóa phiếu khám thành công')
       } catch (error) {
-        console.log('🚀 ~ file: TicketClinicList.vue:171 ~ handleClickDestroyDraft ~ error:', error)
+        console.log('🚀 ~ file: TicketSpaList.vue:171 ~ handleClickDestroyDraft ~ error:', error)
       }
     },
   })
@@ -324,8 +323,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           <tr v-for="(ticket, index) in ticketPagination.data" :key="index">
             <td class="text-center">
               <div class="flex gap-4 justify-center">
-                <router-link
-                  :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }">
+                <router-link :to="{ name: 'TicketSpaDetailContainer', params: { id: ticket.id } }">
                   <div class="flex justify-center items-center gap-2">
                     <span>KB{{ ticket.id }}</span>
                     <span class="text-lg"><ReadOutlined /></span>

@@ -321,34 +321,7 @@ const savePrescription = async () => {
       </div>
     </div>
 
-    <div class="mt-4">
-      <div class="flex flex-wrap item-center gap-2">
-        <span>Số lượng</span>
-        <span v-if="ticketProduct.unitRate !== 1">
-          (Quy đổi:
-          <b>{{ ticketProduct.quantity }}</b>
-          {{ ticketProduct.product?.unitBasicName }})
-        </span>
-      </div>
-      <div class="flex">
-        <div style="width: 100px">
-          <VueSelect
-            v-model:value="ticketProduct.unitRate"
-            :disabled="ticketProduct.product!.unitObject.length <= 1"
-            :options="
-              ticketProduct.product!.unitObject.map((i) => ({
-                value: i.rate,
-                text: i.name,
-                data: i,
-              }))
-            "
-            required></VueSelect>
-        </div>
-        <div class="flex-1">
-          <InputNumber v-model:value="ticketProduct.unitQuantity" required :validate="{ gt: 0 }" />
-        </div>
-      </div>
-    </div>
+
     <div class="mt-4">
       <div>Hướng dẫn sử dụng</div>
       <InputHint

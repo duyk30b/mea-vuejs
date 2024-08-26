@@ -10,7 +10,6 @@ export class TicketSpaApi {
     fromAppointmentId: number
     customerId: number
     registeredAt: number
-    doctorId: number
     reason: string
   }) {
     const response = await AxiosInstance.post('/ticket-spa/register', body)

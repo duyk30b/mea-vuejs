@@ -8,24 +8,26 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, useProcedureStore } from '../../../modules/procedure'
+import { Procedure, ProcedureType, useProcedureStore } from '../../../modules/procedure'
 import { TicketStatus, ticketRef } from '../../../modules/ticket'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
-const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
+const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const procedureList = ref<Procedure[]>([])
+const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
 const procedureStore = useProcedureStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
+const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 const ticketProcedureList = ref<TicketProcedure[]>([])
+const quantity = ref(0)
 watch(
   () => ticketRef.value.ticketProcedureList!,
   (newValue: TicketProcedure[]) => {
@@ -52,30 +54,59 @@ onMounted(async () => {
   }
 })
 
+const clear = () => {
+  ticketProcedure.value = TicketProcedure.blank()
+  procedureOptions.value = []
+}
+
 const searchingProcedure = async (text: string) => {
-  procedureList.value = await procedureStore.search(text)
+  const procedureList = await procedureStore.search(text)
+  procedureOptions.value = procedureList.map((i) => ({ value: i.id, text: i.name, data: i }))
 }
 
 const selectProcedure = (instance?: Procedure) => {
   if (instance) {
-    const ticketProcedure = new TicketProcedure()
-    ticketProcedure.ticketId = ticketRef.value.id
-    ticketProcedure.procedureId = instance.id
-    ticketProcedure.procedure = instance
-    ticketProcedure.expectedPrice = instance.price
-    ticketProcedure.discountMoney = 0
-    ticketProcedure.discountPercent = 0
-    ticketProcedure.discountType = DiscountType.VND
-    ticketProcedure.expectedPrice = instance.price
-    ticketProcedure.actualPrice = instance.price
-    ticketProcedure.quantity = 1
-    ticketProcedure.createdAt = Date.now()
-    ticketProcedureList.value.push(ticketProcedure)
+    ticketProcedure.value.ticketId = ticketRef.value.id
+    ticketProcedure.value.procedureId = instance.id
+    ticketProcedure.value.procedure = instance
+    ticketProcedure.value.expectedPrice = instance.price
+    ticketProcedure.value.discountMoney = 0
+    ticketProcedure.value.discountPercent = 0
+    ticketProcedure.value.discountType = DiscountType.VND
+    ticketProcedure.value.expectedPrice = instance.price
+    ticketProcedure.value.actualPrice = instance.price
+    ticketProcedure.value.quantity = 1
+    ticketProcedure.value.createdAt = Date.now()
+
+    quantity.value = instance.quantityDefault
+  } else {
+    ticketProcedure.value = TicketProcedure.blank()
+  }
+  procedureOptions.value = []
+}
+
+const addProcedureItem = () => {
+  if (!ticketProcedure.value.procedureId) {
+    return inputOptionsProcedure.value?.focus()
   }
 
-  procedureList.value = []
+  if (ticketProcedure.value.procedure!.procedureType === ProcedureType.Basic) {
+    ticketProcedure.value.quantity = quantity.value
+    ticketProcedureList.value.push(ticketProcedure.value)
+  } else if (ticketProcedure.value.procedure!.procedureType === ProcedureType.Regimen) {
+    for (let i = 0; i < quantity.value; i++) {
+      ticketProcedure.value.quantity = 1
+      ticketProcedureList.value.push(ticketProcedure.value)
+    }
+  } else {
+    return
+  }
+
+  clear()
+  inputOptionsProcedure.value?.clear()
+
   if (!isMobile) {
-    inputSearchProcedure.value?.focus()
+    inputOptionsProcedure.value?.focus()
   }
 }
 
@@ -95,34 +126,54 @@ const saveTicketProcedureList = async () => {
 </script>
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="selectProcedure" />
-  <div class="mt-4 flex justify-between">
-    <span>Chỉ định dịch vụ</span>
-    <span>
-      <a
-        v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
-        @click="modalProcedureUpsert?.openModal()">
-        Thêm dịch vụ mới
-      </a>
-    </span>
-  </div>
-  <div style="height: 40px">
-    <InputOptions
-      ref="inputSearchProcedure"
-      :options="procedureList.map((i) => ({ value: i.id, text: i.name, data: i }))"
-      :maxHeight="320"
-      placeholder="Tìm kiếm tên dịch vụ"
-      clear-after-selected
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.ticketStatus)"
-      @selectItem="({ data }) => selectProcedure(data)"
-      @update:text="searchingProcedure">
-      <template #option="{ item: { data } }">
-        <div>
-          <b>{{ data.name }}</b>
-          - {{ formatMoney(data.price) }}
-        </div>
-      </template>
-    </InputOptions>
-  </div>
+
+  <form @submit.prevent="(e) => addProcedureItem()">
+    <div class="mt-4">
+      <div class="flex justify-between">
+        <span>Chỉ định dịch vụ</span>
+        <span>
+          <a
+            v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
+            @click="modalProcedureUpsert?.openModal()">
+            Thêm dịch vụ mới
+          </a>
+        </span>
+      </div>
+      <div style="height: 40px">
+        <InputOptions
+          ref="inputOptionsProcedure"
+          :options="procedureOptions"
+          :maxHeight="320"
+          placeholder="Tìm kiếm tên dịch vụ"
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.ticketStatus)"
+          @selectItem="({ data }) => selectProcedure(data)"
+          @update:text="searchingProcedure">
+          <template #option="{ item: { data } }">
+            <div>
+              <b>{{ data.name }}</b>
+              - {{ formatMoney(data.price) }}
+            </div>
+          </template>
+        </InputOptions>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div>Số lượng</div>
+      <div>
+        <InputNumber v-model:value="quantity" required :validate="{ gt: 0 }" />
+      </div>
+    </div>
+    <div class="mt-4 flex justify-center">
+      <VueButton
+        :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRef.ticketStatus)"
+        color="blue"
+        icon="plus"
+        type="submit">
+        Thêm vào danh sách
+      </VueButton>
+    </div>
+  </form>
+
   <div class="mt-4">
     <div>Danh sách các dịch vụ, thủ thuật</div>
     <div class="table-wrapper">
@@ -141,9 +192,7 @@ const saveTicketProcedureList = async () => {
           <tr v-if="ticketProcedureList!.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr
-            v-for="(ticketProcedure, index) in ticketProcedureList"
-            :key="ticketProcedure.procedureId">
+          <tr v-for="(tpItem, index) in ticketProcedureList" :key="tpItem.procedureId">
             <td>
               <div class="flex flex-col items-center">
                 <button
@@ -175,23 +224,23 @@ const saveTicketProcedureList = async () => {
                 </button>
               </div>
             </td>
-            <td>{{ ticketProcedure.procedure?.name }}</td>
+            <td>{{ tpItem.procedure?.name }}</td>
             <td style="width: 150px">
               <div
                 v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.ticketStatus)"
                 class="text-center">
-                {{ ticketProcedure.quantity }}
+                {{ tpItem.quantity }}
               </div>
               <div v-else class="flex items-center justify-between">
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  :disabled="ticketProcedure.quantity <= 0"
+                  :disabled="tpItem.quantity <= 0"
                   @click="ticketProcedureList[index].quantity--">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
-                  <InputNumber v-model:value="ticketProcedure.quantity" textAlign="right" />
+                  <InputNumber v-model:value="tpItem.quantity" textAlign="right" />
                 </div>
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
@@ -201,9 +250,9 @@ const saveTicketProcedureList = async () => {
                 </button>
               </div>
             </td>
-            <td class="text-right">{{ formatMoney(ticketProcedure.actualPrice) }}</td>
+            <td class="text-right">{{ formatMoney(tpItem.actualPrice) }}</td>
             <td class="text-right">
-              {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
+              {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
             </td>
             <td class="text-center">
               <a

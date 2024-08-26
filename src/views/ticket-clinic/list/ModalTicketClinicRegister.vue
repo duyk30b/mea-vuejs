@@ -182,7 +182,6 @@ defineExpose({ openModal })
               ref="inputOptionsCustomer"
               :options="customerListOptions"
               :maxHeight="200"
-              no-clear-text-when-not-selected
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"

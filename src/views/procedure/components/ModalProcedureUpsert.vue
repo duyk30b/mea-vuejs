@@ -18,7 +18,12 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, ProcedureApi, useProcedureStore } from '../../../modules/procedure'
+import {
+  Procedure,
+  ProcedureApi,
+  ProcedureType,
+  useProcedureStore,
+} from '../../../modules/procedure'
 import { Product, useProductStore } from '../../../modules/product'
 import { customFilter } from '../../../utils'
 import ModalDataProcedure from './ModalDataProcedure.vue'
@@ -44,7 +49,6 @@ const procedure = ref(Procedure.blank())
 const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const consumableList = ref<{ product?: Product; quantity: number }[]>([])
 
-const isRegimen = ref(false)
 const gapHoursType = ref(24)
 const activeTab = ref(TABS_KEY.BASIC)
 
@@ -55,7 +59,7 @@ onMounted(async () => {
   try {
     const { hasChange } = await productStore.refreshDB()
   } catch (error: any) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:50 ~ onMounted ~ error:', error)
+    console.log('🚀 ~ file: ModalProcedureUpsert.vue:57 ~ onMounted ~ error:', error)
   }
 })
 
@@ -64,10 +68,8 @@ const openModal = async (procedureId?: number) => {
 
   if (!procedureId) {
     procedure.value = Procedure.blank()
-    isRegimen.value = false
   } else {
     procedure.value = await procedureStore.getOne(procedureId)
-    isRegimen.value = procedure.value.quantityDefault > 1
 
     if (procedure.value?.consumablesHint) {
       const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
@@ -147,7 +149,7 @@ const handleDelete = async () => {
     emit('success', Procedure.from(procedure.value), 'DELETE')
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
+    console.log('🚀 ~ file: ModalCustomerUpsert.vue:147 ~ handleDelete ~ error:', error)
   }
 }
 
@@ -161,10 +163,12 @@ const clickDelete = () => {
   })
 }
 
-const handleChangeIsRegimen = (e: Event) => {
+const handleChangeProcedureType = (e: Event) => {
   const target = e.target as HTMLInputElement
-  isRegimen.value = target.checked
-  if (!target.checked) {
+  if (target.checked) {
+    procedure.value.procedureType = ProcedureType.Regimen
+  } else {
+    procedure.value.procedureType = ProcedureType.Basic
     procedure.value.quantityDefault = 1
     procedure.value.gapHours = 0
   }
@@ -315,13 +319,13 @@ defineExpose({ openModal })
                     </label>
                     <input
                       id="isRegimen"
-                      v-model="isRegimen"
+                      :checked="procedure.procedureType === ProcedureType.Regimen"
                       type="checkbox"
                       name="isRegimen"
-                      @change="handleChangeIsRegimen" />
+                      @change="handleChangeProcedureType" />
                     <br />
                   </div>
-                  <div v-if="isRegimen">
+                  <div v-if="procedure.procedureType === ProcedureType.Regimen">
                     <div class="mt-3">
                       <div>Số buổi làm</div>
                       <div>

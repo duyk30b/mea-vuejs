@@ -22,13 +22,13 @@ const props = defineProps<{ ticketStatus: TicketStatus }>()
     <template #icon>
       <ClockCircleOutlined />
     </template>
-    Đón tiếp
+    Đang chờ
   </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Approved" color="warning">
+  <a-tag v-if="ticketStatus === TicketStatus.Approved" color="cyan">
     <template #icon>
       <ClockCircleOutlined />
     </template>
-    Đón tiếp
+    Đang chờ
   </a-tag>
   <a-tag v-if="ticketStatus === TicketStatus.Executing" color="processing">
     <template #icon>

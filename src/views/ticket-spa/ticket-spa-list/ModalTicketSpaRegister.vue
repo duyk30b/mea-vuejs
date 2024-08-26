@@ -181,7 +181,6 @@ defineExpose({ openModal })
               ref="inputOptionsCustomer"
               :options="customerListOptions"
               :maxHeight="200"
-              no-clear-text-when-not-selected
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"
@@ -226,14 +225,13 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 80%; flex-grow: 1">
+        <!-- <div style="flex-basis: 80%; flex-grow: 1">
           <div>Đăng ký bác sĩ</div>
           <div>
             <InputOptions
               ref="inputOptionsDoctor"
               :options="customerListOptions"
               :maxHeight="200"
-              no-clear-text-when-not-selected
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"
@@ -248,7 +246,7 @@ defineExpose({ openModal })
               </template>
             </InputOptions>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <div class="p-4 mt-2">

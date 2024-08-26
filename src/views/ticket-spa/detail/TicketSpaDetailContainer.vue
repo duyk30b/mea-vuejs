@@ -230,7 +230,7 @@ const clickCloseVisit = () => {
           size="default"
           @click="startCheckup">
           <LoginOutlined />
-          VÀO KHÁM
+          BẮT ĐẦU LÀM
         </VueButton>
         <VueButton
           color="blue"
@@ -238,7 +238,7 @@ const clickCloseVisit = () => {
           :disabled="![TicketStatus.Executing].includes(ticketRef.ticketStatus)"
           @click="clickCloseVisit">
           <ContainerOutlined />
-          ĐÓNG PHIẾU KHÁM
+          ĐÓNG PHIẾU
         </VueButton>
       </div>
     </div>

@@ -2,8 +2,8 @@ import { DiscountType } from '../enum'
 
 export enum ProcedureType {
   Basic = 1,
-  Remedy = 2, // Bài thuốc
-  // Regimen = 2, // Liệu trình
+  Regimen = 2, // Liệu trình
+  Remedy = 3, // Bài thuốc
 }
 
 export class Procedure {

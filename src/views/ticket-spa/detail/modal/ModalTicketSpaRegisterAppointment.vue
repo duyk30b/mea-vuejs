@@ -7,8 +7,8 @@ import { InputHint } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Appointment, AppointmentApi } from '../../../../modules/appointment'
 import { VoucherType } from '../../../../modules/enum'
+import { ticketRef } from '../../../../modules/ticket'
 import { customFilter } from '../../../../utils'
-import { ticketClinic } from '../ticket-clinic-detail.ref'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -46,7 +46,7 @@ const handleRegisterVisit = async () => {
   appointment.value.registeredAt = time.value.valueOf()
   try {
     if (!appointment.value.id) {
-      ticketClinic.value.toAppointment = await AppointmentApi.createOne({
+      ticketRef.value.toAppointment = await AppointmentApi.createOne({
         fromTicketId: appointment.value.fromTicketId,
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
@@ -55,7 +55,7 @@ const handleRegisterVisit = async () => {
         appointmentStatus: appointment.value.appointmentStatus,
       })
     } else {
-      ticketClinic.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
+      ticketRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
