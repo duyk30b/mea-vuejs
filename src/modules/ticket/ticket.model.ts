@@ -10,6 +10,7 @@ import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
+import { TicketUser } from '../ticket-user'
 import type { User } from '../user'
 
 export enum TicketStatus {
@@ -54,6 +55,7 @@ export class Ticket {
   ticketProductList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
   ticketRadiologyList?: TicketRadiology[]
+  ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
   toAppointment?: Appointment
@@ -86,6 +88,7 @@ export class Ticket {
     ins.ticketProcedureList = []
     ins.ticketProductList = []
     ins.ticketRadiologyList = []
+    ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
 
@@ -133,6 +136,9 @@ export class Ticket {
     }
     if (target.ticketRadiologyList) {
       target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
+    }
+    if (target.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
     }
     if (target.ticketSurchargeList) {
       target.ticketSurchargeList = TicketSurcharge.basicList(target.ticketSurchargeList)

@@ -87,6 +87,10 @@ export const socketInit = () => {
   SocketBase.on(SOCKET_EVENT.TICKET_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
     SocketService.listenTicketChangeTicketRadiologyList(data)
   })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_CHANGE_TICKET_USER_LIST, (data) => {
+    SocketService.listenTicketChangeTicketUserList(data)
+  })
 }
 
 export const reconnectSocket = () => {

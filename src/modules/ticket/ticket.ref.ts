@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { Ticket } from './ticket.model'
 import { VoucherType } from '../enum'
+import { Ticket } from './ticket.model'
 
 const ticketRef = ref<Ticket>(Ticket.blank())
 // watchEffect(() => {
@@ -28,4 +28,4 @@ const ticketPagination = ref({
 
 const ticketHistory = ref<Record<string, Ticket>>({})
 
-export { ticketRef, ticketPagination, ticketHistory }
+export { ticketHistory, ticketPagination, ticketRef }

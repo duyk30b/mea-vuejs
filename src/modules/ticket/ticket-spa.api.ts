@@ -17,7 +17,7 @@ export class TicketSpaApi {
   }
 
   static async startCheckup(params: { ticketId: number }) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${params.ticketId}/start-checkup`)
+    const response = await AxiosInstance.post(`/ticket-spa/${params.ticketId}/start-checkup`)
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
   }
 

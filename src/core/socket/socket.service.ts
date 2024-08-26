@@ -11,6 +11,7 @@ import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
+import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { DistributorDB } from '../indexed-db/repository/distributor.repository'
@@ -200,6 +201,19 @@ export class SocketService {
 
     if (ticketRef.value.id === ticketId) {
       ticketRef.value.ticketProductList = TicketProduct.fromList(ticketProductList)
+    }
+  }
+
+  static async listenTicketChangeTicketUserList(data: { ticketId: number; ticketUserList: any[] }) {
+    const { ticketId, ticketUserList } = data
+
+    const ticketFind = ticketPagination.value.data.find((i) => i.id === ticketId)
+    if (ticketFind) {
+      ticketFind.ticketUserList = TicketUser.fromList(ticketUserList)
+    }
+
+    if (ticketRef.value.id === ticketId) {
+      ticketRef.value.ticketUserList = TicketUser.fromList(ticketUserList)
     }
   }
 }

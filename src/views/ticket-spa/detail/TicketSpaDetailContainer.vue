@@ -17,8 +17,7 @@ import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
-import { TicketStatus, ticketRef } from '../../../modules/ticket'
-import { TicketClinicApi, useTicketClinicStore } from '../../../modules/ticket-clinic'
+import { TicketService, TicketStatus, ticketRef } from '../../../modules/ticket'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
 import TicketSpaConsumable from './TicketSpaConsumable.vue'
 import TicketSpaDiagnosis from './TicketSpaDiagnosis.vue'
@@ -27,18 +26,18 @@ import TicketSpaPrescription from './TicketSpaPrescription.vue'
 import TicketSpaProcedure from './TicketSpaProcedure.vue'
 import TicketSpaRadiology from './TicketSpaRadiology.vue'
 import TicketSpaSummary from './TicketSpaSummary.vue'
+import { TicketSpaApi } from '../../../modules/ticket/ticket-spa.api'
 
 const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
 const settingStore = useSettingStore()
-const ticketRefStore = useTicketClinicStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 
 const startFetchData = async (ticketId: number) => {
   try {
-    const ticketData = await ticketRefStore.detail(ticketId, {
+    const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
         user: true,
@@ -59,7 +58,7 @@ const startFetchData = async (ticketId: number) => {
     if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
     ticketRef.value = ticketData
   } catch (error) {
-    console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
+    console.log('🚀 ~ file: InvoiceDetails.vue:60 ~ error:', error)
   }
 }
 
@@ -82,11 +81,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await TicketClinicApi.startCheckup({ ticketId: ticketRef.value.id })
+  await TicketSpaApi.startCheckup({ ticketId: ticketRef.value.id })
 }
 
 const startCloseVisit = async () => {
-  await TicketClinicApi.close(ticketRef.value.id)
+  // await TicketSpaApi.close(ticketRef.value.id)
 }
 
 const clickCloseVisit = () => {
@@ -230,7 +229,7 @@ const clickCloseVisit = () => {
           size="default"
           @click="startCheckup">
           <LoginOutlined />
-          BẮT ĐẦU LÀM
+          VÀO PHÒNG
         </VueButton>
         <VueButton
           color="blue"

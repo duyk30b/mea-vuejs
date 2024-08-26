@@ -184,7 +184,6 @@ const saveTicketProcedureList = async () => {
             <th>Dịch vụ</th>
             <th>SL</th>
             <th>Giá</th>
-            <th>T.Tiền</th>
             <th></th>
           </tr>
         </thead>
@@ -227,7 +226,10 @@ const saveTicketProcedureList = async () => {
             <td>{{ tpItem.procedure?.name }}</td>
             <td style="width: 150px">
               <div
-                v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.ticketStatus)"
+                v-if="
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.ticketStatus) ||
+                  tpItem.procedure?.procedureType === ProcedureType.Regimen
+                "
                 class="text-center">
                 {{ tpItem.quantity }}
               </div>
@@ -251,9 +253,6 @@ const saveTicketProcedureList = async () => {
               </div>
             </td>
             <td class="text-right">{{ formatMoney(tpItem.actualPrice) }}</td>
-            <td class="text-right">
-              {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
-            </td>
             <td class="text-center">
               <a
                 v-if="![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRef.ticketStatus)"
@@ -264,7 +263,7 @@ const saveTicketProcedureList = async () => {
             </td>
           </tr>
           <tr>
-            <td colspan="4" class="text-right">
+            <td colspan="3" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

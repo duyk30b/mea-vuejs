@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   CheckCircleOutlined,
-  CustomerServiceOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   InteractionOutlined,
@@ -32,9 +31,9 @@ const props = defineProps<{ ticketStatus: TicketStatus }>()
   </a-tag>
   <a-tag v-if="ticketStatus === TicketStatus.Executing" color="processing">
     <template #icon>
-      <CustomerServiceOutlined />
+      <ExclamationCircleOutlined />
     </template>
-    Đang khám
+    Đang thực hiện
   </a-tag>
   <a-tag v-if="ticketStatus === TicketStatus.Debt" color="error">
     <template #icon>
