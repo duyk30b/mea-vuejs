@@ -70,7 +70,7 @@ const selectProcedure = (instance?: Procedure) => {
     ticketProcedure.expectedPrice = instance.price
     ticketProcedure.actualPrice = instance.price
     ticketProcedure.quantity = 1
-    ticketProcedure.createdAt = Date.now()
+    ticketProcedure.startedAt = Date.now()
     ticketProcedureList.value.push(ticketProcedure)
   }
 

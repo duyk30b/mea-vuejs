@@ -1,10 +1,9 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
-import { clinicRouter } from './clinic.router'
 import { dataRouter } from './data.router'
 import { statisticRouter } from './statistic.router'
-import { ticketOrderRouter } from './ticket-order.router'
+import { ticketRouter } from './ticket.router'
 import { warehouseRouter } from './warehouse.router'
 
 enum AuthLevel {
@@ -28,8 +27,7 @@ const Router = createRouter({
           component: () => import('../views/AppHome.vue'),
           meta: { title: 'Trang chủ' },
         },
-        clinicRouter,
-        ticketOrderRouter,
+        ...ticketRouter,
         warehouseRouter,
         dataRouter,
         statisticRouter,

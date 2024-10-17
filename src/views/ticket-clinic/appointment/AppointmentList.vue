@@ -2,22 +2,22 @@
 import { ScheduleOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, onMounted, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../common/vue-form'
-import InputOptions from '../../common/vue-form/InputOptions.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../modules/appointment'
-import { useCustomerStore, type Customer } from '../../modules/customer'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { DTimer, formatPhone } from '../../utils'
-import ModalAppointmentRegister from './ModalAppointmentRegister.vue'
-import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
-import { IconFileSearch, IconTrash } from '../../common/icon'
-import AppointmentStatusTag from './AppointmentStatusTag.vue'
-import { IconEditSquare } from '../../common/icon-google'
-import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
+import { IconFileSearch, IconTrash } from '../../../common/icon'
+import { IconEditSquare } from '../../../common/icon-google'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputOptions, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
+import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { DTimer, formatPhone } from '../../../utils'
+import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
+import AppointmentStatusTag from './AppointmentStatusTag.vue'
+import ModalAppointmentRegister from './ModalAppointmentRegister.vue'
+import { VoucherType } from '../../../modules/enum'
 
 const modalAppointmentRegister = ref<InstanceType<typeof ModalAppointmentRegister>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -68,6 +68,7 @@ const startFetchData = async () => {
         appointmentStatus: appointmentStatusList.value.length
           ? { IN: appointmentStatusList.value }
           : undefined,
+        appointmentType: VoucherType.Clinic,
       },
       sort: { registeredAt: 'ASC' },
     })

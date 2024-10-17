@@ -68,7 +68,7 @@ const startSave = async () => {
     }
 
     if (!ticketRadiology.value.id) {
-      await TicketClinicApi.createTicketRadiology({
+      await TicketClinicApi.createTicketRadiologyCompleted({
         ticketRadiology: ticketRadiology.value,
         files,
       })

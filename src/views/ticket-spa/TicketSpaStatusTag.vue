@@ -1,0 +1,52 @@
+<script setup lang="ts">
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  InteractionOutlined,
+} from '@ant-design/icons-vue'
+import { TicketStatus } from '../../modules/ticket'
+
+const props = defineProps<{ ticketStatus: TicketStatus }>()
+</script>
+
+<template>
+  <a-tag v-if="ticketStatus === TicketStatus.Schedule" color="cyan">
+    <template #icon>
+      <InteractionOutlined />
+    </template>
+    Hẹn
+  </a-tag>
+  <a-tag v-if="ticketStatus === TicketStatus.Draft" color="warning">
+    <template #icon>
+      <ClockCircleOutlined />
+    </template>
+    Đang chờ
+  </a-tag>
+  <a-tag v-if="ticketStatus === TicketStatus.Approved" color="cyan">
+    <template #icon>
+      <ClockCircleOutlined />
+    </template>
+    Đang chờ
+  </a-tag>
+  <a-tag v-if="ticketStatus === TicketStatus.Executing" color="processing">
+    <template #icon>
+      <ExclamationCircleOutlined />
+    </template>
+    Đang thực hiện
+  </a-tag>
+  <a-tag v-if="ticketStatus === TicketStatus.Debt" color="error">
+    <template #icon>
+      <ExclamationCircleOutlined />
+    </template>
+    Nợ
+  </a-tag>
+  <a-tag v-if="ticketStatus === TicketStatus.Completed" color="success">
+    <template #icon>
+      <CheckCircleOutlined />
+    </template>
+    Hoàn thành
+  </a-tag>
+</template>
+
+<style lang="scss" scoped></style>

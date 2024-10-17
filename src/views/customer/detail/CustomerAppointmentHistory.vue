@@ -7,7 +7,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { Customer } from '../../../modules/customer'
 import { DTimer, formatPhone } from '../../../utils'
-import AppointmentStatusTag from '../../appointment/AppointmentStatusTag.vue'
+import AppointmentStatusTag from '../../ticket-clinic/appointment/AppointmentStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),

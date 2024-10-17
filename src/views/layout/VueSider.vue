@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import { IconLabPanel } from '../../common/icon-google'
 import MedicalIcon from '../../common/icon/MedicalIcon.vue'
 import StoreIcon from '../../common/icon/StoreIcon.vue'
 import { useMeStore } from '../../modules/_me/me.store'
@@ -54,16 +55,36 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppHome' }">Home</router-link>
       </span>
     </a-menu-item>
-    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="Clinic">
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="TicketClinic">
       <template #icon>
         <MedicalIcon />
       </template>
       <template #title>Phòng khám</template>
-      <a-menu-item key="ClinicVisitList">
+      <a-menu-item key="TicketClinicList">
         <router-link :to="{ name: 'TicketClinicList' }">Danh sách khám</router-link>
       </a-menu-item>
       <a-menu-item key="AppointmentList">
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
+      </a-menu-item>
+    </a-sub-menu>
+    <a-sub-menu
+      v-if="permissionIdMap[PermissionId.TICKET_TRADITIONAL_READ]"
+      key="TicketTraditional">
+      <template #icon>
+        <MedicalIcon />
+      </template>
+      <template #title>PK Đông Y</template>
+      <a-menu-item key="TicketTraditionalList">
+        <router-link :to="{ name: 'TicketTraditionalList' }">Danh sách khám</router-link>
+      </a-menu-item>
+    </a-sub-menu>
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_TRADITIONAL_READ]" key="TicketSpa">
+      <template #icon>
+        <IconLabPanel />
+      </template>
+      <template #title>Phòng Thẩm mỹ</template>
+      <a-menu-item key="TicketSpaList">
+        <router-link :to="{ name: 'TicketSpaList' }">Đón tiếp</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_ORDER_READ]" key="TicketOrder">
@@ -118,7 +139,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #icon>
         <PicCenterOutlined />
       </template>
-      <template #title>Dữ liệu</template>
+      <template #title>Danh mục</template>
       <a-menu-item v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" key="ProcedureList">
         <router-link :to="{ name: 'ProcedureList' }">Dịch vụ</router-link>
       </a-menu-item>
@@ -181,7 +202,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item key="UserInfo">
         <router-link :to="{ name: 'UserInfo' }">Thông tin cá nhân</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" key="SystemSetting">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+        key="SystemSetting">
         <router-link :to="{ name: 'SystemSetting' }">Cài đặt</router-link>
       </a-menu-item>
     </a-sub-menu>

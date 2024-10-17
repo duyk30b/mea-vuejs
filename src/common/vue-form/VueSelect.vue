@@ -179,7 +179,7 @@ defineExpose({ focus })
       <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
-        <IconClearCircle class="icon-clear-focus" @click="handleClear" />
+        <IconClearCircle class="icon-clear-blur" @click="handleClear" />
       </template>
       <template v-else>
         <IconTriangleDown v-if="!showOptions" />

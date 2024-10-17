@@ -16,6 +16,7 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { VoucherType } from '../../../modules/enum'
 
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -66,6 +67,7 @@ const selectCustomer = async (customerSelect: Customer) => {
         appointmentList.value = await AppointmentApi.list({
           filter: {
             appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
+            appointmentType: VoucherType.Clinic,
           },
         })
         loadAppointment = true
@@ -122,7 +124,9 @@ const handleChangeCheckboxAppointment = (e: any, appointment: Appointment) => {
 const handleRegisterVisit = async () => {
   const registeredAt = time.value.valueOf()
   if (DTimer.timeToText(registeredAt) !== DTimer.timeToText(new Date())) {
-    return AlertStore.addError('Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày')
+    return AlertStore.addError(
+      'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
+    )
   }
   saveLoading.value = true
   try {
@@ -178,7 +182,6 @@ defineExpose({ openModal })
               ref="inputOptionsCustomer"
               :options="customerListOptions"
               :maxHeight="200"
-              no-clear-text-when-not-selected
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"

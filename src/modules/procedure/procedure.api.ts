@@ -53,7 +53,29 @@ export class ProcedureApi {
     const response = await AxiosInstance.post('/procedure/create', {
       name: procedure.name,
       group: procedure.name,
-      price: procedure.price,
+
+      procedureType: procedure.procedureType,
+      quantityDefault: procedure.quantityDefault,
+      gapHours: procedure.gapHours,
+      price: procedure.price, // Giá mặc định
+
+      discountMoney: procedure.discountMoney, // tiền giảm giá mặc định
+      discountPercent: procedure.discountPercent,
+      discountType: procedure.discountType,
+      discountStart: procedure.discountStart != null ? procedure.discountStart : null,
+      discountEnd: procedure.discountEnd != null ? procedure.discountEnd : null,
+
+      saleBolusMoney: procedure.saleBolusMoney, // thưởng chốt sale
+      saleBolusPercent: procedure.saleBolusPercent, // thưởng chốt sale
+      saleBolusType: procedure.saleBolusType, // thưởng chốt sale
+      primaryBolusMoney: procedure.primaryBolusMoney, // thưởng thợ chính
+      primaryBolusPercent: procedure.primaryBolusPercent, // thưởng thợ chính
+      primaryBolusType: procedure.primaryBolusType, // thưởng thợ chính
+      secondaryBolusMoney: procedure.secondaryBolusMoney, // thưởng thợ phụ
+      secondaryBolusPercent: procedure.secondaryBolusPercent, // thưởng thợ phụ
+      secondaryBolusType: procedure.secondaryBolusType, // thưởng thợ phụ
+
+      consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
@@ -64,7 +86,29 @@ export class ProcedureApi {
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
       name: procedure.name,
       group: procedure.name,
-      price: procedure.price,
+
+      procedureType: procedure.procedureType,
+      quantityDefault: procedure.quantityDefault,
+      gapHours: procedure.gapHours,
+      price: procedure.price, // Giá mặc định
+
+      discountMoney: procedure.discountMoney, // tiền giảm giá mặc định
+      discountPercent: procedure.discountPercent,
+      discountType: procedure.discountType,
+      discountStart: procedure.discountStart != null ? procedure.discountStart : null,
+      discountEnd: procedure.discountEnd != null ? procedure.discountEnd : null,
+
+      saleBolusMoney: procedure.saleBolusMoney, // thưởng chốt sale
+      saleBolusPercent: procedure.saleBolusPercent, // thưởng chốt sale
+      saleBolusType: procedure.saleBolusType, // thưởng chốt sale
+      primaryBolusMoney: procedure.primaryBolusMoney, // thưởng thợ chính
+      primaryBolusPercent: procedure.primaryBolusPercent, // thưởng thợ chính
+      primaryBolusType: procedure.primaryBolusType, // thưởng thợ chính
+      secondaryBolusMoney: procedure.secondaryBolusMoney, // thưởng thợ phụ
+      secondaryBolusPercent: procedure.secondaryBolusPercent, // thưởng thợ phụ
+      secondaryBolusType: procedure.secondaryBolusType, // thưởng thợ phụ
+
+      consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>

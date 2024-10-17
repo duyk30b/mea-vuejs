@@ -254,7 +254,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         class="px-4 py-2 flex items-center justify-between gap-4"
         style="border-bottom: 1px solid #cdcdcd"
         :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
-        @dblclick="modalProcedureUpsert?.openModal(procedure)">
+        @dblclick="modalProcedureUpsert?.openModal(procedure.id)">
         <div>
           <div class="flex gap-2">
             <div class="font-medium text-justify">
@@ -387,7 +387,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalProcedureUpsert?.openModal(procedure)">
+                @click="modalProcedureUpsert?.openModal(procedure.id)">
                 <FormOutlined />
               </a>
             </td>

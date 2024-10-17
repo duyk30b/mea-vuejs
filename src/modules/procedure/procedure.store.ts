@@ -73,26 +73,28 @@ export const useProcedureStore = defineStore('procedure-store', {
     },
 
     async getOne(id: number) {
-      const procedure = await ProcedureDB.findOneByKey(id)
-      return procedure ? Procedure.from(procedure) : null
+      const procedure = await ProcedureApi.detail(id, {})
+      // const procedure = await ProcedureDB.findOneByKey(id)
+      await ProcedureDB.upsertOne(procedure)
+      return procedure
     },
 
-    async createOne(instance: Procedure) {
-      const response = await ProcedureApi.createOne(instance)
-      await ProcedureDB.upsertOne(response)
+    async createOne(procedureProp: Procedure) {
+      const procedureResponse = await ProcedureApi.createOne(procedureProp)
+      await ProcedureDB.upsertOne(procedureResponse)
       this.timeSync = Date.now()
-      return response
+      return procedureResponse
     },
 
-    async updateOne(id: number, instance: Procedure) {
-      const response = await ProcedureApi.updateOne(id, instance)
-      await ProcedureDB.replaceOne(id, response)
-      return response
+    async updateOne(id: number, procedureProp: Procedure) {
+      const procedureResponse = await ProcedureApi.updateOne(id, procedureProp)
+      await ProcedureDB.replaceOne(id, procedureResponse)
+      return procedureResponse
     },
 
     async deleteOne(id: number) {
-      const response = await ProcedureApi.deleteOne(id)
-      await ProcedureDB.replaceOne(id, response)
+      const procedureResponse = await ProcedureApi.deleteOne(id)
+      await ProcedureDB.replaceOne(id, procedureResponse)
     },
 
     async search(text: string) {

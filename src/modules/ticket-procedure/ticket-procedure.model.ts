@@ -14,7 +14,7 @@ export class TicketProcedure {
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
   actualPrice: number // Giá thực tế
-  createdAt: number
+  startedAt: number
 
   customer?: Customer
   ticket?: Ticket
@@ -80,7 +80,7 @@ export class TicketProcedure {
     if (a.discountPercent != b.discountPercent) return false
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
-    if (a.createdAt != b.createdAt) return false
+    if (a.startedAt != b.startedAt) return false
     return true
   }
 

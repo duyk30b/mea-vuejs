@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import {
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons-vue'
-import { AppointmentStatus } from '../../modules/appointment'
-import { IconClose } from '../../common/icon'
+import { AppointmentStatus } from '../../../modules/appointment'
 
 const props = defineProps<{ appointmentStatus: AppointmentStatus }>()
 </script>
