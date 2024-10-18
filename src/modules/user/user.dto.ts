@@ -5,12 +5,12 @@ export class UserGetQuery {
   page?: number
   limit?: number
   relation?: {
-    role?: boolean
+    userRoleList?: boolean
   }
 
   filter?: {
     searchText?: string
-    roleId?: number
+    isAdmin?: 1 | 0
     isActive?: 1 | 0
     updatedAt?: ConditionDate
   }

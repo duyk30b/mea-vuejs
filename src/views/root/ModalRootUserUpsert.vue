@@ -37,7 +37,7 @@ const handleSave = async () => {
     return AlertStore.addError('Lỗi: Tên khách hàng không được bỏ trống')
   }
   try {
-    if (user.value.id === null) {
+    if (!user.value.id) {
       const response = await RootUserApi.createOne(user.value)
       emit('success', response, 'CREATE')
     } else {
@@ -129,13 +129,6 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">RoleId</div>
-          <div class="flex-auto">
-            <InputNumber v-model:value="user.roleId" required />
-          </div>
-        </div>
-
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
           <div style="width: 100px; flex: none">Ngày sinh</div>
           <div style="flex: 1">
@@ -147,7 +140,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-3 flex items-center">
+        <div class="mt-5 flex items-center">
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
             <a-radio-group v-model:value="user.gender">
@@ -157,7 +150,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="flex items-center mt-3">
+        <div class="flex items-center mt-5">
+          <div class="w-[100px] flex-none">Admin</div>
+          <a-switch
+            :checked="Boolean(user.isAdmin)"
+            @change="(checked: Boolean) => (user.isAdmin = checked ? 1 : 0)" />
+        </div>
+
+        <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(user.isActive)"

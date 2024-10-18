@@ -30,7 +30,7 @@ const startFetchData = async () => {
     const { data, meta } = await UserApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { role: true },
+      relation: { userRoleList: true },
     })
     userList.value = data
     total.value = meta.total
@@ -94,9 +94,9 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Vai trò</th>
             <th>Username</th>
             <th>Họ Tên</th>
+            <th>Vai trò</th>
             <th v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
             <th v-if="permissionIdMap[PermissionId.USER_UPDATE]">Sửa</th>
@@ -108,9 +108,9 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
           </tr>
           <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">U{{ user.id }}</td>
-            <td>{{ user.role?.name }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.fullName }}</td>
+            <td>{{ user.isAdmin ? 'Admin' : '' }}</td>
             <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>

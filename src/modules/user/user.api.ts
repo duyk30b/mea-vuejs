@@ -29,31 +29,33 @@ export class UserApi {
     return User.from(data.user)
   }
 
-  static async createOne(user: User) {
+  static async createOne(user: User, roleIdList: number[]) {
     const response = await AxiosInstance.post('/user/create', {
       phone: user.phone,
       username: user.username,
       password: user.password,
-      roleId: user.roleId,
       fullName: user.fullName,
       birthday: user.birthday,
       gender: user.gender,
       isActive: user.isActive,
+
+      roleIdList,
     })
     const { data } = response.data as BaseResponse<{ user: any }>
     return User.from(data.user)
   }
 
-  static async updateOne(id: number, user: User) {
+  static async updateOne(id: number, user: User, roleIdList: number[]) {
     const response = await AxiosInstance.patch(`/user/update/${id}`, {
       phone: user.phone,
       username: user.username,
       password: user.password,
-      roleId: user.roleId,
       fullName: user.fullName,
       birthday: user.birthday,
       gender: user.gender,
       isActive: user.isActive,
+
+      roleIdList,
     })
     const { data } = response.data as BaseResponse<{ user: any }>
     return User.from(data.user)
