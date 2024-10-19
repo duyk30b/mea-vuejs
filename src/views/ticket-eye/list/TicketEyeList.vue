@@ -17,11 +17,11 @@ import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
-import ModalTicketClinicRegister from './ModalTicketClinicRegister.vue'
+import TicketEyeStatusTag from '../TicketEyeStatusTag.vue'
+import type ModalTicketEyeRegister from './ModalTicketEyeRegister.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicRegister = ref<InstanceType<typeof ModalTicketClinicRegister>>()
+const modalTicketEyeRegister = ref<InstanceType<typeof ModalTicketEyeRegister>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -177,7 +177,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
 
 <template>
   <ModalTicketClinicRegister
-    ref="modalTicketClinicRegister"
+    ref="modalTicketEyeRegister"
     @success="handleModalTicketClinicRegisterSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
@@ -193,7 +193,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           v-if="permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW]"
           color="blue"
           icon="plus"
-          @click="modalTicketClinicRegister?.openModal()">
+          @click="modalTicketEyeRegister?.openModal()">
           KHÁM MỚI
         </VueButton>
       </div>

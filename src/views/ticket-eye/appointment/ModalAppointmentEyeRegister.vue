@@ -77,7 +77,7 @@ const handleRegisterVisit = async () => {
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
-        appointmentType: VoucherType.Clinic,
+        voucherType: VoucherType.Clinic,
         appointmentStatus: appointment.value.appointmentStatus,
       })
     } else {

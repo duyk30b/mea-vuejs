@@ -67,7 +67,7 @@ const selectCustomer = async (customerSelect: Customer) => {
         appointmentList.value = await AppointmentApi.list({
           filter: {
             appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
-            appointmentType: VoucherType.Clinic,
+            voucherType: VoucherType.Clinic,
           },
         })
         loadAppointment = true

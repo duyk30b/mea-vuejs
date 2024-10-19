@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { ref } from 'vue'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { IconClose } from '../../../../common/icon'
@@ -153,4 +153,4 @@ defineExpose({ openModal, openModalById })
 :deep(.description .ck-editor__editable) {
   height: 400px !important;
 }
-</style>
+</style> -->

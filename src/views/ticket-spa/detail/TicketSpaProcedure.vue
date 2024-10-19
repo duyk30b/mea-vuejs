@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<!-- <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDelete, IconEditSquare } from '../../../common/icon-google'
@@ -300,4 +300,4 @@ const saveTicketProcedureList = async () => {
     </VueButton>
   </div>
 </template>
-<script lang="scss" scope></script>
+<script lang="scss" scope></script> -->

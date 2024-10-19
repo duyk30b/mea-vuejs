@@ -17,7 +17,7 @@ export class Appointment {
   reason: string // Ghi chú
   cancelReason: string // Ghi chú
 
-  appointmentType: VoucherType
+  voucherType: VoucherType
   appointmentStatus: AppointmentStatus
 
   customer?: Customer

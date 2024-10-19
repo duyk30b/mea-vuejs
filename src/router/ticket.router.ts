@@ -140,62 +140,62 @@ export const ticketRouter: RouteRecordRaw[] = [
       // },
     ],
   },
-  {
-    path: 'ticket-spa',
-    name: 'TicketSpa',
-    redirect: () => ({ name: 'TicketSpaList' }),
-    children: [
-      {
-        path: 'list',
-        name: 'TicketSpaList',
-        meta: { title: 'Phòng Thẩm Mỹ' },
-        component: () => import('../views/ticket-spa/ticket-spa-list/TicketSpaList.vue'),
-      },
-      {
-        path: 'detail/:id',
-        name: 'TicketSpaDetailContainer',
-        component: () => import('../views/ticket-spa/detail/TicketSpaDetailContainer.vue'),
-        meta: { title: 'Khám bệnh' },
-        redirect: () => ({ name: 'TicketSpaDiagnosis' }),
-        children: [
-          {
-            path: 'diagnosis',
-            name: 'TicketSpaDiagnosis',
-            component: () => import('../views/ticket-spa/detail/TicketSpaDiagnosis.vue'),
-            meta: { keepAlive: true, title: 'Chẩn đoán' },
-          },
-          {
-            path: 'procedure',
-            name: 'TicketSpaProcedure',
-            component: () => import('../views/ticket-spa/detail/TicketSpaProcedure.vue'),
-            meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
-          },
-          {
-            path: 'radiology',
-            name: 'TicketSpaRadiology',
-            component: () => import('../views/ticket-spa/detail/TicketSpaRadiology.vue'),
-            meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
-          },
-          {
-            path: 'consumable',
-            name: 'TicketSpaConsumable',
-            component: () => import('../views/ticket-spa/detail/TicketSpaConsumable.vue'),
-            meta: { keepAlive: true, title: 'Vật tư' },
-          },
-          {
-            path: 'prescription',
-            name: 'TicketSpaPrescription',
-            component: () => import('../views/ticket-spa/detail/TicketSpaPrescription.vue'),
-            meta: { keepAlive: true, title: 'Kê đơn thuốc' },
-          },
-          {
-            path: 'summary',
-            name: 'TicketSpaSummary',
-            component: () => import('../views/ticket-spa/detail/TicketSpaSummary.vue'),
-            meta: { title: 'Tổng kết' },
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   path: 'ticket-spa',
+  //   name: 'TicketSpa',
+  //   redirect: () => ({ name: 'TicketSpaList' }),
+  //   children: [
+  //     {
+  //       path: 'list',
+  //       name: 'TicketSpaList',
+  //       meta: { title: 'Phòng Thẩm Mỹ' },
+  //       component: () => import('../views/ticket-spa/ticket-spa-list/TicketSpaList.vue'),
+  //     },
+  //     {
+  //       path: 'detail/:id',
+  //       name: 'TicketSpaDetailContainer',
+  //       component: () => import('../views/ticket-spa/detail/TicketSpaDetailContainer.vue'),
+  //       meta: { title: 'Khám bệnh' },
+  //       redirect: () => ({ name: 'TicketSpaDiagnosis' }),
+  //       children: [
+  //         {
+  //           path: 'diagnosis',
+  //           name: 'TicketSpaDiagnosis',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaDiagnosis.vue'),
+  //           meta: { keepAlive: true, title: 'Chẩn đoán' },
+  //         },
+  //         {
+  //           path: 'procedure',
+  //           name: 'TicketSpaProcedure',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaProcedure.vue'),
+  //           meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
+  //         },
+  //         {
+  //           path: 'radiology',
+  //           name: 'TicketSpaRadiology',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaRadiology.vue'),
+  //           meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
+  //         },
+  //         {
+  //           path: 'consumable',
+  //           name: 'TicketSpaConsumable',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaConsumable.vue'),
+  //           meta: { keepAlive: true, title: 'Vật tư' },
+  //         },
+  //         {
+  //           path: 'prescription',
+  //           name: 'TicketSpaPrescription',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaPrescription.vue'),
+  //           meta: { keepAlive: true, title: 'Kê đơn thuốc' },
+  //         },
+  //         {
+  //           path: 'summary',
+  //           name: 'TicketSpaSummary',
+  //           component: () => import('../views/ticket-spa/detail/TicketSpaSummary.vue'),
+  //           meta: { title: 'Tổng kết' },
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ]

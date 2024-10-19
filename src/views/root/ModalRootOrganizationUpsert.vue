@@ -54,7 +54,7 @@ const openModal = async (instance?: Organization) => {
 
     if (firstLoad === true) {
       provinceList.value = await AddressInstance.getAllProvinces()
-      permissionList.value = await PermissionApi.list({ filter: { level: 1 } })
+      permissionList.value = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
       firstLoad = false
     }
   } catch (error) {

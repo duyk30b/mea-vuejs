@@ -15,11 +15,11 @@ import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import AppointmentStatusTag from './AppointmentStatusTag.vue'
-import ModalAppointmentRegister from './ModalAppointmentRegister.vue'
+import AppointmentEyeStatusTag from './AppointmentEyeStatusTag.vue'
+import ModalAppointmentEyeRegister from './ModalAppointmentEyeRegister.vue'
 import { VoucherType } from '../../../modules/enum'
 
-const modalAppointmentRegister = ref<InstanceType<typeof ModalAppointmentRegister>>()
+const modalAppointmentEyeRegister = ref<InstanceType<typeof ModalAppointmentEyeRegister>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const router = useRouter()
@@ -68,7 +68,7 @@ const startFetchData = async () => {
         appointmentStatus: appointmentStatusList.value.length
           ? { IN: appointmentStatusList.value }
           : undefined,
-        appointmentType: VoucherType.Clinic,
+        voucherType: VoucherType.Clinic,
       },
       sort: { registeredAt: 'ASC' },
     })
@@ -140,7 +140,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalAppointmentRegisterSuccess = async () => {
+const handleModalAppointmentEyeRegisterSuccess = async () => {
   // reload bằng lắng nghe event socket
   await startFetchData()
 }
@@ -185,9 +185,9 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 </script>
 
 <template>
-  <ModalAppointmentRegister
-    ref="modalAppointmentRegister"
-    @success="handleModalAppointmentRegisterSuccess" />
+  <ModalAppointmentEyeRegister
+    ref="modalAppointmentEyeRegister"
+    @success="handleModalAppointmentEyeRegisterSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -202,7 +202,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
           v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]"
           icon="plus"
           color="blue"
-          @click="modalAppointmentRegister?.openModal()">
+          @click="modalAppointmentEyeRegister?.openModal()">
           Tạo lịch hẹn mới
         </VueButton>
       </div>
@@ -309,7 +309,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                   <a
                     style="color: #eca52b"
                     class="text-xl"
-                    @click="modalAppointmentRegister?.openModal(appointment)">
+                    @click="modalAppointmentEyeRegister?.openModal(appointment)">
                     <IconEditSquare />
                   </a>
                 </div>
@@ -318,7 +318,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <td style="width: 200px">
               <div class="flex justify-center">
                 <div>
-                  <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
+                  <AppointmentEyeStatusTag :appointmentStatus="appointment.appointmentStatus" />
                 </div>
               </div>
             </td>

@@ -45,10 +45,10 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     if (!user.value.id) {
-      const response = await UserApi.createOne(user.value)
+      const response = await UserApi.createOne(user.value, [])
       emit('success', response, 'CREATE')
     } else {
-      const response = await UserApi.updateOne(user.value.id, user.value)
+      const response = await UserApi.updateOne(user.value.id, user.value, [])
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -95,16 +95,6 @@ defineExpose({ openModal })
       </div>
 
       <div class="px-4 mt-4">
-        <div class="flex items-center">
-          <div style="width: 100px; flex: none">Vai trò</div>
-          <div style="flex: 1">
-            <VueSelect
-              v-model:value="user.roleId"
-              :options="roles.map((i) => ({ text: i.name, value: i.id }))"
-              :disabled="!!user.id && [0, 1].includes(user.roleId)" />
-          </div>
-        </div>
-
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">Username</div>
           <div class="flex-auto">

@@ -2,10 +2,10 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { VoucherType } from '../enum'
 import {
-  AppointmentDetailQuery,
-  AppointmentGetQuery,
-  AppointmentListQuery,
-  type AppointmentPaginationQuery,
+    AppointmentDetailQuery,
+    AppointmentGetQuery,
+    AppointmentListQuery,
+    type AppointmentPaginationQuery,
 } from './appointment.dto'
 import { Appointment, AppointmentStatus } from './appointment.model'
 
@@ -42,7 +42,7 @@ export class AppointmentApi {
     fromTicketId: number
     registeredAt: number
     reason: string
-    appointmentType: VoucherType
+    voucherType: VoucherType
     appointmentStatus: AppointmentStatus
   }) {
     const response = await AxiosInstance.post('/appointment/create', body)

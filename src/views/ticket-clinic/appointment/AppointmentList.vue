@@ -68,7 +68,7 @@ const startFetchData = async () => {
         appointmentStatus: appointmentStatusList.value.length
           ? { IN: appointmentStatusList.value }
           : undefined,
-        appointmentType: VoucherType.Clinic,
+        voucherType: VoucherType.Clinic,
       },
       sort: { registeredAt: 'ASC' },
     })

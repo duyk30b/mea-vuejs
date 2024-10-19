@@ -1,5 +1,5 @@
-import { Role } from '../role/role.model'
-import { User } from '../user/user.model'
+import type { Role } from '../role/role.model'
+import type { User } from '../user/user.model'
 
 export class UserRole {
   oid: number

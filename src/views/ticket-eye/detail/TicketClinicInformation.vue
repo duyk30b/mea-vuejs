@@ -8,8 +8,8 @@ import { PaymentViewType } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
-import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
+import TicketEyeDeliveryStatusTag from '../TicketEyeDeliveryStatusTag.vue'
+import TicketEyeStatusTag from '../TicketEyeStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
 import { ticketClinic } from './ticket-clinic-detail.ref'
@@ -80,7 +80,7 @@ const handleClickModalRegisterAppointment = () => {
         <div>{{ DTimer.timeToText(ticketClinic.startedAt, 'hh:mm DD/MM/YYYY') }}</div>
       </div>
       <div>
-        <TicketClinicStatusTag :ticketStatus="ticketClinic.ticketStatus" />
+        <TicketEyeStatusTag :ticketStatus="ticketClinic.ticketStatus" />
       </div>
     </div>
     <a-divider />
@@ -148,7 +148,7 @@ const handleClickModalRegisterAppointment = () => {
         <div>Lấy thuốc :</div>
       </div>
       <div>
-        <TicketClinicDeliveryStatusTag :deliveryStatus="ticketClinic.deliveryStatus" />
+        <TicketEyeDeliveryStatusTag :deliveryStatus="ticketClinic.deliveryStatus" />
       </div>
     </div>
     <div class="mt-2 flex items-center justify-between">
