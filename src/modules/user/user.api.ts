@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { UserGetQuery, UserListQuery, UserPaginationQuery } from './user.dto'
+import { UserDetailQuery, UserGetQuery, UserListQuery, UserPaginationQuery } from './user.dto'
 import { User } from './user.model'
 
 export class UserApi {
@@ -23,8 +23,10 @@ export class UserApi {
     return User.fromList(data)
   }
 
-  static async detail(id: number): Promise<User> {
-    const response = await AxiosInstance.get(`/user/detail/${id}`)
+  static async detail(id: number, options?: UserDetailQuery): Promise<User> {
+    const params = UserGetQuery.toQuery(options || {})
+
+    const response = await AxiosInstance.get(`/user/detail/${id}`, { params })
     const { data } = response.data as BaseResponse<{ user: any }>
     return User.from(data.user)
   }
@@ -48,8 +50,8 @@ export class UserApi {
   static async updateOne(id: number, user: User, roleIdList: number[]) {
     const response = await AxiosInstance.patch(`/user/update/${id}`, {
       phone: user.phone,
-      username: user.username,
-      password: user.password,
+      // username: user.username,
+      // password: user.password,
       fullName: user.fullName,
       birthday: user.birthday,
       gender: user.gender,

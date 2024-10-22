@@ -5,6 +5,7 @@ export class UserGetQuery {
   page?: number
   limit?: number
   relation?: {
+    organization?: boolean
     userRoleList?: boolean
   }
 

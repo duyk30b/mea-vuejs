@@ -7,7 +7,7 @@ import Device from './device.model'
 
 export class User {
   oid: number
-  id: number | null
+  id: number
   username: string
   password: string
   secret: string
