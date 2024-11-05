@@ -1,13 +1,43 @@
 <script setup lang="ts">
-import { Procedure } from '../../../modules/procedure'
+import { onMounted, ref, watch } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { Procedure, useProcedureStore } from '../../../modules/procedure'
 
-const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
-  procedure: () => Procedure.blank(),
+const props = withDefaults(defineProps<{ procedureId: number }>(), {
+  procedureId: 0,
 })
+
+const procedureStore = useProcedureStore()
+const procedure = ref<Procedure>(Procedure.blank())
+
+const startFetchData = async () => {
+  if (!props.procedureId) return
+
+  try {
+    const procedureFetch = await procedureStore.getOne(props.procedureId, {
+      relation: { procedureGroup: true },
+    })
+    procedure.value = procedureFetch
+  } catch (error) {
+    console.log('🚀 ~ file: ProcedureInfo.vue:23 ~ startFetchData ~ error:', error)
+  }
+}
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
+
+watch(
+  () => props.procedureId,
+  async (newValue) => {
+    console.log('🚀 ~ file: ProcedureInfo.vue:32 ~ newValue:', newValue)
+    await startFetchData()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  console.log('🚀 ~ file: ProcedureInfo.vue:39 ~ onMounted ~ onMounted:')
+})
 </script>
 
 <template>
@@ -22,7 +52,7 @@ const { formatMoney } = settingStore
     </p>
     <p class="mt-2">
       <span class="inline-block w-40">Nhóm</span>
-      <span>{{ settingStore.PROCEDURE_GROUP[procedure.group || 0] }}</span>
+      <span>{{ procedure.procedureGroup?.name }}</span>
     </p>
     <p class="mt-2">
       <span class="inline-block w-40">Giá dịch vụ</span>

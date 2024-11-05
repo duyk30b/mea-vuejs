@@ -23,12 +23,11 @@ const openModal = async (b: Batch) => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    console.log('🚀 ~ file: ModalBatchUpdate.vue:35 ~ handleSave ~ batch.value:', batch.value)
     const batchDraft = await batchStore.updateOne(batch.value.id, batch.value)
     emit('success', batchDraft, 'UPDATE')
-    showModal.value = false
+    handleClose()
   } catch (error) {
-    console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalProductUpsert.vue:30 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }

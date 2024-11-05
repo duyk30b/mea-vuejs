@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { IconClose } from '../../../../common/icon'
-import { BasicEditor } from '../../../../ckeditor/class-editor'
-import InputText from '../../../../common/vue-form/InputText.vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { ImageHost } from '../../../../modules/image/image.model'
-import ImageUpload from '../../../../common/ImageUpload.vue'
 import dayjs, { Dayjs } from 'dayjs'
+import { ref } from 'vue'
+import { BasicEditor } from '../../../../ckeditor/class-editor'
+import { IconClose } from '../../../../common/icon'
+import ImageUpload from '../../../../common/ImageUpload.vue'
+import InputText from '../../../../common/vue-form/InputText.vue'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import VueButton from '../../../../common/VueButton.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { ImageHost } from '../../../../modules/image/image.model'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
-import { TicketClinicApi } from '../../../../modules/ticket-clinic'
-import { User } from '../../../../modules/user'
 
 const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
 
@@ -36,9 +34,9 @@ const openModal = async (instance: TicketRadiology, editable: boolean) => {
     startedAt.value = dayjs(new Date(instance.startedAt))
   }
 
-  if (editable && !ticketRadiology.value.doctor) {
-    ticketRadiology.value.doctor = meStore.user || User.blank()
-  }
+  // if (editable && !ticketRadiology.value.doctor) {
+  //   ticketRadiology.value.doctor = meStore.user || User.blank()
+  // }
   disabled.value = !editable
 }
 
@@ -59,7 +57,6 @@ const startSave = async () => {
   try {
     saveLoading.value = true
     ticketRadiology.value.startedAt = startedAt.value.valueOf()
-    ticketRadiology.value.doctorId = meStore.user?.id || 0
 
     const { filesPosition, imageIdsKeep, files } = imageUploadRef.value?.getData() || {
       filesPosition: [],
@@ -68,12 +65,12 @@ const startSave = async () => {
     }
 
     if (!ticketRadiology.value.id) {
-      await TicketClinicApi.createTicketRadiology({
+      await TicketRadiologyApi.createCompleted({
         ticketRadiology: ticketRadiology.value,
         files,
       })
     } else {
-      await TicketClinicApi.updateTicketRadiology({
+      await TicketRadiologyApi.update({
         ticketRadiology: ticketRadiology.value,
         imageIdsKeep,
         files,
@@ -113,12 +110,12 @@ defineExpose({ openModal, openModalById })
               placeholder="DD/MM/YYYY hh:mm:ss"
               :format="'DD/MM/YYYY HH:mm:ss'" />
           </div>
-          <div class="flex-1">
+          <!-- <div class="flex-1">
             <div>BS thực hiện</div>
             <div>
               <InputText disabled :value="ticketRadiology.doctor?.fullName" />
             </div>
-          </div>
+          </div> -->
         </div>
         <div class="mt-3">
           <div>Mô tả</div>

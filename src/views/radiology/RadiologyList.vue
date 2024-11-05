@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../common/icon'
+import { IconFileSearch } from '../../common/icon'
 import { IconEditSquare, IconPulmonology } from '../../common/icon-google'
 import { InputText, VueSelect } from '../../common/vue-form'
 import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { Radiology, RadiologyApi } from '../../modules/radiology'
-import { customFilter } from '../../utils'
-import ModalDataRadiology from './component/ModalDataRadiology.vue'
+import { RadiologyGroup, RadiologyGroupService } from '../../modules/radiology-group'
+import { arrayToKeyValue, customFilter } from '../../utils'
 import ModalRadiologyDetail from './detail/ModalRadiologyDetail.vue'
 import ModalRadiologyUpsert from './upsert/ModalRadiologyUpsert.vue'
 
 const modalRadiologyUpsert = ref<InstanceType<typeof ModalRadiologyUpsert>>()
-const modalDataRadiology = ref<InstanceType<typeof ModalDataRadiology>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 
 const meStore = useMeStore()
@@ -25,8 +24,9 @@ const { permissionIdMap } = meStore
 
 let radiologyAll: Radiology[] = []
 const radiologyList = ref<Radiology[]>([])
+const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const searchText = ref('')
-const group = ref<string>('')
+const radiologyGroupId = ref<number>(0)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('RADIOLOGY_PAGINATION_LIMIT')) || 10)
@@ -34,13 +34,15 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
+const radiologyGroupMap = computed(() => arrayToKeyValue(radiologyGroupAll.value, 'id'))
+
 const startFilterData = () => {
   radiologyList.value = radiologyAll
     .filter((i) => {
       if (searchText.value && !customFilter(i.name, searchText.value)) {
         return false
       }
-      if (group.value && i.group !== group.value) {
+      if (radiologyGroupId.value && i.radiologyGroupId !== radiologyGroupId.value) {
         return false
       }
       return true
@@ -79,6 +81,11 @@ onBeforeMount(async () => {
   await startFetchData()
   startFilterData()
   dataLoading.value = false
+  try {
+    radiologyGroupAll.value = await RadiologyGroupService.getAll()
+  } catch (error) {
+    console.log('🚀 ~ file: RadiologyList.vue:86 ~ onBeforeMount ~ error:', error)
+  }
 })
 
 const handleModalRadiologyUpsertSuccess = async (
@@ -93,15 +100,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
     // modalRadiologyListSettingScreen.value?.openModal()
   }
-  if (menu.key === 'data-setting') {
-    modalDataRadiology.value?.openModal()
-  }
 }
 </script>
 
 <template>
   <ModalRadiologyUpsert ref="modalRadiologyUpsert" @success="handleModalRadiologyUpsertSuccess" />
-  <ModalDataRadiology ref="modalDataRadiology" />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
 
   <div class="mx-4 mt-4 flex justify-between items-center">
@@ -113,7 +116,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </span>
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.RADIOLOGY_CREATE]"
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
         color="blue"
         icon="plus"
         @click="modalRadiologyUpsert?.openModal()">
@@ -121,17 +124,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </VueButton>
     </div>
     <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
+      <!-- <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
           <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <!-- <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item> -->
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
             <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
-      </a-dropdown>
+      </a-dropdown> -->
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">
@@ -147,12 +150,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div>Chọn nhóm</div>
         <div>
           <VueSelect
-            v-model:value="group"
+            v-model:value="radiologyGroupId"
             :options="[
-              { value: '', text: 'Tất cả' },
-              ...Object.entries(settingStore.RADIOLOGY_GROUP).map(([value, text]) => {
-                return { value, text }
-              }),
+              { value: 0, text: 'Tất cả' },
+              ...radiologyGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
             @update:value="startSearch" />
         </div>
@@ -164,6 +165,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr>
             <th>Mã</th>
             <th>Tên</th>
+            <th>Nhóm</th>
             <th>Giá tiền</th>
             <th>Action</th>
           </tr>
@@ -199,8 +201,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
             </td>
+            <td class="text-center">{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
-            <td v-if="permissionIdMap[PermissionId.RADIOLOGY_UPDATE]" class="text-center">
+            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
               <a
                 style="color: var(--text-orange)"
                 @click="modalRadiologyUpsert?.openModal(radiology)">

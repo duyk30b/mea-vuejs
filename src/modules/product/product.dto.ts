@@ -4,7 +4,7 @@ import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 export class ProductFilterQuery {
   id?: number | ConditionNumber
   isActive?: 1 | 0
-  group?: string
+  productGroupId?: number
   searchText?: string
   quantity?: ConditionNumber
   updatedAt?: ConditionDate
@@ -16,6 +16,7 @@ export class ProductGetQuery {
   limit?: number
   relation?: {
     batchList?: boolean
+    productGroup?: boolean
   }
 
   filter?: ProductFilterQuery & {

@@ -1,5 +1,6 @@
 import { Batch } from '../batch/batch.model'
 import type { UnitType } from '../enum'
+import type { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
@@ -14,17 +15,19 @@ export class Product {
   retailPrice: number // Giá bán lẻ
   hasManageQuantity: 0 | 1
   hasManageBatches: 0 | 1
-  group: string // Nhóm sản phẩm: kháng sinh, dinh dưỡng ...
+  productGroupId: number
   unit: string
   route: string // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
   source: string // Nguồn gốc: ... Ấn Độ, Ý, Pháp, ...
   image: string
   hintUsage: string // Gợi ý cách sử dụng
+
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
   deletedAt: number | null
 
   batchList?: Batch[]
+  productGroup?: ProductGroup
 
   get unitObject(): UnitType[] {
     return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
@@ -106,6 +109,8 @@ export class Product {
     ins.wholesalePrice = 0
     ins.retailPrice = 0
     ins.unit = JSON.stringify([{ name: '', rate: 1, default: true }])
+    ins.productGroupId = 0
+
     ins.isActive = 1
     return ins
   }

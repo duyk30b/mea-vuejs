@@ -2,15 +2,14 @@ import { Customer } from '../customer'
 import type { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { Radiology } from '../radiology'
+import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
-import { User } from '../user'
 
 export class TicketRadiology {
   id: number
   ticketId: number
   customerId: number
   radiologyId: number
-  doctorId: number
   expectedPrice: number
   discountMoney: number
   discountPercent: number
@@ -20,12 +19,12 @@ export class TicketRadiology {
   result: string
   startedAt: number
   imageIds: string
-  imageList: Image[]
 
+  imageList: Image[]
   radiology?: Radiology
   customer?: Customer
   ticket?: Ticket
-  doctor?: User
+  ticketUserList: TicketUser[]
 
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
@@ -62,14 +61,14 @@ export class TicketRadiology {
     if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
       target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'doctor')) {
-      target.doctor = source.doctor ? User.basic(source.doctor) : source.doctor
-    }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
     }
     if (source.imageList) {
       target.imageList = Image.basicList(source.imageList)
+    }
+    if (target.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
     }
     return target
   }
@@ -82,7 +81,6 @@ export class TicketRadiology {
     const ins = new TicketRadiology()
     Object.assign(ins, root)
     delete ins.radiology
-    delete ins.doctor
     return ins
   }
 
@@ -95,7 +93,6 @@ export class TicketRadiology {
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.radiologyId != b.radiologyId) return false
-    if (a.doctorId != b.doctorId) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

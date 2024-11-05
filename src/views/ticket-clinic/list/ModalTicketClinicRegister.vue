@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import dayjs, { Dayjs } from 'dayjs'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../../common/icon'
-import { InputOptions, InputText } from '../../../common/vue-form'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputDate, InputOptions, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { useCustomerStore } from '../../../modules/customer'
+import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
+import { VoucherType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import type { Ticket } from '../../../modules/ticket'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -24,8 +27,10 @@ const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const ticketClinicCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
-  (e: 'success'): void
+  (e: 'success', value: { ticket: Ticket }): void
 }>()
+
+const router = useRouter()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -33,8 +38,10 @@ const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const time = ref<Dayjs>(dayjs())
+const registeredAt = ref<number>(Date.now())
 const reason = ref('')
+const customerSourceId = ref(0)
+const customerSourceAll = ref<CustomerSource[]>([])
 
 const customer = ref<Customer>(Customer.blank())
 const customerListOptions = ref<{ value: number; text: string; data: Customer }[]>([])
@@ -49,6 +56,7 @@ const fromAppointmentId = ref(0)
 
 const openModal = async () => {
   showModal.value = true
+  customerSourceAll.value = await CustomerSourceService.getAll()
 }
 
 const closeModal = () => {
@@ -56,6 +64,7 @@ const closeModal = () => {
   customerListOptions.value = []
   appointmentOptions.value = []
   fromAppointmentId.value = 0
+  customerSourceId.value = 0
   showModal.value = false
 }
 
@@ -66,6 +75,7 @@ const selectCustomer = async (customerSelect: Customer) => {
         appointmentList.value = await AppointmentApi.list({
           filter: {
             appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
+            voucherType: VoucherType.Clinic,
           },
         })
         loadAppointment = true
@@ -75,7 +85,7 @@ const selectCustomer = async (customerSelect: Customer) => {
         .filter((i) => i.customerId === customerSelect.id)
         .sort((a, b) => (a > b ? 1 : -1))
     } catch (error) {
-      console.log('🚀 ~ file: ModalTicketClinicRegister.vue:96 ~ selectCustomer ~ error:', error)
+      console.log('🚀 ~ file: ModalTicketClinicRegister.vue:81 ~ selectCustomer ~ error:', error)
     }
   } else {
     customer.value = Customer.blank()
@@ -111,34 +121,44 @@ const handleChangeCheckboxAppointment = (e: any, appointment: Appointment) => {
   if (e.target.checked) {
     fromAppointmentId.value = appointment.id
     reason.value = appointment.reason
-    time.value = dayjs(appointment.registeredAt)
+    customerSourceId.value = appointment.customerSourceId
   } else {
     fromAppointmentId.value = 0
     reason.value = ''
-    time.value = dayjs()
+    customerSourceId.value = 0
   }
 }
 
 const handleRegisterVisit = async () => {
-  const registeredAt = time.value.valueOf()
-  if (DTimer.timeToText(registeredAt) !== DTimer.timeToText(new Date())) {
-    return AlertStore.addError('Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày')
+  if (DTimer.timeToText(registeredAt.value) !== DTimer.timeToText(new Date())) {
+    return AlertStore.addError(
+      'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
+    )
   }
   saveLoading.value = true
   try {
-    await TicketClinicApi.registerWithExistCustomer({
+    const ticketResponse = await TicketClinicApi.register({
       customerId: customer.value.id,
-      registeredAt,
+      voucherType: VoucherType.Clinic,
+      registeredAt: registeredAt.value,
       reason: reason.value,
+      customerSourceId: customerSourceId.value,
       fromAppointmentId: fromAppointmentId.value,
     })
-    emit('success')
+    emit('success', { ticket: ticketResponse })
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleRegisterVisit ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketClinicRegister.vue:144 ~ handleRegisterVisit ~ error:', error)
   } finally {
     saveLoading.value = false
   }
+}
+
+const openBlankCustomerSourceList = async () => {
+  let route = router.resolve({
+    name: 'CustomerSourceList',
+  })
+  window.open(route.href, '_blank')
 }
 
 defineExpose({ openModal })
@@ -178,7 +198,6 @@ defineExpose({ openModal })
               ref="inputOptionsCustomer"
               :options="customerListOptions"
               :maxHeight="200"
-              no-clear-text-when-not-selected
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               @selectItem="({ data }) => selectCustomer(data)"
@@ -209,22 +228,34 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="grow basis-[80%]">
-          <div>Lý do khám</div>
+        <div style="flex-basis: 80%; flex-grow: 1">
+          <div>Nguồn khách hàng</div>
           <div>
-            <InputText v-model:value="reason" />
+            <VueSelect
+              v-model:value="customerSourceId"
+              :options="customerSourceAll.map((i) => ({ text: i.name, value: i.id }))"
+              :add-other="!customerSourceAll.length">
+              <template #addOther>
+                <div class="flex items-center gap-4" style="font-style: italic">
+                  <span>Chưa có dữ liệu phù hợp.</span>
+                  <a @click="openBlankCustomerSourceList">Quản lý danh sách nguồn khách hàng</a>
+                </div>
+              </template>
+            </VueSelect>
           </div>
         </div>
 
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Thời gian đăng ký</div>
           <div>
-            <a-date-picker
-              v-model:value="time"
-              class="w-full"
-              show-time
-              placeholder="Select Time"
-              format="DD-MM-YYYY HH:mm" />
+            <InputDate v-model:value="registeredAt" type-parser="number" class="w-full" show-time />
+          </div>
+        </div>
+
+        <div class="grow basis-[80%]">
+          <div>Lý do khám</div>
+          <div>
+            <InputText v-model:value="reason" />
           </div>
         </div>
       </div>
@@ -250,9 +281,4 @@ defineExpose({ openModal })
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
 </template>
 
-<style lang="scss">
-.ant-btn-primary[disabled] {
-  color: rgba(255, 255, 255, 0.25);
-  opacity: 0.7;
-}
-</style>
+<style lang="scss"></style>

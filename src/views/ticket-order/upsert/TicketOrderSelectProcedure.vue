@@ -140,7 +140,7 @@ defineExpose({ focus })
         <span>Tên dịch vụ</span>
         <span>
           <a
-            v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
+            v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
             @click="modalProcedureUpsert?.openModal()">
             Thêm dịch vụ mới
           </a>

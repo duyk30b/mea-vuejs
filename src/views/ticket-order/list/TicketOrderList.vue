@@ -54,7 +54,7 @@ const startFetchData = async () => {
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { customer: true },
+      relation: { customer: true, ticketProductList: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
         startedAt: {

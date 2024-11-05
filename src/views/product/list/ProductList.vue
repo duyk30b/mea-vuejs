@@ -17,11 +17,12 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useBatchStore } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductApi, useProductStore, type Product } from '../../../modules/product'
-import { DTimer, arrayToKeyArray } from '../../../utils'
+import { DTimer, arrayToKeyArray, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
+import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
@@ -37,6 +38,7 @@ const { permissionIdMap } = meStore
 const { timeSync: productTimeSync } = storeToRefs(productStore)
 
 const productList = ref<Product[]>([])
+const productGroupAll = ref<ProductGroup[]>([])
 
 const dataLoading = ref(false)
 
@@ -45,11 +47,13 @@ const limit = ref(Number(localStorage.getItem('PRODUCT_PAGINATION_LIMIT')) || 10
 const total = ref(0)
 
 const searchText = ref('')
-const group = ref<string>('')
+const productGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'expiryDate' | 'id' | 'brandName' | 'quantity' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
+
+const productGroupMap = computed(() => arrayToKeyValue(productGroupAll.value, 'id'))
 
 watch(productTimeSync, async () => {
   startFetchData()
@@ -61,7 +65,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       filter: {
-        group: group.value ? group.value : undefined,
+        productGroupId: productGroupId.value ? productGroupId.value : undefined,
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value || undefined,
       },
@@ -89,18 +93,18 @@ const startFetchData = async () => {
       })
     }
   } catch (error) {
-    console.log('🚀 ~ file: ProductList.vue:89 ~ error:', error)
+    console.log('🚀 ~ file: ProductList.vue:96 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
   try {
-    dataLoading.value = true
-    await startFetchData()
+    productGroupAll.value = await ProductGroupService.getAll()
   } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
+    console.log('🚀 ~ file: ProductList.vue:107 ~ onBeforeMount ~ error:', error)
   }
 })
 
@@ -202,7 +206,9 @@ const closeExpiryDate = computed(() => {
         <IconDownload width="20" height="20" @click="downloadExcelProductList" />
       </div>
       <span style="cursor: pointer">
-        <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
+        <a-dropdown
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          trigger="click">
           <span>
             <IconSetting width="20" height="20" />
           </span>
@@ -230,16 +236,13 @@ const closeExpiryDate = computed(() => {
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn nhóm hàng</div>
+        <div>Chọn nhóm sản phẩm</div>
         <div>
           <VueSelect
-            v-model:value="group"
+            v-model:value="productGroupId"
             :options="[
-              { value: '', text: 'Tất cả' },
-              ...Object.entries(settingStore.PRODUCT_GROUP).map(([value, text]) => ({
-                value,
-                text,
-              })),
+              { value: 0, text: 'Tất cả' },
+              ...productGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
             @update:value="startSearch" />
         </div>
@@ -330,7 +333,8 @@ const closeExpiryDate = computed(() => {
             backgroundColor: productIndex % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '',
           }"
           @dblclick="
-            permissionIdMap[PermissionId.PRODUCT_UPDATE] && modalProductUpsert?.openModal(product)
+            permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+              modalProductUpsert?.openModal(product.id)
           ">
           <div class="flex items-center">
             <div class="flex-1">
@@ -348,7 +352,7 @@ const closeExpiryDate = computed(() => {
                 {{ product.substance }}
               </div>
               <div v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-xs">
-                {{ settingStore.PRODUCT_GROUP[product.group!] }}
+                {{ productGroupMap[product.productGroupId]?.name }}
               </div>
               <template v-if="!product.batchList?.length">
                 <div class="flex text-xs gap-2">
@@ -562,7 +566,7 @@ const closeExpiryDate = computed(() => {
                   v-if="batchIndex === 0 && settingStore.SCREEN_PRODUCT_LIST.group"
                   :rowspan="product.batchList.length || 1"
                   class="text-center">
-                  {{ settingStore.PRODUCT_GROUP[product.group!] }}
+                  {{ productGroupMap[product.productGroupId!]?.name }}
                 </td>
                 <td
                   v-if="settingStore.SCREEN_PRODUCT_LIST.unit && batchIndex === 0"
@@ -629,7 +633,7 @@ const closeExpiryDate = computed(() => {
                   <a
                     style="color: #eca52b"
                     class="text-xl"
-                    @click="modalProductUpsert?.openModal(product)">
+                    @click="modalProductUpsert?.openModal(product.id)">
                     <FormOutlined />
                   </a>
                 </td>
@@ -653,7 +657,7 @@ const closeExpiryDate = computed(() => {
                   </div>
                 </td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.group" class="text-center">
-                  {{ settingStore.PRODUCT_GROUP[product.group!] }}
+                  {{ productGroupMap[product.productGroupId!]?.name }}
                 </td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
                   {{ product.unitDefaultName }}
@@ -714,7 +718,7 @@ const closeExpiryDate = computed(() => {
                   <a
                     style="color: #eca52b"
                     class="text-xl"
-                    @click="modalProductUpsert?.openModal(product)">
+                    @click="modalProductUpsert?.openModal(product.id)">
                     <FormOutlined />
                   </a>
                 </td>

@@ -15,6 +15,7 @@ const props = withDefaults(
     clearAfterSelected?: boolean
     noClearTextWhenNotSelected?: boolean
     logicFilter?: Function
+    messageNoResult?: boolean
   }>(),
   {
     value: null,
@@ -26,6 +27,7 @@ const props = withDefaults(
     clearAfterSelected: false,
     noClearTextWhenNotSelected: false,
     logicFilter: () => true,
+    messageNoResult: true,
   }
 )
 
@@ -204,7 +206,7 @@ defineExpose({ focus, clear, setItem })
       <IconSearch class="icon-blur" />
       <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
       <!-- <IconClearOutline class="icon-clear-hover" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-focus" @click="handleClickClear" /> -->
+      <IconClearCircle class="icon-clear-blur" @click="handleClickClear" /> -->
     </div>
     <div
       v-if="showOptions"
@@ -219,6 +221,12 @@ defineExpose({ focus, clear, setItem })
         <slot name="option" :item="item" :index="index">
           <div class="item-text">{{ item.text }}</div>
         </slot>
+      </div>
+      <div
+        v-if="messageNoResult && !optionsFilter.length && searchText"
+        class="item-option"
+        style="font-style: italic">
+        Không tìm thấy kết quả phù hợp
       </div>
     </div>
   </div>

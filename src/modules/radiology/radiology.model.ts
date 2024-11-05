@@ -1,16 +1,24 @@
+import type { RadiologyGroup } from '../radiology-group'
+
 export class Radiology {
   id: number
   name: string // Tên
-  group: string // Tên
+
+  radiologyGroupId: number
+
   price: number // Giá dự kiến
   descriptionDefault: string
   resultDefault: string
+
   updatedAt: number
   deletedAt: number
+
+  radiologyGroup?: RadiologyGroup
 
   static init() {
     const ins = new Radiology()
     ins.id = 0
+    ins.radiologyGroupId = 0
     ins.price = 0
     ins.name = ''
     ins.descriptionDefault = ''

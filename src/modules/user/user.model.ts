@@ -2,32 +2,34 @@ import { decrypt } from '../../utils'
 import type { EGender } from '../enum'
 import { Organization } from '../organization'
 import { Role } from '../role/role.model'
+import { UserRole } from '../user-role/user-role.model'
 import Device from './device.model'
 
 export class User {
   oid: number
-  id: number | null
+  id: number
   username: string
   password: string
   secret: string
   fullName: string
   phone: string
-  roleId: number
   birthday?: number
   gender?: EGender
+
+  isAdmin: 1 | 0 // Trạng thái
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
   deletedAt: number
 
-  role?: Role
+  userRoleList?: UserRole[]
   organization?: Organization
   devices?: Device[]
 
   static init(): User {
     const ins = new User()
-    ins.id = null // UserId = 0 là ROOT
+    ins.id = 0
     ins.isActive = 1
-    ins.roleId = 1
+    ins.isAdmin = 0
     return ins
   }
 
@@ -59,13 +61,16 @@ export class User {
 
   static from(source: User) {
     const target = User.basic(source)
-    if (Object.prototype.hasOwnProperty.call(source, 'role')) {
-      target.role = target.role ? Role.basic(target.role) : target.role
-    }
     if (Object.prototype.hasOwnProperty.call(source, 'organization')) {
       target.organization = target.organization
         ? Organization.basic(target.organization)
         : target.organization
+    }
+    if (target.userRoleList) {
+      target.userRoleList = UserRole.basicList(target.userRoleList)
+      target.userRoleList.forEach((userRole) => {
+        userRole.role = userRole.role ? Role.basic(userRole.role) : userRole.role
+      })
     }
     if (target.devices) {
       target.devices = Device.basicList(target.devices)

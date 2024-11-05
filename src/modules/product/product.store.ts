@@ -3,7 +3,7 @@ import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { useMeStore } from '../_me/me.store'
 import { ProductApi } from './product.api'
-import type { ProductListQuery, ProductPaginationQuery } from './product.dto'
+import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 
@@ -59,7 +59,7 @@ export const useProductStore = defineStore('product-store', {
         limit: limit || 10,
         condition: {
           isActive: filter?.isActive,
-          group: filter?.group,
+          productGroupId: filter?.productGroupId,
           $OR: filter?.searchText
             ? [
                 { brandName: { LIKE: filter?.searchText } },
@@ -104,7 +104,7 @@ export const useProductStore = defineStore('product-store', {
         condition: {
           id: filter?.id,
           isActive: filter?.isActive,
-          group: filter?.group,
+          productGroupId: filter?.productGroupId,
           quantity: filter?.quantity,
         },
         sort,
@@ -112,9 +112,11 @@ export const useProductStore = defineStore('product-store', {
       return Product.fromList(objects)
     },
 
-    async getOne(id: number) {
-      const product = await ProductDB.findOneByKey(id)
-      return product ? Product.from(product) : null
+    async getOne(id: number, options: ProductDetailQuery) {
+      const product = await ProductApi.detail(id, options)
+      // const product = await ProductDB.findOneByKey(id)
+      await ProductDB.upsertOne(product)
+      return product
     },
 
     async createOne(instance: Product) {

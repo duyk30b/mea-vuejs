@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import dayjs, { Dayjs } from 'dayjs'
-import { nextTick, ref } from 'vue'
+import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
-import { InputHint, type InputOptions } from '../../../../common/vue-form'
+import { InputHint } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Appointment, AppointmentApi, AppointmentType } from '../../../../modules/appointment'
+import { Appointment, AppointmentApi } from '../../../../modules/appointment'
+import { VoucherType } from '../../../../modules/enum'
 import { customFilter } from '../../../../utils'
-import { ticketClinic } from '../ticket-clinic-detail.ref'
+import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -45,20 +46,22 @@ const handleRegisterVisit = async () => {
   appointment.value.registeredAt = time.value.valueOf()
   try {
     if (!appointment.value.id) {
-      ticketClinic.value.toAppointment = await AppointmentApi.createOne({
+      ticketClinicRef.value.toAppointment = await AppointmentApi.createOne({
         fromTicketId: appointment.value.fromTicketId,
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
-        appointmentType: AppointmentType.Reminder,
+        customerSourceId: 0,
+        voucherType: VoucherType.Clinic,
         appointmentStatus: appointment.value.appointmentStatus,
       })
     } else {
-      ticketClinic.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
+      ticketClinicRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
         customerId: appointment.value.customerId,
         registeredAt: appointment.value.registeredAt,
         reason: appointment.value.reason,
         appointmentStatus: appointment.value.appointmentStatus,
+        customerSourceId: 0,
         cancelReason: '',
       })
     }

@@ -1,64 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vue - Router</title>
+  <title>Bảng nhập liệu</title>
   <style>
-    p {
-      font-family: monospace;
-      white-space: pre-wrap;
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
 
 <body>
-  <div id="app">
-    <nav>
-      <router-link to="/">Home</router-link> -
-      <router-link to="/user/1/details">User</router-link> -
-      <router-link to="/about">About</router-link> -
-      <router-link to="/xxx">xxx</router-link>
-    </nav>
-    <router-view></router-view>
-  </div>
 
-  <script src="https://unpkg.com/vue@3.2.41/dist/vue.global.js"></script>
-  <script src="https://unpkg.com/vue-router@4.1.6/dist/vue-router.global.js"></script>
+  <table id="editableTable">
+    <thead>
+      <tr>
+        <th>Cột 1</th>
+        <th>Cột 2</th>
+        <th>Cột 3</th>
+        <th>Cột 4</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Tạo 5 hàng, mỗi hàng có 4 ô -->
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+      </tr>
+    </tbody>
+  </table>
 
   <script>
-    const Home = { template: '<h2>Home Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
-    const About = { template: '<h2>About Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
-    const NotFound = { template: '<h2>NotFound Page</h2><p>{{JSON.stringify($route, null, 4)}}</p>' }
+    document.addEventListener("DOMContentLoaded", () => {
+      const inputs = document.querySelectorAll("#editableTable input")
 
-    const User = { template: '<h2>User Page</h2><router-view></router-view>' }
-    const UserDetails = { template: '<h3>User Details</h3><p>{{JSON.stringify($route, null, 4)}}</p>' }
+      // Thêm sự kiện lắng nghe cho mỗi ô input
+      inputs.forEach((input, index) => {
+        input.addEventListener("keydown", (event) => {
+          const rowLength = 4 // số ô trong một hàng (số cột)
+          const totalCells = inputs.length
 
-    const router = VueRouter.createRouter({
-      history: VueRouter.createWebHistory(),
-      routes: [
-        { path: '/', component: Home },
-        {
-          path: '/user/:id',
-          component: User,
-          children: [
-            {
-              path: 'details',
-              component: UserDetails,
-            },
-          ]
-        },
-        { path: '/about', component: About },
-        { path: '/layzy-component', component: () => import('./views/UserDetails') },
-        { path: '/:pathMatch(.*)', component: NotFound },
-      ],
-    })
+          let newIndex
+          switch (event.key) {
+            case "ArrowUp":
+              newIndex = index - rowLength
+              break
+            case "ArrowDown":
+              newIndex = index + rowLength
+              break
+            case "ArrowLeft":
+              newIndex = index - 1
+              break
+            case "ArrowRight":
+              newIndex = index + 1
+              break
+            default:
+              return // thoát nếu không phải các phím điều hướng
+          }
 
-    const app = Vue.createApp({})
-    app.use(router)
-    app.mount("#app")
+          // Kiểm tra nếu chỉ số hợp lệ, chuyển đến ô mới
+          if (newIndex >= 0 && newIndex < totalCells) {
+            inputs[newIndex].focus()
+          }
+
+          event.preventDefault() // ngăn chặn hành vi mặc định
+        })
+      })
+    });
+
   </script>
 </body>
 

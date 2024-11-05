@@ -20,12 +20,9 @@ export class MeService {
       if (
         [
           SettingKey.GOOGLE_DRIVER,
-          SettingKey.PRODUCT_GROUP,
           SettingKey.PRODUCT_UNIT,
           SettingKey.PRODUCT_ROUTE,
           SettingKey.PRODUCT_HINT_USAGE,
-          SettingKey.PROCEDURE_GROUP,
-          SettingKey.RADIOLOGY_GROUP,
           SettingKey.INVOICE_SURCHARGE_DETAIL,
           SettingKey.INVOICE_EXPENSE_DETAIL,
         ].includes(key as any)
@@ -41,29 +38,27 @@ export class MeService {
   }
 
   static reCalculatorPermission(options: {
-    permissionList: Permission[]
+    permissionAll: Permission[]
+    permissionIds: number[]
     user: User
-    role: Role
     organization: Organization
   }) {
-    const { permissionList, user, role, organization } = options
+    const { permissionAll, permissionIds, user, organization } = options
     const meStore = useMeStore()
     meStore.user = user
-    meStore.role = role
     meStore.organization = organization
 
     const organizationPermissionIds: number[] = JSON.parse(organization.permissionIds)
-    const rolePermissionIds: number[] = JSON.parse(role.permissionIds)
 
-    const permissionMap = arrayToKeyValue(permissionList, 'id')
+    const permissionMap = arrayToKeyValue(permissionAll, 'id')
     meStore.permissionMap = permissionMap
 
     const permissionIdMap: Record<string, boolean> = {}
-    permissionList.forEach((permission) => {
+    permissionAll.forEach((permission) => {
       // ROOT thì auto pass dù API inActive
-      if (user.oid === 0) {
-        return (permissionIdMap[permission.id] = true)
-      }
+      // if (user.oid === 1) {
+      //   return (permissionIdMap[permission.id] = true)
+      // }
 
       const pathIdArr = permission.pathId.split('.').map((i) => Number(i))
       // Kiểm tra API có bị inActive
@@ -71,7 +66,7 @@ export class MeService {
         const id = pathIdArr[i]
         const curPermission = permissionMap[id]
         if (!curPermission.isActive) {
-          return false // chỉ cần 1 thằng inActive thì là false
+          return // chỉ cần 1 thằng inActive thì là false
         }
       }
       // org không có quyền thì nghỉ
@@ -79,12 +74,7 @@ export class MeService {
         return
       }
 
-      // Admin thì auto pass sau khi filter Org
-      if (user.roleId === 1) {
-        return (permissionIdMap[permission.id] = true)
-      }
-
-      if (pathIdArr.some((pid) => rolePermissionIds.includes(pid))) {
+      if (pathIdArr.some((pid) => permissionIds.includes(pid))) {
         permissionIdMap[permission.id] = true
       }
     })
@@ -93,10 +83,10 @@ export class MeService {
 
   static async initData() {
     try {
-      const { user, organization, role, permissionList, settingMap } = await MeApi.info()
+      const { organization, permissionAll, permissionIds, settingMap, user } = await MeApi.info()
 
       MeService.reCalculatorSetting(settingMap)
-      MeService.reCalculatorPermission({ permissionList, user, role, organization })
+      MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
     } catch (error) {
       console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }

@@ -64,7 +64,7 @@ export const useBatchStore = defineStore('batch-store', {
         const productObjects = await ProductDB.findManyBy({
           id: filter?.productId,
           isActive: filter?.product?.isActive,
-          group: filter?.product?.group,
+          productGroupId: filter?.product?.productGroupId,
           $OR: filter?.product?.searchText
             ? [
                 { brandName: { LIKE: filter?.product?.searchText } },

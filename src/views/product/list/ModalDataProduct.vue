@@ -11,7 +11,6 @@ import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
 
 const TABS_KEY = {
-  GROUP: 'GROUP',
   ROUTE: 'ROUTE',
   UNIT: 'UNIT',
   HINT_USAGE: 'HINT_USAGE',
@@ -20,7 +19,6 @@ const TABS_KEY = {
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
-const GROUP = ref<typeof store.PRODUCT_GROUP>(JSON.parse(JSON.stringify(store.PRODUCT_GROUP)))
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
 const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(
@@ -29,11 +27,10 @@ const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(
 
 const showModal = ref(false)
 const saveLoading = ref(false)
-const activeTab = ref(TABS_KEY.GROUP)
+const activeTab = ref(TABS_KEY.UNIT)
 
 const openModal = async () => {
   showModal.value = true
-  GROUP.value = JSON.parse(JSON.stringify(store.PRODUCT_GROUP))
   UNIT.value = JSON.parse(JSON.stringify(store.PRODUCT_UNIT))
   ROUTE.value = JSON.parse(JSON.stringify(store.PRODUCT_ROUTE))
   HINT_USAGE.value = JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE))
@@ -42,14 +39,7 @@ const openModal = async () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (activeTab.value === TABS_KEY.GROUP) {
-      Object.keys(GROUP.value).forEach((key) => {
-        if (!GROUP.value[key]) delete GROUP.value[key]
-      })
-      const data = JSON.stringify(GROUP.value)
-      await OrganizationService.saveSettings(SettingKey.PRODUCT_GROUP, data)
-      store.PRODUCT_GROUP = JSON.parse(data)
-    } else if (activeTab.value === TABS_KEY.UNIT) {
+    if (activeTab.value === TABS_KEY.UNIT) {
       const data = JSON.stringify(UNIT.value.filter((i) => !!i))
       UNIT.value = JSON.parse(data)
       await OrganizationService.saveSettings(SettingKey.PRODUCT_UNIT, data)
@@ -76,11 +66,6 @@ const handleSave = async () => {
     saveLoading.value = false
   }
 }
-const handleReload = () => {
-  GROUP.value = JSON.parse(JSON.stringify(store.PRODUCT_GROUP))
-  UNIT.value = JSON.parse(JSON.stringify(store.PRODUCT_UNIT))
-  ROUTE.value = JSON.parse(JSON.stringify(store.PRODUCT_ROUTE))
-}
 
 const closeModal = () => {
   showModal.value = false
@@ -102,29 +87,11 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 modal-data-product-tabs">
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
-            <VueTabMenu :tabKey="TABS_KEY.GROUP">Nhóm hàng</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.UNIT">Đơn vị</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROUTE">Đường dùng</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.HINT_USAGE">Cách sử dụng</VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel :tabKey="TABS_KEY.GROUP">
-              <div class="mt-4 w-full">
-                <div class="text-center font-bold">Danh sách nhóm hàng hóa</div>
-                <div v-for="(r, key) in GROUP" :key="key">
-                  <div class="py-2 flex items-center gap-4">
-                    <InputText v-model:value="GROUP[key]" :prepend="key" style="flex: 1" />
-                    <a style="color: var(--text-red)" @click="delete GROUP[key]">Xóa</a>
-                  </div>
-                </div>
-              </div>
-              <div class="py-2 flex">
-                <VueButton
-                  icon="plus"
-                  color="blue"
-                  @click="GROUP[Date.now().toString(36)] = ''"></VueButton>
-              </div>
-            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.UNIT">
               <div class="mt-4 w-full">
                 <div class="text-center font-bold">Danh sách đơn vị hàng hóa</div>

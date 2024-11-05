@@ -1,26 +1,22 @@
 <script setup lang="ts">
-import {
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  NodeIndexOutlined,
-} from '@ant-design/icons-vue'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { CheckCircleOutlined, MinusCircleOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
+import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconFileSearch, IconSetting } from '../../common/icon'
+import { IconEditSquare } from '../../common/icon-google'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../common/vue-form'
 import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
-import ModalDataProcedure from './components/ModalDataProcedure.vue'
+import { ProcedureGroup, ProcedureGroupService } from '../../modules/procedure-group'
+import { arrayToKeyValue } from '../../utils'
 import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
 import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
 import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
-const modalDataProcedure = ref<InstanceType<typeof ModalDataProcedure>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
@@ -31,6 +27,7 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const procedureList = ref<Procedure[]>([])
+const procedureGroupAll = ref<ProcedureGroup[]>([])
 
 const dataLoading = ref(false)
 
@@ -39,11 +36,13 @@ const limit = ref(Number(localStorage.getItem('PROCEDURE_PAGINATION_LIMIT')) || 
 const total = ref(0)
 
 const searchText = ref('')
-const group = ref<string>('')
+const procedureGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
 const sortColumn = ref<'id' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
+
+const procedureGroupMap = computed(() => arrayToKeyValue(procedureGroupAll.value, 'id'))
 
 const startFetchData = async () => {
   try {
@@ -53,7 +52,7 @@ const startFetchData = async () => {
       filter: {
         isActive: isActive.value !== '' ? isActive.value : undefined,
         searchText: searchText.value ? searchText.value : undefined,
-        group: group.value ? group.value : undefined,
+        procedureGroupId: procedureGroupId.value ? procedureGroupId.value : undefined,
       },
       sort: sortValue.value
         ? {
@@ -68,18 +67,18 @@ const startFetchData = async () => {
 
     dataLoading.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ProcedureList.vue:61 ~ error:', error)
+    console.log('🚀 ~ file: ProcedureList.vue:73 ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
   try {
-    dataLoading.value = true
-    await startFetchData()
+    procedureGroupAll.value = await ProcedureGroupService.getAll()
   } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
+    console.log('🚀 ~ file: ProcedureList.vue:83 ~ onBeforeMount ~ error:', error)
   }
 })
 
@@ -133,16 +132,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
     modalProcedureListSettingScreen.value?.openModal()
   }
-  if (menu.key === 'data-setting') {
-    modalDataProcedure.value?.openModal()
-  }
 }
 </script>
 
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
-  <ModalDataProcedure ref="modalDataProcedure" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <div class="page-header">
     <div class="page-header-content">
@@ -151,7 +146,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         Danh sách dịch vụ
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
         color="blue"
         icon="plus"
         @click="modalProcedureUpsert?.openModal()">
@@ -166,7 +161,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -186,12 +180,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div>Chọn nhóm</div>
         <div>
           <VueSelect
-            v-model:value="group"
+            v-model:value="procedureGroupId"
             :options="[
-              { value: '', text: 'Tất cả' },
-              ...Object.entries(settingStore.PROCEDURE_GROUP).map(([value, text]) => {
-                return { value, text }
-              }),
+              { value: 0, text: 'Tất cả' },
+              ...procedureGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
             @update:value="startSearch" />
         </div>
@@ -254,7 +246,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         class="px-4 py-2 flex items-center justify-between gap-4"
         style="border-bottom: 1px solid #cdcdcd"
         :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
-        @dblclick="modalProcedureUpsert?.openModal(procedure)">
+        @dblclick="modalProcedureUpsert?.openModal(procedure.id)">
         <div>
           <div class="flex gap-2">
             <div class="font-medium text-justify">
@@ -270,7 +262,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </div>
           </div>
           <div v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">
-            {{ settingStore.PROCEDURE_GROUP[procedure.group] }}
+            {{ procedureGroupAll[procedure.procedureGroupId] }}
           </div>
         </div>
         <div>
@@ -336,7 +328,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
             <th
               v-if="
-                permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
+                permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
               ">
               Thao tác
@@ -354,12 +346,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a
                 v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure!)">
+                @click="modalProcedureDetail?.openModal(procedure)">
                 <IconFileSearch />
               </a>
             </td>
             <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group" class="text-center">
-              {{ settingStore.PROCEDURE_GROUP[procedure.group] }}
+              {{ procedureGroupMap[procedure.procedureGroupId]?.name }}
             </td>
             <td class="text-right">
               {{ formatMoney(procedure.price) }}
@@ -380,15 +372,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </td>
             <td
               v-if="
-                permissionIdMap[PermissionId.PROCEDURE_UPDATE] &&
+                permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
               "
               class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalProcedureUpsert?.openModal(procedure)">
-                <FormOutlined />
+                @click="modalProcedureUpsert?.openModal(procedure.id)">
+                <IconEditSquare />
               </a>
             </td>
           </tr>

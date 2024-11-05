@@ -1,9 +1,6 @@
 import { Customer } from '../customer'
-
-export enum AppointmentType {
-  CustomerInitiated = 1, // Đã lên lịch
-  Reminder = 2, // Hoàn thành
-}
+import { CustomerSource } from '../customer-source'
+import type { VoucherType } from '../enum'
 
 export enum AppointmentStatus {
   Waiting = 1, // Đợi - Nhắc khám
@@ -15,21 +12,24 @@ export enum AppointmentStatus {
 export class Appointment {
   id: number
   customerId: number
+  customerSourceId: number
   fromTicketId: number
   toTicketId: number
   registeredAt: number
+
   reason: string // Ghi chú
-  cancelReason: string // Ghi chú
-  appointmentType: AppointmentType
+  cancelReason: string // Lý do hủy
+
+  voucherType: VoucherType
   appointmentStatus: AppointmentStatus
 
   customer?: Customer
+  customerSource?: CustomerSource
 
   static init(): Appointment {
     const ins = new Appointment()
     ins.id = 0
     ins.customerId = 0
-    ins.appointmentType = AppointmentType.Reminder
     ins.appointmentStatus = AppointmentStatus.Waiting
     return ins
   }
@@ -58,6 +58,11 @@ export class Appointment {
     const target = Appointment.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = target.customer ? Customer.basic(target.customer) : target.customer
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'customerSource')) {
+      target.customerSource = target.customerSource
+        ? CustomerSource.basic(target.customerSource)
+        : target.customerSource
     }
     return target
   }

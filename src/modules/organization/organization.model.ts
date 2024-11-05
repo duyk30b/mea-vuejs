@@ -15,6 +15,9 @@ export class Organization {
   permissionIds: string
   isActive: 1 | 0 // Trạng thái
 
+  note: string // Ghi chú
+  expiryDate: number
+
   createdAt: number
   updatedAt: number
   deletedAt: number

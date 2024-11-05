@@ -30,7 +30,8 @@ const startFetchData = async () => {
     const { data, meta } = await UserApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { role: true },
+      relation: { userRoleList: true },
+      sort: { id: 'ASC' },
     })
     userList.value = data
     total.value = meta.total
@@ -94,9 +95,9 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Vai trò</th>
             <th>Username</th>
             <th>Họ Tên</th>
+            <th>Vai trò</th>
             <th v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
             <th v-if="permissionIdMap[PermissionId.USER_UPDATE]">Sửa</th>
@@ -108,9 +109,14 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
           </tr>
           <tr v-for="(user, index) in userList" :key="index">
             <td class="text-center">U{{ user.id }}</td>
-            <td>{{ user.role?.name }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.fullName }}</td>
+            <td>
+              <a-tag v-if="user.isAdmin" color="cyan">Admin</a-tag>
+              <template v-else>
+                {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
+              </template>
+            </td>
             <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
@@ -153,7 +159,10 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
               </a-tag>
             </td>
             <td v-if="permissionIdMap[PermissionId.USER_UPDATE]" class="text-center">
-              <a style="color: #eca52b" class="text-xl" @click="modalUserUpsert?.openModal(user)">
+              <a
+                style="color: #eca52b"
+                class="text-xl"
+                @click="modalUserUpsert?.openModal(user.id)">
                 <FormOutlined />
               </a>
             </td>

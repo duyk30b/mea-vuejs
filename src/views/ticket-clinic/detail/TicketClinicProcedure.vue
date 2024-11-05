@@ -11,11 +11,8 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../../modules/procedure'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
-import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
-import { ticketClinic } from './ticket-clinic-detail.ref'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 
-const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 
 const meStore = useMeStore()
@@ -28,7 +25,7 @@ const { formatMoney, isMobile } = settingStore
 
 const ticketProcedureList = ref<TicketProcedure[]>([])
 watch(
-  () => ticketClinic.value.ticketProcedureList!,
+  () => ticketClinicRef.value.ticketProcedureList!,
   (newValue: TicketProcedure[]) => {
     ticketProcedureList.value = TicketProcedure.fromList(newValue || [])
   },
@@ -39,13 +36,13 @@ const disabledButton = computed(() => {
   return (
     TicketProcedure.equalList(
       ticketProcedureList.value,
-      ticketClinic.value.ticketProcedureList || []
-    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.value.ticketStatus)
+      ticketClinicRef.value.ticketProcedureList || []
+    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)
   )
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicProcedure.vue:48 ~ onMounted ~ onMounted:')
+  console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
     await procedureStore.refreshDB()
   } catch (error: any) {
@@ -60,7 +57,7 @@ const searchingProcedure = async (text: string) => {
 const selectProcedure = (instance?: Procedure) => {
   if (instance) {
     const ticketProcedure = new TicketProcedure()
-    ticketProcedure.ticketId = ticketClinic.value.id
+    ticketProcedure.ticketId = ticketClinicRef.value.id
     ticketProcedure.procedureId = instance.id
     ticketProcedure.procedure = instance
     ticketProcedure.expectedPrice = instance.price
@@ -70,7 +67,7 @@ const selectProcedure = (instance?: Procedure) => {
     ticketProcedure.expectedPrice = instance.price
     ticketProcedure.actualPrice = instance.price
     ticketProcedure.quantity = 1
-    ticketProcedure.createdAt = Date.now()
+    ticketProcedure.startedAt = Date.now()
     ticketProcedureList.value.push(ticketProcedure)
   }
 
@@ -87,24 +84,17 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const saveTicketProcedureList = async () => {
-  await TicketClinicApi.changeTicketProcedureList({
-    ticketId: ticketClinic.value.id,
-    customerId: ticketClinic.value.customerId || 0,
+  await TicketClinicApi.updateTicketProcedureList({
+    ticketId: ticketClinicRef.value.id,
+    customerId: ticketClinicRef.value.customerId || 0,
     ticketProcedureList: ticketProcedureList.value,
   })
 }
 </script>
 <template>
-  <ModalProcedureUpsert ref="modalProcedureUpsert" @success="selectProcedure" />
   <div class="mt-4 flex justify-between">
     <span>Chỉ định dịch vụ</span>
-    <span>
-      <a
-        v-if="permissionIdMap[PermissionId.PROCEDURE_CREATE]"
-        @click="modalProcedureUpsert?.openModal()">
-        Thêm dịch vụ mới
-      </a>
-    </span>
+    <span></span>
   </div>
   <div style="height: 40px">
     <InputOptions
@@ -113,7 +103,7 @@ const saveTicketProcedureList = async () => {
       :maxHeight="320"
       placeholder="Tìm kiếm tên dịch vụ"
       clear-after-selected
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinic.ticketStatus)"
+      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
       @selectItem="({ data }) => selectProcedure(data)"
       @update:text="searchingProcedure">
       <template #option="{ item: { data } }">
@@ -180,7 +170,7 @@ const saveTicketProcedureList = async () => {
             <td style="width: 150px">
               <div
                 v-if="
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.ticketStatus)
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
                 "
                 class="text-center">
                 {{ ticketProcedure.quantity }}
@@ -211,7 +201,9 @@ const saveTicketProcedureList = async () => {
             <td class="text-center">
               <a
                 v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.ticketStatus)
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
+                    ticketClinicRef.ticketStatus
+                  )
                 "
                 class="text-red-500"
                 @click="ticketProcedureList.splice(index, 1)">
@@ -242,9 +234,14 @@ const saveTicketProcedureList = async () => {
   </div>
   <div class="mt-4 flex justify-between">
     <div></div>
-    <VueButton color="blue" :disabled="disabledButton" icon="save" @click="saveTicketProcedureList">
+    <VueButton
+      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]"
+      color="blue"
+      :disabled="disabledButton"
+      icon="save"
+      @click="saveTicketProcedureList">
       Lưu lại
     </VueButton>
   </div>
 </template>
-<script lang="scss" scope></script>
+<style lang="scss" scope></style>

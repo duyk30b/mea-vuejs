@@ -8,14 +8,14 @@ import { InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Radiology, RadiologyApi } from '../../../modules/radiology'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketRadiology } from '../../../modules/ticket-radiology'
 import { customFilter } from '../../../utils'
 import ModalTicketRadiologyResult from './modal/ModalTicketRadiologyResult.vue'
-import { ticketRadiologyHtmlContent } from './print-content/ticket-radiology-html-print-content'
-import { ticketClinic } from './ticket-clinic-detail.ref'
+import { ticketClinicPrintRadiology } from './print-content/ticket-clinic-print-radiology'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
@@ -31,7 +31,7 @@ const { formatMoney } = settingStore
 
 const ticketRadiologyList = ref<TicketRadiology[]>([])
 watch(
-  () => ticketClinic.value.ticketRadiologyList!,
+  () => ticketClinicRef.value.ticketRadiologyList!,
   (newValue: TicketRadiology[]) => {
     ticketRadiologyList.value = TicketRadiology.fromList(newValue || [])
   },
@@ -42,8 +42,8 @@ const disabledButton = computed(() => {
   return (
     TicketRadiology.equalList(
       ticketRadiologyList.value,
-      ticketClinic.value.ticketRadiologyList || []
-    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.value.ticketStatus)
+      ticketClinicRef.value.ticketRadiologyList || []
+    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)
   )
 })
 
@@ -64,8 +64,8 @@ const searchingRadiology = async (text: string) => {
 const selectRadiology = (instance?: Radiology) => {
   if (instance) {
     const ticketRadiology = TicketRadiology.init()
-    ticketRadiology.ticketId = ticketClinic.value.id
-    ticketRadiology.customerId = ticketClinic.value.customerId
+    ticketRadiology.ticketId = ticketClinicRef.value.id
+    ticketRadiology.customerId = ticketClinicRef.value.customerId
     ticketRadiology.radiologyId = instance.id
 
     ticketRadiology.radiology = instance
@@ -88,9 +88,9 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const saveTicketRadiologyList = async () => {
-  await TicketClinicApi.changeTicketRadiologyList({
-    ticketId: ticketClinic.value.id,
-    customerId: ticketClinic.value.customerId || 0,
+  await TicketClinicApi.updateTicketRadiologyList({
+    ticketId: ticketClinicRef.value.id,
+    customerId: ticketClinicRef.value.customerId || 0,
     ticketRadiologyList: ticketRadiologyList.value.filter((i) => i.startedAt == null),
   })
 }
@@ -103,11 +103,11 @@ const startPrint = async (tr: TicketRadiology) => {
     // const templateCompile = Handlebars.compile(templateHtml)
     // const content = templateCompile({
     //   organization: meStore.organization,
-    //   visit: ticketClinic.value,
+    //   visit: ticketClinicRef.value,
     //   ticketRadiology: vr,
     //   imageList: vr.imageList.slice(0, 4),
     // })
-    const content = ticketRadiologyHtmlContent(ticketClinic.value, tr)
+    const content = ticketClinicPrintRadiology(ticketClinicRef.value, tr, '')
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()
@@ -149,7 +149,7 @@ const startPrint = async (tr: TicketRadiology) => {
       :maxHeight="320"
       placeholder="Tìm kiếm tên dịch vụ"
       clear-after-selected
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinic.ticketStatus)"
+      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
       @selectItem="({ data }) => selectRadiology(data)"
       @update:text="searchingRadiology">
       <template #option="{ item: { data } }">
@@ -168,7 +168,7 @@ const startPrint = async (tr: TicketRadiology) => {
           <tr>
             <th>#</th>
             <th>Phiếu</th>
-            <th>BS thực hiện</th>
+            <!-- <th>BS thực hiện</th> -->
             <th>Kết quả</th>
             <th>Giá</th>
             <th></th>
@@ -213,7 +213,7 @@ const startPrint = async (tr: TicketRadiology) => {
               </div>
             </td>
             <td>{{ ticketRadiology.radiology?.name }}</td>
-            <td>{{ ticketRadiology.doctor?.fullName }}</td>
+            <!-- <td>{{ ticketRadiology.doctor?.fullName }}</td> -->
             <td style="max-width: 300px">
               <div class="flex items-center justify-between gap-2">
                 <div
@@ -228,7 +228,9 @@ const startPrint = async (tr: TicketRadiology) => {
                 </div>
                 <a
                   v-if="
-                    [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinic.ticketStatus)
+                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                      ticketClinicRef.ticketStatus
+                    )
                   "
                   @click="modalTicketRadiologyResult?.openModal(ticketRadiology, false)">
                   <IconVisibility width="22" height="22" />
@@ -246,7 +248,7 @@ const startPrint = async (tr: TicketRadiology) => {
               <a
                 v-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinic.ticketStatus
+                    ticketClinicRef.ticketStatus
                   ) && ticketRadiology.startedAt == null
                 "
                 class="text-red-500"
@@ -259,7 +261,7 @@ const startPrint = async (tr: TicketRadiology) => {
             </td>
           </tr>
           <tr>
-            <td colspan="4" class="text-right">
+            <td colspan="3" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">
@@ -279,9 +281,14 @@ const startPrint = async (tr: TicketRadiology) => {
   </div>
   <div class="mt-4 flex justify-between">
     <div></div>
-    <VueButton color="blue" :disabled="disabledButton" icon="save" @click="saveTicketRadiologyList">
+    <VueButton
+      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]"
+      color="blue"
+      :disabled="disabledButton"
+      icon="save"
+      @click="saveTicketRadiologyList">
       Lưu lại
     </VueButton>
   </div>
 </template>
-<script lang="scss" scope></script>
+<style lang="scss" scope></style>

@@ -14,6 +14,7 @@ const props = withDefaults(
     maxHeight?: number
     required?: boolean
     iconClear?: boolean
+    addOther?: boolean
   }>(),
   {
     value: null,
@@ -23,6 +24,7 @@ const props = withDefaults(
     maxHeight: 300,
     required: false,
     iconClear: false,
+    addOther: false,
   }
 )
 
@@ -179,7 +181,7 @@ defineExpose({ focus })
       <!-- <template v-if="iconClear">
         <IconTriangleDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
-        <IconClearCircle class="icon-clear-focus" @click="handleClear" />
+        <IconClearCircle class="icon-clear-blur" @click="handleClear" />
       </template>
       <template v-else>
         <IconTriangleDown v-if="!showOptions" />
@@ -208,6 +210,9 @@ defineExpose({ focus })
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}
           </div>
         </slot>
+      </div>
+      <div v-if="addOther" class="item-option">
+        <slot name="addOther"></slot>
       </div>
     </div>
   </div>

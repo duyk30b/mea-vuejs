@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { IconClose } from '../../../common/icon'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabPanel from '../../../common/vue-tabs/VueTabPanel.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
-import { Procedure, useProcedureStore } from '../../../modules/procedure'
-import ProcedureInfo from './ProcedureInfo.vue'
+import { Procedure } from '../../../modules/procedure'
 import ProcedureHistory from './ProcedureHistory.vue'
+import ProcedureInfo from './ProcedureInfo.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
@@ -17,8 +17,6 @@ const TABS_KEY = {
 }
 
 const emit = defineEmits<{ (e: 'success'): void }>()
-
-const procedureStore = useProcedureStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -33,8 +31,11 @@ const openModal = async (procedureProp: Procedure) => {
 
 const closeModal = () => {
   showModal.value = false
-  procedure.value = Procedure.blank()
 }
+
+onMounted(() => {
+  console.log('🚀 ~ file: ModalProcedureDetail.vue:37 ~ onMounted ~ onMounted:')
+})
 
 defineExpose({ openModal })
 </script>
@@ -70,7 +71,7 @@ defineExpose({ openModal })
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.INFO">
               <div class="mt-4">
-                <ProcedureInfo :procedure="procedure" />
+                <ProcedureInfo :procedureId="procedure.id" />
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PROCEDURE_HISTORY">

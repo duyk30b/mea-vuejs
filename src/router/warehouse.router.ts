@@ -1,8 +1,8 @@
 import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router'
 
 export const warehouseRouter: RouteRecordRaw = {
-  path: 'warehouse',
-  name: 'Warehouse',
+  path: 'goods',
+  name: 'Goods',
   redirect: () => ({ name: 'ProductList' }),
   children: [
     {

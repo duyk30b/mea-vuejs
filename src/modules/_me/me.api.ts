@@ -10,11 +10,11 @@ export class MeApi {
     const response = await AxiosInstance.get('/me/info')
     const { data } = response.data as BaseResponse
     return {
-      user: User.from(data.user),
       organization: Organization.from(data.organization),
-      role: Role.from(data.role),
+      permissionAll: Permission.fromList(data.permissionAll),
+      permissionIds: data.permissionIds,
       settingMap: data.settingMap as Record<string, any>,
-      permissionList: Permission.fromList(data.permissionList),
+      user: User.from(data.user),
     }
   }
 

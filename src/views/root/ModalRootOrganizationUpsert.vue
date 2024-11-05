@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputHint, InputNumber, InputText } from '../../common/vue-form'
+import { InputDate, InputHint, InputNumber, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../core/address.instance'
@@ -54,7 +54,7 @@ const openModal = async (instance?: Organization) => {
 
     if (firstLoad === true) {
       provinceList.value = await AddressInstance.getAllProvinces()
-      permissionList.value = await PermissionApi.list({ filter: { level: 1 } })
+      permissionList.value = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
       firstLoad = false
     }
   } catch (error) {
@@ -264,6 +264,20 @@ defineExpose({ openModal })
             v-model:value="organization.addressStreet"
             style="flex: 1"
             placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+        </div>
+
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div style="width: 100px; flex: none">Note</div>
+          <div class="flex-auto">
+            <InputText v-model:value="organization.note" />
+          </div>
+        </div>
+
+        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
+          <div style="width: 100px; flex: none">HSD</div>
+          <div class="flex-auto">
+            <InputDate v-model:value="organization.expiryDate" />
+          </div>
         </div>
 
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">

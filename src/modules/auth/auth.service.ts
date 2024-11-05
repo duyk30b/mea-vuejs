@@ -60,7 +60,7 @@ export class AuthService {
       LocalStorageService.removeToken()
       useMeStore().user = null // khai báo trước Router push Login
       Router.push({ name: 'Login' })
-      AlertStore.addError('Phiên đăng nhập đã kết thúc !')
+      AlertStore.addError('Phiên đăng nhập đã kết thúc !', 2000)
       try {
         await MeaDatabase.destroy()
         if (refreshToken) {

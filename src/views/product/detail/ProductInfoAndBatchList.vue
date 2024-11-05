@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { FileDoneOutlined } from '@ant-design/icons-vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../common/icon-google'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, ProductApi } from '../../../modules/product'
+import { Product, useProductStore } from '../../../modules/product'
 import { DTimer } from '../../../utils'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
-import { computed } from 'vue'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 
@@ -19,6 +18,7 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const productStore = useProductStore()
 
 const product = ref<Product>(Product.blank())
 const hasZeroQuantity = ref<boolean>(false)
@@ -26,8 +26,8 @@ const startFetchData = async () => {
   if (!props.productId) return
 
   try {
-    const productResponse = await ProductApi.detail(props.productId, {
-      relation: { batchList: true },
+    const productResponse = await productStore.getOne(props.productId, {
+      relation: { batchList: true, productGroup: true },
       filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { NOT: 0 } } },
     })
     productResponse.batchList?.forEach((i) => (i.product = productResponse))
@@ -84,6 +84,12 @@ const closeExpiryDate = computed(() => {
           {{ product.brandName }}
         </td>
       </tr>
+      <tr>
+        <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
+        <td class="px-2">
+          {{ product.productGroup?.name }}
+        </td>
+      </tr>
       <tr v-if="product.substance">
         <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
         <td class="px-2">
@@ -123,7 +129,7 @@ const closeExpiryDate = computed(() => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
         <td class="px-2">
-          {{ settingStore.PRODUCT_GROUP[product.group || 0] }}
+          {{ product.productGroup?.name }}
         </td>
       </tr>
 

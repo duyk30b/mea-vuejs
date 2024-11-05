@@ -2,14 +2,14 @@
 import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { IconClose } from '../../../common/icon'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabPanel from '../../../common/vue-tabs/VueTabPanel.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { Radiology } from '../../../modules/radiology'
-import RadiologyInfo from './RadiologyInfo.vue'
 import RadiologyHistory from './RadiologyHistory.vue'
+import RadiologyInfo from './RadiologyInfo.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
@@ -68,7 +68,7 @@ defineExpose({ openModal })
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.INFO">
               <div class="mt-4">
-                <RadiologyInfo :radiology="radiology" />
+                <RadiologyInfo :radiologyId="radiology.id" />
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.HISTORY">

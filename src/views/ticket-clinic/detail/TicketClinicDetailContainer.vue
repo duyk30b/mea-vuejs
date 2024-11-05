@@ -18,15 +18,14 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, useTicketClinicStore } from '../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef, useTicketClinicStore } from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
-import TicketClinicDiagnosis from './TicketClinicDiagnosis.vue'
+import TicketClinicDiagnosis from './TicketClinicDiagnosisBasic.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
-import { ticketClinic } from './ticket-clinic-detail.ref'
 import TicketClinicConsumable from './TicketClinicConsumable.vue'
 
 const route = useRoute()
@@ -42,12 +41,16 @@ const startFetchData = async (ticketId: number) => {
     const ticketData = await ticketClinicStore.detail(ticketId, {
       relation: {
         customer: true,
-        user: true,
         customerPaymentList: false, // query khi bật modal thanh toán
+
         ticketDiagnosis: true,
-        ticketProductList: true,
+        // ticketProductList: true,
+        ticketProductConsumableList: true,
+        ticketProductPrescriptionList: true,
         ticketProcedureList: true,
         ticketRadiologyList: true,
+
+        ticketUserList: true,
         toAppointment: true,
       },
     })
@@ -58,7 +61,7 @@ const startFetchData = async (ticketId: number) => {
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
     if (!ticketData.ticketProductList) ticketData.ticketProductList = []
     if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
-    ticketClinic.value = ticketData
+    ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
   }
@@ -83,15 +86,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await TicketClinicApi.startCheckup({ ticketId: ticketClinic.value.id })
+  await TicketClinicApi.startCheckup({ ticketId: ticketClinicRef.value.id })
 }
 
 const startCloseVisit = async () => {
-  await TicketClinicApi.close(ticketClinic.value.id)
+  await TicketClinicApi.close(ticketClinicRef.value.id)
 }
 
 const clickCloseVisit = () => {
-  if (ticketClinic.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
@@ -100,26 +103,26 @@ const clickCloseVisit = () => {
       ],
     })
   }
-  if ((ticketClinic.value.ticketRadiologyList || []).find((i) => i.startedAt == null)) {
+  if ((ticketClinicRef.value.ticketRadiologyList || []).find((i) => i.startedAt == null)) {
     return ModalStore.alert({
       title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
       content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
     })
   }
 
-  if (ticketClinic.value.paid > ticketClinic.value.totalMoney) {
+  if (ticketClinicRef.value.paid > ticketClinicRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
 
-  if (ticketClinic.value.debt) {
+  if (ticketClinicRef.value.debt) {
     return ModalStore.confirm({
       title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
       content: [
         '- Vẫn đóng phiếu khám.',
-        `- Ghi nợ khách hàng: ${formatMoney(ticketClinic.value?.debt || 0)}.`,
+        `- Ghi nợ khách hàng: ${formatMoney(ticketClinicRef.value?.debt || 0)}.`,
       ],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
@@ -137,7 +140,7 @@ const clickCloseVisit = () => {
     <div class="page-header-content">
       <div class="md:block">
         <ContactsOutlined />
-        <span class="ml-2">{{ ticketClinic.customer?.fullName }}</span>
+        <span class="ml-2">{{ ticketClinicRef.customer?.fullName }}</span>
       </div>
     </div>
     <div class="page-header-setting">
@@ -167,7 +170,7 @@ const clickCloseVisit = () => {
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketClinic.ticketStatus
+                ticketClinicRef.ticketStatus
               )
             ">
             <VueTabMenu
@@ -224,7 +227,7 @@ const clickCloseVisit = () => {
         <VueButton
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Approved].includes(
-              ticketClinic.ticketStatus
+              ticketClinicRef.ticketStatus
             )
           "
           color="blue"
@@ -236,7 +239,7 @@ const clickCloseVisit = () => {
         <VueButton
           color="blue"
           size="default"
-          :disabled="![TicketStatus.Executing].includes(ticketClinic.ticketStatus)"
+          :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"
           @click="clickCloseVisit">
           <ContainerOutlined />
           ĐÓNG PHIẾU KHÁM

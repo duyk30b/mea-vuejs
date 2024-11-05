@@ -5,9 +5,11 @@ export class TicketDiagnosis {
   ticketId: number
   reason: string // Lý do vào khám
   healthHistory: string // Tóm tăt bệnh án
+  general: string // Khám tổng quát, toàn thân
+  regional: string // khám bộ phận
   summary: string // Tóm tăt bệnh án
+  special: string // khám đặc biệt, VD: đo thị lực
   diagnosis: string // Chẩn đoán
-  vitalSigns: string
   imageIds: string
   imageList: Image[]
   advice?: string // Lời nhắc
@@ -17,9 +19,11 @@ export class TicketDiagnosis {
     ins.id = 0
     ins.reason = ''
     ins.healthHistory = ''
+    ins.general = JSON.stringify({})
+    ins.regional = JSON.stringify({})
     ins.summary = ''
+    ins.special = JSON.stringify({})
     ins.diagnosis = ''
-    ins.vitalSigns = JSON.stringify({})
     ins.advice = ''
     return ins
   }

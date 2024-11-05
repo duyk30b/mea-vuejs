@@ -1,6 +1,7 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { AppointmentStatus, AppointmentType } from './appointment.model'
+import type { VoucherType } from '../enum'
+import type { AppointmentStatus } from './appointment.model'
 
 export class AppointmentGetQuery {
   page: number
@@ -12,7 +13,7 @@ export class AppointmentGetQuery {
   filter?: {
     customerId?: number
     appointmentStatus?: AppointmentStatus | ConditionEnum<AppointmentStatus>
-    appointmentType?: AppointmentType | ConditionEnum<AppointmentType>
+    voucherType?: VoucherType | ConditionEnum<VoucherType>
     registeredAt?: ConditionDate
   }
 

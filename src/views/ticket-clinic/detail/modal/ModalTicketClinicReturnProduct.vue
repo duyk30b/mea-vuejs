@@ -2,14 +2,13 @@
 import { CloseOutlined, DollarOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import type { TicketProduct } from '../../../../modules/ticket-product'
-import { arrayToKeyArray, timeToText } from '../../../../utils'
-import { ticketClinic } from '../ticket-clinic-detail.ref'
 import { DeliveryStatus } from '../../../../modules/enum'
-import { TicketClinicApi } from '../../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import type { TicketProduct } from '../../../../modules/ticket-product'
+import { timeToText } from '../../../../utils'
 
 const ticketProductReturnList = ref<
   {
@@ -29,8 +28,11 @@ const returnLoading = ref(false)
 
 const openModal = async () => {
   showModal.value = true
-  ticketProductReturnList.value = ticketClinic.value
-    .ticketProductList!.filter((i) => i.deliveryStatus === DeliveryStatus.Delivered)
+  ticketProductReturnList.value = [
+    ...(ticketClinicRef.value.ticketProductPrescriptionList || []),
+    ...(ticketClinicRef.value.ticketProductConsumableList || []),
+  ]
+    .filter((i) => i.deliveryStatus === DeliveryStatus.Delivered)
     .map((i) => {
       return {
         ticketProductId: i.id,
@@ -74,7 +76,7 @@ const startReturnProduct = async () => {
     if (!validateQuantity()) return
 
     await TicketClinicApi.returnProduct({
-      ticketId: ticketClinic.value.id,
+      ticketId: ticketClinicRef.value.id,
       returnList: ticketProductReturnList.value
         .filter((i) => i.quantityReturn > 0)
         .map((i) => {
@@ -110,7 +112,7 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          Thông tin hoàn trả: {{ ticketClinic.customer?.fullName }}
+          Thông tin hoàn trả: {{ ticketClinicRef.customer?.fullName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />

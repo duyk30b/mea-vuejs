@@ -15,7 +15,7 @@ export class BatchGetQuery {
     updatedAt?: ConditionDate
     product?: {
       searchText?: string
-      group?: string
+      productGroupId?: number
       quantity?: ConditionNumber
       isActive?: 1 | 0
       updatedAt?: ConditionDate

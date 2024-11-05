@@ -1,16 +1,40 @@
+import { DiscountType } from '../enum'
+import type { ProcedureGroup } from '../procedure-group'
+
+export enum ProcedureType {
+  Basic = 1,
+  Regimen = 2, // Liệu trình
+  Remedy = 3, // Bài thuốc
+}
+
 export class Procedure {
   id: number
   name: string // Tên dịch vụ
-  group: string // Nhóm dịch vụ ...
-  price: number // Giá dự kiến
+  procedureType: ProcedureType
+  quantityDefault: number
+  gapHours: number
+  procedureGroupId: number
+  price: number // Giá mặc định
+
+  consumablesHint: string
+
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
   deletedAt: number
 
+  procedureGroup?: ProcedureGroup
+
   static init() {
     const ins = new Procedure()
     ins.id = 0
+    ins.procedureType = ProcedureType.Basic
+    ins.quantityDefault = 1
+    ins.procedureGroupId = 0
+    ins.gapHours = 0
+
     ins.price = 0
+
+    ins.consumablesHint = JSON.stringify([])
     ins.isActive = 1
     return ins
   }

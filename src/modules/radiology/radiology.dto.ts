@@ -4,7 +4,10 @@ import type { ConditionDate } from '../_base/base-condition'
 export class RadiologyGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: {
+    radiologyGroup?: boolean
+  }
+
   filter?: {
     updatedAt?: ConditionDate
   }

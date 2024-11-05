@@ -4,14 +4,12 @@ import {
   CheckCircleOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { RoleApi, type Role } from '../../modules/role'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { useMeStore } from '../../modules/_me/me.store'
 import VueButton from '../../common/VueButton.vue'
+import { useMeStore } from '../../modules/_me/me.store'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { RoleApi, type Role } from '../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -34,7 +32,7 @@ const startFetchData = async () => {
     roleList.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: RoleList.vue:32 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: RoleList.vue:35 ~ startFetchData ~ error:', error)
   }
 }
 

@@ -2,17 +2,16 @@
 import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber } from '../../../../common/vue-form'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CustomerPaymentApi } from '../../../../modules/customer-payment/customer-payment.api'
 import { PaymentViewType } from '../../../../modules/enum'
 import { Ticket, TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi } from '../../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { timeToText } from '../../../../utils'
 import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
-import { ticketClinic } from '../ticket-clinic-detail.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -33,7 +32,7 @@ const openModal = async (view: PaymentViewType) => {
   money.value = 0
   showModal.value = true
 
-  ticketClone.value = Ticket.from(ticketClinic.value)
+  ticketClone.value = Ticket.from(ticketClinicRef.value)
   ticketClone.value.customerPaymentList = await CustomerPaymentApi.list({
     filter: {
       customerId: ticketClone.value.customerId,

@@ -12,19 +12,6 @@ export const settingDefault = {
     allowNegativeQuantity: false,
   },
 
-  PRODUCT_GROUP: <Record<string, string>>{
-    1: 'Kháng sinh - Kháng Virus',
-    2: 'Dị ứng',
-    3: 'Thần Kinh',
-    4: 'Tiêu Hóa',
-    5: 'Cơ Xương Khớp',
-    6: 'Giảm Đau - Hạ Sốt',
-    8: 'Thực Phẩm Chức Năng',
-    9: 'Dinh Dưỡng',
-    10: 'Hô hấp',
-    11: 'Tim Mạch',
-    12: 'Da Liễu',
-  },
   PRODUCT_UNIT: <string[]>[
     'Lọ',
     'Vỉ',
@@ -44,18 +31,6 @@ export const settingDefault = {
     'Uống 1 viên khi sốt, sau 4h có thể uống tiếp',
     'Bôi dưới da 3 lần/ngày',
   ],
-
-  PROCEDURE_GROUP: <Record<string, string>>{
-    1: 'Tiêm truyền',
-    2: 'Làm đẹp',
-    3: 'Chăm sóc',
-  },
-
-  RADIOLOGY_GROUP: <Record<string, string>>{
-    1: 'Nội soi',
-    2: 'Siêu âm',
-    3: 'X-Quang',
-  },
 
   INVOICE_SURCHARGE_DETAIL: <Record<string, string>>{
     _unknown: 'Khác',

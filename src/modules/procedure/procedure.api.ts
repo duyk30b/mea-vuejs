@@ -52,8 +52,14 @@ export class ProcedureApi {
   static async createOne(procedure: Procedure) {
     const response = await AxiosInstance.post('/procedure/create', {
       name: procedure.name,
-      group: procedure.name,
-      price: procedure.price,
+      procedureGroupId: procedure.procedureGroupId,
+
+      procedureType: procedure.procedureType,
+      quantityDefault: procedure.quantityDefault,
+      gapHours: procedure.gapHours,
+      price: procedure.price, // Giá mặc định
+
+      consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
@@ -63,8 +69,14 @@ export class ProcedureApi {
   static async updateOne(id: number, procedure: Procedure) {
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
       name: procedure.name,
-      group: procedure.name,
-      price: procedure.price,
+      procedureGroupId: procedure.procedureGroupId,
+
+      procedureType: procedure.procedureType,
+      quantityDefault: procedure.quantityDefault,
+      gapHours: procedure.gapHours,
+      price: procedure.price, // Giá mặc định
+
+      consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>

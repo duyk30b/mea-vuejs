@@ -60,32 +60,48 @@ export const socketInit = () => {
     SocketService.listenProcedureUpsert(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CREATE, (data) => {
-    SocketService.listenTicketClinicCreate(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CREATE, (data) => {
+    SocketService.listenTicketCreate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE, (data) => {
-    SocketService.listenTicketClinicUpdate(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE, (data) => {
+    SocketService.listenTicketUpdate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_DIAGNOSIS, (data) => {
-    SocketService.listenTicketClinicUpdateTicketDiagnosis(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_DESTROY, (data) => {
+    SocketService.listenTicketDestroy(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY, (data) => {
-    SocketService.listenTicketClinicUpdateTicketRadiology(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_DIAGNOSIS_BASIC, (data) => {
+    SocketService.listenTicketUpdateTicketDiagnosisBasic(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketProductList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_DIAGNOSIS_SPECIAL, (data) => {
+    SocketService.listenTicketUpdateTicketDiagnosisSpecial(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PROCEDURE_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketProcedureList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_PROCEDURE_LIST, (data) => {
+    SocketService.listenTicketUpdateTicketProcedureList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketRadiologyList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
+    SocketService.listenTicketUpdateTicketProductConsumableList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
+    SocketService.listenTicketUpdateTicketProductPrescriptionList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_RADIOLOGY_RESULT, (data) => {
+    SocketService.listenTicketUpdateTicketRadiologyResult(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_RADIOLOGY_LIST, (data) => {
+    SocketService.listenTicketUpdateTicketRadiologyList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_UPDATE_TICKET_USER_LIST, (data) => {
+    SocketService.listenTicketUpdateTicketUserList(data)
   })
 }
 

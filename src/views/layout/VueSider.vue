@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import { IconLabPanel } from '../../common/icon-google'
 import MedicalIcon from '../../common/icon/MedicalIcon.vue'
 import StoreIcon from '../../common/icon/StoreIcon.vue'
 import { useMeStore } from '../../modules/_me/me.store'
@@ -54,18 +55,50 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppHome' }">Home</router-link>
       </span>
     </a-menu-item>
-    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="Clinic">
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="TicketClinic">
       <template #icon>
         <MedicalIcon />
       </template>
       <template #title>Phòng khám</template>
-      <a-menu-item key="ClinicVisitList">
+      <a-menu-item key="TicketClinicList">
         <router-link :to="{ name: 'TicketClinicList' }">Danh sách khám</router-link>
       </a-menu-item>
       <a-menu-item key="AppointmentList">
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
       </a-menu-item>
     </a-sub-menu>
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_EYE_READ]" key="ClinicEye">
+      <template #icon>
+        <MedicalIcon />
+      </template>
+      <template #title>PK Mắt</template>
+      <a-menu-item key="TicketEye">
+        <router-link :to="{ name: 'TicketEye' }">Danh sách khám</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.APPOINTMENT_READ]" key="AppointmentEye">
+        <router-link :to="{ name: 'AppointmentEye' }">Hẹn khám</router-link>
+      </a-menu-item>
+    </a-sub-menu>
+    <!-- <a-sub-menu
+      v-if="permissionIdMap[PermissionId.TICKET_TRADITIONAL_READ]"
+      key="TicketTraditional">
+      <template #icon>
+        <MedicalIcon />
+      </template>
+      <template #title>PK Đông Y</template>
+      <a-menu-item key="TicketTraditionalList">
+        <router-link :to="{ name: 'TicketTraditionalList' }">Danh sách khám</router-link>
+      </a-menu-item>
+    </a-sub-menu> -->
+    <!-- <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_TRADITIONAL_READ]" key="TicketSpa">
+      <template #icon>
+        <IconLabPanel />
+      </template>
+      <template #title>Phòng Thẩm mỹ</template>
+      <a-menu-item key="TicketSpaList">
+        <router-link :to="{ name: 'TicketSpaList' }">Đón tiếp</router-link>
+      </a-menu-item>
+    </a-sub-menu> -->
     <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_ORDER_READ]" key="TicketOrder">
       <template #icon>
         <StoreIcon />
@@ -95,7 +128,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         permissionIdMap[PermissionId.RECEIPT_READ] ||
         permissionIdMap[PermissionId.DISTRIBUTOR_READ]
       "
-      key="Warehouse">
+      key="Goods">
       <template #icon>
         <AppstoreOutlined />
       </template>
@@ -112,18 +145,47 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </a-sub-menu>
     <a-sub-menu
       v-if="
-        permissionIdMap[PermissionId.PROCEDURE_READ] || permissionIdMap[PermissionId.RADIOLOGY_READ]
+        permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] ||
+        permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY] ||
+        permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] ||
+        permissionIdMap[PermissionId.MASTER_DATA_TICKET_SOURCE] ||
+        permissionIdMap[PermissionId.MASTER_DATA_PRODUCT_GROUP] ||
+        permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE_GROUP] ||
+        permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY_GROUP]
       "
-      key="Data">
+      key="MasterData">
       <template #icon>
         <PicCenterOutlined />
       </template>
-      <template #title>Dữ liệu</template>
-      <a-menu-item v-if="permissionIdMap[PermissionId.PROCEDURE_READ]" key="ProcedureList">
+      <template #title>Danh mục</template>
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]" key="ProcedureList">
         <router-link :to="{ name: 'ProcedureList' }">Dịch vụ</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.RADIOLOGY_READ]" key="RadiologyList">
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
         <router-link :to="{ name: 'RadiologyList' }">Phiếu CĐHA</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" key="WarehouseList">
+        <router-link :to="{ name: 'WarehouseList' }">DS kho</router-link>
+      </a-menu-item>
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_TICKET_SOURCE]"
+        key="CustomerSourceList">
+        <router-link :to="{ name: 'CustomerSourceList' }">DS nguồn khách hàng</router-link>
+      </a-menu-item>
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRODUCT_GROUP]"
+        key="ProductGroupList">
+        <router-link :to="{ name: 'ProductGroupList' }">DS nhóm sản phẩm</router-link>
+      </a-menu-item>
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE_GROUP]"
+        key="ProcedureGroupList">
+        <router-link :to="{ name: 'ProcedureGroupList' }">DS nhóm dịch vụ</router-link>
+      </a-menu-item>
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY_GROUP]"
+        key="RadiologyGroupList">
+        <router-link :to="{ name: 'RadiologyGroupList' }">DS nhóm CĐHA</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu
@@ -181,7 +243,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item key="UserInfo">
         <router-link :to="{ name: 'UserInfo' }">Thông tin cá nhân</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" key="SystemSetting">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+        key="SystemSetting">
         <router-link :to="{ name: 'SystemSetting' }">Cài đặt</router-link>
       </a-menu-item>
     </a-sub-menu>

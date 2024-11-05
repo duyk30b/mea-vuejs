@@ -3,7 +3,7 @@ import {
   AccountBookOutlined,
   CheckCircleOutlined,
   FormOutlined,
-  MinusCircleOutlined
+  MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
@@ -11,6 +11,7 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import type { Organization } from '../../modules/organization'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
+import { timeToText } from '../../utils'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
 
@@ -90,7 +91,8 @@ const handleModalRootOrganizationUpsertSuccess = async (
             <th>Phone</th>
             <th>Email</th>
             <th>Name</th>
-            <th>Address</th>
+            <th>ExpiryDate</th>
+            <th>Note</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -104,10 +106,8 @@ const handleModalRootOrganizationUpsertSuccess = async (
             <td class="text-center">{{ organization.phone }}</td>
             <td>{{ organization.email }}</td>
             <td>{{ organization.name }}</td>
-            <td>
-              {{ organization.addressProvince }} - {{ organization.addressDistrict }} -
-              {{ organization.addressWard }}
-            </td>
+            <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
+            <td>{{ organization.note }}</td>
             <td class="text-center">
               <a-tag v-if="organization.isActive" color="success">
                 <template #icon>

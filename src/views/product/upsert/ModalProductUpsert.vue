@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { CloseOutlined, SettingOutlined, SisternodeOutlined } from '@ant-design/icons-vue'
+import { SisternodeOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputDate,
@@ -18,6 +19,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { UnitType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { useProductStore } from '../../../modules/product'
+import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 import { Product } from '../../../modules/product/product.model'
 import { customFilter } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
@@ -27,27 +29,39 @@ const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpse
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 
 const emit = defineEmits<{ (e: 'success', value: Product, type: 'CREATE' | 'UPDATE'): void }>()
-const productStore = useProductStore()
+
 const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-
-const showModal = ref(false)
+const productStore = useProductStore()
 
 const product = ref(Product.blank())
-const unit = ref<UnitType[]>([])
+const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
+const unit = ref<UnitType[]>([{ name: '', rate: 1, default: true }])
+
+const showModal = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (instance?: Product) => {
+const openModal = async (productId?: number) => {
   showModal.value = true
-  if (instance) {
-    product.value = Product.from(instance)
-    unit.value = JSON.parse(instance.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
-  } else {
+  if (!productId) {
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
+  } else {
+    const productFetch = await productStore.getOne(productId, {})
+    product.value = productFetch
+    unit.value = JSON.parse(
+      productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }])
+    )
   }
+
+  const productGroupAll = await ProductGroupService.getAll()
+  productGroupOptions.value = productGroupAll.map((i) => ({
+    value: i.id,
+    text: i.name,
+    data: i,
+  }))
 }
 
 const openModalFromTicket = () => {
@@ -144,10 +158,10 @@ defineExpose({ openModal, openModalFromTicket })
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalProductUpsertSettingScreen?.openModal()">
-          <SettingOutlined />
+          <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -259,13 +273,8 @@ defineExpose({ openModal, openModalFromTicket })
           <div class="">Nhóm</div>
           <div>
             <InputOptions
-              v-model:value="product.group"
-              :options="
-                Object.entries(settingStore.PRODUCT_GROUP).map(([value, text]) => ({
-                  value,
-                  text,
-                }))
-              "
+              v-model:value="product.productGroupId"
+              :options="productGroupOptions"
               :logic-filter="
                 (item: any, text: string) => customFilter(item?.text, text)
               "></InputOptions>
@@ -366,7 +375,7 @@ defineExpose({ openModal, openModalFromTicket })
             <span v-if="product.hasManageQuantity">
               ( Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất )
             </span>
-            <span v-if="!product.hasManageQuantity">( Sản phẩm này không có số lượng )</span>
+            <span v-if="!product.hasManageQuantity">( Sản phẩm này không quan tâm số lượng )</span>
           </div>
         </div>
 
@@ -403,8 +412,7 @@ defineExpose({ openModal, openModalFromTicket })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton class="btn ml-auto" type="reset" @click="handleClose">
-            <CloseOutlined />
+          <VueButton class="btn ml-auto" icon="close" type="reset" @click="handleClose">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
@@ -417,5 +425,7 @@ defineExpose({ openModal, openModalFromTicket })
   <ModalProductUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalProductUpsertSettingScreen" />
-  <ModalDataProduct v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" ref="modalDataProduct" />
+  <ModalDataProduct
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalDataProduct" />
 </template>

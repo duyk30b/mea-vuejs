@@ -1,12 +1,12 @@
-<script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
+<script lang="ts" setup>
 import { ref } from 'vue'
 import { BasicEditor } from '../../../ckeditor/class-editor'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../../common/icon'
 import { InputMoney, InputOptions, InputText, VueSelect } from '../../../common/vue-form'
-import { useSettingStore } from '../../../modules/_me/setting.store'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { Radiology, RadiologyApi } from '../../../modules/radiology'
+import { RadiologyGroup, RadiologyGroupService } from '../../../modules/radiology-group'
 import { customFilter } from '../../../utils'
 
 const emit = defineEmits<{
@@ -16,8 +16,7 @@ const emit = defineEmits<{
 const showModal = ref(false)
 const radiology = ref(Radiology.blank())
 const radiologyExampleOptions = ref<{ value: number; text: string; data: Radiology }[]>([])
-const settingStore = useSettingStore()
-const { isMobile } = settingStore
+const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const saveLoading = ref(false)
 
 const openModal = async (instance?: Radiology) => {
@@ -32,6 +31,7 @@ const openModal = async (instance?: Radiology) => {
       data: i,
     }))
   }
+  radiologyGroupAll.value = await RadiologyGroupService.getAll()
 }
 
 const closeModal = () => {
@@ -42,11 +42,11 @@ const closeModal = () => {
 const handleInputRadiologyName = (name: string) => {
   radiology.value.name = name
 
-  const groupFilter = Object.entries(settingStore.RADIOLOGY_GROUP).find(([value, text]) => {
-    return customFilter(name, text)
+  const groupFilter = radiologyGroupAll.value.find((group) => {
+    return customFilter(name, group.name)
   })
   if (groupFilter) {
-    radiology.value.group = groupFilter[0]
+    radiology.value.radiologyGroupId = groupFilter.id
   }
 }
 
@@ -86,7 +86,7 @@ defineExpose({ openModal })
           }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -100,6 +100,7 @@ defineExpose({ openModal })
             <InputOptions
               :options="radiologyExampleOptions"
               noClearTextWhenNotSelected
+              :message-no-result="false"
               :logic-filter="(item: any, text: string) => customFilter(item?.text, text)"
               @update:text="handleInputRadiologyName"
               @selectItem="({ data }) => selectRadiologyExample(data)" />
@@ -109,12 +110,9 @@ defineExpose({ openModal })
           <div class="">Nhóm</div>
           <div>
             <VueSelect
-              v-model:value="radiology.group"
+              v-model:value="radiology.radiologyGroupId"
               :options="
-                Object.entries(settingStore.RADIOLOGY_GROUP).map(([value, text]) => ({
-                  value,
-                  text,
-                }))
+                radiologyGroupAll.map((group) => ({ value: group.id, text: group.name }))
               " />
           </div>
         </div>

@@ -1,12 +1,13 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import type { VoucherType } from '../enum'
 import {
   AppointmentDetailQuery,
   AppointmentGetQuery,
   AppointmentListQuery,
   type AppointmentPaginationQuery,
 } from './appointment.dto'
-import { Appointment, AppointmentStatus, AppointmentType } from './appointment.model'
+import { Appointment, AppointmentStatus } from './appointment.model'
 
 export class AppointmentApi {
   static async pagination(options: AppointmentPaginationQuery) {
@@ -41,7 +42,8 @@ export class AppointmentApi {
     fromTicketId: number
     registeredAt: number
     reason: string
-    appointmentType: AppointmentType
+    customerSourceId: number
+    voucherType: VoucherType
     appointmentStatus: AppointmentStatus
   }) {
     const response = await AxiosInstance.post('/appointment/create', body)
@@ -55,6 +57,7 @@ export class AppointmentApi {
       customerId: number
       registeredAt: number
       reason: string
+      customerSourceId: number
       cancelReason: string
       appointmentStatus: AppointmentStatus
     }
@@ -70,8 +73,10 @@ export class AppointmentApi {
     return data
   }
 
-  static async registerTicketClinic(id: number) {
-    const response = await AxiosInstance.post(`/appointment/register-ticket-clinic/${id}`)
+  static async registerTicket(appointmentId: number, registeredAt: number) {
+    const response = await AxiosInstance.post(`/appointment/${appointmentId}/register-ticket`, {
+      registeredAt,
+    })
     const { data } = response.data as BaseResponse<{ appointmentId: any }>
     return data
   }

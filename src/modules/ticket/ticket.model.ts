@@ -1,6 +1,7 @@
-import type { Appointment } from '../appointment'
+import { Appointment } from '../appointment'
 import { Customer } from '../customer'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
+import { CustomerSource } from '../customer-source'
 import { DeliveryStatus, DiscountType, VoucherType } from '../enum'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
@@ -10,7 +11,7 @@ import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
-import type { User } from '../user'
+import { TicketUser } from '../ticket-user'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -25,9 +26,11 @@ export enum TicketStatus {
 export class Ticket {
   id: number
   customerId: number
+  customerSourceId: number
   voucherType: VoucherType
   ticketStatus: TicketStatus
   deliveryStatus: DeliveryStatus
+
   totalCostAmount: number
   proceduresMoney: number
   productsMoney: number
@@ -41,21 +44,27 @@ export class Ticket {
   profit: number
   paid: number
   debt: number
+
   note: string
+
   registeredAt: number // Giờ đăng ký khám
   startedAt: number | null // Giờ vào khám
   endedAt: number
   updatedAt: number | null // Giờ kết thúc khám
 
   customer?: Customer
-  user?: User
   customerPaymentList?: CustomerPayment[]
+  customerSource?: CustomerSource
   ticketDiagnosis?: TicketDiagnosis
   ticketProductList?: TicketProduct[]
+  ticketProductConsumableList?: TicketProduct[]
+  ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
   ticketRadiologyList?: TicketRadiology[]
+  ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
+
   toAppointment?: Appointment
 
   static init(): Ticket {
@@ -86,6 +95,7 @@ export class Ticket {
     ins.ticketProcedureList = []
     ins.ticketProductList = []
     ins.ticketRadiologyList = []
+    ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
 
@@ -111,6 +121,18 @@ export class Ticket {
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = target.customer ? Customer.basic(target.customer) : target.customer
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'customerSource')) {
+      target.customerSource = target.customerSource
+        ? CustomerSource.basic(target.customerSource)
+        : target.customerSource
+    }
+
+    if (Object.prototype.hasOwnProperty.call(source, 'toAppointment')) {
+      target.toAppointment = target.toAppointment
+        ? Appointment.basic(target.toAppointment)
+        : target.toAppointment
+    }
+
     if (Object.prototype.hasOwnProperty.call(source, 'ticketDiagnosis')) {
       target.ticketDiagnosis = target.ticketDiagnosis
         ? TicketDiagnosis.basic(target.ticketDiagnosis)
@@ -125,6 +147,22 @@ export class Ticket {
         i.product = Product.basic(i.product!)
       })
     }
+    if (target.ticketProductPrescriptionList) {
+      target.ticketProductPrescriptionList = TicketProduct.basicList(
+        target.ticketProductPrescriptionList
+      )
+      target.ticketProductPrescriptionList.forEach((i) => {
+        i.product = Product.basic(i.product!)
+      })
+    }
+    if (target.ticketProductConsumableList) {
+      target.ticketProductConsumableList = TicketProduct.basicList(
+        target.ticketProductConsumableList
+      )
+      target.ticketProductConsumableList.forEach((i) => {
+        i.product = Product.basic(i.product!)
+      })
+    }
     if (target.ticketProcedureList) {
       target.ticketProcedureList = TicketProcedure.basicList(target.ticketProcedureList)
       target.ticketProcedureList.forEach((i) => {
@@ -133,6 +171,9 @@ export class Ticket {
     }
     if (target.ticketRadiologyList) {
       target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
+    }
+    if (target.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
     }
     if (target.ticketSurchargeList) {
       target.ticketSurchargeList = TicketSurcharge.basicList(target.ticketSurchargeList)

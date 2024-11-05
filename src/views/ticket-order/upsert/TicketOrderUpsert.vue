@@ -374,7 +374,7 @@ const handleChangeTabs = (activeKey: any) => {
                 Hàng hóa ({{ ticket.ticketProductList!.length }})
               </VueTabMenu>
               <VueTabMenu
-                v-if="permissionIdMap[PermissionId.PROCEDURE_READ]"
+                v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
                 :tabKey="TABS_KEY.PROCEDURE">
                 Dịch vụ ({{ ticket.ticketProcedureList!.length }})
               </VueTabMenu>

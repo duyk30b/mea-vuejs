@@ -3,16 +3,18 @@ import { useMeStore } from '../../modules/_me/me.store'
 import { Batch, useBatchStore } from '../../modules/batch'
 import { Customer, useCustomerStore } from '../../modules/customer'
 import { Distributor, useDistributorStore } from '../../modules/distributor'
+import { VoucherType } from '../../modules/enum'
 import { Organization } from '../../modules/organization'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
 import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
-import { useTicketClinicStore } from '../../modules/ticket-clinic/ticket-clinic.store'
+import { ticketClinicList, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
+import { ticketEyeList, ticketEyeRef } from '../../modules/ticket-eye'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
-import { ticketClinic } from '../../views/ticket-clinic/detail/ticket-clinic-detail.ref'
+import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { DistributorDB } from '../indexed-db/repository/distributor.repository'
@@ -75,15 +77,24 @@ export class SocketService {
     useProcedureStore().timeSync = Date.now()
   }
 
-  static async listenTicketClinicCreate(data: { ticket: any }) {
+  static async listenTicketCreate(data: { ticket: any }) {
     const ticket = Ticket.from(data.ticket)
-    const ticketClinicStore = useTicketClinicStore()
 
-    ticketClinicStore.paginationMeta.total++
-    if (ticketClinicStore.paginationMeta.page === 1) {
-      ticketClinicStore.ticketList.unshift(ticket)
-      if (ticketClinicStore.ticketList.length > ticketClinicStore.paginationMeta.limit) {
-        ticketClinicStore.ticketList.pop()
+    if (ticket.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === ticket.id)
+      if (ticketFind) {
+        Object.assign(ticketFind, ticket)
+      } else {
+        ticketClinicList.value.unshift(ticket)
+      }
+    }
+
+    if (ticket.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === ticket.id)
+      if (ticketFind) {
+        Object.assign(ticketFind, ticket)
+      } else {
+        ticketEyeList.value.unshift(ticket)
       }
     }
 
@@ -92,122 +103,313 @@ export class SocketService {
     }
   }
 
-  static async listenTicketClinicUpdate(data: { ticketBasic: any }) {
+  static async listenTicketDestroy(data: { ticketId: any; voucherType: VoucherType }) {
+    if (data.voucherType === VoucherType.Clinic) {
+      const findIndex = ticketClinicList.value.findIndex((i) => i.id === data.ticketId)
+      if (findIndex !== -1) {
+        ticketClinicList.value.splice(findIndex, 1)
+      }
+    }
+
+    if (data.voucherType === VoucherType.Eye) {
+      const findIndex = ticketEyeList.value.findIndex((i) => i.id === data.ticketId)
+      if (findIndex !== -1) {
+        ticketEyeList.value.splice(findIndex, 1)
+      }
+    }
+  }
+
+  static async listenTicketUpdate(data: { ticketBasic: any }) {
     const ticketBasic = Ticket.from(data.ticketBasic)
-
-    const ticketFind = useTicketClinicStore().ticketList.find((i) => i.id === ticketBasic.id)
-    if (ticketFind) {
-      Object.assign(ticketFind, ticketBasic)
+    if (ticketBasic.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === ticketBasic.id)
+      if (ticketFind) {
+        Object.assign(ticketFind, ticketBasic)
+      }
+      if (ticketClinicRef.value.id === ticketBasic.id) {
+        Object.assign(ticketClinicRef.value, ticketBasic)
+      }
     }
 
-    if (ticketBasic.id === ticketClinic.value.id) {
-      Object.assign(ticketClinic.value, ticketBasic)
+    if (ticketBasic.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === ticketBasic.id)
+      if (ticketFind) {
+        Object.assign(ticketFind, ticketBasic)
+      }
+      if (ticketEyeRef.value.id === ticketBasic.id) {
+        Object.assign(ticketEyeRef.value, ticketBasic)
+      }
     }
   }
 
-  static async listenTicketClinicUpdateTicketDiagnosis(data: {
+  static async listenTicketUpdateTicketDiagnosisBasic(data: {
     ticketId: number
-    ticketDiagnosis: any
+    voucherType: VoucherType
+    ticketDiagnosisBasic: any
   }) {
-    const { ticketId } = data
-    const ticketDiagnosis = TicketDiagnosis.from(data.ticketDiagnosis)
-    const ticketClinicStore = useTicketClinicStore()
-
-    const ticketFind = ticketClinicStore.ticketList.find((i) => i.id === data.ticketId)
-    if (ticketFind) {
-      Object.assign(ticketFind.ticketDiagnosis!, ticketDiagnosis)
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        if (!ticketFind.ticketDiagnosis) {
+          ticketFind.ticketDiagnosis = new TicketDiagnosis()
+        }
+        Object.assign(ticketFind.ticketDiagnosis, TicketDiagnosis.from(data.ticketDiagnosisBasic))
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        Object.assign(
+          ticketClinicRef.value.ticketDiagnosis!,
+          TicketDiagnosis.from(data.ticketDiagnosisBasic)
+        )
+      }
     }
 
-    if (ticketClinicStore.ticketHistory[ticketId]) {
-      Object.assign(ticketClinicStore.ticketHistory[ticketId], ticketDiagnosis)
-    }
-    if (ticketClinic.value.id === ticketId) {
-      Object.assign(ticketClinic.value.ticketDiagnosis!, ticketDiagnosis)
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        if (!ticketFind.ticketDiagnosis) {
+          ticketFind.ticketDiagnosis = new TicketDiagnosis()
+        }
+        Object.assign(ticketFind.ticketDiagnosis, TicketDiagnosis.from(data.ticketDiagnosisBasic))
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        Object.assign(
+          ticketEyeRef.value.ticketDiagnosis!,
+          TicketDiagnosis.from(data.ticketDiagnosisBasic)
+        )
+      }
     }
   }
 
-  static async listenTicketClinicChangeTicketProcedureList(data: {
+  static async listenTicketUpdateTicketDiagnosisSpecial(data: {
     ticketId: number
+    voucherType: VoucherType
+    special: string
+  }) {
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        if (!ticketFind.ticketDiagnosis) {
+          ticketFind.ticketDiagnosis = new TicketDiagnosis()
+        }
+        ticketFind.ticketDiagnosis.special = data.special
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketDiagnosis!.special = data.special
+      }
+    }
+
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        if (!ticketFind.ticketDiagnosis) {
+          ticketFind.ticketDiagnosis = new TicketDiagnosis()
+        }
+        ticketFind.ticketDiagnosis.special = data.special
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketDiagnosis!.special = data.special
+      }
+    }
+  }
+
+  static async listenTicketUpdateTicketProcedureList(data: {
+    ticketId: number
+    voucherType: VoucherType
     ticketProcedureList: any[]
   }) {
-    const { ticketId, ticketProcedureList } = data
-
-    const ticketFind = useTicketClinicStore().ticketList.find((i) => i.id === ticketId)
-    if (ticketFind) {
-      ticketFind.ticketProcedureList = TicketProcedure.fromList(ticketProcedureList)
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketProcedureList = TicketProcedure.fromList(
+          data.ticketProcedureList
+        )
+      }
     }
 
-    if (ticketClinic.value.id === ticketId) {
-      ticketClinic.value.ticketProcedureList = TicketProcedure.fromList(ticketProcedureList)
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
+      }
     }
   }
 
-  static async listenTicketClinicChangeTicketRadiologyList(data: {
+  static async listenTicketUpdateTicketProductConsumableList(data: {
     ticketId: number
+    voucherType: VoucherType
+    ticketProductConsumableList: any[]
+  }) {
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProductConsumableList = TicketProduct.fromList(
+          data.ticketProductConsumableList
+        )
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketProductConsumableList = TicketProduct.fromList(
+          data.ticketProductConsumableList
+        )
+      }
+    }
+
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProductConsumableList = TicketProduct.fromList(
+          data.ticketProductConsumableList
+        )
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketProductConsumableList = TicketProduct.fromList(
+          data.ticketProductConsumableList
+        )
+      }
+    }
+  }
+
+  static async listenTicketUpdateTicketProductPrescriptionList(data: {
+    ticketId: number
+    voucherType: VoucherType
+    ticketProductPrescriptionList: any[]
+  }) {
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProductPrescriptionList = TicketProduct.fromList(
+          data.ticketProductPrescriptionList
+        )
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketProductPrescriptionList = TicketProduct.fromList(
+          data.ticketProductPrescriptionList
+        )
+      }
+    }
+
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketProductPrescriptionList = TicketProduct.fromList(
+          data.ticketProductPrescriptionList
+        )
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketProductPrescriptionList = TicketProduct.fromList(
+          data.ticketProductPrescriptionList
+        )
+      }
+    }
+  }
+
+  static async listenTicketUpdateTicketRadiologyList(data: {
+    ticketId: number
+    voucherType: VoucherType
     ticketRadiologyList: any[]
   }) {
-    const { ticketId, ticketRadiologyList } = data
-
-    const ticketFind = useTicketClinicStore().ticketList.find((i) => i.id === ticketId)
-    if (ticketFind) {
-      ticketFind.ticketRadiologyList = TicketRadiology.fromList(ticketRadiologyList)
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketRadiologyList = TicketRadiology.fromList(
+          data.ticketRadiologyList
+        )
+      }
     }
 
-    if (ticketClinic.value.id === ticketId) {
-      ticketClinic.value.ticketRadiologyList = TicketRadiology.fromList(ticketRadiologyList)
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
+      }
     }
   }
 
-  static async listenTicketClinicUpdateTicketRadiology(data: {
+  static async listenTicketUpdateTicketRadiologyResult(data: {
     ticketId: number
+    voucherType: VoucherType
     ticketRadiology: any
   }) {
     const { ticketId } = data
     const ticketRadiology = TicketRadiology.from(data.ticketRadiology)
 
-    const ticketFind = useTicketClinicStore().ticketList.find((i) => i.id === data.ticketId)
-    if (ticketFind) {
-      if (!ticketFind.ticketRadiologyList) {
-        ticketFind.ticketRadiologyList = []
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        const ticketRadiologyFind = (ticketFind.ticketRadiologyList || []).find((i) => {
+          return i.id === data.ticketRadiology.id
+        })
+        if (ticketRadiologyFind) {
+          Object.assign(ticketRadiologyFind, ticketRadiology)
+        }
       }
-      const ticketRadiologyFind = ticketFind.ticketRadiologyList.find((i) => {
-        return i.id === ticketRadiology.id
-      })
-      if (ticketRadiologyFind) {
-        Object.assign(ticketRadiologyFind, ticketRadiology)
-      } else {
-        ticketFind.ticketRadiologyList.push(ticketRadiology)
+
+      if (ticketClinicRef.value.id === data.ticketId) {
+        const ticketRadiologyFind = (ticketClinicRef.value.ticketRadiologyList || []).find((i) => {
+          return i.id === data.ticketRadiology.id
+        })
+        if (ticketRadiologyFind) {
+          Object.assign(ticketRadiologyFind, ticketRadiology)
+        }
       }
     }
 
-    if (ticketClinic.value.id === ticketId) {
-      if (!ticketClinic.value.ticketRadiologyList) {
-        ticketClinic.value.ticketRadiologyList = []
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        const ticketRadiologyFind = (ticketFind.ticketRadiologyList || []).find((i) => {
+          return i.id === data.ticketRadiology.id
+        })
+        if (ticketRadiologyFind) {
+          Object.assign(ticketRadiologyFind, ticketRadiology)
+        }
       }
-      const ticketRadiologyFind = ticketClinic.value.ticketRadiologyList.find((i) => {
-        return i.id === ticketRadiology.id
-      })
-      if (ticketRadiologyFind) {
-        Object.assign(ticketRadiologyFind, ticketRadiology)
-      } else {
-        ticketClinic.value.ticketRadiologyList.push(ticketRadiology)
+
+      if (ticketEyeRef.value.id === data.ticketId) {
+        const ticketRadiologyFind = (ticketEyeRef.value.ticketRadiologyList || []).find((i) => {
+          return i.id === data.ticketRadiology.id
+        })
+        if (ticketRadiologyFind) {
+          Object.assign(ticketRadiologyFind, ticketRadiology)
+        }
       }
     }
   }
 
-  static async listenTicketClinicChangeTicketProductList(data: {
+  static async listenTicketUpdateTicketUserList(data: {
     ticketId: number
-    ticketProductList: any[]
+    voucherType: VoucherType
+    ticketUserList: any[]
   }) {
-    const { ticketId, ticketProductList } = data
-
-    const ticketFind = useTicketClinicStore().ticketList.find((i) => i.id === ticketId)
-    if (ticketFind) {
-      ticketFind.ticketProductList = TicketProduct.fromList(ticketProductList)
+    if (data.voucherType === VoucherType.Clinic) {
+      const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketUserList = TicketUser.fromList(data.ticketUserList)
+      }
+      if (ticketClinicRef.value.id === data.ticketId) {
+        ticketClinicRef.value.ticketUserList = TicketUser.fromList(data.ticketUserList)
+      }
     }
 
-    if (ticketClinic.value.id === ticketId) {
-      ticketClinic.value.ticketProductList = TicketProduct.fromList(ticketProductList)
+    if (data.voucherType === VoucherType.Eye) {
+      const ticketFind = ticketEyeList.value.find((i) => i.id === data.ticketId)
+      if (ticketFind) {
+        ticketFind.ticketUserList = TicketUser.fromList(data.ticketUserList)
+      }
+      if (ticketEyeRef.value.id === data.ticketId) {
+        ticketEyeRef.value.ticketUserList = TicketUser.fromList(data.ticketUserList)
+      }
     }
   }
 }

@@ -9,6 +9,7 @@ import { AuthService } from '../modules/auth/auth.service'
 axios.defaults.headers.post['x-os'] = DeviceInstance.platform
 axios.defaults.headers.post['x-browser'] = DeviceInstance.browser
 axios.defaults.headers.post['x-mobile'] = DeviceInstance.mobile
+axios.defaults.headers.post['x-client-id'] = CONFIG.CLIENT_ID
 
 const AxiosLoading = reactive({ percent: 0, loading: true })
 

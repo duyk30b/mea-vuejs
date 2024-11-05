@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
-import dayjs, { type Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketApi, TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
-import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
+import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
+import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
@@ -25,44 +23,42 @@ const modalTicketClinicRegister = ref<InstanceType<typeof ModalTicketClinicRegis
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
+const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const customerList = ref<Customer[]>([])
-
 const dataLoading = ref(false)
 
 const startDate = DTimer.startOfDate(new Date())
-const endDate = DTimer.endOfDate(new Date())
+const fromTime = ref<number>(startDate.getTime())
+const toTime = ref<number>()
 
-const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startDate), dayjs(endDate)])
 const customerId = ref<number>()
 const ticketStatus = ref<TicketStatus | null>(null)
 
 const sortColumn = ref<'registeredAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const ticketClinicStore = useTicketClinicStore()
+const page = ref(1)
+const limit = ref(Number(localStorage.getItem('TICKET_CLINIC_PAGINATION_LIMIT')) || 10)
+const total = ref(0)
 
 const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const fromTime = timeRanger.value?.[0].startOf('day').toDate()
-    const toTime = timeRanger.value?.[1].endOf('day').toDate()
-
     const { data, meta } = await TicketApi.pagination({
-      page: ticketClinicStore.paginationMeta.page,
-      limit: ticketClinicStore.paginationMeta.limit,
+      page: page.value,
+      limit: limit.value,
       relation: { customer: true, ticketDiagnosis: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
         registeredAt:
-          fromTime && toTime
+          fromTime.value || toTime.value
             ? {
-                GTE: fromTime ? fromTime : undefined,
-                LTE: toTime ? toTime : undefined,
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LTE: toTime.value ? toTime.value : undefined,
               }
             : undefined,
         ticketStatus: ticketStatus.value ?? undefined,
@@ -76,12 +72,10 @@ const startFetchData = async () => {
         : { registeredAt: 'DESC' },
     })
 
-    ticketClinicStore.ticketList = data
-    ticketClinicStore.paginationMeta.limit = meta.limit
-    ticketClinicStore.paginationMeta.page = meta.page
-    ticketClinicStore.paginationMeta.total = meta.total
+    ticketClinicList.value = data
+    total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: VisitList.vue:72 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -95,7 +89,10 @@ onMounted(async () => {
   try {
     await customerStore.refreshDB()
   } catch (error: any) {
+    console.log('🚀 ~ file: TicketClinicList.vue:98 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
+  } finally {
+    dataLoading.value = false
   }
 })
 
@@ -117,7 +114,7 @@ const selectCustomer = async (data?: Customer) => {
 }
 
 const startSearch = async () => {
-  ticketClinicStore.paginationMeta.page = 1
+  page.value = 1
   await startFetchData()
 }
 
@@ -144,18 +141,21 @@ const changeSort = async (column: 'id' | 'registeredAt') => {
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
-  if (options.page) ticketClinicStore.paginationMeta.page = options.page
+  if (options.page) page.value = options.page
   if (options.limit) {
-    ticketClinicStore.paginationMeta.limit = options.limit
+    limit.value = options.limit
     localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {}
-const handleModalTicketClinicRegisterSuccess = async () => {
-  // reload bằng lắng nghe event socket
-  // await startFetchData()
+
+const handleModalTicketClinicRegisterSuccess = (data: { ticket: Ticket }) => {
+  const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticket.id)
+  if (!ticketFind) {
+    ticketClinicList.value.unshift(data.ticket)
+  }
 }
 
 const handleClickDestroyDraft = async (ticketId: number) => {
@@ -168,7 +168,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         await startFetchData()
         AlertStore.addSuccess('Xóa phiếu khám thành công')
       } catch (error) {
-        console.log('🚀 ~ file: TicketClinicList.vue:171 ~ handleClickDestroyDraft ~ error:', error)
+        console.log('🚀 ~ file: TicketClinicList.vue:179 ~ onOk: ~ error:', error)
       }
     },
   })
@@ -238,15 +238,25 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn thời gian</div>
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Từ ngày</div>
         <div>
-          <a-range-picker
-            v-model:value="timeRanger"
-            :onChange="handleChangeTime"
-            format="DD-MM-YYYY"
-            style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+          <InputDate
+            v-model:value="fromTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime" />
+        </div>
+      </div>
+
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Đến ngày</div>
+        <div>
+          <InputDate
+            v-model:value="toTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime" />
         </div>
       </div>
 
@@ -265,6 +275,13 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
             @update:value="handleSelectTicketStatus" />
+        </div>
+      </div>
+
+      <div>
+        <div>&nbsp;</div>
+        <div>
+          <VueButton color="blue" @click="startSearch">Tìm kiếm</VueButton>
         </div>
       </div>
     </div>
@@ -321,10 +338,10 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="ticketClinicStore.ticketList.length === 0">
+          <tr v-if="ticketClinicList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(ticket, index) in ticketClinicStore.ticketList" :key="index">
+          <tr v-for="(ticket, index) in ticketClinicList" :key="index">
             <td class="text-center">
               <div class="flex gap-4 justify-center">
                 <router-link
@@ -356,7 +373,12 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               </div>
             </td>
             <td>
-              {{ ticket.ticketDiagnosis?.diagnosis || ticket.ticketDiagnosis?.reason || '' }}
+              {{
+                ticket.ticketDiagnosis?.diagnosis ||
+                ticket.ticketDiagnosis?.reason ||
+                ticket.note ||
+                ''
+              }}
             </td>
             <td class="text-center">
               {{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}
@@ -374,9 +396,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
       </table>
       <div class="mt-4 float-right mb-4">
         <a-pagination
-          v-model:current="ticketClinicStore.paginationMeta.page"
-          v-model:pageSize="ticketClinicStore.paginationMeta.limit"
-          :total="ticketClinicStore.paginationMeta.total"
+          v-model:current="page"
+          v-model:pageSize="limit"
+          :total="total"
           show-size-changer
           @change="
             (page: number, pageSize: number) => changePagination({ page, limit: pageSize })

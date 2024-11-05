@@ -32,6 +32,8 @@ export class RootOrganizationApi {
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,
       isActive: organization.isActive,
+      note: organization.note,
+      expiryDate: organization.expiryDate,
     })
     const { data } = response.data as BaseResponse<{ organization: any }>
 
@@ -52,6 +54,8 @@ export class RootOrganizationApi {
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,
       isActive: organization.isActive,
+      note: organization.note,
+      expiryDate: organization.expiryDate,
     })
     const { data } = response.data as BaseResponse<{ organization: any }>
 

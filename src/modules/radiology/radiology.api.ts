@@ -58,7 +58,7 @@ export class RadiologyApi {
   static async createOne(radiology: Radiology) {
     const response = await AxiosInstance.post('/radiology/create', {
       name: radiology.name,
-      group: radiology.group,
+      radiologyGroupId: radiology.radiologyGroupId,
       price: radiology.price,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
@@ -70,7 +70,7 @@ export class RadiologyApi {
   static async updateOne(id: number, radiology: Radiology) {
     const response = await AxiosInstance.patch(`/radiology/update/${id}`, {
       name: radiology.name,
-      group: radiology.group,
+      radiologyGroupId: radiology.radiologyGroupId,
       price: radiology.price,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,

@@ -27,7 +27,7 @@ const limit = ref(
   Number(localStorage.getItem('CUSTOMER_TICKET_CLINIC_HISTORY_PAGINATION_LIMIT')) || 20
 )
 const total = ref(0)
-const vitalSigns = ref<{
+const general = ref<{
   pulse?: number // Mạch
   temperature?: number // Nhiệt độ
   bloodPressure?: string // Huyết áp
@@ -58,7 +58,7 @@ const startFetchData = async () => {
 
 const clickTicketHistory = async (basic: Ticket) => {
   ticket.value = await ticketClinicStore.getTicketHistoryByBasic(basic)
-  vitalSigns.value = JSON.parse(ticket.value.ticketDiagnosis?.vitalSigns || '{}')
+  general.value = JSON.parse(ticket.value.ticketDiagnosis?.general || '{}')
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -133,7 +133,7 @@ watch(
               <div class="mt-4" style="font-weight: 500">2. Tiền sử:</div>
               <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.healthHistory"></div>
               <!-- <div class="mt-4" style="font-weight: 500">3. Chỉ số sinh tồn</div>
-            <div>{{ JSON.stringify(ticket.ticketDiagnosis?.vitalSigns) }}</div> -->
+            <div>{{ JSON.stringify(ticket.ticketDiagnosis?.general) }}</div> -->
               <div class="mt-4" style="font-weight: 500">4. Tóm tắt:</div>
               <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.summary"></div>
               <div class="mt-4" style="font-weight: 500">5. Chẩn đoán:</div>
@@ -147,7 +147,7 @@ watch(
                   <td class="title-vital-signs">Mạch</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.pulse" type="number" />
+                    <input disabled :value="general.pulse" type="number" />
                   </td>
                   <td class="unit-vital-signs">l/p</td>
                 </tr>
@@ -155,7 +155,7 @@ watch(
                   <td class="title-vital-signs">Nhiệt độ</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.temperature" type="number" />
+                    <input disabled :value="general.temperature" type="number" />
                   </td>
                   <td class="unit-vital-signs">°C</td>
                 </tr>
@@ -163,7 +163,7 @@ watch(
                   <td class="title-vital-signs">Huyết áp</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.bloodPressure" />
+                    <input disabled :value="general.bloodPressure" />
                   </td>
                   <td class="unit-vital-signs">mmHg</td>
                 </tr>
@@ -171,7 +171,7 @@ watch(
                   <td class="title-vital-signs">TS Thở</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.respiratoryRate" type="number" />
+                    <input disabled :value="general.respiratoryRate" type="number" />
                   </td>
                   <td class="unit-vital-signs">l/p</td>
                 </tr>
@@ -179,7 +179,7 @@ watch(
                   <td class="title-vital-signs">SpO2</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.spO2" type="number" />
+                    <input disabled :value="general.spO2" type="number" />
                   </td>
                   <td class="unit-vital-signs">%</td>
                 </tr>
@@ -187,7 +187,7 @@ watch(
                   <td class="title-vital-signs">Chiều cao</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.height" type="number" />
+                    <input disabled :value="general.height" type="number" />
                   </td>
                   <td class="unit-vital-signs">cm</td>
                 </tr>
@@ -195,7 +195,7 @@ watch(
                   <td class="title-vital-signs">Cân nặng</td>
                   <td>:</td>
                   <td class="input-vital-signs">
-                    <input disabled :value="vitalSigns.weight" type="number" />
+                    <input disabled :value="general.weight" type="number" />
                   </td>
                   <td class="unit-vital-signs">kg</td>
                 </tr>

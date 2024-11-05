@@ -5,7 +5,6 @@ import { Distributor, useDistributorStore } from '../distributor'
 import { Organization } from '../organization'
 import type { PermissionId } from '../permission/permission.enum'
 import type { Permission } from '../permission/permission.model'
-import { Role } from '../role'
 import { User } from '../user/user.model'
 import { useSettingStore } from './setting.store'
 
@@ -16,7 +15,6 @@ export const useMeStore = defineStore('me-store', {
     return {
       user,
       organization: Organization.blank(),
-      role: Role.blank(),
       distributorDefault: Distributor.blank(),
       customerDefault: Customer.blank(),
       permissionMap: <Record<string, Permission>>{},

@@ -2,37 +2,36 @@
 import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
-import { InputDate, InputText, VueSelect } from '../../common/vue-form'
+import { CheckboxList, InputDate, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
-import { useSettingStore } from '../../modules/_me/setting.store'
 import { RoleApi, type Role } from '../../modules/role'
 import { User, UserApi } from '../../modules/user'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const settingStore = useSettingStore()
-const { isMobile } = settingStore
-
 const showModal = ref(false)
 const user = ref<User>(User.blank())
-const roles = ref<Role[]>([])
 const saveLoading = ref(false)
+const roleIdList = ref<number[]>([])
+const roleListCheckboxOptions = ref<{ text: string; value: number | string }[]>([])
 
-let firstLoad = true
-
-const openModal = async (instance?: User) => {
+const openModal = async (userId?: number) => {
   showModal.value = true
-  user.value = instance ? User.from(instance) : User.blank()
-  if (firstLoad === true) {
-    try {
-      roles.value = await RoleApi.list({})
-      firstLoad = false
-    } catch (error) {
-      console.log('🚀 ~ file: ModalUserUpsert.vue:46 ~ openModal ~ error:', error)
-    }
+  try {
+    const [userData, roleList] = await Promise.all([
+      userId ? UserApi.detail(userId, { relation: { userRoleList: true } }) : User.blank(),
+      RoleApi.list({}),
+    ])
+    user.value = User.from(userData)
+    roleListCheckboxOptions.value = roleList.map((i) => ({ value: i.id, text: i.name }))
+    roleIdList.value = userData.userRoleList?.map((i) => i.roleId) || []
+  } catch (error: any) {
+    AlertStore.addError(error.message)
+    console.log('🚀 ~ file: ModalUserUpsert.vue:46 ~ openModal ~ error:', error)
   }
 }
 
@@ -44,11 +43,12 @@ const closeModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
+    roleIdList.value.sort((a, b) => (a > b ? 1 : -1))
     if (!user.value.id) {
-      const response = await UserApi.createOne(user.value)
+      const response = await UserApi.createOne(user.value, roleIdList.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await UserApi.updateOne(user.value.id, user.value)
+      const response = await UserApi.updateOne(user.value.id, user.value, roleIdList.value)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -94,44 +94,31 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-4 mt-4">
-        <div class="flex items-center">
-          <div style="width: 100px; flex: none">Vai trò</div>
-          <div style="flex: 1">
-            <VueSelect
-              v-model:value="user.roleId"
-              :options="roles.map((i) => ({ text: i.name, value: i.id }))"
-              :disabled="!!user.id && [0, 1].includes(user.roleId)" />
-          </div>
-        </div>
-
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">Username</div>
-          <div class="flex-auto">
+      <div class="px-4 mt-4 gap-4 flex flex-wrap">
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Username</div>
+          <div>
             <InputText v-model:value="user.username" :disabled="!!user.id" required />
           </div>
         </div>
 
-        <div
-          v-if="!user.id"
-          class="mt-3 flex"
-          :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">Password</div>
-          <div class="flex-auto">
-            <InputText v-model:value="user.password" required />
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Password</div>
+          <div>
+            <InputText v-model:value="user.password" required :disabled="!!user.id" />
           </div>
         </div>
 
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
-          <div style="width: 100px; flex: none">Họ tên</div>
-          <div class="flex-auto">
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Tên hiển thị</div>
+          <div>
             <InputText v-model:value="user.fullName" required />
           </div>
         </div>
 
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Số điện thoại</div>
-          <div class="flex-auto">
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Số điện thoại</div>
+          <div>
             <InputText
               v-model:value="user.phone"
               pattern="[0][356789][0-9]{8}"
@@ -140,9 +127,9 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-          <div style="width: 100px; flex: none">Ngày sinh</div>
-          <div style="flex: 1">
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Ngày sinh</div>
+          <div>
             <InputDate
               v-model:value="user.birthday"
               format="DD/MM/YYYY"
@@ -151,9 +138,9 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-5 flex items-center">
-          <div style="width: 100px; flex: none">Giới tính</div>
-          <div style="flex: 1">
+        <div style="flex-basis: 300px; flex-grow: 1">
+          <div>Giới tính</div>
+          <div>
             <a-radio-group v-model:value="user.gender">
               <a-radio :value="1">Nam</a-radio>
               <a-radio :value="0">Nữ</a-radio>
@@ -161,7 +148,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="flex items-center mt-5">
+        <div style="flex-basis: 90%; flex-grow: 1">
+          <div>Vai trò</div>
+          <div>
+            <CheckboxList v-model:value="roleIdList" :options="roleListCheckboxOptions" />
+          </div>
+        </div>
+
+        <div style="flex-basis: 90%; flex-grow: 1" class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(user.isActive)"

@@ -21,10 +21,11 @@ export class RootUserApi {
       phone: user.phone,
       username: user.username,
       password: user.password,
-      roleId: user.roleId,
       fullName: user.fullName,
       birthday: user.birthday,
       gender: user.gender,
+
+      isAdmin: user.isAdmin,
       isActive: user.isActive,
     })
     const { data } = response.data as BaseResponse<{ user: any }>
@@ -37,10 +38,10 @@ export class RootUserApi {
       phone: user.phone,
       username: user.username,
       password: user.password,
-      roleId: user.roleId,
       fullName: user.fullName,
       birthday: user.birthday,
-      gender: user.gender,
+
+      isAdmin: user.isAdmin,
       isActive: user.isActive,
     })
     const { data } = response.data as BaseResponse<{ user: any }>
