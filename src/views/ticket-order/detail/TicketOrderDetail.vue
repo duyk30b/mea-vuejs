@@ -64,8 +64,8 @@ const startFetchData = async (ticketId: number) => {
       relation: {
         customer: true,
         customerPaymentList: true,
-        ticketProductList: true,
-        ticketProcedureList: true,
+        ticketProductList: { product: true, batch: true },
+        ticketProcedureList: { procedure: true },
         ticketSurchargeList: true,
         ticketExpenseList: true,
       },

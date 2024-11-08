@@ -38,17 +38,17 @@ export class ProductGroupApi {
     return ProductGroup.from(data)
   }
 
-  static async createOne(customerSource: ProductGroup) {
+  static async createOne(productGroup: ProductGroup) {
     const response = await AxiosInstance.post('/product-group/create', {
-      name: customerSource.name,
+      name: productGroup.name,
     })
     const { data } = response.data as BaseResponse
     return ProductGroup.from(data)
   }
 
-  static async updateOne(id: number, customerSource: ProductGroup) {
+  static async updateOne(id: number, productGroup: ProductGroup) {
     const response = await AxiosInstance.patch(`/product-group/update/${id}`, {
-      name: customerSource.name,
+      name: productGroup.name,
     })
     const { data } = response.data as BaseResponse
     return ProductGroup.from(data)

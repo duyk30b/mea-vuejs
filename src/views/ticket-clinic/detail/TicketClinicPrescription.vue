@@ -9,12 +9,16 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../modules/batch'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { PrintHtmlService, PrintHtmlType } from '../../../modules/print-html'
+import {
+  ticketClinicPrintPrescription,
+  ticketClinicPrintPrescriptionTemplate,
+} from '../../../modules/print-html/print-content/ticket-clinic-print-prescription'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer, customFilter } from '../../../utils'
-import { ticketClinicPrintPrescription } from './print-content/ticket-clinic-print-prescription'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -168,6 +172,21 @@ const changeItemPosition = (index: number, count: number) => {
   ticketProductPrescriptionList.value[index + count] = temp
 }
 
+const startPrint3 = async () => {
+  try {
+    const content = ticketClinicPrintPrescription(ticketClinicRef.value, '')
+    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
+    const pri = iframePrint.contentWindow as Window
+    pri.document.open()
+    pri.document.write(content)
+    pri.document.close()
+    pri.focus()
+    pri.print()
+  } catch (error) {
+    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+  }
+}
+
 const startPrint = async () => {
   try {
     // const response = await fetch('/template/prescription.hbs')
@@ -179,7 +198,13 @@ const startPrint = async () => {
     //   visit: ticketClinicRef.value,
     // })
 
-    const content = ticketClinicPrintPrescription(ticketClinicRef.value, '')
+    const printHtml = await PrintHtmlService.getOneByKey('PRESCRIPTION')
+    let content = ''
+    if (printHtml) {
+      content = ticketClinicPrintPrescriptionTemplate(ticketClinicRef.value, '', printHtml.content)
+    } else {
+      content = ticketClinicPrintPrescription(ticketClinicRef.value, '')
+    }
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()

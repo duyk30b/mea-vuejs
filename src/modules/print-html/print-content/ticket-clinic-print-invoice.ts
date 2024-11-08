@@ -1,19 +1,29 @@
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import type { Ticket } from '../../../../modules/ticket'
-import { DTimer, formatPhone, timeToText } from '../../../../utils'
+import { DTimer, formatPhone } from '../../../utils'
+import { useMeStore } from '../../_me/me.store'
+import { useSettingStore } from '../../_me/setting.store'
+import type { Ticket } from '../../ticket'
+
+export const ticketClinicPrintInvoiceTemplate = (ticket: Ticket, htmlString: string) => {
+  const settingStore = useSettingStore()
+  const meStore = useMeStore()
+  const organization = meStore.organization
+  const { formatMoney } = settingStore
+  const compiledTemplate = new Function(
+    'ticket',
+    'organization',
+    'DTimer',
+    'formatPhone',
+    'formatMoney',
+    `return \`${htmlString}\`;`
+  )
+  return compiledTemplate(ticket, organization, DTimer, formatPhone, formatMoney)
+}
 
 export const ticketClinicPrintInvoice = (ticket: Ticket) => {
   const settingStore = useSettingStore()
   const meStore = useMeStore()
+  const organization = meStore.organization
   const { formatMoney } = settingStore
-
-  const prescriptionMoney = (ticket.ticketProductPrescriptionList || []).reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-  const consumableMoney = (ticket.ticketProductConsumableList || []).reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
 
   return `
   <head>
@@ -57,8 +67,8 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
         <table style="width: 100%">
           <tr>
             <td style="width: 50%">
-              <p>${meStore.organization.name} </p>
-              <p>${meStore.organization.phone} </p>
+              <p>${organization.name} </p>
+              <p>${organization.phone} </p>
             </td>
             <td style="width: 50%; text-align:right">
               <p>Mã KH: C${ticket.customerId}  </p>
@@ -77,13 +87,13 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
             <td style="padding-right: 10px">:</td>
             <td> ${ticket.customer?.fullName} </td>
             <td style="white-space: no-wrap; padding-left: 48px;">
-              - Ngày sinh: ${timeToText(ticket.customer?.birthday, 'DD/MM/YYYY')}
+              - Ngày sinh: ${DTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY')}
             </td>
           </tr>
           <tr>
             <td> SĐT </td>
             <td>:</td>
-            <td> ${formatPhone(ticket.customer!.phone!)} </td>
+            <td> ${formatPhone(ticket.customer?.phone)} </td>
             <td style="white-space: no-wrap; padding-left: 48px;">
               - Giới tính: ${
                 ticket.customer?.gender === 1 ? 'Nam' : ticket.customer?.gender === 0 ? 'Nữ' : ''
@@ -145,7 +155,11 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
                 <tr>
                   <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền thuốc </td>
                   <td style="text-align: right; font-weight: bold">
-                    ${formatMoney(prescriptionMoney)}
+                    ${formatMoney(
+                      (ticket.ticketProductPrescriptionList || []).reduce((acc, item) => {
+                        return acc + item.actualPrice * item.quantity
+                      }, 0)
+                    )}
                   </td>
                 </tr>
               </tbody>
@@ -185,7 +199,11 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
                 <tr>
                   <td colspan="5" style="text-align: right; text-transform: uppercase;">Tổng tiền vật tư </td>
                   <td style="text-align: right; font-weight: bold">
-                    ${formatMoney(consumableMoney)}
+                    ${formatMoney(
+                      (ticket.ticketProductConsumableList || []).reduce((acc, item) => {
+                        return acc + item.actualPrice * item.quantity
+                      }, 0)
+                    )}
                   </td>
                 </tr>
               </tbody>
@@ -194,14 +212,14 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
             }
 
             ${
-              ticket.ticketProcedureList!.length
+              (ticket.ticketProcedureList || []).length
                 ? `
               <tbody>
                 <tr>
                   <th colspan="6" style="text-align: left; text-transform: uppercase;">Dịch vụ thủ thuật</th>
                 </tr>
-                ${ticket
-                  .ticketProcedureList!.map((i, index) => {
+                ${(ticket.ticketProcedureList || [])
+                  .map((i, index) => {
                     return `
                     <tr>
                       <td>${index + 1}</td>
@@ -230,7 +248,7 @@ export const ticketClinicPrintInvoice = (ticket: Ticket) => {
             }
 
             ${
-              ticket.ticketRadiologyList!.length
+              (ticket.ticketRadiologyList || []).length
                 ? `
               <tbody>
                 <tr>

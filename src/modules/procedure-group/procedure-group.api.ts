@@ -31,24 +31,27 @@ export class ProcedureGroupApi {
     }
   }
 
-  static async detail(id: number, options: ProcedureGroupDetailQuery = {}): Promise<ProcedureGroup> {
+  static async detail(
+    id: number,
+    options: ProcedureGroupDetailQuery = {}
+  ): Promise<ProcedureGroup> {
     const params = ProcedureGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/procedure-group/detail/${id}`, { params })
     const { data, meta } = response.data as BaseResponse
     return ProcedureGroup.from(data)
   }
 
-  static async createOne(customerSource: ProcedureGroup) {
+  static async createOne(procedureGroup: ProcedureGroup) {
     const response = await AxiosInstance.post('/procedure-group/create', {
-      name: customerSource.name,
+      name: procedureGroup.name,
     })
     const { data } = response.data as BaseResponse
     return ProcedureGroup.from(data)
   }
 
-  static async updateOne(id: number, customerSource: ProcedureGroup) {
+  static async updateOne(id: number, procedureGroup: ProcedureGroup) {
     const response = await AxiosInstance.patch(`/procedure-group/update/${id}`, {
-      name: customerSource.name,
+      name: procedureGroup.name,
     })
     const { data } = response.data as BaseResponse
     return ProcedureGroup.from(data)

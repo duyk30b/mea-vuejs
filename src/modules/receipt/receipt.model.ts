@@ -28,7 +28,6 @@ export class Receipt {
   note: string
   startedAt: number
   shippedAt: number
-  deletedAt: number
 
   receiptItems?: ReceiptItem[]
   distributor?: Distributor
@@ -73,7 +72,7 @@ export class Receipt {
   }
 
   static from(source: Receipt): Receipt {
-    const target = new Receipt()
+    const target = Receipt.basic(source)
     Object.assign(target, source)
     if (Object.prototype.hasOwnProperty.call(source, 'distributor')) {
       if (!source.distributor) {

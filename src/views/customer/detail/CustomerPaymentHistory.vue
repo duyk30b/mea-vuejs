@@ -7,11 +7,11 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
-import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DTimer, formatPhone } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
+import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -67,22 +67,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
 const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) => {
   emit('update_customer', data.customer)
   await startFetchData()
@@ -130,24 +114,7 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
             <td>
-              <div
-                v-if="customerPayment.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(customerPayment.ticketId)">
-                  BH{{ customerPayment.ticketId }}
-                </a>
-              </div>
-              <div
-                v-if="customerPayment.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(customerPayment.ticketId)">
-                  KB{{ customerPayment.ticketId }}
-                </a>
-              </div>
+              <LinkAndStatusTicket :ticket="customerPayment.ticket!" />
               <div style="white-space: nowrap">
                 {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -197,24 +164,7 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
             <td>
-              <div
-                v-if="customerPayment.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(customerPayment.ticketId)">
-                  BH{{ customerPayment.ticketId }}
-                </a>
-              </div>
-              <div
-                v-if="customerPayment.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(customerPayment.ticketId)">
-                  KB{{ customerPayment.ticketId }}
-                </a>
-              </div>
+              <LinkAndStatusTicket :ticket="customerPayment.ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>

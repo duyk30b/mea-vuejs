@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate } from '../_base/base-condition'
+import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
 import type { ReceiptStatus } from './receipt.model'
 
 export class ReceiptGetQuery {
@@ -8,14 +8,13 @@ export class ReceiptGetQuery {
   relation?: {
     distributor?: boolean
     distributorPayments?: boolean
-    receiptItems?: boolean
+    receiptItems?: { product?: boolean; batch?: boolean } | false
   }
 
   filter?: {
     distributorId?: number
     startedAt?: ConditionDate
-    deletedAt?: ConditionDate
-    status?: ReceiptStatus
+    status?: ReceiptStatus | ConditionEnum<ReceiptStatus>
   }
 
   sort?: {

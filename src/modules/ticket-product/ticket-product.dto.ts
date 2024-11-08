@@ -1,4 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionEnum } from '../_base/base-condition'
+import type { DeliveryStatus } from '../enum'
 
 export class TicketProductGetQuery {
   page: number
@@ -15,6 +17,7 @@ export class TicketProductGetQuery {
     customerId?: number
     productId?: number
     batchId?: number
+    deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
   }
 
   sort?: { id?: 'ASC' | 'DESC' }

@@ -164,13 +164,6 @@ defineExpose({ openModal })
                 </a-checkbox>
               </td>
             </tr>
-            <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.process.forceEdit">
-                  Cho phép sửa mọi phiếu hàng (kể cả phiếu hàng đã hoàn thành)
-                </a-checkbox>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>

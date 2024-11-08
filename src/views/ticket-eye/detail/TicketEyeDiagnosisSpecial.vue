@@ -3,8 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketEyeApi, ticketEyeRef } from '../../../modules/ticket-eye'
 import type { DiagnosisSpecialEye } from '../../../modules/ticket-eye'
+import { TicketEyeApi, ticketEyeRef } from '../../../modules/ticket-eye'
 import { ticketEyePrintOptometry } from './print-content/ticket-eye-print-optometry'
 
 const meStore = useMeStore()
@@ -97,54 +97,46 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 500; text-align: center">MP</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MP_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MP_Cau }}
+              <td class="title">MP</td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MP_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MP_Loan = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MP_Loan }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MP_Loan"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MP_TrucLoan = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MP_TrucLoan }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MP_TrucLoan"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                rowspan="2"
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.KhucXaMay_KhoangCachDongTu = (e.target as any).innerText)
-                ">
-                {{ optometry.KhucXaMay_KhoangCachDongTu }}
-              </td>
+              <td rowspan="2"><input v-model="optometry.KhucXaMay_KhoangCachDongTu" /></td>
             </tr>
             <tr>
-              <td style="font-weight: 500; text-align: center">MT</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MT_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MT_Cau }}
+              <td class="title">MT</td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MT_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MT_Loan = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MT_Loan }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MT_Loan"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaMay_MT_TrucLoan = (e.target as any).innerText)">
-                {{ optometry.KhucXaMay_MT_TrucLoan }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaMay_MT_TrucLoan"
+                  type="number"
+                  style="text-align: left" />
               </td>
             </tr>
           </tbody>
@@ -167,79 +159,55 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 500; text-align: center">MP</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MP_KhongKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MP_KhongKinh }}
+              <td class="title">MP</td>
+              <td><input v-model="optometry.KhucXaKinhCu_MP_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MP_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MP_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MP_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MP_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MP_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MP_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MP_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MP_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MP_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MP_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MP_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaKinhCu_MP_CoKinh" /></td>
             </tr>
             <tr>
-              <td style="font-weight: 500; text-align: center">MT</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MT_KhongKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MT_KhongKinh }}
+              <td class="title">MT</td>
+              <td><input v-model="optometry.KhucXaKinhCu_MT_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MT_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MT_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MT_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MT_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MT_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MT_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaKinhCu_MT_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MT_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MT_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_MT_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_MT_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaKinhCu_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
-              <td
-                colspan="5"
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaKinhCu_Note = (e.target as any).innerText)">
-                {{ optometry.KhucXaKinhCu_Note }}
+              <td colspan="5">
+                <input v-model="optometry.KhucXaKinhCu_Note" />
               </td>
             </tr>
           </tbody>
@@ -262,80 +230,54 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 500; text-align: center">MP</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MP_KhongKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MP_KhongKinh }}
+              <td class="title">MP</td>
+              <td><input v-model="optometry.KhucXaNhinXa_MP_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MP_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MP_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MP_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MP_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MP_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MP_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MP_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MP_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MP_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MP_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MP_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaNhinXa_MP_CoKinh" /></td>
             </tr>
             <tr>
-              <td style="font-weight: 500; text-align: center">MT</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MT_KhongKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MT_KhongKinh }}
+              <td class="title">MT</td>
+              <td><input v-model="optometry.KhucXaNhinXa_MT_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MT_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MT_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MT_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MT_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MT_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MT_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinXa_MT_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MT_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MT_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_MT_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_MT_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaNhinXa_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
-              <td
-                colspan="5"
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinXa_Note = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinXa_Note }}
-              </td>
+              <td colspan="5"><input v-model="optometry.KhucXaNhinXa_Note" /></td>
             </tr>
           </tbody>
         </table>
@@ -357,84 +299,54 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 500; text-align: center">MP</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.KhucXaNhinGan_MP_KhongKinh = (e.target as any).innerText)
-                ">
-                {{ optometry.KhucXaNhinGan_MP_KhongKinh }}
+              <td class="title">MP</td>
+              <td><input v-model="optometry.KhucXaNhinGan_MP_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MP_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MP_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MP_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MP_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MP_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MP_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MP_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MP_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MP_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MP_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MP_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaNhinGan_MP_CoKinh" /></td>
             </tr>
             <tr>
-              <td style="font-weight: 500; text-align: center">MT</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.KhucXaNhinGan_MT_KhongKinh = (e.target as any).innerText)
-                ">
-                {{ optometry.KhucXaNhinGan_MT_KhongKinh }}
+              <td class="title">MT</td>
+              <td><input v-model="optometry.KhucXaNhinGan_MT_KhongKinh" /></td>
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MT_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MT_Cau = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MT_Cau }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MT_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MT_Tru = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MT_Tru }}
+              <td>
+                <input
+                  v-model="optometry.KhucXaNhinGan_MT_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MT_Truc = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MT_Truc }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_MT_CoKinh = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_MT_CoKinh }}
-              </td>
+              <td><input v-model="optometry.KhucXaNhinGan_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
-              <td
-                colspan="5"
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.KhucXaNhinGan_Note = (e.target as any).innerText)">
-                {{ optometry.KhucXaNhinGan_Note }}
-              </td>
+              <td colspan="5"><input v-model="optometry.KhucXaNhinGan_Note" /></td>
             </tr>
           </tbody>
         </table>
@@ -453,87 +365,29 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td>Nhãn áp (mmHg)</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.NhanAp_MP_mmHg = (e.target as any).innerText)">
-                {{ optometry.NhanAp_MP_mmHg }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.NhanAp_MT_mmHg = (e.target as any).innerText)">
-                {{ optometry.NhanAp_MT_mmHg }}
-              </td>
+              <td style="padding: 0 6px">Nhãn áp (mmHg)</td>
+              <td><input v-model="optometry.NhanAp_MP_mmHg" /></td>
+              <td><input v-model="optometry.NhanAp_MT_mmHg" /></td>
             </tr>
             <tr>
-              <td>Bề dày giác mạc (μm)</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.BeDayGiacMac_MP_micrometer = (e.target as any).innerText)
-                ">
-                {{ optometry.BeDayGiacMac_MP_micrometer }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.BeDayGiacMac_MT_micrometer = (e.target as any).innerText)
-                ">
-                {{ optometry.BeDayGiacMac_MT_micrometer }}
-              </td>
+              <td style="padding: 0 6px">Bề dày giác mạc (μm)</td>
+              <td><input v-model="optometry.BeDayGiacMac_MP_micrometer" /></td>
+              <td><input v-model="optometry.BeDayGiacMac_MT_micrometer" /></td>
             </tr>
             <tr>
-              <td>Đường kính đồng tử (mm)</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.DuongKinhDongTu_MP_millimeter = (e.target as any).innerText)
-                ">
-                {{ optometry.DuongKinhDongTu_MP_millimeter }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.DuongKinhDongTu_MT_millimeter = (e.target as any).innerText)
-                ">
-                {{ optometry.DuongKinhDongTu_MT_millimeter }}
-              </td>
+              <td style="padding: 0 6px">Đường kính đồng tử (mm)</td>
+              <td><input v-model="optometry.DuongKinhDongTu_MP_millimeter" /></td>
+              <td><input v-model="optometry.DuongKinhDongTu_MT_millimeter" /></td>
             </tr>
             <tr>
-              <td>Chiều dài trục nhãn cầu</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.ChieuDaiTrucNhanCau_MP = (e.target as any).innerText)">
-                {{ optometry.ChieuDaiTrucNhanCau_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.ChieuDaiTrucNhanCau_MT = (e.target as any).innerText)">
-                {{ optometry.ChieuDaiTrucNhanCau_MT }}
-              </td>
+              <td style="padding: 0 6px">Chiều dài trục nhãn cầu</td>
+              <td><input v-model="optometry.ChieuDaiTrucNhanCau_MP" /></td>
+              <td><input v-model="optometry.ChieuDaiTrucNhanCau_MT" /></td>
             </tr>
             <tr>
-              <td>Biên độ điều tiết</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.BienDoDieuTiet_MP = (e.target as any).innerText)">
-                {{ optometry.BienDoDieuTiet_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.BienDoDieuTiet_MT = (e.target as any).innerText)">
-                {{ optometry.BienDoDieuTiet_MT }}
-              </td>
+              <td style="padding: 0 6px">Biên độ điều tiết</td>
+              <td><input v-model="optometry.BienDoDieuTiet_MP" /></td>
+              <td><input v-model="optometry.BienDoDieuTiet_MT" /></td>
             </tr>
           </tbody>
         </table>
@@ -556,67 +410,49 @@ const startPrint = async () => {
           </thead>
           <tbody>
             <tr>
-              <td style="font-weight: 500; text-align: center">MP</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MP_Cau = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MP_Cau }}
+              <td class="title">MP</td>
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MP_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MP_Tru = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MP_Tru }}
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MP_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MP_Truc = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MP_Truc }}
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MP_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MP_ADD = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MP_ADD }}
-              </td>
-              <td
-                rowspan="2"
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="
-                  (e) => (optometry.SoKinhChiDinh_KhoangCachDongTu = (e.target as any).innerText)
-                ">
-                {{ optometry.SoKinhChiDinh_KhoangCachDongTu }}
-              </td>
+              <td><input v-model="optometry.SoKinhChiDinh_MP_ADD" /></td>
+              <td rowspan="2"><input v-model="optometry.SoKinhChiDinh_KhoangCachDongTu" /></td>
             </tr>
             <tr>
-              <td style="font-weight: 500; text-align: center">MT</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MT_Cau = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MT_Cau }}
+              <td class="title">MT</td>
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MT_Cau"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MT_Tru = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MT_Tru }}
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MT_Tru"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MT_Truc = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MT_Truc }}
+              <td>
+                <input
+                  v-model="optometry.SoKinhChiDinh_MT_Truc"
+                  type="number"
+                  style="text-align: left" />
               </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (optometry.SoKinhChiDinh_MT_ADD = (e.target as any).innerText)">
-                {{ optometry.SoKinhChiDinh_MT_ADD }}
-              </td>
+              <td><input v-model="optometry.SoKinhChiDinh_MT_ADD" /></td>
             </tr>
           </tbody>
         </table>
@@ -642,18 +478,30 @@ table {
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
-}
 
-th {
-  white-space: normal;
-}
+  th {
+    white-space: normal;
+    padding: 6px;
+    border: 1px solid #cdcdcd;
+  }
 
-th,
-td {
-  border: 1px solid #cdcdcd;
-  padding: 6px;
-  &:focus-visible {
-    outline: 2px solid #40a9ff;
+  td {
+    &.title {
+      padding: 0 6px;
+      font-weight: 500;
+      text-align: center;
+    }
+    border: 1px solid #cdcdcd;
+    input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 6px;
+      border-radius: 2px;
+      &:focus {
+        outline: 2px solid #40a9ff;
+      }
+    }
   }
 }
 </style>

@@ -3,11 +3,9 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { TicketProduct, TicketProductApi } from '../../../modules/ticket-product'
 import { DTimer, formatPhone } from '../../../utils'
-import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
+import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -30,6 +28,7 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         customerId: props.customer.id!,
+        deliveryStatus: { NOT: 4 },
       },
       relation: {
         product: true,
@@ -62,22 +61,6 @@ watch(
   },
   { immediate: true }
 )
-
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
@@ -109,26 +92,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <div class="font-medium">
                 {{ ticketProduct.product!.brandName }}
               </div>
-              <div
-                v-if="ticketProduct.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketProduct.ticketId)">
-                  BH{{ ticketProduct.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketProduct.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketProduct.ticketId)">
-                  KB{{ ticketProduct.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketProduct.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
@@ -184,26 +148,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
           </tr>
           <tr v-for="(ticketProduct, index) in ticketProductList" :key="index">
             <td>
-              <div
-                v-if="ticketProduct.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketProduct.ticketId)">
-                  BH{{ ticketProduct.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketProduct.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketProduct.ticketId)">
-                  KB{{ ticketProduct.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketProduct.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketProduct.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>

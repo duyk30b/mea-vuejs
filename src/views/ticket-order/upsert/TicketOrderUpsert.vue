@@ -81,8 +81,8 @@ onBeforeMount(async () => {
       const ticketResponse = await TicketApi.detail(ticketId, {
         relation: {
           customer: true,
-          ticketProductList: true,
-          ticketProcedureList: true,
+          ticketProductList: { product: true, batch: true },
+          ticketProcedureList: { procedure: true },
           ticketSurchargeList: true,
           ticketExpenseList: true,
         },

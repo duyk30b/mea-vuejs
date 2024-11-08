@@ -213,7 +213,7 @@ defineExpose({ openModal })
         <div class="mt-4 pb-6 flex justify-center gap-4">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_PREPAYMENT] &&
+              permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
               [ReceiptStatus.Draft, ReceiptStatus.Prepayment, ReceiptStatus.Debt].includes(
                 receipt.status
               )

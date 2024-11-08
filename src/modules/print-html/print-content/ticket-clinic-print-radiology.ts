@@ -1,7 +1,7 @@
-import { useMeStore } from '../../../../modules/_me/me.store'
-import type { Ticket } from '../../../../modules/ticket'
-import type { TicketRadiology } from '../../../../modules/ticket-radiology'
-import { DTimer, formatPhone, timeToText } from '../../../../utils'
+import { DTimer, formatPhone } from '../../../utils'
+import { useMeStore } from '../../_me/me.store'
+import type { Ticket } from '../../ticket'
+import type { TicketRadiology } from '../../ticket-radiology'
 
 export const ticketClinicPrintRadiology = (
   ticket: Ticket,
@@ -72,7 +72,7 @@ export const ticketClinicPrintRadiology = (
             <td style="padding-right: 10px">:</td>
             <td> ${ticket.customer?.fullName} </td>
             <td style="white-space: no-wrap; padding-left: 48px;">
-              - Ngày sinh: ${timeToText(ticket.customer?.birthday, 'DD/MM/YYYY')}
+              - Ngày sinh: ${DTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY')}
             </td>
           </tr>
           <tr>

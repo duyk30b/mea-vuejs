@@ -4,7 +4,7 @@ import type { ProductGroup } from './product-group.model'
 
 export class ProductGroupService {
   static timeSync: string = ''
-  static customerSourceAll: ProductGroup[]
+  static productGroupAll: ProductGroup[]
 
   static async getAll() {
     let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_GROUP')
@@ -20,11 +20,11 @@ export class ProductGroupService {
       refreshTime.time = now
       ProductGroupService.timeSync = now
       const fetchData = await ProductGroupApi.list({})
-      ProductGroupService.customerSourceAll = fetchData.data
+      ProductGroupService.productGroupAll = fetchData.data
       await RefreshTimeDB.upsertOne(refreshTime)
     }
 
-    return ProductGroupService.customerSourceAll
+    return ProductGroupService.productGroupAll
   }
 
   static async updateTimeSyncDB() {
@@ -40,14 +40,14 @@ export class ProductGroupService {
     await RefreshTimeDB.upsertOne(refreshTime)
   }
 
-  static async createOne(customerSource: ProductGroup) {
+  static async createOne(productGroup: ProductGroup) {
     await ProductGroupService.updateTimeSyncDB()
-    return await ProductGroupApi.createOne(customerSource)
+    return await ProductGroupApi.createOne(productGroup)
   }
 
-  static async updateOne(id: number, customerSource: ProductGroup) {
+  static async updateOne(id: number, productGroup: ProductGroup) {
     await ProductGroupService.updateTimeSyncDB()
-    return await ProductGroupApi.updateOne(id, customerSource)
+    return await ProductGroupApi.updateOne(id, productGroup)
   }
 
   static async destroyOne(id: number) {

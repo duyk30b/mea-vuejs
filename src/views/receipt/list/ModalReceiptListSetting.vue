@@ -11,15 +11,15 @@ import { IconClose } from '../../../common/icon'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
-const settingDisplay = ref<typeof store.SCREEN_TICKET_ORDER_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_TICKET_ORDER_LIST))
+const settingDisplay = ref<typeof store.SCREEN_RECEIPT_LIST>(
+  JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_LIST))
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
 
 const openModal = async () => {
   showModal.value = true
-  settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_TICKET_ORDER_LIST))
+  settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_LIST))
 }
 
 const handleClose = () => {
@@ -30,9 +30,9 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     const settingData = JSON.stringify(settingDisplay.value)
-    await OrganizationService.saveSettings(SettingKey.SCREEN_TICKET_ORDER_LIST, settingData)
+    await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_LIST, settingData)
     AlertStore.addSuccess('Cập nhật cài đặt thành công')
-    store.SCREEN_TICKET_ORDER_LIST = JSON.parse(settingData)
+    store.SCREEN_RECEIPT_LIST = JSON.parse(settingData)
 
     emit('success')
     showModal.value = false
@@ -67,12 +67,7 @@ defineExpose({ openModal })
             <tbody>
               <tr>
                 <td>
-                  <a-checkbox v-model:checked="settingDisplay.profit">Hiển thị tiền lãi</a-checkbox>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <a-checkbox v-model:checked="settingDisplay.ticketProductList">
+                  <a-checkbox v-model:checked="settingDisplay.receiptItems">
                     Hiển thị sản phẩm
                   </a-checkbox>
                 </td>

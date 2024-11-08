@@ -28,9 +28,9 @@ export const useTicketClinicStore = defineStore('ticket-clinic-store', {
           relation: {
             customer: true,
             ticketDiagnosis: true,
-            ticketProductList: true,
-            ticketProcedureList: true,
-            ticketRadiologyList: true,
+            ticketProductList: { product: true, batch: true },
+            ticketProcedureList: { procedure: true },
+            ticketRadiologyList: { radiology: true },
           },
         })
       }

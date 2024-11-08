@@ -1,27 +1,24 @@
 <script setup lang="ts">
-import {
-  AuditOutlined,
-  FileSearchOutlined,
-  FormOutlined,
-  PlusOutlined,
-} from '@ant-design/icons-vue'
+import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconSetting } from '../../../common/icon'
+import { IconVisibility } from '../../../common/icon-google'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Receipt, ReceiptStatus, useReceiptStore } from '../../../modules/receipt'
+import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
-import VueButton from '../../../common/VueButton.vue'
-import { IconVisibility } from '../../../common/icon-google'
+import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
 
+const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
-const receiptStore = useReceiptStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
@@ -47,12 +44,16 @@ const startFetchData = async () => {
     const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
     const toTime = timeRanger.value?.[1].endOf('day').toISOString()
 
-    const { data, meta } = await receiptStore.pagination({
-      relation: { distributor: true },
+    const { data, meta } = await ReceiptApi.pagination({
+      relation: {
+        distributor: true,
+        receiptItems: settingStore.SCREEN_RECEIPT_LIST.receiptItems
+          ? { product: true, batch: false }
+          : false,
+      },
       filter: {
         startedAt: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
-        deletedAt: { IS_NULL: true },
-        status: receiptStatus.value ?? undefined,
+        status: receiptStatus.value ? receiptStatus.value : { NOT: ReceiptStatus.Cancelled },
       },
       page: page.value,
       limit: limit.value,
@@ -107,12 +108,15 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
-    // modalSettingArrivalList.value?.openModal()
+    modalReceiptListSetting.value?.openModal()
   }
 }
 </script>
 
 <template>
+  <ModalReceiptListSetting
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalReceiptListSetting" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -135,16 +139,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
     </div>
     <div class="page-header-setting">
-      <!-- <a-dropdown trigger="click">
-          <span style="font-size: 1.2rem; cursor: pointer;">
-            <SettingOutlined />
-          </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown> -->
+      <a-dropdown trigger="click">
+        <span style="font-size: 1.2rem; cursor: pointer">
+          <IconSetting />
+        </span>
+        <template #overlay>
+          <a-menu @click="handleMenuSettingClick">
+            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </div>
   </div>
 
@@ -172,7 +176,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Prepayment },
               { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
               { text: 'Hoàn thành', value: ReceiptStatus.Success },
-              { text: 'Hoàn trả', value: ReceiptStatus.Cancelled },
+              { text: 'Hủy', value: ReceiptStatus.Cancelled },
             ]"
             @update:value="startSearch" />
         </div>
@@ -226,6 +230,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <div v-if="receipt.distributor?.note" class="text-xs italic">
                   {{ receipt.distributor?.note }}
                 </div>
+                <div class="text-xs">
+                  {{ (receipt.receiptItems || []).map((i) => i.product?.brandName).join(', ') }}
+                </div>
               </td>
               <td class="text-right">
                 <div>{{ formatMoney(receipt.totalMoney) }}</div>
@@ -270,6 +277,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
             <th>Thời gian</th>
             <th>Nhà cung cấp</th>
+            <th v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">Sản phẩm</th>
             <th>Tổng Tiền</th>
             <th>Trạng thái</th>
           </tr>
@@ -314,6 +322,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="receipt.distributor?.note" class="text-xs italic">
                 {{ receipt.distributor?.note }}
               </div>
+            </td>
+            <td v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">
+              {{ (receipt.receiptItems || []).map((i) => i.product?.brandName).join(', ') }}
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.totalMoney) }}</div>

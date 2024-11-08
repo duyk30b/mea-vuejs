@@ -276,7 +276,7 @@ defineExpose({ openModal })
         <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch' : 'items-center'">
           <div style="width: 100px; flex: none">HSD</div>
           <div class="flex-auto">
-            <InputDate v-model:value="organization.expiryDate" />
+            <InputDate v-model:value="organization.expiryDate" typeParser="number" />
           </div>
         </div>
 

@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import {
-  FileSearchOutlined,
-  SettingOutlined,
-  ShopOutlined
-} from '@ant-design/icons-vue'
+import { FileSearchOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -52,7 +48,7 @@ const { formatMoney } = settingStore
 const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 
 const distributor = ref<Distributor>(Distributor.blank())
-const distributorList = ref<Distributor[]>([])
+const distributorOptions = ref<{ value: number; text: string; data: Distributor }[]>([])
 
 const time = ref<Dayjs>(dayjs())
 
@@ -69,7 +65,7 @@ onBeforeMount(async () => {
     const receiptResponse = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: true,
+        receiptItems: { product: true, batch: true },
       },
     })
 
@@ -115,9 +111,14 @@ onUnmounted(() => {
 const searchingDistributor = async (text: string) => {
   distributor.value.id = 0
   if (text) {
-    distributorList.value = await distributorStore.search(text)
+    const distributorList = await distributorStore.search(text)
+    distributorOptions.value = distributorList.map((i) => ({
+      value: i.id,
+      text: i.fullName,
+      data: i,
+    }))
   } else {
-    distributorList.value = []
+    distributorOptions.value = []
   }
 }
 
@@ -171,35 +172,8 @@ const saveReceipt = async (type: EReceiptSave) => {
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
-      case EReceiptSave.CREATE_QUICK_AND_NEW: {
-        const response = await ReceiptApi.createQuickReceipt(receipt.value)
-        receipt.value = Receipt.blank()
-
-        const distributorRes = Distributor.from(meStore.distributorDefault)
-        distributor.value = distributorRes
-        receipt.value.distributor = distributorRes
-        receipt.value.distributorId = distributorRes.id
-        inputOptionsDistributor.value?.setItem({
-          text: distributorRes.fullName,
-          value: distributorRes.id,
-          data: distributorRes,
-        })
-        AlertStore.add({ type: 'success', message: 'Tạo phiếu thành công', time: 500 })
-        break
-      }
-      case EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT: {
-        const response = await ReceiptApi.updateReceiptDraftAndReceiptPrepayment(
-          receipt.value.id,
-          receipt.value
-        )
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
-        break
-      }
-      case EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS: {
-        const response = await ReceiptApi.updateReceiptDebtAndReceiptSuccess(
-          receipt.value.id,
-          receipt.value
-        )
+      case EReceiptSave.UPDATE_DRAFT_PREPAYMENT: {
+        const response = await ReceiptApi.updateDraftPrepayment(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -303,12 +277,12 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <div style="height: 40px">
             <InputOptions
               ref="inputOptionsDistributor"
-              :options="distributorList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
+              :options="distributorOptions"
               :max-height="260"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               :disabled="mode === EReceiptUpsertMode.UPDATE"
               required
-              @selectItem="({ data }) => createDistributor(data)"
+              @selectItem="({ data }) => selectDistributor(data)"
               @update:text="searchingDistributor">
               <template #option="{ item: { data } }">
                 <div>
@@ -415,22 +389,6 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT] &&
-              settingStore.SCREEN_RECEIPT_UPSERT.save.createBasicAndNew
-            "
-            class="mt-4 w-full flex flex-col px-1">
-            <VueButton
-              color="blue"
-              type="button"
-              :loading="saveLoading"
-              size="large"
-              icon="save"
-              @click="saveReceipt(EReceiptSave.CREATE_QUICK_AND_NEW)">
-              Lưu và Tạo phiếu mới
-            </VueButton>
-          </div>
-          <div
-            v-if="
               permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
               settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
@@ -450,7 +408,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1">
@@ -460,14 +418,14 @@ const openModalDistributorDetail = (data?: Distributor) => {
               size="large"
               icon="save"
               type="button"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)">
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
               Cập nhật phiếu nháp
             </VueButton>
           </div>
 
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+              permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Prepayment].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1">
@@ -477,24 +435,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
               size="large"
               type="button"
               icon="save"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT)">
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
               Cập nhật phiếu tạm ứng
-            </VueButton>
-          </div>
-
-          <div
-            v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS] &&
-              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
-            "
-            class="mt-4 w-full flex flex-col px-1">
-            <VueButton
-              color="blue"
-              :loading="saveLoading"
-              icon="save"
-              size="large"
-              @click="saveReceipt(EReceiptSave.UPDATE_RECEIPT_DEBT_AND_RECEIPT_SUCCESS)">
-              Cập nhật phiếu đã nhập
             </VueButton>
           </div>
         </template>

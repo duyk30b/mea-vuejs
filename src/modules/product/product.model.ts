@@ -1,6 +1,6 @@
 import { Batch } from '../batch/batch.model'
 import type { UnitType } from '../enum'
-import type { ProductGroup } from '../product-group'
+import { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
@@ -138,6 +138,11 @@ export class Product {
 
   static from(source: Product) {
     const target = Product.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'productGroup')) {
+      target.productGroup = target.productGroup
+        ? ProductGroup.basic(target.productGroup)
+        : target.productGroup
+    }
     if (source.batchList) {
       target.batchList = Batch.basicList(source.batchList)
     }

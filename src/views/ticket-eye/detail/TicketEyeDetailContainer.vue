@@ -46,12 +46,12 @@ const startFetchData = async (ticketId: number) => {
 
         ticketDiagnosis: true,
         // ticketProductList: true,
-        ticketProductConsumableList: true,
-        ticketProductPrescriptionList: true,
-        ticketProcedureList: true,
+        ticketProductConsumableList: { product: true, batch: true },
+        ticketProductPrescriptionList: { product: true, batch: true },
+        ticketProcedureList: { procedure: true },
         // ticketRadiologyList: true,
-        
-        ticketUserList: true,
+
+        ticketUserList: { user: true },
         toAppointment: true,
       },
     })

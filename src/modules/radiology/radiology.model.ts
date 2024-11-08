@@ -1,4 +1,4 @@
-import type { RadiologyGroup } from '../radiology-group'
+import { RadiologyGroup } from '../radiology-group'
 
 export class Radiology {
   id: number
@@ -47,6 +47,11 @@ export class Radiology {
 
   static from(source: Radiology) {
     const target = Radiology.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'radiologyGroup')) {
+      target.radiologyGroup = target.radiologyGroup
+        ? RadiologyGroup.basic(target.radiologyGroup)
+        : target.radiologyGroup
+    }
     return target
   }
 

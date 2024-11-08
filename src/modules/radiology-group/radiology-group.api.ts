@@ -38,17 +38,17 @@ export class RadiologyGroupApi {
     return RadiologyGroup.from(data)
   }
 
-  static async createOne(customerSource: RadiologyGroup) {
+  static async createOne(radiologyGroup: RadiologyGroup) {
     const response = await AxiosInstance.post('/radiology-group/create', {
-      name: customerSource.name,
+      name: radiologyGroup.name,
     })
     const { data } = response.data as BaseResponse
     return RadiologyGroup.from(data)
   }
 
-  static async updateOne(id: number, customerSource: RadiologyGroup) {
+  static async updateOne(id: number, radiologyGroup: RadiologyGroup) {
     const response = await AxiosInstance.patch(`/radiology-group/update/${id}`, {
-      name: customerSource.name,
+      name: radiologyGroup.name,
     })
     const { data } = response.data as BaseResponse
     return RadiologyGroup.from(data)

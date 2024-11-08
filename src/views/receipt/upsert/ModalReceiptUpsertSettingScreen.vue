@@ -239,13 +239,6 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.save.createBasicAndNew">
-                          Lưu và Tạo phiếu mới
-                        </a-checkbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
                         <a-checkbox v-model:checked="settingDisplay.save.createDraft">
                           Lưu nháp
                         </a-checkbox>

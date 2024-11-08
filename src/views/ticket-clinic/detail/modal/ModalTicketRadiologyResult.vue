@@ -43,7 +43,7 @@ const openModal = async (instance: TicketRadiology, editable: boolean) => {
 const openModalById = async (radiologyId: number) => {
   showModal.value = true
   ticketRadiology.value = await TicketRadiologyApi.detail(radiologyId, {
-    relation: { imageList: true, radiology: true, doctor: true },
+    relation: { imageList: true, radiology: true },
   })
   startedAt.value = dayjs(new Date(ticketRadiology.value.startedAt))
   disabled.value = true

@@ -4,14 +4,14 @@ import {
   CopyOutlined,
   ExceptionOutlined,
   FileDoneOutlined,
-  FileSearchOutlined,
   FileSyncOutlined,
   MoreOutlined,
-  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -50,7 +50,7 @@ const startFetchData = async (receiptId: number) => {
     receipt.value = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: true,
+        receiptItems: { product: true, batch: true },
         distributorPayments: true,
       },
     })
@@ -119,29 +119,16 @@ const startRefundPrepayment = async () => {
 const startCancel = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPayments } = await ReceiptApi.cancel(
+    const { receiptBasic, distributorPaymentList } = await ReceiptApi.cancel(
       receipt.value.id!,
       receipt.value.paid
     )
+    console.log('🚀 ~ file: ReceiptDetail.vue:126 ~ startCancel ~ receiptBasic:', receiptBasic)
     Object.assign(receipt.value, receiptBasic)
-    receipt.value.distributorPayments = distributorPayments
-    AlertStore.add({ type: 'success', message: 'Trả hàng thành công', time: 1000 })
-    router.go(0)
+    receipt.value.distributorPayments = distributorPaymentList
+    AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
   } catch (error) {
     console.log('🚀 ~ startCancel ~ error:', error)
-  } finally {
-    loadingProcess.value = false
-  }
-}
-
-const softDeleteCancel = async () => {
-  try {
-    loadingProcess.value = true
-    await ReceiptApi.softDeleteCancel(receipt.value.id!)
-    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
-    router.push({ name: 'ReceiptList' })
-  } catch (error) {
-    console.log('🚀 ~ softDeleteCancel ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -203,16 +190,6 @@ const clickDestroyDraft = () => {
   })
 }
 
-const clickSoftDeleteCancel = () => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
-    content: 'Phiếu nhập đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
-    async onOk() {
-      await softDeleteCancel()
-    },
-  })
-}
-
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
     modalReceiptDetailSettingScreen.value?.openModal()
@@ -220,16 +197,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 }
 
 const handleMenuActionClick = (menu: { key: string }) => {
-  if (menu.key === 'EDIT_RECEIPT') startEdit()
   if (menu.key === 'REFUND_PREPAYMENT') clickRefundPrepayment()
   if (menu.key === 'CANCEL') clickCancel()
-  if (menu.key === 'DELETE') {
-    if (receipt.value.status === ReceiptStatus.Draft) {
-      clickDestroyDraft()
-    } else if (receipt.value.status === ReceiptStatus.Cancelled) {
-      clickSoftDeleteCancel()
-    }
-  }
+  if (menu.key === 'DESTROY_DRAFT') clickDestroyDraft()
 }
 
 const openModalDistributorDetail = (data?: Distributor) => {
@@ -248,7 +218,9 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="page-header-content">
       <AuditOutlined />
       Thông tin phiếu nhập hàng
-      <span v-if="receipt.deletedAt" style="color: var(--text-red)">(Đơn đã bị xóa)</span>
+      <span v-if="receipt.status === ReceiptStatus.Cancelled" style="color: var(--text-red)">
+        (Đơn đã bị hủy)
+      </span>
       <VueButton
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         type="button"
@@ -263,7 +235,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
@@ -281,7 +253,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <td class="font-medium px-2 py-1">
           {{ receipt.distributor?.fullName }}
           <a class="ml-1" @click="openModalDistributorDetail(receipt.distributor)">
-            <FileSearchOutlined />
+            <IconFileSearch />
           </a>
         </td>
       </tr>
@@ -321,7 +293,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       </VueButton>
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.RECEIPT_UPDATE_RECEIPT_DRAFT_AND_RECEIPT_PREPAYMENT] &&
+          permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
           [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
         "
         color="blue"
@@ -334,18 +306,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <a-menu @click="handleMenuActionClick">
             <a-menu-item
               v-if="
-                settingStore.SCREEN_RECEIPT_DETAIL.process.forceEdit &&
-                [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
-              "
-              key="EDIT_RECEIPT">
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
-                Sửa phiếu
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                permissionIdMap[PermissionId.RECEIPT_REFUND_PREPAYMENT] &&
+                permissionIdMap[PermissionId.RECEIPT_REFUND_PAYMENT] &&
                 [ReceiptStatus.Prepayment].includes(receipt.status)
               "
               key="REFUND_PREPAYMENT">
@@ -356,7 +317,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
             </a-menu-item>
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_RETURN_PRODUCT] &&
+                permissionIdMap[PermissionId.RECEIPT_CANCEL] &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
               key="CANCEL">
@@ -365,17 +326,17 @@ const openModalDistributorDetail = (data?: Distributor) => {
                 Hủy phiếu
               </span>
             </a-menu-item>
-            <!-- <a-menu-item
+            <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_DELETE] &&
-                [ReceiptStatus.Draft, ReceiptStatus.Cancelled].includes(receipt.status)
+                permissionIdMap[PermissionId.RECEIPT_DESTROY_DRAFT] &&
+                [ReceiptStatus.Draft].includes(receipt.status)
               "
-              key="DELETE">
+              key="DESTROY_DRAFT">
               <span class="text-red-500">
-                <DeleteOutlined class="mr-2" />
+                <IconDelete class="mr-2" />
                 Xóa phiếu
               </span>
-            </a-menu-item> -->
+            </a-menu-item>
           </a-menu>
         </template>
         <a-button shape="circle">
@@ -409,6 +370,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
         <VueButton
           v-if="
+            permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
+            permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
             receipt.paid != receipt.totalMoney &&
             settingStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndPayment
           "
@@ -423,6 +386,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
         <VueButton
           v-if="
+            permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
+            permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
             receipt.paid != receipt.totalMoney &&
             settingStore.SCREEN_RECEIPT_DETAIL.process.sendProductAndDebit
           "

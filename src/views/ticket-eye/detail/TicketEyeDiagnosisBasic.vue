@@ -120,7 +120,7 @@ const hasChangeData = computed(() => {
 const saveTicketDiagnosis = async () => {
   try {
     saveLoading.value = true
-    
+
     const generalValue = JSON.parse(JSON.stringify(general.value))
     Object.keys(generalValue).forEach((key) => {
       if (!generalValue[key]) delete generalValue[key]
@@ -204,109 +204,39 @@ const handleFocus = (e: Event) => {
           </thead>
           <tbody>
             <tr>
-              <td>Thị lực</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.ThiLuc_MP = (e.target as any).innerText)">
-                {{ regional.ThiLuc_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.ThiLuc_MT = (e.target as any).innerText)">
-                {{ regional.ThiLuc_MT }}
-              </td>
+              <td class="title">Thị lực</td>
+              <td><input v-model="regional.ThiLuc_MP" /></td>
+              <td><input v-model="regional.ThiLuc_MT" /></td>
             </tr>
             <tr>
-              <td>Nhãn áp</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.NhanAp_MP = (e.target as any).innerText)">
-                {{ regional.NhanAp_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.NhanAp_MT = (e.target as any).innerText)">
-                {{ regional.NhanAp_MT }}
-              </td>
+              <td class="title">Nhãn áp</td>
+              <td><input v-model="regional.NhanAp_MP" /></td>
+              <td><input v-model="regional.NhanAp_MT" /></td>
             </tr>
             <tr>
-              <td>Mi mắt - kết mạc</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.MiMatKetMac_MP = (e.target as any).innerText)">
-                {{ regional.MiMatKetMac_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.MiMatKetMac_MT = (e.target as any).innerText)">
-                {{ regional.MiMatKetMac_MT }}
-              </td>
+              <td class="title">Mi mắt - kết mạc</td>
+              <td><input v-model="regional.MiMatKetMac_MP" /></td>
+              <td><input v-model="regional.MiMatKetMac_MT" /></td>
             </tr>
             <tr>
-              <td>Giác mạc</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.GiacMac_MP = (e.target as any).innerText)">
-                {{ regional.GiacMac_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.GiacMac_MT = (e.target as any).innerText)">
-                {{ regional.GiacMac_MT }}
-              </td>
+              <td class="title">Giác mạc</td>
+              <td><input v-model="regional.GiacMac_MP" /></td>
+              <td><input v-model="regional.GiacMac_MT" /></td>
             </tr>
             <tr>
-              <td>Tiền phòng, mống mắt</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.TienPhongMongMat_MP = (e.target as any).innerText)">
-                {{ regional.TienPhongMongMat_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.TienPhongMongMat_MT = (e.target as any).innerText)">
-                {{ regional.TienPhongMongMat_MT }}
-              </td>
+              <td class="title">Tiền phòng, mống mắt</td>
+              <td><input v-model="regional.TienPhongMongMat_MP" /></td>
+              <td><input v-model="regional.TienPhongMongMat_MT" /></td>
             </tr>
             <tr>
-              <td>Thủy tinh thể</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.ThuyTinhThe_MP = (e.target as any).innerText)">
-                {{ regional.ThuyTinhThe_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.ThuyTinhThe_MT = (e.target as any).innerText)">
-                {{ regional.ThuyTinhThe_MT }}
-              </td>
+              <td class="title">Thủy tinh thể</td>
+              <td><input v-model="regional.ThuyTinhThe_MP" /></td>
+              <td><input v-model="regional.ThuyTinhThe_MT" /></td>
             </tr>
             <tr>
-              <td>Đáy mắt</td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.DayMat_MP = (e.target as any).innerText)">
-                {{ regional.DayMat_MP }}
-              </td>
-              <td
-                contenteditable="true"
-                @focus="handleFocus"
-                @input="(e) => (regional.DayMat_MT = (e.target as any).innerText)">
-                {{ regional.DayMat_MT }}
-              </td>
+              <td class="title">Đáy mắt</td>
+              <td><input v-model="regional.DayMat_MP" /></td>
+              <td><input v-model="regional.DayMat_MT" /></td>
             </tr>
           </tbody>
         </table>
@@ -359,14 +289,28 @@ table {
   border-collapse: collapse;
   width: 100%;
   table-layout: fixed;
-}
 
-th,
-td {
-  border: 1px solid #cdcdcd;
-  padding: 6px;
-  &:focus-visible {
-    outline: 2px solid #40a9ff;
+  th {
+    white-space: normal;
+    padding: 6px;
+    border: 1px solid #cdcdcd;
+  }
+
+  td {
+    &.title {
+      padding: 0 6px;
+    }
+    border: 1px solid #cdcdcd;
+    input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 6px;
+      border-radius: 2px;
+      &:focus {
+        outline: 2px solid #40a9ff;
+      }
+    }
   }
 }
 </style>

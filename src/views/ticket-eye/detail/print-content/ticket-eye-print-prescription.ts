@@ -57,7 +57,7 @@ export const ticketEyePrintPrescription = (ticket: Ticket, doctorName: string) =
         </table>
 
         <div style="text-align: center; font-size: 1.8rem; font-weight: bold; line-height: 2.5; text-transform: uppercase;">
-          ĐƠN THUỐC
+          PHIẾU TƯ VẤN DÙNG THUỐC
         </div>
 
         <table class="information">

@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router'
 
 export const masterDataRouter: RouteRecordRaw = {
   path: 'master-data',
@@ -92,6 +92,30 @@ export const masterDataRouter: RouteRecordRaw = {
           name: 'RadiologyGroupList',
           component: () => import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
           meta: { title: 'Dịch vụ' },
+        },
+      ],
+    },
+    {
+      path: 'print-html',
+      name: 'PrintHtml',
+      redirect: () => ({ name: 'PrintHtmlList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'PrintHtmlList',
+          component: () => import('../views/master-data/print-html/PrintHtmlList.vue'),
+          meta: { title: 'Mẫu in' },
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'PrintHtmlUpsert',
+          component: () => import('../views/master-data/print-html/PrintHtmlUpsert.vue'),
+          meta: {
+            title: (route: RouteLocationNormalizedLoaded) => {
+              if (route.query?.mode === 'UPDATE') return 'Cập nhật mẫu in'
+              return 'Tạo mới mẫu in'
+            },
+          },
         },
       ],
     },

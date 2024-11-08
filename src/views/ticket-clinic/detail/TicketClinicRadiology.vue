@@ -9,13 +9,13 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Radiology, RadiologyApi } from '../../../modules/radiology'
+import { Radiology, RadiologyApi, RadiologyService } from '../../../modules/radiology'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketRadiology } from '../../../modules/ticket-radiology'
 import { customFilter } from '../../../utils'
 import ModalTicketRadiologyResult from './modal/ModalTicketRadiologyResult.vue'
-import { ticketClinicPrintRadiology } from './print-content/ticket-clinic-print-radiology'
+import { ticketClinicPrintRadiology } from '../../../modules/print-html/print-content/ticket-clinic-print-radiology'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
@@ -50,8 +50,7 @@ const disabledButton = computed(() => {
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicRadiology.vue:54 ~ onMounted ~ onMounted:')
   try {
-    const response = await RadiologyApi.list({})
-    radiologyAll = response.data
+    radiologyAll = await RadiologyService.getAll()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }

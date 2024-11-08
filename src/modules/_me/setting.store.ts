@@ -106,7 +106,9 @@ export const settingDefault = {
     relative: true,
   },
 
-  SCREEN_RECEIPT_LIST: {},
+  SCREEN_RECEIPT_LIST: {
+    receiptItems: false,
+  },
   SCREEN_RECEIPT_DETAIL: {
     receiptItemsTable: {
       substance: true,
@@ -124,7 +126,6 @@ export const settingDefault = {
     process: {
       sendProductAndPayment: true,
       sendProductAndDebit: false,
-      forceEdit: false,
     },
   },
   SCREEN_RECEIPT_UPSERT: {
@@ -146,13 +147,13 @@ export const settingDefault = {
       debt: false,
     },
     save: {
-      createBasicAndNew: false,
       createDraft: true,
     },
   },
 
   SCREEN_TICKET_ORDER_LIST: {
     profit: true,
+    ticketProductList: false,
   },
   SCREEN_INVOICE_DETAIL: {
     invoiceItemsTable: {

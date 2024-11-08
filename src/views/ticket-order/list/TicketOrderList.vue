@@ -54,14 +54,19 @@ const startFetchData = async () => {
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { customer: true, ticketProductList: true },
+      relation: {
+        customer: true,
+        ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
+          ? { product: true, batch: false }
+          : false,
+      },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
         startedAt: {
           GTE: fromTime ? fromTime : undefined,
           LTE: toTime ? toTime : undefined,
         },
-        ticketStatus: ticketStatus.value ?? undefined,
+        ticketStatus: ticketStatus.value ? ticketStatus.value : { NOT: TicketStatus.Cancelled },
         voucherType: VoucherType.Order,
       },
       sort: sortValue.value
@@ -182,7 +187,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
           </a-menu>
-          ~~
         </template>
       </a-dropdown>
     </div>
@@ -236,7 +240,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Đang thực hiện', value: TicketStatus.Executing },
               { text: 'Nợ', value: TicketStatus.Debt },
               { text: 'Hoàn thành', value: TicketStatus.Completed },
-              { text: 'Đơn hủy', value: TicketStatus.Cancelled },
+              { text: 'Hủy', value: TicketStatus.Cancelled },
             ]"
             @update:value="() => startSearch()"></VueSelect>
         </div>
@@ -338,6 +342,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
             <th>Thời gian</th>
             <th>Khách hàng</th>
+            <th v-if="settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList">Sản phẩm</th>
             <th>Tổng Tiền</th>
             <th v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit">Lãi</th>
             <th>Thanh toán</th>
@@ -386,6 +391,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="ticket.note" class="text-xs italic">
                 {{ ticket.note }}
               </div>
+            </td>
+            <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList">
+              {{ (ticket.ticketProductList || []).map((i) => i.product?.brandName).join(', ') }}
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>

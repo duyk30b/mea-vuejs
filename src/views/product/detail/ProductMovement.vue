@@ -43,7 +43,11 @@ const startFetchProductMovements = async () => {
         voucherType: voucherType.value != null ? voucherType.value : undefined,
         productId: props.product.id,
       },
-      relation: { distributor: true, customer: true },
+      relation: {
+        ticket: false,
+        distributor: true,
+        customer: true,
+      },
       sort: { id: 'DESC' },
     })
     data.forEach((i) => (i.product = props.product))
@@ -64,7 +68,11 @@ const startFetchBatchMovements = async () => {
         productId: props.product.id,
         batchId: batchId.value ? batchId.value : undefined,
       },
-      relation: { distributor: true, customer: true },
+      relation: {
+        ticket: false,
+        distributor: true,
+        customer: true,
+      },
       sort: { id: 'DESC' },
     })
     data.forEach((i) => (i.product = props.product))
@@ -143,6 +151,14 @@ const openBlankTicketOrderDetail = async (ticketId: number) => {
 const openBlankTicketClinicDetail = async (ticketId: number) => {
   let route = router.resolve({
     name: 'TicketClinicSummary',
+    params: { id: ticketId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankTicketEyeDetail = async (ticketId: number) => {
+  let route = router.resolve({
+    name: 'TicketEyeSummary',
     params: { id: ticketId },
   })
   window.open(route.href, '_blank')
@@ -246,6 +262,19 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <div>
                 <a @click="openBlankTicketClinicDetail(productMovement.voucherId)">
                   KB{{ productMovement.voucherId }}
+                </a>
+              </div>
+              <div>
+                <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
+              </div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </div>
+            <div v-if="productMovement.voucherType === VoucherType.Eye">
+              <div>
+                <a @click="openBlankTicketEyeDetail(productMovement.voucherId)">
+                  KM{{ productMovement.voucherId }}
                 </a>
               </div>
               <div>
@@ -422,67 +451,47 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         <tr v-for="(productMovement, index) in productMovementList" :key="index">
           <td>
             <div v-if="productMovement.voucherType === VoucherType.Receipt">
-              <div>
-                <a @click="openBlankReceiptDetail(productMovement.voucherId)">
-                  NH{{ productMovement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="green">{{ productMovement.distributor!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="productMovement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+              <a @click="openBlankReceiptDetail(productMovement.voucherId)">
+                NH{{ productMovement.voucherId }}
+              </a>
+              <span class="ml-2">
+                <a-tag color="green">{{ productMovement.distributor!.fullName }}</a-tag>
+              </span>
             </div>
             <div v-if="productMovement.voucherType === VoucherType.Order">
-              <div>
-                <a @click="openBlankTicketOrderDetail(productMovement.voucherId)">
-                  BH{{ productMovement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="productMovement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+              <a @click="openBlankTicketOrderDetail(productMovement.voucherId)">
+                BH{{ productMovement.voucherId }}
+              </a>
+              <span class="ml-2">
+                <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
+              </span>
             </div>
             <div v-if="productMovement.voucherType === VoucherType.Clinic">
-              <div>
-                <a @click="openBlankTicketClinicDetail(productMovement.voucherId)">
-                  KB{{ productMovement.voucherId }}
-                </a>
-                <span class="ml-2">
-                  <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
-                </span>
-              </div>
-              <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
-                <span v-if="productMovement.isRefund">
-                  <a-tag color="error">
-                    <template #icon>
-                      <MinusCircleOutlined />
-                    </template>
-                    Hoàn trả
-                  </a-tag>
-                </span>
-              </div>
+              <a @click="openBlankTicketClinicDetail(productMovement.voucherId)">
+                KB{{ productMovement.voucherId }}
+              </a>
+              <span class="ml-2">
+                <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
+              </span>
+            </div>
+            <div v-if="productMovement.voucherType === VoucherType.Eye">
+              <a @click="openBlankTicketEyeDetail(productMovement.voucherId)">
+                KB{{ productMovement.voucherId }}
+              </a>
+              <span class="ml-2">
+                <a-tag color="blue">{{ productMovement.customer!.fullName }}</a-tag>
+              </span>
+            </div>
+            <div style="font-size: 0.8rem; white-space: nowrap">
+              {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              <span v-if="productMovement.isRefund">
+                <a-tag color="error">
+                  <template #icon>
+                    <MinusCircleOutlined />
+                  </template>
+                  Hoàn trả
+                </a-tag>
+              </span>
             </div>
           </td>
           <td class="text-center">

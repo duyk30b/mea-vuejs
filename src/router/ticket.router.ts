@@ -33,7 +33,7 @@ export const ticketRouter: RouteRecordRaw[] = [
   },
   {
     path: 'clinic',
-    name: 'TicketClinic',
+    name: 'Clinic',
     children: [
       {
         path: 'appointment',

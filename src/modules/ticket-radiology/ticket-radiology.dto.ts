@@ -6,7 +6,6 @@ export class TicketRadiologyGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
-    doctor?: boolean
     radiology?: boolean
     imageList?: boolean
   }

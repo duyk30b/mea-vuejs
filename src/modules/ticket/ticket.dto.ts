@@ -9,15 +9,15 @@ export class TicketGetQuery {
   relation?: {
     customer?: boolean
     customerPaymentList?: boolean
-    ticketProductList?: boolean
-    ticketProductConsumableList?: boolean
-    ticketProductPrescriptionList?: boolean
-    ticketProcedureList?: boolean
-    ticketRadiologyList?: boolean
+    ticketProductList?: { product?: boolean; batch?: boolean } | false
+    ticketProductConsumableList?: { product?: boolean; batch?: boolean } | false
+    ticketProductPrescriptionList?: { product?: boolean; batch?: boolean } | false
+    ticketProcedureList?: { procedure?: boolean } | false
+    ticketRadiologyList?: { radiology?: boolean } | false
     ticketDiagnosis?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
-    ticketUserList?: boolean
+    ticketUserList?: { user?: boolean } | false
     toAppointment?: boolean
   }
 

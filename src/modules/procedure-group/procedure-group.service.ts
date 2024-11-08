@@ -4,7 +4,7 @@ import type { ProcedureGroup } from './procedure-group.model'
 
 export class ProcedureGroupService {
   static timeSync: string = ''
-  static customerSourceAll: ProcedureGroup[]
+  static procedureGroupAll: ProcedureGroup[]
 
   static async getAll() {
     let refreshTime = await RefreshTimeDB.findOneByCode('PROCEDURE_GROUP')
@@ -20,11 +20,11 @@ export class ProcedureGroupService {
       refreshTime.time = now
       ProcedureGroupService.timeSync = now
       const fetchData = await ProcedureGroupApi.list({})
-      ProcedureGroupService.customerSourceAll = fetchData.data
+      ProcedureGroupService.procedureGroupAll = fetchData.data
       await RefreshTimeDB.upsertOne(refreshTime)
     }
 
-    return ProcedureGroupService.customerSourceAll
+    return ProcedureGroupService.procedureGroupAll
   }
 
   static async updateTimeSyncDB() {
@@ -40,14 +40,14 @@ export class ProcedureGroupService {
     await RefreshTimeDB.upsertOne(refreshTime)
   }
 
-  static async createOne(customerSource: ProcedureGroup) {
+  static async createOne(procedureGroup: ProcedureGroup) {
     await ProcedureGroupService.updateTimeSyncDB()
-    return await ProcedureGroupApi.createOne(customerSource)
+    return await ProcedureGroupApi.createOne(procedureGroup)
   }
 
-  static async updateOne(id: number, customerSource: ProcedureGroup) {
+  static async updateOne(id: number, procedureGroup: ProcedureGroup) {
     await ProcedureGroupService.updateTimeSyncDB()
-    return await ProcedureGroupApi.updateOne(id, customerSource)
+    return await ProcedureGroupApi.updateOne(id, procedureGroup)
   }
 
   static async destroyOne(id: number) {

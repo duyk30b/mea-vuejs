@@ -1,5 +1,4 @@
-import { DiscountType } from '../enum'
-import type { ProcedureGroup } from '../procedure-group'
+import { ProcedureGroup } from '../procedure-group'
 
 export enum ProcedureType {
   Basic = 1,
@@ -60,6 +59,11 @@ export class Procedure {
 
   static from(source?: Procedure) {
     const target = Procedure.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'procedureGroup')) {
+      target.procedureGroup = target.procedureGroup
+        ? ProcedureGroup.basic(target.procedureGroup)
+        : target.procedureGroup
+    }
     return target
   }
 

@@ -80,8 +80,9 @@ export const convertViToEn = (root: string): string => {
     .replace(/Đ/g, 'D')
 }
 
-export const formatPhone = (phone: string) => {
-  return (phone || '').replace(/(\d{4})(\d{3})(\d{3})/, '$1.$2.$3')
+export const formatPhone = (phone?: string) => {
+  if (!phone) return ''
+  return phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1.$2.$3')
 }
 
 export const snakeCaseToCamelCase = (input: string) =>

@@ -106,9 +106,11 @@ export const socketInit = () => {
 }
 
 export const reconnectSocket = () => {
-  SocketBase.disconnect()
-  SocketBase.auth = { token: localStorage.getItem(REFRESH_TOKEN) }
-  SocketBase.connect()
+  if (SocketBase) {
+    SocketBase.disconnect()
+    SocketBase.auth = { token: localStorage.getItem(REFRESH_TOKEN) }
+    SocketBase.connect()
+  }
 }
 
 export { SocketBase }

@@ -3,11 +3,9 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
 import { DTimer, formatPhone } from '../../../utils'
-import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
+import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -61,22 +59,6 @@ watch(
   },
   { immediate: true }
 )
-
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
@@ -108,26 +90,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <div class="font-medium">
                 {{ ticketProcedure.procedure!.name }}
               </div>
-              <div
-                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketProcedure.ticketId)">
-                  BH{{ ticketProcedure.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketProcedure.ticketId)">
-                  KB{{ ticketProcedure.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketProcedure.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
@@ -182,26 +145,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
           </tr>
           <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
             <td>
-              <div
-                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketProcedure.ticketId)">
-                  BH{{ ticketProcedure.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketProcedure.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketProcedure.ticketId)">
-                  KB{{ ticketProcedure.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>

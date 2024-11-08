@@ -45,6 +45,8 @@ const indexFocus = ref<number>(-1)
 const showOptions = ref<boolean>(false)
 const itemSelected = ref<any>(null)
 
+const optionsStringify = ref<string>('')
+
 const optionsFilter = computed(() => {
   return props.options.filter((item) => {
     return props.logicFilter(item, searchText.value || '')
@@ -52,22 +54,45 @@ const optionsFilter = computed(() => {
 })
 
 watch(
+  () => props.options, // mục đích của watch value là để tìm và show ra text
+  (newVal: { value: any; text: string; data?: any }[]) => {
+    if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
+    const optionsStringifyNew = JSON.stringify(newVal)
+    if (optionsStringify.value === optionsStringifyNew) return
+
+    optionsStringify.value = optionsStringifyNew
+
+    const findIndex = newVal.findIndex((item) => item.value === props.value)
+    if (findIndex === -1) {
+      itemSelected.value = {}
+      searchText.value = ''
+      emit('update:text', '')
+    } else {
+      const item = newVal[findIndex]
+      itemSelected.value = item
+      searchText.value = item.text
+      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
+      emit('update:text', item.text)
+    }
+  },
+  { immediate: true }
+)
+
+watch(
   () => props.value, // mục đích của watch value là để tìm và show ra text
   (newVal) => {
-    if (newVal != null) {
-      const optionsWatch = props.options.filter((item) => props.logicFilter(item, searchText.value))
-      const findIndex = optionsWatch.findIndex((item) => item.value === newVal)
-      if (findIndex === -1) {
-        itemSelected.value = {}
-        searchText.value = ''
-        emit('update:text', '')
-      } else {
-        const item = optionsWatch[findIndex]
-        itemSelected.value = item
-        searchText.value = item.text
-        // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
-        emit('update:text', item.text)
-      }
+    if (newVal == null) return
+    const findIndex = props.options.findIndex((item) => item.value === newVal)
+    if (findIndex === -1) {
+      itemSelected.value = {}
+      searchText.value = ''
+      emit('update:text', '')
+    } else {
+      const item = props.options[findIndex]
+      itemSelected.value = item
+      searchText.value = item.text
+      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
+      emit('update:text', item.text)
     }
   },
   { immediate: true }

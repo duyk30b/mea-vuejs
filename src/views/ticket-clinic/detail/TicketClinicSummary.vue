@@ -10,6 +10,11 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { PrintHtmlService } from '../../../modules/print-html'
+import {
+  ticketClinicPrintInvoice,
+  ticketClinicPrintInvoiceTemplate,
+} from '../../../modules/print-html/print-content/ticket-clinic-print-invoice'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
@@ -21,7 +26,6 @@ import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalRadiologyDetail from '../../radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from './modal/ModalTicketClinicReturnProduct.vue'
-import { ticketClinicPrintInvoice } from './print-content/ticket-clinic-print-invoice'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
@@ -422,7 +426,14 @@ const startPrint = async () => {
     //   visit: ticketClinicRef.value,
     // })
 
-    const content = ticketClinicPrintInvoice(ticketClinicRef.value)
+    const printHtml = await PrintHtmlService.getOneByKey('INVOICE')
+    let content = ''
+    if (printHtml) {
+      content = ticketClinicPrintInvoiceTemplate(ticketClinicRef.value, printHtml.content)
+    } else {
+      content = ticketClinicPrintInvoice(ticketClinicRef.value)
+    }
+
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()

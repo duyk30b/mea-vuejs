@@ -60,7 +60,7 @@ const startFetchData = async () => {
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
-                LTE: toTime.value ? toTime.value : undefined,
+                LTE: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
         customerId: customerId.value ? customerId.value : undefined,
@@ -265,6 +265,13 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
               { value: [AppointmentStatus.Cancelled], text: 'Hủy hẹn' },
             ]"
             @update:value="handleSelectAppointmentStatus" />
+        </div>
+      </div>
+
+      <div>
+        <div>&nbsp;</div>
+        <div>
+          <VueButton color="blue" @click="startSearch">Tìm kiếm</VueButton>
         </div>
       </div>
     </div>

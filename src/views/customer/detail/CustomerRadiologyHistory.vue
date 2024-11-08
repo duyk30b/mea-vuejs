@@ -4,12 +4,10 @@ import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { DTimer, formatPhone } from '../../../utils'
-import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
+import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -65,22 +63,6 @@ watch(
   },
   { immediate: true }
 )
-
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
@@ -115,26 +97,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
               <div>
                 {{ ticketRadiology.result }}
               </div>
-              <div
-                v-if="ticketRadiology.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                  BH{{ ticketRadiology.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketRadiology.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                  KB{{ ticketRadiology.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
@@ -185,26 +148,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
           </tr>
           <tr v-for="(ticketRadiology, index) in ticketRadiologyList" :key="index">
             <td>
-              <div
-                v-if="ticketRadiology.ticket!.voucherType === VoucherType.Order"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                  BH{{ ticketRadiology.ticketId }}
-                </a>
-                <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-              </div>
-              <div
-                v-if="ticketRadiology.ticket!.voucherType === VoucherType.Clinic"
-                style="font-size: 0.8rem">
-                <a
-                  style="margin-right: 0.5em"
-                  @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                  KB{{ ticketRadiology.ticketId }}
-                </a>
-                <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-              </div>
+              <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
                 {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>

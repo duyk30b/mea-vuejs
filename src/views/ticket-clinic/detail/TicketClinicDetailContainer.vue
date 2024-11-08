@@ -18,7 +18,11 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef, useTicketClinicStore } from '../../../modules/ticket-clinic'
+import {
+  TicketClinicApi,
+  ticketClinicRef,
+  useTicketClinicStore,
+} from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
 import TicketClinicDiagnosis from './TicketClinicDiagnosisBasic.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
@@ -45,12 +49,12 @@ const startFetchData = async (ticketId: number) => {
 
         ticketDiagnosis: true,
         // ticketProductList: true,
-        ticketProductConsumableList: true,
-        ticketProductPrescriptionList: true,
-        ticketProcedureList: true,
-        ticketRadiologyList: true,
+        ticketProductConsumableList: { product: true, batch: true },
+        ticketProductPrescriptionList: { product: true, batch: true },
+        ticketProcedureList: { procedure: true },
+        ticketRadiologyList: { radiology: true },
 
-        ticketUserList: true,
+        ticketUserList: { user: true },
         toAppointment: true,
       },
     })

@@ -8,7 +8,7 @@ import IconClearCircle from '../icon/IconClearCircle.vue'
 const props = withDefaults(
   defineProps<{
     value?: string | number | Date | null
-    typeParser?: string
+    typeParser?: 'number' | 'string' | 'object'
     disabled?: boolean
     defaultType?: 'date' | 'month' | 'year'
     showTime?: boolean

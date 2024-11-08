@@ -4,7 +4,7 @@ import type { RadiologyGroup } from './radiology-group.model'
 
 export class RadiologyGroupService {
   static timeSync: string = ''
-  static customerSourceAll: RadiologyGroup[]
+  static radiologyGroupAll: RadiologyGroup[]
 
   static async getAll() {
     let refreshTime = await RefreshTimeDB.findOneByCode('RADIOLOGY_GROUP')
@@ -20,11 +20,11 @@ export class RadiologyGroupService {
       refreshTime.time = now
       RadiologyGroupService.timeSync = now
       const fetchData = await RadiologyGroupApi.list({})
-      RadiologyGroupService.customerSourceAll = fetchData.data
+      RadiologyGroupService.radiologyGroupAll = fetchData.data
       await RefreshTimeDB.upsertOne(refreshTime)
     }
 
-    return RadiologyGroupService.customerSourceAll
+    return RadiologyGroupService.radiologyGroupAll
   }
 
   static async updateTimeSyncDB() {
@@ -40,14 +40,14 @@ export class RadiologyGroupService {
     await RefreshTimeDB.upsertOne(refreshTime)
   }
 
-  static async createOne(customerSource: RadiologyGroup) {
+  static async createOne(radiologyGroup: RadiologyGroup) {
     await RadiologyGroupService.updateTimeSyncDB()
-    return await RadiologyGroupApi.createOne(customerSource)
+    return await RadiologyGroupApi.createOne(radiologyGroup)
   }
 
-  static async updateOne(id: number, customerSource: RadiologyGroup) {
+  static async updateOne(id: number, radiologyGroup: RadiologyGroup) {
     await RadiologyGroupService.updateTimeSyncDB()
-    return await RadiologyGroupApi.updateOne(id, customerSource)
+    return await RadiologyGroupApi.updateOne(id, radiologyGroup)
   }
 
   static async destroyOne(id: number) {
