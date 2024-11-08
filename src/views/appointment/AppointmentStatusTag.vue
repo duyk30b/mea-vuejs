@@ -5,7 +5,7 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons-vue'
-import { AppointmentStatus } from '../../../modules/appointment'
+import { AppointmentStatus } from '../../modules/appointment'
 
 const props = defineProps<{ appointmentStatus: AppointmentStatus }>()
 </script>

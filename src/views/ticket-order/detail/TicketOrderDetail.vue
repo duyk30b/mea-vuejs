@@ -19,12 +19,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import {
-  Ticket,
-  TicketOrderActionApi,
-  TicketOrderBasicApi,
-  TicketStatus,
-} from '../../../modules/ticket'
+import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { useTicketOrderStore } from '../../../modules/ticket-order/ticket-order.store'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -38,6 +33,7 @@ import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketOrderReturnProduct = ref<InstanceType<typeof ModalTicketOrderReturnProduct>>()
@@ -105,7 +101,7 @@ const startCopy = () => {
 const destroyDraft = async () => {
   try {
     loadingProcess.value = true
-    await TicketOrderBasicApi.destroyDraft(ticket.value.id!)
+    await TicketOrderApi.destroyDraft(ticket.value.id!)
     AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
     router.push({ name: 'TicketOrderList' })
   } catch (error) {
@@ -118,7 +114,7 @@ const destroyDraft = async () => {
 const startCancel = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.cancel({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.cancel({
       ticketId: ticket.value.id!,
     })
     Object.assign(ticket.value, ticketBasic)
@@ -137,7 +133,7 @@ const sendProductAndClose = async () => {
   try {
     loadingProcess.value = true
     const { ticketBasic, customerPayment } =
-      await TicketOrderActionApi.sendProductAndPaymentAndClose({
+      await TicketOrderApi.sendProductAndPaymentAndClose({
         ticketId: ticket.value.id!,
         money: 0,
       })
@@ -156,7 +152,7 @@ const sendProductAndClose = async () => {
 const close = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.paymentAndClose({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.paymentAndClose({
       ticketId: ticket.value.id!,
       money: 0,
     })
@@ -173,7 +169,7 @@ const close = async () => {
 const sendProduct = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic } = await TicketOrderActionApi.sendProduct({
+    const { ticketBasic } = await TicketOrderApi.sendProduct({
       ticketId: ticket.value.id!,
     })
     Object.assign(ticket.value, ticketBasic)

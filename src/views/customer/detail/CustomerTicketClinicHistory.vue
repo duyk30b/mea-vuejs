@@ -6,7 +6,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { VoucherType } from '../../../modules/enum'
 import { ImageHost } from '../../../modules/image/image.model'
-import { Ticket, TicketApi } from '../../../modules/ticket'
+import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DTimer, formatPhone } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
@@ -44,7 +44,7 @@ const startFetchData = async () => {
       limit: limit.value,
       filter: {
         customerId: props.customer.id!,
-        voucherType: VoucherType.Clinic,
+        ticketType: { IN: [TicketType.Clinic, TicketType.Eye] },
       },
       relation: { ticketDiagnosis: true },
       sort: { id: 'DESC' },

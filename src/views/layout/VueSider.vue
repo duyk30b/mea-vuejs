@@ -55,7 +55,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppHome' }">Home</router-link>
       </span>
     </a-menu-item>
-    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="TicketClinic">
+    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]" key="Clinic">
       <template #icon>
         <MedicalIcon />
       </template>
@@ -65,18 +65,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </a-menu-item>
       <a-menu-item key="AppointmentList">
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
-      </a-menu-item>
-    </a-sub-menu>
-    <a-sub-menu v-if="permissionIdMap[PermissionId.TICKET_EYE_READ]" key="ClinicEye">
-      <template #icon>
-        <MedicalIcon />
-      </template>
-      <template #title>PK Mắt</template>
-      <a-menu-item key="TicketEye">
-        <router-link :to="{ name: 'TicketEye' }">Danh sách khám</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.APPOINTMENT_READ]" key="AppointmentEye">
-        <router-link :to="{ name: 'AppointmentEye' }">Hẹn khám</router-link>
       </a-menu-item>
     </a-sub-menu>
     <!-- <a-sub-menu

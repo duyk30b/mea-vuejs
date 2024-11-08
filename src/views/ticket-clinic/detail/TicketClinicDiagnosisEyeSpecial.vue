@@ -3,9 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import type { DiagnosisSpecialEye } from '../../../modules/ticket-eye'
-import { TicketEyeApi, ticketEyeRef } from '../../../modules/ticket-eye'
-import { ticketEyePrintOptometry } from './print-content/ticket-eye-print-optometry'
+import {
+  type DiagnosisSpecialEye,
+  ticketClinicRef,
+  TicketEyeApi,
+} from '../../../modules/ticket-clinic'
+import { ticketEyePrintOptometry } from '../../../modules/print-html/print-content/ticket-eye-print-optometry'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -18,7 +21,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.special,
+  () => ticketClinicRef.value.ticketDiagnosis!.special,
   (newValue, oldValue) => {
     optometry.value = JSON.parse(newValue || '{}')
   },
@@ -34,7 +37,7 @@ const optometryString = computed(() => {
 })
 
 const hasChangeData = computed(() => {
-  return ticketEyeRef.value.ticketDiagnosis!.special != optometryString.value
+  return ticketClinicRef.value.ticketDiagnosis!.special != optometryString.value
 })
 
 const saveTicketEyeOptometry = async () => {
@@ -42,8 +45,8 @@ const saveTicketEyeOptometry = async () => {
     saveLoading.value = true
 
     await TicketEyeApi.updateDiagnosisSpecial({
-      ticketId: ticketEyeRef.value.id,
-      ticketDiagnosisId: ticketEyeRef.value.ticketDiagnosis!.id,
+      ticketId: ticketClinicRef.value.id,
+      ticketDiagnosisId: ticketClinicRef.value.ticketDiagnosis!.id,
       special: optometryString.value,
     })
   } catch (error) {
@@ -67,7 +70,11 @@ const handleFocus = (e: Event) => {
 
 const startPrint = async () => {
   try {
-    const content = ticketEyePrintOptometry(ticketEyeRef.value, optometry.value, '')
+    const content = ticketEyePrintOptometry(
+      ticketClinicRef.value,
+      JSON.parse(ticketClinicRef.value.ticketDiagnosis!.special),
+      ''
+    )
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()
@@ -462,7 +469,7 @@ const startPrint = async () => {
     <div class="mt-4 flex justify-between gap-4">
       <VueButton color="blue" icon="print" @click="startPrint">In phiếu</VueButton>
       <VueButton
-        v-if="permissionIdMap[PermissionId.TICKET_EYE_UPDATE_DIAGNOSIS_SPECIAL]"
+        v-if="permissionIdMap[PermissionId.TICKET_CLINIC_EYE_UPDATE_DIAGNOSIS_SPECIAL]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

@@ -77,7 +77,7 @@ const handleClickModalRegisterAppointment = () => {
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <IconClock />
-        <div>{{ DTimer.timeToText(ticketClinicRef.startedAt, 'hh:mm DD/MM/YYYY') }}</div>
+        <div>{{ DTimer.timeToText(ticketClinicRef.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
       </div>
       <div>
         <TicketClinicStatusTag :ticketStatus="ticketClinicRef.ticketStatus" />

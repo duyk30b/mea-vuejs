@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
-import { InputDate } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { Appointment, AppointmentApi } from '../../../modules/appointment'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose } from '../../common/icon'
+import { InputDate } from '../../common/vue-form'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { Appointment, AppointmentApi } from '../../modules/appointment'
+import { useMeStore } from '../../modules/_me/me.store'
 
 const appointmentRegisterSuccessForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -21,7 +22,7 @@ const appointment = ref<Appointment>(Appointment.blank())
 const openModal = async (appointmentProp: Appointment) => {
   showModal.value = true
   appointment.value = Appointment.from(appointmentProp)
-  registeredAt.value = appointmentProp.registeredAt
+  registeredAt.value = Date.now()
 }
 
 const closeModal = () => {
@@ -30,15 +31,18 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const handleRegisterTicketEye = async () => {
+const handleRegisterTicketClinic = async () => {
   saveLoading.value = true
   try {
-    await AppointmentApi.registerTicket(appointment.value.id, registeredAt.value)
+    await AppointmentApi.registerTicketClinic(appointment.value.id, {
+      registeredAt: registeredAt.value,
+      ticketType: useMeStore().getTicketTypeDefault(),
+    })
     emit('success')
     saveLoading.value = false
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalAppointmentEyeSuccess.vue:41 ~ error:', error)
+    console.log('🚀 ~ file: ModalAppointmentClinicSuccess.vue:41  ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -52,7 +56,7 @@ defineExpose({ openModal })
     <form
       ref="appointmentRegisterSuccessForm"
       class="bg-white pb-2"
-      @submit.prevent="handleRegisterTicketEye">
+      @submit.prevent="handleRegisterTicketClinic">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Khách hàng đã đến theo hẹn</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">

@@ -23,11 +23,18 @@ export enum TicketStatus {
   Cancelled = 7,
 }
 
+export enum TicketType {
+  Order = 2,
+  Clinic = 3,
+  Spa = 4,
+  Eye = 5,
+}
+
 export class Ticket {
   id: number
   customerId: number
   customerSourceId: number
-  voucherType: VoucherType
+  ticketType: TicketType
   ticketStatus: TicketStatus
   deliveryStatus: DeliveryStatus
 

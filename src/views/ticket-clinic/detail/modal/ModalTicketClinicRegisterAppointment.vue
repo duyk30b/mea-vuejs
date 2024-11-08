@@ -44,17 +44,10 @@ const closeModal = () => {
 const handleRegisterVisit = async () => {
   saveLoading.value = true
   appointment.value.registeredAt = time.value.valueOf()
+  appointment.value.customerSourceId = 0
   try {
     if (!appointment.value.id) {
-      ticketClinicRef.value.toAppointment = await AppointmentApi.createOne({
-        fromTicketId: appointment.value.fromTicketId,
-        customerId: appointment.value.customerId,
-        registeredAt: appointment.value.registeredAt,
-        reason: appointment.value.reason,
-        customerSourceId: 0,
-        voucherType: VoucherType.Clinic,
-        appointmentStatus: appointment.value.appointmentStatus,
-      })
+      ticketClinicRef.value.toAppointment = await AppointmentApi.createOne(appointment.value)
     } else {
       ticketClinicRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
         customerId: appointment.value.customerId,

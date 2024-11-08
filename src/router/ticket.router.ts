@@ -1,4 +1,6 @@
 import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router'
+import { useMeStore } from '../modules/_me/me.store'
+import { TicketType } from '../modules/ticket'
 
 export const ticketRouter: RouteRecordRaw[] = [
   {
@@ -34,6 +36,7 @@ export const ticketRouter: RouteRecordRaw[] = [
   {
     path: 'clinic',
     name: 'Clinic',
+    redirect: () => ({ name: 'TicketClinicList' }),
     children: [
       {
         path: 'appointment',
@@ -43,7 +46,7 @@ export const ticketRouter: RouteRecordRaw[] = [
           {
             path: 'list',
             name: 'AppointmentList',
-            component: () => import('../views/ticket-clinic/appointment/AppointmentClinicList.vue'),
+            component: () => import('../views/appointment/AppointmentList.vue'),
             meta: { title: 'Hẹn khám' },
           },
         ],
@@ -65,13 +68,37 @@ export const ticketRouter: RouteRecordRaw[] = [
             component: () =>
               import('../views/ticket-clinic/detail/TicketClinicDetailContainer.vue'),
             meta: { title: 'Khám bệnh' },
-            redirect: () => ({ name: 'TicketClinicDiagnosisBasic' }),
+            redirect: () => {
+              const ticketTypeDefault = useMeStore().getTicketTypeDefault()
+              if (ticketTypeDefault === TicketType.Clinic) {
+                return { name: 'TicketClinicDiagnosisBase' }
+              }
+              if (ticketTypeDefault === TicketType.Eye) {
+                return { name: 'TicketClinicDiagnosisEyeBasic' }
+              }
+              return { name: 'TicketClinicDiagnosisBase' }
+            },
             children: [
               {
-                path: 'diagnosis-basic',
-                name: 'TicketClinicDiagnosisBasic',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicDiagnosisBasic.vue'),
+                path: 'diagnosis-base',
+                name: 'TicketClinicDiagnosisBase',
+                component: () =>
+                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisBase.vue'),
                 meta: { keepAlive: true, title: 'Khám' },
+              },
+              {
+                path: 'diagnosis-eye-basic',
+                name: 'TicketClinicDiagnosisEyeBasic',
+                component: () =>
+                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisEyeBasic.vue'),
+                meta: { keepAlive: true, title: 'Khám' },
+              },
+              {
+                path: 'diagnosis-eye-special',
+                name: 'TicketClinicDiagnosisEyeSpecial',
+                component: () =>
+                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisEyeSpecial.vue'),
+                meta: { keepAlive: true, title: 'Đo thị lực' },
               },
               {
                 path: 'procedure',
@@ -102,89 +129,6 @@ export const ticketRouter: RouteRecordRaw[] = [
                 path: 'summary',
                 name: 'TicketClinicSummary',
                 component: () => import('../views/ticket-clinic/detail/TicketClinicSummary.vue'),
-                meta: { title: 'Tổng kết' },
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: 'clinic-eye',
-    name: 'ClinicEye',
-    children: [
-      {
-        path: 'appointment',
-        name: 'AppointmentEye',
-        redirect: () => ({ name: 'AppointmentEyeList' }),
-        children: [
-          {
-            path: 'list',
-            name: 'AppointmentEyeList',
-            component: () => import('../views/ticket-eye/appointment/AppointmentEyeList.vue'),
-            meta: { title: 'Hẹn khám' },
-          },
-        ],
-      },
-      {
-        path: 'ticket-eye',
-        name: 'TicketEye',
-        redirect: () => ({ name: 'TicketEyeList' }),
-        children: [
-          {
-            path: 'list',
-            name: 'TicketEyeList',
-            component: () => import('../views/ticket-eye/list/TicketEyeList.vue'),
-            meta: { title: 'Danh sách khám' },
-          },
-          {
-            path: 'detail/:id',
-            name: 'TicketEyeDetailContainer',
-            component: () => import('../views/ticket-eye/detail/TicketEyeDetailContainer.vue'),
-            meta: { title: 'Khám bệnh' },
-            redirect: () => ({ name: 'TicketEyeDiagnosisBasic' }),
-            children: [
-              {
-                path: 'diagnosis-basic',
-                name: 'TicketEyeDiagnosisBasic',
-                component: () => import('../views/ticket-eye/detail/TicketEyeDiagnosisBasic.vue'),
-                meta: { keepAlive: true, title: 'Khám' },
-              },
-              {
-                path: 'diagnosis-special',
-                name: 'TicketEyeDiagnosisSpecial',
-                component: () => import('../views/ticket-eye/detail/TicketEyeDiagnosisSpecial.vue'),
-                meta: { keepAlive: true, title: 'Đo thị lực' },
-              },
-              {
-                path: 'procedure',
-                name: 'TicketEyeProcedure',
-                component: () => import('../views/ticket-eye/detail/TicketEyeProcedure.vue'),
-                meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
-              },
-              // {
-              //   path: 'radiology',
-              //   name: 'TicketEyeRadiology',
-              //   component: () => import('../views/ticket-eye/detail/TicketEyeRadiology.vue'),
-              //   meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
-              // },
-              {
-                path: 'consumable',
-                name: 'TicketEyeConsumable',
-                component: () => import('../views/ticket-eye/detail/TicketEyeConsumable.vue'),
-                meta: { keepAlive: true, title: 'Vật tư' },
-              },
-              {
-                path: 'prescription',
-                name: 'TicketEyePrescription',
-                component: () => import('../views/ticket-eye/detail/TicketEyePrescription.vue'),
-                meta: { keepAlive: true, title: 'Kê đơn thuốc' },
-              },
-              {
-                path: 'summary',
-                name: 'TicketEyeSummary',
-                component: () => import('../views/ticket-eye/detail/TicketEyeSummary.vue'),
                 meta: { title: 'Tổng kết' },
               },
             ],

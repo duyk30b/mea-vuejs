@@ -99,7 +99,7 @@ const logoutAll = async () => {
             <th>OID</th>
             <th>Login</th>
             <th>Thiết bị đăng nhập</th>
-            <th>Org Info</th>
+            <th>Organization Note</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -154,9 +154,7 @@ const logoutAll = async () => {
               </div>
             </td>
             <td>
-              <div>{{ user.organization?.phone }}</div>
-              <div>{{ user.organization?.email }}</div>
-              <div>{{ user.organization?.name }}</div>
+              {{ user.organization?.note }}
             </td>
             <td class="text-center">
               <a-tag v-if="user.isActive" color="success">

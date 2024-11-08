@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -9,9 +9,8 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useCustomerStore, type Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
+import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -58,11 +57,11 @@ const startFetchData = async () => {
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
-                LTE: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
         ticketStatus: ticketStatus.value ?? undefined,
-        voucherType: VoucherType.Clinic,
+        ticketType: { IN: [TicketType.Clinic, TicketType.Eye] },
       },
       sort: sortValue.value
         ? {
@@ -359,7 +358,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
               </div>
             </td>
             <td class="text-center">
-              {{ DTimer.timeToText(ticket.startedAt || ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

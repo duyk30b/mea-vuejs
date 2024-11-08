@@ -8,10 +8,11 @@ import { nextTick, ref } from 'vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketOrderActionApi, TicketStatus } from '../../../modules/ticket'
+import {  TicketStatus } from '../../../modules/ticket'
 import { timeToText } from '../../../utils'
 import CustomerPaymentTypeTag from '../../customer/CustomerPaymentTypeTag.vue'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -46,7 +47,7 @@ const startPrepayment = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     paymentLoading.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.prepayment({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.prepayment({
       ticketId: ticket.value.id,
       money: money.value,
     })
@@ -70,7 +71,7 @@ const startSendProductAndPaymentAndClose = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     const { ticketBasic, customerPayment } =
-      await TicketOrderActionApi.sendProductAndPaymentAndClose({
+      await TicketOrderApi.sendProductAndPaymentAndClose({
         ticketId: ticket.value.id,
         money: money.value,
       })
@@ -95,7 +96,7 @@ const startPaymentAndClose = async () => {
     if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.paymentAndClose({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.paymentAndClose({
       ticketId: ticket.value.id,
       money: money.value,
     })
@@ -118,7 +119,7 @@ const startRefundOverpaid = async () => {
     if (money.value <= 0 || ticket.value.totalMoney > ticket.value.paid - money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.refundOverpaid({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.refundOverpaid({
       ticketId: ticket.value.id,
       money: money.value,
     })
@@ -141,7 +142,7 @@ const startPayDebt = async () => {
     if (money.value <= 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderActionApi.payDebt({
+    const { ticketBasic, customerPayment } = await TicketOrderApi.payDebt({
       ticketId: ticket.value.id,
       money: money.value,
     })

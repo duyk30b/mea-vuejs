@@ -10,6 +10,7 @@ import { timeToText } from '../../../utils'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
 import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ radiology: Radiology }>(), {
@@ -97,26 +98,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         </tr>
         <tr v-for="(ticketRadiology, index) in ticketRadiologyList" :key="index">
           <td>
-            <div
-              v-if="ticketRadiology.ticket!.voucherType === VoucherType.Order"
-              style="font-size: 0.8rem; white-space: nowrap">
-              <a
-                style="margin-right: 0.5em"
-                @click="openBlankTicketOrderDetail(ticketRadiology.ticketId)">
-                BH{{ ticketRadiology.ticketId }}
-              </a>
-              <TicketOrderStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-            </div>
-            <div
-              v-if="ticketRadiology.ticket!.voucherType === VoucherType.Clinic"
-              style="font-size: 0.8rem; white-space: nowrap">
-              <a
-                style="margin-right: 0.5em"
-                @click="openBlankTicketClinicDetail(ticketRadiology.ticketId)">
-                KB{{ ticketRadiology.ticketId }}
-              </a>
-              <TicketClinicStatusTag :ticketStatus="ticketRadiology.ticket!.ticketStatus" />
-            </div>
+            <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>

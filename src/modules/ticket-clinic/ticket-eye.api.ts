@@ -1,8 +1,6 @@
-import { ref } from 'vue'
-import { Ticket } from '../ticket'
-
-export const ticketEyeRef = ref<Ticket>(Ticket.blank())
-export const ticketEyeList = ref<Ticket[]>([])
+import { AxiosInstance } from '../../core/axios.instance'
+import type { BaseResponse } from '../_base/base-dto'
+import type { TicketDiagnosis } from '../ticket-diagnosis'
 
 export type DiagnosisSpecialEye = {
   // Oculus Sinister: Mắt trái
@@ -114,4 +112,55 @@ export type DiagnosisSpecialEye = {
   SoKinhChiDinh_MT_Truc?: number
   SoKinhChiDinh_MT_ADD?: number
   SoKinhChiDinh_KhoangCachDongTu?: number
+}
+
+export class TicketEyeApi {
+  static async updateDiagnosisBasic(options: {
+    ticketId: number
+    customerId: number
+    object: Pick<
+      TicketDiagnosis,
+      'reason' | 'healthHistory' | 'general' | 'regional' | 'summary' | 'diagnosis'
+    >
+    imageIdsKeep: number[]
+    files: File[]
+    filesPosition: number[]
+  }) {
+    const { ticketId, customerId, object, imageIdsKeep, files, filesPosition } = options
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    formData.append('filesPosition', JSON.stringify(filesPosition))
+    formData.append('imageIdsKeep', JSON.stringify(imageIdsKeep))
+    formData.append('customerId', customerId.toString())
+    formData.append('reason', object.reason)
+    formData.append('healthHistory', object.healthHistory)
+    formData.append('general', object.general)
+    formData.append('regional', object.regional)
+    formData.append('summary', object.summary)
+    formData.append('diagnosis', object.diagnosis)
+
+    const response = await AxiosInstance.post(
+      `/ticket-eye/${ticketId}/update-diagnosis-basic`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    const { data } = response.data as BaseResponse
+  }
+
+  static async updateDiagnosisSpecial(options: {
+    ticketId: number
+    ticketDiagnosisId: number
+    special: string
+  }) {
+    const { ticketId, ticketDiagnosisId, special } = options
+    const response = await AxiosInstance.post(`/ticket-eye/${ticketId}/update-diagnosis-special`, {
+      ticketDiagnosisId,
+      special,
+    })
+    const { data } = response.data as BaseResponse
+  }
 }

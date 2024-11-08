@@ -2,7 +2,7 @@ import { PrintHtmlApi } from './print-html.api'
 import type { PrintHtml, PrintHtmlType } from './print-html.model'
 
 export class PrintHtmlService {
-  static printHtmlMap: Record<string, PrintHtml> = {}
+  static printHtmlMap: Record<string, PrintHtml | null> = {}
 
   static async getOneByKey(key: keyof typeof PrintHtmlType) {
     if (PrintHtmlService.printHtmlMap[key] === undefined) {

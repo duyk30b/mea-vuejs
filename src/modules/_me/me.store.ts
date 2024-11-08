@@ -3,10 +3,11 @@ import { LocalStorageService } from '../../core/local-storage.service'
 import { Customer, useCustomerStore } from '../customer'
 import { Distributor, useDistributorStore } from '../distributor'
 import { Organization } from '../organization'
-import type { PermissionId } from '../permission/permission.enum'
+import { PermissionId } from '../permission/permission.enum'
 import type { Permission } from '../permission/permission.model'
 import { User } from '../user/user.model'
 import { useSettingStore } from './setting.store'
+import { Ticket, TicketType } from '../ticket'
 
 export const useMeStore = defineStore('me-store', {
   state: () => {
@@ -48,22 +49,16 @@ export const useMeStore = defineStore('me-store', {
       }
       return this.customerDefault
     },
-    checkPermission(permissionId: PermissionId) {
-      // const permission = this.permissionMap[permissionId]
-      // const pathIdArr = permission.pathId.split('.').map((i) => Number(i))
-      // if (this.user?.oid === 0) return true
-      // // Kiểm tra API có bị block
-      // let publicCheck = false
-      // for (let i = 0; i < pathIdArr.length; i++) {
-      //   const id = pathIdArr[i]
-      //   const curPermission = this.permissionMap[id]
-      //   if (curPermission.status === PermissionStatus.PUBLIC) {
-      //     publicCheck = true
-      //   } else if (curPermission.status === PermissionStatus.BLOCK) {
-      //     return false // chỉ cần 1 thằng block thì là false
-      //   }
-      // }
-      // if (publicCheck) return true // nếu có public thì pass
+
+    getTicketTypeDefault() {
+      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization.permissionIds)
+      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
+        return TicketType.Clinic
+      }
+      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_EYE)) {
+        return TicketType.Eye
+      }
+      return TicketType.Clinic
     },
   },
 })

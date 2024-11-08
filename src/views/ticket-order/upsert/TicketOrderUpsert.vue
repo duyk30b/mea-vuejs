@@ -14,7 +14,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketOrderBasicApi, TicketStatus } from '../../../modules/ticket'
+import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
@@ -29,6 +29,7 @@ import TicketOrderSurchargeList from './TicketOrderSurchargeList.vue'
 import ModalDataTicketOrder from './modal-setting/ModalDataTicketOrder.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
 import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -192,7 +193,7 @@ const handleChangeInvoiceDiscountPercent = (data: number) => {
 }
 
 const startUpdateDebtSuccess = async () => {
-  const ticketResponse = await TicketOrderBasicApi.updateDebtSuccess(ticket.value.id, ticket.value)
+  const ticketResponse = await TicketOrderApi.updateDebtSuccess(ticket.value.id, ticket.value)
   router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
 }
 
@@ -273,12 +274,12 @@ const saveInvoice = async (type: ETicketOrderSave) => {
 
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
-        const ticketResponse = await TicketOrderBasicApi.createDraft(ticket.value)
+        const ticketResponse = await TicketOrderApi.createDraft(ticket.value)
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
       case ETicketOrderSave.UPDATE_DRAFT_APPROVED: {
-        const ticketResponse = await TicketOrderBasicApi.updateDraftApproved(
+        const ticketResponse = await TicketOrderApi.updateDraftApproved(
           ticket.value.id,
           ticket.value
         )
@@ -286,7 +287,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
         break
       }
       case ETicketOrderSave.CREATE_DEBT_SUCCESS: {
-        await TicketOrderBasicApi.createDebtSuccess(ticket.value)
+        await TicketOrderApi.createDebtSuccess(ticket.value)
         ticket.value = Ticket.blank()
 
         const customerRes = Customer.from(meStore.customerDefault)

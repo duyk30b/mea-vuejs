@@ -7,8 +7,9 @@ import { InputMoney } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { TicketOrderActionApi, TicketStatus } from '../../../modules/ticket'
+import { TicketStatus } from '../../../modules/ticket'
 import { ticket } from './ticket-order-detail.ref'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 
 const emit = defineEmits<{ (e: 'success'): any }>()
 
@@ -120,7 +121,7 @@ const startReturnProduct = async () => {
   returnLoading.value = true
   try {
     if (!reCalculatorAndValidateQuantity()) return
-    await TicketOrderActionApi.returnProduct({
+    await TicketOrderApi.returnProduct({
       ticketId: ticket.value.id,
       returnList: Object.values(tpMapReturn.value).filter((i) => i.quantityReturn > 0),
       discountMoneyReturn: ticket.value.discountMoney - discountMoneyUpdate.value,

@@ -8,6 +8,7 @@ import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
 import { VoucherType } from '../../../modules/enum'
+import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),
@@ -93,26 +94,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         </tr>
         <tr v-for="(ticketProcedure, index) in ticketProcedureList" :key="index">
           <td>
-            <div
-              v-if="ticketProcedure.ticket!.voucherType === VoucherType.Order"
-              style="font-size: 0.8rem; white-space: nowrap">
-              <a
-                style="margin-right: 0.5em"
-                @click="openBlankTicketOrderDetail(ticketProcedure.ticketId)">
-                BH{{ ticketProcedure.ticketId }}
-              </a>
-              <TicketOrderStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-            </div>
-            <div
-              v-if="ticketProcedure.ticket!.voucherType === VoucherType.Clinic"
-              style="font-size: 0.8rem; white-space: nowrap">
-              <a
-                style="margin-right: 0.5em"
-                @click="openBlankTicketClinicDetail(ticketProcedure.ticketId)">
-                KB{{ ticketProcedure.ticketId }}
-              </a>
-              <TicketClinicStatusTag :ticketStatus="ticketProcedure.ticket!.ticketStatus" />
-            </div>
+            <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
             </div>

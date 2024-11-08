@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import type { VoucherType } from '../enum'
+import type { TicketType } from '../ticket'
 import {
   AppointmentDetailQuery,
   AppointmentGetQuery,
@@ -37,16 +37,15 @@ export class AppointmentApi {
     return Appointment.from(data.appointment)
   }
 
-  static async createOne(body: {
-    customerId: number
-    fromTicketId: number
-    registeredAt: number
-    reason: string
-    customerSourceId: number
-    voucherType: VoucherType
-    appointmentStatus: AppointmentStatus
-  }) {
-    const response = await AxiosInstance.post('/appointment/create', body)
+  static async createOne(appointment: Appointment) {
+    const response = await AxiosInstance.post('/appointment/create', {
+      customerId: appointment.customerId,
+      fromTicketId: appointment.fromTicketId,
+      registeredAt: appointment.registeredAt,
+      reason: appointment.reason,
+      customerSourceId: appointment.customerSourceId,
+      appointmentStatus: appointment.appointmentStatus,
+    })
     const { data } = response.data as BaseResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }
@@ -73,10 +72,14 @@ export class AppointmentApi {
     return data
   }
 
-  static async registerTicket(appointmentId: number, registeredAt: number) {
-    const response = await AxiosInstance.post(`/appointment/${appointmentId}/register-ticket`, {
-      registeredAt,
-    })
+  static async registerTicketClinic(
+    appointmentId: number,
+    body: { registeredAt: number; ticketType: TicketType }
+  ) {
+    const response = await AxiosInstance.post(
+      `/appointment/${appointmentId}/register-ticket-clinic`,
+      body
+    )
     const { data } = response.data as BaseResponse<{ appointmentId: any }>
     return data
   }

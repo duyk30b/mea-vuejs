@@ -13,7 +13,6 @@ export class AppointmentGetQuery {
   filter?: {
     customerId?: number
     appointmentStatus?: AppointmentStatus | ConditionEnum<AppointmentStatus>
-    voucherType?: VoucherType | ConditionEnum<VoucherType>
     registeredAt?: ConditionDate
   }
 

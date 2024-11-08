@@ -155,12 +155,15 @@ const handleKeydown = (e: KeyboardEvent) => {
     const time = getCurrentTime({ requireLength: false })
     if (!time) return
     if (props.typeParser === 'number') {
+      emit('update:value', time.getTime())
       emit('selectTime', time.getTime())
     }
     if (props.typeParser === 'string') {
+      emit('update:value', time.toISOString())
       emit('selectTime', time.toISOString())
     }
     if (props.typeParser === 'object') {
+      emit('update:value', time)
       emit('selectTime', time)
     }
   }

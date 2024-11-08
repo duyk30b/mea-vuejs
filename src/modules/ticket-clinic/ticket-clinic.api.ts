@@ -5,13 +5,13 @@ import type { TicketDiagnosis } from '../ticket-diagnosis'
 import type { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
-import { Ticket } from '../ticket/ticket.model'
+import { Ticket, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async register(body: {
     fromAppointmentId: number
     customerId: number
-    voucherType: VoucherType.Clinic
+    ticketType: TicketType
     registeredAt: number
     reason: string
     customerSourceId: number
@@ -31,7 +31,7 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
   }
 
-  static async updateDiagnosisBasic(options: {
+  static async updateDiagnosisBase(options: {
     ticketId: number
     customerId: number
     object: Pick<

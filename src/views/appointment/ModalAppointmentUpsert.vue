@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../common/icon'
-import { InputDate, InputHint, InputOptions, InputText, VueSelect } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { Customer, useCustomerStore } from '../../../modules/customer'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
-import type { VoucherType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DTimer, customFilter } from '../../../utils'
-import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import { useRouter } from 'vue-router'
+import VueButton from '../../common/VueButton.vue'
+import { IconClose, IconFileSearch } from '../../common/icon'
+import { InputDate, InputHint, InputOptions, InputText, VueSelect } from '../../common/vue-form'
+import VueModal from '../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../modules/_me/me.store'
+import { useSettingStore } from '../../modules/_me/setting.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../modules/appointment'
+import { Customer, useCustomerStore } from '../../modules/customer'
+import { CustomerSource, CustomerSourceService } from '../../modules/customer-source'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { DTimer, customFilter } from '../../utils'
+import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
@@ -45,10 +44,9 @@ const customerSourceAll = ref<CustomerSource[]>([])
 const now = new Date()
 now.setMinutes(0, 0)
 
-const openModalForCreate = async (voucherType: VoucherType) => {
+const openModalForCreate = async () => {
   showModal.value = true
   appointment.value = Appointment.blank()
-  appointment.value.voucherType = voucherType
 
   const now = new Date()
   now.setMinutes(0, 0)
@@ -77,19 +75,12 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const handleRegisterAppointmentEye = async () => {
+const handleRegisterAppointmentClinic = async () => {
   saveLoading.value = true
   try {
     if (!appointment.value.id) {
-      await AppointmentApi.createOne({
-        fromTicketId: 0,
-        customerId: appointment.value.customerId,
-        registeredAt: appointment.value.registeredAt,
-        reason: appointment.value.reason,
-        customerSourceId: appointment.value.customerSourceId || 0,
-        voucherType: appointment.value.voucherType,
-        appointmentStatus: appointment.value.appointmentStatus,
-      })
+      appointment.value.fromTicketId = 0
+      await AppointmentApi.createOne(appointment.value)
     } else {
       await AppointmentApi.updateOne(appointment.value.id, {
         customerId: appointment.value.customerId,
@@ -161,9 +152,11 @@ defineExpose({ openModalForCreate, openModalForUpdate })
     <form
       ref="appointmentRegisterForm"
       class="bg-white pb-2"
-      @submit.prevent="handleRegisterAppointmentEye">
+      @submit.prevent="handleRegisterAppointmentClinic">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Tạo lịch hẹn mới</div>
+        <div class="flex-1 text-lg font-medium">
+          {{ appointment.id ? 'Cập nhật lịch hẹn' : 'Tạo lịch hẹn mới' }}
+        </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -194,6 +187,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           <div style="height: 40px">
             <InputOptions
               ref="inputOptionsCustomer"
+              :disabled="!!appointment.id"
               :options="customerListOptions"
               :maxHeight="260"
               no-clear-text-when-not-selected
@@ -289,7 +283,12 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           <VueButton class="mr-auto btn" type="reset" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
-          <VueButton class="btn btn-blue" type="submit" icon="save" :loading="saveLoading">
+          <VueButton
+            class="btn btn-blue"
+            type="submit"
+            icon="save"
+            :loading="saveLoading"
+            :disabled="appointment.appointmentStatus === AppointmentStatus.Completed">
             <span v-if="!appointment.id">TẠO LỊCH HẸN</span>
             <span v-else>CẬP NHẬT LỊCH HẸN</span>
           </VueButton>

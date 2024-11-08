@@ -10,27 +10,35 @@ import {
 import { onBeforeMount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFluidMed, IconRadiology, IconStethoscope } from '../../../common/icon-google'
+import {
+  IconEyeGlasses,
+  IconFluidMed,
+  IconRadiology,
+  IconStethoscope,
+} from '../../../common/icon-google'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
-import { TicketStatus } from '../../../modules/ticket'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { TicketStatus, TicketType } from '../../../modules/ticket'
 import {
   TicketClinicApi,
   ticketClinicRef,
   useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
-import TicketClinicDiagnosis from './TicketClinicDiagnosisBasic.vue'
+import TicketClinicConsumable from './TicketClinicConsumable.vue'
+import TicketClinicDiagnosisBase from './TicketClinicDiagnosisBase.vue'
+import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
+import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
-import TicketClinicConsumable from './TicketClinicConsumable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -166,11 +174,26 @@ const clickCloseVisit = () => {
       <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
         <template #menu>
           <VueTabMenu
-            :tabKey="TicketClinicDiagnosis.__name!"
-            @active="router.push({ name: TicketClinicDiagnosis.__name })">
+            v-if="ticketClinicRef.ticketType === TicketType.Clinic"
+            :tabKey="TicketClinicDiagnosisBase.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisBase.__name })">
             <IconStethoscope />
             Khám
           </VueTabMenu>
+          <template v-else-if="ticketClinicRef.ticketType === TicketType.Eye">
+            <VueTabMenu
+              :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
+              @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })">
+              <IconStethoscope />
+              Khám mắt
+            </VueTabMenu>
+            <VueTabMenu
+              :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
+              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })">
+              <IconEyeGlasses />
+              Đo thị lực
+            </VueTabMenu>
+          </template>
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
@@ -214,7 +237,9 @@ const clickCloseVisit = () => {
         <KeepAlive
           :include="
             [
-              TicketClinicDiagnosis.__name,
+              TicketClinicDiagnosisBase.__name,
+              TicketClinicDiagnosisEyeBasic.__name,
+              TicketClinicDiagnosisEyeSpecial.__name,
               TicketClinicProcedure.__name,
               TicketClinicConsumable.__name,
               TicketClinicRadiology.__name,
@@ -232,7 +257,7 @@ const clickCloseVisit = () => {
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Approved].includes(
               ticketClinicRef.ticketStatus
-            )
+            ) && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]
           "
           color="blue"
           size="default"
@@ -241,6 +266,7 @@ const clickCloseVisit = () => {
           VÀO KHÁM
         </VueButton>
         <VueButton
+          v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CLOSE]"
           color="blue"
           size="default"
           :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"

@@ -20,7 +20,6 @@ export class Appointment {
   reason: string // Ghi chú
   cancelReason: string // Lý do hủy
 
-  voucherType: VoucherType
   appointmentStatus: AppointmentStatus
 
   customer?: Customer
@@ -30,6 +29,7 @@ export class Appointment {
     const ins = new Appointment()
     ins.id = 0
     ins.customerId = 0
+    ins.customerSourceId = 0
     ins.appointmentStatus = AppointmentStatus.Waiting
     return ins
   }

@@ -37,7 +37,7 @@ export class PrintHtmlApi {
 
     const response = await AxiosInstance.get('/print-html/get-one', { params })
     const { data, meta } = response.data as BaseResponse<{ print: any }>
-    return PrintHtml.from(data.print)
+    return data.print ? PrintHtml.from(data.print) : null
   }
 
   static async detail(id: number, options: PrintHtmlDetailQuery = {}): Promise<PrintHtml> {

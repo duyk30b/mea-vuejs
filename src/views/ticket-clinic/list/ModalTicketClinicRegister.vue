@@ -48,7 +48,6 @@ const customerListOptions = ref<{ value: number; text: string; data: Customer }[
 
 const appointmentList = ref<Appointment[]>([])
 const appointmentOptions = ref<Appointment[]>([])
-let loadAppointment = false
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -71,19 +70,15 @@ const closeModal = () => {
 const selectCustomer = async (customerSelect: Customer) => {
   if (customerSelect) {
     try {
-      if (!loadAppointment) {
-        appointmentList.value = await AppointmentApi.list({
-          filter: {
-            appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
-            voucherType: VoucherType.Clinic,
-          },
-        })
-        loadAppointment = true
-      }
+      appointmentList.value = await AppointmentApi.list({
+        filter: {
+          appointmentStatus: { IN: [AppointmentStatus.Waiting, AppointmentStatus.Confirm] },
+          customerId: customerSelect.id,
+        },
+      })
+
       customer.value = Customer.from(customerSelect)
-      appointmentOptions.value = appointmentList.value
-        .filter((i) => i.customerId === customerSelect.id)
-        .sort((a, b) => (a > b ? 1 : -1))
+      appointmentOptions.value = appointmentList.value.sort((a, b) => (a > b ? 1 : -1))
     } catch (error) {
       console.log('🚀 ~ file: ModalTicketClinicRegister.vue:81 ~ selectCustomer ~ error:', error)
     }
@@ -139,7 +134,7 @@ const handleRegisterVisit = async () => {
   try {
     const ticketResponse = await TicketClinicApi.register({
       customerId: customer.value.id,
-      voucherType: VoucherType.Clinic,
+      ticketType: useMeStore().getTicketTypeDefault(),
       registeredAt: registeredAt.value,
       reason: reason.value,
       customerSourceId: customerSourceId.value,
@@ -148,7 +143,10 @@ const handleRegisterVisit = async () => {
     emit('success', { ticket: ticketResponse })
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalTicketClinicRegister.vue:144 ~ handleRegisterVisit ~ error:', error)
+    console.log(
+      '🚀 ~ file: ModalTicketClinicRegister.vue:144 ~ handleRegisterVisit ~ error:',
+      error
+    )
   } finally {
     saveLoading.value = false
   }

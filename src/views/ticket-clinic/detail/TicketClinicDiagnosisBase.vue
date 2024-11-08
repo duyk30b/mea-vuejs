@@ -4,9 +4,14 @@ import { BasicEditor } from '../../../ckeditor/class-editor'
 import ImageUpload from '../../../common/ImageUpload.vue'
 import VueButton from '../../../common/VueButton.vue'
 import { InputText } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { ImageHost } from '../../../modules/image/image.model'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
 
@@ -25,7 +30,7 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisBasic.vue:28 ~ onMounted')
+  console.log('🚀 ~ file: TicketClinicDiagnosisBase.vue:28 ~ onMounted')
 })
 
 watch(
@@ -44,8 +49,8 @@ watch(
     try {
       general.value = JSON.parse(newValue || JSON.stringify({}))
     } catch (error) {
-      console.log('🚀 ~ file: TicketClinicDiagnosisBasic.vue:47 ~ newValue:', newValue)
-      console.log('🚀 ~ file: TicketClinicDiagnosisBasic.vue:47 ~ error:', error)
+      console.log('🚀 ~ file: TicketClinicDiagnosisBase.vue:47 ~ newValue:', newValue)
+      console.log('🚀 ~ file: TicketClinicDiagnosisBase.vue:47 ~ error:', error)
       general.value = {}
     }
   },
@@ -115,7 +120,7 @@ const saveVisitDiagnosis = async () => {
       files: [],
     }
 
-    await TicketClinicApi.updateDiagnosisBasic({
+    await TicketClinicApi.updateDiagnosisBase({
       ticketId: ticketClinicRef.value.id,
       imageIdsKeep,
       files,
@@ -126,7 +131,7 @@ const saveVisitDiagnosis = async () => {
       },
     })
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicDiagnosisBasic.vue:129 ~ saveVisitDiagnosis ~ error:', error)
+    console.log('🚀 ~ file: TicketClinicDiagnosisBase.vue:129 ~ saveVisitDiagnosis ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -241,6 +246,7 @@ const saveVisitDiagnosis = async () => {
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
+        v-if="permissionIdMap[PermissionId.TICKET_CLINIC_BASE_UPDATE_DIAGNOSIS]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

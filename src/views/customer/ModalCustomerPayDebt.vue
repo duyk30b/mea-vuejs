@@ -9,8 +9,9 @@ import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, useCustomerStore } from '../../modules/customer'
 import { VoucherType } from '../../modules/enum'
-import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { TicketApi, TicketStatus, TicketType, type Ticket } from '../../modules/ticket'
 import { timeToText } from '../../utils'
+import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -159,16 +160,7 @@ defineExpose({ openModal })
             <tbody>
               <tr v-for="(ticketPayment, index) in ticketPaymentList" :key="index">
                 <td>
-                  <div v-if="ticketPayment.ticket.voucherType === VoucherType.Order">
-                    <a @click="openBlankTicketOrderDetail(ticketPayment.ticket.id)">
-                      BH{{ ticketPayment.ticket.id }}
-                    </a>
-                  </div>
-                  <div v-if="ticketPayment.ticket.voucherType === VoucherType.Clinic">
-                    <a @click="openBlankTicketClinicDetail(ticketPayment.ticket.id)">
-                      KB{{ ticketPayment.ticket.id }}
-                    </a>
-                  </div>
+                  <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
                   <div>{{ timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">

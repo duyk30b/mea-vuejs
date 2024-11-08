@@ -8,7 +8,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
-import { TicketEyeApi, ticketEyeRef } from '../../../modules/ticket-eye'
+import { ticketClinicRef, TicketEyeApi } from '../../../modules/ticket-clinic'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -52,47 +52,47 @@ onMounted(async () => {
 })
 
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.reason,
+  () => ticketClinicRef.value.ticketDiagnosis!.reason,
   (newValue, oldValue) => (ticketDiagnosis.value.reason = newValue || ''),
   { immediate: true }
 )
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.healthHistory,
+  () => ticketClinicRef.value.ticketDiagnosis!.healthHistory,
   (newValue, oldValue) => (ticketDiagnosis.value.healthHistory = newValue || ''),
   { immediate: true }
 )
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.general,
+  () => ticketClinicRef.value.ticketDiagnosis!.general,
   (newValue, oldValue) => (general.value = JSON.parse(newValue || JSON.stringify({}))),
   { immediate: true }
 )
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.diagnosis,
+  () => ticketClinicRef.value.ticketDiagnosis!.diagnosis,
   (newValue, oldValue) => (ticketDiagnosis.value.diagnosis = newValue || ''),
   { immediate: true }
 )
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.regional,
+  () => ticketClinicRef.value.ticketDiagnosis!.regional,
   (newValue, oldValue) => (regional.value = JSON.parse(newValue || JSON.stringify({}))),
   { immediate: true }
 )
 watch(
-  () => ticketEyeRef.value.ticketDiagnosis!.imageIds,
+  () => ticketClinicRef.value.ticketDiagnosis!.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
   { immediate: true }
 )
 
 const hasChangeData = computed(() => {
-  if (ticketEyeRef.value.ticketDiagnosis!.reason !== ticketDiagnosis.value.reason) {
+  if (ticketClinicRef.value.ticketDiagnosis!.reason !== ticketDiagnosis.value.reason) {
     return true
   }
-  if (ticketEyeRef.value.ticketDiagnosis!.healthHistory !== ticketDiagnosis.value.healthHistory) {
+  if (ticketClinicRef.value.ticketDiagnosis!.healthHistory !== ticketDiagnosis.value.healthHistory) {
     return true
   }
-  if (ticketEyeRef.value.ticketDiagnosis!.summary !== ticketDiagnosis.value.summary) {
+  if (ticketClinicRef.value.ticketDiagnosis!.summary !== ticketDiagnosis.value.summary) {
     return true
   }
-  if (ticketEyeRef.value.ticketDiagnosis!.diagnosis !== ticketDiagnosis.value.diagnosis) {
+  if (ticketClinicRef.value.ticketDiagnosis!.diagnosis !== ticketDiagnosis.value.diagnosis) {
     return true
   }
   if (hasChangeImage.value) {
@@ -103,7 +103,7 @@ const hasChangeData = computed(() => {
   Object.keys(generalValue).forEach((key) => {
     if (!generalValue[key]) delete generalValue[key]
   })
-  if (ticketEyeRef.value.ticketDiagnosis!.general !== JSON.stringify(generalValue)) {
+  if (ticketClinicRef.value.ticketDiagnosis!.general !== JSON.stringify(generalValue)) {
     return true
   }
 
@@ -111,7 +111,7 @@ const hasChangeData = computed(() => {
   Object.keys(regionalValue).forEach((key) => {
     if (!regionalValue[key]) delete regionalValue[key]
   })
-  if (ticketEyeRef.value.ticketDiagnosis!.regional !== JSON.stringify(regionalValue)) {
+  if (ticketClinicRef.value.ticketDiagnosis!.regional !== JSON.stringify(regionalValue)) {
     return true
   }
   return false
@@ -140,11 +140,11 @@ const saveTicketDiagnosis = async () => {
     }
 
     await TicketEyeApi.updateDiagnosisBasic({
-      ticketId: ticketEyeRef.value.id,
+      ticketId: ticketClinicRef.value.id,
       imageIdsKeep,
       files,
       filesPosition,
-      customerId: ticketEyeRef.value.customerId,
+      customerId: ticketClinicRef.value.customerId,
       object: {
         ...ticketDiagnosis.value,
       },
@@ -248,7 +248,7 @@ const handleFocus = (e: Event) => {
         ref="imageUploadRef"
         :height="100"
         :rootImageList="
-          (ticketEyeRef.ticketDiagnosis?.imageList || [])
+          (ticketClinicRef.ticketDiagnosis?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
               thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
@@ -267,7 +267,7 @@ const handleFocus = (e: Event) => {
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.TICKET_EYE_UPDATE_DIAGNOSIS_BASIC]"
+        v-if="permissionIdMap[PermissionId.TICKET_CLINIC_EYE_UPDATE_DIAGNOSIS_BASIC]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

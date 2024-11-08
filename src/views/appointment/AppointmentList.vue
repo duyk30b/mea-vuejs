@@ -2,25 +2,24 @@
 import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconTrash } from '../../../common/icon'
-import { IconEditSquare } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { useCustomerStore, type Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DTimer, formatPhone } from '../../../utils'
-import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import AppointmentClinicStatusTag from './AppointmentClinicStatusTag.vue'
-import ModalAppointmentClinicRegister from './ModalAppointmentClinicRegister.vue'
-import ModalAppointmentClinicSuccess from './ModalAppointmentClinicSuccess.vue'
+import VueButton from '../../common/VueButton.vue'
+import { IconFileSearch, IconTrash } from '../../common/icon'
+import { IconEditSquare } from '../../common/icon-google'
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { InputDate, InputOptions, VueSelect } from '../../common/vue-form'
+import { ModalStore } from '../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../modules/_me/me.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '../../modules/appointment'
+import { useCustomerStore, type Customer } from '../../modules/customer'
+import { PermissionId } from '../../modules/permission/permission.enum'
+import { DTimer, formatPhone } from '../../utils'
+import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
+import AppointmentStatusTag from './AppointmentStatusTag.vue'
+import ModalAppointmentRegisterTicket from './ModalAppointmentRegisterTicketClinic.vue'
+import ModalAppointmentUpsert from './ModalAppointmentUpsert.vue'
 
-const modalAppointmentClinicRegister = ref<InstanceType<typeof ModalAppointmentClinicRegister>>()
-const modalAppointmentClinicSuccess = ref<InstanceType<typeof ModalAppointmentClinicSuccess>>()
+const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
+const modalAppointmentRegisterTicket = ref<InstanceType<typeof ModalAppointmentRegisterTicket>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
 const router = useRouter()
@@ -60,14 +59,13 @@ const startFetchData = async () => {
           fromTime.value || toTime.value
             ? {
                 GTE: fromTime.value ? fromTime.value : undefined,
-                LTE: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
         customerId: customerId.value ? customerId.value : undefined,
         appointmentStatus: appointmentStatusList.value.length
           ? { IN: appointmentStatusList.value }
           : undefined,
-        voucherType: VoucherType.Clinic,
       },
       sort: { registeredAt: 'ASC' },
     })
@@ -139,14 +137,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalAppointmentClinicRegisterSuccess = async () => {
-  await startFetchData()
-}
-
-const handleModalAppointmentClinicSuccessSuccess = async () => {
-  await startFetchData()
-}
-
 const handleClickDeleteAppointment = async (appointmentId: number) => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa lịch hẹn này ?',
@@ -172,12 +162,8 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 </script>
 
 <template>
-  <ModalAppointmentClinicRegister
-    ref="modalAppointmentClinicRegister"
-    @success="handleModalAppointmentClinicRegisterSuccess" />
-  <ModalAppointmentClinicSuccess
-    ref="modalAppointmentClinicSuccess"
-    @success="handleModalAppointmentClinicSuccessSuccess" />
+  <ModalAppointmentUpsert ref="modalAppointmentUpsert" @success="startFetchData" />
+  <ModalAppointmentRegisterTicket ref="modalAppointmentRegisterTicket" @success="startFetchData" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -192,7 +178,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
           v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]"
           icon="plus"
           color="blue"
-          @click="modalAppointmentClinicRegister?.openModalForCreate(VoucherType.Clinic)">
+          @click="modalAppointmentUpsert?.openModalForCreate()">
           Tạo lịch hẹn mới
         </VueButton>
       </div>
@@ -267,6 +253,13 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             @update:value="handleSelectAppointmentStatus" />
         </div>
       </div>
+
+      <div>
+        <div>&nbsp;</div>
+        <div>
+          <VueButton color="blue" @click="startSearch">Tìm kiếm</VueButton>
+        </div>
+      </div>
     </div>
 
     <div class="page-main-table table-wrapper">
@@ -302,27 +295,23 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
             <td colspan="20" class="text-center">Không có lịch hẹn nào</td>
           </tr>
           <tr v-for="(appointment, index) in appointmentList" :key="index">
-            <td style="width: 100px">
-              <div class="flex justify-between items-center">
+            <td>
+              <div class="flex justify-between items-center gap-4">
                 <div>HK{{ appointment.id }}</div>
                 <div v-if="permissionIdMap[PermissionId.APPOINTMENT_UPDATE]">
                   <a
                     style="color: #eca52b"
                     class="text-xl"
-                    @click="modalAppointmentClinicRegister?.openModalForUpdate(appointment)">
+                    @click="modalAppointmentUpsert?.openModalForUpdate(appointment)">
                     <IconEditSquare />
                   </a>
                 </div>
               </div>
             </td>
-            <td style="width: 200px">
-              <div class="flex justify-center">
-                <div>
-                  <AppointmentClinicStatusTag :appointmentStatus="appointment.appointmentStatus" />
-                </div>
-              </div>
+            <td style="text-align: center">
+              <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
             </td>
-            <td class="text-center" style="width: 200px">
+            <td class="text-center">
               <div
                 v-if="
                   [AppointmentStatus.Waiting, AppointmentStatus.Confirm].includes(
@@ -332,7 +321,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 class="flex items-center justify-center">
                 <VueButton
                   size="small"
-                  @click="modalAppointmentClinicSuccess?.openModal(appointment)">
+                  @click="modalAppointmentRegisterTicket?.openModal(appointment)">
                   Đăng ký khám
                 </VueButton>
               </div>
@@ -342,7 +331,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 </a>
               </div>
             </td>
-            <td class="text-center" style="width: 200px">
+            <td class="text-center">
               {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
             </td>
             <td>

@@ -594,7 +594,7 @@ const savePrescription = async () => {
   <div class="mt-4 flex gap-4">
     <VueButton color="blue" icon="print" @click="startPrint">In đơn thuốc</VueButton>
     <VueButton
-      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]"
+      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]"
       color="blue"
       class="ml-auto"
       :disabled="disabledButton"

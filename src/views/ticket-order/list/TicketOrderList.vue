@@ -10,9 +10,8 @@ import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, useCustomerStore } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus } from '../../../modules/ticket'
+import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -67,7 +66,7 @@ const startFetchData = async () => {
           LTE: toTime ? toTime : undefined,
         },
         ticketStatus: ticketStatus.value ? ticketStatus.value : { NOT: TicketStatus.Cancelled },
-        voucherType: VoucherType.Order,
+        ticketType: TicketType.Order,
       },
       sort: sortValue.value
         ? {
