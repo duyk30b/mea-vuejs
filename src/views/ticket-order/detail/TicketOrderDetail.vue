@@ -11,7 +11,7 @@ import {
   ScheduleOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, onUnmounted, ref } from 'vue'
+import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -53,6 +53,28 @@ const ticketOrderStore = useTicketOrderStore()
 
 const loadingProcess = ref(false)
 const loadingRefund = ref(false)
+
+const ticketOrderDeliveryStatus = computed(() => {
+  if (!ticket.value.ticketProductList?.length) {
+    return DeliveryStatus.NoStock
+  }
+  if (
+    ticket.value.ticketProductList!.find((i) => {
+      return i.deliveryStatus === DeliveryStatus.Pending
+    })
+  ) {
+    return DeliveryStatus.Pending
+  }
+  if (
+    ticket.value.ticketProductList!.find((i) => {
+      return i.deliveryStatus === DeliveryStatus.Delivered
+    })
+  ) {
+    return DeliveryStatus.Delivered
+  }
+
+  return DeliveryStatus.NoStock
+})
 
 const startFetchData = async (ticketId: number) => {
   try {
@@ -132,12 +154,13 @@ const startCancel = async () => {
 const sendProductAndClose = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, customerPayment } =
+    const { ticketBasic, customerPayment, ticketProductList } =
       await TicketOrderApi.sendProductAndPaymentAndClose({
         ticketId: ticket.value.id!,
         money: 0,
       })
     Object.assign(ticket.value, ticketBasic)
+    ticket.value.ticketProductList = ticketProductList
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
     if (customerPayment) {
       ticket.value.customerPaymentList.push(customerPayment!)
@@ -169,10 +192,11 @@ const close = async () => {
 const sendProduct = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic } = await TicketOrderApi.sendProduct({
+    const { ticketBasic, ticketProductList } = await TicketOrderApi.sendProduct({
       ticketId: ticket.value.id!,
     })
     Object.assign(ticket.value, ticketBasic)
+    ticket.value.ticketProductList = ticketProductList
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
@@ -406,7 +430,7 @@ const openModalTicketOrderPreview = () => {
           permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
           permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
           [TicketStatus.Draft, TicketStatus.Approved].includes(ticket.ticketStatus) &&
-          ticket.deliveryStatus === DeliveryStatus.Pending &&
+          ticketOrderDeliveryStatus === DeliveryStatus.Pending &&
           ticket.paid < ticket.totalMoney
         ">
         <VueButton
@@ -425,7 +449,7 @@ const openModalTicketOrderPreview = () => {
         v-if="
           permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
           permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-          ticket.deliveryStatus === DeliveryStatus.Pending &&
+          ticketOrderDeliveryStatus === DeliveryStatus.Pending &&
           ticket.paid === ticket.totalMoney
         ">
         <VueButton color="blue" icon="send" :loading="loadingProcess" @click="sendProductAndClose">
@@ -437,7 +461,7 @@ const openModalTicketOrderPreview = () => {
       <template
         v-if="
           permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-          ticket.deliveryStatus === DeliveryStatus.Pending &&
+          ticketOrderDeliveryStatus === DeliveryStatus.Pending &&
           ticket.paid > ticket.totalMoney
         ">
         <VueButton color="blue" icon="send" :loading="loadingProcess" @click="sendProduct">
@@ -449,7 +473,7 @@ const openModalTicketOrderPreview = () => {
       <template
         v-if="
           permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-          ticket.deliveryStatus === DeliveryStatus.NoStock &&
+          ticketOrderDeliveryStatus === DeliveryStatus.NoStock &&
           ticket.paid < ticket.totalMoney
         ">
         <VueButton
@@ -468,7 +492,7 @@ const openModalTicketOrderPreview = () => {
           [TicketStatus.Draft, TicketStatus.Approved, TicketStatus.Executing].includes(
             ticket.ticketStatus
           ) &&
-          ticket.deliveryStatus === DeliveryStatus.NoStock &&
+          ticketOrderDeliveryStatus === DeliveryStatus.NoStock &&
           ticket.paid === ticket.totalMoney
         ">
         <VueButton color="blue" icon="send" :loading="loadingProcess" @click="close">
@@ -480,7 +504,7 @@ const openModalTicketOrderPreview = () => {
       <template
         v-if="
           permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
-          [DeliveryStatus.NoStock, DeliveryStatus.Delivered].includes(ticket.deliveryStatus) &&
+          [DeliveryStatus.NoStock, DeliveryStatus.Delivered].includes(ticketOrderDeliveryStatus) &&
           ticket.paid > ticket.totalMoney
         ">
         <VueButton

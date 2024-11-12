@@ -14,4 +14,10 @@ export class TicketProductApi {
       data: TicketProduct.fromList(data),
     }
   }
+
+  static async destroyZeroQuantity(id: number) {
+    const response = await AxiosInstance.delete(`/ticket-product/destroy-zero/${id}`)
+    const { data, meta } = response.data as BaseResponse<{ ticketProductId: number }>
+    return data.ticketProductId
+  }
 }

@@ -5,15 +5,26 @@ export const masterDataRouter: RouteRecordRaw = {
   name: 'MasterData',
   children: [
     {
-      path: 'radiology',
-      name: 'Radiology',
-      redirect: () => ({ name: 'RadiologyList' }),
+      path: 'paraclinical',
+      name: 'Paraclinical',
+      redirect: () => ({ name: 'ParaclinicalList' }),
       children: [
         {
           path: 'list',
-          name: 'RadiologyList',
-          component: () => import('../views/radiology/RadiologyList.vue'),
-          meta: { title: 'Chẩn đoán hình ảnh' },
+          name: 'ParaclinicalList',
+          component: () => import('../views/master-data/paraclinical/ParaclinicalList.vue'),
+          meta: { title: 'Cận lâm sàng' },
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'ParaclinicalUpsert',
+          component: () => import('../views/master-data/paraclinical/upsert/ParaclinicalUpsert.vue'),
+          meta: {
+            title: (route: RouteLocationNormalizedLoaded) => {
+              if (route.query?.mode === 'UPDATE') return 'Cập nhật phiếu cận lâm sàng'
+              return 'Tạo mới phiếu cận lâm sàng'
+            },
+          },
         },
       ],
     },
@@ -83,14 +94,15 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'radiology-group',
-      name: 'RadiologyGroup',
-      redirect: () => ({ name: 'RadiologyGroupList' }),
+      path: 'paraclinical-group',
+      name: 'ParaclinicalGroup',
+      redirect: () => ({ name: 'ParaclinicalGroupList' }),
       children: [
         {
           path: 'list',
-          name: 'RadiologyGroupList',
-          component: () => import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
+          name: 'ParaclinicalGroupList',
+          component: () =>
+            import('../views/master-data/paraclinical-group/ParaclinicalGroupList.vue'),
           meta: { title: 'Dịch vụ' },
         },
       ],

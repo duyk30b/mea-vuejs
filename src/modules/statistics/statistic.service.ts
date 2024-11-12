@@ -1,9 +1,9 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
-import type { VoucherType } from '../enum'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
+import type { TicketType } from '../ticket'
 
 export class StatisticService {
   static async sumWarehouse() {
@@ -125,7 +125,7 @@ export class StatisticService {
     fromTime: string
     toTime: string
     timeType: 'date' | 'month'
-    voucherType?: VoucherType
+    ticketType?: TicketType
   }) {
     const response = await AxiosInstance.get('/statistic/statistic-ticket', { params })
     const { data } = response.data as BaseResponse<
@@ -135,7 +135,7 @@ export class StatisticService {
           sumTotalCostAmount: number
           sumProceduresMoney: number
           sumProductsMoney: number
-          sumRadiologyMoney: number
+          sumParaclinicalMoney: number
           sumSurcharge: number
           sumExpense: number
           sumDiscountMoney: number

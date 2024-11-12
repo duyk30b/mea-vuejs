@@ -19,7 +19,7 @@ import CustomerInfo from './CustomerInfo.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
 import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
-import CustomerRadiologyHistory from './CustomerRadiologyHistory.vue'
+import CustomerParaclinicalHistory from './CustomerParaclinicalHistory.vue'
 import CustomerTicketClinicHistory from './CustomerTicketClinicHistory.vue'
 import CustomerTicketHistory from './CustomerTicketHistory.vue'
 
@@ -31,7 +31,7 @@ const TABS_KEY = {
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
   PRODUCT_HISTORY: 'PRODUCT_HISTORY',
   PROCEDURE_HISTORY: 'PROCEDURE_HISTORY',
-  RADIOLOGY_HISTORY: 'RADIOLOGY_HISTORY',
+  PARACLINICAL_HISTORY: 'PARACLINICAL_HISTORY',
 }
 
 const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>()
@@ -121,9 +121,9 @@ defineExpose({ openModal })
             </VueTabMenu>
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]"
-              :tabKey="TABS_KEY.RADIOLOGY_HISTORY">
+              :tabKey="TABS_KEY.PARACLINICAL_HISTORY">
               <IconRadiology />
-              CĐHA
+              cận lâm sàng
             </VueTabMenu>
           </template>
           <template #panel>
@@ -151,8 +151,8 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.PROCEDURE_HISTORY">
               <CustomerProcedureHistory :customer="customer" />
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.RADIOLOGY_HISTORY">
-              <CustomerRadiologyHistory :customer="customer" />
+            <VueTabPanel :tabKey="TABS_KEY.PARACLINICAL_HISTORY">
+              <CustomerParaclinicalHistory :customer="customer" />
             </VueTabPanel>
           </template>
         </VueTabs>

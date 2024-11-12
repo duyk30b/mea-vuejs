@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
-import { TicketApi } from '../ticket/ticket.api'
-import type { Ticket } from '../ticket/ticket.model'
-import type { TicketDetailQuery } from '../ticket/ticket.dto'
-import { Customer } from '../customer'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
+import { Customer } from '../customer'
+import { TicketApi } from '../ticket/ticket.api'
+import type { TicketDetailQuery } from '../ticket/ticket.dto'
+import type { Ticket } from '../ticket/ticket.model'
 
 export const useTicketClinicStore = defineStore('ticket-clinic-store', {
   state: () => {
@@ -30,7 +30,7 @@ export const useTicketClinicStore = defineStore('ticket-clinic-store', {
             ticketDiagnosis: true,
             ticketProductList: { product: true, batch: true },
             ticketProcedureList: { procedure: true },
-            ticketRadiologyList: { radiology: true },
+            ticketParaclinicalList: { paraclinical: true },
           },
         })
       }

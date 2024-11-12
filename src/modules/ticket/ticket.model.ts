@@ -2,14 +2,15 @@ import { Appointment } from '../appointment'
 import { Customer } from '../customer'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
-import { DeliveryStatus, DiscountType, VoucherType } from '../enum'
+import { DeliveryStatus, DiscountType } from '../enum'
+import { Image } from '../image/image.model'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { TicketDiagnosis } from '../ticket-diagnosis'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
+import { TicketParaclinical } from '../ticket-paraclinical'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
-import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
 
@@ -36,12 +37,11 @@ export class Ticket {
   customerSourceId: number
   ticketType: TicketType
   ticketStatus: TicketStatus
-  deliveryStatus: DeliveryStatus
 
   totalCostAmount: number
   proceduresMoney: number
   productsMoney: number
-  radiologyMoney: number
+  paraclinicalMoney: number
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
   discountType: DiscountType // Loại giảm giá
@@ -67,7 +67,7 @@ export class Ticket {
   ticketProductConsumableList?: TicketProduct[]
   ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
-  ticketRadiologyList?: TicketRadiology[]
+  ticketParaclinicalList?: TicketParaclinical[]
   ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
   ticketExpenseList?: TicketExpense[]
@@ -81,7 +81,7 @@ export class Ticket {
     ins.totalCostAmount = 0
     ins.proceduresMoney = 0
     ins.productsMoney = 0
-    ins.radiologyMoney = 0
+    ins.paraclinicalMoney = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
@@ -101,7 +101,7 @@ export class Ticket {
     ins.ticketDiagnosis = TicketDiagnosis.init()
     ins.ticketProcedureList = []
     ins.ticketProductList = []
-    ins.ticketRadiologyList = []
+    ins.ticketParaclinicalList = []
     ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
@@ -144,6 +144,9 @@ export class Ticket {
       target.ticketDiagnosis = target.ticketDiagnosis
         ? TicketDiagnosis.basic(target.ticketDiagnosis)
         : target.ticketDiagnosis
+      if (source.ticketDiagnosis?.imageList) {
+        target.ticketDiagnosis!.imageList = Image.basicList(source.ticketDiagnosis?.imageList)
+      }
     }
     if (target.customerPaymentList) {
       target.customerPaymentList = CustomerPayment.basicList(target.customerPaymentList)
@@ -176,8 +179,8 @@ export class Ticket {
         i.procedure = Procedure.basic(i.procedure!)
       })
     }
-    if (target.ticketRadiologyList) {
-      target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
+    if (target.ticketParaclinicalList) {
+      target.ticketParaclinicalList = TicketParaclinical.basicList(target.ticketParaclinicalList)
     }
     if (target.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(target.ticketUserList)

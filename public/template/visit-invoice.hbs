@@ -163,10 +163,10 @@
           <tr>
             <th colspan="6" style="text-align: left; text-transform: uppercase;">III. CHẨN ĐOÁN HÌNH ẢNH</th>
           </tr>
-          {{#each visit.visitRadiologyList}}
+          {{#each visit.visitParaclinicalList}}
           <tr>
             <td>{{ plus @index 1 }}</td>
-            <td colspan="3">{{ this.radiology.name }}</td>
+            <td colspan="3">{{ this.paraclinical.name }}</td>
             <td style="text-align: right;">
               {{#if (boolean this.discountMoney 0)}}
               <div style="font-size: 0.9rem; color:red; font-style: italic; text-decoration: line-through;">
@@ -183,7 +183,7 @@
               Tổng tiền chẩn đoán hình ảnh
             </td>
             <td style="text-align: right; font-weight: bold">
-              {{ formatNumber visit.radiologyMoney }}
+              {{ formatNumber visit.paraclinicalMoney }}
             </td>
           </tr>
         </tbody>

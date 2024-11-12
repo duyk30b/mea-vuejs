@@ -8,7 +8,7 @@ import { nextTick, ref } from 'vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import {  TicketStatus } from '../../../modules/ticket'
+import { TicketStatus } from '../../../modules/ticket'
 import { timeToText } from '../../../utils'
 import CustomerPaymentTypeTag from '../../customer/CustomerPaymentTypeTag.vue'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
@@ -70,12 +70,13 @@ const startSendProductAndPaymentAndClose = async () => {
     if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } =
+    const { ticketBasic, customerPayment, ticketProductList } =
       await TicketOrderApi.sendProductAndPaymentAndClose({
         ticketId: ticket.value.id,
         money: money.value,
       })
     Object.assign(ticket.value, ticketBasic)
+    ticket.value.ticketProductList = ticketProductList
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
     if (customerPayment) {
       ticket.value.customerPaymentList.push(customerPayment!)
@@ -201,7 +202,9 @@ defineExpose({ openModal })
                   <div v-if="customerPayment.note" style="font-size: 0.8rem">
                     {{ customerPayment.note }}
                   </div>
-                  <div v-if="customerPayment.description" style="font-size: 0.8rem; font-style: italic;">
+                  <div
+                    v-if="customerPayment.description"
+                    style="font-size: 0.8rem; font-style: italic">
                     {{ customerPayment.description }}
                   </div>
                 </td>

@@ -44,6 +44,18 @@ export class Customer {
     return ins
   }
 
+  static example(): Customer {
+    const customer = Customer.blank()
+    customer.fullName = 'Nguyễn Văn A'
+    customer.birthday = new Date('1990-09-04').getTime()
+    customer.gender = 1
+    customer.phone = '0968123456'
+    customer.addressProvince = 'Hà Nội'
+    customer.addressDistrict = 'Long Biên'
+    customer.addressWard = 'Thạch Bàn'
+    return customer
+  }
+
   static basic(source: Customer) {
     const target = new Customer()
     Object.keys(target).forEach((key) => {

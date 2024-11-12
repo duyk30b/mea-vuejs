@@ -7,7 +7,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment } from '../../../modules/appointment'
 import { PaymentViewType } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
-import { ticketClinicRef } from '../../../modules/ticket-clinic'
+import { ticketClinicRef, ticketRefDeliveryStatus } from '../../../modules/ticket-clinic'
 import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
@@ -150,7 +150,7 @@ const handleClickModalRegisterAppointment = () => {
         <div>Lấy thuốc :</div>
       </div>
       <div>
-        <TicketClinicDeliveryStatusTag :deliveryStatus="ticketClinicRef.deliveryStatus" />
+        <TicketClinicDeliveryStatusTag :deliveryStatus="ticketRefDeliveryStatus" />
       </div>
     </div>
     <div class="mt-2 flex items-center justify-between">

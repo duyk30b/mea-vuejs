@@ -107,10 +107,10 @@ export const ticketRouter: RouteRecordRaw[] = [
                 meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
               },
               {
-                path: 'radiology',
-                name: 'TicketClinicRadiology',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicRadiology.vue'),
-                meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
+                path: 'paraclinical',
+                name: 'TicketClinicParaclinical',
+                component: () => import('../views/ticket-clinic/detail/TicketClinicParaclinical.vue'),
+                meta: { keepAlive: true, title: 'Chỉ định cận lâm sàng' },
               },
               {
                 path: 'consumable',

@@ -11,6 +11,15 @@ export class Image {
   hostId: string
   waitDelete: 0 | 1
 
+  link(options: { size: number }) {
+    const { size } = options
+    if (this.hostType === ImageHost.GoogleDriver) {
+      return `https://drive.google.com/thumbnail?id=${this.hostId}&amp;sz=w${size}`
+    } else {
+      return `https://drive.google.com/thumbnail?id=${this.hostId}&amp;sz=w${size}`
+    }
+  }
+
   static init(): Image {
     const ins = new Image()
     ins.id = 0

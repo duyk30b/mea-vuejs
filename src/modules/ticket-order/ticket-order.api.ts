@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { CustomerPayment } from '../customer-payment/customer-payment.model'
+import { TicketProduct } from '../ticket-product'
 import { Ticket } from '../ticket/ticket.model'
 
 export class TicketOrderApi {
@@ -11,7 +12,7 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         proceduresMoney: ticket.proceduresMoney,
         productsMoney: ticket.productsMoney,
-        radiologyMoney: ticket.radiologyMoney,
+        paraclinicalMoney: ticket.paraclinicalMoney,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -67,7 +68,7 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         proceduresMoney: ticket.proceduresMoney,
         productsMoney: ticket.productsMoney,
-        radiologyMoney: ticket.radiologyMoney,
+        paraclinicalMoney: ticket.paraclinicalMoney,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -130,7 +131,7 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         proceduresMoney: ticket.proceduresMoney,
         productsMoney: ticket.productsMoney,
-        radiologyMoney: ticket.radiologyMoney,
+        paraclinicalMoney: ticket.paraclinicalMoney,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -187,7 +188,7 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         proceduresMoney: ticket.proceduresMoney,
         productsMoney: ticket.productsMoney,
-        radiologyMoney: ticket.radiologyMoney,
+        paraclinicalMoney: ticket.paraclinicalMoney,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -255,9 +256,14 @@ export class TicketOrderApi {
       `/ticket-order/${ticketId}/send-product-and-payment-and-close`,
       { money }
     )
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment?: any }>
+    const { data } = response.data as BaseResponse<{
+      ticketBasic: any
+      ticketProductList: any[]
+      customerPayment?: any
+    }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
+      ticketProductList: TicketProduct.fromList(data.ticketProductList),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
   }
@@ -279,7 +285,11 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/refund-overpaid`, {
       money,
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{
+      ticketBasic: any
+
+      customerPayment: any
+    }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
       customerPayment: CustomerPayment.from(data.customerPayment),
@@ -289,9 +299,14 @@ export class TicketOrderApi {
   static async sendProduct(options: { ticketId: number }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/send-product`)
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{
+      ticketBasic: any
+      ticketProductList: any[]
+      customerPayment: any
+    }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
+      ticketProductList: TicketProduct.fromList(data.ticketProductList),
     }
   }
 
@@ -316,10 +331,15 @@ export class TicketOrderApi {
       debtReturn: options.debtReturn,
       paidReturn: options.paidReturn,
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment?: any }>
+    const { data } = response.data as BaseResponse<{
+      ticketBasic: any
+      ticketProductList: any[]
+      customerPayment?: any
+    }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
+      ticketProductList: TicketProduct.fromList(data.ticketProductList),
     }
   }
 

@@ -1,6 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { VoucherType } from '../enum'
 import type { TicketStatus, TicketType } from './ticket.model'
 
 export class TicketGetQuery {
@@ -13,7 +12,7 @@ export class TicketGetQuery {
     ticketProductConsumableList?: { product?: boolean; batch?: boolean } | false
     ticketProductPrescriptionList?: { product?: boolean; batch?: boolean } | false
     ticketProcedureList?: { procedure?: boolean } | false
-    ticketRadiologyList?: { radiology?: boolean } | false
+    ticketParaclinicalList?: { paraclinical?: boolean } | false
     ticketDiagnosis?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean

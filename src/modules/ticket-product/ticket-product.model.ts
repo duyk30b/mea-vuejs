@@ -45,6 +45,10 @@ export class TicketProduct {
     return Number((this.quantityPrescription / this.unitRate).toFixed(3))
   }
 
+  get unitQuantityReturn() {
+    return Number((this.quantityReturn / this.unitRate).toFixed(3))
+  }
+
   get unitExpectedPrice() {
     return this.expectedPrice * this.unitRate
   }

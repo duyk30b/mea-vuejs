@@ -12,25 +12,19 @@ const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
     <template #icon>
       <ShoppingCartOutlined />
     </template>
-    Không có thuốc
+    Không có thuốc - vật tư
   </a-tag>
   <a-tag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="warning">
     <template #icon>
       <ShoppingCartOutlined />
     </template>
-    Chưa xuất thuốc
+    Chưa xuất thuốc - vật tư
   </a-tag>
   <a-tag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="success">
     <template #icon>
       <ShoppingCartOutlined />
     </template>
-    Đã xuất thuốc
-  </a-tag>
-  <a-tag v-else-if="deliveryStatus === DeliveryStatus.Cancelled" color="error">
-    <template #icon>
-      <ShoppingCartOutlined />
-    </template>
-    Hủy
+    Đã xuất thuốc - vật tư
   </a-tag>
 </template>
 

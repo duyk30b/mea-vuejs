@@ -8,17 +8,17 @@ import VueButton from '../../../common/VueButton.vue'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { VoucherType } from '../../../modules/enum'
-import { StatisticService } from '../../../modules/statistics'
-import { DTimer } from '../../../utils'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { StatisticService } from '../../../modules/statistics'
+import { TicketType } from '../../../modules/ticket'
+import { DTimer } from '../../../utils'
 
 type DataResponseType = {
   timeLabel: string
   sumTotalCostAmount: number
   sumProceduresMoney: number
   sumProductsMoney: number
-  sumRadiologyMoney: number
+  sumParaclinicalMoney: number
   sumSurcharge: number
   sumExpense: number
   sumDiscountMoney: number
@@ -42,7 +42,7 @@ const { permissionIdMap } = meStore
 const now = new Date()
 const endMonth = DTimer.endOfMonth(now)
 const startMonth = DTimer.startOfMonth(now)
-const voucherType = ref<VoucherType | null>(null)
+const ticketType = ref<TicketType | null>(null)
 const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])
 const timeType = ref<'date' | 'month'>('date')
 const loaded = ref(false)
@@ -69,7 +69,7 @@ const startFetchData = async () => {
       toTime = DTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
     data.value = await StatisticService.statisticTicket({
-      voucherType: voucherType.value ?? undefined,
+      ticketType: ticketType.value ?? undefined,
       fromTime: fromTime.toISOString(),
       toTime: toTime.toISOString(),
       timeType: timeType.value,
@@ -144,14 +144,14 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
         <div>Chọn loại phiếu</div>
         <div>
           <VueSelect
-            v-model:value="voucherType"
+            v-model:value="ticketType"
             :options="[
               { value: null, text: 'Tất cả' },
               ...(permissionIdMap[PermissionId.TICKET_ORDER_READ]
-                ? [{ value: VoucherType.Order, text: 'Bán hàng' }]
+                ? [{ value: TicketType.Order, text: 'Bán hàng' }]
                 : []),
               ...(permissionIdMap[PermissionId.TICKET_CLINIC_READ]
-                ? [{ value: VoucherType.Clinic, text: 'Phiếu khám' }]
+                ? [{ value: TicketType.Clinic, text: 'Phiếu khám' }]
                 : []),
             ]"
             @update:value="startFetchData" />
@@ -266,7 +266,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
             <th>Tổng tiền</th>
             <th>Tiền sản phẩm</th>
             <th>Tiền dịch vụ</th>
-            <th>Tiền CĐHA</th>
+            <th>Tiền cận lâm sàng</th>
             <th>Tổng vốn</th>
             <th>Tổng phụ phí</th>
             <th>Tổng chi phí</th>
@@ -281,7 +281,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
             <td class="text-right">{{ formatMoney(item.sumTotalMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumProductsMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumProceduresMoney) }}</td>
-            <td class="text-right">{{ formatMoney(item.sumRadiologyMoney) }}</td>
+            <td class="text-right">{{ formatMoney(item.sumParaclinicalMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumTotalCostAmount) }}</td>
             <td class="text-right">{{ formatMoney(item.sumSurcharge) }}</td>
             <td class="text-right">{{ formatMoney(item.sumExpense) }}</td>

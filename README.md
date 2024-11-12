@@ -18,8 +18,9 @@ npm run build
 firebase deploy
 ```
 
-## Rule
-1. class-transformer: Không dùng giá trị mặc định của class, lý do:
-- Khi dùng mặc định của class, có thể gen ra giá trị mặc dù không hề Expose group nó
-- Dùng @Transform. Group nào Expose mới có giá trị mặc định !!!
-2. Emit data phải là dữ liệu mới (copy tạo mới rồi mới gửi)
+## Github
+1. Reset commit master
+```
+git branch -f master HEAD
+git push origin master --force
+```

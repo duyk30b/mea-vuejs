@@ -36,33 +36,33 @@ export class PrintHtmlApi {
     const params = PrintHtmlGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/print-html/get-one', { params })
-    const { data, meta } = response.data as BaseResponse<{ print: any }>
-    return data.print ? PrintHtml.from(data.print) : null
+    const { data, meta } = response.data as BaseResponse<{ printHtml: any }>
+    return data.printHtml ? PrintHtml.from(data.printHtml) : null
   }
 
   static async detail(id: number, options: PrintHtmlDetailQuery = {}): Promise<PrintHtml> {
     const params = PrintHtmlGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/print-html/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse<{ print: any }>
-    return PrintHtml.from(data.print)
+    const { data, meta } = response.data as BaseResponse<{ printHtml: any }>
+    return PrintHtml.from(data.printHtml)
   }
 
   static async createOne(printHtml: PrintHtml) {
     const response = await AxiosInstance.post('/print-html/create', {
-      key: printHtml.key,
+      type: printHtml.type,
       content: printHtml.content || '',
-      radiologyId: printHtml.key === PrintHtmlType.RADIOLOGY ? printHtml.radiologyId : 0,
+      paraclinicalId: printHtml.type === PrintHtmlType.PARACLINICAL ? printHtml.paraclinicalId : 0,
     })
-    const { data } = response.data as BaseResponse<{ print: any }>
-    return PrintHtml.from(data.print)
+    const { data } = response.data as BaseResponse<{ printHtml: any }>
+    return PrintHtml.from(data.printHtml)
   }
 
   static async updateOne(id: number, content: string) {
     const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
       content,
     })
-    const { data } = response.data as BaseResponse<{ print: any }>
-    return PrintHtml.from(data.print)
+    const { data } = response.data as BaseResponse<{ printHtml: any }>
+    return PrintHtml.from(data.printHtml)
   }
 
   static async destroyOne(id: number) {

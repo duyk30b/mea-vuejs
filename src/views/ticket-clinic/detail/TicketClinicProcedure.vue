@@ -138,6 +138,7 @@ const saveTicketProcedureList = async () => {
             <td>
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -152,6 +153,7 @@ const saveTicketProcedureList = async () => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;

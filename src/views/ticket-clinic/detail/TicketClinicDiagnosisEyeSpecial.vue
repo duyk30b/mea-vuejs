@@ -3,15 +3,19 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { PrintHtmlService } from '../../../modules/print-html'
+import {
+  ticketEyePrintOptometryCompiledTemplate,
+  ticketEyePrintOptometryDefault,
+} from '../../../modules/print-html/print-content/ticket-eye-print-optometry'
 import {
   type DiagnosisSpecialEye,
   ticketClinicRef,
   TicketEyeApi,
 } from '../../../modules/ticket-clinic'
-import { ticketEyePrintOptometry } from '../../../modules/print-html/print-content/ticket-eye-print-optometry'
 
 const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { permissionIdMap, organization } = meStore
 
 const optometry = ref<DiagnosisSpecialEye>({})
 const saveLoading = ref(false)
@@ -70,11 +74,21 @@ const handleFocus = (e: Event) => {
 
 const startPrint = async () => {
   try {
-    const content = ticketEyePrintOptometry(
-      ticketClinicRef.value,
-      JSON.parse(ticketClinicRef.value.ticketDiagnosis!.special),
-      ''
-    )
+    const printHtml = await PrintHtmlService.findOneBy({ type: 'OPTOMETRY', paraclinicalId: 0 })
+    let htmlString = printHtml?.content
+    if (!htmlString) {
+      htmlString = await ticketEyePrintOptometryDefault()
+    }
+
+    const content = ticketEyePrintOptometryCompiledTemplate({
+      organization,
+      ticket: ticketClinicRef.value,
+      customer: ticketClinicRef.value.customer!,
+      optometry: JSON.parse(ticketClinicRef.value.ticketDiagnosis!.special || '{}'),
+      technicianName: '',
+      htmlString,
+    })
+
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()
@@ -90,7 +104,7 @@ const startPrint = async () => {
 <template>
   <div class="mt-4">
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khúc xạ máy</div>
+      <div class="italic">Khúc xạ máy</div>
       <div class="w-full" style="min-width: 600px">
         <table>
           <thead>
@@ -106,21 +120,15 @@ const startPrint = async () => {
             <tr>
               <td class="title">MP</td>
               <td>
-                <input
-                  v-model="optometry.KhucXaMay_MP_Cau"
-                  type="number"
-                  style="text-align: left" />
+                <input v-model="optometry.KhucXaMay_MP_Cau" type="text" style="text-align: left" />
               </td>
               <td>
-                <input
-                  v-model="optometry.KhucXaMay_MP_Loan"
-                  type="number"
-                  style="text-align: left" />
+                <input v-model="optometry.KhucXaMay_MP_Loan" type="text" style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaMay_MP_TrucLoan"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td rowspan="2"><input v-model="optometry.KhucXaMay_KhoangCachDongTu" /></td>
@@ -128,21 +136,15 @@ const startPrint = async () => {
             <tr>
               <td class="title">MT</td>
               <td>
-                <input
-                  v-model="optometry.KhucXaMay_MT_Cau"
-                  type="number"
-                  style="text-align: left" />
+                <input v-model="optometry.KhucXaMay_MT_Cau" type="text" style="text-align: left" />
               </td>
               <td>
-                <input
-                  v-model="optometry.KhucXaMay_MT_Loan"
-                  type="number"
-                  style="text-align: left" />
+                <input v-model="optometry.KhucXaMay_MT_Loan" type="text" style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaMay_MT_TrucLoan"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
             </tr>
@@ -151,7 +153,7 @@ const startPrint = async () => {
       </div>
     </div>
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khúc xạ kính cũ</div>
+      <div class="italic">Khúc xạ kính cũ</div>
       <div class="w-full" style="min-width: 600px">
         <table>
           <thead>
@@ -171,19 +173,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MP_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MP_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MP_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaKinhCu_MP_CoKinh" /></td>
@@ -194,19 +196,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MT_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MT_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaKinhCu_MT_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaKinhCu_MT_CoKinh" /></td>
@@ -222,7 +224,7 @@ const startPrint = async () => {
       </div>
     </div>
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khúc xạ nhìn xa</div>
+      <div class="italic">Khúc xạ nhìn xa</div>
       <div class="w-full" style="min-width: 600px">
         <table>
           <thead>
@@ -242,19 +244,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MP_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MP_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MP_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaNhinXa_MP_CoKinh" /></td>
@@ -265,19 +267,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MT_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MT_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinXa_MT_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaNhinXa_MT_CoKinh" /></td>
@@ -291,7 +293,7 @@ const startPrint = async () => {
       </div>
     </div>
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khúc xạ nhìn gần</div>
+      <div class="italic">Khúc xạ nhìn gần</div>
       <div class="w-full" style="min-width: 600px">
         <table>
           <thead>
@@ -311,19 +313,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MP_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MP_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MP_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaNhinGan_MP_CoKinh" /></td>
@@ -334,19 +336,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MT_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MT_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.KhucXaNhinGan_MT_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.KhucXaNhinGan_MT_CoKinh" /></td>
@@ -360,7 +362,7 @@ const startPrint = async () => {
       </div>
     </div>
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khác</div>
+      <div class="italic">Khác</div>
       <div class="w-full" style="min-width: 600px">
         <table>
           <thead>
@@ -402,7 +404,7 @@ const startPrint = async () => {
     </div>
 
     <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Số kính chỉ định</div>
+      <div class="italic">Số kính chỉ định</div>
       <div class="w-full" style="min-width: 600px">
         <table class="special">
           <thead>
@@ -421,19 +423,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MP_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MP_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MP_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.SoKinhChiDinh_MP_ADD" /></td>
@@ -444,19 +446,19 @@ const startPrint = async () => {
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MT_Cau"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MT_Tru"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
                   v-model="optometry.SoKinhChiDinh_MT_Truc"
-                  type="number"
+                  type="text"
                   style="text-align: left" />
               </td>
               <td><input v-model="optometry.SoKinhChiDinh_MT_ADD" /></td>

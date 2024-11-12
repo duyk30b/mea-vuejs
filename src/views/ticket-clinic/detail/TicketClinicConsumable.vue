@@ -10,7 +10,7 @@ import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketProduct, TicketProductType } from '../../../modules/ticket-product'
+import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer } from '../../../utils'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 
@@ -185,6 +185,23 @@ const savePrescription = async () => {
     ticketProductConsumableList: ticketProductConsumableListChange,
   })
 }
+
+const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
+  await TicketProductApi.destroyZeroQuantity(ticketProductId)
+  const findIndexCurrent = ticketProductConsumableList.value.findIndex((i) => {
+    return i.id === ticketProductId
+  })
+  if (findIndexCurrent !== -1) {
+    ticketProductConsumableList.value.splice(findIndexCurrent, 1)
+  }
+
+  const findIndexRoot = ticketClinicRef.value.ticketProductConsumableList!.findIndex((i) => {
+    return i.id === ticketProductId
+  })
+  if (findIndexRoot !== -1) {
+    ticketClinicRef.value.ticketProductConsumableList!.splice(findIndexCurrent, 1)
+  }
+}
 </script>
 <template>
   <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addPrescriptionItem()">
@@ -356,7 +373,9 @@ const savePrescription = async () => {
 
     <div style="flex-grow: 1; flex-basis: 80%" class="mt-2 flex justify-center">
       <VueButton
-        :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
+        :disabled="
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+        "
         color="blue"
         type="submit">
         <PlusOutlined />
@@ -388,6 +407,7 @@ const savePrescription = async () => {
             <td>
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -402,6 +422,7 @@ const savePrescription = async () => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -465,17 +486,25 @@ const savePrescription = async () => {
             </td>
             <td class="text-center">
               <a
-                v-if="
+                v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered && tpItem.quantity == 0"
+                class="text-red-500"
+                @click="destroyTicketProductZeroQuantity(tpItem.id)">
+                <DeleteOutlined />
+              </a>
+              <a
+                v-else-if="
                   !(
                     tpItem.deliveryStatus === DeliveryStatus.Delivered ||
-                    [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                      ticketClinicRef.ticketStatus
+                    )
                   )
                 "
                 class="text-red-500"
                 @click="ticketProductConsumableList!.splice(index, 1)">
                 <DeleteOutlined />
               </a>
-              <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered">
+              <a-tooltip v-else-if="tpItem.deliveryStatus === DeliveryStatus.Delivered">
                 <template #title>Đã xuất vật tư</template>
                 <ShoppingCartOutlined style="color: #52c41a; cursor: not-allowed !important" />
               </a-tooltip>

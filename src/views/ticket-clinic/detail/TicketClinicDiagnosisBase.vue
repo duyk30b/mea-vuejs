@@ -230,8 +230,8 @@ const saveVisitDiagnosis = async () => {
           (ticketClinicRef.ticketDiagnosis?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
-              thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
-              enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
+              thumbnail: i.link({ size: 200 }),
+              enlarged: i.link({ size: 1000 }),
               id: i.id,
             }))
         "

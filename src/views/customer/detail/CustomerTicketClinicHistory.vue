@@ -4,14 +4,13 @@ import ImageUpload from '../../../common/ImageUpload.vue'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { VoucherType } from '../../../modules/enum'
 import { ImageHost } from '../../../modules/image/image.model'
 import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DTimer, formatPhone } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketParaclinicalResult from '../../ticket-clinic/detail/modal/ModalTicketParaclinicalResult.vue'
 
-const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
+const modalTicketParaclinicalResult = ref<InstanceType<typeof ModalTicketParaclinicalResult>>()
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
 })
@@ -81,7 +80,7 @@ watch(
 </script>
 
 <template>
-  <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
+  <ModalTicketParaclinicalResult ref="modalTicketParaclinicalResult" />
   <div class="mt-4">
     <div class="flex flex-wrap items-center gap-2">
       <span>
@@ -212,8 +211,8 @@ watch(
                 (ticket.ticketDiagnosis?.imageList || [])
                   .filter((i) => i.hostType === ImageHost.GoogleDriver)
                   .map((i) => ({
-                    thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
-                    enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
+                    thumbnail: i.link({ size: 200 }),
+                    enlarged: i.link({ size: 1000 }),
                     id: i.id,
                   }))
               " />
@@ -256,7 +255,7 @@ watch(
           </div>
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
-            <div class="mb-2" style="font-weight: 500">7. CĐHA:</div>
+            <div class="mb-2" style="font-weight: 500">7. cận lâm sàng:</div>
             <table>
               <thead>
                 <tr>
@@ -268,21 +267,27 @@ watch(
               </thead>
               <tbody style="background-color: white">
                 <tr
-                  v-for="(ticketRadiology, index) in ticket.ticketRadiologyList"
-                  :key="ticketRadiology.id">
+                  v-for="(ticketParaclinical, index) in ticket.ticketParaclinicalList"
+                  :key="ticketParaclinical.id">
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>
-                    <div style="font-weight: 500">{{ ticketRadiology.radiology?.name }}</div>
-                    <div style="font-style: italic">{{ ticketRadiology.result }}</div>
+                    <div style="font-weight: 500">{{ ticketParaclinical.paraclinical?.name }}</div>
+                    <div style="font-style: italic">{{ ticketParaclinical.result }}</div>
                   </td>
                   <td class="text-center">
-                    <a @click="modalTicketRadiologyResult?.openModal(ticketRadiology, false)">
+                    <a
+                      @click="
+                        modalTicketParaclinicalResult?.openModalByInstance(
+                          ticketParaclinical,
+                          false
+                        )
+                      ">
                       <IconVisibility width="22" height="22" />
                     </a>
                   </td>
                   <td class="text-right">
                     <div
-                      v-if="ticketRadiology.discountMoney"
+                      v-if="ticketParaclinical.discountMoney"
                       style="
                         color: var(--text-red);
                         font-size: 0.8rem;
@@ -290,9 +295,9 @@ watch(
                         font-style: italic;
                         white-space: nowrap;
                       ">
-                      {{ formatMoney(ticketRadiology.expectedPrice) }}
+                      {{ formatMoney(ticketParaclinical.expectedPrice) }}
                     </div>
-                    <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
+                    <div>{{ formatMoney(ticketParaclinical.actualPrice) }}</div>
                   </td>
                 </tr>
               </tbody>

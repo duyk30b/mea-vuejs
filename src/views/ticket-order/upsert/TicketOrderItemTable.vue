@@ -165,6 +165,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <td style="padding: 0.5rem 0.2rem; white-space: nowrap">
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -179,6 +180,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -329,6 +331,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <td style="padding: 0.5rem 0.2rem; white-space: nowrap">
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -343,6 +346,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -570,6 +574,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <td>
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -584,6 +589,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -708,6 +714,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <td>
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -722,6 +729,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;

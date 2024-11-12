@@ -4,9 +4,10 @@ import type { PrintHtmlType } from './print-html.model'
 export class PrintHtmlGetQuery {
   page?: number
   limit?: number
-  relation?: { radiology?: boolean }
+  relation?: { paraclinical?: boolean }
   filter?: {
-    key?: keyof typeof PrintHtmlType
+    type?: keyof typeof PrintHtmlType
+    paraclinicalId?: number
   }
 
   sort?: {

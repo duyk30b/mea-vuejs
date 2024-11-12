@@ -162,7 +162,7 @@ defineExpose({ openModal })
                   <div
                     v-if="tpReturn.tpRoot.quantityReturn"
                     style="font-size: 0.9em; font-style: italic">
-                    Hoàn trả: {{ tpReturn.tpRoot.quantityReturn / tpReturn.tpRoot.unitRate }}
+                    Hoàn trả: {{ tpReturn.tpRoot.unitQuantityReturn }}
                   </div>
                 </td>
                 <td class="text-center">{{ tpReturn.tpRoot.unitName }}</td>

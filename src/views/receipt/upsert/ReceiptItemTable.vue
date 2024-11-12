@@ -41,6 +41,7 @@ const changeItemPosition = (index: number, count: number) => {
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             <div class="flex flex-col items-center">
               <button
+                type="button"
                 style="
                   border: none;
                   font-size: 1.2rem;
@@ -55,6 +56,7 @@ const changeItemPosition = (index: number, count: number) => {
               </button>
               <span>{{ index + 1 }}</span>
               <button
+                type="button"
                 style="
                   border: none;
                   font-size: 1.2rem;
@@ -140,6 +142,7 @@ const changeItemPosition = (index: number, count: number) => {
           <td>
             <div class="flex flex-col items-center">
               <button
+                type="button"
                 style="
                   border: none;
                   font-size: 1.2rem;
@@ -154,6 +157,7 @@ const changeItemPosition = (index: number, count: number) => {
               </button>
               <span>{{ index + 1 }}</span>
               <button
+                type="button"
                 style="
                   border: none;
                   font-size: 1.2rem;

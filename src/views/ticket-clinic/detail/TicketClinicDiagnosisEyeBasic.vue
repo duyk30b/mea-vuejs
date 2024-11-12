@@ -86,7 +86,9 @@ const hasChangeData = computed(() => {
   if (ticketClinicRef.value.ticketDiagnosis!.reason !== ticketDiagnosis.value.reason) {
     return true
   }
-  if (ticketClinicRef.value.ticketDiagnosis!.healthHistory !== ticketDiagnosis.value.healthHistory) {
+  if (
+    ticketClinicRef.value.ticketDiagnosis!.healthHistory !== ticketDiagnosis.value.healthHistory
+  ) {
     return true
   }
   if (ticketClinicRef.value.ticketDiagnosis!.summary !== ticketDiagnosis.value.summary) {
@@ -251,8 +253,8 @@ const handleFocus = (e: Event) => {
           (ticketClinicRef.ticketDiagnosis?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
-              thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
-              enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
+              thumbnail: i.link({ size: 200 }),
+              enlarged: i.link({ size: 1000 }),
               id: i.id,
             }))
         "

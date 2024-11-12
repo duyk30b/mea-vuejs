@@ -32,8 +32,8 @@ const startFetchData = async () => {
     const { data, meta } = await PrintHtmlApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { radiology: true },
-      filter: {},
+      relation: { paraclinical: true },
+      filter: { paraclinicalId: 0 },
       sort: { id: 'ASC' },
     })
 
@@ -44,11 +44,6 @@ const startFetchData = async () => {
   } finally {
     dataLoading.value = false
   }
-}
-
-const startSearch = async () => {
-  page.value = 1
-  startFetchData()
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -62,10 +57,10 @@ onBeforeMount(async () => {
   await startFetchData()
 })
 
-const handleClickDeletePrintHtml = async (id: number, name: string) => {
+const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHtmlType) => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa dữ liệu này ?',
-    content: `Bạn chắc chắn cần xóa bản ghi "${name}" ?`,
+    content: `Bạn chắc chắn cần xóa bản ghi "${PrintHtmlType[type]}" ?`,
     onOk: async () => {
       try {
         await PrintHtmlService.destroyOne(id)
@@ -83,7 +78,7 @@ const handleClickDeletePrintHtml = async (id: number, name: string) => {
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
         <IconSetting style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách nhóm CĐHA</span>
+        <span class="font-medium" style="font-size: 1.25rem">Danh sách nhóm cận lâm sàng</span>
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
@@ -127,8 +122,8 @@ const handleClickDeletePrintHtml = async (id: number, name: string) => {
           </tr>
           <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
             <td class="text-center">G{{ printHtml.id }}</td>
-            <td>{{ PrintHtmlType[printHtml.key] }}</td>
-            <td>{{ printHtml.radiology?.name }}</td>
+            <td>{{ PrintHtmlType[printHtml.type] }}</td>
+            <td>{{ printHtml.paraclinical?.name }}</td>
             <td>{{ printHtml.content.slice(0, 150) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]">
               <div class="flex justify-between">
@@ -139,7 +134,7 @@ const handleClickDeletePrintHtml = async (id: number, name: string) => {
                 </a>
                 <a
                   style="color: var(--text-red)"
-                  @click="handleClickDeletePrintHtml(printHtml.id, printHtml.key)">
+                  @click="handleClickDeletePrintHtml(printHtml.id, printHtml.type)">
                   <IconDelete width="24px" height="24px" />
                 </a>
               </div>

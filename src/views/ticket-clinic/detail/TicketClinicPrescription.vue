@@ -11,19 +11,19 @@ import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { PrintHtmlService, PrintHtmlType } from '../../../modules/print-html'
 import {
-  ticketClinicPrintPrescription,
-  ticketClinicPrintPrescriptionTemplate,
+  ticketClinicPrintPrescriptionDefault,
+  ticketClinicPrintPrescriptionCompiledTemplate,
 } from '../../../modules/print-html/print-content/ticket-clinic-print-prescription'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { TicketProduct, TicketProductType } from '../../../modules/ticket-product'
+import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer, customFilter } from '../../../utils'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
 const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { permissionIdMap, organization } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const productStore = useProductStore()
@@ -172,21 +172,6 @@ const changeItemPosition = (index: number, count: number) => {
   ticketProductPrescriptionList.value[index + count] = temp
 }
 
-const startPrint3 = async () => {
-  try {
-    const content = ticketClinicPrintPrescription(ticketClinicRef.value, '')
-    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(content)
-    pri.document.close()
-    pri.focus()
-    pri.print()
-  } catch (error) {
-    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
-  }
-}
-
 const startPrint = async () => {
   try {
     // const response = await fetch('/template/prescription.hbs')
@@ -198,13 +183,21 @@ const startPrint = async () => {
     //   visit: ticketClinicRef.value,
     // })
 
-    const printHtml = await PrintHtmlService.getOneByKey('PRESCRIPTION')
-    let content = ''
-    if (printHtml) {
-      content = ticketClinicPrintPrescriptionTemplate(ticketClinicRef.value, '', printHtml.content)
-    } else {
-      content = ticketClinicPrintPrescription(ticketClinicRef.value, '')
+    const printHtml = await PrintHtmlService.findOneBy({ type: 'PRESCRIPTION', paraclinicalId: 0 })
+    let htmlString = printHtml?.content
+    if (!htmlString) {
+      htmlString = await ticketClinicPrintPrescriptionDefault()
     }
+
+    const content = ticketClinicPrintPrescriptionCompiledTemplate({
+      organization,
+      ticket: ticketClinicRef.value,
+      customer: ticketClinicRef.value.customer!,
+      ticketProductPrescriptionList: ticketClinicRef.value.ticketProductPrescriptionList || [],
+      doctorName: '',
+      htmlString,
+    })
+
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
     const pri = iframePrint.contentWindow as Window
     pri.document.open()
@@ -261,6 +254,23 @@ const savePrescription = async () => {
         ? advice.value || ''
         : undefined,
   })
+}
+
+const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
+  await TicketProductApi.destroyZeroQuantity(ticketProductId)
+  const findIndexCurrent = ticketProductPrescriptionList.value.findIndex((i) => {
+    return i.id === ticketProductId
+  })
+  if (findIndexCurrent !== -1) {
+    ticketProductPrescriptionList.value.splice(findIndexCurrent, 1)
+  }
+
+  const findIndexRoot = ticketClinicRef.value.ticketProductPrescriptionList!.findIndex((i) => {
+    return i.id === ticketProductId
+  })
+  if (findIndexRoot !== -1) {
+    ticketClinicRef.value.ticketProductPrescriptionList!.splice(findIndexCurrent, 1)
+  }
 }
 </script>
 <template>
@@ -451,6 +461,7 @@ const savePrescription = async () => {
             <th>#</th>
             <th>Tên Thuốc</th>
             <th>SL kê</th>
+            <th>SL mua</th>
             <th>Đ.Vị</th>
             <th>Giá</th>
             <th>T.Tiền</th>
@@ -467,6 +478,7 @@ const savePrescription = async () => {
             <td>
               <div class="flex flex-col items-center">
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -481,6 +493,7 @@ const savePrescription = async () => {
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
+                  type="button"
                   style="
                     border: none;
                     font-size: 1.2rem;
@@ -534,9 +547,8 @@ const savePrescription = async () => {
                 </button>
               </div>
             </td>
-            <td class="text-center whitespace-nowrap">
-              {{ tpItem.unitName }}
-            </td>
+            <td class="text-center whitespace-nowrap">{{ tpItem.unitQuantity }}</td>
+            <td class="text-center whitespace-nowrap">{{ tpItem.unitName }}</td>
             <td class="text-right whitespace-nowrap">
               {{ formatMoney(tpItem.unitExpectedPrice || 0) }}
             </td>
@@ -545,7 +557,13 @@ const savePrescription = async () => {
             </td>
             <td class="text-center">
               <a
-                v-if="
+                v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered && tpItem.quantity == 0"
+                class="text-red-500"
+                @click="destroyTicketProductZeroQuantity(tpItem.id)">
+                <DeleteOutlined />
+              </a>
+              <a
+                v-else-if="
                   !(
                     tpItem.deliveryStatus === DeliveryStatus.Delivered ||
                     [TicketStatus.Debt, TicketStatus.Completed].includes(
@@ -557,14 +575,17 @@ const savePrescription = async () => {
                 @click="ticketProductPrescriptionList!.splice(index, 1)">
                 <DeleteOutlined />
               </a>
-              <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered">
+              <a-tooltip
+                v-else-if="
+                  tpItem.deliveryStatus === DeliveryStatus.Delivered && tpItem.quantity != 0
+                ">
                 <template #title>Đã xuất thuốc</template>
                 <ShoppingCartOutlined style="color: #52c41a; cursor: not-allowed !important" />
               </a-tooltip>
             </td>
           </tr>
           <tr>
-            <td colspan="5" class="text-right">
+            <td colspan="6" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

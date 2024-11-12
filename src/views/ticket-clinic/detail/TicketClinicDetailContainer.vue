@@ -27,6 +27,7 @@ import { TicketStatus, TicketType } from '../../../modules/ticket'
 import {
   TicketClinicApi,
   ticketClinicRef,
+  ticketRefDeliveryStatus,
   useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
@@ -35,9 +36,9 @@ import TicketClinicDiagnosisBase from './TicketClinicDiagnosisBase.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
 import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
+import TicketClinicParaclinical from './TicketClinicParaclinical.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
-import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
 
 const route = useRoute()
@@ -60,19 +61,21 @@ const startFetchData = async (ticketId: number) => {
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
-        ticketRadiologyList: { radiology: true },
+        ticketParaclinicalList: { paraclinical: true },
 
         ticketUserList: { user: true },
         toAppointment: true,
       },
     })
     if (!ticketData.ticketDiagnosis) {
-      ticketData.ticketDiagnosis = TicketDiagnosis.blank()
-      ticketData.ticketDiagnosis.ticketId = ticketId
+      const ticketDiagnosis = TicketDiagnosis.blank()
+      ticketDiagnosis.ticketId = ticketData.id
+      ticketDiagnosis.reason = ticketData.note
+      ticketData.ticketDiagnosis = ticketDiagnosis
     }
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
     if (!ticketData.ticketProductList) ticketData.ticketProductList = []
-    if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
+    if (!ticketData.ticketParaclinicalList) ticketData.ticketParaclinicalList = []
     ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
@@ -106,7 +109,7 @@ const startCloseVisit = async () => {
 }
 
 const clickCloseVisit = () => {
-  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketRefDeliveryStatus.value === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
@@ -115,10 +118,10 @@ const clickCloseVisit = () => {
       ],
     })
   }
-  if ((ticketClinicRef.value.ticketRadiologyList || []).find((i) => i.startedAt == null)) {
+  if ((ticketClinicRef.value.ticketParaclinicalList || []).find((i) => i.startedAt == null)) {
     return ModalStore.alert({
       title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
-      content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
+      content: 'Cần thực hiện phiếu cận lâm sàng trước khi đóng phiếu khám',
     })
   }
 
@@ -213,10 +216,10 @@ const clickCloseVisit = () => {
               Vật tư
             </VueTabMenu>
             <VueTabMenu
-              :tabKey="TicketClinicRadiology.__name!"
-              @active="router.push({ name: TicketClinicRadiology.__name })">
+              :tabKey="TicketClinicParaclinical.__name!"
+              @active="router.push({ name: TicketClinicParaclinical.__name })">
               <IconRadiology />
-              CĐHA
+              Cận lâm sàng
             </VueTabMenu>
             <VueTabMenu
               :tabKey="TicketClinicPrescription.__name!"
@@ -242,7 +245,7 @@ const clickCloseVisit = () => {
               TicketClinicDiagnosisEyeSpecial.__name,
               TicketClinicProcedure.__name,
               TicketClinicConsumable.__name,
-              TicketClinicRadiology.__name,
+              TicketClinicParaclinical.__name,
               TicketClinicPrescription.__name,
             ].join(',')
           ">
