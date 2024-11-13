@@ -60,5 +60,17 @@ export const useMeStore = defineStore('me-store', {
       }
       return TicketType.Clinic
     },
+
+    getTicketTypeAvailable() {
+      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization.permissionIds)
+      const ticketTypeListAvailable: TicketType[] = []
+      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
+        ticketTypeListAvailable.push(TicketType.Clinic)
+      }
+      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_EYE)) {
+        ticketTypeListAvailable.push(TicketType.Eye)
+      }
+      return ticketTypeListAvailable
+    },
   },
 })

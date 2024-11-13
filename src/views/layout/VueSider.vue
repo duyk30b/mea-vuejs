@@ -134,12 +134,12 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     <a-sub-menu
       v-if="
         permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] ||
-        permissionIdMap[PermissionId.MASTER_DATA_PARACLINICAL] ||
+        permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY] ||
         permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] ||
         permissionIdMap[PermissionId.MASTER_DATA_TICKET_SOURCE] ||
         permissionIdMap[PermissionId.MASTER_DATA_PRODUCT_GROUP] ||
         permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE_GROUP] ||
-        permissionIdMap[PermissionId.MASTER_DATA_PARACLINICAL_GROUP]
+        permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY_GROUP]
       "
       key="MasterData">
       <template #icon>
@@ -149,8 +149,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]" key="ProcedureList">
         <router-link :to="{ name: 'ProcedureList' }">Dịch vụ</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PARACLINICAL]" key="ParaclinicalList">
-        <router-link :to="{ name: 'ParaclinicalList' }">Cận lâm sàng</router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
+        <router-link :to="{ name: 'RadiologyList' }">Phiếu CĐHA</router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" key="WarehouseList">
         <router-link :to="{ name: 'WarehouseList' }">Danh sách kho</router-link>
@@ -171,9 +171,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'ProcedureGroupList' }">DS nhóm dịch vụ</router-link>
       </a-menu-item>
       <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PARACLINICAL_GROUP]"
-        key="ParaclinicalGroupList">
-        <router-link :to="{ name: 'ParaclinicalGroupList' }">DS nhóm cận lâm sàng</router-link>
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY_GROUP]"
+        key="RadiologyGroupList">
+        <router-link :to="{ name: 'RadiologyGroupList' }">DS nhóm CĐHA</router-link>
       </a-menu-item>
       <a-menu-item
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"

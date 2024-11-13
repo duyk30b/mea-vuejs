@@ -6,7 +6,7 @@ export enum TicketUserReferenceType {
   Ticket = 1,
   TicketProcedure = 2,
   TicketProduct = 3,
-  TicketParaclinical = 4,
+  TicketRadiology = 4,
 }
 
 export enum TicketUserType {
@@ -15,7 +15,7 @@ export enum TicketUserType {
   ProcedureSales = 3, // Sale chốt dịch vụ
   ProcedureTechnicianPrimary = 4, // Kỹ thuật viên chính
   ProcedureTechnicianSecondary = 5, // Kỹ thuật viên chính
-  ParaclinicalDoctor = 6, // Bác sĩ thực hiện cận lâm sàng
+  RadiologyDoctor = 6, // Bác sĩ thực hiện cận lâm sàng
 }
 
 export class TicketUser {

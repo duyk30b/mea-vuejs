@@ -5,24 +5,24 @@ export const masterDataRouter: RouteRecordRaw = {
   name: 'MasterData',
   children: [
     {
-      path: 'paraclinical',
-      name: 'Paraclinical',
-      redirect: () => ({ name: 'ParaclinicalList' }),
+      path: 'radiology',
+      name: 'Radiology',
+      redirect: () => ({ name: 'RadiologyList' }),
       children: [
         {
           path: 'list',
-          name: 'ParaclinicalList',
-          component: () => import('../views/master-data/paraclinical/ParaclinicalList.vue'),
-          meta: { title: 'Cận lâm sàng' },
+          name: 'RadiologyList',
+          component: () => import('../views/master-data/radiology/RadiologyList.vue'),
+          meta: { title: 'CĐHA' },
         },
         {
           path: 'upsert/:id?',
-          name: 'ParaclinicalUpsert',
-          component: () => import('../views/master-data/paraclinical/upsert/ParaclinicalUpsert.vue'),
+          name: 'RadiologyUpsert',
+          component: () => import('../views/master-data/radiology/upsert/RadiologyUpsert.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
-              if (route.query?.mode === 'UPDATE') return 'Cập nhật phiếu cận lâm sàng'
-              return 'Tạo mới phiếu cận lâm sàng'
+              if (route.query?.mode === 'UPDATE') return 'Cập nhật phiếu CĐHA'
+              return 'Tạo mới phiếu CĐHA'
             },
           },
         },
@@ -94,15 +94,15 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'paraclinical-group',
-      name: 'ParaclinicalGroup',
-      redirect: () => ({ name: 'ParaclinicalGroupList' }),
+      path: 'radiology-group',
+      name: 'RadiologyGroup',
+      redirect: () => ({ name: 'RadiologyGroupList' }),
       children: [
         {
           path: 'list',
-          name: 'ParaclinicalGroupList',
+          name: 'RadiologyGroupList',
           component: () =>
-            import('../views/master-data/paraclinical-group/ParaclinicalGroupList.vue'),
+            import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
           meta: { title: 'Dịch vụ' },
         },
       ],
@@ -121,7 +121,7 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'upsert/:id?',
           name: 'PrintHtmlUpsert',
-          component: () => import('../views/master-data/print-html/PrintHtmlUpsert.vue'),
+          component: () => import('../views/master-data/print-html/upsert/PrintHtmlUpsert.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
               if (route.query?.mode === 'UPDATE') return 'Cập nhật mẫu in'

@@ -1,29 +1,26 @@
-import { Paraclinical } from '../paraclinical'
-
-export const PrintHtmlType = {
-  DIAGNOSIS: 'Phiếu khám và chẩn đoán',
-  OPTOMETRY: 'Phiếu đo thị lực',
-  PRESCRIPTION: 'Đơn thuốc',
-  INVOICE: 'Hóa đơn',
-  PARACLINICAL: 'Phiếu cận lâm sàng',
+export const PrintHtmlIdDefault = {
+  INVOiCE: 1,
+  PRESCRIPTION: 2,
+  ENDOSCOPY: 3, // 'Nội soi'
+  ULTRASOUND: 4, // 'Siêu âm'
+  OPTOMETRY: 20, // Đo thị lực
 }
-
-export const PrintHtmlTypeList = Object.values(PrintHtmlType)
 
 export class PrintHtml {
   id: number
-  type: keyof typeof PrintHtmlType
-  paraclinicalId: number
+  name: string
   content: string // Dạng HTML
+  initVariable: string // Dạng JS
+  dataExample: string // Dạng JS
   updatedAt: number
-
-  paraclinical?: Paraclinical
 
   static init(): PrintHtml {
     const ins = new PrintHtml()
     ins.id = 0
-    ins.paraclinicalId = 0
+    ins.name = ''
     ins.content = ''
+    ins.initVariable = ''
+    ins.dataExample = '{}'
     return ins
   }
 
@@ -48,11 +45,6 @@ export class PrintHtml {
 
   static from(source: PrintHtml) {
     const target = PrintHtml.basic(source)
-    if (Object.prototype.hasOwnProperty.call(source, 'paraclinical')) {
-      target.paraclinical = target.paraclinical
-        ? Paraclinical.basic(target.paraclinical)
-        : target.paraclinical
-    }
     return target
   }
 
@@ -62,8 +54,7 @@ export class PrintHtml {
 
   static equal(a: PrintHtml, b: PrintHtml) {
     if (a.id != b.id) return false
-    if (a.type != b.type) return false
-    if (a.paraclinicalId != b.paraclinicalId) return false
+    if (a.name != b.name) return false
     if (a.content != b.content) return false
     if (a.updatedAt != b.updatedAt) return
     return true

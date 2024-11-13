@@ -55,20 +55,20 @@ const optionsFilter = computed(() => {
 
 watch(
   () => props.options, // mục đích của watch value là để tìm và show ra text
-  (newVal: { value: any; text: string; data?: any }[]) => {
+  (newOptions: { value: any; text: string; data?: any }[]) => {
     if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
-    const optionsStringifyNew = JSON.stringify(newVal)
+    const optionsStringifyNew = JSON.stringify(newOptions)
     if (optionsStringify.value === optionsStringifyNew) return
 
     optionsStringify.value = optionsStringifyNew
 
-    const findIndex = newVal.findIndex((item) => item.value === props.value)
+    const findIndex = newOptions.findIndex((item) => item.value === props.value)
     if (findIndex === -1) {
       itemSelected.value = {}
       searchText.value = ''
       emit('update:text', '')
     } else {
-      const item = newVal[findIndex]
+      const item = newOptions[findIndex]
       itemSelected.value = item
       searchText.value = item.text
       // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được

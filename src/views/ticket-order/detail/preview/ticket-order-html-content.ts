@@ -77,7 +77,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
       <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tiền hàng</b></td>
       <td colspan="2" style="text-align: right">
         <b>
-        ${formatMoney(ticket.productsMoney + ticket.proceduresMoney + ticket.paraclinicalMoney)}
+        ${formatMoney(ticket.productsMoney + ticket.proceduresMoney + ticket.radiologyMoney)}
         </b>
       </td>
     </tr>`

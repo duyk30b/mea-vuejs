@@ -16,7 +16,7 @@ import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { customFilter, timeToText } from '../../../utils'
+import { customFilter, DTimer, timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
 import { computed } from 'vue'
@@ -360,7 +360,7 @@ defineExpose({ focus })
             <div v-if="data.id">
               Lô {{ data.lotNumber }}
               <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
-                {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+                {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
               </span>
               - Tồn
               <b>{{ data.unitQuantity }}</b>
@@ -373,7 +373,7 @@ defineExpose({ focus })
             <div v-if="data?.id">
               Lô {{ data.lotNumber }}
               <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
-                {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+                {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
               </span>
               <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
                 - Tồn

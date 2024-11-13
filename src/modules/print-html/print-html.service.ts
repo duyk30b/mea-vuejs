@@ -1,29 +1,56 @@
 import { PrintHtmlApi } from './print-html.api'
-import { PrintHtmlGetOneQuery } from './print-html.dto'
-import type { PrintHtml, PrintHtmlType } from './print-html.model'
+import type { PrintHtml } from './print-html.model'
 
 export class PrintHtmlService {
-  static printHtmlMap: Record<string, PrintHtml | null> = {}
+  static loadedAll: boolean = false
+  static printHtmlAll: PrintHtml[] = []
 
-  static async findOneBy(options: { type: keyof typeof PrintHtmlType; paraclinicalId: number }) {
-    const { type, paraclinicalId } = options
-    const key = `${type}_${paraclinicalId}`
-    if (PrintHtmlService.printHtmlMap[key] === undefined) {
-      const print = await PrintHtmlApi.getOne({ filter: { type, paraclinicalId } })
-      PrintHtmlService.printHtmlMap[key] = print || null
+  static loadedExample = false
+  static printHtmlExampleList: PrintHtml[] = []
+
+  static async getAll() {
+    if (!PrintHtmlService.loadedAll) {
+      const fetchData = await PrintHtmlApi.getList({})
+      PrintHtmlService.printHtmlAll = fetchData.data
+      PrintHtmlService.loadedAll = true
     }
-    return PrintHtmlService.printHtmlMap[key]
+
+    return PrintHtmlService.printHtmlAll
+  }
+
+  static async getExampleList() {
+    if (!PrintHtmlService.loadedExample) {
+      PrintHtmlService.printHtmlExampleList = await PrintHtmlApi.exampleList()
+      PrintHtmlService.loadedExample = true
+    }
+
+    return PrintHtmlService.printHtmlExampleList
+  }
+
+  static async detail(id: number) {
+    await Promise.all([PrintHtmlService.getAll(), PrintHtmlService.getExampleList()])
+    return [...PrintHtmlService.printHtmlAll, ...PrintHtmlService.printHtmlExampleList].find(
+      (i) => {
+        return i.id === id
+      }
+    )
   }
 
   static async createOne(printHtml: PrintHtml) {
-    return await PrintHtmlApi.createOne(printHtml)
+    const result = await PrintHtmlApi.createOne(printHtml)
+    PrintHtmlService.loadedAll = false
+    return result
   }
 
-  static async updateOne(id: number, content: string) {
-    return await PrintHtmlApi.updateOne(id, content)
+  static async updateOne(id: number, printHtml: PrintHtml) {
+    const result = await PrintHtmlApi.updateOne(id, printHtml)
+    PrintHtmlService.loadedAll = false
+    return result
   }
 
   static async destroyOne(id: number) {
-    return await PrintHtmlApi.destroyOne(id)
+    const result = await PrintHtmlApi.destroyOne(id)
+    PrintHtmlService.loadedAll = false
+    return result
   }
 }

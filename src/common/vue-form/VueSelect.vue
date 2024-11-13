@@ -39,6 +39,7 @@ const showOptions = ref<boolean>(false)
 const itemSelected = ref<{ value?: any; text?: any; data?: any }>({})
 
 const optionsElement = ref<HTMLElement>()
+const optionsStringify = ref<string>('')
 
 watch(
   () => props.value, // mục đích của watch value là để tìm và show ra text
@@ -59,6 +60,11 @@ watch(
 watch(
   () => props.options, // mục đích của watch value là để tìm và show ra text
   (newOptions) => {
+    if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
+    const optionsStringifyNew = JSON.stringify(newOptions)
+    if (optionsStringify.value === optionsStringifyNew) return
+    optionsStringify.value = optionsStringifyNew
+
     const index = newOptions.findIndex((item) => {
       if (typeof item.value === 'object') {
         return JSON.stringify(item.value) === JSON.stringify(props.value)

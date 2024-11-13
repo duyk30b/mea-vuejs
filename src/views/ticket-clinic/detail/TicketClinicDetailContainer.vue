@@ -7,9 +7,10 @@ import {
   LoginOutlined,
   OneToOneOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconSetting } from '../../../common/icon'
 import {
   IconEyeGlasses,
   IconFluidMed,
@@ -36,10 +37,14 @@ import TicketClinicDiagnosisBase from './TicketClinicDiagnosisBase.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
 import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
-import TicketClinicParaclinical from './TicketClinicParaclinical.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
+import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
+import ModalTicketClinicDetailSettingData from './setting/ModalTicketClinicDetailSettingData.vue'
+
+const modalTicketClinicDetailSettingData =
+  ref<InstanceType<typeof ModalTicketClinicDetailSettingData>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -61,7 +66,7 @@ const startFetchData = async (ticketId: number) => {
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
-        ticketParaclinicalList: { paraclinical: true },
+        ticketRadiologyList: { radiology: true },
 
         ticketUserList: { user: true },
         toAppointment: true,
@@ -75,7 +80,7 @@ const startFetchData = async (ticketId: number) => {
     }
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
     if (!ticketData.ticketProductList) ticketData.ticketProductList = []
-    if (!ticketData.ticketParaclinicalList) ticketData.ticketParaclinicalList = []
+    if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
     ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
@@ -90,11 +95,12 @@ onBeforeMount(async () => {
 })
 
 const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    console.log('🚀 ~ file: VisitContainer.vue:60 ~ handleMenuSettingClick ~ menu.key:', menu.key)
-  }
-  if (menu.key === 'data-setting') {
-    console.log('🚀 ~ file: VisitContainer.vue:63 ~ handleMenuSettingClick ~ menu.key:', menu.key)
+  if (menu.key === 'SETTING_DATA') {
+    console.log(
+      '🚀 ~ file: TicketClinicDetailContainer.vue:98 ~ handleMenuSettingClick ~ menu:',
+      menu
+    )
+    modalTicketClinicDetailSettingData.value?.openModal()
   }
 }
 
@@ -118,10 +124,10 @@ const clickCloseVisit = () => {
       ],
     })
   }
-  if ((ticketClinicRef.value.ticketParaclinicalList || []).find((i) => i.startedAt == null)) {
+  if ((ticketClinicRef.value.ticketRadiologyList || []).find((i) => i.startedAt == null)) {
     return ModalStore.alert({
       title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
-      content: 'Cần thực hiện phiếu cận lâm sàng trước khi đóng phiếu khám',
+      content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
     })
   }
 
@@ -151,6 +157,7 @@ const clickCloseVisit = () => {
 </script>
 
 <template>
+  <ModalTicketClinicDetailSettingData ref="modalTicketClinicDetailSettingData" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
@@ -159,17 +166,17 @@ const clickCloseVisit = () => {
       </div>
     </div>
     <div class="page-header-setting">
-      <!-- <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
+            <!-- <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item> -->
+            <a-menu-item key="SETTING_DATA">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>
-      </a-dropdown> -->
+      </a-dropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
@@ -216,10 +223,10 @@ const clickCloseVisit = () => {
               Vật tư
             </VueTabMenu>
             <VueTabMenu
-              :tabKey="TicketClinicParaclinical.__name!"
-              @active="router.push({ name: TicketClinicParaclinical.__name })">
+              :tabKey="TicketClinicRadiology.__name!"
+              @active="router.push({ name: TicketClinicRadiology.__name })">
               <IconRadiology />
-              Cận lâm sàng
+              CĐHA
             </VueTabMenu>
             <VueTabMenu
               :tabKey="TicketClinicPrescription.__name!"
@@ -245,7 +252,7 @@ const clickCloseVisit = () => {
               TicketClinicDiagnosisEyeSpecial.__name,
               TicketClinicProcedure.__name,
               TicketClinicConsumable.__name,
-              TicketClinicParaclinical.__name,
+              TicketClinicRadiology.__name,
               TicketClinicPrescription.__name,
             ].join(',')
           ">

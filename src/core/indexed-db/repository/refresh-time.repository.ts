@@ -11,7 +11,7 @@ export type RefreshTimeCode =
   | 'CUSTOMER_SOURCE'
   | 'PRODUCT_GROUP'
   | 'PROCEDURE_GROUP'
-  | 'PARACLINICAL_GROUP'
+  | 'RADIOLOGY_GROUP'
 
 export type RefreshTime = {
   code: RefreshTimeCode

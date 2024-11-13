@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { formatNumber } from '../../utils'
+import { PrintHtmlIdDefault } from '../print-html'
 
 export const settingDefault = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -238,13 +239,17 @@ export const settingDefault = {
       createDraft: true,
     },
   },
-  SCREEN_VISIT_CREATE: {
-    phone: true,
-    birthday: true,
-    gender: true,
-    identityCard: true,
-    address: true,
-    relative: true,
+
+  SCREEN_APPOINTMENT_LIST: {
+    fromDateToDateDistance: -1,
+  },
+
+  TICKET_CLINIC_DETAIL: {
+    printHtmlIdSetting: {
+      invoice: PrintHtmlIdDefault.INVOiCE,
+      prescription: PrintHtmlIdDefault.PRESCRIPTION,
+      diagnosisEyeSpecial: PrintHtmlIdDefault.OPTOMETRY,
+    },
   },
 }
 

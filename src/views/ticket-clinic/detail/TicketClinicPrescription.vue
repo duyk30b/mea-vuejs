@@ -9,16 +9,13 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../modules/batch'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtmlService, PrintHtmlType } from '../../../modules/print-html'
-import {
-  ticketClinicPrintPrescriptionDefault,
-  ticketClinicPrintPrescriptionCompiledTemplate,
-} from '../../../modules/print-html/print-content/ticket-clinic-print-prescription'
+import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer, customFilter } from '../../../utils'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -183,19 +180,16 @@ const startPrint = async () => {
     //   visit: ticketClinicRef.value,
     // })
 
-    const printHtml = await PrintHtmlService.findOneBy({ type: 'PRESCRIPTION', paraclinicalId: 0 })
-    let htmlString = printHtml?.content
-    if (!htmlString) {
-      htmlString = await ticketClinicPrintPrescriptionDefault()
+    const printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.prescription
+    const printHtml = await PrintHtmlService.detail(printHtmlId)
+    if (!printHtml) {
+      return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = ticketClinicPrintPrescriptionCompiledTemplate({
+    const content = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
-      customer: ticketClinicRef.value.customer!,
-      ticketProductPrescriptionList: ticketClinicRef.value.ticketProductPrescriptionList || [],
-      doctorName: '',
-      htmlString,
+      printHtml,
     })
 
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement

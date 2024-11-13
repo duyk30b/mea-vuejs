@@ -1,14 +1,10 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { PrintHtmlType } from './print-html.model'
 
 export class PrintHtmlGetQuery {
   page?: number
   limit?: number
-  relation?: { paraclinical?: boolean }
-  filter?: {
-    type?: keyof typeof PrintHtmlType
-    paraclinicalId?: number
-  }
+  relation?: {}
+  filter?: {}
 
   sort?: {
     id?: 'ASC' | 'DESC'

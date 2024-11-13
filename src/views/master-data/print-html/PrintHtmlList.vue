@@ -6,12 +6,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import {
-  PrintHtml,
-  PrintHtmlApi,
-  PrintHtmlType,
-  PrintHtmlService,
-} from '../../../modules/print-html'
+import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../modules/print-html'
 
 const meStore = useMeStore()
 
@@ -32,8 +27,8 @@ const startFetchData = async () => {
     const { data, meta } = await PrintHtmlApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { paraclinical: true },
-      filter: { paraclinicalId: 0 },
+      relation: {},
+      filter: {},
       sort: { id: 'ASC' },
     })
 
@@ -57,13 +52,13 @@ onBeforeMount(async () => {
   await startFetchData()
 })
 
-const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHtmlType) => {
+const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
   ModalStore.confirm({
     title: 'Bạn có chắc muốn xóa dữ liệu này ?',
-    content: `Bạn chắc chắn cần xóa bản ghi "${PrintHtmlType[type]}" ?`,
+    content: `Bạn chắc chắn cần xóa bản ghi "${printHtml.name}" ?`,
     onOk: async () => {
       try {
-        await PrintHtmlService.destroyOne(id)
+        await PrintHtmlService.destroyOne(printHtml.id)
         await startFetchData()
       } catch (error) {
         console.log('🚀 ~ file: PrintHtmlList.vue:79 ~ onOk: ~ error:', error)
@@ -78,7 +73,7 @@ const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHt
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
         <IconSetting style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách nhóm cận lâm sàng</span>
+        <span class="font-medium" style="font-size: 1.25rem">Danh sách mẫu in</span>
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
@@ -96,9 +91,7 @@ const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHt
         <thead>
           <tr>
             <th style="width: 100px">ID</th>
-            <th>Loại</th>
-            <th>-</th>
-            <th>Data</th>
+            <th>Tên</th>
             <th style="width: 100px"></th>
           </tr>
         </thead>
@@ -121,10 +114,8 @@ const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHt
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-            <td class="text-center">G{{ printHtml.id }}</td>
-            <td>{{ PrintHtmlType[printHtml.type] }}</td>
-            <td>{{ printHtml.paraclinical?.name }}</td>
-            <td>{{ printHtml.content.slice(0, 150) }}</td>
+            <td class="text-center">P{{ printHtml.id }}</td>
+            <td>{{ printHtml.name }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]">
               <div class="flex justify-between">
                 <a
@@ -132,9 +123,7 @@ const handleClickDeletePrintHtml = async (id: number, type: keyof typeof PrintHt
                   @click="$router.push({ name: 'PrintHtmlUpsert', params: { id: printHtml.id } })">
                   <IconEditSquare width="24px" height="24px" />
                 </a>
-                <a
-                  style="color: var(--text-red)"
-                  @click="handleClickDeletePrintHtml(printHtml.id, printHtml.type)">
+                <a style="color: var(--text-red)" @click="handleClickDeletePrintHtml(printHtml)">
                   <IconDelete width="24px" height="24px" />
                 </a>
               </div>

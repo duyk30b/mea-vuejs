@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { formatPhone, timeToText } from '../../../utils'
+import { DTimer, formatPhone } from '../../../utils'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
   customer: () => Customer.blank(),
@@ -34,7 +34,7 @@ const { formatMoney } = settingStore
       <tr>
         <td class="px-2 py-1 whitespace-nowrap">Ngày sinh</td>
         <td class="px-2">
-          {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
+          {{ DTimer.timeToText(customer.birthday, 'DD/MM/YYYY') }}
         </td>
       </tr>
       <tr>

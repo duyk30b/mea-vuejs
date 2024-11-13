@@ -18,7 +18,7 @@ type DataResponseType = {
   sumTotalCostAmount: number
   sumProceduresMoney: number
   sumProductsMoney: number
-  sumParaclinicalMoney: number
+  sumRadiologyMoney: number
   sumSurcharge: number
   sumExpense: number
   sumDiscountMoney: number
@@ -266,7 +266,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
             <th>Tổng tiền</th>
             <th>Tiền sản phẩm</th>
             <th>Tiền dịch vụ</th>
-            <th>Tiền cận lâm sàng</th>
+            <th>Tiền CĐHA</th>
             <th>Tổng vốn</th>
             <th>Tổng phụ phí</th>
             <th>Tổng chi phí</th>
@@ -281,7 +281,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
             <td class="text-right">{{ formatMoney(item.sumTotalMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumProductsMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumProceduresMoney) }}</td>
-            <td class="text-right">{{ formatMoney(item.sumParaclinicalMoney) }}</td>
+            <td class="text-right">{{ formatMoney(item.sumRadiologyMoney) }}</td>
             <td class="text-right">{{ formatMoney(item.sumTotalCostAmount) }}</td>
             <td class="text-right">{{ formatMoney(item.sumSurcharge) }}</td>
             <td class="text-right">{{ formatMoney(item.sumExpense) }}</td>

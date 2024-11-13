@@ -25,11 +25,11 @@ watchEffect(() => {
   const proceduresMoney = ticket.value.ticketProcedureList!.reduce((acc, item) => {
     return acc + item.actualPrice * item.quantity
   }, 0)
-  const paraclinicalMoney = (ticket.value.ticketParaclinicalList || []).reduce((acc, item) => {
+  const radiologyMoney = (ticket.value.ticketRadiologyList || []).reduce((acc, item) => {
     return acc + item.actualPrice
   }, 0)
 
-  const itemsActualMoney = productsMoney + proceduresMoney + paraclinicalMoney
+  const itemsActualMoney = productsMoney + proceduresMoney + radiologyMoney
 
   let discountMoney = 0
   let discountPercent = 0
@@ -54,7 +54,7 @@ watchEffect(() => {
   ticket.value.totalCostAmount = totalCostAmount
   ticket.value.productsMoney = productsMoney
   ticket.value.proceduresMoney = proceduresMoney
-  ticket.value.paraclinicalMoney = paraclinicalMoney
+  ticket.value.radiologyMoney = radiologyMoney
   ticket.value.discountMoney = discountMoney
   ticket.value.discountPercent = discountPercent
   ticket.value.discountType = discountType

@@ -16,9 +16,9 @@ import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketOrderExpenseList from './TicketOrderExpenseList.vue'
@@ -29,7 +29,7 @@ import TicketOrderSurchargeList from './TicketOrderSurchargeList.vue'
 import ModalDataTicketOrder from './modal-setting/ModalDataTicketOrder.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
 import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
-import { TicketOrderApi } from '../../../modules/ticket-order'
+import { DTimer } from '../../../utils'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -434,7 +434,7 @@ const handleChangeTabs = (activeKey: any) => {
                 <div>
                   <b>{{ data.fullName }}</b>
                   - {{ data.phone }} -
-                  {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
+                  {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div>{{ data.addressString }}</div>
               </template>

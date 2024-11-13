@@ -3,7 +3,7 @@ import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
-import { IconFileSearch, IconTrash } from '../../common/icon'
+import { IconFileSearch, IconSetting, IconTrash } from '../../common/icon'
 import { IconEditSquare } from '../../common/icon-google'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputOptions, VueSelect } from '../../common/vue-form'
@@ -16,17 +16,22 @@ import { DTimer, formatPhone } from '../../utils'
 import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
 import AppointmentStatusTag from './AppointmentStatusTag.vue'
 import ModalAppointmentRegisterTicket from './ModalAppointmentRegisterTicketClinic.vue'
+import ModalAppointmentListSettingScreen from './setting/ModalAppointmentListSettingScreen.vue'
 import ModalAppointmentUpsert from './ModalAppointmentUpsert.vue'
+import { useSettingStore } from '../../modules/_me/setting.store'
 
 const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
 const modalAppointmentRegisterTicket = ref<InstanceType<typeof ModalAppointmentRegisterTicket>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
+const modalAppointmentListSettingScreen =
+  ref<InstanceType<typeof ModalAppointmentListSettingScreen>>()
 
 const router = useRouter()
 const route = useRoute()
 
 const customerStore = useCustomerStore()
 const meStore = useMeStore()
+const settingStore = useSettingStore()
 const { permissionIdMap } = meStore
 
 const appointmentList = ref<Appointment[]>([])
@@ -36,9 +41,17 @@ const customerId = ref<number>()
 
 const appointmentStatusList = ref<AppointmentStatus[]>([])
 
-const startDate = DTimer.startOfDate(new Date())
-const fromTime = ref<number>(startDate.getTime())
-const toTime = ref<number>()
+const startTime = DTimer.startOfDate(new Date()).getTime()
+let toTime: number | null = 0
+if (settingStore.SCREEN_APPOINTMENT_LIST.fromDateToDateDistance !== -1) {
+  toTime =
+    startTime +
+    Number(settingStore.SCREEN_APPOINTMENT_LIST.fromDateToDateDistance) * 24 * 60 * 60 * 1000
+} else {
+  toTime = null
+}
+const fromDate = ref<number>(startTime)
+const toDate = ref<number | null>(toTime)
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('APPOINTMENT_PAGINATION_LIMIT')) || 10)
@@ -56,10 +69,10 @@ const startFetchData = async () => {
       relation: { customer: true },
       filter: {
         registeredAt:
-          fromTime.value || toTime.value
+          fromDate.value || toDate.value
             ? {
-                GTE: fromTime.value ? fromTime.value : undefined,
-                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+                GTE: fromDate.value ? fromDate.value : undefined,
+                LT: toDate.value ? toDate.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
         customerId: customerId.value ? customerId.value : undefined,
@@ -159,12 +172,21 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
   })
   window.open(route.href, '_blank')
 }
+
+const handleMenuSettingClick = (menu: { key: string }) => {
+  if (menu.key === 'SETTING_SCREEN') {
+    modalAppointmentListSettingScreen.value?.openModal()
+  }
+}
 </script>
 
 <template>
   <ModalAppointmentUpsert ref="modalAppointmentUpsert" @success="startFetchData" />
   <ModalAppointmentRegisterTicket ref="modalAppointmentRegisterTicket" @success="startFetchData" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
+  <ModalAppointmentListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalAppointmentListSettingScreen" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
@@ -183,7 +205,22 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting"></div>
+    <div class="flex mr-2 gap-8">
+      <span style="cursor: pointer">
+        <a-dropdown
+          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          trigger="click">
+          <span>
+            <IconSetting width="20" height="20" />
+          </span>
+          <template #overlay>
+            <a-menu @click="handleMenuSettingClick">
+              <a-menu-item key="SETTING_SCREEN">Cài đặt hiển thị</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
+      </span>
+    </div>
   </div>
 
   <div class="page-main">
@@ -216,7 +253,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         <div>Từ ngày</div>
         <div>
           <InputDate
-            v-model:value="fromTime"
+            v-model:value="fromDate"
             type-parser="number"
             class="w-full"
             @selectTime="handleChangeTime" />
@@ -227,7 +264,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
         <div>Đến ngày</div>
         <div>
           <InputDate
-            v-model:value="toTime"
+            v-model:value="toDate"
             type-parser="number"
             class="w-full"
             @selectTime="handleChangeTime" />

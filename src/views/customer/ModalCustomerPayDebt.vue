@@ -8,9 +8,8 @@ import { InputMoney, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, useCustomerStore } from '../../modules/customer'
-import { VoucherType } from '../../modules/enum'
-import { TicketApi, TicketStatus, TicketType, type Ticket } from '../../modules/ticket'
-import { timeToText } from '../../utils'
+import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { DTimer } from '../../utils'
 import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -161,7 +160,9 @@ defineExpose({ openModal })
               <tr v-for="(ticketPayment, index) in ticketPaymentList" :key="index">
                 <td>
                   <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
-                  <div>{{ timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
+                  <div>
+                    {{ DTimer.timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}
+                  </div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(ticketPayment.ticket.debt) }}

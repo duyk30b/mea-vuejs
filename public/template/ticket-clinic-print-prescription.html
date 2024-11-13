@@ -39,10 +39,10 @@
       <tr>
         <td style="width: 50%">
           <p>${organization.name} </p>
-          <p>${organization.phone} </p>
+          <p>${DString.formatPhone(organization.phone)} </p>
         </td>
         <td style="width: 50%; text-align:right">
-          <p>Mã KH: C${customer.id}  </p>
+          <p>Mã KH: C${ticket.customerId}  </p>
           <p>Mã Phiếu: T${ticket.id} </p>
         </td>
       </tr>
@@ -56,30 +56,30 @@
       <tr>
         <td> Họ tên </td>
         <td style="padding-right: 10px">:</td>
-        <td> ${customer?.fullName} </td>
+        <td> ${ticket.customer?.fullName} </td>
         <td style="white-space: no-wrap; padding-left: 48px;">
-          - Ngày sinh: ${DTimer.timeToText(customer?.birthday, 'DD/MM/YYYY')}
+          - Ngày sinh: ${DTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY')}
         </td>
       </tr>
       <tr>
         <td> SĐT </td>
         <td>:</td>
-        <td> ${formatPhone(customer?.phone)} </td>
+        <td> ${DString.formatPhone(ticket.customer?.phone)} </td>
         <td style="white-space: no-wrap; padding-left: 48px;">
           - Giới tính: ${
-            customer?.gender === 1 ? 'Nam' : customer?.gender === 0 ? 'Nữ' : ''
+            ticket.customer?.gender === 1 ? 'Nam' : ticket.customer?.gender === 0 ? 'Nữ' : ''
           }
         </td>
       </tr>
       <tr>
         <td> Địa chỉ </td>
         <td>:</td>
-        <td colspan="2"> ${customer?.addressString} </td>
+        <td colspan="2"> ${ticket.customer?.addressString} </td>
       </tr>
       <tr>
         <td style="width: 100px;"> Chẩn đoán </td>
         <td>:</td>  
-        <td colspan="2"> ${ticket.ticketDiagnosis?.diagnosis} </td>
+        <td colspan="2"> ${ticket.ticketDiagnosis?.diagnosis || ''} </td>
       </tr>
     </table>
 
@@ -93,7 +93,7 @@
         </tr>
       </thead>
       <tbody>
-        ${(ticketProductPrescriptionList || [])
+        ${(ticket.ticketProductPrescriptionList || [])
           .map((i, index) => {
             return `
             <tr>
@@ -121,13 +121,13 @@
         <td style="width: 70%; vertical-align: top;">
           <div style="font-style: italic; text-decoration: underline;">Lời dặn: </div>
           <div style="padding-top: 10px;">
-            ${ticket.ticketDiagnosis?.advice}
+            ${ticket.ticketDiagnosis?.advice || ''}
           </div>
         </td>
         <td style="width: 30%; text-align: center; vertical-align: top;"> 
           <div> Bác sĩ kê đơn </div>
           <div style="margin-top: 100px">
-            ${doctorName}
+            ${(ticket.userList || []).find(i=>i.roleId===1)?.fullName || ''}
           </div>
         </td>
       </tr>

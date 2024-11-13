@@ -12,7 +12,7 @@ export class TicketGetQuery {
     ticketProductConsumableList?: { product?: boolean; batch?: boolean } | false
     ticketProductPrescriptionList?: { product?: boolean; batch?: boolean } | false
     ticketProcedureList?: { procedure?: boolean } | false
-    ticketParaclinicalList?: { paraclinical?: boolean } | false
+    ticketRadiologyList?: { radiology?: boolean } | false
     ticketDiagnosis?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean

@@ -7,7 +7,7 @@ import {
   type PrintHtmlGetOneQuery,
   type PrintHtmlPaginationQuery,
 } from './print-html.dto'
-import { PrintHtml, PrintHtmlType } from './print-html.model'
+import { PrintHtml } from './print-html.model'
 
 export class PrintHtmlApi {
   static async pagination(options: PrintHtmlPaginationQuery) {
@@ -19,6 +19,12 @@ export class PrintHtmlApi {
       meta,
       data: PrintHtml.fromList(data),
     }
+  }
+
+  static async exampleList() {
+    const response = await AxiosInstance.get('/print-html/example-list')
+    const { data, time } = response.data as BaseResponse
+    return PrintHtml.fromList(data)
   }
 
   static async getList(options: PrintHtmlGetListQuery) {
@@ -49,17 +55,21 @@ export class PrintHtmlApi {
 
   static async createOne(printHtml: PrintHtml) {
     const response = await AxiosInstance.post('/print-html/create', {
-      type: printHtml.type,
+      name: printHtml.name || '',
       content: printHtml.content || '',
-      paraclinicalId: printHtml.type === PrintHtmlType.PARACLINICAL ? printHtml.paraclinicalId : 0,
+      initVariable: printHtml.initVariable || '',
+      dataExample: printHtml.dataExample || '',
     })
     const { data } = response.data as BaseResponse<{ printHtml: any }>
     return PrintHtml.from(data.printHtml)
   }
 
-  static async updateOne(id: number, content: string) {
+  static async updateOne(id: number, printHtml: PrintHtml) {
     const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
-      content,
+      name: printHtml.name,
+      content: printHtml.content || '',
+      initVariable: printHtml.initVariable || '',
+      dataExample: printHtml.dataExample || '',
     })
     const { data } = response.data as BaseResponse<{ printHtml: any }>
     return PrintHtml.from(data.printHtml)

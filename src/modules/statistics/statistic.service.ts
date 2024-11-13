@@ -135,7 +135,7 @@ export class StatisticService {
           sumTotalCostAmount: number
           sumProceduresMoney: number
           sumProductsMoney: number
-          sumParaclinicalMoney: number
+          sumRadiologyMoney: number
           sumSurcharge: number
           sumExpense: number
           sumDiscountMoney: number

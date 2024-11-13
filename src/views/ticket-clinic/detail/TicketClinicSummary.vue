@@ -10,28 +10,28 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus, DiscountType, PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtmlService } from '../../../modules/print-html'
+import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef, ticketRefDeliveryStatus } from '../../../modules/ticket-clinic'
+import {
+  TicketClinicApi,
+  ticketClinicRef,
+  ticketRefDeliveryStatus,
+} from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { TicketParaclinical } from '../../../modules/ticket-paraclinical'
+import { TicketRadiology } from '../../../modules/ticket-radiology'
 import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
-import ModalParaclinicalDetail from '../../master-data/paraclinical/detail/ModalParaclinicalDetail.vue'
+import ModalRadiologyDetail from '../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from './modal/ModalTicketClinicReturnProduct.vue'
-import {
-  ticketClinicPrintInvoiceCompiledTemplate,
-  ticketClinicPrintInvoiceDefault,
-} from '../../../modules/print-html/print-content/ticket-clinic-print-invoice'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-const modalParaclinicalDetail = ref<InstanceType<typeof ModalParaclinicalDetail>>()
+const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -41,7 +41,7 @@ const { permissionIdMap, organization } = meStore
 const ticketProductConsumableList = ref<TicketProduct[]>([])
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
 const ticketProcedureList = ref<TicketProcedure[]>([])
-const ticketParaclinicalList = ref<TicketParaclinical[]>([])
+const ticketRadiologyList = ref<TicketRadiology[]>([])
 
 const saveLoading = ref(false)
 const sendProductLoading = ref(false)
@@ -73,9 +73,9 @@ watch(
   { immediate: true }
 )
 watch(
-  () => ticketClinicRef.value.ticketParaclinicalList,
+  () => ticketClinicRef.value.ticketRadiologyList,
   (newValue, oldValue) => {
-    ticketParaclinicalList.value = TicketParaclinical.fromList(newValue || [])
+    ticketRadiologyList.value = TicketRadiology.fromList(newValue || [])
   },
   { immediate: true }
 )
@@ -98,8 +98,8 @@ const proceduresMoney = computed(() => {
   }, 0)
 })
 
-const paraclinicalMoney = computed(() => {
-  return ticketParaclinicalList.value.reduce((acc, item) => {
+const radiologyMoney = computed(() => {
+  return ticketRadiologyList.value.reduce((acc, item) => {
     return acc + item.actualPrice
   }, 0)
 })
@@ -133,9 +133,9 @@ const disabledSave = computed(() => {
     return false
   }
   if (
-    !TicketParaclinical.equalList(
-      ticketParaclinicalList.value,
-      ticketClinicRef.value.ticketParaclinicalList || []
+    !TicketRadiology.equalList(
+      ticketRadiologyList.value,
+      ticketClinicRef.value.ticketRadiologyList || []
     )
   ) {
     return false
@@ -238,24 +238,24 @@ const handleChangeTicketProductConsumableDiscountPercent = (
   ticketProductConsumableList.value[index].discountType = DiscountType.Percent
 }
 
-const handleChangeTicketParaclinicalDiscountMoney = (discountMoney: number, index: number) => {
-  const expectedPrice = ticketParaclinicalList.value[index].expectedPrice || 0
+const handleChangeTicketRadiologyDiscountMoney = (discountMoney: number, index: number) => {
+  const expectedPrice = ticketRadiologyList.value[index].expectedPrice || 0
   const discountPercent = expectedPrice == 0 ? 0 : Math.floor((discountMoney * 100) / expectedPrice)
   const actualPrice = expectedPrice - discountMoney
-  ticketParaclinicalList.value[index].discountMoney = discountMoney
-  ticketParaclinicalList.value[index].discountPercent = discountPercent
-  ticketParaclinicalList.value[index].actualPrice = actualPrice
-  ticketParaclinicalList.value[index].discountType = DiscountType.VND
+  ticketRadiologyList.value[index].discountMoney = discountMoney
+  ticketRadiologyList.value[index].discountPercent = discountPercent
+  ticketRadiologyList.value[index].actualPrice = actualPrice
+  ticketRadiologyList.value[index].discountType = DiscountType.VND
 }
 
-const handleChangeTicketParaclinicalDiscountPercent = (discountPercent: number, index: number) => {
-  const expectedPrice = ticketParaclinicalList.value[index].expectedPrice || 0
+const handleChangeTicketRadiologyDiscountPercent = (discountPercent: number, index: number) => {
+  const expectedPrice = ticketRadiologyList.value[index].expectedPrice || 0
   const discountMoney = Math.floor((discountPercent * expectedPrice) / 100)
   const actualPrice = expectedPrice - discountMoney
-  ticketParaclinicalList.value[index].discountPercent = discountPercent
-  ticketParaclinicalList.value[index].discountMoney = discountMoney
-  ticketParaclinicalList.value[index].actualPrice = actualPrice
-  ticketParaclinicalList.value[index].discountType = DiscountType.Percent
+  ticketRadiologyList.value[index].discountPercent = discountPercent
+  ticketRadiologyList.value[index].discountMoney = discountMoney
+  ticketRadiologyList.value[index].actualPrice = actualPrice
+  ticketRadiologyList.value[index].discountType = DiscountType.Percent
 }
 
 const updateTicketProductConsumableQuantity = (index: number, unitQuantity: number) => {
@@ -316,8 +316,8 @@ const saveTicketItemsMoney = async () => {
       ticketProcedureList: ticketProcedureList.value.filter((item, index) => {
         return !TicketProcedure.equal(item, ticketClinicRef.value.ticketProcedureList![index])
       }),
-      ticketParaclinicalList: ticketParaclinicalList.value.filter((item, index) => {
-        return !TicketParaclinical.equal(item, ticketClinicRef.value.ticketParaclinicalList![index])
+      ticketRadiologyList: ticketRadiologyList.value.filter((item, index) => {
+        return !TicketRadiology.equal(item, ticketClinicRef.value.ticketRadiologyList![index])
       }),
     })
   } catch (e) {
@@ -426,17 +426,16 @@ const startPrint = async () => {
     //   visit: ticketClinicRef.value,
     // })
 
-    const printHtml = await PrintHtmlService.findOneBy({ type: 'INVOICE', paraclinicalId: 0 })
-    let htmlString = printHtml?.content
-    if (!htmlString) {
-      htmlString = await ticketClinicPrintInvoiceDefault()
+    const printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.invoice
+    const printHtml = await PrintHtmlService.detail(printHtmlId)
+    if (!printHtml) {
+      return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = ticketClinicPrintInvoiceCompiledTemplate({
+    const content = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
-      customer: ticketClinicRef.value.customer!,
-      htmlString,
+      printHtml,
     })
 
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
@@ -456,7 +455,7 @@ const startPrint = async () => {
   <ModalTicketClinicReturnProduct ref="modalTicketClinicReturnProduct" />
   <ModalProductDetail ref="modalProductDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalParaclinicalDetail ref="modalParaclinicalDetail" />
+  <ModalRadiologyDetail ref="modalRadiologyDetail" />
   <div class="mt-4 flex gap-4">
     <VueButton
       class="ml-auto"
@@ -954,7 +953,7 @@ const startPrint = async () => {
           </tr>
         </tbody>
       </template>
-      <template v-if="ticketParaclinicalList.length">
+      <template v-if="ticketRadiologyList.length">
         <thead>
           <tr>
             <th>#</th>
@@ -965,25 +964,25 @@ const startPrint = async () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ticketParaclinical, index) in ticketParaclinicalList || []" :key="index">
+          <tr v-for="(ticketRadiology, index) in ticketRadiologyList || []" :key="index">
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               {{ index + 1 }}
             </td>
             <td colspan="4">
               <div class="flex items-center gap-1">
-                <span>{{ ticketParaclinical.paraclinical?.name }}</span>
+                <span>{{ ticketRadiology.radiology?.name }}</span>
                 <a
                   style="line-height: 0"
-                  @click="modalParaclinicalDetail?.openModal(ticketParaclinical.paraclinical!)">
+                  @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)">
                   <IconFileSearch />
                 </a>
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
-              <div v-if="ticketParaclinical.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(ticketParaclinical.expectedPrice) }}</del>
+              <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
               </div>
-              <div>{{ formatMoney(ticketParaclinical.actualPrice) }}</div>
+              <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
             </td>
 
             <td class="text-center" style="width: 40px">
@@ -998,14 +997,14 @@ const startPrint = async () => {
                   <div>
                     Chiết khấu (Tiền hàng:
                     <b>
-                      {{ formatMoney(ticketParaclinical.expectedPrice) }}
+                      {{ formatMoney(ticketRadiology.expectedPrice) }}
                     </b>
                     )
                   </div>
                   <div class="mt-2">
                     <div>
                       <InputNumber
-                        :value="ticketParaclinical.discountMoney"
+                        :value="ticketRadiology.discountMoney"
                         append="VNĐ"
                         :disabled="
                           [TicketStatus.Debt, TicketStatus.Completed].includes(
@@ -1013,13 +1012,13 @@ const startPrint = async () => {
                           )
                         "
                         @update:value="
-                          (e: number) => handleChangeTicketParaclinicalDiscountMoney(e, index)
+                          (e: number) => handleChangeTicketRadiologyDiscountMoney(e, index)
                         " />
                     </div>
                     <div class="mt-2">
                       <div class="w-full">
                         <InputNumber
-                          :value="ticketParaclinical.discountPercent"
+                          :value="ticketRadiology.discountPercent"
                           append="%"
                           :disabled="
                             [TicketStatus.Debt, TicketStatus.Completed].includes(
@@ -1027,34 +1026,34 @@ const startPrint = async () => {
                             )
                           "
                           @update:value="
-                            (e: number) => handleChangeTicketParaclinicalDiscountPercent(e, index)
+                            (e: number) => handleChangeTicketRadiologyDiscountPercent(e, index)
                           " />
                       </div>
                     </div>
                   </div>
                 </template>
                 <a-tag
-                  v-if="ticketParaclinical.discountType === 'VNĐ'"
+                  v-if="ticketRadiology.discountType === 'VNĐ'"
                   color="success"
                   style="cursor: pointer">
-                  {{ formatMoney(ticketParaclinical.discountMoney) }}
+                  {{ formatMoney(ticketRadiology.discountMoney) }}
                 </a-tag>
                 <a-tag
-                  v-if="ticketParaclinical.discountType === '%'"
+                  v-if="ticketRadiology.discountType === '%'"
                   color="success"
                   style="cursor: pointer">
-                  {{ ticketParaclinical.discountPercent || 0 }}%
+                  {{ ticketRadiology.discountPercent || 0 }}%
                 </a-tag>
               </a-popconfirm>
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(ticketParaclinical.actualPrice) }}
+              {{ formatMoney(ticketRadiology.actualPrice) }}
             </td>
           </tr>
           <tr>
             <td class="uppercase text-right" colspan="7">Tiền CHẨN ĐOÁN HÌNH ẢNH</td>
             <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(paraclinicalMoney) }}
+              {{ formatMoney(radiologyMoney) }}
             </td>
           </tr>
         </tbody>
@@ -1064,7 +1063,7 @@ const startPrint = async () => {
           <td class="uppercase text-right font-bold" colspan="7">Tổng tiền</td>
           <td class="font-bold text-right whitespace-nowrap">
             {{
-              formatMoney(consumableMoney + prescriptionMoney + proceduresMoney + paraclinicalMoney)
+              formatMoney(consumableMoney + prescriptionMoney + proceduresMoney + radiologyMoney)
             }}
           </td>
         </tr>

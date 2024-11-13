@@ -22,7 +22,7 @@ export class TicketProcedureApi {
   static async detail(id: number, options: TicketProcedureDetailQuery) {
     const params = TicketProcedureGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/ticket-paraclinical/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/ticket-radiology/detail/${id}`, { params })
     const { data } = response.data as BaseResponse<{ ticketProcedure: any }>
     return TicketProcedure.from(data.ticketProcedure)
   }

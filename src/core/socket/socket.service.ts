@@ -9,9 +9,9 @@ import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { ticketClinicList, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
-import { TicketParaclinical } from '../../modules/ticket-paraclinical'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
+import { TicketRadiology } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
@@ -190,45 +190,45 @@ export class SocketService {
     }
   }
 
-  static async listenTicketClinicUpdateTicketParaclinicalList(data: {
+  static async listenTicketClinicUpdateTicketRadiologyList(data: {
     ticketId: number
-    ticketParaclinicalList: any[]
+    ticketRadiologyList: any[]
   }) {
     const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
     if (ticketFind) {
-      ticketFind.ticketParaclinicalList = TicketParaclinical.fromList(data.ticketParaclinicalList)
+      ticketFind.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
     }
     if (ticketClinicRef.value.id === data.ticketId) {
-      ticketClinicRef.value.ticketParaclinicalList = TicketParaclinical.fromList(
-        data.ticketParaclinicalList
+      ticketClinicRef.value.ticketRadiologyList = TicketRadiology.fromList(
+        data.ticketRadiologyList
       )
     }
   }
 
-  static async listenTicketClinicUpdateTicketParaclinicalResult(data: {
+  static async listenTicketClinicUpdateTicketRadiologyResult(data: {
     ticketId: number
-    ticketParaclinical: any
+    ticketRadiology: any
   }) {
     const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
     if (ticketFind) {
-      const ticketParaclinicalFind = (ticketFind.ticketParaclinicalList || []).find((i) => {
-        return i.id === data.ticketParaclinical.id
+      const ticketRadiologyFind = (ticketFind.ticketRadiologyList || []).find((i) => {
+        return i.id === data.ticketRadiology.id
       })
-      if (ticketParaclinicalFind) {
-        Object.assign(ticketParaclinicalFind, TicketParaclinical.from(data.ticketParaclinical))
+      if (ticketRadiologyFind) {
+        Object.assign(ticketRadiologyFind, TicketRadiology.from(data.ticketRadiology))
       }
     }
 
     if (ticketClinicRef.value.id === data.ticketId) {
-      ticketClinicRef.value.ticketParaclinicalList ||= []
-      const ticketParaclinicalFind = ticketClinicRef.value.ticketParaclinicalList.find((i) => {
-        return i.id === data.ticketParaclinical.id
+      ticketClinicRef.value.ticketRadiologyList ||= []
+      const ticketRadiologyFind = ticketClinicRef.value.ticketRadiologyList.find((i) => {
+        return i.id === data.ticketRadiology.id
       })
-      if (ticketParaclinicalFind) {
-        Object.assign(ticketParaclinicalFind, TicketParaclinical.from(data.ticketParaclinical))
+      if (ticketRadiologyFind) {
+        Object.assign(ticketRadiologyFind, TicketRadiology.from(data.ticketRadiology))
       } else {
-        ticketClinicRef.value.ticketParaclinicalList.push(
-          TicketParaclinical.from(data.ticketParaclinical)
+        ticketClinicRef.value.ticketRadiologyList.push(
+          TicketRadiology.from(data.ticketRadiology)
         )
       }
     }

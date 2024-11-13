@@ -1,5 +1,0 @@
-export * from './paraclinical-attribute.model'
-export * from './paraclinical.api'
-export * from './paraclinical.dto'
-export * from './paraclinical.model'
-export * from './paraclinical.service'

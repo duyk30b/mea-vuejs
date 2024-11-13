@@ -3,18 +3,17 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtmlService } from '../../../modules/print-html'
-import {
-  ticketEyePrintOptometryCompiledTemplate,
-  ticketEyePrintOptometryDefault,
-} from '../../../modules/print-html/print-content/ticket-eye-print-optometry'
+import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import {
   type DiagnosisSpecialEye,
   ticketClinicRef,
   TicketEyeApi,
 } from '../../../modules/ticket-clinic'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const meStore = useMeStore()
+const settingStore = useSettingStore()
 const { permissionIdMap, organization } = meStore
 
 const optometry = ref<DiagnosisSpecialEye>({})
@@ -74,19 +73,16 @@ const handleFocus = (e: Event) => {
 
 const startPrint = async () => {
   try {
-    const printHtml = await PrintHtmlService.findOneBy({ type: 'OPTOMETRY', paraclinicalId: 0 })
-    let htmlString = printHtml?.content
-    if (!htmlString) {
-      htmlString = await ticketEyePrintOptometryDefault()
+    const printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.diagnosisEyeSpecial
+    const printHtml = await PrintHtmlService.detail(printHtmlId)
+    if (!printHtml) {
+      return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = ticketEyePrintOptometryCompiledTemplate({
+    const content = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
-      customer: ticketClinicRef.value.customer!,
-      optometry: JSON.parse(ticketClinicRef.value.ticketDiagnosis!.special || '{}'),
-      technicianName: '',
-      htmlString,
+      printHtml,
     })
 
     const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
