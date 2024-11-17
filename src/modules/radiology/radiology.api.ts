@@ -60,7 +60,9 @@ export class RadiologyApi {
       name: radiology.name,
       radiologyGroupId: radiology.radiologyGroupId,
       printHtmlId: radiology.printHtmlId,
+      priority: radiology.priority,
       price: radiology.price,
+      requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
     })
@@ -73,7 +75,9 @@ export class RadiologyApi {
       name: radiology.name,
       radiologyGroupId: radiology.radiologyGroupId,
       printHtmlId: radiology.printHtmlId,
+      priority: radiology.priority,
       price: radiology.price,
+      requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
     })
@@ -81,9 +85,9 @@ export class RadiologyApi {
     return Radiology.from(data.radiology)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/radiology/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ radiology: any }>
-    return Radiology.from(data.radiology)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/radiology/destroy/${id}`)
+    const { data } = response.data as BaseResponse<{ radiologyId: number }>
+    return data
   }
 }

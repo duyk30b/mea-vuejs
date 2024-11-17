@@ -51,7 +51,7 @@ export const useMeStore = defineStore('me-store', {
     },
 
     getTicketTypeDefault() {
-      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization.permissionIds)
+      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization?.permissionIds || '[]')
       if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
         return TicketType.Clinic
       }

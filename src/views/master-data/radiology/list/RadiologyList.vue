@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon'
-import { IconEditSquare, IconPulmonology } from '../../../common/icon-google'
-import { InputText, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Radiology, RadiologyApi } from '../../../modules/radiology'
-import { RadiologyGroup, RadiologyGroupService } from '../../../modules/radiology-group'
-import { arrayToKeyValue, customFilter } from '../../../utils'
-import ModalRadiologyDetail from './detail/ModalRadiologyDetail.vue'
+import VueButton from '../../../../common/VueButton.vue'
+import { IconFileSearch } from '../../../../common/icon'
+import { IconEditSquare, IconPulmonology } from '../../../../common/icon-google'
+import { InputText, VueSelect } from '../../../../common/vue-form'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
+import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
+import { arrayToKeyValue, customFilter } from '../../../../utils'
+import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
+import ModalCopyRadiologyExample from './ModalCopyRadiologyExample.vue'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
+const modalCopyRadiologyExample = ref<InstanceType<typeof ModalCopyRadiologyExample>>()
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -20,9 +22,7 @@ const { formatMoney } = settingStore
 
 const { permissionIdMap } = meStore
 
-let radiologyAll: Radiology[] = []
 const radiologyList = ref<Radiology[]>([])
-const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const searchText = ref('')
 const radiologyGroupId = ref<number>(0)
 
@@ -32,25 +32,35 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
+const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const radiologyGroupMap = computed(() => arrayToKeyValue(radiologyGroupAll.value, 'id'))
 
-const startFilterData = () => {
-  radiologyList.value = radiologyAll
-    .filter((i) => {
-      if (searchText.value && !customFilter(i.name, searchText.value)) {
-        return false
-      }
-      if (radiologyGroupId.value && i.radiologyGroupId !== radiologyGroupId.value) {
-        return false
-      }
-      return true
+const startFetchData = async () => {
+  dataLoading.value = true
+  try {
+    const { data, meta } = await RadiologyService.pagination({
+      page: page.value,
+      limit: limit.value,
+      relation: { radiologyGroup: false },
+      filter: {
+        radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
+        name: searchText.value ? { LIKE: searchText.value } : undefined,
+      },
+      sort: { priority: 'DESC' },
     })
-    .slice((page.value - 1) * limit.value, page.value * limit.value)
+
+    radiologyList.value = data
+    total.value = meta.total
+  } catch (error) {
+    console.log('🚀 ~ file: RadiologyList.vue:56 ~ startFetchData ~ error:', error)
+  } finally {
+    dataLoading.value = false
+  }
 }
 
 const startSearch = async () => {
   page.value = 1
-  startFilterData()
+  startFetchData()
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -59,27 +69,12 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     limit.value = options.limit
     localStorage.setItem('RADIOLOGY_PAGINATION_LIMIT', String(options.limit))
   }
-  startFilterData()
-}
-
-const startFetchData = async () => {
-  try {
-    const response = await RadiologyApi.list({
-      sort: { id: 'DESC' },
-    })
-    radiologyAll = response.data
-    total.value = radiologyAll.length
-  } catch (error) {
-    console.log('🚀 ~ file: RadiologyList.vue:63 ~ startFetchData ~ error:', error)
-  }
+  startFetchData()
 }
 
 onBeforeMount(async () => {
-  dataLoading.value = true
-  await startFetchData()
-  startFilterData()
-  dataLoading.value = false
   try {
+    await startFetchData()
     radiologyGroupAll.value = await RadiologyGroupService.getAll()
   } catch (error) {
     console.log('🚀 ~ file: RadiologyList.vue:86 ~ onBeforeMount ~ error:', error)
@@ -91,10 +86,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     // modalRadiologyListSettingScreen.value?.openModal()
   }
 }
+
+const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => {
+  await startFetchData()
+}
 </script>
 
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
+  <ModalCopyRadiologyExample
+    ref="modalCopyRadiologyExample"
+    @success="handleModalCopyRadiologyExampleSuccess" />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
@@ -110,6 +112,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         @click="$router.push({ name: 'RadiologyUpsert' })">
         Thêm mới
       </VueButton>
+      <!-- <VueButton
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
+        color="blue"
+        icon="plus"
+        @click="modalCopyRadiologyExample?.openModal()">
+        Copy từ danh sách mẫu
+      </VueButton> -->
     </div>
     <div>
       <!-- <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
@@ -151,7 +160,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       <table>
         <thead>
           <tr>
-            <th>Mã</th>
+            <th>Ưu tiên</th>
             <th>Tên</th>
             <th>Nhóm</th>
             <th>Giá tiền</th>
@@ -177,7 +186,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="radiology in radiologyList" :key="radiology.id">
-            <td class="text-center">R{{ radiology.id }}</td>
+            <td class="text-center">R{{ radiology.priority }}</td>
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ radiology.name }}</span>

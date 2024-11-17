@@ -1,17 +1,16 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionString } from '../_base/base-condition'
 
-export class RadiologyGetQuery {
+export class LaboratoryGetQuery {
   page?: number
   limit?: number
   relation?: {
-    radiologyGroup?: boolean
-    printHtml?: boolean
+    laboratoryGroup?: boolean
   }
 
   filter?: {
     name?: ConditionString
-    radiologyGroupId?: number
+    laboratoryGroupId?: number
     updatedAt?: ConditionDate
   }
 
@@ -21,7 +20,7 @@ export class RadiologyGetQuery {
     priority?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<RadiologyGetQuery>) {
+  static toQuery(instance: Partial<LaboratoryGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -32,6 +31,6 @@ export class RadiologyGetQuery {
   }
 }
 
-export class RadiologyPaginationQuery extends RadiologyGetQuery {}
-export class RadiologyListQuery extends OmitClass(RadiologyGetQuery, ['page']) {}
-export class RadiologyDetailQuery extends PickClass(RadiologyGetQuery, ['relation']) {}
+export class LaboratoryPaginationQuery extends LaboratoryGetQuery {}
+export class LaboratoryListQuery extends OmitClass(LaboratoryGetQuery, ['page']) {}
+export class LaboratoryDetailQuery extends PickClass(LaboratoryGetQuery, ['relation']) {}

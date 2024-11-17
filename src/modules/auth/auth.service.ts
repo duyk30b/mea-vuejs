@@ -6,7 +6,7 @@ import { Router } from '../../router/router'
 import { sleep } from '../../utils'
 import { useMeStore } from '../_me/me.store'
 import { AuthApi } from './auth.api'
-import type { LoginDto, RegisterDto } from './auth.dto'
+import type { LoginDto, LoginRootDto, RegisterDto } from './auth.dto'
 
 export class AuthService {
   static async register(body: RegisterDto) {
@@ -28,7 +28,22 @@ export class AuthService {
     try {
       const data = await AuthApi.login(body)
       LocalStorageService.setToken(data)
-      LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
+      LocalStorageService.setOrgPhone(body.orgPhone)
+      useMeStore().user = data.user
+      reconnectSocket()
+      return true
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error.message || error?.config.signal?.reason
+      AlertStore.addError(message)
+    }
+  }
+
+  static async loginRoot(body: LoginRootDto) {
+    try {
+      const data = await AuthApi.loginRoot(body)
+      LocalStorageService.setToken(data)
+      LocalStorageService.setOrgPhone(body.orgPhone)
       useMeStore().user = data.user
       reconnectSocket()
       return true
@@ -43,7 +58,6 @@ export class AuthService {
     try {
       const data = await AuthApi.loginDemo()
       LocalStorageService.setToken(data)
-      // LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
       useMeStore().user = data.user
       reconnectSocket()
       return true

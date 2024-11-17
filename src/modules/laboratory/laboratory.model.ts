@@ -1,29 +1,28 @@
+import { LaboratoryGroup } from '../laboratory-group'
 import { PrintHtml } from '../print-html'
-import { RadiologyGroup } from '../radiology-group'
 
-export class Radiology {
+export class Laboratory {
   id: number
-  name: string
+  name: string // Tên
 
-  radiologyGroupId: number
+  laboratoryGroupId: number
   printHtmlId: number
 
   price: number
   priority: number
-  requestNoteDefault: string
   descriptionDefault: string
   resultDefault: string
 
   updatedAt: number
   deletedAt: number
 
-  radiologyGroup?: RadiologyGroup
+  laboratoryGroup?: LaboratoryGroup
   printHtml?: PrintHtml
 
   static init() {
-    const ins = new Radiology()
+    const ins = new Laboratory()
     ins.id = 0
-    ins.radiologyGroupId = 0
+    ins.laboratoryGroupId = 0
     ins.printHtmlId = 0
     ins.name = ''
     ins.price = 0
@@ -33,13 +32,13 @@ export class Radiology {
   }
 
   static blank() {
-    const ins = Radiology.init()
+    const ins = Laboratory.init()
     ins.printHtml = PrintHtml.init()
     return ins
   }
 
-  static basic(source: Radiology) {
-    const target = new Radiology()
+  static basic(source: Laboratory) {
+    const target = new Laboratory()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
@@ -48,16 +47,16 @@ export class Radiology {
     return target
   }
 
-  static basicList(sources: Radiology[]): Radiology[] {
-    return sources.map((i) => Radiology.basic(i))
+  static basicList(sources: Laboratory[]): Laboratory[] {
+    return sources.map((i) => Laboratory.basic(i))
   }
 
-  static from(source: Radiology) {
-    const target = Radiology.basic(source)
-    if (Object.prototype.hasOwnProperty.call(source, 'radiologyGroup')) {
-      target.radiologyGroup = target.radiologyGroup
-        ? RadiologyGroup.basic(target.radiologyGroup)
-        : target.radiologyGroup
+  static from(source: Laboratory) {
+    const target = Laboratory.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratoryGroup')) {
+      target.laboratoryGroup = target.laboratoryGroup
+        ? LaboratoryGroup.basic(target.laboratoryGroup)
+        : target.laboratoryGroup
     }
     if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
       target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
@@ -65,29 +64,27 @@ export class Radiology {
     return target
   }
 
-  static fromList(sourceList: Radiology[]): Radiology[] {
-    return sourceList.map((i) => Radiology.from(i))
+  static fromList(sourceList: Laboratory[]): Laboratory[] {
+    return sourceList.map((i) => Laboratory.from(i))
   }
 
-  static equal(a: Radiology, b: Radiology) {
+  static equal(a: Laboratory, b: Laboratory) {
     if (a.id != b.id) return false
     if (a.name != b.name) return false
-    if (a.radiologyGroupId != b.radiologyGroupId) return
+    if (a.laboratoryGroupId != b.laboratoryGroupId) return
     if (a.printHtmlId != b.printHtmlId) return
-    if (a.priority != b.priority) return false
     if (a.price != b.price) return false
-    if (a.requestNoteDefault != b.requestNoteDefault) return false
-    if (a.descriptionDefault != b.descriptionDefault) return false
     if (a.resultDefault != b.resultDefault) return false
+    if (a.descriptionDefault != b.descriptionDefault) return false
     if (a.updatedAt != b.updatedAt) return false
     if (a.deletedAt != b.deletedAt) return false
     return true
   }
 
-  static equalList(a: Radiology[], b: Radiology[]) {
+  static equalList(a: Laboratory[], b: Laboratory[]) {
     if (a.length != b.length) return false
     for (let i = 0; i < a.length; i++) {
-      if (!Radiology.equal(a[i], b[i])) {
+      if (!Laboratory.equal(a[i], b[i])) {
         return false
       }
     }

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { IconEye } from '../icon'
+
 const props = withDefaults(
   defineProps<{
     value: string | null
@@ -56,7 +58,20 @@ const handleInput = (e: Event) => {
         :title="title"
         :type="type"
         @input="handleInput" />
+      <!-- <div v-if="type === 'password'" class="password-toggle">
+        <IconEye />
+      </div> -->
     </div>
     <div v-if="append" class="append">{{ append }}</div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.password-toggle {
+  line-height: 0;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+</style>

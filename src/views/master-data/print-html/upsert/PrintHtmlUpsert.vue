@@ -12,6 +12,7 @@ import { Ticket } from '../../../../modules/ticket'
 import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
+import { DDom } from '../../../../utils'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -19,11 +20,11 @@ const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtml
 const emit = defineEmits<{
   (e: 'success', value: PrintHtml, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
+const iframe = ref<HTMLIFrameElement>()
 
 const route = useRoute()
 const router = useRouter()
-
-const iframe = ref<HTMLIFrameElement>()
+const organization = useMeStore().organization
 
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
@@ -65,7 +66,7 @@ const updatePreview = () => {
   if (!doc) return
 
   const textDom = printHtmlCompiledTemplate({
-    organization: useMeStore().organization,
+    organization,
     ticket: ticketDemo.value,
     data: JSON.parse(printHtml.value.dataExample || '{}'),
     printHtml: printHtml.value,
@@ -108,6 +109,21 @@ const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
   printHtml.value.initVariable = printHtmlProp.initVariable
   updatePreview()
 }
+
+const startTestPrint = async () => {
+  try {
+    const textDom = printHtmlCompiledTemplate({
+      organization,
+      ticket: ticketDemo.value,
+      data: JSON.parse(printHtml.value.dataExample || '{}'),
+      printHtml: printHtml.value,
+    })
+
+    await DDom.startPrint('iframe-print', textDom)
+  } catch (error) {
+    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+  }
+}
 </script>
 
 <template>
@@ -149,8 +165,9 @@ const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
     </div>
 
     <div style="flex-basis: 600px; flex-grow: 1; height: 600px" class="flex flex-col">
-      <div>
+      <div class="flex justify-between">
         <a @click="modalSelectTicketExample?.openModal()">Xem thử</a>
+        <a @click="startTestPrint">In thử</a>
       </div>
       <div style="flex-grow: 3">
         <iframe ref="iframe" class="preview-iframe" style="width: 100%; height: 100%"></iframe>

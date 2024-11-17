@@ -142,4 +142,22 @@ export class DString {
   static formatMoney = (money: number) => {
     return DString.formatNumber({ number: money, fixed: 0 })
   }
+
+  static formatAddress = (address: {
+    addressProvince: string
+    addressDistrict: string
+    addressWard: string
+    addressStreet: string
+  }) => {
+    const { addressStreet, addressWard, addressDistrict, addressProvince } = address
+    return [addressStreet, addressWard, addressDistrict, addressProvince]
+      .filter((i) => !!i)
+      .join(' - ')
+      .replace('Tỉnh', '')
+      .replace('Thành phố', '')
+      .replace('Quận ', '')
+      .replace('Huyện ', '')
+      .replace('Phường ', '')
+      .replace('Xã ', '')
+  }
 }

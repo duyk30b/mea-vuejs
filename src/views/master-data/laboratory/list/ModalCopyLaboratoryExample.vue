@@ -59,7 +59,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="margin-top: 100px">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Dữ liệu mẫu</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Danh sách phiếu CĐHA mẫu</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -79,8 +79,8 @@ defineExpose({ openModal })
           <table>
             <thead>
               <tr>
-                <th>Tên</th>
                 <th style="width: 100px">#</th>
+                <th>Tên</th>
               </tr>
             </thead>
             <tbody>
@@ -88,10 +88,8 @@ defineExpose({ openModal })
                 <td colspan="20" class="text-center">Không có dữ liệu</td>
               </tr>
               <tr v-for="radiology in radiologyExampleList" :key="radiology.id">
+                <td></td>
                 <td>{{ radiology.name }}</td>
-                <td class="text-center">
-                  <a @click="selectRadiologyExample(radiology)">Chọn</a>
-                </td>
               </tr>
             </tbody>
           </table>

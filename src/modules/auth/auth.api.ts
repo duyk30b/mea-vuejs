@@ -2,7 +2,7 @@ import axios from 'axios'
 import { CONFIG } from '../../config'
 import type { BaseResponse } from '../_base/base-dto'
 import { User } from '../user'
-import type { LoginDto, RegisterDto } from './auth.dto'
+import type { LoginDto, LoginRootDto, RegisterDto } from './auth.dto'
 
 export class AuthApi {
   static async register(body: RegisterDto) {
@@ -25,6 +25,24 @@ export class AuthApi {
 
   static async login(body: LoginDto) {
     const response = await axios.post(`${CONFIG.API_URL}/auth/login`, body)
+    const { data } = response.data as BaseResponse<{
+      user: any
+      accessToken: string
+      accessExp: number
+      refreshToken: string
+      refreshExp: number
+    }>
+    return {
+      user: User.from(data.user),
+      accessToken: data.accessToken as string,
+      accessExp: data.accessExp as number,
+      refreshToken: data.refreshToken as string,
+      refreshExp: data.refreshExp as number,
+    }
+  }
+
+  static async loginRoot(body: LoginRootDto) {
+    const response = await axios.post(`${CONFIG.API_URL}/auth/login-root`, body)
     const { data } = response.data as BaseResponse<{
       user: any
       accessToken: string

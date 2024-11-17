@@ -107,8 +107,6 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     //   imageList: vr.imageList.slice(0, 4),
     // })
     const printHtmlId = ticketRadiologyData.radiology?.printHtmlId || 0
-    console.log('🚀 ~ file: TicketClinicRadiology.vue:110 ~ startPrint ~ ticketRadiologyData:', ticketRadiologyData)
-    console.log('🚀 ~ file: TicketClinicRadiology.vue:110 ~ startPrint ~ printHtmlId:', printHtmlId)
     const printHtml = await PrintHtmlService.detail(printHtmlId)
     if (!printHtml) {
       return AlertStore.addError('Cài đặt in thất bại')
@@ -238,6 +236,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                     -webkit-line-clamp: 2; /* Số dòng tối đa */
                     overflow: hidden;
                     text-overflow: ellipsis;
+                    line-clamp: 2;
                   ">
                   {{ ticketRadiology.result }}
                 </div>

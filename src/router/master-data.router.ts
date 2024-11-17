@@ -5,6 +5,43 @@ export const masterDataRouter: RouteRecordRaw = {
   name: 'MasterData',
   children: [
     {
+      path: 'procedure',
+      name: 'Procedure',
+      redirect: () => ({ name: 'ProcedureList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'ProcedureList',
+          component: () => import('../views/procedure/ProcedureList.vue'),
+          meta: { title: 'Dịch vụ' },
+        },
+      ],
+    },
+    {
+      path: 'laboratory',
+      name: 'Laboratory',
+      redirect: () => ({ name: 'LaboratoryList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'LaboratoryList',
+          component: () => import('../views/master-data/laboratory/list/LaboratoryList.vue'),
+          meta: { title: 'Xét nghiệm' },
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'LaboratoryUpsert',
+          component: () => import('../views/master-data/laboratory/upsert/LaboratoryUpsert.vue'),
+          meta: {
+            title: (route: RouteLocationNormalizedLoaded) => {
+              if (route.query?.mode === 'UPDATE') return 'Cập nhật xét nghiệm'
+              return 'Tạo mới xét nghiệm'
+            },
+          },
+        },
+      ],
+    },
+    {
       path: 'radiology',
       name: 'Radiology',
       redirect: () => ({ name: 'RadiologyList' }),
@@ -12,7 +49,7 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'list',
           name: 'RadiologyList',
-          component: () => import('../views/master-data/radiology/RadiologyList.vue'),
+          component: () => import('../views/master-data/radiology/list/RadiologyList.vue'),
           meta: { title: 'CĐHA' },
         },
         {
@@ -25,19 +62,6 @@ export const masterDataRouter: RouteRecordRaw = {
               return 'Tạo mới phiếu CĐHA'
             },
           },
-        },
-      ],
-    },
-    {
-      path: 'procedure',
-      name: 'Procedure',
-      redirect: () => ({ name: 'ProcedureList' }),
-      children: [
-        {
-          path: 'list',
-          name: 'ProcedureList',
-          component: () => import('../views/procedure/ProcedureList.vue'),
-          meta: { title: 'Dịch vụ' },
         },
       ],
     },
@@ -101,9 +125,8 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'list',
           name: 'RadiologyGroupList',
-          component: () =>
-            import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
-          meta: { title: 'Dịch vụ' },
+          component: () => import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
+          meta: { title: 'CĐHA' },
         },
       ],
     },

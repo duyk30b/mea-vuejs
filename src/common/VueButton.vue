@@ -125,8 +125,15 @@ const props = withDefaults(
     padding: 0 8px;
     border: none;
     color: #1890ff;
+    background-color: inherit !important;
     &:hover {
       color: #40a9ff;
+    }
+    &.btn-blue {
+      color: #1890ff;
+      &:hover {
+        color: #40a9ff;
+      }
     }
   }
 

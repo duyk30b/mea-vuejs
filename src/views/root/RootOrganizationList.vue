@@ -58,10 +58,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalRootOrganizationUpsertSuccess = async (
-  data: Organization,
-  type: 'CREATE' | 'UPDATE' | 'CLEAR' | 'DELETE'
-) => {
+const handleModalRootOrganizationUpsertSuccess = async () => {
   await startFetchData()
 }
 </script>

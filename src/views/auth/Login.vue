@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { AuthService } from '../../modules/auth/auth.service'
 import { InputPhone, InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
+import InputNumber from '../../common/vue-form/InputNumber.vue'
 
 const router = useRouter()
 
@@ -13,21 +14,38 @@ const formState = reactive({
   orgPhone: LocalStorageService.getOrgPhone(),
   username: '',
   password: '',
+  oid: 1,
 })
 
 const loading = ref(false)
 
+const isRootLogin = computed(() => {
+  return formState.orgPhone === '0986021190' && formState.username === 'ROOT'
+})
+
 const startLogin = async () => {
   loading.value = true
-  const result = await AuthService.login({
-    orgPhone: formState.orgPhone,
-    username: formState.username,
-    password: formState.password,
-  })
-  loading.value = false
-  if (result) {
-    router.push({ name: 'AppHome' })
+  if (!isRootLogin.value) {
+    const result = await AuthService.login({
+      orgPhone: formState.orgPhone,
+      username: formState.username,
+      password: formState.password,
+    })
+    if (result) {
+      router.push({ name: 'AppHome' })
+    }
+  } else if (isRootLogin.value) {
+    const result = await AuthService.loginRoot({
+      orgPhone: formState.orgPhone,
+      username: formState.username,
+      password: formState.password,
+      oid: formState.oid,
+    })
+    if (result) {
+      router.push({ name: 'AppHome' })
+    }
   }
+  loading.value = false
 }
 
 const startLoginDemo = async () => {
@@ -68,6 +86,13 @@ const startLoginDemo = async () => {
               name="password"
               type="password"
               required />
+          </div>
+        </div>
+
+        <div v-if="isRootLogin" class="mt-4">
+          <div>Oid</div>
+          <div>
+            <InputNumber v-model:value="formState.oid" />
           </div>
         </div>
 

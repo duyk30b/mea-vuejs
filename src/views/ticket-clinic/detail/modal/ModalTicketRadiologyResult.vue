@@ -115,7 +115,7 @@ defineExpose({ openModalByInstance, openModalById })
         </div>
         <div class="mt-3">
           <div>Mô tả</div>
-          <div style="height: 400px">
+          <div style="min-height: 400px">
             <WysiwygEditor v-model:value="ticketRadiology.description" />
           </div>
         </div>
