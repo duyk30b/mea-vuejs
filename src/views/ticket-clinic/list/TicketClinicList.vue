@@ -393,7 +393,8 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-4">
+      <div class="my-4 flex gap-4 justify-between">
+        <div class="">Tổng: {{ total }}</div>
         <a-pagination
           v-model:current="page"
           v-model:pageSize="limit"

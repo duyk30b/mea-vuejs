@@ -20,6 +20,15 @@ export const useMeStore = defineStore('me-store', {
       customerDefault: Customer.blank(),
       permissionMap: <Record<string, Permission>>{},
       permissionIdMap: <Record<string, boolean>>{},
+      rootSetting: {
+        printDefault: {
+          invoice: 0,
+          laboratory: 0,
+          optometry: 0,
+          prescription: 0,
+          radiology: 0,
+        },
+      },
     }
   },
 
@@ -51,7 +60,9 @@ export const useMeStore = defineStore('me-store', {
     },
 
     getTicketTypeDefault() {
-      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization?.permissionIds || '[]')
+      const organizationPermissionIds: PermissionId[] = JSON.parse(
+        this.organization?.permissionIds || '[]'
+      )
       if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
         return TicketType.Clinic
       }

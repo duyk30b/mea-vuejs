@@ -17,6 +17,12 @@ export class OrganizationService {
     return organization
   }
 
+  static async updateInfoAndLogo(body: Organization, file: File) {
+    const organization = await OrganizationApi.updateInfoAndLogo(body, file)
+    useMeStore().organization = Organization.from(organization)
+    return organization
+  }
+
   static async changeEmail(email: string) {
     const organization = await OrganizationApi.changeEmail(email)
     useMeStore().organization = Organization.from(organization)

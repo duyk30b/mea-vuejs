@@ -10,7 +10,7 @@ import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
-import { PrintHtml, PrintHtmlIdDefault, PrintHtmlService } from '../../../../modules/print-html'
+import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
 import { TicketType } from '../../../../modules/ticket'
 
 const TABS_KEY = {
@@ -104,7 +104,7 @@ defineExpose({ openModal })
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.diagnosisEyeSpecial"
                             :options="[
-                              { value: PrintHtmlIdDefault.OPTOMETRY, text: 'Mặc định' },
+                              { value: 0, text: 'Mặc định' },
                               ...printHtmlAll.map((group) => ({
                                 value: group.id,
                                 text: group.name,
@@ -120,7 +120,7 @@ defineExpose({ openModal })
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.prescription"
                             :options="[
-                              { value: PrintHtmlIdDefault.PRESCRIPTION, text: 'Mặc định' },
+                              { value: 0, text: 'Mặc định' },
                               ...printHtmlAll.map((group) => ({
                                 value: group.id,
                                 text: group.name,
@@ -136,7 +136,7 @@ defineExpose({ openModal })
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.invoice"
                             :options="[
-                              { value: PrintHtmlIdDefault.INVOiCE, text: 'Mặc định' },
+                              { value: 0, text: 'Mặc định' },
                               ...printHtmlAll.map((group) => ({
                                 value: group.id,
                                 text: group.name,

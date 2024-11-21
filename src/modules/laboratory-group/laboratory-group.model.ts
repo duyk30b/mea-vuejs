@@ -1,11 +1,16 @@
+import { PrintHtml } from '../print-html'
+
 export class LaboratoryGroup {
   id: number
   name: string
+  printHtmlId: number
+
+  printHtml?: PrintHtml
 
   static init(): LaboratoryGroup {
     const ins = new LaboratoryGroup()
     ins.id = 0
-
+    ins.printHtmlId = 0
     return ins
   }
 
@@ -30,6 +35,9 @@ export class LaboratoryGroup {
 
   static from(source: LaboratoryGroup) {
     const target = LaboratoryGroup.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
+      target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    }
     return target
   }
 

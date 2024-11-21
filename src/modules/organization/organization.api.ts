@@ -23,6 +23,26 @@ export class OrganizationApi {
     return Organization.from(data.organization)
   }
 
+  static async updateInfoAndLogo(organization: Organization, file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('name', organization.name)
+    formData.append('addressProvince', organization.addressProvince)
+    formData.append('addressDistrict', organization.addressDistrict)
+    formData.append('addressWard', organization.addressWard)
+    formData.append('addressStreet', organization.addressStreet)
+
+    const response = await AxiosInstance.patch(`/organization/update-info-and-logo`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    const { data } = response.data as BaseResponse<{ organization: any }>
+
+    return Organization.from(data.organization)
+  }
+
   static async sendEmailVerifyOrganizationEmail() {
     const response = await AxiosInstance.post('/organization/send-email-verify-organization-email')
     const { data } = response.data as BaseResponse

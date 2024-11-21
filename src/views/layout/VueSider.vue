@@ -161,19 +161,6 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         key="CustomerSourceList">
         <router-link :to="{ name: 'CustomerSourceList' }">DS nguồn khách hàng</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]" key="ProductGroupList">
-        <router-link :to="{ name: 'ProductGroupList' }">DS nhóm sản phẩm</router-link>
-      </a-menu-item>
-      <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
-        key="ProcedureGroupList">
-        <router-link :to="{ name: 'ProcedureGroupList' }">DS nhóm dịch vụ</router-link>
-      </a-menu-item>
-      <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
-        key="RadiologyGroupList">
-        <router-link :to="{ name: 'RadiologyGroupList' }">DS nhóm CĐHA</router-link>
-      </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]" key="PrintHtmlList">
         <router-link :to="{ name: 'PrintHtmlList' }">Mẫu in</router-link>
       </a-menu-item>

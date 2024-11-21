@@ -3,10 +3,11 @@
   "files.eol": "\n",
   "workbench.tree.indent": 16,
   "editor.tabSize": 2,
+  "editor.inlayHints.fontSize": 10,
+  "editor.suggest.insertMode": "replace",
   "eslint.validate": ["javascript", "javascriptreact", "vue"],
   "workbench.editor.wrapTabs": true,
   "window.title": "${rootName}",
-  "editor.inlayHints.fontSize": 10,
   "workbench.colorCustomizations": {
     "editorInlayHint.background": "#4d4d4d99",
     "editorInlayHint.foreground": "#ffffffcc"

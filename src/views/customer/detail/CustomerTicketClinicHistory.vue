@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import ImageUpload from '../../../common/ImageUpload.vue'
+import { onMounted, ref, watch } from 'vue'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
-import { DTimer, formatPhone } from '../../../utils'
+import { DImage, DTimer, formatPhone } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../modules/laboratory'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
@@ -16,9 +17,12 @@ const props = withDefaults(defineProps<{ customer: Customer }>(), {
 })
 
 const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
+const { formatMoney } = settingStore
 
 const ticketClinicStore = useTicketClinicStore()
+
+const laboratoryMap = ref<Record<string, Laboratory>>({})
+
 const ticketList = ref<Ticket[]>([])
 const ticket = ref<Ticket>(Ticket.blank())
 const page = ref(1)
@@ -35,6 +39,10 @@ const general = ref<{
   height?: number // Chiều cao
   weight?: number // Cân nặng
 }>({})
+
+onMounted(async () => {
+  laboratoryMap.value = await LaboratoryService.getMap()
+})
 
 const startFetchData = async () => {
   try {
@@ -203,7 +211,7 @@ watch(
           </div>
           <div class="mt-4 px-4 pt-2 pb-1" style="background-color: white">
             <div style="font-style: italic; text-decoration: underline">Hình ảnh</div>
-            <ImageUpload
+            <ImageUploadMultiple
               ref="imageUploadRef"
               :height="100"
               :editable="false"
@@ -211,15 +219,15 @@ watch(
                 (ticket.ticketDiagnosis?.imageList || [])
                   .filter((i) => i.hostType === ImageHost.GoogleDriver)
                   .map((i) => ({
-                    thumbnail: i.link({ size: 200 }),
-                    enlarged: i.link({ size: 1000 }),
+                    thumbnail: DImage.getImageLink(i, { size: 200 }),
+                    enlarged: DImage.getImageLink(i, { size: 1000 }),
                     id: i.id,
                   }))
               " />
           </div>
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">6. Dịch vụ:</div>
-            <table>
+            <table v-if="ticket.ticketProcedureList?.length">
               <thead>
                 <tr>
                   <th>#</th>
@@ -255,8 +263,92 @@ watch(
           </div>
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
-            <div class="mb-2" style="font-weight: 500">7. CĐHA:</div>
-            <table>
+            <div class="mb-2" style="font-weight: 500">7. Xét nghiệm:</div>
+            <table v-if="ticket.ticketLaboratoryList?.length">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tên Xét nghiệm</th>
+                  <th>Kết quả</th>
+                  <th>Tham chiếu</th>
+                  <th>Đơn vị</th>
+                  <th>Giá tiền</th>
+                </tr>
+              </thead>
+              <tbody style="background-color: white">
+                <template
+                  v-for="(ticketLaboratory, index) in ticket.ticketLaboratoryList"
+                  :key="ticketLaboratory.id">
+                  <tr
+                    v-for="(laboratoryParent, i) in laboratoryMap[ticketLaboratory.laboratoryId]
+                      ? [laboratoryMap[ticketLaboratory.laboratoryId]]
+                      : []"
+                    :key="i"
+                    :style="
+                      ticketLaboratory.attentionParse[laboratoryParent.id] ? 'color: red' : ''
+                    ">
+                    <td class="text-center">{{ index + 1 }}</td>
+                    <td>{{ laboratoryParent?.name }}</td>
+                    <td class="text-center">
+                      <div>{{ ticketLaboratory.resultParse[laboratoryParent.id] }}</div>
+                    </td>
+                    <td>
+                      <span v-if="laboratoryParent?.valueType === LaboratoryValueType.Number">
+                        {{ laboratoryParent?.lowValue }} -
+                        {{ laboratoryParent?.highValue }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span v-if="laboratoryParent?.valueType === LaboratoryValueType.Number">
+                        {{ laboratoryParent?.unit }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <div
+                        v-if="ticketLaboratory.discountMoney"
+                        style="
+                          color: var(--text-red);
+                          font-size: 0.8rem;
+                          text-decoration: line-through;
+                          font-style: italic;
+                          white-space: nowrap;
+                        ">
+                        {{ formatMoney(ticketLaboratory.expectedPrice) }}
+                      </div>
+                      <div>{{ formatMoney(ticketLaboratory.actualPrice) }}</div>
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="(laboratoryItem, i) in laboratoryMap[ticketLaboratory.laboratoryId]
+                      ?.children || []"
+                    :key="i"
+                    :style="ticketLaboratory.attentionParse[laboratoryItem.id] ? 'color: red' : ''">
+                    <td></td>
+                    <td>{{ laboratoryItem?.name }}</td>
+                    <td class="text-center">
+                      <div>{{ ticketLaboratory?.resultParse[laboratoryItem.id] }}</div>
+                    </td>
+                    <td>
+                      <span v-if="laboratoryItem?.valueType === LaboratoryValueType.Number">
+                        {{ laboratoryItem?.lowValue }} -
+                        {{ laboratoryItem?.highValue }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span v-if="laboratoryItem?.valueType === LaboratoryValueType.Number">
+                        {{ laboratoryItem?.unit }}
+                      </span>
+                    </td>
+                    <td class="text-right"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+            <div class="mb-2" style="font-weight: 500">8. CĐHA:</div>
+            <table v-if="ticket.ticketRadiologyList?.length">
               <thead>
                 <tr>
                   <th>#</th>
@@ -304,8 +396,8 @@ watch(
           </div>
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
-            <div class="mb-2" style="font-weight: 500">8. Đơn thuốc:</div>
-            <table>
+            <div class="mb-2" style="font-weight: 500">9. Thuốc - Vật tư:</div>
+            <table v-if="ticket.ticketProductList?.length">
               <thead>
                 <tr>
                   <th>#</th>
@@ -346,7 +438,7 @@ watch(
           </div>
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
-            <div class="mb-2" style="font-weight: 500">9. Thanh toán:</div>
+            <div class="mb-2" style="font-weight: 500">10. Thanh toán:</div>
             <table>
               <tr>
                 <td>- Tổng chi phí:</td>

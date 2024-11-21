@@ -13,16 +13,14 @@ import { Customer } from '../../../../modules/customer'
 import {
   PrintHtml,
   printHtmlCompiledTemplate,
-  PrintHtmlIdDefault,
   PrintHtmlService,
-  ticketClinicPrintTicketRadiologyDefault,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { Ticket } from '../../../../modules/ticket'
 import { TicketDiagnosis } from '../../../../modules/ticket-diagnosis'
-import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 import { DDom } from '../../../../utils'
+import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -35,7 +33,8 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 
-const organization = useMeStore().organization
+const meStore = useMeStore()
+const { organization } = meStore
 
 const radiologyRoot = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
@@ -53,19 +52,17 @@ ticketDemo.customer = Customer.example()
 
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
-    RadiologyGroupService.getAll(),
+    RadiologyGroupService.list({}),
     PrintHtmlService.getAll(),
     PrintHtmlService.getExampleList(),
   ])
   radiologyGroupAll.value = promiseInit[0]
   printHtmlOptions.value = [
-    ...promiseInit[1],
-    ...promiseInit[2].filter((i) =>
-      [PrintHtmlIdDefault.ENDOSCOPY, PrintHtmlIdDefault.ULTRASOUND].includes(i.id)
-    ),
-  ].map((i) => {
-    return { value: i.id, text: i.name }
-  })
+    { text: 'Mặc định', value: 0 },
+    ...promiseInit[1].map((i) => {
+      return { value: i.id, text: i.name }
+    }),
+  ]
 })
 
 onMounted(async () => {
@@ -79,14 +76,6 @@ onMounted(async () => {
   } else {
     radiology.value = Radiology.blank()
   }
-
-  if (!radiology.value.printHtml) {
-    radiology.value.printHtml = PrintHtml.blank()
-  }
-  if (!radiology.value.printHtml.content) {
-    radiology.value.printHtml!.content = await ticketClinicPrintTicketRadiologyDefault()
-  }
-
   updatePreview()
 })
 
@@ -122,8 +111,22 @@ const updatePreview = async () => {
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  const printHtml = await PrintHtmlService.detail(radiology.value.printHtmlId)
-  if (!printHtml) return
+  let printHtmlId = radiology.value.printHtmlId
+  let printHtml: PrintHtml | undefined
+  if (printHtmlId !== 0) {
+    printHtml = await PrintHtmlService.detail(printHtmlId)
+    if (!printHtml || !printHtml.content) {
+      printHtmlId = 0
+    }
+  }
+  if (printHtmlId === 0) {
+    printHtmlId = meStore.rootSetting.printDefault.radiology
+    printHtml = await PrintHtmlService.detail(printHtmlId)
+  }
+
+  if (!printHtml || !printHtml.content) {
+    return
+  }
 
   const data = JSON.parse(printHtml.dataExample || '{}')
   data.radiology = Radiology.from(radiology.value)
@@ -134,6 +137,7 @@ const updatePreview = async () => {
     organization,
     ticket: ticketDemo,
     data,
+    masterData: {},
     printHtml,
   })
 
@@ -169,8 +173,22 @@ const handleClickDelete = async () => {
 
 const startTestPrint = async () => {
   try {
-    const printHtml = await PrintHtmlService.detail(radiology.value.printHtmlId)
-    if (!printHtml) return
+    let printHtmlId = radiology.value.printHtmlId
+    let printHtml: PrintHtml | undefined
+
+    if (printHtmlId !== 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.content) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId === 0) {
+      printHtmlId = meStore.rootSetting.printDefault.radiology
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+    if (!printHtml || !printHtml.content) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
 
     const data = JSON.parse(printHtml.dataExample || '{}')
     data.radiology = Radiology.from(radiology.value)
@@ -181,6 +199,7 @@ const startTestPrint = async () => {
       organization,
       ticket: ticketDemo,
       data,
+      masterData: {},
       printHtml,
     })
 

@@ -1,3 +1,4 @@
+import { Image } from '../image/image.model'
 import { User } from '../user'
 
 export class Organization {
@@ -22,6 +23,7 @@ export class Organization {
   updatedAt: number
   deletedAt: number
 
+  logoImage?: Image
   userList?: User[]
 
   static init(): Organization {
@@ -55,6 +57,9 @@ export class Organization {
 
   static from(source: Organization) {
     const target = Organization.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'logoImage')) {
+      target.logoImage = target.logoImage ? Image.basic(target.logoImage) : target.logoImage
+    }
     if (target.userList) {
       target.userList = User.basicList(target.userList)
     }

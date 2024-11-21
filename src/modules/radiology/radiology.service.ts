@@ -1,7 +1,7 @@
 import { customFilter } from '../../utils'
 import { RadiologyApi } from './radiology.api'
 import type { RadiologyPaginationQuery } from './radiology.dto'
-import type { Radiology } from './radiology.model'
+import { Radiology } from './radiology.model'
 
 export class RadiologyService {
   static loadedAll: boolean = false
@@ -20,7 +20,7 @@ export class RadiologyService {
       RadiologyService.loadedAll = true
     }
 
-    return RadiologyService.radiologyAll
+    return Radiology.fromList(RadiologyService.radiologyAll)
   }
 
   static async pagination(options: RadiologyPaginationQuery) {

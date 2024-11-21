@@ -8,6 +8,7 @@ import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { TicketDiagnosis } from '../ticket-diagnosis'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
+import { TicketLaboratory } from '../ticket-laboratory'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
@@ -67,6 +68,7 @@ export class Ticket {
   ticketProductConsumableList?: TicketProduct[]
   ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
+  ticketLaboratoryList?: TicketLaboratory[]
   ticketRadiologyList?: TicketRadiology[]
   ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
@@ -178,6 +180,9 @@ export class Ticket {
       target.ticketProcedureList.forEach((i) => {
         i.procedure = Procedure.basic(i.procedure!)
       })
+    }
+    if (target.ticketLaboratoryList) {
+      target.ticketLaboratoryList = TicketLaboratory.basicList(target.ticketLaboratoryList)
     }
     if (target.ticketRadiologyList) {
       target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)

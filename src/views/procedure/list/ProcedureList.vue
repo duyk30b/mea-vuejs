@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import { CheckCircleOutlined, MinusCircleOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../common/icon'
-import { IconEditSquare } from '../../common/icon-google'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputText, VueSelect } from '../../common/vue-form'
-import { useMeStore } from '../../modules/_me/me.store'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { Procedure, useProcedureStore } from '../../modules/procedure'
-import { ProcedureGroup, ProcedureGroupService } from '../../modules/procedure-group'
-import { arrayToKeyValue } from '../../utils'
-import ModalProcedureListSettingScreen from './components/ModalProcedureListSettingScreen.vue'
-import ModalProcedureUpsert from './components/ModalProcedureUpsert.vue'
-import ModalProcedureDetail from './detail/ModalProcedureDetail.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconEditSquare } from '../../../common/icon-google'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputText, VueSelect } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Procedure, useProcedureStore } from '../../../modules/procedure'
+import { ProcedureGroup, ProcedureGroupService } from '../../../modules/procedure-group'
+import { arrayToKeyValue } from '../../../utils'
+import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
+import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
+import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
+import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
+const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
 
 const procedureStore = useProcedureStore()
 const settingStore = useSettingStore()
@@ -76,7 +78,7 @@ onBeforeMount(async () => {
   await startFetchData()
   dataLoading.value = false
   try {
-    procedureGroupAll.value = await ProcedureGroupService.getAll()
+    procedureGroupAll.value = await ProcedureGroupService.list({})
   } catch (error) {
     console.log('🚀 ~ file: ProcedureList.vue:83 ~ onBeforeMount ~ error:', error)
   }
@@ -132,6 +134,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'screen-setting') {
     modalProcedureListSettingScreen.value?.openModal()
   }
+  if (menu.key === 'PROCEDURE_GROUP_MANAGER') {
+    modalProcedureGroupManager.value?.openModal()
+  }
+}
+
+const handleModalProcedureGroupManagerSuccess = async () => {
+  procedureGroupAll.value = await ProcedureGroupService.list({})
 }
 </script>
 
@@ -139,6 +148,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
+  <ModalProcedureGroupManager
+    ref="modalProcedureGroupManager"
+    @success="handleModalProcedureGroupManagerSuccess" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
@@ -161,6 +173,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="PROCEDURE_GROUP_MANAGER">Quản lý nhóm dịch vụ</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>

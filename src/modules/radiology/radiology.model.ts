@@ -7,9 +7,9 @@ export class Radiology {
 
   radiologyGroupId: number
   printHtmlId: number
+  priority: number
 
   price: number
-  priority: number
   requestNoteDefault: string
   descriptionDefault: string
   resultDefault: string
@@ -23,10 +23,14 @@ export class Radiology {
   static init() {
     const ins = new Radiology()
     ins.id = 0
+    ins.name = ''
+
     ins.radiologyGroupId = 0
     ins.printHtmlId = 0
-    ins.name = ''
+    ins.priority = 1
+    
     ins.price = 0
+    ins.requestNoteDefault = ''
     ins.descriptionDefault = ''
     ins.resultDefault = 'Chưa phát hiện dấu hiệu bất thường'
     return ins

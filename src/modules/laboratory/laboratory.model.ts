@@ -1,39 +1,53 @@
 import { LaboratoryGroup } from '../laboratory-group'
-import { PrintHtml } from '../print-html'
+
+export enum LaboratoryValueType {
+  Number = 1,
+  String = 2,
+  Options = 3,
+  Children = 4,
+}
 
 export class Laboratory {
   id: number
-  name: string // Tên
-
+  name: string
   laboratoryGroupId: number
-  printHtmlId: number
-
   price: number
-  priority: number
-  descriptionDefault: string
-  resultDefault: string
 
-  updatedAt: number
-  deletedAt: number
+  level: number
+  parentId: number
+
+  valueType: LaboratoryValueType
+  lowValue: number
+  highValue: number
+  unit: string
+  options: string
+
+  optionsParse: string[] // chỉ được convert ở front-end
 
   laboratoryGroup?: LaboratoryGroup
-  printHtml?: PrintHtml
+  children?: Laboratory[]
 
   static init() {
     const ins = new Laboratory()
     ins.id = 0
-    ins.laboratoryGroupId = 0
-    ins.printHtmlId = 0
     ins.name = ''
+    ins.laboratoryGroupId = 0
     ins.price = 0
-    ins.descriptionDefault = ''
-    ins.resultDefault = 'Chưa phát hiện dấu hiệu bất thường'
+    ins.level = 1
+    ins.parentId = 0
+    ins.lowValue = 0
+    ins.highValue = 0
+    ins.valueType = LaboratoryValueType.Number
+    ins.price = 0
+    ins.unit = ''
+    ins.options = JSON.stringify([])
+    ins.optionsParse = []
+    ins.children = []
     return ins
   }
 
   static blank() {
     const ins = Laboratory.init()
-    ins.printHtml = PrintHtml.init()
     return ins
   }
 
@@ -58,8 +72,8 @@ export class Laboratory {
         ? LaboratoryGroup.basic(target.laboratoryGroup)
         : target.laboratoryGroup
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
-      target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    if (target.children) {
+      target.children = Laboratory.basicList(target.children)
     }
     return target
   }
@@ -68,16 +82,24 @@ export class Laboratory {
     return sourceList.map((i) => Laboratory.from(i))
   }
 
-  static equal(a: Laboratory, b: Laboratory) {
+  static equal(a: Laboratory, b: Laboratory, options?: { children?: boolean }) {
     if (a.id != b.id) return false
     if (a.name != b.name) return false
-    if (a.laboratoryGroupId != b.laboratoryGroupId) return
-    if (a.printHtmlId != b.printHtmlId) return
+    if (a.laboratoryGroupId != b.laboratoryGroupId) return false
     if (a.price != b.price) return false
-    if (a.resultDefault != b.resultDefault) return false
-    if (a.descriptionDefault != b.descriptionDefault) return false
-    if (a.updatedAt != b.updatedAt) return false
-    if (a.deletedAt != b.deletedAt) return false
+
+    if (a.level != b.level) return false
+    if (a.parentId != b.parentId) return false
+
+    if (a.valueType != b.valueType) return false
+    if (a.lowValue != b.lowValue) return false
+    if (a.highValue != b.highValue) return false
+    if (a.unit != b.unit) return false
+    if (a.options != b.options) return false
+
+    if (options?.children) {
+      if (!Laboratory.equalList(a.children || [], b.children || [])) return false
+    }
     return true
   }
 

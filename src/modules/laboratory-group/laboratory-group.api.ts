@@ -47,6 +47,7 @@ export class LaboratoryGroupApi {
         return {
           id: i.id || 0,
           name: i.name,
+          printHtmlId: i.printHtmlId || 0,
         }
       }),
     })
@@ -57,6 +58,7 @@ export class LaboratoryGroupApi {
   static async createOne(laboratoryGroup: LaboratoryGroup) {
     const response = await AxiosInstance.post('/laboratory-group/create', {
       name: laboratoryGroup.name,
+      printHtmlId: laboratoryGroup.printHtmlId,
     })
     const { data } = response.data as BaseResponse
     return LaboratoryGroup.from(data)
@@ -65,6 +67,7 @@ export class LaboratoryGroupApi {
   static async updateOne(id: number, laboratoryGroup: LaboratoryGroup) {
     const response = await AxiosInstance.patch(`/laboratory-group/update/${id}`, {
       name: laboratoryGroup.name,
+      printHtmlId: laboratoryGroup.printHtmlId,
     })
     const { data } = response.data as BaseResponse
     return LaboratoryGroup.from(data)

@@ -31,6 +31,7 @@ export const useTicketClinicStore = defineStore('ticket-clinic-store', {
             ticketProductList: { product: true, batch: true },
             ticketProcedureList: { procedure: true },
             ticketRadiologyList: { radiology: true },
+            ticketLaboratoryList: {},
           },
         })
       }

@@ -6,17 +6,19 @@ import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import ModalLaboratoryDetail from '../detail/ModalLaboratoryDetail.vue'
-import ModalCopyLaboratoryExample from './ModalCopyLaboratoryExample.vue'
+import type ModalCopyLaboratoryExample from './ModalCopyLaboratoryExample.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 import { arrayToKeyValue } from '../../../../utils'
+import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 
 const modalLaboratoryDetail = ref<InstanceType<typeof ModalLaboratoryDetail>>()
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratoryExample>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
+const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -46,6 +48,7 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: { laboratoryGroup: false },
       filter: {
+        level: 1,
         laboratoryGroupId: laboratoryGroupId.value ? laboratoryGroupId.value : undefined,
         name: searchText.value ? { LIKE: searchText.value } : undefined,
       },
@@ -95,14 +98,23 @@ const handleModalCopyLaboratoryExampleSuccess = async (menu: { key: string }) =>
   await startFetchData()
 }
 
-const handleModalLaboratoryGroupManagerSuccess = async () => {}
+const handleModalLaboratoryGroupManagerSuccess = async () => {
+  laboratoryGroupAll.value = await LaboratoryGroupService.getAll()
+}
+
+const handleModalLaboratoryUpsertSuccess = async () => {
+  await startFetchData()
+}
 </script>
 
 <template>
   <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
-  <ModalCopyLaboratoryExample
+  <ModalLaboratoryUpsert
+    ref="modalLaboratoryUpsert"
+    @success="handleModalLaboratoryUpsertSuccess" />
+  <!-- <ModalCopyLaboratoryExample
     ref="modalCopyLaboratoryExample"
-    @success="handleModalCopyLaboratoryExampleSuccess" />
+    @success="handleModalCopyLaboratoryExampleSuccess" /> -->
   <ModalLaboratoryGroupManager
     ref="modalLaboratoryGroupManager"
     @success="handleModalLaboratoryGroupManagerSuccess" />
@@ -116,7 +128,7 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {}
         v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'LaboratoryUpsert' })">
+        @click="modalLaboratoryUpsert?.openModal()">
         Thêm mới
       </VueButton>
       <!-- <VueButton
@@ -169,6 +181,8 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {}
             <th>Mã</th>
             <th>Tên</th>
             <th>Nhóm</th>
+            <th>Tham chiếu</th>
+            <th>Đơn vị</th>
             <th>Giá tiền</th>
             <th>Action</th>
           </tr>
@@ -192,7 +206,7 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {}
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
-            <td class="text-center">R{{ laboratory.id }}</td>
+            <td class="text-center">L{{ laboratory.id }}</td>
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ laboratory.name }}</span>
@@ -207,11 +221,21 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {}
             <td class="text-center">
               {{ laboratoryGroupMap[laboratory.laboratoryGroupId]?.name }}
             </td>
+            <td class="text-right">
+              {{
+                laboratory.valueType === LaboratoryValueType.Number
+                  ? laboratory.lowValue + ' - ' + laboratory.highValue
+                  : ''
+              }}
+            </td>
+            <td class="text-right">
+              {{ laboratory.valueType === LaboratoryValueType.Number ? laboratory.unit : '' }}
+            </td>
             <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
               <a
                 style="color: var(--text-orange)"
-                @click="$router.push({ name: 'LaboratoryUpsert', params: { id: laboratory.id } })">
+                @click="modalLaboratoryUpsert?.openModal(laboratory.id)">
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>

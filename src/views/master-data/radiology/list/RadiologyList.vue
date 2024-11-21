@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../../common/icon'
+import { IconFileSearch, IconSetting } from '../../../../common/icon'
 import { IconEditSquare, IconPulmonology } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
+import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
-import { arrayToKeyValue, customFilter } from '../../../../utils'
+import { arrayToKeyValue } from '../../../../utils'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
-import ModalCopyRadiologyExample from './ModalCopyRadiologyExample.vue'
+import type ModalCopyRadiologyExample from './ModalCopyRadiologyExample.vue'
+import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologyExample = ref<InstanceType<typeof ModalCopyRadiologyExample>>()
+const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -75,16 +77,20 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 onBeforeMount(async () => {
   try {
     await startFetchData()
-    radiologyGroupAll.value = await RadiologyGroupService.getAll()
+    radiologyGroupAll.value = await RadiologyGroupService.list({})
   } catch (error) {
     console.log('🚀 ~ file: RadiologyList.vue:86 ~ onBeforeMount ~ error:', error)
   }
 })
 
 const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    // modalRadiologyListSettingScreen.value?.openModal()
+  if (menu.key === 'RADIOLOGY_GROUP_MANAGER') {
+    modalRadiologyGroupManager.value?.openModal()
   }
+}
+
+const handleModalRadiologyGroupManagerSuccess = async () => {
+  radiologyGroupAll.value = await RadiologyGroupService.list({})
 }
 
 const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => {
@@ -94,9 +100,12 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
 
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
-  <ModalCopyRadiologyExample
+  <!-- <ModalCopyRadiologyExample
     ref="modalCopyRadiologyExample"
-    @success="handleModalCopyRadiologyExampleSuccess" />
+    @success="handleModalCopyRadiologyExampleSuccess" /> -->
+  <ModalRadiologyGroupManager
+    ref="modalRadiologyGroupManager"
+    @success="handleModalRadiologyGroupManagerSuccess" />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
@@ -121,17 +130,16 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
       </VueButton> -->
     </div>
     <div>
-      <!-- <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
+      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span style="font-size: 1.2rem; cursor: pointer">
           <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
+            <a-menu-item key="RADIOLOGY_GROUP_MANAGER">Quản lý nhóm CĐHA</a-menu-item>
           </a-menu>
         </template>
-      </a-dropdown> -->
+      </a-dropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">

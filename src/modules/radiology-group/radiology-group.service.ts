@@ -1,57 +1,76 @@
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { arrayToKeyValue } from '../../utils'
 import { RadiologyGroupApi } from './radiology-group.api'
-import type { RadiologyGroup } from './radiology-group.model'
+import type { RadiologyGroupListQuery, RadiologyGroupPaginationQuery } from './radiology-group.dto'
+import { RadiologyGroup } from './radiology-group.model'
 
 export class RadiologyGroupService {
-  static timeSync: string = ''
-  static radiologyGroupAll: RadiologyGroup[]
+  static loadedAll: boolean = false
 
-  static async getAll() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('RADIOLOGY_GROUP')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'RADIOLOGY_GROUP',
-        dataVersion: 0,
-        time: new Date(0).toISOString(),
-      }
-    }
-    if (refreshTime.time !== RadiologyGroupService.timeSync) {
-      const now = new Date().toISOString()
-      refreshTime.time = now
-      RadiologyGroupService.timeSync = now
-      const fetchData = await RadiologyGroupApi.list({})
-      RadiologyGroupService.radiologyGroupAll = fetchData.data
-      await RefreshTimeDB.upsertOne(refreshTime)
+  static radiologyGroupAll: RadiologyGroup[]
+  static radiologyGroupMap: Record<string, RadiologyGroup> = {}
+
+  private static async getAll() {
+    if (!RadiologyGroupService.loadedAll) {
+      const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
+      const radiologyGroupList = data
+      RadiologyGroupService.radiologyGroupAll = radiologyGroupList
+
+      RadiologyGroupService.radiologyGroupMap = arrayToKeyValue(radiologyGroupList, 'id')
+      RadiologyGroupService.loadedAll = true
     }
 
     return RadiologyGroupService.radiologyGroupAll
   }
 
-  static async updateTimeSyncDB() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('RADIOLOGY_GROUP')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'RADIOLOGY_GROUP',
-        dataVersion: 0,
-        time: '',
-      }
+  static async getMap() {
+    await RadiologyGroupService.getAll()
+    return RadiologyGroupService.radiologyGroupMap
+  }
+
+  static async pagination(options: RadiologyGroupPaginationQuery) {
+    const page = options.page || 1
+    const limit = options.limit || 10
+    await RadiologyGroupService.getAll()
+    const data = RadiologyGroupService.radiologyGroupAll.slice((page - 1) * limit, page * limit)
+    return {
+      data,
+      meta: { total: RadiologyGroupService.radiologyGroupAll.length },
     }
-    refreshTime.time = new Date().toISOString()
-    await RefreshTimeDB.upsertOne(refreshTime)
+  }
+
+  static async list(options: RadiologyGroupListQuery) {
+    const filter = options.filter || {}
+    const all = await RadiologyGroupService.getAll()
+    let data = all
+    if (options.filter) {
+      data = data.filter((i) => {
+        return true
+      })
+    }
+    return RadiologyGroup.fromList(data)
+  }
+
+  static async replaceAll(body: RadiologyGroup[]) {
+    const result = await RadiologyGroupApi.replaceAll(body)
+    RadiologyGroupService.loadedAll = false
+    return result
   }
 
   static async createOne(radiologyGroup: RadiologyGroup) {
-    await RadiologyGroupService.updateTimeSyncDB()
-    return await RadiologyGroupApi.createOne(radiologyGroup)
+    const result = await RadiologyGroupApi.createOne(radiologyGroup)
+    RadiologyGroupService.loadedAll = false
+    return result
   }
 
   static async updateOne(id: number, radiologyGroup: RadiologyGroup) {
-    await RadiologyGroupService.updateTimeSyncDB()
-    return await RadiologyGroupApi.updateOne(id, radiologyGroup)
+    const result = await RadiologyGroupApi.updateOne(id, radiologyGroup)
+    RadiologyGroupService.loadedAll = false
+    return result
   }
 
   static async destroyOne(id: number) {
-    await RadiologyGroupService.updateTimeSyncDB()
-    return await RadiologyGroupApi.destroyOne(id)
+    const result = await RadiologyGroupApi.destroyOne(id)
+    RadiologyGroupService.loadedAll = false
+    return result
   }
 }

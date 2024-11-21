@@ -1,19 +1,20 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { BasicEditor } from '../../../ckeditor/class-editor'
-import ImageUpload from '../../../common/ImageUpload.vue'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import VueButton from '../../../common/VueButton.vue'
 import { InputText } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
 import { ticketClinicRef, TicketEyeApi } from '../../../modules/ticket-clinic'
+import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
+import { DImage } from '../../../utils'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const ticketDiagnosis = ref<TicketDiagnosis>(TicketDiagnosis.blank())
 const general = ref<{
@@ -135,7 +136,7 @@ const saveTicketDiagnosis = async () => {
     })
     ticketDiagnosis.value.regional = JSON.stringify(regionalValue)
 
-    const { filesPosition, imageIdsKeep, files } = imageUploadRef.value?.getData() || {
+    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
       filesPosition: [],
       imageIdsKeep: [],
       files: [],
@@ -246,15 +247,15 @@ const handleFocus = (e: Event) => {
     </div>
     <div class="mt-4">
       <div>Hình ảnh</div>
-      <ImageUpload
-        ref="imageUploadRef"
+      <ImageUploadMultiple
+        ref="imageUploadMultipleRef"
         :height="100"
         :rootImageList="
           (ticketClinicRef.ticketDiagnosis?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
-              thumbnail: i.link({ size: 200 }),
-              enlarged: i.link({ size: 1000 }),
+              thumbnail: DImage.getImageLink(i, { size: 200 }),
+              enlarged: DImage.getImageLink(i, { size: 1000 }),
               id: i.id,
             }))
         "

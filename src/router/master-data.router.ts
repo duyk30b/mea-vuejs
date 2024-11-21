@@ -12,7 +12,7 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'list',
           name: 'ProcedureList',
-          component: () => import('../views/procedure/ProcedureList.vue'),
+          component: () => import('../views/procedure/list/ProcedureList.vue'),
           meta: { title: 'Dịch vụ' },
         },
       ],
@@ -27,17 +27,6 @@ export const masterDataRouter: RouteRecordRaw = {
           name: 'LaboratoryList',
           component: () => import('../views/master-data/laboratory/list/LaboratoryList.vue'),
           meta: { title: 'Xét nghiệm' },
-        },
-        {
-          path: 'upsert/:id?',
-          name: 'LaboratoryUpsert',
-          component: () => import('../views/master-data/laboratory/upsert/LaboratoryUpsert.vue'),
-          meta: {
-            title: (route: RouteLocationNormalizedLoaded) => {
-              if (route.query?.mode === 'UPDATE') return 'Cập nhật xét nghiệm'
-              return 'Tạo mới xét nghiệm'
-            },
-          },
         },
       ],
     },
@@ -88,45 +77,6 @@ export const masterDataRouter: RouteRecordRaw = {
           name: 'CustomerSourceList',
           component: () => import('../views/master-data/customer-source/CustomerSourceList.vue'),
           meta: { title: 'Dịch vụ' },
-        },
-      ],
-    },
-    {
-      path: 'product-group',
-      name: 'ProductGroup',
-      redirect: () => ({ name: 'ProductGroupList' }),
-      children: [
-        {
-          path: 'list',
-          name: 'ProductGroupList',
-          component: () => import('../views/master-data/product-group/ProductGroupList.vue'),
-          meta: { title: 'Dịch vụ' },
-        },
-      ],
-    },
-    {
-      path: 'procedure-group',
-      name: 'ProcedureGroup',
-      redirect: () => ({ name: 'ProcedureGroupList' }),
-      children: [
-        {
-          path: 'list',
-          name: 'ProcedureGroupList',
-          component: () => import('../views/master-data/procedure-group/ProcedureGroupList.vue'),
-          meta: { title: 'Dịch vụ' },
-        },
-      ],
-    },
-    {
-      path: 'radiology-group',
-      name: 'RadiologyGroup',
-      redirect: () => ({ name: 'RadiologyGroupList' }),
-      children: [
-        {
-          path: 'list',
-          name: 'RadiologyGroupList',
-          component: () => import('../views/master-data/radiology-group/RadiologyGroupList.vue'),
-          meta: { title: 'CĐHA' },
         },
       ],
     },

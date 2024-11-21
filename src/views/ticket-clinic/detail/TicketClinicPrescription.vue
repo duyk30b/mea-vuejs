@@ -9,12 +9,12 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../modules/batch'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
+import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
-import { DTimer, customFilter } from '../../../utils'
+import { DDom, DTimer, customFilter } from '../../../utils'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
@@ -171,34 +171,30 @@ const changeItemPosition = (index: number, count: number) => {
 
 const startPrint = async () => {
   try {
-    // const response = await fetch('/template/prescription.hbs')
-    // const templateHtml = await response.text()
-
-    // const templateCompile = Handlebars.compile(templateHtml)
-    // const content = templateCompile({
-    //   organization: meStore.organization,
-    //   visit: ticketClinicRef.value,
-    // })
-
-    const printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.prescription
-    const printHtml = await PrintHtmlService.detail(printHtmlId)
-    if (!printHtml) {
+    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.prescription
+    let printHtml: PrintHtml | undefined
+    if (printHtmlId !== 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.content) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId === 0) {
+      printHtmlId = meStore.rootSetting.printDefault.prescription
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+    if (!printHtml || !printHtml.content) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = printHtmlCompiledTemplate({
+    const textDom = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
-      printHtml,
+      masterData: {},
+      printHtml: printHtml!,
     })
 
-    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(content)
-    pri.document.close()
-    pri.focus()
-    pri.print()
+    await DDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }

@@ -9,9 +9,6 @@ export type RefreshTimeCode =
   | 'CUSTOMER'
   | 'DISTRIBUTOR'
   | 'CUSTOMER_SOURCE'
-  | 'PRODUCT_GROUP'
-  | 'PROCEDURE_GROUP'
-  | 'RADIOLOGY_GROUP'
 
 export type RefreshTime = {
   code: RefreshTimeCode

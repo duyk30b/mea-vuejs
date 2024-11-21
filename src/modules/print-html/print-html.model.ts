@@ -1,11 +1,3 @@
-export const PrintHtmlIdDefault = {
-  INVOiCE: 1,
-  PRESCRIPTION: 2,
-  ENDOSCOPY: 3, // 'Nội soi'
-  ULTRASOUND: 4, // 'Siêu âm'
-  OPTOMETRY: 20, // Đo thị lực
-}
-
 export class PrintHtml {
   id: number
   name: string

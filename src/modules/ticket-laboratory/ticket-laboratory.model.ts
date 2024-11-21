@@ -1,20 +1,19 @@
 import { Customer } from '../customer'
 import type { DiscountType } from '../enum'
-import { Image } from '../image/image.model'
-import { Radiology } from '../radiology'
+import { Laboratory } from '../laboratory'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
-export enum TicketRadiologyStatus {
+export enum TicketLaboratoryStatus {
   Empty = 1,
   Pending = 2,
   Completed = 3,
 }
-export class TicketRadiology {
+export class TicketLaboratory {
   id: number
   ticketId: number
   customerId: number
-  radiologyId: number
+  laboratoryId: number
 
   expectedPrice: number
   discountMoney: number
@@ -22,86 +21,95 @@ export class TicketRadiology {
   discountType: DiscountType
   actualPrice: number
 
-  description: string
   result: string
+  attention: string
 
-  startedAt: number
-  status: TicketRadiologyStatus
-  imageIds: string
+  status: TicketLaboratoryStatus
+  startedAt: number | null
 
-  imageList: Image[]
-  radiology?: Radiology
+  resultParse: Record<string, any> // chỉ dùng ở front-end
+  attentionParse: Record<string, any> // chỉ dùng ở front-end
+
   customer?: Customer
   ticket?: Ticket
   ticketUserList: TicketUser[]
+  laboratoryList?: Laboratory[]
 
-  static init(): TicketRadiology {
-    const ins = new TicketRadiology()
+  static init(): TicketLaboratory {
+    const ins = new TicketLaboratory()
     ins.id = 0
-    ins.imageIds = '[]'
+    ins.result = JSON.stringify({})
+    ins.attention = JSON.stringify({})
+    ins.resultParse = {}
+    ins.attentionParse = {}
     return ins
   }
 
-  static blank(): TicketRadiology {
-    const ins = TicketRadiology.init()
-    ins.imageList = []
+  static blank(): TicketLaboratory {
+    const ins = TicketLaboratory.init()
     return ins
   }
 
-  static basic(source: TicketRadiology) {
-    const target = new TicketRadiology()
+  static basic(source: TicketLaboratory) {
+    const target = new TicketLaboratory()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    try {
+      target.resultParse = JSON.parse(target.result)
+    } catch (error) {
+      target.resultParse = {}
+    }
+    try {
+      target.attentionParse = JSON.parse(target.attention)
+    } catch (error) {
+      target.attentionParse = {}
+    }
     return target
   }
 
-  static basicList(sources: TicketRadiology[]): TicketRadiology[] {
-    return sources.map((i) => TicketRadiology.basic(i))
+  static basicList(sources: TicketLaboratory[]): TicketLaboratory[] {
+    return sources.map((i) => TicketLaboratory.basic(i))
   }
 
-  static from(source: TicketRadiology) {
-    const target = TicketRadiology.basic(source)
-    if (Object.prototype.hasOwnProperty.call(source, 'radiology')) {
-      target.radiology = source.radiology ? Radiology.basic(source.radiology) : source.radiology
-    }
+  static from(source: TicketLaboratory) {
+    const target = TicketLaboratory.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
       target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
     }
-    if (source.imageList) {
-      target.imageList = Image.basicList(source.imageList)
-    }
     if (target.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(target.ticketUserList)
+    }
+    if (target.laboratoryList) {
+      target.laboratoryList = Laboratory.basicList(target.laboratoryList)
     }
     return target
   }
 
-  static fromList(sourceList: TicketRadiology[]): TicketRadiology[] {
-    return sourceList.map((i) => TicketRadiology.from(i))
+  static fromList(sourceList: TicketLaboratory[]): TicketLaboratory[] {
+    return sourceList.map((i) => TicketLaboratory.from(i))
   }
 
-  static toBasic(root: TicketRadiology) {
-    const ins = new TicketRadiology()
+  static toBasic(root: TicketLaboratory) {
+    const ins = new TicketLaboratory()
     Object.assign(ins, root)
-    delete ins.radiology
     return ins
   }
 
-  static toBasics(roots: TicketRadiology[]): TicketRadiology[] {
-    return roots.map((i) => TicketRadiology.toBasic(i))
+  static toBasics(roots: TicketLaboratory[]): TicketLaboratory[] {
+    return roots.map((i) => TicketLaboratory.toBasic(i))
   }
 
-  static equal(a: TicketRadiology, b: TicketRadiology) {
+  static equal(a: TicketLaboratory, b: TicketLaboratory) {
     if (a.id != b.id) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
-    if (a.radiologyId != b.radiologyId) return false
+    if (a.laboratoryId != b.laboratoryId) return false
 
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
@@ -109,18 +117,17 @@ export class TicketRadiology {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
-    if (a.description != b.description) return false
+    if (a.attention != b.attention) return false
     if (a.result != b.result) return false
 
     if (a.startedAt != b.startedAt) return false
-    if (a.imageIds != b.imageIds) return false
     return true
   }
 
-  static equalList(a: TicketRadiology[], b: TicketRadiology[]) {
+  static equalList(a: TicketLaboratory[], b: TicketLaboratory[]) {
     if (a.length != b.length) return false
     for (let i = 0; i < a.length; i++) {
-      if (!TicketRadiology.equal(a[i], b[i])) {
+      if (!TicketLaboratory.equal(a[i], b[i])) {
         return false
       }
     }

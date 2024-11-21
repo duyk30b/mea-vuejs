@@ -1,57 +1,76 @@
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { arrayToKeyValue } from '../../utils'
 import { ProductGroupApi } from './product-group.api'
-import type { ProductGroup } from './product-group.model'
+import type { ProductGroupListQuery, ProductGroupPaginationQuery } from './product-group.dto'
+import { ProductGroup } from './product-group.model'
 
 export class ProductGroupService {
-  static timeSync: string = ''
-  static productGroupAll: ProductGroup[]
+  static loadedAll: boolean = false
 
-  static async getAll() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_GROUP')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'PRODUCT_GROUP',
-        dataVersion: 0,
-        time: new Date(0).toISOString(),
-      }
-    }
-    if (refreshTime.time !== ProductGroupService.timeSync) {
-      const now = new Date().toISOString()
-      refreshTime.time = now
-      ProductGroupService.timeSync = now
-      const fetchData = await ProductGroupApi.list({})
-      ProductGroupService.productGroupAll = fetchData.data
-      await RefreshTimeDB.upsertOne(refreshTime)
+  static productGroupAll: ProductGroup[]
+  static productGroupMap: Record<string, ProductGroup> = {}
+
+  private static async getAll() {
+    if (!ProductGroupService.loadedAll) {
+      const { data } = await ProductGroupApi.list({ sort: { id: 'ASC' } })
+      const productGroupList = data
+      ProductGroupService.productGroupAll = productGroupList
+
+      ProductGroupService.productGroupMap = arrayToKeyValue(productGroupList, 'id')
+      ProductGroupService.loadedAll = true
     }
 
     return ProductGroupService.productGroupAll
   }
 
-  static async updateTimeSyncDB() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT_GROUP')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'PRODUCT_GROUP',
-        dataVersion: 0,
-        time: '',
-      }
+  static async getMap() {
+    await ProductGroupService.getAll()
+    return ProductGroupService.productGroupMap
+  }
+
+  static async pagination(options: ProductGroupPaginationQuery) {
+    const page = options.page || 1
+    const limit = options.limit || 10
+    await ProductGroupService.getAll()
+    const data = ProductGroupService.productGroupAll.slice((page - 1) * limit, page * limit)
+    return {
+      data,
+      meta: { total: ProductGroupService.productGroupAll.length },
     }
-    refreshTime.time = new Date().toISOString()
-    await RefreshTimeDB.upsertOne(refreshTime)
+  }
+
+  static async list(options: ProductGroupListQuery) {
+    const filter = options.filter || {}
+    const all = await ProductGroupService.getAll()
+    let data = all
+    if (options.filter) {
+      data = data.filter((i) => {
+        return true
+      })
+    }
+    return ProductGroup.fromList(data)
+  }
+
+  static async replaceAll(body: ProductGroup[]) {
+    const result = await ProductGroupApi.replaceAll(body)
+    ProductGroupService.loadedAll = false
+    return result
   }
 
   static async createOne(productGroup: ProductGroup) {
-    await ProductGroupService.updateTimeSyncDB()
-    return await ProductGroupApi.createOne(productGroup)
+    const result = await ProductGroupApi.createOne(productGroup)
+    ProductGroupService.loadedAll = false
+    return result
   }
 
   static async updateOne(id: number, productGroup: ProductGroup) {
-    await ProductGroupService.updateTimeSyncDB()
-    return await ProductGroupApi.updateOne(id, productGroup)
+    const result = await ProductGroupApi.updateOne(id, productGroup)
+    ProductGroupService.loadedAll = false
+    return result
   }
 
   static async destroyOne(id: number) {
-    await ProductGroupService.updateTimeSyncDB()
-    return await ProductGroupApi.destroyOne(id)
+    const result = await ProductGroupApi.destroyOne(id)
+    ProductGroupService.loadedAll = false
+    return result
   }
 }

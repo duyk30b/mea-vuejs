@@ -31,11 +31,27 @@ export class RadiologyGroupApi {
     }
   }
 
-  static async detail(id: number, options: RadiologyGroupDetailQuery = {}): Promise<RadiologyGroup> {
+  static async detail(
+    id: number,
+    options: RadiologyGroupDetailQuery = {}
+  ): Promise<RadiologyGroup> {
     const params = RadiologyGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/radiology-group/detail/${id}`, { params })
     const { data, meta } = response.data as BaseResponse
     return RadiologyGroup.from(data)
+  }
+
+  static async replaceAll(body: RadiologyGroup[]) {
+    const response = await AxiosInstance.put('/radiology-group/replace-all', {
+      radiologyGroupReplaceAll: body.map((i) => {
+        return {
+          id: i.id || 0,
+          name: i.name,
+        }
+      }),
+    })
+    const { data } = response.data as BaseResponse
+    return data
   }
 
   static async createOne(radiologyGroup: RadiologyGroup) {

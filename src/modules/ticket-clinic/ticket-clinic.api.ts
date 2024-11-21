@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { TicketDiagnosis } from '../ticket-diagnosis'
+import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
@@ -90,6 +91,31 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse
   }
 
+  static async updateTicketLaboratoryList(body: {
+    ticketId: number
+    customerId: number
+    ticketLaboratoryList: TicketLaboratory[]
+  }) {
+    const { ticketId, customerId, ticketLaboratoryList } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-ticket-laboratory-list`,
+      {
+        customerId: customerId,
+        ticketLaboratoryList: ticketLaboratoryList.map((i) => {
+          const plain: { [P in keyof TicketLaboratory]?: any } = {}
+          plain.laboratoryId = i.laboratoryId
+          plain.expectedPrice = i.expectedPrice
+          plain.discountMoney = i.discountMoney
+          plain.discountPercent = i.discountPercent
+          plain.discountType = i.discountType
+          plain.actualPrice = i.actualPrice
+          return plain
+        }),
+      }
+    )
+    const { data } = response.data as BaseResponse
+  }
+
   static async updateTicketRadiologyList(body: {
     ticketId: number
     customerId: number
@@ -173,9 +199,16 @@ export class TicketClinicApi {
     ticketId: number
     ticketProductList: TicketProduct[]
     ticketProcedureList: TicketProcedure[]
+    ticketLaboratoryList: TicketLaboratory[]
     ticketRadiologyList: TicketRadiology[]
   }) {
-    const { ticketId, ticketProductList, ticketProcedureList, ticketRadiologyList } = body
+    const {
+      ticketId,
+      ticketProductList,
+      ticketProcedureList,
+      ticketRadiologyList,
+      ticketLaboratoryList,
+    } = body
 
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update-items-money`, {
       ticketProductUpdateList: ticketProductList.map((item) => {
@@ -194,6 +227,16 @@ export class TicketClinicApi {
         return {
           ticketProcedureId: item.id,
           procedureId: item.procedureId,
+          discountMoney: item.discountMoney,
+          discountPercent: item.discountPercent,
+          discountType: item.discountType,
+          actualPrice: item.actualPrice,
+        }
+      }),
+      ticketLaboratoryUpdateList: ticketLaboratoryList.map((item) => {
+        return {
+          ticketLaboratoryId: item.id,
+          laboratoryId: item.laboratoryId,
           discountMoney: item.discountMoney,
           discountPercent: item.discountPercent,
           discountType: item.discountType,

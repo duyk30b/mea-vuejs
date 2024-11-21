@@ -55,35 +55,62 @@ export class LaboratoryApi {
     return Laboratory.from(data.laboratory)
   }
 
-  static async createOne(laboratory: Laboratory) {
+  static async create(laboratory: Laboratory) {
     const response = await AxiosInstance.post('/laboratory/create', {
       name: laboratory.name,
       laboratoryGroupId: laboratory.laboratoryGroupId,
-      printHtmlId: laboratory.printHtmlId,
       price: laboratory.price,
-      descriptionDefault: laboratory.descriptionDefault,
-      resultDefault: laboratory.resultDefault,
+      valueType: laboratory.valueType,
+      lowValue: laboratory.lowValue,
+      highValue: laboratory.highValue,
+      unit: laboratory.unit,
+      options: laboratory.options,
+      children: (laboratory.children || []).map((i) => {
+        return {
+          name: i.name,
+          price: i.price,
+          lowValue: i.lowValue,
+          highValue: i.highValue,
+          valueType: i.valueType,
+          unit: i.unit,
+          options: i.options,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ laboratory: any }>
     return Laboratory.from(data.laboratory)
   }
 
-  static async updateOne(id: number, laboratory: Laboratory) {
+  static async update(id: number, laboratory: Laboratory) {
     const response = await AxiosInstance.patch(`/laboratory/update/${id}`, {
       name: laboratory.name,
-      laboratoryGroupId: laboratory.laboratoryGroupId,
-      printHtmlId: laboratory.printHtmlId,
       price: laboratory.price,
-      descriptionDefault: laboratory.descriptionDefault,
-      resultDefault: laboratory.resultDefault,
+      laboratoryGroupId: laboratory.laboratoryGroupId,
+      lowValue: laboratory.lowValue,
+      highValue: laboratory.highValue,
+      // valueType: laboratory.valueType, // không cho cập nhật loại giá trị
+      unit: laboratory.unit,
+      options: laboratory.options,
+      children: (laboratory.children || []).map((i) => {
+        return {
+          id: i.id,
+          name: i.name,
+          price: i.price,
+          lowValue: i.lowValue,
+          highValue: i.highValue,
+          valueType: i.valueType,
+          unit: i.unit,
+          options: i.options,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ laboratory: any }>
     return Laboratory.from(data.laboratory)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/laboratory/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ laboratory: any }>
-    return Laboratory.from(data.laboratory)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/laboratory/destroy/${id}`)
+    const { data } = response.data as BaseResponse<{ laboratoryId: number }>
+    return data
   }
 }

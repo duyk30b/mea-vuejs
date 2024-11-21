@@ -56,7 +56,7 @@ const openModal = async (productId?: number) => {
     )
   }
 
-  const productGroupAll = await ProductGroupService.getAll()
+  const productGroupAll = await ProductGroupService.list({})
   productGroupOptions.value = productGroupAll.map((i) => ({
     value: i.id,
     text: i.name,

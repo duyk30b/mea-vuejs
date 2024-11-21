@@ -10,11 +10,11 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
+import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketRadiology } from '../../../modules/ticket-radiology'
-import { customFilter } from '../../../utils'
+import { customFilter, DDom } from '../../../utils'
 import ModalTicketRadiologyResult from './modal/ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -96,52 +96,32 @@ const saveTicketRadiologyList = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    // const response = await fetch('/template/visit-radiology.hbs')
-    // const templateHtml = await response.text()
+    let printHtmlId = ticketRadiologyData.radiology?.printHtmlId || 0
+    let printHtml: PrintHtml | undefined
+    if (printHtmlId !== 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.content) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId === 0) {
+      printHtmlId = meStore.rootSetting.printDefault.radiology
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
 
-    // const templateCompile = Handlebars.compile(templateHtml)
-    // const content = templateCompile({
-    //   organization: meStore.organization,
-    //   visit: ticketClinicRef.value,
-    //   ticketRadiology: vr,
-    //   imageList: vr.imageList.slice(0, 4),
-    // })
-    const printHtmlId = ticketRadiologyData.radiology?.printHtmlId || 0
-    const printHtml = await PrintHtmlService.detail(printHtmlId)
-    if (!printHtml) {
+    if (!printHtml || !printHtml.content) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = printHtmlCompiledTemplate({
+    const textDom = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
-      printHtml,
+      masterData: {},
+      printHtml: printHtml!,
     })
 
-    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(content)
-    pri.document.close()
-
-    // Đợi tất cả hình ảnh tải xong
-    const images = pri.document.images
-    const imagePromises = []
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i]
-      if (!img.complete) {
-        imagePromises.push(
-          new Promise<void>((resolve) => {
-            img.onload = () => resolve()
-            img.onerror = () => resolve() // Xử lý trường hợp tải hình ảnh thất bại
-          })
-        )
-      }
-    }
-    await Promise.all(imagePromises)
-    pri.focus()
-    pri.print()
+    await DDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -241,20 +221,11 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                   {{ ticketRadiology.result }}
                 </div>
                 <a
-                  v-if="
-                    [TicketStatus.Debt, TicketStatus.Completed].includes(
+                v-if="
+                    ![TicketStatus.Debt, TicketStatus.Completed].includes(
                       ticketClinicRef.ticketStatus
-                    )
+                    ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                   "
-                  @click="
-                    modalTicketRadiologyResult?.openModalByInstance(ticketRadiology, {
-                      editable: false,
-                    })
-                  ">
-                  <IconVisibility width="22" height="22" />
-                </a>
-                <a
-                  v-else
                   class="text-orange-500"
                   @click="
                     modalTicketRadiologyResult?.openModalByInstance(ticketRadiology, {
@@ -262,6 +233,15 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                     })
                   ">
                   <IconEditSquare width="22" height="22" />
+                </a>
+                <a
+                  v-else
+                  @click="
+                    modalTicketRadiologyResult?.openModalByInstance(ticketRadiology, {
+                      editable: false,
+                    })
+                  ">
+                  <IconVisibility width="22" height="22" />
                 </a>
               </div>
             </td>

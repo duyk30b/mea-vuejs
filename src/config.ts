@@ -11,3 +11,5 @@ export const CONFIG = {
       ? 'https://api.mea.vn'
       : `http://${location.hostname}:20000`,
 }
+
+// CONFIG.API_URL = 'https://api.mea.vn'

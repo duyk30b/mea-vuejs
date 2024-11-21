@@ -97,7 +97,7 @@ const openModal = async (procedureId?: number) => {
     }
   }
 
-  const procedureGroupAll = await ProcedureGroupService.getAll()
+  const procedureGroupAll = await ProcedureGroupService.list({})
   procedureGroupOptions.value = procedureGroupAll.map((i) => ({
     value: i.id,
     text: i.name,

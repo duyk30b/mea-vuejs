@@ -23,11 +23,13 @@ import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import ModalProductGroupManager from './ModalProductGroupManager.vue'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 
 const settingStore = useSettingStore()
 const productStore = useProductStore()
@@ -102,7 +104,7 @@ onBeforeMount(async () => {
   await startFetchData()
   dataLoading.value = false
   try {
-    productGroupAll.value = await ProductGroupService.getAll()
+    productGroupAll.value = await ProductGroupService.list({})
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:107 ~ onBeforeMount ~ error:', error)
   }
@@ -163,6 +165,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'data-setting') {
     modalDataProduct.value?.openModal()
   }
+  if (menu.key === 'PRODUCT_GROUP_MANAGER') {
+    modalProductGroupManager.value?.openModal()
+  }
+}
+
+const handleModalProductGroupManagerSuccess = async () => {
+  productGroupAll.value = await ProductGroupService.list({})
 }
 
 const downloadExcelProductList = async () => {
@@ -187,6 +196,9 @@ const closeExpiryDate = computed(() => {
     ref="modalProductListSettingScreen" />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductDetail ref="modalProductDetail" />
+  <ModalProductGroupManager
+    ref="modalProductGroupManager"
+    @success="handleModalProductGroupManagerSuccess" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
@@ -216,6 +228,7 @@ const closeExpiryDate = computed(() => {
             <a-menu @click="handleMenuSettingClick">
               <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
               <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
+              <a-menu-item key="PRODUCT_GROUP_MANAGER">Quản lý nhóm sản phẩm</a-menu-item>
             </a-menu>
           </template>
         </a-dropdown>

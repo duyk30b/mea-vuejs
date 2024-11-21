@@ -1,19 +1,33 @@
+import { arrayToKeyValue } from '../../utils'
 import { LaboratoryGroupApi } from './laboratory-group.api'
-import type { LaboratoryGroupPaginationQuery } from './laboratory-group.dto'
-import type { LaboratoryGroup } from './laboratory-group.model'
+import type {
+  LaboratoryGroupListQuery,
+  LaboratoryGroupPaginationQuery,
+} from './laboratory-group.dto'
+import { LaboratoryGroup } from './laboratory-group.model'
 
 export class LaboratoryGroupService {
   static loadedAll: boolean = false
+
   static laboratoryGroupAll: LaboratoryGroup[]
+  static laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
   static async getAll() {
     if (!LaboratoryGroupService.loadedAll) {
-      const fetchData = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
-      LaboratoryGroupService.laboratoryGroupAll = fetchData.data
+      const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
+      const laboratoryGroupList = data
+      LaboratoryGroupService.laboratoryGroupAll = laboratoryGroupList
+
+      LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(laboratoryGroupList, 'id')
       LaboratoryGroupService.loadedAll = true
     }
 
-    return LaboratoryGroupService.laboratoryGroupAll
+    return LaboratoryGroup.fromList(LaboratoryGroupService.laboratoryGroupAll)
+  }
+
+  static async getMap() {
+    await LaboratoryGroupService.getAll()
+    return LaboratoryGroupService.laboratoryGroupMap
   }
 
   static async pagination(options: LaboratoryGroupPaginationQuery) {
@@ -25,6 +39,18 @@ export class LaboratoryGroupService {
       data,
       meta: { total: LaboratoryGroupService.laboratoryGroupAll.length },
     }
+  }
+
+  static async list(options: LaboratoryGroupListQuery) {
+    const filter = options.filter || {}
+    const all = await LaboratoryGroupService.getAll()
+    let data = all
+    if (options.filter) {
+      data = data.filter((i) => {
+        return true
+      })
+    }
+    return LaboratoryGroup.fromList(data)
   }
 
   static async replaceAll(body: LaboratoryGroup[]) {

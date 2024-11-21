@@ -9,7 +9,7 @@ import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Procedure, useProcedureStore } from '../../../modules/procedure'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
-import ModalProcedureUpsert from '../../procedure/components/ModalProcedureUpsert.vue'
+import ModalProcedureUpsert from '../../procedure/upsert/ModalProcedureUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()

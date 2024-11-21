@@ -1,5 +1,5 @@
 import { PrintHtmlApi } from './print-html.api'
-import type { PrintHtml } from './print-html.model'
+import { PrintHtml } from './print-html.model'
 
 export class PrintHtmlService {
   static loadedAll: boolean = false
@@ -15,7 +15,7 @@ export class PrintHtmlService {
       PrintHtmlService.loadedAll = true
     }
 
-    return PrintHtmlService.printHtmlAll
+    return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
   }
 
   static async getExampleList() {

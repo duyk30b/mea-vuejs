@@ -83,10 +83,14 @@ export class MeService {
 
   static async initData() {
     try {
-      const { organization, permissionAll, permissionIds, settingMap, user } = await MeApi.info()
+      const { organization, permissionAll, permissionIds, settingMap, user, rootSetting } =
+        await MeApi.info()
 
       MeService.reCalculatorSetting(settingMap)
       MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
+
+      const meStore = useMeStore()
+      meStore.rootSetting = objectUpdatePropertyByObject(meStore.rootSetting, rootSetting)
     } catch (error) {
       console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }

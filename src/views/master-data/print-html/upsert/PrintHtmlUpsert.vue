@@ -13,6 +13,7 @@ import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
 import { DDom } from '../../../../utils'
+import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -24,7 +25,10 @@ const iframe = ref<HTMLIFrameElement>()
 
 const route = useRoute()
 const router = useRouter()
-const organization = useMeStore().organization
+const meStore = useMeStore()
+const organization = meStore.organization
+
+let laboratoryMap: Record<string, Laboratory> = {}
 
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
@@ -39,6 +43,7 @@ onBeforeMount(async () => {
   } else {
     printHtml.value = PrintHtml.blank()
   }
+  laboratoryMap = await LaboratoryService.getMap()
 })
 
 const handleSave = async () => {
@@ -69,6 +74,7 @@ const updatePreview = () => {
     organization,
     ticket: ticketDemo.value,
     data: JSON.parse(printHtml.value.dataExample || '{}'),
+    masterData: { laboratoryMap },
     printHtml: printHtml.value,
   })
 
@@ -92,6 +98,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
         ticketRadiologyList: { radiology: true },
+        ticketLaboratoryList: {},
 
         ticketUserList: { user: true },
         toAppointment: true,
@@ -116,6 +123,7 @@ const startTestPrint = async () => {
       organization,
       ticket: ticketDemo.value,
       data: JSON.parse(printHtml.value.dataExample || '{}'),
+      masterData: { laboratoryMap },
       printHtml: printHtml.value,
     })
 

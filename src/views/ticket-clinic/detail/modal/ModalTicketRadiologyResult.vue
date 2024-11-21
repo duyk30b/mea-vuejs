@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { BasicEditor } from '../../../../ckeditor/class-editor'
 import { IconClose } from '../../../../common/icon'
-import ImageUpload from '../../../../common/ImageUpload.vue'
+import ImageUploadMultiple from '../../../../common/image-upload/ImageUploadMultiple.vue'
 import InputText from '../../../../common/vue-form/InputText.vue'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
@@ -12,7 +12,7 @@ import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-
 import { InputDate } from '../../../../common/vue-form'
 import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 
-const imageUploadRef = ref<InstanceType<typeof ImageUpload>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const meStore = useMeStore()
 
@@ -22,6 +22,7 @@ const ticketRadiology = ref<TicketRadiology>(TicketRadiology.blank())
 const saveLoading = ref(false)
 
 const disabled = ref(true)
+const editable = ref(true)
 
 const openModalByInstance = async (instance: TicketRadiology, options: { editable: boolean }) => {
   showModal.value = true
@@ -36,6 +37,7 @@ const openModalByInstance = async (instance: TicketRadiology, options: { editabl
   //   ticketRadiology.value.doctor = meStore.user || User.blank()
   // }
   disabled.value = !options.editable
+  editable.value = options.editable
 }
 
 const openModalById = async (radiologyId: number) => {
@@ -53,7 +55,7 @@ const closeModal = () => {
 const startSave = async () => {
   try {
     saveLoading.value = true
-    const { filesPosition, imageIdsKeep, files } = imageUploadRef.value?.getData() || {
+    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
       filesPosition: [],
       imageIdsKeep: [],
       files: [],
@@ -101,6 +103,7 @@ defineExpose({ openModalByInstance, openModalById })
             <div>
               <InputDate
                 v-model:value="ticketRadiology.startedAt"
+                :disabled="!editable"
                 defaultType="date"
                 showTime
                 typeParser="number" />
@@ -121,9 +124,10 @@ defineExpose({ openModalByInstance, openModalById })
         </div>
         <div class="mt-3">
           <div>Hình ảnh</div>
-          <ImageUpload
-            ref="imageUploadRef"
+          <ImageUploadMultiple
+            ref="imageUploadMultipleRef"
             :height="100"
+            :editable="editable"
             :rootImageList="
               (ticketRadiology.imageList || [])
                 .filter((i) => i.hostType === ImageHost.GoogleDriver)
@@ -137,12 +141,13 @@ defineExpose({ openModalByInstance, openModalById })
         <div class="mt-3">
           <div>Kết luận</div>
           <div>
-            <InputText v-model:value="ticketRadiology.result" />
+            <InputText v-model:value="ticketRadiology.result" :disabled="!editable" />
           </div>
         </div>
         <div class="mt-6 flex justify-end gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
           <VueButton
+            v-if="editable"
             :disabled="disabled"
             :loading="saveLoading"
             color="blue"

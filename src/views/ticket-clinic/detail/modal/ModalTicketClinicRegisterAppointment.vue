@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import dayjs, { Dayjs } from 'dayjs'
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
-import { InputHint } from '../../../../common/vue-form'
+import { InputDate, InputHint } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Appointment, AppointmentApi } from '../../../../modules/appointment'
-import { VoucherType } from '../../../../modules/enum'
-import { customFilter } from '../../../../utils'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { customFilter } from '../../../../utils'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -21,29 +19,18 @@ const saveLoading = ref(false)
 
 const appointment = ref<Appointment>(Appointment.blank())
 
-const now = new Date()
-now.setMinutes(0, 0)
-now.setDate(now.getDate() + 7)
-const time = ref<Dayjs>(dayjs())
-
 const openModal = async (appointmentProp: Appointment) => {
   showModal.value = true
-
   appointment.value = Appointment.from(appointmentProp)
-  time.value = dayjs(new Date(appointmentProp.registeredAt))
 }
 
 const closeModal = () => {
-  appointment.value = Appointment.blank()
-  const now = new Date()
-  now.setMinutes(0, 0)
-  time.value = dayjs(now)
   showModal.value = false
+  appointment.value = Appointment.blank()
 }
 
 const handleRegisterVisit = async () => {
   saveLoading.value = true
-  appointment.value.registeredAt = time.value.valueOf()
   appointment.value.customerSourceId = 0
   try {
     if (!appointment.value.id) {
@@ -84,12 +71,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Thời gian hẹn</div>
           <div>
-            <a-date-picker
-              v-model:value="time"
-              class="w-full"
-              show-time
-              placeholder="Select Time"
-              format="DD-MM-YYYY HH:mm" />
+            <InputDate v-model:value="appointment.registeredAt" show-time type-parser="number" />
           </div>
         </div>
 

@@ -38,6 +38,19 @@ export class ProductGroupApi {
     return ProductGroup.from(data)
   }
 
+  static async replaceAll(body: ProductGroup[]) {
+    const response = await AxiosInstance.put('/product-group/replace-all', {
+      productGroupReplaceAll: body.map((i) => {
+        return {
+          id: i.id || 0,
+          name: i.name,
+        }
+      }),
+    })
+    const { data } = response.data as BaseResponse
+    return data
+  }
+
   static async createOne(productGroup: ProductGroup) {
     const response = await AxiosInstance.post('/product-group/create', {
       name: productGroup.name,

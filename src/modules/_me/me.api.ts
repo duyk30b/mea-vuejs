@@ -15,6 +15,7 @@ export class MeApi {
       permissionIds: data.permissionIds,
       settingMap: data.settingMap as Record<string, any>,
       user: User.from(data.user),
+      rootSetting: data.rootSetting,
     }
   }
 

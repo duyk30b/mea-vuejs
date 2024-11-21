@@ -56,9 +56,9 @@ input {
   font-size: 16px !important;
   outline: none;
 
-  &[type='number'] {
-    text-align: right;
-  }
+  // &[type='number'] {
+  //   text-align: right;
+  // }
 }
 
 input::-webkit-outer-spin-button,

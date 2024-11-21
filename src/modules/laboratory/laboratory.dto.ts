@@ -1,17 +1,19 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionString } from '../_base/base-condition'
+import type { ConditionNumber, ConditionString } from '../_base/base-condition'
 
 export class LaboratoryGetQuery {
   page?: number
   limit?: number
   relation?: {
     laboratoryGroup?: boolean
+    children?: boolean
   }
 
   filter?: {
     name?: ConditionString
     laboratoryGroupId?: number
-    updatedAt?: ConditionDate
+    level?: number
+    parentId?: number
   }
 
   sort?: {

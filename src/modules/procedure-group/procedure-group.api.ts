@@ -41,6 +41,19 @@ export class ProcedureGroupApi {
     return ProcedureGroup.from(data)
   }
 
+  static async replaceAll(body: ProcedureGroup[]) {
+    const response = await AxiosInstance.put('/procedure-group/replace-all', {
+      procedureGroupReplaceAll: body.map((i) => {
+        return {
+          id: i.id || 0,
+          name: i.name,
+        }
+      }),
+    })
+    const { data } = response.data as BaseResponse
+    return data
+  }
+
   static async createOne(procedureGroup: ProcedureGroup) {
     const response = await AxiosInstance.post('/procedure-group/create', {
       name: procedureGroup.name,

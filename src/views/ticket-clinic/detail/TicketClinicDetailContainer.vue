@@ -14,6 +14,7 @@ import { IconSetting } from '../../../common/icon'
 import {
   IconEyeGlasses,
   IconFluidMed,
+  IconLabPanel,
   IconRadiology,
   IconStethoscope,
 } from '../../../common/icon-google'
@@ -32,11 +33,14 @@ import {
   useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
+import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
+import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import TicketClinicConsumable from './TicketClinicConsumable.vue'
 import TicketClinicDiagnosisBase from './TicketClinicDiagnosisBase.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
 import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
+import TicketClinicLaboratory from './TicketClinicLaboratory.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
@@ -66,8 +70,8 @@ const startFetchData = async (ticketId: number) => {
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
+        ticketLaboratoryList: {},
         ticketRadiologyList: { radiology: true },
-
         ticketUserList: { user: true },
         toAppointment: true,
       },
@@ -80,6 +84,7 @@ const startFetchData = async (ticketId: number) => {
     }
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
     if (!ticketData.ticketProductList) ticketData.ticketProductList = []
+    if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
     if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
     ticketClinicRef.value = ticketData
   } catch (error) {
@@ -124,13 +129,26 @@ const clickCloseVisit = () => {
       ],
     })
   }
-  if ((ticketClinicRef.value.ticketRadiologyList || []).find((i) => i.startedAt == null)) {
+  if (
+    (ticketClinicRef.value.ticketRadiologyList || []).find(
+      (i) => i.status == TicketRadiologyStatus.Pending
+    )
+  ) {
     return ModalStore.alert({
       title: 'Phiếu chẩn đoán hình ảnh vẫn chưa thực hiện ?',
       content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
     })
   }
-
+  if (
+    (ticketClinicRef.value.ticketLaboratoryList || []).find(
+      (i) => i.status === TicketLaboratoryStatus.Pending
+    )
+  ) {
+    return ModalStore.alert({
+      title: 'Phiếu xét nghiệm vẫn chưa được thực hiện ?',
+      content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
+    })
+  }
   if (ticketClinicRef.value.paid > ticketClinicRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
@@ -223,6 +241,12 @@ const clickCloseVisit = () => {
               Vật tư
             </VueTabMenu>
             <VueTabMenu
+              :tabKey="TicketClinicLaboratory.__name!"
+              @active="router.push({ name: TicketClinicLaboratory.__name })">
+              <IconLabPanel />
+              Xét nghiệm
+            </VueTabMenu>
+            <VueTabMenu
               :tabKey="TicketClinicRadiology.__name!"
               @active="router.push({ name: TicketClinicRadiology.__name })">
               <IconRadiology />
@@ -252,6 +276,7 @@ const clickCloseVisit = () => {
               TicketClinicDiagnosisEyeSpecial.__name,
               TicketClinicProcedure.__name,
               TicketClinicConsumable.__name,
+              TicketClinicLaboratory.__name,
               TicketClinicRadiology.__name,
               TicketClinicPrescription.__name,
             ].join(',')

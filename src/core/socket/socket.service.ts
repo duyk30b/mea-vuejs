@@ -9,6 +9,7 @@ import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { ticketClinicList, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
+import { TicketLaboratory } from '../../modules/ticket-laboratory'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
@@ -187,6 +188,50 @@ export class SocketService {
       ticketClinicRef.value.ticketProductPrescriptionList = TicketProduct.fromList(
         data.ticketProductPrescriptionList
       )
+    }
+  }
+
+  static async listenTicketClinicUpdateTicketLaboratoryList(data: {
+    ticketId: number
+    ticketLaboratoryList: any[]
+  }) {
+    const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+    if (ticketFind) {
+      ticketFind.ticketLaboratoryList = TicketLaboratory.fromList(data.ticketLaboratoryList)
+    }
+    if (ticketClinicRef.value.id === data.ticketId) {
+      ticketClinicRef.value.ticketLaboratoryList = TicketLaboratory.fromList(
+        data.ticketLaboratoryList
+      )
+    }
+  }
+
+  static async listenTicketClinicUpdateTicketLaboratoryResult(data: {
+    ticketId: number
+    ticketLaboratory: any
+  }) {
+    const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
+    if (ticketFind) {
+      const ticketLaboratoryFind = (ticketFind.ticketLaboratoryList || []).find((i) => {
+        return i.id === data.ticketLaboratory.id
+      })
+      if (ticketLaboratoryFind) {
+        Object.assign(ticketLaboratoryFind, TicketLaboratory.from(data.ticketLaboratory))
+      }
+    }
+
+    if (ticketClinicRef.value.id === data.ticketId) {
+      ticketClinicRef.value.ticketLaboratoryList ||= []
+      const ticketLaboratoryFind = ticketClinicRef.value.ticketLaboratoryList.find((i) => {
+        return i.id === data.ticketLaboratory.id
+      })
+      if (ticketLaboratoryFind) {
+        Object.assign(ticketLaboratoryFind, TicketLaboratory.from(data.ticketLaboratory))
+      } else {
+        ticketClinicRef.value.ticketLaboratoryList.push(
+          TicketLaboratory.from(data.ticketLaboratory)
+        )
+      }
     }
   }
 

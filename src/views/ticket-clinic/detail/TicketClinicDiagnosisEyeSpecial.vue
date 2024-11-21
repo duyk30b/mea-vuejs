@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
+import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import {
   type DiagnosisSpecialEye,
   ticketClinicRef,
@@ -11,6 +11,7 @@ import {
 } from '../../../modules/ticket-clinic'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { DDom } from '../../../utils'
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -73,25 +74,30 @@ const handleFocus = (e: Event) => {
 
 const startPrint = async () => {
   try {
-    const printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.diagnosisEyeSpecial
-    const printHtml = await PrintHtmlService.detail(printHtmlId)
-    if (!printHtml) {
+    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.diagnosisEyeSpecial
+    let printHtml: PrintHtml | undefined
+    if (printHtmlId !== 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.content) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId === 0) {
+      printHtmlId = meStore.rootSetting.printDefault.optometry
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+    if (!printHtml || !printHtml.content) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const content = printHtmlCompiledTemplate({
+    const textDom = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
+      masterData: {},
       printHtml,
     })
 
-    const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(content)
-    pri.document.close()
-    pri.focus()
-    pri.print()
+    await DDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: TicketEyePrescription.vue:191 ~ startPrint ~ error:', error)
   }
