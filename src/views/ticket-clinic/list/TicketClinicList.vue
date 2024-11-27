@@ -2,7 +2,7 @@
 import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconTrash } from '../../../common/icon'
+import { IconSetting, IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -12,13 +12,17 @@ import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
-import { DTimer } from '../../../utils'
+import { DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
-import ModalTicketClinicRegister from './ModalTicketClinicRegister.vue'
+import ModalTicketClinicGeneralRegister from '../register/ModalTicketClinicGeneralRegister.vue'
+import ModalTicketClinicListSettingScreen from './ModalTicketClinicListSettingScreen.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicRegister = ref<InstanceType<typeof ModalTicketClinicRegister>>()
+const modalTicketClinicGeneralRegister =
+  ref<InstanceType<typeof ModalTicketClinicGeneralRegister>>()
+const modalTicketClinicListSettingScreen =
+  ref<InstanceType<typeof ModalTicketClinicListSettingScreen>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -50,7 +54,7 @@ const startFetchData = async () => {
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { customer: true, ticketDiagnosis: true },
+      relation: { customer: true, ticketAttributeList: true },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
         registeredAt:
@@ -61,7 +65,7 @@ const startFetchData = async () => {
               }
             : undefined,
         ticketStatus: ticketStatus.value ?? undefined,
-        ticketType: { IN: [TicketType.Clinic, TicketType.Eye] },
+        ticketType: { NOT: TicketType.Order },
       },
       sort: sortValue.value
         ? {
@@ -148,9 +152,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {}
+const handleMenuSettingClick = (menu: { key: string }) => {
+  if (menu.key === 'SCREEN_SETTING') {
+    modalTicketClinicListSettingScreen.value?.openModal()
+  }
+}
 
-const handleModalTicketClinicRegisterSuccess = (data: { ticket: Ticket }) => {
+const handleModalTicketClinicGeneralRegisterSuccess = (data: { ticket: Ticket }) => {
   const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticket.id)
   if (!ticketFind) {
     ticketClinicList.value.unshift(data.ticket)
@@ -175,10 +183,13 @@ const handleClickDestroyDraft = async (ticketId: number) => {
 </script>
 
 <template>
-  <ModalTicketClinicRegister
-    ref="modalTicketClinicRegister"
-    @success="handleModalTicketClinicRegisterSuccess" />
+  <ModalTicketClinicGeneralRegister
+    ref="modalTicketClinicGeneralRegister"
+    @success="handleModalTicketClinicGeneralRegisterSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
+  <ModalTicketClinicListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalTicketClinicListSettingScreen" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
@@ -189,25 +200,40 @@ const handleClickDestroyDraft = async (ticketId: number) => {
       </div>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW]"
+          v-if="
+            permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW] &&
+            settingStore.SCREEN_TICKET_CLINIC_LIST.buttonRegisterDraft
+          "
           color="blue"
           icon="plus"
-          @click="modalTicketClinicRegister?.openModal()">
+          @click="modalTicketClinicGeneralRegister?.openModal(TicketStatus.Draft)">
+          TIẾP ĐÓN
+        </VueButton>
+      </div>
+      <div>
+        <VueButton
+          v-if="
+            permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW] &&
+            settingStore.SCREEN_TICKET_CLINIC_LIST.buttonRegisterExecuting
+          "
+          color="blue"
+          icon="plus"
+          @click="$router.push({ name: 'TicketClinicDetailContainer', params: { id: 0 } })">
           KHÁM MỚI
         </VueButton>
       </div>
     </div>
     <div class="page-header-setting">
-      <!-- <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer;">
-          <SettingOutlined />
+      <a-dropdown trigger="click">
+        <span style="font-size: 1.2rem; cursor: pointer">
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting"> Cài đặt hiển thị </a-menu-item>
-          </a-menu>~~
+            <a-menu-item key="SCREEN_SETTING">Cài đặt phòng khám</a-menu-item>
+          </a-menu>
         </template>
-      </a-dropdown> -->
+      </a-dropdown>
     </div>
   </div>
 
@@ -302,7 +328,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
                 :icon="['fas', 'sort-down']" />
             </th>
-            <th class="">T.T</th>
+            <th class="">Trạng thái</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               Thời gian &nbsp;
               <font-awesome-icon
@@ -317,6 +343,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 :icon="['fas', 'sort-down']" />
             </th>
             <th style="min-width: 150px">Khách hàng</th>
+            <th>SĐT</th>
             <th style="white-space: nowrap">Lý do / Chẩn đoán</th>
             <th>Thanh toán</th>
             <th></th>
@@ -346,7 +373,12 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 <router-link
                   :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }">
                   <div class="flex justify-center items-center gap-2">
-                    <span>KB{{ ticket.id }}</span>
+                    <span>
+                      {{ ticket.date }}{{ ticket.month
+                      }}{{ ticket.year?.toString().slice(-2) || '' }}_{{
+                        ticket.dailyIndex?.toString().padStart(3, '0') || ''
+                      }}
+                    </span>
                     <span class="text-lg"><ReadOutlined /></span>
                   </div>
                 </router-link>
@@ -371,13 +403,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 {{ ticket.customer?.note }}
               </div>
             </td>
+            <td class="text-center">{{ formatPhone(ticket.customer?.phone) }}</td>
             <td>
-              {{
-                ticket.ticketDiagnosis?.diagnosis ||
-                ticket.ticketDiagnosis?.reason ||
-                ticket.note ||
-                ''
-              }}
+              {{ ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || '' }}
             </td>
             <td class="text-center">
               {{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputOptions, VueSelect } from '../../../../common/vue-form'
+import { VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -14,20 +14,17 @@ import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
 import { TicketType } from '../../../../modules/ticket'
 
 const TABS_KEY = {
+  GENERAL: 'GENERAL',
   PRINT_SETTING: 'PRINT_SETTING',
-  CĐHA: 'CĐHA',
-  PRESCRIPTION: 'PRESCRIPTION',
 }
-
-const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const store = useSettingStore()
+const settingStore = useSettingStore()
 const meStore = useMeStore()
 
-const settingDisplay = ref<typeof store.TICKET_CLINIC_DETAIL>(
-  JSON.parse(JSON.stringify(store.TICKET_CLINIC_DETAIL))
+const settingDisplay = ref<typeof settingStore.TICKET_CLINIC_DETAIL>(
+  JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL))
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -40,7 +37,7 @@ let firstLoad = true
 
 const openModal = async () => {
   showModal.value = true
-  settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_DETAIL))
+  settingDisplay.value = JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL))
 
   if (firstLoad) {
     const promiseInit = await Promise.all([PrintHtmlService.getAll()])
@@ -59,7 +56,7 @@ const handleSave = async () => {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.TICKET_CLINIC_DETAIL, settingData)
     AlertStore.addSuccess('Cập nhật cài đặt thành công', 1000)
-    store.TICKET_CLINIC_DETAIL = JSON.parse(settingData)
+    settingStore.TICKET_CLINIC_DETAIL = JSON.parse(settingData)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -85,9 +82,27 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.GENERAL">Cài đặt chung</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRINT_SETTING">Cài đặt IN</VueTabMenu>
           </template>
           <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.GENERAL">
+              <div class="mt-4 pb-20 table-wrapper">
+                <table class="">
+                  <thead>
+                    <tr>
+                      <th colspan="2">Cài đặt chung</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Khác</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PRINT_SETTING">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">
@@ -97,7 +112,7 @@ defineExpose({ openModal })
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="meStore.getTicketTypeAvailable().includes(TicketType.Eye)">
+                    <tr v-if="settingStore.SCREEN_TICKET_CLINIC_LIST.ticketType === TicketType.Eye">
                       <td>Đo thị lực</td>
                       <td>
                         <div>

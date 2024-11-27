@@ -72,12 +72,8 @@ export const socketInit = () => {
     SocketService.listenTicketClinicDestroy(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_DIAGNOSIS_BASIC, (data) => {
-    SocketService.listenTicketClinicUpdateTicketDiagnosisBasic(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_DIAGNOSIS_SPECIAL, (data) => {
-    SocketService.listenTicketClinicUpdateTicketDiagnosisSpecial(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE_LIST, (data) => {
+    SocketService.listenTicketClinicUpdateTicketAttributeList(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST, (data) => {

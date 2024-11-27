@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { formatNumber } from '../../utils'
+import { TicketType } from '../ticket'
 
 export const settingDefault = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -73,6 +74,11 @@ export const settingDefault = {
   SCREEN_PROCEDURE_DETAIL: {},
   SCREEN_PROCEDURE_UPSERT: {},
 
+  SCREEN_LABORATORY_LIST: {},
+  SCREEN_RADIOLOGY_LIST: {
+    SORT: {},
+  },
+
   SCREEN_DISTRIBUTOR_LIST: {
     detail: true,
     phone: true,
@@ -101,8 +107,10 @@ export const settingDefault = {
     phone: true,
     birthday: true,
     gender: true,
-    identityCard: true,
-    address: true,
+    addressProvince: true,
+    addressDistrict: true,
+    addressWard: true,
+    addressStreet: true,
     relative: true,
   },
 
@@ -154,6 +162,7 @@ export const settingDefault = {
   SCREEN_TICKET_ORDER_LIST: {
     profit: true,
     ticketProductList: false,
+    ticketAttributeList: false,
   },
   SCREEN_INVOICE_DETAIL: {
     invoiceItemsTable: {
@@ -243,6 +252,11 @@ export const settingDefault = {
     fromDateToDateDistance: -1,
   },
 
+  SCREEN_TICKET_CLINIC_LIST: {
+    ticketType: TicketType.Clinic,
+    buttonRegisterDraft: false,
+    buttonRegisterExecuting: true,
+  },
   TICKET_CLINIC_DETAIL: {
     printHtmlIdSetting: {
       invoice: 0,

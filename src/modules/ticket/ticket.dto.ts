@@ -14,7 +14,7 @@ export class TicketGetQuery {
     ticketProcedureList?: { procedure?: boolean } | false
     ticketLaboratoryList?: { laboratoryList?: boolean } | false
     ticketRadiologyList?: { radiology?: boolean } | false
-    ticketDiagnosis?: boolean
+    ticketAttributeList?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
     ticketUserList?: { user?: boolean } | false

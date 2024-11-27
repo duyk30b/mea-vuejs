@@ -15,7 +15,7 @@ const props = withDefaults(
     clearAfterSelected?: boolean
     noClearTextWhenNotSelected?: boolean
     logicFilter?: Function
-    messageNoResult?: boolean
+    messageNoResult?: string
   }>(),
   {
     value: null,
@@ -27,7 +27,7 @@ const props = withDefaults(
     clearAfterSelected: false,
     noClearTextWhenNotSelected: false,
     logicFilter: () => true,
-    messageNoResult: true,
+    messageNoResult: 'Không tìm thấy kết quả phù hợp',
   }
 )
 
@@ -248,10 +248,10 @@ defineExpose({ focus, clear, setItem })
         </slot>
       </div>
       <div
-        v-if="messageNoResult && !optionsFilter.length && searchText"
+        v-if="!!messageNoResult && !optionsFilter.length && searchText"
         class="item-option"
         style="font-style: italic">
-        Không tìm thấy kết quả phù hợp
+        {{ messageNoResult }}
       </div>
     </div>
   </div>

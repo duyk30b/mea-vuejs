@@ -1,0 +1,404 @@
+<script lang="ts" setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
+import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
+import VueButton from '../../../common/VueButton.vue'
+import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { ImageHost } from '../../../modules/image/image.model'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import {
+  TicketAttributeKeyObstetricList,
+  type TicketAttributeKeyObstetricType,
+} from '../../../modules/ticket-attribute'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { DImage } from '../../../utils'
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
+
+const ticketAttributeOriginMap: { [P in TicketAttributeKeyObstetricType]?: any } = {}
+const ticketAttributeMap = ref<
+  { [P in TicketAttributeKeyObstetricType]?: any } & { healthHistory: string; body: string }
+>({
+  healthHistory: '',
+  body: '',
+})
+
+const saveLoading = ref(false)
+const hasChangeImage = ref(false)
+
+onMounted(async () => {
+  console.log('🚀 ~ file: TicketClinicDiagnosisObstetric.vue:31 ~ onMounted')
+})
+
+watch(
+  () => ticketClinicRef.value.ticketAttributeList,
+  (newValue, oldValue) => {
+    if (!newValue) {
+      return (ticketAttributeMap.value = { healthHistory: '', body: '' })
+    }
+    newValue.forEach((i) => {
+      if (!TicketAttributeKeyObstetricList.includes(i.key as any)) return
+      const k = i.key as unknown as TicketAttributeKeyObstetricType
+      if (i.value === ticketAttributeOriginMap[k]) return
+      ticketAttributeOriginMap[k] = i.value
+      ticketAttributeMap.value[k] = i.value
+    })
+  },
+  { immediate: true, deep: true }
+)
+
+watch(
+  () => ticketClinicRef.value!.imageIds,
+  (newValue, oldValue) => (hasChangeImage.value = false),
+  { immediate: true }
+)
+
+const hasChangeCustomer = computed(() => {
+  const customerHealthHistory = ticketClinicRef.value.customer?.healthHistory || ''
+  return customerHealthHistory != ticketAttributeMap.value.healthHistory
+})
+
+const hasChangeAttribute = computed(() => {
+  let hasChange = false
+  Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
+    const k = key as unknown as TicketAttributeKeyObstetricType
+    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    if (rootValue != value) {
+      hasChange = true
+    }
+  })
+  return hasChange
+})
+
+const hasChangeData = computed(() => {
+  if (hasChangeImage.value) return true
+  if (hasChangeAttribute.value) return true
+  if (hasChangeCustomer.value) return true
+
+  return false
+})
+
+const saveTicketDiagnosis = async () => {
+  try {
+    saveLoading.value = true
+    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
+      filesPosition: [],
+      imageIdsKeep: [],
+      files: [],
+    }
+
+    let ticketAttributeChangeList = undefined
+    if (hasChangeAttribute.value) {
+      ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
+        .map(([key, value]) => ({ key, value }))
+        .filter((i) => !!i.key)
+    }
+
+    await TicketClinicApi.updateDiagnosis({
+      ticketId: ticketClinicRef.value.id,
+      files,
+      imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+      ticketAttributeChangeList,
+      ticketAttributeKeyList: TicketAttributeKeyObstetricList as any,
+      customerChange: hasChangeCustomer.value
+        ? {
+            customerId: ticketClinicRef.value.customerId,
+            healthHistory: ticketAttributeMap.value.healthHistory,
+          }
+        : undefined,
+    })
+  } catch (error) {
+    console.log('🚀 ~ TicketClinicDiagnosisObstetricBasic.vue:115 ~ saveTicketDiagnosis:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const updateDuKienSinh = (value: any) => {
+  if (!value) {
+    ticketAttributeMap.value.TuoiThai_Tuan = undefined
+    ticketAttributeMap.value.TuoiThai_Ngay = undefined
+    return
+  }
+
+  const toDay = new Date()
+  toDay.setHours(0, 0, 0, 0)
+  const timeDuKienSinh = new Date(value)
+  const timeNgayThuThai = new Date(timeDuKienSinh.getTime() - 40 * 7 * 24 * 60 * 60 * 1000)
+  timeNgayThuThai.setHours(0, 0, 0, 0)
+
+  const timeDistance = toDay.getTime() - timeNgayThuThai.getTime()
+  if (timeDistance < 0) {
+    ticketAttributeMap.value.TuoiThai_Tuan = 0
+    ticketAttributeMap.value.TuoiThai_Ngay = 0
+    return
+  }
+  const dayTime = 24 * 60 * 60 * 1000
+  const weekTime = 7 * dayTime
+  ticketAttributeMap.value.TuoiThai_Tuan = Math.floor(timeDistance / weekTime)
+  ticketAttributeMap.value.TuoiThai_Ngay = Math.floor(Math.floor(timeDistance % weekTime) / dayTime)
+}
+
+const updateTuoiThaiTuan = (value: number) => {
+  const Tuan = value || 0
+  const Ngay = ticketAttributeMap.value.TuoiThai_Ngay || 0
+  const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
+  const toDay = new Date()
+  toDay.setHours(0, 0, 0, 0)
+  const timeNgayThuThai = new Date(toDay.getTime() - timeDistance)
+  const timeDuKienSinh = new Date(timeNgayThuThai.getTime() + 40 * 7 * 24 * 60 * 60 * 1000)
+
+  ticketAttributeMap.value.NgayDuKienSinh = timeDuKienSinh.toISOString()
+}
+const updateTuoiThaiNgay = (value: number) => {
+  const Tuan = ticketAttributeMap.value.TuoiThai_Tuan || 0
+  const Ngay = value || 0
+  const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
+  const toDay = new Date()
+  toDay.setHours(0, 0, 0, 0)
+  const timeNgayThuThai = new Date(toDay.getTime() - timeDistance)
+  const timeDuKienSinh = new Date(timeNgayThuThai.getTime() + 40 * 7 * 24 * 60 * 60 * 1000)
+  ticketAttributeMap.value.NgayDuKienSinh = timeDuKienSinh.toISOString()
+}
+
+const getDataTicketDiagnosis = () => {
+  return { ticketAttributeMap: ticketAttributeMap.value }
+}
+
+defineExpose({ getDataTicketDiagnosis })
+</script>
+<template>
+  <div>
+    <div class="mt-4">
+      <div>Lý do khám</div>
+      <div>
+        <InputText v-model:value="ticketAttributeMap.reason" />
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap gap-4">
+      <div style="flex-basis: 300px; flex-grow: 1">
+        <div>Tiền sử</div>
+        <div style="height: 150px">
+          <WysiwygEditor v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+        </div>
+      </div>
+      <div style="flex-basis: 300px; flex-grow: 1">
+        <div>Toàn thân</div>
+        <div style="height: 150px">
+          <WysiwygEditor v-model:value="ticketAttributeMap.body" menuType="COLLAPSE" />
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-4">
+      <div style="flex-basis: 400px; flex-grow: 4">
+        <div class="italic underline font-bold">Thông tin sản phụ</div>
+        <div>
+          <table class="table-regional" style="width: 100%">
+            <tbody>
+              <tr>
+                <td>PARA:</td>
+                <td>
+                  <div><InputText v-model:value="ticketAttributeMap.PARA" /></div>
+                </td>
+              </tr>
+              <tr>
+                <td>Ngày đầu - KKC (LMP):</td>
+                <td>
+                  <div>
+                    <InputDate
+                      v-model:value="ticketAttributeMap.NgayDauKyKinhCuoi"
+                      typeParser="string" />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Ngày thụ thai (DOC):</td>
+                <td>
+                  <InputDate v-model:value="ticketAttributeMap.NgayThuThai" typeParser="string" />
+                </td>
+              </tr>
+              <tr>
+                <td>Ngày dự kiến sinh (EDD):</td>
+                <td>
+                  <InputDate
+                    v-model:value="ticketAttributeMap.NgayDuKienSinh"
+                    typeParser="string"
+                    @update:value="updateDuKienSinh" />
+                </td>
+              </tr>
+              <tr>
+                <td>Tuổi thai:</td>
+                <td>
+                  <div class="flex gap-4">
+                    <div>
+                      <div>Tuần</div>
+                      <div>
+                        <InputNumber
+                          v-model:value="ticketAttributeMap.TuoiThai_Tuan"
+                          @update:value="updateTuoiThaiTuan" />
+                      </div>
+                    </div>
+                    <div>
+                      <div>Ngày</div>
+                      <div>
+                        <InputNumber
+                          v-model:value="ticketAttributeMap.TuoiThai_Ngay"
+                          @update:value="updateTuoiThaiNgay" />
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex flex-col" style="flex-basis: 200px; flex-grow: 1">
+        <div>Chỉ số sinh tồn</div>
+        <div class="grow pb-4" style="border: 1px solid #d1d5db">
+          <table class="table-vital-signs">
+            <tbody>
+              <tr>
+                <td class="title-vital-signs">Mạch</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.pulse" type="number" />
+                </td>
+                <td class="unit-vital-signs">l/p</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Nhiệt độ</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.temperature" type="number" />
+                </td>
+                <td class="unit-vital-signs">°C</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Huyết áp</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.bloodPressure" />
+                </td>
+                <td class="unit-vital-signs">mmHg</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">TS Thở</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.respiratoryRate" type="number" />
+                </td>
+                <td class="unit-vital-signs">l/p</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">SpO2</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.spO2" type="number" />
+                </td>
+                <td class="unit-vital-signs">%</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Chiều cao</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.height" type="number" />
+                </td>
+                <td class="unit-vital-signs">cm</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Cân nặng</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.weight" type="number" />
+                </td>
+                <td class="unit-vital-signs">kg</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div v-if="ticketClinicRef.id" class="mt-4">
+      <div>Hình ảnh</div>
+      <ImageUploadMultiple
+        ref="imageUploadMultipleRef"
+        :height="100"
+        :rootImageList="
+          (ticketClinicRef?.imageList || [])
+            .filter((i) => i.hostType === ImageHost.GoogleDriver)
+            .map((i) => ({
+              thumbnail: DImage.getImageLink(i, { size: 200 }),
+              enlarged: DImage.getImageLink(i, { size: 1000 }),
+              id: i.id,
+            }))
+        "
+        @changeImage="hasChangeImage = true" />
+    </div>
+    <div class="mt-4">
+      <div>Chẩn đoán</div>
+      <div>
+        <InputText v-model:value="ticketAttributeMap.diagnosis" />
+      </div>
+    </div>
+    <div class="mt-4 flex justify-between gap-4">
+      <div></div>
+      <VueButton
+        v-if="
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_BASIC]
+        "
+        color="blue"
+        :disabled="!hasChangeData"
+        :loading="saveLoading"
+        icon="save"
+        @click="saveTicketDiagnosis">
+        Lưu lại
+      </VueButton>
+    </div>
+  </div>
+</template>
+<style lang="scss" scoped>
+.table-regional {
+  border-collapse: collapse;
+
+  td {
+    padding-right: 10px;
+    padding-top: 10px;
+    &:first-child {
+      white-space: nowrap; /* Không xuống dòng */
+      width: 10%;
+    }
+  }
+}
+.table-vital-signs {
+  td.title-vital-signs {
+    padding: 4px 4px 4px 8px;
+    white-space: nowrap;
+  }
+  td.unit-vital-signs {
+    padding: 4px 8px 4px 8px;
+    white-space: nowrap;
+  }
+  td.input-vital-signs {
+    padding-left: 8px;
+  }
+  input {
+    padding-left: 0.5rem;
+    text-align: left;
+    font-style: italic;
+    width: 100%;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #cdcdcd;
+    &:focus {
+      outline: none;
+    }
+  }
+}
+</style>

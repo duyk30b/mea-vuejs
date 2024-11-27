@@ -6,7 +6,7 @@ import { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
-import { TicketDiagnosis } from '../ticket-diagnosis'
+import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import { TicketLaboratory } from '../ticket-laboratory'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
@@ -30,6 +30,7 @@ export enum TicketType {
   Clinic = 3,
   Spa = 4,
   Eye = 5,
+  Obstetric = 6,
 }
 
 export class Ticket {
@@ -53,7 +54,12 @@ export class Ticket {
   paid: number
   debt: number
 
-  note: string
+  imageIds: string
+
+  year: number
+  month: number
+  date: number
+  dailyIndex: number
 
   registeredAt: number // Giờ đăng ký khám
   startedAt: number | null // Giờ vào khám
@@ -63,7 +69,7 @@ export class Ticket {
   customer?: Customer
   customerPaymentList?: CustomerPayment[]
   customerSource?: CustomerSource
-  ticketDiagnosis?: TicketDiagnosis
+  ticketAttributeList?: TicketAttribute[]
   ticketProductList?: TicketProduct[]
   ticketProductConsumableList?: TicketProduct[]
   ticketProductPrescriptionList?: TicketProduct[]
@@ -75,6 +81,9 @@ export class Ticket {
   ticketExpenseList?: TicketExpense[]
 
   toAppointment?: Appointment
+  imageList: Image[]
+
+  ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
 
   static init(): Ticket {
     const ins = new Ticket()
@@ -100,13 +109,15 @@ export class Ticket {
     const ins = Ticket.init()
     // ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
     ins.customerPaymentList = []
-    ins.ticketDiagnosis = TicketDiagnosis.init()
+    ins.ticketAttributeList = []
+    ins.ticketAttributeMap = {}
     ins.ticketProcedureList = []
     ins.ticketProductList = []
     ins.ticketRadiologyList = []
     ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
+    ins.imageList = []
 
     return ins
   }
@@ -142,14 +153,11 @@ export class Ticket {
         : target.toAppointment
     }
 
-    if (Object.prototype.hasOwnProperty.call(source, 'ticketDiagnosis')) {
-      target.ticketDiagnosis = target.ticketDiagnosis
-        ? TicketDiagnosis.basic(target.ticketDiagnosis)
-        : target.ticketDiagnosis
-      if (source.ticketDiagnosis?.imageList) {
-        target.ticketDiagnosis!.imageList = Image.basicList(source.ticketDiagnosis?.imageList)
-      }
+    if (target.ticketAttributeList) {
+      target.ticketAttributeList = TicketAttribute.basicList(target.ticketAttributeList)
+      target.ticketAttributeMap = TicketAttribute.basicMap(target.ticketAttributeList)
     }
+
     if (target.customerPaymentList) {
       target.customerPaymentList = CustomerPayment.basicList(target.customerPaymentList)
     }
@@ -195,6 +203,10 @@ export class Ticket {
     }
     if (target.ticketExpenseList) {
       target.ticketExpenseList = TicketExpense.basicList(target.ticketExpenseList)
+    }
+
+    if (target.imageList) {
+      target.imageList = Image.basicList(target.imageList)
     }
     return target
   }

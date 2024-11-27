@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { IdcardOutlined, PhoneOutlined, WarningOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { nextTick, onBeforeMount, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClock, IconDollar, IconFileSearch, IconSend } from '../../../common/icon'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -14,15 +14,64 @@ import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
+import { Customer, CustomerService, useCustomerStore } from '../../../modules/customer'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
+const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalTicketClinicRegisterAppointment =
   ref<InstanceType<typeof ModalTicketClinicRegisterAppointment>>()
+const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
+
+const customerList = ref<Customer[]>([])
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const updateCustomer = () => {}
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+
+watch(
+  () => ticketClinicRef.value.id,
+  (newValue) => {
+    if (newValue) {
+      inputOptionsCustomer.value?.setItem({
+        value: ticketClinicRef.value.customer!.id,
+        text: ticketClinicRef.value.customer!.fullName,
+        data: ticketClinicRef.value.customer!,
+      })
+    }
+  }
+)
+
+const searchingCustomer = async (text: string) => {
+  ticketClinicRef.value.customer = Customer.blank()
+  ticketClinicRef.value.customerId = 0
+  if (text) {
+    customerList.value = await CustomerService.search(text)
+  } else {
+    customerList.value = []
+  }
+}
+
+const selectCustomer = (data?: Customer) => {
+  ticketClinicRef.value.customerId = data?.id || 0
+  ticketClinicRef.value.customer = Customer.from(data || Customer.blank())
+  ticketClinicRef.value.ticketAttributeMap!.healthHistory = data?.healthHistory || ''
+}
+
+const createCustomer = (instance?: Customer) => {
+  inputOptionsCustomer.value?.setItem({
+    text: instance?.fullName,
+    data: instance,
+    value: instance?.id,
+  })
+  selectCustomer(instance)
+}
 
 const handleClickModalRegisterAppointment = () => {
   let toAppointment
@@ -43,26 +92,54 @@ const handleClickModalRegisterAppointment = () => {
 }
 </script>
 <template>
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
   <ModalTicketClinicRegisterAppointment ref="modalTicketClinicRegisterAppointment" />
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <div class="bg-white p-4">
-    <div class="flex justify-between">
-      <div class="uppercase font-medium">
-        <IdcardOutlined />
-        <span class="ml-4">{{ ticketClinicRef.customer?.fullName }}</span>
-        <a class="ml-2" @click="modalCustomerDetail?.openModal(ticketClinicRef.customer!)">
-          <IconFileSearch />
-        </a>
-      </div>
-      <div>
-        {{ ticketClinicRef.customer?.gender === 0 ? 'Nữ' : ' ' }}
-        {{ ticketClinicRef.customer?.gender === 1 ? 'Nam' : ' ' }}
-        <span class="ml-2">
-          {{ DTimer.timeToText(ticketClinicRef.customer?.birthday, 'DD/MM/YYYY') }}
+    <div class="">
+      <div class="flex justify-between">
+        <span>
+          Tên KH (nợ cũ:
+          <b>{{ formatMoney(ticketClinicRef.customer?.debt || 0) }}</b>
+          )
+          <a
+            v-if="ticketClinicRef.customerId"
+            class="ml-1"
+            @click="modalCustomerDetail?.openModal(ticketClinicRef.customer!)">
+            <IconFileSearch />
+          </a>
+        </span>
+        <span>
+          <a
+            v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+            @click="modalCustomerUpsert?.openModal()">
+            Thêm KH mới
+          </a>
         </span>
       </div>
+      <div style="height: 40px">
+        <InputOptions
+          ref="inputOptionsCustomer"
+          :options="customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
+          :maxHeight="320"
+          placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
+          :disabled="!!ticketClinicRef.id"
+          required
+          @selectItem="({ data }) => selectCustomer(data)"
+          @update:text="searchingCustomer">
+          <template #option="{ item: { data } }">
+            <div>
+              <b>{{ data.fullName }}</b>
+              - {{ data.phone }} -
+              {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+            </div>
+            <div>{{ data.addressString }}</div>
+          </template>
+        </InputOptions>
+      </div>
     </div>
+
     <div class="mt-2 flex justify-between">
       <div class="">
         <PhoneOutlined />
@@ -72,7 +149,7 @@ const handleClickModalRegisterAppointment = () => {
     </div>
     <div class="mt-2">
       <WarningOutlined />
-      <span class="ml-4">{{ ticketClinicRef.ticketDiagnosis?.diagnosis }}</span>
+      <span class="ml-4">{{ ticketClinicRef.ticketAttributeMap?.diagnosis }}</span>
     </div>
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">

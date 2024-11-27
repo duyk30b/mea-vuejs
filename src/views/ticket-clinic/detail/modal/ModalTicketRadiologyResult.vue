@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { BasicEditor } from '../../../../ckeditor/class-editor'
 import { IconClose } from '../../../../common/icon'
 import ImageUploadMultiple from '../../../../common/image-upload/ImageUploadMultiple.vue'
+import { InputDate } from '../../../../common/vue-form'
 import InputText from '../../../../common/vue-form/InputText.vue'
+import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
+import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { ImageHost } from '../../../../modules/image/image.model'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
-import { InputDate } from '../../../../common/vue-form'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
@@ -50,6 +50,7 @@ const openModalById = async (radiologyId: number) => {
 
 const closeModal = () => {
   showModal.value = false
+  ticketRadiology.value = TicketRadiology.blank()
 }
 
 const startSave = async () => {
@@ -67,7 +68,7 @@ const startSave = async () => {
         files,
       })
     } else {
-      await TicketRadiologyApi.update({
+      await TicketRadiologyApi.updateResult({
         ticketRadiology: ticketRadiology.value,
         imageIdsKeep,
         files,
@@ -80,6 +81,17 @@ const startSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const cancelResult = async () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn hủy kết quả piếu CĐHA này',
+    content: [''],
+    async onOk() {
+      await TicketRadiologyApi.cancelResult(ticketRadiology.value.id)
+      closeModal()
+    },
+  })
 }
 
 defineExpose({ openModalByInstance, openModalById })
@@ -145,7 +157,17 @@ defineExpose({ openModalByInstance, openModalById })
           </div>
         </div>
         <div class="mt-6 flex justify-end gap-4">
-          <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
+          <VueButton
+            v-if="editable && ticketRadiology.id"
+            color="red"
+            type="button"
+            icon="close"
+            @click="cancelResult">
+            Hủy kết quả
+          </VueButton>
+          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+            Đóng lại
+          </VueButton>
           <VueButton
             v-if="editable"
             :disabled="disabled"

@@ -25,18 +25,17 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { TicketStatus, TicketType } from '../../../modules/ticket'
+import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import {
   TicketClinicApi,
   ticketClinicRef,
   ticketRefDeliveryStatus,
   useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
-import { TicketDiagnosis } from '../../../modules/ticket-diagnosis'
 import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import TicketClinicConsumable from './TicketClinicConsumable.vue'
-import TicketClinicDiagnosisBase from './TicketClinicDiagnosisBase.vue'
+import TicketClinicDiagnosisGeneral from './TicketClinicDiagnosisGeneral.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
 import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
@@ -46,6 +45,8 @@ import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
 import ModalTicketClinicDetailSettingData from './setting/ModalTicketClinicDetailSettingData.vue'
+import { Customer } from '../../../modules/customer'
+import TicketClinicDiagnosisObstetric from './TicketClinicDiagnosisObstetric.vue'
 
 const modalTicketClinicDetailSettingData =
   ref<InstanceType<typeof ModalTicketClinicDetailSettingData>>()
@@ -57,6 +58,7 @@ const settingStore = useSettingStore()
 const ticketClinicStore = useTicketClinicStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
+const childComponent = ref<any>(null)
 
 const startFetchData = async (ticketId: number) => {
   try {
@@ -65,7 +67,7 @@ const startFetchData = async (ticketId: number) => {
         customer: true,
         customerPaymentList: false, // query khi bật modal thanh toán
 
-        ticketDiagnosis: true,
+        ticketAttributeList: true,
         // ticketProductList: true,
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },
@@ -76,16 +78,23 @@ const startFetchData = async (ticketId: number) => {
         toAppointment: true,
       },
     })
-    if (!ticketData.ticketDiagnosis) {
-      const ticketDiagnosis = TicketDiagnosis.blank()
-      ticketDiagnosis.ticketId = ticketData.id
-      ticketDiagnosis.reason = ticketData.note
-      ticketData.ticketDiagnosis = ticketDiagnosis
-    }
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
     if (!ticketData.ticketProductList) ticketData.ticketProductList = []
     if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
     if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
+
+    if (!ticketData.ticketAttributeList) {
+      const healthHistory = ticketData.customer?.healthHistory || ''
+      ticketData.ticketAttributeList = [
+        {
+          key: 'healthHistory',
+          value: ticketData.customer?.healthHistory || '',
+          id: 0,
+          ticketId: ticketData.id,
+        },
+      ]
+      ticketData.ticketAttributeMap = { healthHistory }
+    }
     ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
@@ -96,15 +105,15 @@ onBeforeMount(async () => {
   const ticketId = Number(route.params.id)
   if (ticketId) {
     await startFetchData(ticketId)
+  } else {
+    ticketClinicRef.value = Ticket.blank()
+    ticketClinicRef.value.ticketType = settingStore.SCREEN_TICKET_CLINIC_LIST.ticketType
+    ticketClinicRef.value.customer = Customer.init()
   }
 })
 
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SETTING_DATA') {
-    console.log(
-      '🚀 ~ file: TicketClinicDetailContainer.vue:98 ~ handleMenuSettingClick ~ menu:',
-      menu
-    )
     modalTicketClinicDetailSettingData.value?.openModal()
   }
 }
@@ -113,6 +122,30 @@ const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
   await TicketClinicApi.startCheckup({ ticketId: ticketClinicRef.value.id })
+}
+
+const startRegisterExecuting = async () => {
+  // if (childComponent.value?.getDataTicketDiagnosis) {
+  //   const data = childComponent.value.getDataTicketDiagnosis()
+  //   ticketDiagnosis = data.ticketDiagnosis || TicketDiagnosis.blank()
+  // }
+
+  // ticketClinicRef.value = await TicketClinicApi.registerExecuting({
+  //   customerId: ticketClinicRef.value.customerId,
+  //   ticketType: ticketClinicRef.value.ticketType,
+  //   registeredAt: Date.now(),
+  //   diagnosisBasic: {
+  //     reason: ticketDiagnosis?.reason || '',
+  //     healthHistory: ticketDiagnosis?.healthHistory || '',
+  //     general: ticketDiagnosis?.general || '',
+  //     regional: ticketDiagnosis?.regional || '',
+  //     summary: ticketDiagnosis?.summary || '',
+  //     diagnosis: ticketDiagnosis?.diagnosis || '',
+  //   },
+  // })
+  router.replace({
+    path: route.path.replace(/\/detail\/\d+/, `/detail/${ticketClinicRef.value.id}`),
+  })
 }
 
 const startCloseVisit = async () => {
@@ -203,31 +236,38 @@ const clickCloseVisit = () => {
         <template #menu>
           <VueTabMenu
             v-if="ticketClinicRef.ticketType === TicketType.Clinic"
-            :tabKey="TicketClinicDiagnosisBase.__name!"
-            @active="router.push({ name: TicketClinicDiagnosisBase.__name })">
+            :tabKey="TicketClinicDiagnosisGeneral.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisGeneral.__name })">
             <IconStethoscope />
             Khám
           </VueTabMenu>
-          <template v-else-if="ticketClinicRef.ticketType === TicketType.Eye">
-            <VueTabMenu
-              :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
-              @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })">
-              <IconStethoscope />
-              Khám mắt
-            </VueTabMenu>
-            <VueTabMenu
-              :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
-              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })">
-              <IconEyeGlasses />
-              Đo thị lực
-            </VueTabMenu>
-          </template>
+          <VueTabMenu
+            v-if="ticketClinicRef.ticketType === TicketType.Obstetric"
+            :tabKey="TicketClinicDiagnosisObstetric.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisObstetric.__name })">
+            <IconStethoscope />
+            Khám
+          </VueTabMenu>
+          <VueTabMenu
+            v-if="ticketClinicRef.ticketType === TicketType.Eye"
+            :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
+            @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })">
+            <IconStethoscope />
+            Khám mắt
+          </VueTabMenu>
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
                 ticketClinicRef.ticketStatus
               )
             ">
+            <VueTabMenu
+              v-if="ticketClinicRef.ticketType === TicketType.Eye"
+              :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
+              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })">
+              <IconEyeGlasses />
+              Đo thị lực
+            </VueTabMenu>
             <VueTabMenu
               :tabKey="TicketClinicProcedure.__name!"
               @active="router.push({ name: TicketClinicProcedure.__name })">
@@ -271,7 +311,8 @@ const clickCloseVisit = () => {
         <KeepAlive
           :include="
             [
-              TicketClinicDiagnosisBase.__name,
+              TicketClinicDiagnosisGeneral.__name,
+              TicketClinicDiagnosisObstetric.__name,
               TicketClinicDiagnosisEyeBasic.__name,
               TicketClinicDiagnosisEyeSpecial.__name,
               TicketClinicProcedure.__name,
@@ -281,7 +322,7 @@ const clickCloseVisit = () => {
               TicketClinicPrescription.__name,
             ].join(',')
           ">
-          <component :is="Component" />
+          <component :is="Component" ref="childComponent" />
         </KeepAlive>
       </RouterView>
     </div>
@@ -292,13 +333,23 @@ const clickCloseVisit = () => {
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Approved].includes(
               ticketClinicRef.ticketStatus
-            ) && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]
+            ) &&
+            permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
+            !!ticketClinicRef.id
           "
           color="blue"
           size="default"
           @click="startCheckup">
           <LoginOutlined />
           VÀO KHÁM
+        </VueButton>
+        <VueButton
+          v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]"
+          color="blue"
+          size="default"
+          @click="startRegisterExecuting">
+          <LoginOutlined />
+          ĐĂNG KÝ KHÁM
         </VueButton>
         <VueButton
           v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CLOSE]"

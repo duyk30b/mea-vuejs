@@ -85,15 +85,29 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.identityCard">
-                  Hiển thị căn cước công dân
+                <a-checkbox v-model:checked="settingDisplay.addressProvince">
+                  Hiển thị điền địa chỉ tỉnh
                 </a-checkbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.address">
-                  Hiển thị điền thông tin địa chỉ
+                <a-checkbox v-model:checked="settingDisplay.addressDistrict">
+                  Hiển thị điền địa chỉ huyện
+                </a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.addressWard">
+                  Hiển thị điền địa chỉ xã
+                </a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.addressStreet">
+                  Hiển thị điền địa chỉ đường
                 </a-checkbox>
               </td>
             </tr>

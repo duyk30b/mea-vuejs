@@ -30,15 +30,6 @@ const limit = ref(
   Number(localStorage.getItem('CUSTOMER_TICKET_CLINIC_HISTORY_PAGINATION_LIMIT')) || 20
 )
 const total = ref(0)
-const general = ref<{
-  pulse?: number // Mạch
-  temperature?: number // Nhiệt độ
-  bloodPressure?: string // Huyết áp
-  respiratoryRate?: number // Nhịp thở
-  spO2?: number // sp02
-  height?: number // Chiều cao
-  weight?: number // Cân nặng
-}>({})
 
 onMounted(async () => {
   laboratoryMap.value = await LaboratoryService.getMap()
@@ -53,7 +44,7 @@ const startFetchData = async () => {
         customerId: props.customer.id!,
         ticketType: { IN: [TicketType.Clinic, TicketType.Eye] },
       },
-      relation: { ticketDiagnosis: true },
+      relation: { ticketAttributeList: true },
       sort: { id: 'DESC' },
     })
     ticketList.value = data
@@ -65,7 +56,6 @@ const startFetchData = async () => {
 
 const clickTicketHistory = async (basic: Ticket) => {
   ticket.value = await ticketClinicStore.getTicketHistoryByBasic(basic)
-  general.value = JSON.parse(ticket.value.ticketDiagnosis?.general || '{}')
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -112,7 +102,7 @@ watch(
             :class="ticket.id === ticketItem.id ? 'active' : ''"
             @click="clickTicketHistory(ticketItem)">
             {{ DTimer.timeToText(ticketItem.registeredAt, 'DD/MM/YY') }} -
-            {{ ticketItem.ticketDiagnosis?.diagnosis }}
+            {{ ticketItem.ticketAttributeMap?.diagnosis }}
           </div>
         </div>
         <div class="mt-4 mb-2 flex justify-center">
@@ -135,88 +125,94 @@ watch(
             <div style="flex-grow: 1">
               <div>
                 <span class="mr-4" style="font-weight: 500">1. Lý do khám:</span>
-                {{ ticket.ticketDiagnosis?.reason }}
+                {{ ticket.ticketAttributeMap?.reason }}
               </div>
               <div class="mt-4" style="font-weight: 500">2. Tiền sử:</div>
-              <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.healthHistory"></div>
-              <!-- <div class="mt-4" style="font-weight: 500">3. Chỉ số sinh tồn</div>
-            <div>{{ JSON.stringify(ticket.ticketDiagnosis?.general) }}</div> -->
-              <div class="mt-4" style="font-weight: 500">4. Tóm tắt:</div>
-              <div class="mt-2 ml-4" v-html="ticket.ticketDiagnosis?.summary"></div>
-              <div class="mt-4" style="font-weight: 500">5. Chẩn đoán:</div>
+              <div class="mt-2 ml-4" v-html="ticket.ticketAttributeMap?.healthHistory"></div>
+              <div class="mt-4" style="font-weight: 500">3. Tóm tắt:</div>
+              <div class="mt-2 ml-4" v-html="ticket.ticketAttributeMap?.summary"></div>
+              <div class="mt-4" style="font-weight: 500">4. Chẩn đoán:</div>
               <div class="mt-2 ml-4">
-                {{ ticket.ticketDiagnosis?.diagnosis }}
+                {{ ticket.ticketAttributeMap?.diagnosis }}
               </div>
             </div>
             <div class="py-2 px-2" style="border: 1px solid #d1d5db">
               <table class="table-vital-signs">
-                <tr>
-                  <td class="title-vital-signs">Mạch</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.pulse" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">l/p</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">Nhiệt độ</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.temperature" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">°C</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">Huyết áp</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.bloodPressure" />
-                  </td>
-                  <td class="unit-vital-signs">mmHg</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">TS Thở</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.respiratoryRate" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">l/p</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">SpO2</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.spO2" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">%</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">Chiều cao</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.height" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">cm</td>
-                </tr>
-                <tr>
-                  <td class="title-vital-signs">Cân nặng</td>
-                  <td>:</td>
-                  <td class="input-vital-signs">
-                    <input disabled :value="general.weight" type="number" />
-                  </td>
-                  <td class="unit-vital-signs">kg</td>
-                </tr>
+                <tbody>
+                  <tr>
+                    <td class="title-vital-signs">Mạch</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input disabled :value="ticket.ticketAttributeMap?.pulse" type="number" />
+                    </td>
+                    <td class="unit-vital-signs">l/p</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">Nhiệt độ</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input
+                        disabled
+                        :value="ticket.ticketAttributeMap?.temperature"
+                        type="number" />
+                    </td>
+                    <td class="unit-vital-signs">°C</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">Huyết áp</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input disabled :value="ticket.ticketAttributeMap?.bloodPressure" />
+                    </td>
+                    <td class="unit-vital-signs">mmHg</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">TS Thở</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input
+                        disabled
+                        :value="ticket.ticketAttributeMap?.respiratoryRate"
+                        type="number" />
+                    </td>
+                    <td class="unit-vital-signs">l/p</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">SpO2</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input disabled :value="ticket.ticketAttributeMap?.spO2" type="number" />
+                    </td>
+                    <td class="unit-vital-signs">%</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">Chiều cao</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input disabled :value="ticket.ticketAttributeMap?.height" type="number" />
+                    </td>
+                    <td class="unit-vital-signs">cm</td>
+                  </tr>
+                  <tr>
+                    <td class="title-vital-signs">Cân nặng</td>
+                    <td>:</td>
+                    <td class="input-vital-signs">
+                      <input disabled :value="ticket.ticketAttributeMap?.weight" type="number" />
+                    </td>
+                    <td class="unit-vital-signs">kg</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>
           <div class="mt-4 px-4 pt-2 pb-1" style="background-color: white">
-            <div style="font-style: italic; text-decoration: underline">Hình ảnh</div>
+            <div style="font-style: italic; text-decoration: underline">5. Hình ảnh</div>
             <ImageUploadMultiple
               ref="imageUploadRef"
               :height="100"
               :editable="false"
               :rootImageList="
-                (ticket.ticketDiagnosis?.imageList || [])
+                (ticket?.imageList || [])
                   .filter((i) => i.hostType === ImageHost.GoogleDriver)
                   .map((i) => ({
                     thumbnail: DImage.getImageLink(i, { size: 200 }),
@@ -440,18 +436,20 @@ watch(
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">10. Thanh toán:</div>
             <table>
-              <tr>
-                <td>- Tổng chi phí:</td>
-                <td class="px-4">{{ formatMoney(ticket.totalMoney) }}</td>
-              </tr>
-              <tr>
-                <td>- Đã thanh toán:</td>
-                <td class="px-4">{{ formatMoney(ticket.paid) }}</td>
-              </tr>
-              <tr>
-                <td>- Nợ:</td>
-                <td class="px-4">{{ formatMoney(ticket.debt) }}</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td>- Tổng chi phí:</td>
+                  <td class="px-4">{{ formatMoney(ticket.totalMoney) }}</td>
+                </tr>
+                <tr>
+                  <td>- Đã thanh toán:</td>
+                  <td class="px-4">{{ formatMoney(ticket.paid) }}</td>
+                </tr>
+                <tr>
+                  <td>- Nợ:</td>
+                  <td class="px-4">{{ formatMoney(ticket.debt) }}</td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>

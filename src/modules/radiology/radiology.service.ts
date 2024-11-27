@@ -15,7 +15,7 @@ export class RadiologyService {
       const fetchData = await RadiologyApi.list({})
       RadiologyService.radiologyAll = fetchData.data
       RadiologyService.radiologyAll.sort((a, b) => {
-        return a.priority > b.priority ? -1 : 1
+        return a.priority > b.priority ? 1 : -1 // sắp xêp tăng dần
       })
       RadiologyService.loadedAll = true
     }

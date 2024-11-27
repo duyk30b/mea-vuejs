@@ -8,8 +8,8 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
-  TicketAttributeKeyEyeList,
-  type TicketAttributeKeyEyeType,
+  TicketAttributeKeyGeneralList,
+  type TicketAttributeKeyGeneralType,
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
@@ -19,30 +19,29 @@ const { permissionIdMap } = meStore
 
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
-const ticketAttributeOriginMap: { [P in TicketAttributeKeyEyeType]?: any } = {}
+const ticketAttributeOriginMap: { [P in TicketAttributeKeyGeneralType]?: any } = {}
 const ticketAttributeMap = ref<
-  { [P in TicketAttributeKeyEyeType]?: any } & { healthHistory: string; body: string }
+  { [P in TicketAttributeKeyGeneralType]?: any } & { healthHistory: string; summary: string }
 >({
   healthHistory: '',
-  body: '',
+  summary: '',
 })
-
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:30 ~ onMounted')
+  console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:28 ~ onMounted')
 })
 
 watch(
   () => ticketClinicRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) {
-      return (ticketAttributeMap.value = { healthHistory: '', body: '' })
+      return (ticketAttributeMap.value = { healthHistory: '', summary: '' })
     }
     newValue.forEach((i) => {
-      if (!TicketAttributeKeyEyeList.includes(i.key as any)) return
-      const k = i.key as unknown as TicketAttributeKeyEyeType
+      if (!TicketAttributeKeyGeneralList.includes(i.key as any)) return
+      const k = i.key as unknown as TicketAttributeKeyGeneralType
       if (i.value === ticketAttributeOriginMap[k]) return
       ticketAttributeOriginMap[k] = i.value
       ticketAttributeMap.value[k] = i.value
@@ -52,7 +51,7 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value.imageIds,
+  () => ticketClinicRef.value!.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
   { immediate: true }
 )
@@ -65,7 +64,7 @@ const hasChangeCustomer = computed(() => {
 const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
-    const k = key as unknown as TicketAttributeKeyEyeType
+    const k = key as unknown as TicketAttributeKeyGeneralType
     const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
@@ -103,7 +102,7 @@ const saveTicketDiagnosis = async () => {
       files,
       imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
       ticketAttributeChangeList,
-      ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
+      ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
       customerChange: hasChangeCustomer.value
         ? {
             customerId: ticketClinicRef.value.customerId,
@@ -112,7 +111,7 @@ const saveTicketDiagnosis = async () => {
         : undefined,
     })
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:115 ~ saveTicketDiagnosis:', error)
+    console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:137 ~:', error)
   } finally {
     saveLoading.value = false
   }
@@ -125,83 +124,96 @@ const getDataTicketDiagnosis = () => {
 defineExpose({ getDataTicketDiagnosis })
 </script>
 <template>
-  <div>
-    <div class="mt-4">
+  <div class="mt-4">
+    <div>
       <div>Lý do khám</div>
       <div>
         <InputText v-model:value="ticketAttributeMap.reason" />
       </div>
     </div>
-    <div class="mt-4 flex flex-wrap gap-4">
-      <div style="flex-basis: 300px; flex-grow: 1">
+    <div class="mt-4 flex flex-col md:flex-row flex-wrap gap-4">
+      <div class="flex-1">
         <div>Tiền sử</div>
-        <div style="height: 150px">
+        <div class="healthHistory" style="height: 150px">
           <WysiwygEditor v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
         </div>
+        <div class="mt-4">Tóm tắt</div>
+        <div class="summary" style="height: 150px">
+          <WysiwygEditor v-model:value="ticketAttributeMap.summary" menuType="COLLAPSE" />
+        </div>
       </div>
-      <div style="flex-basis: 300px; flex-grow: 1">
-        <div>Toàn thân</div>
-        <div style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.body" menuType="COLLAPSE" />
+      <div class="md:w-[220px] w-full flex flex-col">
+        <div>Chỉ số sinh tồn</div>
+        <div class="grow pb-4" style="border: 1px solid #d1d5db">
+          <table class="table-vital-signs">
+            <tbody>
+              <tr>
+                <td class="title-vital-signs">Mạch</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.pulse" type="number" />
+                </td>
+                <td class="unit-vital-signs">l/p</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Nhiệt độ</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.temperature" type="number" />
+                </td>
+                <td class="unit-vital-signs">°C</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Huyết áp</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.bloodPressure" />
+                </td>
+                <td class="unit-vital-signs">mmHg</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">TS Thở</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.respiratoryRate" type="number" />
+                </td>
+                <td class="unit-vital-signs">l/p</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">SpO2</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.spO2" type="number" />
+                </td>
+                <td class="unit-vital-signs">%</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Chiều cao</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.height" type="number" />
+                </td>
+                <td class="unit-vital-signs">cm</td>
+              </tr>
+              <tr>
+                <td class="title-vital-signs">Cân nặng</td>
+                <td>:</td>
+                <td class="input-vital-signs">
+                  <input v-model="ticketAttributeMap.weight" type="number" />
+                </td>
+                <td class="unit-vital-signs">kg</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-
-    <div class="mt-4 w-full" style="overflow-x: scroll">
-      <div>Khám mắt</div>
-      <div class="w-full" style="min-width: 600px">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 160px"></th>
-              <th>Mắt Phải</th>
-              <th>Mắt Trái</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="title">Thị lực</td>
-              <td><input v-model="ticketAttributeMap.ThiLuc_MP" /></td>
-              <td><input v-model="ticketAttributeMap.ThiLuc_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Nhãn áp</td>
-              <td><input v-model="ticketAttributeMap.NhanAp_MP" /></td>
-              <td><input v-model="ticketAttributeMap.NhanAp_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Mi mắt - kết mạc</td>
-              <td><input v-model="ticketAttributeMap.MiMatKetMac_MP" /></td>
-              <td><input v-model="ticketAttributeMap.MiMatKetMac_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Giác mạc</td>
-              <td><input v-model="ticketAttributeMap.GiacMac_MP" /></td>
-              <td><input v-model="ticketAttributeMap.GiacMac_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Tiền phòng, mống mắt</td>
-              <td><input v-model="ticketAttributeMap.TienPhongMongMat_MP" /></td>
-              <td><input v-model="ticketAttributeMap.TienPhongMongMat_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Thủy tinh thể</td>
-              <td><input v-model="ticketAttributeMap.ThuyTinhThe_MP" /></td>
-              <td><input v-model="ticketAttributeMap.ThuyTinhThe_MT" /></td>
-            </tr>
-            <tr>
-              <td class="title">Đáy mắt</td>
-              <td><input v-model="ticketAttributeMap.DayMat_MP" /></td>
-              <td><input v-model="ticketAttributeMap.DayMat_MT" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="mt-4"></div>
     <div class="mt-4">
       <div>Hình ảnh</div>
       <ImageUploadMultiple
         ref="imageUploadMultipleRef"
+        :editable="!!ticketClinicRef.id"
         :height="100"
         :rootImageList="
           (ticketClinicRef?.imageList || [])
@@ -237,31 +249,30 @@ defineExpose({ getDataTicketDiagnosis })
   </div>
 </template>
 <style lang="scss" scoped>
-table {
-  border-collapse: collapse;
+.table-vital-signs {
   width: 100%;
-  table-layout: fixed;
-
-  th {
-    white-space: normal;
-    padding: 6px;
-    border: 1px solid #cdcdcd;
+  td.title-vital-signs {
+    padding: 4px 4px 4px 8px;
+    white-space: nowrap;
   }
-
-  td {
-    &.title {
-      padding: 0 6px;
-    }
-    border: 1px solid #cdcdcd;
-    input {
-      width: 100%;
-      height: 100%;
-      border: none;
-      padding: 6px;
-      border-radius: 2px;
-      &:focus {
-        outline: 2px solid #40a9ff;
-      }
+  td.unit-vital-signs {
+    padding: 4px 8px 4px 8px;
+    white-space: nowrap;
+  }
+  td.input-vital-signs {
+    padding-left: 8px;
+  }
+  input {
+    padding-left: 0.5rem;
+    text-align: left;
+    font-style: italic;
+    width: 100%;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #cdcdcd;
+    &:focus {
+      outline: none;
     }
   }
 }

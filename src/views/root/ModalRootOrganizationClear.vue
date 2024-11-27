@@ -38,6 +38,7 @@ const tableNameMap: Record<string, any> = {
   ReceiptItem: 1,
   Role: 0,
   Setting: 0,
+  TicketAttribute: 1,
   TicketDiagnosis: 1,
   TicketExpense: 1,
   TicketProcedure: 1,

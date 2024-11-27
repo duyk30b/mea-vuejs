@@ -105,9 +105,6 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
                 <a-tag color="blue">{{ ticketProcedure?.customer?.fullName }}</a-tag>
               </span>
             </div>
-            <div v-if="ticketProcedure.ticket?.note" style="font-size: 0.8rem; font-style: italic">
-              {{ ticketProcedure.ticket?.note }}
-            </div>
           </td>
           <td class="text-center">
             {{ ticketProcedure.quantity }}

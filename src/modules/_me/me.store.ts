@@ -3,11 +3,9 @@ import { LocalStorageService } from '../../core/local-storage.service'
 import { Customer, useCustomerStore } from '../customer'
 import { Distributor, useDistributorStore } from '../distributor'
 import { Organization } from '../organization'
-import { PermissionId } from '../permission/permission.enum'
 import type { Permission } from '../permission/permission.model'
 import { User } from '../user/user.model'
 import { useSettingStore } from './setting.store'
-import { Ticket, TicketType } from '../ticket'
 
 export const useMeStore = defineStore('me-store', {
   state: () => {
@@ -57,31 +55,6 @@ export const useMeStore = defineStore('me-store', {
         }
       }
       return this.customerDefault
-    },
-
-    getTicketTypeDefault() {
-      const organizationPermissionIds: PermissionId[] = JSON.parse(
-        this.organization?.permissionIds || '[]'
-      )
-      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
-        return TicketType.Clinic
-      }
-      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_EYE)) {
-        return TicketType.Eye
-      }
-      return TicketType.Clinic
-    },
-
-    getTicketTypeAvailable() {
-      const organizationPermissionIds: PermissionId[] = JSON.parse(this.organization.permissionIds)
-      const ticketTypeListAvailable: TicketType[] = []
-      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_BASE)) {
-        ticketTypeListAvailable.push(TicketType.Clinic)
-      }
-      if (organizationPermissionIds.includes(PermissionId.TICKET_CLINIC_EYE)) {
-        ticketTypeListAvailable.push(TicketType.Eye)
-      }
-      return ticketTypeListAvailable
     },
   },
 })

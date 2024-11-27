@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { AccountBookOutlined } from '@ant-design/icons-vue'
 import { onMounted, ref } from 'vue'
-import { InputNumber } from '../../common/vue-form'
+import { InputNumber, InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { OrganizationService } from '../../modules/organization'
 import { PermissionApi } from '../../modules/permission/permission.api'
 import { SettingApi } from '../../modules/setting/setting.api'
+import { RootDataApi } from '../../modules/root-data/root-data.api'
 
 const settingStore = useSettingStore()
 const meStore = useMeStore()
+
+const keyMigration = ref<string>('')
 
 const googleDriverAccounts = ref<any[]>([])
 onMounted(async () => {
@@ -38,6 +41,14 @@ const logoutGoogleDriver = async () => {
 
 const saveRootSetting = async () => {
   await OrganizationService.saveSettings('ROOT_SETTING' as any, JSON.stringify(meStore.rootSetting))
+}
+
+const startMigration = async () => {
+  try {
+    await RootDataApi.migration({ key: keyMigration.value })
+  } catch (error) {
+    console.log('🚀 ~ file: RootData.vue:51 ~ startMigration ~ error:', error)
+  }
 }
 </script>
 
@@ -99,6 +110,19 @@ const saveRootSetting = async () => {
                   @click="logoutGoogleDriver()">
                   Logout
                 </VueButton>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-center">3</td>
+              <td>Migration</td>
+              <td>
+                <form class="flex items-center" @submit.prevent="startMigration">
+                  <InputText
+                    v-model:value="keyMigration"
+                    placeholder="input key migration"
+                    required />
+                  <VueButton color="blue" type="submit">RUN</VueButton>
+                </form>
               </td>
             </tr>
           </tbody>

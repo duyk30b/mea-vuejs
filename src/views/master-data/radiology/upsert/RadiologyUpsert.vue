@@ -18,7 +18,6 @@ import {
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { Ticket } from '../../../../modules/ticket'
-import { TicketDiagnosis } from '../../../../modules/ticket-diagnosis'
 import { DDom } from '../../../../utils'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
@@ -45,8 +44,7 @@ const printHtmlOptions = ref<{ text: string; value: number }[]>([])
 const activeTab = ref(TABS_KEY.BASIC)
 
 const ticketDemo = Ticket.blank()
-ticketDemo.ticketDiagnosis = TicketDiagnosis.blank()
-ticketDemo.ticketDiagnosis.diagnosis = 'Viêm mũi dị ứng'
+ticketDemo.ticketAttributeMap = { diagnosis: 'Viêm mũi dị ứng' }
 ticketDemo.startedAt = Date.now()
 ticketDemo.customer = Customer.example()
 
@@ -75,6 +73,8 @@ onMounted(async () => {
     radiology.value = Radiology.from(radiologyResponse)
   } else {
     radiology.value = Radiology.blank()
+    const radiologyAll = await RadiologyService.getAll()
+    radiology.value.priority = radiologyAll.length + 1
   }
   updatePreview()
 })
@@ -254,7 +254,7 @@ const startTestPrint = async () => {
             </div>
 
             <div style="flex-basis: 90%; flex-grow: 1">
-              <div>Mức độ ưu tiên khi sắp xếp trong danh sách (số càng lớn ưu tiên càng cao)</div>
+              <div>Số thứ tự trong danh sách</div>
               <div style="flex: 1">
                 <InputNumber v-model:value="radiology.priority" :validate="{ GTE: 0 }" />
               </div>

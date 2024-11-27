@@ -74,89 +74,91 @@ const closeExpiryDate = computed(() => {
     @success="handleModalBatchUpdateSuccess" />
   <div class="mt-4">
     <table class="w-full">
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Mã sản phẩm</td>
-        <td class="px-2 font-medium">SP{{ product.id }}</td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Tên sản phẩm</td>
-        <td class="px-2">
-          {{ product.brandName }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
-        <td class="px-2">
-          {{ product.productGroup?.name }}
-        </td>
-      </tr>
-      <tr v-if="product.substance">
-        <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
-        <td class="px-2">
-          {{ product.substance }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
-        <td class="px-2">
-          <b>{{ product.unitQuantity }}</b>
-          {{ product.unitDefaultName }}
-          <span v-if="product.unitDefaultRate != 1" class="ml-2">
-            (
-            <b>{{ product.quantity }}</b>
-            {{ product.unitBasicName }})
-          </span>
-        </td>
-      </tr>
-      <tr v-if="!product.hasManageBatches">
-        <td class="px-2 py-1 whitespace-nowrap">Số lô</td>
-        <td class="px-2">
-          {{ product.lotNumber }}
-        </td>
-      </tr>
-      <tr v-if="!product.hasManageBatches">
-        <td class="px-2 py-1 whitespace-nowrap">HSD</td>
-        <td
-          class="px-2"
-          :style="
-            product.expiryDate && product.expiryDate < closeExpiryDate
-              ? 'color:red; font-weight:500'
-              : ''
-          ">
-          {{ product.expiryDate ? DTimer.timeToText(product.expiryDate) : '' }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
-        <td class="px-2">
-          {{ product.productGroup?.name }}
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Mã sản phẩm</td>
+          <td class="px-2 font-medium">SP{{ product.id }}</td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Tên sản phẩm</td>
+          <td class="px-2">
+            {{ product.brandName }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
+          <td class="px-2">
+            {{ product.productGroup?.name }}
+          </td>
+        </tr>
+        <tr v-if="product.substance">
+          <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
+          <td class="px-2">
+            {{ product.substance }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
+          <td class="px-2">
+            <b>{{ product.unitQuantity }}</b>
+            {{ product.unitDefaultName }}
+            <span v-if="product.unitDefaultRate != 1" class="ml-2">
+              (
+              <b>{{ product.quantity }}</b>
+              {{ product.unitBasicName }})
+            </span>
+          </td>
+        </tr>
+        <tr v-if="!product.hasManageBatches">
+          <td class="px-2 py-1 whitespace-nowrap">Số lô</td>
+          <td class="px-2">
+            {{ product.lotNumber }}
+          </td>
+        </tr>
+        <tr v-if="!product.hasManageBatches">
+          <td class="px-2 py-1 whitespace-nowrap">HSD</td>
+          <td
+            class="px-2"
+            :style="
+              product.expiryDate && product.expiryDate < closeExpiryDate
+                ? 'color:red; font-weight:500'
+                : ''
+            ">
+            {{ product.expiryDate ? DTimer.timeToText(product.expiryDate) : '' }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
+          <td class="px-2">
+            {{ product.productGroup?.name }}
+          </td>
+        </tr>
 
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Đơn vị</td>
-        <td class="px-2">
-          {{ unitString(product) }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Đường dùng</td>
-        <td class="px-2">
-          {{ product.route }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Nguồn gốc</td>
-        <td class="px-2">
-          {{ product.source }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Gợi ý cách dùng</td>
-        <td class="px-2">
-          {{ product.hintUsage }}
-        </td>
-      </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Đơn vị</td>
+          <td class="px-2">
+            {{ unitString(product) }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Đường dùng</td>
+          <td class="px-2">
+            {{ product.route }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Nguồn gốc</td>
+          <td class="px-2">
+            {{ product.source }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Gợi ý cách dùng</td>
+          <td class="px-2">
+            {{ product.hintUsage }}
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 

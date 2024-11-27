@@ -47,7 +47,6 @@ export class CustomerApi {
       phone: customer.phone,
       birthday: customer.birthday,
       gender: customer.gender,
-      identityCard: customer.identityCard, // số căn cước
       addressProvince: customer.addressProvince,
       addressDistrict: customer.addressDistrict,
       addressWard: customer.addressWard,
@@ -67,7 +66,6 @@ export class CustomerApi {
       phone: customer.phone,
       birthday: customer.birthday,
       gender: customer.gender,
-      identityCard: customer.identityCard, // số căn cước
       addressProvince: customer.addressProvince,
       addressDistrict: customer.addressDistrict,
       addressWard: customer.addressWard,

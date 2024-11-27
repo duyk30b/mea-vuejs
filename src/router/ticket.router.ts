@@ -1,5 +1,5 @@
 import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router'
-import { useMeStore } from '../modules/_me/me.store'
+import { useSettingStore } from '../modules/_me/setting.store'
 import { TicketType } from '../modules/ticket'
 
 export const ticketRouter: RouteRecordRaw[] = [
@@ -69,21 +69,31 @@ export const ticketRouter: RouteRecordRaw[] = [
               import('../views/ticket-clinic/detail/TicketClinicDetailContainer.vue'),
             meta: { title: 'Khám bệnh' },
             redirect: () => {
-              const ticketTypeDefault = useMeStore().getTicketTypeDefault()
+              const ticketTypeDefault = useSettingStore().SCREEN_TICKET_CLINIC_LIST.ticketType
               if (ticketTypeDefault === TicketType.Clinic) {
-                return { name: 'TicketClinicDiagnosisBase' }
+                return { name: 'TicketClinicDiagnosisGeneral' }
+              }
+              if (ticketTypeDefault === TicketType.Obstetric) {
+                return { name: 'TicketClinicDiagnosisObstetric' }
               }
               if (ticketTypeDefault === TicketType.Eye) {
                 return { name: 'TicketClinicDiagnosisEyeBasic' }
               }
-              return { name: 'TicketClinicDiagnosisBase' }
+              return { name: 'TicketClinicDiagnosisGeneral' }
             },
             children: [
               {
-                path: 'diagnosis-base',
-                name: 'TicketClinicDiagnosisBase',
+                path: 'diagnosis-general',
+                name: 'TicketClinicDiagnosisGeneral',
                 component: () =>
-                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisBase.vue'),
+                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisGeneral.vue'),
+                meta: { keepAlive: true, title: 'Khám' },
+              },
+              {
+                path: 'diagnosis-obstetrics',
+                name: 'TicketClinicDiagnosisObstetric',
+                component: () =>
+                  import('../views/ticket-clinic/detail/TicketClinicDiagnosisObstetric.vue'),
                 meta: { keepAlive: true, title: 'Khám' },
               },
               {

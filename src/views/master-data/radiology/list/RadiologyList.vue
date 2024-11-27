@@ -13,7 +13,9 @@ import { arrayToKeyValue } from '../../../../utils'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import type ModalCopyRadiologyExample from './ModalCopyRadiologyExample.vue'
 import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
+import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
 
+const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologyExample = ref<InstanceType<typeof ModalCopyRadiologyExample>>()
 const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
@@ -48,7 +50,7 @@ const startFetchData = async () => {
         radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
         name: searchText.value ? { LIKE: searchText.value } : undefined,
       },
-      sort: { priority: 'DESC' },
+      sort: { priority: 'ASC' },
     })
 
     radiologyList.value = data
@@ -87,6 +89,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'RADIOLOGY_GROUP_MANAGER') {
     modalRadiologyGroupManager.value?.openModal()
   }
+  if (menu.key === 'SCREEN_SETTING') {
+    modalRadiologyListSettingScreen.value?.openModal()
+  }
 }
 
 const handleModalRadiologyGroupManagerSuccess = async () => {
@@ -99,6 +104,9 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
 </script>
 
 <template>
+  <ModalRadiologyListSettingScreen
+    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    ref="modalRadiologyListSettingScreen" />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
   <!-- <ModalCopyRadiologyExample
     ref="modalCopyRadiologyExample"
@@ -136,6 +144,7 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
+            <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
             <a-menu-item key="RADIOLOGY_GROUP_MANAGER">Quản lý nhóm CĐHA</a-menu-item>
           </a-menu>
         </template>
@@ -168,7 +177,7 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
       <table>
         <thead>
           <tr>
-            <th>Ưu tiên</th>
+            <th>STT</th>
             <th>Tên</th>
             <th>Nhóm</th>
             <th>Giá tiền</th>
@@ -194,7 +203,7 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="radiology in radiologyList" :key="radiology.id">
-            <td class="text-center">R{{ radiology.priority }}</td>
+            <td class="text-center">R{{ radiology.priority.toString().padStart(3, '0') }}</td>
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ radiology.name }}</span>

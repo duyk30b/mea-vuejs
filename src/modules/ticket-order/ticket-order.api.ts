@@ -5,7 +5,8 @@ import { TicketProduct } from '../ticket-product'
 import { Ticket } from '../ticket/ticket.model'
 
 export class TicketOrderApi {
-  static async createDraft(ticket: Ticket) {
+  static async createDraft(options: { ticket: Ticket }) {
+    const { ticket } = options
     const response = await AxiosInstance.post('/ticket-order/create-draft', {
       ticketOrderDraftInsert: {
         customerId: ticket.customerId,
@@ -22,7 +23,6 @@ export class TicketOrderApi {
         // debt: ticket.debt, // nháp ko gửi paid và debt
         expense: ticket.expense,
         profit: ticket.profit,
-        note: ticket.note,
         registeredAt: ticket.registeredAt,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
@@ -57,12 +57,16 @@ export class TicketOrderApi {
         name: i.name,
         money: i.money,
       })),
+      ticketOrderAttributeDaftList: ticket.ticketAttributeList?.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
     })
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
     return Ticket.from(data.ticketBasic)
   }
 
-  static async updateDraftApproved(ticketId: number, ticket: Ticket) {
+  static async updateDraftApproved(options: { ticketId: number; ticket: Ticket }) {
+    const { ticketId, ticket } = options
     const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-draft-approved`, {
       ticketOrderDraftApprovedUpdate: {
         totalCostAmount: ticket.totalCostAmount,
@@ -78,7 +82,6 @@ export class TicketOrderApi {
         // debt: ticket.debt, // nháp ko gửi paid và debt
         expense: ticket.expense,
         profit: ticket.profit,
-        note: ticket.note,
         registeredAt: ticket.registeredAt,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
@@ -113,6 +116,9 @@ export class TicketOrderApi {
         name: i.name,
         money: i.money,
       })),
+      ticketOrderAttributeDaftList: ticket.ticketAttributeList?.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
     })
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
     return Ticket.from(data.ticketBasic)
@@ -124,7 +130,8 @@ export class TicketOrderApi {
     return data
   }
 
-  static async createDebtSuccess(ticket: Ticket) {
+  static async createDebtSuccess(options: { ticket: Ticket }) {
+    const { ticket } = options
     const response = await AxiosInstance.post('/ticket-order/create-debt-success', {
       ticketOrderDebtSuccessInsert: {
         customerId: ticket.customerId,
@@ -141,7 +148,6 @@ export class TicketOrderApi {
         // debt: ticket.debt, // backend tự tính
         expense: ticket.expense,
         profit: ticket.profit,
-        note: ticket.note,
         registeredAt: ticket.registeredAt,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
@@ -176,12 +182,16 @@ export class TicketOrderApi {
         name: i.name,
         money: i.money,
       })),
+      ticketOrderAttributeDaftList: ticket.ticketAttributeList?.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
     })
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
     return Ticket.from(data.ticketBasic)
   }
 
-  static async updateDebtSuccess(ticketId: number, ticket: Ticket) {
+  static async updateDebtSuccess(options: { ticketId: number; ticket: Ticket }) {
+    const { ticket, ticketId } = options
     const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-debt-success`, {
       ticketOrderDebtSuccessUpdate: {
         // customerId: ticket.customerId, // không cho thay đổi customerID
@@ -198,7 +208,6 @@ export class TicketOrderApi {
         // debt: ticket.debt, // backend tự tính
         expense: ticket.expense,
         profit: ticket.profit,
-        note: ticket.note,
         registeredAt: ticket.registeredAt,
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
@@ -233,6 +242,9 @@ export class TicketOrderApi {
         name: i.name,
         money: i.money,
       })),
+      ticketOrderAttributeDaftList: ticket.ticketAttributeList?.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
     })
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
     return Ticket.from(data.ticketBasic)

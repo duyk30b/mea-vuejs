@@ -25,9 +25,9 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
-        ticketDiagnosis: true,
+        ticketAttributeList: true,
       },
-      filter: { ticketType: { IN: [TicketType.Clinic, TicketType.Eye] } },
+      filter: { ticketType: { NOT: TicketType.Order } },
       sort: { registeredAt: 'DESC' },
     })
 
@@ -98,10 +98,7 @@ defineExpose({ openModal })
                 </td>
                 <td>
                   {{
-                    ticket.ticketDiagnosis?.diagnosis ||
-                    ticket.ticketDiagnosis?.reason ||
-                    ticket.note ||
-                    ''
+                    ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || ''
                   }}
                 </td>
                 <td class="text-center">

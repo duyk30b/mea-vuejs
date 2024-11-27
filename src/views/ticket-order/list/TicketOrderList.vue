@@ -55,6 +55,9 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
+        ticketAttributeList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList
+          ? true
+          : false,
         ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
           ? { product: true, batch: false }
           : false,
@@ -290,8 +293,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
               </div>
-              <div v-if="ticket?.note" class="text-xs italic">
-                {{ ticket.note }}
+              <div
+                v-if="
+                  settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList &&
+                  ticket?.ticketAttributeMap?.note
+                "
+                class="text-xs italic">
+                {{ ticket?.ticketAttributeMap?.note }}
               </div>
             </td>
             <td class="text-right">
@@ -387,8 +395,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
               </div>
-              <div v-if="ticket.note" class="text-xs italic">
-                {{ ticket.note }}
+              <div
+                v-if="
+                  settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList &&
+                  ticket?.ticketAttributeMap?.note
+                "
+                class="text-xs italic">
+                {{ ticket?.ticketAttributeMap?.note }}
               </div>
             </td>
             <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList">

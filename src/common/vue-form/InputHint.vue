@@ -129,8 +129,8 @@ defineExpose({ focus, clear })
         @focusin="showOptions = true" />
     </div>
     <div class="icon-append">
-      <IconClearOutline class="icon-clear-blur" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-hover" @click="handleClickClear" />
+      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
+      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
     </div>
     <div
       v-if="showOptions"

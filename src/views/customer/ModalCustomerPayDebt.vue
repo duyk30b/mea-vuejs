@@ -176,37 +176,39 @@ defineExpose({ openModal })
         </div>
         <div class="mt-4">
           <table style="width: 100%">
-            <tr>
-              <td style="width: 30%; text-align: right">Công nợ:</td>
-              <td style="font-size: 16px; text-align: right; padding-right: 12px">
-                {{ formatMoney(customer.debt) }}
-              </td>
-            </tr>
-            <tr>
-              <td style="width: 30%; text-align: right">Số tiền trả:</td>
-              <td style="padding: 1rem 0 1rem 1rem">
-                <div class="flex">
-                  <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
-                  <InputMoney
-                    ref="inputMoneyPay"
-                    v-model:value="money"
-                    textAlign="right"
-                    :validate="{ lte: customer.debt, gt: 0 }"
-                    required
-                    @update:value="calculatorEachVoucherPayment" />
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="width: 30%; text-align: right">Còn nợ:</td>
-              <td style="font-size: 16px; text-align: right; padding-right: 12px">
-                {{ formatMoney(customer.debt - money) }}
-              </td>
-            </tr>
-            <tr>
-              <td style="width: 30%; text-align: right">Ghi chú:</td>
-              <td style="padding: 1rem 0 0 1rem"><InputText v-model:value="note" /></td>
-            </tr>
+            <tbody>
+              <tr>
+                <td style="width: 30%; text-align: right">Công nợ:</td>
+                <td style="font-size: 16px; text-align: right; padding-right: 12px">
+                  {{ formatMoney(customer.debt) }}
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 30%; text-align: right">Số tiền trả:</td>
+                <td style="padding: 1rem 0 1rem 1rem">
+                  <div class="flex">
+                    <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
+                    <InputMoney
+                      ref="inputMoneyPay"
+                      v-model:value="money"
+                      textAlign="right"
+                      :validate="{ lte: customer.debt, gt: 0 }"
+                      required
+                      @update:value="calculatorEachVoucherPayment" />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 30%; text-align: right">Còn nợ:</td>
+                <td style="font-size: 16px; text-align: right; padding-right: 12px">
+                  {{ formatMoney(customer.debt - money) }}
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 30%; text-align: right">Ghi chú:</td>
+                <td style="padding: 1rem 0 0 1rem"><InputText v-model:value="note" /></td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>

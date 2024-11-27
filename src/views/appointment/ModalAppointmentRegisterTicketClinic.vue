@@ -4,15 +4,15 @@ import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
 import { InputDate } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
+import { useSettingStore } from '../../modules/_me/setting.store'
 import { Appointment, AppointmentApi } from '../../modules/appointment'
-import { useMeStore } from '../../modules/_me/me.store'
 
 const appointmentRegisterSuccessForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
   (e: 'success'): void
 }>()
-
+const settingStore = useSettingStore()
 const registeredAt = ref<number>(Date.now())
 const saveLoading = ref(false)
 const showModal = ref(false)
@@ -36,7 +36,7 @@ const handleRegisterTicketClinic = async () => {
   try {
     await AppointmentApi.registerTicketClinic(appointment.value.id, {
       registeredAt: registeredAt.value,
-      ticketType: useMeStore().getTicketTypeDefault(),
+      ticketType: settingStore.SCREEN_TICKET_CLINIC_LIST.ticketType,
     })
     emit('success')
     saveLoading.value = false

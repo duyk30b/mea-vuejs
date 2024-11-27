@@ -1,74 +1,87 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
-import {
-  type DiagnosisSpecialEye,
-  ticketClinicRef,
-  TicketEyeApi,
-} from '../../../modules/ticket-clinic'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DDom } from '../../../utils'
+import {
+  TicketAttributeKeyOptometryList,
+  type TicketAttributeKeyOptometryType,
+} from '../../../modules/ticket-attribute'
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { permissionIdMap, organization } = meStore
 
-const optometry = ref<DiagnosisSpecialEye>({})
+const ticketAttributeOriginMap: { [P in TicketAttributeKeyOptometryType]?: any } = {}
+const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>({})
+
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketEyeDiagnosisSpecial.vue:15 ~ onMounted')
+  console.log('🚀 ~ file: TicketClinicDiagnosisEyeSpecial.vue:26 ~ onMounted')
 })
 
 watch(
-  () => ticketClinicRef.value.ticketDiagnosis!.special,
+  () => ticketClinicRef.value.ticketAttributeList,
   (newValue, oldValue) => {
-    optometry.value = JSON.parse(newValue || '{}')
+    if (!newValue) {
+      return (ticketAttributeMap.value = {})
+    }
+    newValue.forEach((i) => {
+      if (!TicketAttributeKeyOptometryList.includes(i.key as any)) return
+      const k = i.key as unknown as TicketAttributeKeyOptometryType
+      if (i.value === ticketAttributeOriginMap[k]) return
+      ticketAttributeOriginMap[k] = i.value
+      ticketAttributeMap.value[k] = i.value
+    })
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
-const optometryString = computed(() => {
-  const optometryClone = JSON.parse(JSON.stringify(optometry.value))
-  Object.keys(optometryClone).forEach((key) => {
-    if (!optometryClone[key]) delete optometryClone[key]
+const hasChangeAttribute = computed(() => {
+  let hasChange = false
+  Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
+    const k = key as unknown as TicketAttributeKeyOptometryType
+    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    if (rootValue != value) {
+      hasChange = true
+    }
   })
-  return JSON.stringify(optometryClone)
+  return hasChange
 })
 
 const hasChangeData = computed(() => {
-  return ticketClinicRef.value.ticketDiagnosis!.special != optometryString.value
+  if (hasChangeAttribute.value) return true
+
+  return false
 })
 
-const saveTicketEyeOptometry = async () => {
+const saveTicketDiagnosis = async () => {
   try {
     saveLoading.value = true
 
-    await TicketEyeApi.updateDiagnosisSpecial({
+    let ticketAttributeChangeList = undefined
+    if (hasChangeAttribute.value) {
+      ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
+        .map(([key, value]) => ({ key, value }))
+        .filter((i) => !!i.key)
+    }
+
+    await TicketClinicApi.updateDiagnosis({
       ticketId: ticketClinicRef.value.id,
-      ticketDiagnosisId: ticketClinicRef.value.ticketDiagnosis!.id,
-      special: optometryString.value,
+      files: [],
+      ticketAttributeChangeList,
+      ticketAttributeKeyList: TicketAttributeKeyOptometryList as any,
     })
   } catch (error) {
-    console.log('🚀 ~ file: VisitDiagnosis.vue:48 ~ saveTicketEyeOptometry ~ error:', error)
+    console.log('🚀 TicketClinicDiagnosisEyeSpecial.vue:82 ~ saveTicketDiagnosis ~ error:', error)
   } finally {
     saveLoading.value = false
-  }
-}
-
-const handleFocus = (e: Event) => {
-  const target = e.target as HTMLElement
-  const range = document.createRange()
-  const selection = window.getSelection()
-  if (target?.childNodes?.[0]) {
-    range.selectNodeContents(target) // Chọn toàn bộ nội dung của div
-    range.collapse(false) // focus thì xuống cuối câu
-    selection?.removeAllRanges() // Xóa tất cả các range hiện tại
-    selection?.addRange(range) // Thêm range mới để bôi đen toàn bộ nội dung
   }
 }
 
@@ -122,30 +135,42 @@ const startPrint = async () => {
             <tr>
               <td class="title">MP</td>
               <td>
-                <input v-model="optometry.KhucXaMay_MP_Cau" type="text" style="text-align: left" />
-              </td>
-              <td>
-                <input v-model="optometry.KhucXaMay_MP_Loan" type="text" style="text-align: left" />
-              </td>
-              <td>
                 <input
-                  v-model="optometry.KhucXaMay_MP_TrucLoan"
+                  v-model="ticketAttributeMap.KhucXaMay_MP_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td rowspan="2"><input v-model="optometry.KhucXaMay_KhoangCachDongTu" /></td>
+              <td>
+                <input
+                  v-model="ticketAttributeMap.KhucXaMay_MP_Loan"
+                  type="text"
+                  style="text-align: left" />
+              </td>
+              <td>
+                <input
+                  v-model="ticketAttributeMap.KhucXaMay_MP_TrucLoan"
+                  type="text"
+                  style="text-align: left" />
+              </td>
+              <td rowspan="2"><input v-model="ticketAttributeMap.KhucXaMay_KhoangCachDongTu" /></td>
             </tr>
             <tr>
               <td class="title">MT</td>
               <td>
-                <input v-model="optometry.KhucXaMay_MT_Cau" type="text" style="text-align: left" />
-              </td>
-              <td>
-                <input v-model="optometry.KhucXaMay_MT_Loan" type="text" style="text-align: left" />
+                <input
+                  v-model="ticketAttributeMap.KhucXaMay_MT_Cau"
+                  type="text"
+                  style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaMay_MT_TrucLoan"
+                  v-model="ticketAttributeMap.KhucXaMay_MT_Loan"
+                  type="text"
+                  style="text-align: left" />
+              </td>
+              <td>
+                <input
+                  v-model="ticketAttributeMap.KhucXaMay_MT_TrucLoan"
                   type="text"
                   style="text-align: left" />
               </td>
@@ -171,54 +196,54 @@ const startPrint = async () => {
           <tbody>
             <tr>
               <td class="title">MP</td>
-              <td><input v-model="optometry.KhucXaKinhCu_MP_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MP_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MP_Cau"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MP_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MP_Tru"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MP_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MP_Truc"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MP_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaKinhCu_MP_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MP_CoKinh" /></td>
             </tr>
             <tr>
               <td class="title">MT</td>
-              <td><input v-model="optometry.KhucXaKinhCu_MT_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MT_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MT_Cau"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MT_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MT_Tru"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MT_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaKinhCu_MT_Truc"
+                  v-model="ticketAttributeMap.KhucXaKinhCu_MT_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaKinhCu_MT_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
               <td colspan="5">
-                <input v-model="optometry.KhucXaKinhCu_Note" />
+                <input v-model="ticketAttributeMap.KhucXaKinhCu_Note" />
               </td>
             </tr>
           </tbody>
@@ -242,53 +267,53 @@ const startPrint = async () => {
           <tbody>
             <tr>
               <td class="title">MP</td>
-              <td><input v-model="optometry.KhucXaNhinXa_MP_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MP_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MP_Cau"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MP_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MP_Tru"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MP_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MP_Truc"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MP_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaNhinXa_MP_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MP_CoKinh" /></td>
             </tr>
             <tr>
               <td class="title">MT</td>
-              <td><input v-model="optometry.KhucXaNhinXa_MT_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MT_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MT_Cau"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MT_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MT_Tru"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MT_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinXa_MT_Truc"
+                  v-model="ticketAttributeMap.KhucXaNhinXa_MT_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaNhinXa_MT_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
-              <td colspan="5"><input v-model="optometry.KhucXaNhinXa_Note" /></td>
+              <td colspan="5"><input v-model="ticketAttributeMap.KhucXaNhinXa_Note" /></td>
             </tr>
           </tbody>
         </table>
@@ -311,53 +336,53 @@ const startPrint = async () => {
           <tbody>
             <tr>
               <td class="title">MP</td>
-              <td><input v-model="optometry.KhucXaNhinGan_MP_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MP_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MP_Cau"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MP_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MP_Tru"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MP_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MP_Truc"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MP_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaNhinGan_MP_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MP_CoKinh" /></td>
             </tr>
             <tr>
               <td class="title">MT</td>
-              <td><input v-model="optometry.KhucXaNhinGan_MT_KhongKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MT_KhongKinh" /></td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MT_Cau"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MT_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MT_Tru"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MT_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.KhucXaNhinGan_MT_Truc"
+                  v-model="ticketAttributeMap.KhucXaNhinGan_MT_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.KhucXaNhinGan_MT_CoKinh" /></td>
+              <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MT_CoKinh" /></td>
             </tr>
             <tr>
               <td style="text-align: center">Ghi chú</td>
-              <td colspan="5"><input v-model="optometry.KhucXaNhinGan_Note" /></td>
+              <td colspan="5"><input v-model="ticketAttributeMap.KhucXaNhinGan_Note" /></td>
             </tr>
           </tbody>
         </table>
@@ -377,28 +402,28 @@ const startPrint = async () => {
           <tbody>
             <tr>
               <td style="padding: 0 6px">Nhãn áp (mmHg)</td>
-              <td><input v-model="optometry.NhanAp_MP_mmHg" /></td>
-              <td><input v-model="optometry.NhanAp_MT_mmHg" /></td>
+              <td><input v-model="ticketAttributeMap.NhanAp_MP_mmHg" /></td>
+              <td><input v-model="ticketAttributeMap.NhanAp_MT_mmHg" /></td>
             </tr>
             <tr>
               <td style="padding: 0 6px">Bề dày giác mạc (μm)</td>
-              <td><input v-model="optometry.BeDayGiacMac_MP_micrometer" /></td>
-              <td><input v-model="optometry.BeDayGiacMac_MT_micrometer" /></td>
+              <td><input v-model="ticketAttributeMap.BeDayGiacMac_MP_micrometer" /></td>
+              <td><input v-model="ticketAttributeMap.BeDayGiacMac_MT_micrometer" /></td>
             </tr>
             <tr>
               <td style="padding: 0 6px">Đường kính đồng tử (mm)</td>
-              <td><input v-model="optometry.DuongKinhDongTu_MP_millimeter" /></td>
-              <td><input v-model="optometry.DuongKinhDongTu_MT_millimeter" /></td>
+              <td><input v-model="ticketAttributeMap.DuongKinhDongTu_MP_millimeter" /></td>
+              <td><input v-model="ticketAttributeMap.DuongKinhDongTu_MT_millimeter" /></td>
             </tr>
             <tr>
               <td style="padding: 0 6px">Chiều dài trục nhãn cầu</td>
-              <td><input v-model="optometry.ChieuDaiTrucNhanCau_MP" /></td>
-              <td><input v-model="optometry.ChieuDaiTrucNhanCau_MT" /></td>
+              <td><input v-model="ticketAttributeMap.ChieuDaiTrucNhanCau_MP" /></td>
+              <td><input v-model="ticketAttributeMap.ChieuDaiTrucNhanCau_MT" /></td>
             </tr>
             <tr>
               <td style="padding: 0 6px">Biên độ điều tiết</td>
-              <td><input v-model="optometry.BienDoDieuTiet_MP" /></td>
-              <td><input v-model="optometry.BienDoDieuTiet_MT" /></td>
+              <td><input v-model="ticketAttributeMap.BienDoDieuTiet_MP" /></td>
+              <td><input v-model="ticketAttributeMap.BienDoDieuTiet_MT" /></td>
             </tr>
           </tbody>
         </table>
@@ -424,46 +449,48 @@ const startPrint = async () => {
               <td class="title">MP</td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MP_Cau"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MP_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MP_Tru"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MP_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MP_Truc"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MP_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.SoKinhChiDinh_MP_ADD" /></td>
-              <td rowspan="2"><input v-model="optometry.SoKinhChiDinh_KhoangCachDongTu" /></td>
+              <td><input v-model="ticketAttributeMap.SoKinhChiDinh_MP_ADD" /></td>
+              <td rowspan="2">
+                <input v-model="ticketAttributeMap.SoKinhChiDinh_KhoangCachDongTu" />
+              </td>
             </tr>
             <tr>
               <td class="title">MT</td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MT_Cau"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MT_Cau"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MT_Tru"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MT_Tru"
                   type="text"
                   style="text-align: left" />
               </td>
               <td>
                 <input
-                  v-model="optometry.SoKinhChiDinh_MT_Truc"
+                  v-model="ticketAttributeMap.SoKinhChiDinh_MT_Truc"
                   type="text"
                   style="text-align: left" />
               </td>
-              <td><input v-model="optometry.SoKinhChiDinh_MT_ADD" /></td>
+              <td><input v-model="ticketAttributeMap.SoKinhChiDinh_MT_ADD" /></td>
             </tr>
           </tbody>
         </table>
@@ -473,12 +500,14 @@ const startPrint = async () => {
     <div class="mt-4 flex justify-between gap-4">
       <VueButton color="blue" icon="print" @click="startPrint">In phiếu</VueButton>
       <VueButton
-        v-if="permissionIdMap[PermissionId.TICKET_CLINIC_EYE_UPDATE_DIAGNOSIS_SPECIAL]"
+        v-if="
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_SPECIAL]
+        "
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketEyeOptometry">
+        @click="saveTicketDiagnosis">
         Lưu lại
       </VueButton>
     </div>

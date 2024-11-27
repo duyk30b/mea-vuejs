@@ -283,8 +283,10 @@ const startPrint = async (
                   <div>{{ ticketLaboratory?.resultParse[laboratoryItem.id] }}</div>
                 </td>
                 <td class="text-center">
-                  {{ laboratoryItem?.lowValue }} -
-                  {{ laboratoryItem?.highValue }}
+                  <span v-if="laboratoryItem?.valueType === LaboratoryValueType.Number">
+                    {{ laboratoryItem?.lowValue }} -
+                    {{ laboratoryItem?.highValue }}
+                  </span>
                 </td>
                 <td class="text-center">
                   {{ laboratoryItem?.unit }}

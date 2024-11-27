@@ -77,6 +77,13 @@ defineExpose({ openModal })
                   </a-checkbox>
                 </td>
               </tr>
+              <tr>
+                <td>
+                  <a-checkbox v-model:checked="settingDisplay.ticketAttributeList">
+                    Hiển thị ghi chú
+                  </a-checkbox>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

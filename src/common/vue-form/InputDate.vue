@@ -276,8 +276,8 @@ const handleClickClear = () => {
       </div>
     </div>
     <div class="icon-append">
-      <IconClearOutline class="icon-clear-blur" @click="handleClickClear" />
-      <IconClearCircle class="icon-clear-hover" @click="handleClickClear" />
+      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
+      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
       <IconCalendar style="margin-left: 12px" @click="showDatePicker = !showDatePicker" />
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">

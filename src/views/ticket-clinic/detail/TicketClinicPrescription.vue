@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { DeleteOutlined, PlusOutlined, ShoppingCartOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { BasicEditor } from '../../../ckeditor/class-editor'
 import VueButton from '../../../common/VueButton.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputHint, InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
+import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, useBatchStore } from '../../../modules/batch'
@@ -14,8 +15,11 @@ import { Product, useProductStore } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
-import { DDom, DTimer, customFilter } from '../../../utils'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { customFilter, DDom, DTimer } from '../../../utils'
+import {
+  TicketAttributeKeyAdviceList,
+  type TicketAttributeKeyAdviceType,
+} from '../../../modules/ticket-attribute'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -31,7 +35,22 @@ const batchList = ref<Batch[]>([])
 
 const ticketProductPrescription = ref<TicketProduct>(TicketProduct.blank())
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
-const advice = ref('')
+
+const ticketAttributeOriginMap: { [P in TicketAttributeKeyAdviceType]?: any } = {}
+const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & { advice: string }>({
+  advice: '',
+})
+
+const saveLoading = ref(false)
+
+onMounted(async () => {
+  console.log('🚀 ~ file: TicketClinicPrescription.vue:42 ~ onMounted')
+  try {
+    await Promise.all([productStore.refreshDB(), batchStore.refreshDB()])
+  } catch (error: any) {
+    console.log('🚀 ~ file: TicketClinicPrescription.vue:46 ~ onMounted ~ error:', error)
+  }
+})
 
 watch(
   () => ticketClinicRef.value.ticketProductPrescriptionList,
@@ -40,11 +59,35 @@ watch(
   },
   { immediate: true }
 )
+
 watch(
-  () => ticketClinicRef.value.ticketDiagnosis!.advice,
-  (newValue, oldValue) => (advice.value = newValue || ''),
-  { immediate: true }
+  () => ticketClinicRef.value.ticketAttributeList,
+  (newValue, oldValue) => {
+    if (!newValue) {
+      return (ticketAttributeMap.value = { advice: '' })
+    }
+    newValue.forEach((i) => {
+      if (!TicketAttributeKeyAdviceList.includes(i.key as any)) return
+      const k = i.key as unknown as TicketAttributeKeyAdviceType
+      if (i.value === ticketAttributeOriginMap[k]) return
+      ticketAttributeOriginMap[k] = i.value
+      ticketAttributeMap.value[k] = i.value
+    })
+  },
+  { immediate: true, deep: true }
 )
+
+const hasChangeAttribute = computed(() => {
+  let hasChange = false
+  Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
+    const k = key as unknown as TicketAttributeKeyAdviceType
+    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    if (rootValue != value) {
+      hasChange = true
+    }
+  })
+  return hasChange
+})
 
 const disabledButton = computed(() => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
@@ -59,19 +102,10 @@ const disabledButton = computed(() => {
     return false
   }
 
-  if (advice.value !== ticketClinicRef.value.ticketDiagnosis!.advice) {
+  if (hasChangeAttribute.value) {
     return false
   }
   return true
-})
-
-onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicPrescription.vue:69 ~ onMounted')
-  try {
-    await Promise.all([productStore.refreshDB(), batchStore.refreshDB()])
-  } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicPrescription.vue:74 ~ onMounted ~ error:', error)
-  }
 })
 
 const searchingProduct = async (text: string) => {
@@ -201,48 +235,47 @@ const startPrint = async () => {
 }
 
 const savePrescription = async () => {
+  let ticketProductPrescriptionListChange: TicketProduct[] | undefined = undefined
+
   if (
-    TicketProduct.equalList(
+    !TicketProduct.equalList(
       ticketProductPrescriptionList.value,
       ticketClinicRef.value.ticketProductPrescriptionList || []
     )
   ) {
-    return await TicketClinicApi.updateTicketProductPrescription({
-      ticketId: ticketClinicRef.value.id,
-      advice:
-        advice.value != ticketClinicRef.value.ticketDiagnosis!.advice
-          ? advice.value || ''
-          : undefined,
+    ticketProductPrescriptionListChange = ticketProductPrescriptionList.value.filter((i) => {
+      return [DeliveryStatus.NoStock, DeliveryStatus.Pending].includes(i.deliveryStatus)
+    })
+    ticketProductPrescriptionListChange.forEach((i) => {
+      // luôn tính lại costAmount
+      let itemCostAmount = 0
+      if (i.batchId) {
+        itemCostAmount = i.quantity * i.batch!.costPrice
+      } else if (i.product!.quantity <= 0) {
+        itemCostAmount = (i.product?.costPrice || 0) * i.quantity
+      } else {
+        itemCostAmount = (i.product!.costAmount * i.quantity) / i.product!.quantity
+      }
+      const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
+
+      i.costAmount = itemCostAmountFix
+
+      // i.quantityPrescription = i.quantity // bỏ logic này vì có thể có những sản phẩm không bán
     })
   }
 
-  const ticketProductPrescriptionListChange = ticketProductPrescriptionList.value.filter((i) => {
-    return [DeliveryStatus.NoStock, DeliveryStatus.Pending].includes(i.deliveryStatus)
-  })
-  ticketProductPrescriptionListChange.forEach((i) => {
-    // luôn tính lại costAmount
-    let itemCostAmount = 0
-    if (i.batchId) {
-      itemCostAmount = i.quantity * i.batch!.costPrice
-    } else if (i.product!.quantity <= 0) {
-      itemCostAmount = (i.product?.costPrice || 0) * i.quantity
-    } else {
-      itemCostAmount = (i.product!.costAmount * i.quantity) / i.product!.quantity
-    }
-    const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
-    i.costAmount = itemCostAmountFix
-
-    // i.quantityPrescription = i.quantity // bỏ logic này vì có thể có những sản phẩm không bán
-  })
+  let ticketAttributeChangeList = undefined
+  if (hasChangeAttribute.value) {
+    ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
+      .map(([key, value]) => ({ key, value }))
+      .filter((i) => !!i.key)
+  }
 
   await TicketClinicApi.updateTicketProductPrescription({
     ticketId: ticketClinicRef.value.id,
     ticketProductPrescriptionList: ticketProductPrescriptionListChange,
-    advice:
-      advice.value != ticketClinicRef.value.ticketDiagnosis!.advice
-        ? advice.value || ''
-        : undefined,
+    ticketAttributeChangeList,
+    ticketAttributeKeyList: TicketAttributeKeyAdviceList as any,
   })
 }
 
@@ -597,8 +630,8 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
-      <div>
-        <ckeditor v-model="advice" :editor="BasicEditor"></ckeditor>
+      <div style="min-height: 100px">
+        <WysiwygEditor v-model:value="ticketAttributeMap.advice" menuType="COLLAPSE" />
       </div>
     </div>
   </div>
@@ -616,8 +649,4 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
   </div>
 </template>
 
-<style lang="scss" scoped>
-:deep(.ck-editor__editable) {
-  height: 100px !important;
-}
-</style>
+<style lang="scss" scoped></style>

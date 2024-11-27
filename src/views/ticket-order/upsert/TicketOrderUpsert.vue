@@ -15,10 +15,12 @@ import { Customer, CustomerApi, useCustomerStore } from '../../../modules/custom
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
+import type { TicketAttributeMap } from '../../../modules/ticket-attribute'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
+import { DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketOrderExpenseList from './TicketOrderExpenseList.vue'
@@ -29,7 +31,6 @@ import TicketOrderSurchargeList from './TicketOrderSurchargeList.vue'
 import ModalDataTicketOrder from './modal-setting/ModalDataTicketOrder.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
 import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
-import { DTimer } from '../../../utils'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -82,6 +83,7 @@ onBeforeMount(async () => {
       const ticketResponse = await TicketApi.detail(ticketId, {
         relation: {
           customer: true,
+          ticketAttributeList: true,
           ticketProductList: { product: true, batch: true },
           ticketProcedureList: { procedure: true },
           ticketSurchargeList: true,
@@ -192,54 +194,6 @@ const handleChangeInvoiceDiscountPercent = (data: number) => {
   ticket.value.discountType = DiscountType.Percent
 }
 
-const startUpdateDebtSuccess = async () => {
-  const ticketResponse = await TicketOrderApi.updateDebtSuccess(ticket.value.id, ticket.value)
-  router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
-}
-
-const clickUpdateDebtSuccess = () => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc chắn cập nhật hóa đơn này',
-    content: [
-      '- Nếu có thay đổi hàng hóa, kho hàng sẽ nhập lại hàng cũ và xuất hàng mới',
-      ...(ticket.value.paid != oldTicket.value.paid
-        ? [
-            `- Số tiền thanh toán thay đổi: ${formatMoney(oldTicket.value.paid)} --> ${formatMoney(
-              ticket.value.paid
-            )}`,
-          ]
-        : []),
-      ...(ticket.value.paid > oldTicket.value.paid
-        ? [
-            `- Khách hàng cần thanh toán thêm: ${formatMoney(
-              ticket.value.paid - oldTicket.value.paid
-            )}`,
-          ]
-        : []),
-      ...(ticket.value.paid < oldTicket.value.paid
-        ? [`- Trả lại khách hàng: ${formatMoney(oldTicket.value.paid - ticket.value.paid)}`]
-        : []),
-      ...(ticket.value.debt != oldTicket.value.debt
-        ? [
-            `- Số tiền nợ đơn này thay đổi: ${formatMoney(oldTicket.value.debt)} --> ${formatMoney(
-              ticket.value.debt
-            )}`,
-          ]
-        : []),
-      ...(ticket.value.debt > oldTicket.value.debt
-        ? [`- Khách hàng nợ thêm: ${formatMoney(ticket.value.debt - oldTicket.value.debt)}`]
-        : []),
-      ...(ticket.value.debt < oldTicket.value.debt
-        ? [`- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debt - ticket.value.debt)}`]
-        : []),
-    ],
-    async onOk() {
-      await startUpdateDebtSuccess()
-    },
-    okText: 'Xác nhận CẬP NHẬT ĐƠN',
-  })
-}
-
 const saveInvoice = async (type: ETicketOrderSave) => {
   const validForm = ticketUpsertForm.value?.checkValidity()
   if (!validForm) {
@@ -272,22 +226,35 @@ const saveInvoice = async (type: ETicketOrderSave) => {
       return i.money != 0
     })
 
+    ticket.value.ticketAttributeList = Object.entries(ticket.value.ticketAttributeMap)
+      .map(([key, value]) => ({
+        id: 0,
+        ticketId: ticket.value.id,
+        key: key as any,
+        value,
+      }))
+      .filter((i) => !!i.value)
+
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
-        const ticketResponse = await TicketOrderApi.createDraft(ticket.value)
+        const ticketResponse = await TicketOrderApi.createDraft({
+          ticket: ticket.value,
+        })
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
       case ETicketOrderSave.UPDATE_DRAFT_APPROVED: {
-        const ticketResponse = await TicketOrderApi.updateDraftApproved(
-          ticket.value.id,
-          ticket.value
-        )
+        const ticketResponse = await TicketOrderApi.updateDraftApproved({
+          ticket: ticket.value,
+          ticketId: ticket.value.id,
+        })
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
       case ETicketOrderSave.CREATE_DEBT_SUCCESS: {
-        await TicketOrderApi.createDebtSuccess(ticket.value)
+        await TicketOrderApi.createDebtSuccess({
+          ticket: ticket.value,
+        })
         ticket.value = Ticket.blank()
 
         const customerRes = Customer.from(meStore.customerDefault)
@@ -305,7 +272,50 @@ const saveInvoice = async (type: ETicketOrderSave) => {
       }
 
       case ETicketOrderSave.UPDATE_DEBT_SUCCESS: {
-        clickUpdateDebtSuccess()
+        ModalStore.confirm({
+          title: 'Bạn có chắc chắn cập nhật hóa đơn này',
+          content: [
+            '- Nếu có thay đổi hàng hóa, kho hàng sẽ nhập lại hàng cũ và xuất hàng mới',
+            ...(ticket.value.paid != oldTicket.value.paid
+              ? [
+                  `- Số tiền thanh toán thay đổi: ${formatMoney(
+                    oldTicket.value.paid
+                  )} --> ${formatMoney(ticket.value.paid)}`,
+                ]
+              : []),
+            ...(ticket.value.paid > oldTicket.value.paid
+              ? [
+                  `- Khách hàng cần thanh toán thêm: ${formatMoney(
+                    ticket.value.paid - oldTicket.value.paid
+                  )}`,
+                ]
+              : []),
+            ...(ticket.value.paid < oldTicket.value.paid
+              ? [`- Trả lại khách hàng: ${formatMoney(oldTicket.value.paid - ticket.value.paid)}`]
+              : []),
+            ...(ticket.value.debt != oldTicket.value.debt
+              ? [
+                  `- Số tiền nợ đơn này thay đổi: ${formatMoney(
+                    oldTicket.value.debt
+                  )} --> ${formatMoney(ticket.value.debt)}`,
+                ]
+              : []),
+            ...(ticket.value.debt > oldTicket.value.debt
+              ? [`- Khách hàng nợ thêm: ${formatMoney(ticket.value.debt - oldTicket.value.debt)}`]
+              : []),
+            ...(ticket.value.debt < oldTicket.value.debt
+              ? [`- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debt - ticket.value.debt)}`]
+              : []),
+          ],
+          async onOk() {
+            const ticketResponse = await TicketOrderApi.updateDebtSuccess({
+              ticketId: ticket.value.id,
+              ticket: ticket.value,
+            })
+            router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
+          },
+          okText: 'Xác nhận CẬP NHẬT ĐƠN',
+        })
         break
       }
       default:
@@ -576,7 +586,7 @@ const handleChangeTabs = (activeKey: any) => {
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <a-input v-model:value="ticket.note" class="input-payment" />
+                    <a-input v-model:value="ticket.ticketAttributeMap.note" class="input-payment" />
                   </td>
                 </tr>
               </tbody>

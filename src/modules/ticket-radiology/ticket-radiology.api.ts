@@ -53,7 +53,7 @@ export class TicketRadiologyApi {
     return data
   }
 
-  static async update(options: {
+  static async updateResult(options: {
     ticketRadiology: TicketRadiology
     imageIdsKeep: number[]
     files: File[]
@@ -70,7 +70,7 @@ export class TicketRadiologyApi {
     formData.append('filesPosition', JSON.stringify(filesPosition))
 
     const response = await AxiosInstance.post(
-      `/ticket-radiology/update/${ticketRadiology.id}`,
+      `/ticket-radiology/${ticketRadiology.id}/update-result`,
       formData,
       {
         headers: {
@@ -79,6 +79,12 @@ export class TicketRadiologyApi {
       }
     )
     const { data } = response.data as BaseResponse<{ ticketRadiologyId: number }>
+    return data
+  }
+
+  static async cancelResult(id: number) {
+    const response = await AxiosInstance.post(`/ticket-radiology/${id}/cancel-result`)
+    const { data } = response.data as BaseResponse<{ ticketId: number }>
     return data
   }
 }

@@ -82,6 +82,7 @@ const startFetchData = async (ticketId: number) => {
       relation: {
         customer: true,
         customerPaymentList: true,
+        ticketAttributeList: true,
         ticketProductList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
         ticketSurchargeList: true,
@@ -338,7 +339,7 @@ const openModalTicketOrderPreview = () => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap align-top">Ghi chú</td>
         <td class="px-2 py-1">
-          {{ ticket.note }}
+          {{ ticket.ticketAttributeMap.note }}
         </td>
       </tr>
     </table>

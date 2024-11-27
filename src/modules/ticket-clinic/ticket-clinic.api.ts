@@ -1,22 +1,54 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import type { TicketDiagnosis } from '../ticket-diagnosis'
+import type { Customer } from '../customer'
 import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
-import { Ticket, type TicketType } from '../ticket/ticket.model'
+import { Ticket, TicketStatus, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
-  static async register(body: {
-    fromAppointmentId: number
+  static async create(body: {
     customerId: number
-    ticketType: TicketType
-    registeredAt: number
-    reason: string
-    customerSourceId: number
+    fromAppointmentId: number
+    customer?: Customer
+    ticket: {
+      ticketType: TicketType
+      ticketStatus: TicketStatus
+      customerSourceId: number
+      registeredAt: number
+    }
+    ticketAttributeList: { key: string; value: any }[]
   }) {
-    const response = await AxiosInstance.post('/ticket-clinic/register', body)
+    const response = await AxiosInstance.post('/ticket-clinic/create', {
+      customerId: body.customerId,
+      fromAppointmentId: body.fromAppointmentId,
+      customer:
+        body.customerId === 0 && body.customer
+          ? {
+              fullName: body.customer.fullName,
+              phone: body.customer.phone,
+              birthday: body.customer.birthday,
+              gender: body.customer.gender,
+              addressProvince: body.customer.addressProvince,
+              addressDistrict: body.customer.addressDistrict,
+              addressWard: body.customer.addressWard,
+              addressStreet: body.customer.addressStreet,
+              relative: body.customer.relative,
+              healthHistory: body.customer.healthHistory,
+              note: body.customer.note,
+            }
+          : undefined,
+      ticket: {
+        customerSourceId: body.ticket.customerSourceId || 0,
+        ticketType: body.ticket.ticketType,
+        ticketStatus: body.ticket.ticketStatus,
+        registeredAt: body.ticket.registeredAt,
+      },
+      ticketAttributeList: body.ticketAttributeList.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
+    })
     const { data } = response.data as BaseResponse<{ ticket: any }>
     return Ticket.from(data.ticket)
   }
@@ -31,32 +63,52 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
   }
 
-  static async updateDiagnosisBase(options: {
+  static async updateDiagnosis(options: {
     ticketId: number
-    customerId: number
-    object: Pick<
-      TicketDiagnosis,
-      'reason' | 'healthHistory' | 'general' | 'regional' | 'summary' | 'diagnosis'
-    >
-    imageIdsKeep: number[]
     files: File[]
-    filesPosition: number[]
+    imagesChange?: {
+      imageIdsKeep: number[]
+      filesPosition: number[]
+    }
+    ticketAttributeChangeList?: { key: string; value: any }[]
+    ticketAttributeKeyList: string[]
+    customerChange?: {
+      customerId: number
+      healthHistory: string
+    }
   }) {
-    const { ticketId, customerId, object, imageIdsKeep, files, filesPosition } = options
+    const { ticketId, customerChange, imagesChange, ticketAttributeChangeList, files } = options
+
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
-    formData.append('filesPosition', JSON.stringify(filesPosition))
-    formData.append('imageIdsKeep', JSON.stringify(imageIdsKeep))
-    formData.append('customerId', customerId.toString())
-    formData.append('reason', object.reason)
-    formData.append('healthHistory', object.healthHistory)
-    formData.append('general', object.general)
-    formData.append('regional', object.regional)
-    formData.append('summary', object.summary || '')
-    formData.append('diagnosis', object.diagnosis)
+    formData.append('ticketAttributeKeyList', JSON.stringify(options.ticketAttributeKeyList))
+
+    if (imagesChange) {
+      const imagesChangeStr = JSON.stringify({
+        imageIdsKeep: imagesChange.imageIdsKeep,
+        filesPosition: imagesChange.filesPosition,
+      })
+      formData.append('imagesChange', imagesChangeStr)
+    }
+    if (ticketAttributeChangeList) {
+      const ticketAttributeChangeListStr = JSON.stringify(
+        ticketAttributeChangeList.map((i) => {
+          return { key: i.key, value: i.value }
+        })
+      )
+      formData.append('ticketAttributeChangeList', ticketAttributeChangeListStr)
+    }
+
+    if (customerChange) {
+      const customerChangeStr = JSON.stringify({
+        customerId: customerChange.customerId,
+        healthHistory: customerChange.healthHistory,
+      })
+      formData.append('customerChange', customerChangeStr)
+    }
 
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-diagnosis-basic`,
+      `/ticket-clinic/${ticketId}/update-diagnosis`,
       formData,
       {
         headers: {
@@ -64,7 +116,7 @@ export class TicketClinicApi {
         },
       }
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async updateTicketProcedureList(body: {
@@ -169,30 +221,42 @@ export class TicketClinicApi {
   static async updateTicketProductPrescription(body: {
     ticketId: number
     ticketProductPrescriptionList?: TicketProduct[]
-    advice?: string
+    ticketAttributeChangeList?: { key: string; value: any }[]
+    ticketAttributeKeyList: string[]
   }) {
-    const { ticketId, ticketProductPrescriptionList, advice } = body
+    const {
+      ticketId,
+      ticketProductPrescriptionList,
+      ticketAttributeChangeList,
+      ticketAttributeKeyList,
+    } = body
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/update-ticket-product-prescription`,
       {
-        ticketProductPrescriptionList: ticketProductPrescriptionList?.map((i) => ({
-          productId: i.productId,
-          batchId: i.batchId,
-          unitRate: i.unitRate,
-          quantityPrescription: i.quantityPrescription,
-          quantity: i.quantity,
-          costAmount: i.costAmount,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-          hintUsage: i.hintUsage,
-        })),
-        advice,
+        ticketProductPrescriptionList: ticketProductPrescriptionList
+          ? ticketProductPrescriptionList.map((i) => ({
+              productId: i.productId,
+              batchId: i.batchId,
+              unitRate: i.unitRate,
+              quantityPrescription: i.quantityPrescription,
+              quantity: i.quantity,
+              costAmount: i.costAmount,
+              expectedPrice: i.expectedPrice,
+              discountMoney: i.discountMoney,
+              discountPercent: i.discountPercent,
+              discountType: i.discountType,
+              actualPrice: i.actualPrice,
+              hintUsage: i.hintUsage,
+            }))
+          : undefined,
+        ticketAttributeKeyList: ticketAttributeKeyList || undefined,
+        ticketAttributeChangeList:
+          ticketAttributeChangeList?.map((i) => {
+            return { key: i.key, value: i.value }
+          }) || undefined,
       }
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async updateItemsMoney(body: {

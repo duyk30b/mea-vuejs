@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon'
+import { IconSetting } from '../../../../common/icon'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -9,13 +9,11 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import ModalLaboratoryDetail from '../detail/ModalLaboratoryDetail.vue'
-import type ModalCopyLaboratoryExample from './ModalCopyLaboratoryExample.vue'
-import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
+import type ModalCopyLaboratoryExample from './ModalCopyLaboratoryExample.vue'
+import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 
-const modalLaboratoryDetail = ref<InstanceType<typeof ModalLaboratoryDetail>>()
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratoryExample>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
 const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
@@ -108,7 +106,6 @@ const handleModalLaboratoryUpsertSuccess = async () => {
 </script>
 
 <template>
-  <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
   <ModalLaboratoryUpsert
     ref="modalLaboratoryUpsert"
     @success="handleModalLaboratoryUpsertSuccess" />
@@ -210,12 +207,6 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ laboratory.name }}</span>
-                <a
-                  style="line-height: 0"
-                  class="text-base"
-                  @click="modalLaboratoryDetail?.openModal(laboratory)">
-                  <IconFileSearch />
-                </a>
               </div>
             </td>
             <td class="text-center">

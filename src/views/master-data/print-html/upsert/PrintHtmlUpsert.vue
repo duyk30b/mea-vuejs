@@ -92,7 +92,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
         customer: true,
         customerPaymentList: false, // query khi bật modal thanh toán
 
-        ticketDiagnosis: true,
+        ticketAttributeList: true,
         // ticketProductList: true,
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },

@@ -27,7 +27,7 @@ export const useTicketClinicStore = defineStore('ticket-clinic-store', {
         this.ticketHistory[ticket.id] = await TicketApi.detail(ticket.id, {
           relation: {
             customer: true,
-            ticketDiagnosis: true,
+            ticketAttributeList: true,
             ticketProductList: { product: true, batch: true },
             ticketProcedureList: { procedure: true },
             ticketRadiologyList: { radiology: true },

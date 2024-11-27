@@ -7,8 +7,8 @@ import { Organization } from '../../modules/organization'
 import { Procedure, useProcedureStore } from '../../modules/procedure'
 import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
+import { TicketAttribute } from '../../modules/ticket-attribute'
 import { ticketClinicList, ticketClinicRef } from '../../modules/ticket-clinic'
-import { TicketDiagnosis } from '../../modules/ticket-diagnosis'
 import { TicketLaboratory } from '../../modules/ticket-laboratory'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
@@ -44,6 +44,10 @@ export class SocketService {
     const customer = Customer.from(data.customer)
     await CustomerDB.upsertOne(customer)
     useCustomerStore().timeSync = Date.now()
+
+    if (ticketClinicRef.value.customerId === customer.id) {
+      ticketClinicRef.value.customer = customer
+    }
   }
 
   static async listenProductUpsert(data: { product: any }) {
@@ -109,38 +113,18 @@ export class SocketService {
     }
   }
 
-  static async listenTicketClinicUpdateTicketDiagnosisBasic(data: {
+  static async listenTicketClinicUpdateTicketAttributeList(data: {
     ticketId: number
-    ticketDiagnosisBasic: any
+    ticketAttributeList: any[]
   }) {
     const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
     if (ticketFind) {
-      if (!ticketFind.ticketDiagnosis) {
-        ticketFind.ticketDiagnosis = new TicketDiagnosis()
-      }
-      Object.assign(ticketFind.ticketDiagnosis, TicketDiagnosis.from(data.ticketDiagnosisBasic))
+      ticketFind.ticketAttributeList = TicketAttribute.fromList(data.ticketAttributeList)
+      ticketFind.ticketAttributeMap = TicketAttribute.basicMap(data.ticketAttributeList)
     }
     if (ticketClinicRef.value.id === data.ticketId) {
-      Object.assign(
-        ticketClinicRef.value.ticketDiagnosis!,
-        TicketDiagnosis.from(data.ticketDiagnosisBasic)
-      )
-    }
-  }
-
-  static async listenTicketClinicUpdateTicketDiagnosisSpecial(data: {
-    ticketId: number
-    special: string
-  }) {
-    const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticketId)
-    if (ticketFind) {
-      if (!ticketFind.ticketDiagnosis) {
-        ticketFind.ticketDiagnosis = new TicketDiagnosis()
-      }
-      ticketFind.ticketDiagnosis.special = data.special
-    }
-    if (ticketClinicRef.value.id === data.ticketId) {
-      ticketClinicRef.value.ticketDiagnosis!.special = data.special
+      ticketClinicRef.value.ticketAttributeList = TicketAttribute.fromList(data.ticketAttributeList)
+      ticketClinicRef.value.ticketAttributeMap = TicketAttribute.basicMap(data.ticketAttributeList)
     }
   }
 
@@ -244,9 +228,7 @@ export class SocketService {
       ticketFind.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
     }
     if (ticketClinicRef.value.id === data.ticketId) {
-      ticketClinicRef.value.ticketRadiologyList = TicketRadiology.fromList(
-        data.ticketRadiologyList
-      )
+      ticketClinicRef.value.ticketRadiologyList = TicketRadiology.fromList(data.ticketRadiologyList)
     }
   }
 
@@ -272,9 +254,7 @@ export class SocketService {
       if (ticketRadiologyFind) {
         Object.assign(ticketRadiologyFind, TicketRadiology.from(data.ticketRadiology))
       } else {
-        ticketClinicRef.value.ticketRadiologyList.push(
-          TicketRadiology.from(data.ticketRadiology)
-        )
+        ticketClinicRef.value.ticketRadiologyList.push(TicketRadiology.from(data.ticketRadiology))
       }
     }
   }

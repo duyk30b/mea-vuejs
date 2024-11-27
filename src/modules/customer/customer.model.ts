@@ -3,10 +3,10 @@ import type { EGender } from '../enum'
 export class Customer {
   id: number
   fullName: string
+  customerSourceId: number
   phone?: string
   birthday?: number
   gender?: EGender
-  identityCard?: string // số căn cước
   addressProvince: string
   addressDistrict: string
   addressWard: string
