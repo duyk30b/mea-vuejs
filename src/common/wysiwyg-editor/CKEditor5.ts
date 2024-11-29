@@ -1,35 +1,35 @@
-import { Alignment } from '@ckeditor/ckeditor5-alignment'
 import {
+  Font,
+  Alignment,
+  BlockQuote,
   Bold,
+  ClassicEditor,
   Code,
+  CodeBlock,
+  Essentials,
+  Heading,
+  HorizontalLine,
+  Indent,
+  IndentBlock,
   Italic,
+  Link,
+  List,
+  Paragraph,
+  RemoveFormat,
+  SourceEditing,
   Strikethrough,
   Subscript,
   Superscript,
-  Underline,
-} from '@ckeditor/ckeditor5-basic-styles'
-import { BlockQuote } from '@ckeditor/ckeditor5-block-quote'
-import { CodeBlock } from '@ckeditor/ckeditor5-code-block'
-import { ClassicEditor } from '@ckeditor/ckeditor5-editor-classic'
-import { Essentials } from '@ckeditor/ckeditor5-essentials'
-import Font from '@ckeditor/ckeditor5-font/src/font'
-import { Heading } from '@ckeditor/ckeditor5-heading'
-import { HorizontalLine } from '@ckeditor/ckeditor5-horizontal-line'
-import { Indent, IndentBlock } from '@ckeditor/ckeditor5-indent'
-import { Link } from '@ckeditor/ckeditor5-link'
-import { List, TodoList } from '@ckeditor/ckeditor5-list'
-import { Paragraph } from '@ckeditor/ckeditor5-paragraph'
-import { RemoveFormat } from '@ckeditor/ckeditor5-remove-format'
-import { SourceEditing } from '@ckeditor/ckeditor5-source-editing'
-import {
   Table,
   TableCellPropertiesEditing,
   TableCellPropertiesUI,
   TablePropertiesEditing,
   TablePropertiesUI,
   TableToolbar,
-} from '@ckeditor/ckeditor5-table'
-import { Undo } from '@ckeditor/ckeditor5-undo'
+  TodoList,
+  Underline,
+  Undo,
+} from 'ckeditor5'
 
 const pluginList = [
   Essentials, // IMPORTANT: plugin quan trọng bắt buộc có

@@ -12,7 +12,6 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 /* import font awesome icon component */
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 /* import specific icons */
-import CKEditor from '@ckeditor/ckeditor5-vue'
 import {
   faAddressCard,
   faDesktop,
@@ -54,7 +53,6 @@ const start = async () => {
   app.use(Antd)
   app.use(createPinia())
   app.use(Router)
-  app.use(CKEditor)
 
   app.mount('#app')
 
