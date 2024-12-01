@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
+import type { DiscountType } from '../enum'
 import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
@@ -29,6 +30,7 @@ export class TicketClinicApi {
               fullName: body.customer.fullName,
               phone: body.customer.phone,
               birthday: body.customer.birthday,
+              yearOfBirth: body.customer.yearOfBirth,
               gender: body.customer.gender,
               addressProvince: body.customer.addressProvince,
               addressDistrict: body.customer.addressDistrict,
@@ -36,7 +38,9 @@ export class TicketClinicApi {
               addressStreet: body.customer.addressStreet,
               relative: body.customer.relative,
               healthHistory: body.customer.healthHistory,
+              customerSourceId: body.customer.customerSourceId || 0,
               note: body.customer.note,
+              isActive: body.customer.isActive,
             }
           : undefined,
       ticket: {
@@ -261,6 +265,9 @@ export class TicketClinicApi {
 
   static async updateItemsMoney(body: {
     ticketId: number
+    discountMoney: number
+    discountPercent: number
+    discountType: DiscountType
     ticketProductList: TicketProduct[]
     ticketProcedureList: TicketProcedure[]
     ticketLaboratoryList: TicketLaboratory[]
@@ -275,6 +282,9 @@ export class TicketClinicApi {
     } = body
 
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update-items-money`, {
+      discountMoney: body.discountMoney,
+      discountPercent: body.discountPercent,
+      discountType: body.discountType,
       ticketProductUpdateList: ticketProductList.map((item) => {
         return {
           ticketProductId: item.id,

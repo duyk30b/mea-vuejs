@@ -84,7 +84,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="px-4 mt-4 modal-data-product-tabs">
+      <div class="px-4 mt-4">
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.UNIT">Đơn vị</VueTabMenu>
@@ -154,13 +154,4 @@ defineExpose({ openModal })
 </template>
 
 <style lang="scss">
-.modal-data-product-tabs {
-  .ant-tabs-tab {
-    border-top: 5px solid #d6d6d6 !important;
-
-    &.ant-tabs-tab-active {
-      border-top-color: #1890ff !important;
-    }
-  }
-}
 </style>

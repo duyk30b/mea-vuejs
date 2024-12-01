@@ -40,21 +40,17 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    provinceList.value = await AddressInstance.getAllProvinces()
-    if (organization.value.addressProvince) {
-      districtList.value = await AddressInstance.getDistrictsByProvince(
-        organization.value.addressProvince
+  provinceList.value = await AddressInstance.getAllProvinces()
+  if (organization.value.addressProvince) {
+    districtList.value = await AddressInstance.getDistrictsByProvince(
+      organization.value.addressProvince
+    )
+    if (organization.value.addressDistrict) {
+      wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+        organization.value.addressProvince,
+        organization.value.addressDistrict
       )
-      if (organization.value.addressDistrict) {
-        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-          organization.value.addressProvince,
-          organization.value.addressDistrict
-        )
-      }
     }
-  } catch (error) {
-    console.log('🚀 ~ file: OrganizationInfo.vue:42 ~ onMounted ~ error:', error)
   }
 })
 
@@ -64,11 +60,7 @@ const handleChangeProvince = async (province: string) => {
     wardList.value = []
     return
   }
-  try {
-    districtList.value = await AddressInstance.getDistrictsByProvince(province)
-  } catch (error) {
-    console.log('🚀 ~ handleChangeProvince ~ error:', error)
-  }
+  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
 const handleChangeDistrict = async (district: string) => {
@@ -76,14 +68,10 @@ const handleChangeDistrict = async (district: string) => {
     wardList.value = []
     return
   }
-  try {
-    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-      organization.value.addressProvince,
-      district
-    )
-  } catch (error) {
-    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
-  }
+  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+    organization.value.addressProvince,
+    district
+  )
 }
 
 const saveOrganization = async () => {

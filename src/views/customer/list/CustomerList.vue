@@ -16,7 +16,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { CustomerApi, useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { formatPhone, timeToText } from '../../../utils'
+import { DString, DTimer } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
@@ -280,11 +280,11 @@ const downloadExcelCustomerList = async () => {
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
-                {{ customer.addressString }}
+                {{ DString.formatAddress(customer) }}
               </div>
               <div class="flex gap-4 text-xs">
                 <div v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-                  {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
+                  {{ DTimer.timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
@@ -301,7 +301,7 @@ const downloadExcelCustomerList = async () => {
             <td
               v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none">
-              <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
+              <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
@@ -430,11 +430,11 @@ const downloadExcelCustomerList = async () => {
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-              {{ timeToText(customer.birthday, 'DD/MM/YYYY') }}
+              {{ DTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || '' }}
             </td>
 
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.address">
-              {{ customer.addressString }}
+              {{ DString.formatAddress(customer) }}
             </td>
             <td class="text-right">
               <div class="flex justify-between gap-1 items-center">

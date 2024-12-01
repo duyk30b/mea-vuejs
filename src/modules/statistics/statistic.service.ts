@@ -1,9 +1,10 @@
 import { AxiosInstance } from '../../core/axios.instance'
+import type { ConditionEnum } from '../_base/base-condition'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
-import type { TicketType } from '../ticket'
+import { TicketGetQuery, type TicketFilterQuery, type TicketType } from '../ticket'
 
 export class StatisticService {
   static async sumWarehouse() {
@@ -121,28 +122,38 @@ export class StatisticService {
     return Object.entries(data).map(([key, value]) => ({ timeLabel: key, ...value }))
   }
 
-  static async statisticTicket(params: {
-    fromTime: string
-    toTime: string
-    timeType: 'date' | 'month'
-    ticketType?: TicketType
-  }) {
-    const response = await AxiosInstance.get('/statistic/statistic-ticket', { params })
+  static async statisticTicket(
+    options: TicketFilterQuery & {
+      fromTime: string
+      toTime: string
+      groupTimeType: 'date' | 'month'
+    }
+  ) {
+    const filter = TicketGetQuery.toQuery(options)
+    const response = await AxiosInstance.get('/statistic/statistic-ticket', {
+      params: {
+        ...filter,
+        fromTime: options.fromTime,
+        toTime: options.toTime,
+        groupTimeType: options.groupTimeType,
+      },
+    })
     const { data } = response.data as BaseResponse<
       Record<
         string,
         {
+          countTicket: number
+          sumTotalMoney: number
           sumTotalCostAmount: number
-          sumProceduresMoney: number
-          sumProductsMoney: number
+          sumProcedureMoney: number
+          sumProductMoney: number
           sumRadiologyMoney: number
+          sumLaboratoryMoney: number
           sumSurcharge: number
           sumExpense: number
           sumDiscountMoney: number
-          sumTotalMoney: number
           sumProfit: number
           sumDebt: number
-          countTicket: number
         }
       >
     >

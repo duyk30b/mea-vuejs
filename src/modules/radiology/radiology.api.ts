@@ -32,12 +32,6 @@ export class RadiologyApi {
     }
   }
 
-  static async exampleList() {
-    const response = await AxiosInstance.get('/radiology/example-list')
-    const { data, time } = response.data as BaseResponse
-    return Radiology.fromList(data)
-  }
-
   static search: (params: RadiologyListQuery) => Promise<Radiology[]> = debounceAsync(
     async (params: RadiologyListQuery): Promise<Radiology[]> => {
       const response = await AxiosInstance.get('/radiology/list', { params })
@@ -88,6 +82,20 @@ export class RadiologyApi {
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/radiology/destroy/${id}`)
     const { data } = response.data as BaseResponse<{ radiologyId: number }>
+    return data
+  }
+
+  static async systemList() {
+    const response = await AxiosInstance.get('/radiology/system-list')
+    const { data, time } = response.data as BaseResponse
+    return Radiology.fromList(data)
+  }
+
+  static async systemCopy(body: { radiologyIdList: number[] }) {
+    const response = await AxiosInstance.post('/radiology/system-copy', {
+      radiologyIdList: body.radiologyIdList,
+    })
+    const { data, time } = response.data as BaseResponse<boolean>
     return data
   }
 }

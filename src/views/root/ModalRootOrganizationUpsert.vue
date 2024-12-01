@@ -37,29 +37,29 @@ const permissionIds = ref<PermissionId[]>([])
 let firstLoad = true
 
 const openModal = async (instance?: Organization) => {
-  try {
-    showModal.value = true
-    if (firstLoad === true) {
+  showModal.value = true
+  if (firstLoad === true) {
+    try {
       permissionList.value = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
-      provinceList.value = await AddressInstance.getAllProvinces()
-      firstLoad = false
+    } catch (error) {
+      console.log('🚀 ~ file: ModalRootOrganizationUpsert.vue:46 ~ openModal ~ error:', error)
     }
+    provinceList.value = await AddressInstance.getAllProvinces()
+    firstLoad = false
+  }
 
-    if (instance) {
-      organization.value = instance ? Organization.from(instance) : Organization.blank()
-      permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
-      if (instance.addressProvince) {
-        districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
-        if (instance.addressDistrict) {
-          wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-            instance.addressProvince,
-            instance.addressDistrict
-          )
-        }
+  if (instance) {
+    organization.value = instance ? Organization.from(instance) : Organization.blank()
+    permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
+    if (instance.addressProvince) {
+      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
+      if (instance.addressDistrict) {
+        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+          instance.addressProvince,
+          instance.addressDistrict
+        )
       }
     }
-  } catch (error) {
-    console.log('🚀 ~ file: ModalRootOrganizationUpsert.vue:48 ~ openModal ~ error:', error)
   }
 }
 
@@ -100,11 +100,7 @@ const handleChangeProvince = async (province: string) => {
     wardList.value = []
     return
   }
-  try {
-    districtList.value = await AddressInstance.getDistrictsByProvince(province)
-  } catch (error) {
-    console.log('🚀 ~ handleChangeProvince ~ error:', error)
-  }
+  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
 const handleChangeDistrict = async (district: string) => {
@@ -112,14 +108,10 @@ const handleChangeDistrict = async (district: string) => {
     wardList.value = []
     return
   }
-  try {
-    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-      organization.value.addressProvince,
-      district
-    )
-  } catch (error) {
-    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
-  }
+  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+    organization.value.addressProvince,
+    district
+  )
 }
 
 const handleModalRootOrganizationClearSuccess = async () => {

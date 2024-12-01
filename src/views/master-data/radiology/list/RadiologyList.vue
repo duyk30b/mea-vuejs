@@ -11,13 +11,13 @@ import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
-import type ModalCopyRadiologyExample from './ModalCopyRadiologyExample.vue'
+import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
 import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
-const modalCopyRadiologyExample = ref<InstanceType<typeof ModalCopyRadiologyExample>>()
+const modalCopyRadiologySystem = ref<InstanceType<typeof ModalCopyRadiologySystem>>()
 const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const meStore = useMeStore()
@@ -92,13 +92,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SCREEN_SETTING') {
     modalRadiologyListSettingScreen.value?.openModal()
   }
+  if (menu.key === 'COPY_FROM_SYSTEM') {
+    modalCopyRadiologySystem.value?.openModal()
+  }
 }
 
 const handleModalRadiologyGroupManagerSuccess = async () => {
   radiologyGroupAll.value = await RadiologyGroupService.list({})
+  await startFetchData()
 }
 
-const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => {
+const handleModalCopyRadiologySystemSuccess = async () => {
   await startFetchData()
 }
 </script>
@@ -108,9 +112,9 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalRadiologyListSettingScreen" />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
-  <!-- <ModalCopyRadiologyExample
-    ref="modalCopyRadiologyExample"
-    @success="handleModalCopyRadiologyExampleSuccess" /> -->
+  <ModalCopyRadiologySystem
+    ref="modalCopyRadiologySystem"
+    @success="handleModalCopyRadiologySystemSuccess" />
   <ModalRadiologyGroupManager
     ref="modalRadiologyGroupManager"
     @success="handleModalRadiologyGroupManagerSuccess" />
@@ -129,13 +133,6 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
         @click="$router.push({ name: 'RadiologyUpsert' })">
         Thêm mới
       </VueButton>
-      <!-- <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
-        color="blue"
-        icon="plus"
-        @click="modalCopyRadiologyExample?.openModal()">
-        Copy từ danh sách mẫu
-      </VueButton> -->
     </div>
     <div>
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
@@ -146,6 +143,7 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
             <a-menu-item key="RADIOLOGY_GROUP_MANAGER">Quản lý nhóm CĐHA</a-menu-item>
+            <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -203,7 +201,7 @@ const handleModalCopyRadiologyExampleSuccess = async (menu: { key: string }) => 
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="radiology in radiologyList" :key="radiology.id">
-            <td class="text-center">R{{ radiology.priority.toString().padStart(3, '0') }}</td>
+            <td class="text-center">{{ radiology.priority }}</td>
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ radiology.name }}</span>

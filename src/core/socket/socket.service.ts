@@ -2,9 +2,7 @@ import { MeService } from '../../modules/_me/me.service'
 import { useMeStore } from '../../modules/_me/me.store'
 import { Batch, useBatchStore } from '../../modules/batch'
 import { Customer, useCustomerStore } from '../../modules/customer'
-import { Distributor, useDistributorStore } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import { Procedure, useProcedureStore } from '../../modules/procedure'
 import { Product, useProductStore } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
@@ -16,8 +14,6 @@ import { TicketRadiology } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
-import { DistributorDB } from '../indexed-db/repository/distributor.repository'
-import { ProcedureDB } from '../indexed-db/repository/procedure.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
 
 export class SocketService {
@@ -32,12 +28,6 @@ export class SocketService {
 
   static async listenSettingReload(data: any) {
     await MeService.reloadSetting()
-  }
-
-  static async listenDistributorUpsert(data: { distributor: any }) {
-    const distributor = Distributor.from(data.distributor)
-    await DistributorDB.upsertOne(distributor)
-    useDistributorStore().timeSync = Date.now()
   }
 
   static async listenCustomerUpsert(data: { customer: any }) {
@@ -72,12 +62,6 @@ export class SocketService {
     const batchList = Batch.fromList(data.batchList)
     await BatchDB.upsertMany(batchList)
     useBatchStore().timeSync = Date.now()
-  }
-
-  static async listenProcedureUpsert(data: { procedure: any }) {
-    const procedure = Procedure.from(data.procedure)
-    await ProcedureDB.upsertOne(procedure)
-    useProcedureStore().timeSync = Date.now()
   }
 
   static async listenTicketClinicCreate(data: { ticket: any }) {

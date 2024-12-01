@@ -127,11 +127,13 @@ const updateDuKienSinh = (value: any) => {
 
   const toDay = new Date()
   toDay.setHours(0, 0, 0, 0)
-  const timeDuKienSinh = new Date(value)
-  const timeNgayThuThai = new Date(timeDuKienSinh.getTime() - 40 * 7 * 24 * 60 * 60 * 1000)
-  timeNgayThuThai.setHours(0, 0, 0, 0)
+  const DuKienSinh = new Date(value)
+  DuKienSinh.setHours(0, 0, 0, 0)
 
-  const timeDistance = toDay.getTime() - timeNgayThuThai.getTime()
+  const timeDuKienSinh = DuKienSinh.getTime()
+  const timeNgayThuThai = timeDuKienSinh - 40 * 7 * 24 * 60 * 60 * 1000
+
+  const timeDistance = toDay.getTime() - timeNgayThuThai
   if (timeDistance < 0) {
     ticketAttributeMap.value.TuoiThai_Tuan = 0
     ticketAttributeMap.value.TuoiThai_Ngay = 0
@@ -147,22 +149,53 @@ const updateTuoiThaiTuan = (value: number) => {
   const Tuan = value || 0
   const Ngay = ticketAttributeMap.value.TuoiThai_Ngay || 0
   const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
+
   const toDay = new Date()
   toDay.setHours(0, 0, 0, 0)
-  const timeNgayThuThai = new Date(toDay.getTime() - timeDistance)
-  const timeDuKienSinh = new Date(timeNgayThuThai.getTime() + 40 * 7 * 24 * 60 * 60 * 1000)
+  const timeNgayThuThai = toDay.getTime() - timeDistance
+  const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
 
-  ticketAttributeMap.value.NgayDuKienSinh = timeDuKienSinh.toISOString()
+  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
 }
 const updateTuoiThaiNgay = (value: number) => {
   const Tuan = ticketAttributeMap.value.TuoiThai_Tuan || 0
   const Ngay = value || 0
   const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
+
   const toDay = new Date()
   toDay.setHours(0, 0, 0, 0)
-  const timeNgayThuThai = new Date(toDay.getTime() - timeDistance)
-  const timeDuKienSinh = new Date(timeNgayThuThai.getTime() + 40 * 7 * 24 * 60 * 60 * 1000)
-  ticketAttributeMap.value.NgayDuKienSinh = timeDuKienSinh.toISOString()
+  const timeNgayThuThai = toDay.getTime() - timeDistance
+  const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
+
+  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
+}
+
+const updateTuoiPhoi = (TuoiPhoi: number) => {
+  if (!TuoiPhoi) return
+  const NgayChuyenPhoiString = ticketAttributeMap.value.NgayChuyenPhoi
+  if (!NgayChuyenPhoiString) return
+  const NgayChuyenPhoi = new Date(NgayChuyenPhoiString)
+  NgayChuyenPhoi.setHours(0, 0, 0, 0)
+
+  const timeNgayThuThai = NgayChuyenPhoi.getTime() - (TuoiPhoi + 14) * 24 * 60 * 60 * 1000
+  const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
+
+  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
+  updateDuKienSinh(timeDuKienSinh)
+}
+
+const updateNgayChuyenPhoi = (NgayChuyenPhoiString: any) => {
+  if (!NgayChuyenPhoiString) return
+  const TuoiPhoi = Number(ticketAttributeMap.value.TuoiPhoi)
+  if (!TuoiPhoi) return
+  const NgayChuyenPhoi = new Date(NgayChuyenPhoiString)
+  NgayChuyenPhoi.setHours(0, 0, 0, 0)
+
+  const timeNgayThuThai = NgayChuyenPhoi.getTime() - (TuoiPhoi + 14) * 24 * 60 * 60 * 1000
+  const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
+
+  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
+  updateDuKienSinh(timeDuKienSinh)
 }
 
 const getDataTicketDiagnosis = () => {
@@ -196,66 +229,67 @@ defineExpose({ getDataTicketDiagnosis })
 
     <div class="mt-4 flex flex-wrap gap-4">
       <div style="flex-basis: 400px; flex-grow: 4">
-        <div class="italic underline font-bold">Thông tin sản phụ</div>
-        <div>
-          <table class="table-regional" style="width: 100%">
-            <tbody>
-              <tr>
-                <td>PARA:</td>
-                <td>
-                  <div><InputText v-model:value="ticketAttributeMap.PARA" /></div>
-                </td>
-              </tr>
-              <tr>
-                <td>Ngày đầu - KKC (LMP):</td>
-                <td>
-                  <div>
-                    <InputDate
-                      v-model:value="ticketAttributeMap.NgayDauKyKinhCuoi"
-                      typeParser="string" />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Ngày thụ thai (DOC):</td>
-                <td>
-                  <InputDate v-model:value="ticketAttributeMap.NgayThuThai" typeParser="string" />
-                </td>
-              </tr>
-              <tr>
-                <td>Ngày dự kiến sinh (EDD):</td>
-                <td>
-                  <InputDate
-                    v-model:value="ticketAttributeMap.NgayDuKienSinh"
-                    typeParser="string"
-                    @update:value="updateDuKienSinh" />
-                </td>
-              </tr>
-              <tr>
-                <td>Tuổi thai:</td>
-                <td>
-                  <div class="flex gap-4">
-                    <div>
-                      <div>Tuần</div>
-                      <div>
-                        <InputNumber
-                          v-model:value="ticketAttributeMap.TuoiThai_Tuan"
-                          @update:value="updateTuoiThaiTuan" />
-                      </div>
-                    </div>
-                    <div>
-                      <div>Ngày</div>
-                      <div>
-                        <InputNumber
-                          v-model:value="ticketAttributeMap.TuoiThai_Ngay"
-                          @update:value="updateTuoiThaiNgay" />
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="flex flex-wrap items-center gap-4 justify-end">
+          <div style="flex-basis: 60px">Cơ bản:</div>
+          <div style="flex-grow: 2">
+            <div style="">PARA</div>
+            <div><InputText v-model:value="ticketAttributeMap.PARA" /></div>
+          </div>
+          <div style="flex-basis: 200px; flex-grow: 1">
+            <div style="">Ngày đầu - KKC:</div>
+            <div>
+              <InputDate v-model:value="ticketAttributeMap.NgayDauKyKinhCuoi" typeParser="string" />
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-4 justify-end">
+          <div style="flex-basis: 60px">IVF:</div>
+          <div style="flex-grow: 2">
+            <div style="">Tuổi phôi (ngày)</div>
+            <div>
+              <InputNumber
+                v-model:value="ticketAttributeMap.TuoiPhoi"
+                @update:value="updateTuoiPhoi" />
+            </div>
+          </div>
+          <div style="flex-basis: 200px; flex-grow: 1">
+            <div style="">Ngày chuyển phôi</div>
+            <div>
+              <InputDate
+                v-model:value="ticketAttributeMap.NgayChuyenPhoi"
+                typeParser="string"
+                @update:value="updateNgayChuyenPhoi" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-4 justify-end">
+          <div style="flex-basis: 60px">Tuổi thai:</div>
+          <div style="flex-basis: 100px; flex-grow: 1">
+            <div style="">Tuần</div>
+            <div>
+              <InputNumber
+                v-model:value="ticketAttributeMap.TuoiThai_Tuan"
+                @update:value="updateTuoiThaiTuan" />
+            </div>
+          </div>
+          <div style="flex-basis: 100px; flex-grow: 1">
+            <div style="">Ngày</div>
+            <div>
+              <InputNumber
+                v-model:value="ticketAttributeMap.TuoiThai_Ngay"
+                @update:value="updateTuoiThaiNgay" />
+            </div>
+          </div>
+          <div style="flex-basis: 200px; flex-grow: 1">
+            <div style="">Dự kiến sinh</div>
+            <div>
+              <InputDate
+                v-model:value="ticketAttributeMap.NgayDuKienSinh"
+                typeParser="string"
+                @update:value="updateDuKienSinh" />
+            </div>
+          </div>
         </div>
       </div>
       <div class="flex flex-col" style="flex-basis: 200px; flex-grow: 1">
@@ -363,18 +397,6 @@ defineExpose({ getDataTicketDiagnosis })
   </div>
 </template>
 <style lang="scss" scoped>
-.table-regional {
-  border-collapse: collapse;
-
-  td {
-    padding-right: 10px;
-    padding-top: 10px;
-    &:first-child {
-      white-space: nowrap; /* Không xuống dòng */
-      width: 10%;
-    }
-  }
-}
 .table-vital-signs {
   td.title-vital-signs {
     padding: 4px 4px 4px 8px;

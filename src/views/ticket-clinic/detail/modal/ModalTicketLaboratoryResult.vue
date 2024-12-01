@@ -19,7 +19,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 const showModal = ref(false)
 
 const ticketLaboratoryResultList = ref<TicketLaboratory[]>([])
-const laboratoryGroup = ref<LaboratoryGroup>(LaboratoryGroup.blank())
+const laboratoryGroup = ref<LaboratoryGroup | null>(LaboratoryGroup.blank())
 
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const startedAt = ref<number>(Date.now())
@@ -120,7 +120,7 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          Trả kết quả xét nghiệm: {{ laboratoryGroup.name }}
+          Trả kết quả xét nghiệm: {{ laboratoryGroup?.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <CloseOutlined />

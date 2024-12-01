@@ -148,7 +148,8 @@ export const TicketAttributeKeyObstetricList = [
 
   'PARA',
   'NgayDauKyKinhCuoi',
-  'NgayThuThai',
+  'NgayChuyenPhoi',
+  'TuoiPhoi',
   'NgayDuKienSinh',
   'TuoiThai_Tuan',
   'TuoiThai_Ngay',

@@ -5,23 +5,21 @@ import {
   FileSearchOutlined,
   FormOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
   SettingOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { useDistributorStore, type Distributor } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { formatPhone } from '../../../utils'
+import { DString } from '../../../utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconPlus } from '../../../common/icon'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -251,7 +249,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
-                {{ distributor.addressString }}
+                {{ DString.formatAddress(distributor) }}
               </div>
               <div
                 v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
@@ -262,7 +260,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td
               v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none">
-              <a :href="'tel:' + distributor.phone">{{ formatPhone(distributor.phone || '') }}</a>
+              <a :href="'tel:' + distributor.phone">
+                {{ DString.formatPhone(distributor.phone || '') }}
+              </a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(distributor.debt) }}</div>
@@ -387,10 +387,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
-              {{ distributor.phone }}
+              {{ DString.formatPhone(distributor.phone) }}
             </td>
             <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">
-              {{ distributor.addressString }}
+              {{ DString.formatAddress(distributor) }}
             </td>
             <td class="text-right">
               <div class="flex justify-between">

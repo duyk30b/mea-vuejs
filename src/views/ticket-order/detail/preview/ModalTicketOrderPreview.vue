@@ -6,7 +6,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Ticket } from '../../../../modules/ticket'
-import { timeToText } from '../../../../utils'
+import { DString, timeToText } from '../../../../utils'
 import TicketOrderModalPreviewSetting from './ModalTicketOrderPreviewSetting.vue'
 
 const ticketOrderModalPreviewSetting = ref<InstanceType<typeof TicketOrderModalPreviewSetting>>()
@@ -72,7 +72,7 @@ defineExpose({ openModal })
           </div>
           <div class="flex">
             <div style="width: 6rem">Địa chỉ:</div>
-            <div>{{ ticket.customer?.addressString }}</div>
+            <div>{{ DString.formatAddress(ticket.customer) }}</div>
           </div>
         </div>
         <div>

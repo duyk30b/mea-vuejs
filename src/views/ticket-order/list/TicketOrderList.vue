@@ -13,7 +13,7 @@ import { Customer, useCustomerStore } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { timeToText } from '../../../utils'
+import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketOrderStatusTag from '../TicketOrderStatusTag.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
@@ -209,10 +209,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
-                - {{ data.phone }} -
-                {{ timeToText(data.birthday, 'DD/MM/YYYY') }}
+                - {{ DString.formatPhone(data.phone) }} -
+                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
-              <div>{{ data.addressString }}</div>
+              <div>{{ DString.formatAddress(data) }}</div>
             </template>
           </InputOptions>
         </div>
@@ -288,7 +288,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div class="text-xs">
-                {{ timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
@@ -383,7 +383,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </router-link>
             </td>
             <td class="text-center">
-              {{ timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>

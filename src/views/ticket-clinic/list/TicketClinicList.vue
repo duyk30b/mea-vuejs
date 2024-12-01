@@ -12,17 +12,15 @@ import { useCustomerStore, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
-import { DTimer, formatPhone } from '../../../utils'
+import { DString, DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
-import ModalTicketClinicGeneralRegister from '../register/ModalTicketClinicGeneralRegister.vue'
-import ModalTicketClinicListSettingScreen from './ModalTicketClinicListSettingScreen.vue'
+import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
+import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalTicketClinicGeneralRegister =
-  ref<InstanceType<typeof ModalTicketClinicGeneralRegister>>()
-const modalTicketClinicListSettingScreen =
-  ref<InstanceType<typeof ModalTicketClinicListSettingScreen>>()
+const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
+const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
@@ -154,11 +152,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SCREEN_SETTING') {
-    modalTicketClinicListSettingScreen.value?.openModal()
+    modalTicketClinicListSetting.value?.openModal()
   }
 }
 
-const handleModalTicketClinicGeneralRegisterSuccess = (data: { ticket: Ticket }) => {
+const handleModalTicketClinicCreateSuccess = (data: { ticket: Ticket }) => {
   const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticket.id)
   if (!ticketFind) {
     ticketClinicList.value.unshift(data.ticket)
@@ -183,13 +181,13 @@ const handleClickDestroyDraft = async (ticketId: number) => {
 </script>
 
 <template>
-  <ModalTicketClinicGeneralRegister
-    ref="modalTicketClinicGeneralRegister"
-    @success="handleModalTicketClinicGeneralRegisterSuccess" />
+  <ModalTicketClinicCreate
+    ref="modalTicketClinicCreate"
+    @success="handleModalTicketClinicCreateSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalTicketClinicListSettingScreen
+  <ModalTicketClinicListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalTicketClinicListSettingScreen" />
+    ref="modalTicketClinicListSetting" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
@@ -201,20 +199,20 @@ const handleClickDestroyDraft = async (ticketId: number) => {
       <div>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW] &&
-            settingStore.SCREEN_TICKET_CLINIC_LIST.buttonRegisterDraft
+            permissionIdMap[PermissionId.TICKET_CLINIC_CREATE] &&
+            settingStore.TICKET_CLINIC_LIST.buttonShowModalCreate
           "
           color="blue"
           icon="plus"
-          @click="modalTicketClinicGeneralRegister?.openModal(TicketStatus.Draft)">
+          @click="modalTicketClinicCreate?.openModal(TicketStatus.Draft)">
           TIẾP ĐÓN
         </VueButton>
       </div>
       <div>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_CLINIC_REGISTER_NEW] &&
-            settingStore.SCREEN_TICKET_CLINIC_LIST.buttonRegisterExecuting
+            permissionIdMap[PermissionId.TICKET_CLINIC_CREATE] &&
+            settingStore.TICKET_CLINIC_LIST.buttonShowTicketDetailBlank
           "
           color="blue"
           icon="plus"
@@ -343,7 +341,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 :icon="['fas', 'sort-down']" />
             </th>
             <th style="min-width: 150px">Khách hàng</th>
-            <th>SĐT</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.birthday">Ngày sinh</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.address">Địa chỉ</th>
             <th style="white-space: nowrap">Lý do / Chẩn đoán</th>
             <th>Thanh toán</th>
             <th></th>
@@ -376,7 +376,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                     <span>
                       {{ ticket.date }}{{ ticket.month
                       }}{{ ticket.year?.toString().slice(-2) || '' }}_{{
-                        ticket.dailyIndex?.toString().padStart(3, '0') || ''
+                        ticket.dailyIndex?.toString().padStart(2, '0') || ''
                       }}
                     </span>
                     <span class="text-lg"><ReadOutlined /></span>
@@ -403,7 +403,20 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 {{ ticket.customer?.note }}
               </div>
             </td>
-            <td class="text-center">{{ formatPhone(ticket.customer?.phone) }}</td>
+
+            <td v-if="settingStore.TICKET_CLINIC_LIST.birthday" class="text-center">
+              {{
+                DTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
+                ticket.customer?.yearOfBirth ||
+                ''
+              }}
+            </td>
+            <td v-if="settingStore.TICKET_CLINIC_LIST.phone" class="text-center">
+              {{ formatPhone(ticket.customer?.phone) }}
+            </td>
+            <td v-if="settingStore.TICKET_CLINIC_LIST.address">
+              {{ DString.formatAddress(ticket.customer!) }}
+            </td>
             <td>
               {{ ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || '' }}
             </td>

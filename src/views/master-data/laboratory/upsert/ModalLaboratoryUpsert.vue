@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose, IconTrash } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText, VueSelect } from '../../../../common/vue-form'
+import InputNumber from '../../../../common/vue-form/InputNumber.vue'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import {
@@ -38,6 +39,8 @@ const openModal = async (laboratoryId?: number) => {
     laboratory.value = Laboratory.blank()
     laboratory.value.optionsParse = ['Âm tính', 'Dương tính', 'Không xác định']
     laboratory.value.children = [Laboratory.blank()]
+    const laboratoryAll = await LaboratoryService.list({})
+    laboratory.value.priority = laboratoryAll.length + 1
   } else {
     const laboratoryResponse = await LaboratoryApi.detail(laboratoryId, {
       relation: {
@@ -66,12 +69,13 @@ const openModal = async (laboratoryId?: number) => {
       })
     }
   }
-  laboratoryGroupAll.value = await LaboratoryGroupService.getAll()
+  laboratoryGroupAll.value = await LaboratoryGroupService.list({})
 }
 
 const closeModal = () => {
   showModal.value = false
   laboratory.value = Laboratory.blank()
+  laboratoryRoot.value = Laboratory.blank()
 }
 
 const disabledButtonSave = computed(() => {
@@ -84,6 +88,12 @@ const handleChangeLaboratoryOptionsParse = (optionsParse: string[]) => {
 
 const handleChangeLaboratoryChildOptionsParse = (index: number, optionsParse: string[]) => {
   laboratory.value.children![index].options = JSON.stringify(optionsParse)
+}
+
+const handleAddChildren = () => {
+  const child = Laboratory.blank()
+  child.priority = laboratory.value.children!.length + 1
+  laboratory.value.children!.push(child)
 }
 
 const cleanLaboratory = (ins: LaboratoryUpsertType) => {
@@ -183,12 +193,19 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 pb-20">
         <div class="flex flex-wrap gap-4">
-          <div style="flex-basis: 90%; flex-grow: 1">
+          <div style="flex-basis: 70%; flex-grow: 5">
             <div class="flex gap-4 justify-start">
               <span>Tên xét nghiệm</span>
             </div>
             <div>
               <InputText v-model:value="laboratory.name" required />
+            </div>
+          </div>
+
+          <div style="flex-basis: 200px; flex-grow: 1">
+            <div class="">STT</div>
+            <div>
+              <InputNumber v-model:value="laboratory.priority" />
             </div>
           </div>
 
@@ -218,7 +235,9 @@ defineExpose({ openModal })
             <div>
               <VueSelect
                 v-model:value="laboratory.valueType"
-                :disabled="!!laboratory.id"
+                :disabled="
+                  !!laboratory.id && laboratoryRoot?.valueType === LaboratoryValueType.Children
+                "
                 :options="[
                   {
                     value: LaboratoryValueType.Number,
@@ -299,7 +318,7 @@ defineExpose({ openModal })
               <table>
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th>STT</th>
                     <th>Tên giá trị</th>
                     <th>Kiểu giá trị</th>
                     <th>Ngưỡng thấp</th>
@@ -311,7 +330,13 @@ defineExpose({ openModal })
                 </thead>
                 <tbody>
                   <tr v-for="(laboratoryChild, index) in laboratory.children" :key="index">
-                    <td class="text-center">{{ index + 1 }}</td>
+                    <td class="text-center">
+                      <input
+                        v-model="laboratory.children![index].priority"
+                        type="number"
+                        step="1"
+                        style="width: 50px; text-align: center" />
+                    </td>
                     <td>
                       <input
                         v-model="laboratory.children![index].name"
@@ -381,7 +406,7 @@ defineExpose({ openModal })
               </table>
             </div>
             <div class="mt-2">
-              <a @click="laboratory.children!.push(Laboratory.blank())">✚ Thêm giá trị con</a>
+              <a @click="handleAddChildren">✚ Thêm giá trị con</a>
             </div>
           </div>
         </template>

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { IconClose } from '../../../../common/icon'
 import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
+import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { customFilter } from '../../../../utils'
 
 const emit = defineEmits<{
@@ -22,7 +22,12 @@ const total = ref(0)
 
 const startFilterData = () => {
   radiologyExampleList.value = radiologyExampleAll
-    .filter((i) => customFilter(i.name, searchText.value))
+    .filter((i) => {
+      if (searchText.value && !customFilter(i.name, searchText.value)) {
+        return false
+      }
+      return true
+    })
     .slice((page.value - 1) * limit.value, page.value * limit.value)
 }
 
@@ -39,7 +44,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const openModal = async () => {
   showModal.value = true
-  radiologyExampleAll = await RadiologyService.exampleList()
+  radiologyExampleAll = await RadiologyApi.systemList()
   startFilterData()
 }
 

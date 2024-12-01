@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { formatNumber } from '../../utils'
-import { TicketType } from '../ticket'
+import { TicketStatus, TicketType } from '../ticket'
 
 export const settingDefault = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -104,14 +104,13 @@ export const settingDefault = {
   },
   SCREEN_CUSTOMER_DETAIL: {},
   SCREEN_CUSTOMER_UPSERT: {
-    phone: true,
     birthday: true,
     gender: true,
-    addressProvince: true,
-    addressDistrict: true,
-    addressWard: true,
-    addressStreet: true,
-    relative: true,
+    addressFull: false,
+    addressBasic: true,
+    relative: false,
+    note: false,
+    customerSource: false,
   },
 
   SCREEN_RECEIPT_LIST: {
@@ -248,14 +247,28 @@ export const settingDefault = {
     },
   },
 
-  SCREEN_APPOINTMENT_LIST: {
+  APPOINTMENT_LIST: {
     fromDateToDateDistance: -1,
   },
 
-  SCREEN_TICKET_CLINIC_LIST: {
+  APPOINTMENT_UPSERT: {
+    birthday: true,
+    gender: true,
+    addressFull: false,
+    addressBasic: true,
+    relative: false,
+    note: false,
+    customerSource: false,
+  },
+
+  TICKET_CLINIC_LIST: {
     ticketType: TicketType.Clinic,
-    buttonRegisterDraft: false,
-    buttonRegisterExecuting: true,
+    ticketStatus: TicketStatus.Executing,
+    buttonShowModalCreate: true,
+    buttonShowTicketDetailBlank: false,
+    birthday: false,
+    phone: false,
+    address: false,
   },
   TICKET_CLINIC_DETAIL: {
     printHtmlIdSetting: {
@@ -263,6 +276,33 @@ export const settingDefault = {
       prescription: 0,
       diagnosisEyeSpecial: 0,
     },
+  },
+  TICKET_CLINIC_CREATE: {
+    birthday: true,
+    gender: true,
+    addressFull: false,
+    addressBasic: true,
+    relative: false,
+    note: false,
+    customerSource: false,
+    SCREEN: {
+      modalStyle: 'margin-top: 100px; width: 800px',
+      itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
+    },
+  },
+  TICKET_STATISTIC: {
+    countTicket: true,
+    sumTotalMoney: true,
+    sumTotalCostAmount: true,
+    sumProcedureMoney: true,
+    sumProductMoney: true,
+    sumRadiologyMoney: true,
+    sumLaboratoryMoney: true,
+    sumSurcharge: true,
+    sumExpense: true,
+    sumDiscountMoney: true,
+    sumProfit: true,
+    sumDebt: true,
   },
 }
 
@@ -275,7 +315,8 @@ export const useSettingStore = defineStore('setting-store', {
 
   getters: {
     formatMoney: (state) => {
-      return (money: number) => {
+      return (money?: number) => {
+        if (!money) return '0'
         if (state.SYSTEM_SETTING.moneyDivisionFormat === 1) {
           return formatNumber({ number: money, fixed: 0 })
         }

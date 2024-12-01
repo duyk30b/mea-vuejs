@@ -32,12 +32,6 @@ export class LaboratoryApi {
     }
   }
 
-  static async exampleList() {
-    const response = await AxiosInstance.get('/laboratory/example-list')
-    const { data, time } = response.data as BaseResponse
-    return Laboratory.fromList(data)
-  }
-
   static search: (params: LaboratoryListQuery) => Promise<Laboratory[]> = debounceAsync(
     async (params: LaboratoryListQuery): Promise<Laboratory[]> => {
       const response = await AxiosInstance.get('/laboratory/list', { params })
@@ -57,6 +51,7 @@ export class LaboratoryApi {
 
   static async create(laboratory: Laboratory) {
     const response = await AxiosInstance.post('/laboratory/create', {
+      priority: laboratory.priority,
       name: laboratory.name,
       laboratoryGroupId: laboratory.laboratoryGroupId,
       price: laboratory.price,
@@ -68,6 +63,7 @@ export class LaboratoryApi {
       children: (laboratory.children || []).map((i) => {
         return {
           name: i.name,
+          priority: i.priority,
           price: i.price,
           lowValue: i.lowValue,
           highValue: i.highValue,
@@ -83,6 +79,7 @@ export class LaboratoryApi {
 
   static async update(id: number, laboratory: Laboratory) {
     const response = await AxiosInstance.patch(`/laboratory/update/${id}`, {
+      priority: laboratory.priority,
       name: laboratory.name,
       price: laboratory.price,
       laboratoryGroupId: laboratory.laboratoryGroupId,
@@ -94,6 +91,7 @@ export class LaboratoryApi {
       children: (laboratory.children || []).map((i) => {
         return {
           id: i.id,
+          priority: i.priority,
           name: i.name,
           price: i.price,
           lowValue: i.lowValue,
@@ -111,6 +109,20 @@ export class LaboratoryApi {
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/laboratory/destroy/${id}`)
     const { data } = response.data as BaseResponse<{ laboratoryId: number }>
+    return data
+  }
+
+  static async systemList() {
+    const response = await AxiosInstance.get('/laboratory/system-list')
+    const { data, time } = response.data as BaseResponse
+    return Laboratory.fromList(data)
+  }
+
+  static async systemCopy(body: { laboratoryIdList: number[] }) {
+    const response = await AxiosInstance.post('/laboratory/system-copy', {
+      laboratoryIdList: body.laboratoryIdList,
+    })
+    const { data, time } = response.data as BaseResponse<boolean>
     return data
   }
 }

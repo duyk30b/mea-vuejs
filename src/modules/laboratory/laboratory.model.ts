@@ -9,6 +9,8 @@ export enum LaboratoryValueType {
 
 export class Laboratory {
   id: number
+  priority: number
+
   name: string
   laboratoryGroupId: number
   price: number
@@ -30,6 +32,7 @@ export class Laboratory {
   static init() {
     const ins = new Laboratory()
     ins.id = 0
+    ins.priority = 1
     ins.name = ''
     ins.laboratoryGroupId = 0
     ins.price = 0
@@ -37,7 +40,7 @@ export class Laboratory {
     ins.parentId = 0
     ins.lowValue = 0
     ins.highValue = 0
-    ins.valueType = LaboratoryValueType.Number
+    ins.valueType = LaboratoryValueType.String
     ins.price = 0
     ins.unit = ''
     ins.options = JSON.stringify([])
@@ -84,6 +87,7 @@ export class Laboratory {
 
   static equal(a: Laboratory, b: Laboratory, options?: { children?: boolean }) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.name != b.name) return false
     if (a.laboratoryGroupId != b.laboratoryGroupId) return false
     if (a.price != b.price) return false

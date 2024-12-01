@@ -60,61 +60,52 @@ defineExpose({ openModal })
         <table>
           <thead>
             <tr>
-              <th>Màn hình thêm/sửa khách hàng</th>
+              <th colspan="2">Màn hình thêm/sửa khách hàng</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.phone">
-                  Hiển thị số điện thoại
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
+              <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.birthday">
                   Hiển thị ngày sinh
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
+              <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.gender">Hiển thị giới tính</a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.addressProvince">
-                  Hiển thị điền địa chỉ tỉnh
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.addressFull">
+                  Hiển thị điền địa chỉ đầy đủ (tỉnh, huyện, xã, đường)
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.addressDistrict">
-                  Hiển thị điền địa chỉ huyện
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.addressBasic">
+                  Hiển thị điền địa chỉ cơ bản
                 </a-checkbox>
               </td>
             </tr>
             <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.addressWard">
-                  Hiển thị điền địa chỉ xã
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.addressStreet">
-                  Hiển thị điền địa chỉ đường
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
+              <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.relative">
                   Hiển thị điền thông tin liên hệ khác
+                </a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.note">Hiển thị điền ghi chú</a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a-checkbox v-model:checked="settingDisplay.customerSource">
+                  Hiển thị nguồn khách hàng
                 </a-checkbox>
               </td>
             </tr>

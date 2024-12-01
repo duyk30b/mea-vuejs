@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import { Customer } from '../customer'
 import type { TicketType } from '../ticket'
 import {
   AppointmentDetailQuery,
@@ -40,28 +41,43 @@ export class AppointmentApi {
   static async createOne(appointment: Appointment) {
     const response = await AxiosInstance.post('/appointment/create', {
       customerId: appointment.customerId,
+      appointmentStatus: appointment.appointmentStatus,
+      customer:
+        appointment.customerId === 0 && appointment.customer
+          ? {
+              fullName: appointment.customer.fullName,
+              phone: appointment.customer.phone,
+              customerSourceId: appointment.customer.customerSourceId || 0,
+              birthday: appointment.customer.birthday,
+              yearOfBirth: appointment.customer.yearOfBirth,
+              gender: appointment.customer.gender,
+              addressProvince: appointment.customer.addressProvince,
+              addressDistrict: appointment.customer.addressDistrict,
+              addressWard: appointment.customer.addressWard,
+              addressStreet: appointment.customer.addressStreet,
+              relative: appointment.customer.relative,
+              healthHistory: appointment.customer.healthHistory,
+              note: appointment.customer.note,
+              isActive: appointment.customer.isActive,
+            }
+          : undefined,
       fromTicketId: appointment.fromTicketId,
       registeredAt: appointment.registeredAt,
       reason: appointment.reason,
       customerSourceId: appointment.customerSourceId,
-      appointmentStatus: appointment.appointmentStatus,
     })
     const { data } = response.data as BaseResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }
 
-  static async updateOne(
-    id: number,
-    body: {
-      customerId: number
-      registeredAt: number
-      reason: string
-      customerSourceId: number
-      cancelReason: string
-      appointmentStatus: AppointmentStatus
-    }
-  ) {
-    const response = await AxiosInstance.patch(`/appointment/update/${id}`, body)
+  static async updateOne(id: number, appointment: Appointment) {
+    const response = await AxiosInstance.patch(`/appointment/update/${id}`, {
+      registeredAt: appointment.registeredAt,
+      reason: appointment.reason,
+      customerSourceId: appointment.customerSourceId,
+      cancelReason: appointment.cancelReason,
+      appointmentStatus: appointment.appointmentStatus,
+    })
     const { data } = response.data as BaseResponse<{ appointment: any }>
     return Appointment.from(data.appointment)
   }

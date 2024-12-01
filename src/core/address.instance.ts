@@ -42,7 +42,10 @@ export class AddressInstance {
   static async fetchDistrictByProvince(provinceName: string): Promise<District[]> {
     await this.fetchAllProvinces()
     const province = this.data.find((item) => item.full_name === provinceName)
-    if (!province) throw new Error(`No exists province: ${provinceName}`)
+    if (!province) {
+      console.log(`No exists province: ${provinceName}`)
+      return []
+    }
 
     try {
       if (!province.districts || province.districts?.length == 0) {
@@ -62,10 +65,16 @@ export class AddressInstance {
   ): Promise<Ward[]> {
     await this.fetchAllProvinces()
     const province = this.data.find((item) => item.full_name === provinceName)
-    if (!province) throw new Error(`No exists province: ${provinceName}`)
+    if (!province) {
+      console.log(`No exists province: ${provinceName}`)
+      return []
+    }
 
     const district = province.districts.find((item) => item.full_name === districtName)
-    if (!district) throw new Error(`No exists district: ${districtName}`)
+    if (!district) {
+      console.log(`No exists district: ${districtName}`)
+      return []
+    }
 
     try {
       if (!district.wards || district.wards.length === 0) {

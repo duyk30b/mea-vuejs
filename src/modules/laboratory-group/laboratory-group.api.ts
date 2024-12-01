@@ -37,8 +37,32 @@ export class LaboratoryGroupApi {
   ): Promise<LaboratoryGroup> {
     const params = LaboratoryGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/laboratory-group/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
-    return LaboratoryGroup.from(data)
+    const { data, meta } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    return LaboratoryGroup.from(data.laboratoryGroup)
+  }
+
+  static async createOne(laboratoryGroup: LaboratoryGroup) {
+    const response = await AxiosInstance.post('/laboratory-group/create', {
+      name: laboratoryGroup.name,
+      printHtmlId: laboratoryGroup.printHtmlId,
+    })
+    const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    return LaboratoryGroup.from(data.laboratoryGroup)
+  }
+
+  static async updateOne(id: number, laboratoryGroup: LaboratoryGroup) {
+    const response = await AxiosInstance.patch(`/laboratory-group/update/${id}`, {
+      name: laboratoryGroup.name,
+      printHtmlId: laboratoryGroup.printHtmlId,
+    })
+    const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
+    return LaboratoryGroup.from(data.laboratoryGroup)
+  }
+
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/laboratory-group/destroy/${id}`)
+    const { data, meta } = response.data as BaseResponse<boolean>
+    return data
   }
 
   static async replaceAll(body: LaboratoryGroup[]) {
@@ -55,27 +79,9 @@ export class LaboratoryGroupApi {
     return data
   }
 
-  static async createOne(laboratoryGroup: LaboratoryGroup) {
-    const response = await AxiosInstance.post('/laboratory-group/create', {
-      name: laboratoryGroup.name,
-      printHtmlId: laboratoryGroup.printHtmlId,
-    })
-    const { data } = response.data as BaseResponse
-    return LaboratoryGroup.from(data)
-  }
-
-  static async updateOne(id: number, laboratoryGroup: LaboratoryGroup) {
-    const response = await AxiosInstance.patch(`/laboratory-group/update/${id}`, {
-      name: laboratoryGroup.name,
-      printHtmlId: laboratoryGroup.printHtmlId,
-    })
-    const { data } = response.data as BaseResponse
-    return LaboratoryGroup.from(data)
-  }
-
-  static async destroyOne(id: number) {
-    const response = await AxiosInstance.delete(`/laboratory-group/destroy/${id}`)
-    const { data, meta } = response.data as BaseResponse
-    return LaboratoryGroup.from(data)
+  static async systemList() {
+    const response = await AxiosInstance.get('/laboratory-group/system-list')
+    const { data, time } = response.data as BaseResponse
+    return LaboratoryGroup.fromList(data)
   }
 }

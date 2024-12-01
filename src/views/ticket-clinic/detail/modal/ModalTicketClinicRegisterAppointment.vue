@@ -36,14 +36,10 @@ const handleRegisterVisit = async () => {
     if (!appointment.value.id) {
       ticketClinicRef.value.toAppointment = await AppointmentApi.createOne(appointment.value)
     } else {
-      ticketClinicRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
-        customerId: appointment.value.customerId,
-        registeredAt: appointment.value.registeredAt,
-        reason: appointment.value.reason,
-        appointmentStatus: appointment.value.appointmentStatus,
-        customerSourceId: 0,
-        cancelReason: '',
-      })
+      ticketClinicRef.value.toAppointment = await AppointmentApi.updateOne(
+        appointment.value.id,
+        appointment.value
+      )
     }
     emit('success')
     showModal.value = false

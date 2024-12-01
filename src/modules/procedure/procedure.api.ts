@@ -83,9 +83,9 @@ export class ProcedureApi {
     return Procedure.from(data.procedure)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/procedure/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ procedure: any }>
-    return Procedure.from(data.procedure)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/procedure/destroy/${id}`)
+    const { data, meta } = response.data as BaseResponse<boolean>
+    return data
   }
 }

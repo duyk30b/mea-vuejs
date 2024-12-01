@@ -52,12 +52,15 @@ onBeforeMount(async () => {
   const promiseInit = await Promise.all([
     RadiologyGroupService.list({}),
     PrintHtmlService.getAll(),
-    PrintHtmlService.getExampleList(),
+    PrintHtmlService.getSystemList(),
   ])
   radiologyGroupAll.value = promiseInit[0]
   printHtmlOptions.value = [
     { text: 'Mặc định', value: 0 },
     ...promiseInit[1].map((i) => {
+      return { value: i.id, text: i.name }
+    }),
+    ...promiseInit[2].map((i) => {
       return { value: i.id, text: i.name }
     }),
   ]
@@ -73,7 +76,7 @@ onMounted(async () => {
     radiology.value = Radiology.from(radiologyResponse)
   } else {
     radiology.value = Radiology.blank()
-    const radiologyAll = await RadiologyService.getAll()
+    const radiologyAll = await RadiologyService.list({})
     radiology.value.priority = radiologyAll.length + 1
   }
   updatePreview()

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { FileSyncOutlined, MoreOutlined } from '@ant-design/icons-vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconFileSearch } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -24,13 +24,10 @@ import { TicketProduct } from '../../../modules/ticket-product'
 import { TicketRadiology } from '../../../modules/ticket-radiology'
 import { DDom, timeToText } from '../../../utils'
 import ModalRadiologyDetail from '../../master-data/radiology/detail/ModalRadiologyDetail.vue'
-import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
+import ModalProcedureDetail from '../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from './modal/ModalTicketClinicReturnProduct.vue'
-import { Radiology, RadiologyService } from '../../../modules/radiology'
-import { Procedure } from '../../../modules/procedure'
-import { ProcedureGroupService } from '../../../modules/procedure-group'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
@@ -50,6 +47,12 @@ const ticketProductPrescriptionList = ref<TicketProduct[]>([])
 const ticketProcedureList = ref<TicketProcedure[]>([])
 const ticketLaboratoryList = ref<TicketLaboratory[]>([])
 const ticketRadiologyList = ref<TicketRadiology[]>([])
+
+const ticketDiscount = reactive({
+  discountPercent: 0,
+  discountMoney: 0,
+  discountType: DiscountType.VND,
+})
 
 const saveLoading = ref(false)
 const sendProductLoading = ref(false)
@@ -126,6 +129,29 @@ const radiologyMoney = computed(() => {
   }, 0)
 })
 
+const itemsActualMoney = computed(() => {
+  return (
+    prescriptionMoney.value +
+    consumableMoney.value +
+    proceduresMoney.value +
+    laboratoryMoney.value +
+    radiologyMoney.value
+  )
+})
+
+watch(
+  () => itemsActualMoney.value,
+  (newValue, oldValue) => {
+    if (ticketDiscount.discountType === DiscountType.VND) {
+      ticketDiscount.discountPercent =
+        newValue == 0 ? 0 : Math.floor((ticketDiscount.discountMoney * 100) / newValue)
+    }
+    if (ticketDiscount.discountType === DiscountType.Percent) {
+      ticketDiscount.discountMoney = Math.floor((ticketDiscount.discountPercent * newValue) / 100)
+    }
+  }
+)
+
 const disabledSave = computed(() => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
     return true
@@ -167,6 +193,13 @@ const disabledSave = computed(() => {
       ticketRadiologyList.value,
       ticketClinicRef.value.ticketRadiologyList || []
     )
+  ) {
+    return false
+  }
+  if (
+    ticketDiscount.discountMoney !== ticketClinicRef.value.discountMoney ||
+    ticketDiscount.discountPercent !== ticketClinicRef.value.discountPercent ||
+    ticketDiscount.discountType !== ticketClinicRef.value.discountType
   ) {
     return false
   }
@@ -308,6 +341,19 @@ const handleChangeTicketProductConsumableDiscountPercent = (
   ticketProductConsumableList.value[index].discountType = DiscountType.Percent
 }
 
+const handleChangeTicketDiscountMoney = (discountMoney: number) => {
+  ticketDiscount.discountType = DiscountType.VND
+  ticketDiscount.discountMoney = discountMoney
+  ticketDiscount.discountPercent =
+    itemsActualMoney.value == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney.value)
+}
+
+const handleChangeTicketDiscountPercent = (discountPercent: number) => {
+  ticketDiscount.discountType = DiscountType.Percent
+  ticketDiscount.discountPercent = discountPercent
+  ticketDiscount.discountMoney = Math.floor((discountPercent * itemsActualMoney.value) / 100)
+}
+
 const updateTicketProductConsumableQuantity = (index: number, unitQuantity: number) => {
   const ticketProductCurrent = ticketProductConsumableList.value[index]
 
@@ -362,6 +408,9 @@ const saveTicketItemsMoney = async () => {
 
     await TicketClinicApi.updateItemsMoney({
       ticketId: ticketClinicRef.value.id,
+      discountMoney: ticketDiscount.discountMoney,
+      discountPercent: ticketDiscount.discountPercent,
+      discountType: ticketDiscount.discountType,
       ticketProductList: [...prescriptionChangeList, ...consumableChangeList],
       ticketProcedureList: ticketProcedureList.value.filter((item, index) => {
         return !TicketProcedure.equal(item, ticketClinicRef.value.ticketProcedureList![index])
@@ -667,9 +716,7 @@ const startPrint = async () => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>
-                      {{ formatMoney(tpPrescription.unitExpectedPrice) }}
-                    </b>
+                    <b>{{ formatMoney(tpPrescription.unitExpectedPrice) }}</b>
                     )
                   </div>
                   <div class="mt-2">
@@ -836,9 +883,7 @@ const startPrint = async () => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>
-                      {{ formatMoney(tpConsumable.unitExpectedPrice) }}
-                    </b>
+                    <b>{{ formatMoney(tpConsumable.unitExpectedPrice) }}</b>
                     )
                   </div>
                   <div class="mt-2">
@@ -950,9 +995,7 @@ const startPrint = async () => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>
-                      {{ formatMoney(ticketProcedure.expectedPrice) }}
-                    </b>
+                    <b>{{ formatMoney(ticketProcedure.expectedPrice) }}</b>
                     )
                   </div>
                   <div class="mt-2">
@@ -1050,9 +1093,7 @@ const startPrint = async () => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>
-                      {{ formatMoney(ticketLaboratory.expectedPrice) }}
-                    </b>
+                    <b>{{ formatMoney(ticketLaboratory.expectedPrice) }}</b>
                     )
                   </div>
                   <div class="mt-2">
@@ -1155,9 +1196,7 @@ const startPrint = async () => {
                 <template #title>
                   <div>
                     Chiết khấu (Tiền hàng:
-                    <b>
-                      {{ formatMoney(ticketRadiology.expectedPrice) }}
-                    </b>
+                    <b>{{ formatMoney(ticketRadiology.expectedPrice) }}</b>
                     )
                   </div>
                   <div class="mt-2">
@@ -1219,17 +1258,73 @@ const startPrint = async () => {
       </template>
       <tbody>
         <tr>
+          <td class="text-right" colspan="7">Tổng cộng</td>
+          <td class="text-right whitespace-nowrap">
+            {{ formatMoney(itemsActualMoney) }}
+          </td>
+        </tr>
+        <tr>
+          <td class="text-right" colspan="7">Chiết khấu</td>
+          <td class="text-center" style="width: 40px">
+            <a-popconfirm>
+              <template #cancelButton>
+                <div></div>
+              </template>
+              <template #okButton>
+                <div></div>
+              </template>
+              <template #title>
+                <div>
+                  Chiết khấu (Tổng tiền hiện tại:
+                  <b>{{ formatMoney(itemsActualMoney) }}</b>
+                  )
+                </div>
+                <div class="mt-2">
+                  <div>
+                    <InputNumber
+                      :value="ticketDiscount.discountMoney"
+                      append="VNĐ"
+                      :disabled="
+                        [TicketStatus.Debt, TicketStatus.Completed].includes(
+                          ticketClinicRef.ticketStatus
+                        )
+                      "
+                      @update:value="handleChangeTicketDiscountMoney" />
+                  </div>
+                  <div class="mt-2">
+                    <div class="w-full">
+                      <InputNumber
+                        :value="ticketDiscount.discountPercent"
+                        append="%"
+                        :disabled="
+                          [TicketStatus.Debt, TicketStatus.Completed].includes(
+                            ticketClinicRef.ticketStatus
+                          )
+                        "
+                        @update:value="handleChangeTicketDiscountPercent" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <a-tag
+                v-if="ticketDiscount.discountType === 'VNĐ'"
+                color="success"
+                style="cursor: pointer">
+                {{ formatMoney(ticketDiscount.discountMoney) }}
+              </a-tag>
+              <a-tag
+                v-if="ticketDiscount.discountType === '%'"
+                color="success"
+                style="cursor: pointer">
+                {{ ticketDiscount.discountPercent || 0 }}%
+              </a-tag>
+            </a-popconfirm>
+          </td>
+        </tr>
+        <tr>
           <td class="uppercase text-right font-bold" colspan="7">Tổng tiền</td>
           <td class="font-bold text-right whitespace-nowrap">
-            {{
-              formatMoney(
-                consumableMoney +
-                  prescriptionMoney +
-                  proceduresMoney +
-                  radiologyMoney +
-                  laboratoryMoney
-              )
-            }}
+            {{ formatMoney(itemsActualMoney - ticketDiscount.discountMoney) }}
           </td>
         </tr>
       </tbody>

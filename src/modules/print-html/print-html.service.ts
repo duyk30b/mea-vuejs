@@ -5,8 +5,8 @@ export class PrintHtmlService {
   static loadedAll: boolean = false
   static printHtmlAll: PrintHtml[] = []
 
-  static loadedExample = false
-  static printHtmlExampleList: PrintHtml[] = []
+  static loadedSystem = false
+  static printHtmlSystemList: PrintHtml[] = []
 
   static async getAll() {
     if (!PrintHtmlService.loadedAll) {
@@ -18,22 +18,20 @@ export class PrintHtmlService {
     return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
   }
 
-  static async getExampleList() {
-    if (!PrintHtmlService.loadedExample) {
-      PrintHtmlService.printHtmlExampleList = await PrintHtmlApi.exampleList()
-      PrintHtmlService.loadedExample = true
+  static async getSystemList() {
+    if (!PrintHtmlService.loadedSystem) {
+      PrintHtmlService.printHtmlSystemList = await PrintHtmlApi.systemList()
+      PrintHtmlService.loadedSystem = true
     }
 
-    return PrintHtmlService.printHtmlExampleList
+    return PrintHtmlService.printHtmlSystemList
   }
 
   static async detail(id: number) {
-    await Promise.all([PrintHtmlService.getAll(), PrintHtmlService.getExampleList()])
-    return [...PrintHtmlService.printHtmlAll, ...PrintHtmlService.printHtmlExampleList].find(
-      (i) => {
-        return i.id === id
-      }
-    )
+    await Promise.all([PrintHtmlService.getAll(), PrintHtmlService.getSystemList()])
+    return [...PrintHtmlService.printHtmlAll, ...PrintHtmlService.printHtmlSystemList].find((i) => {
+      return i.id === id
+    })
   }
 
   static async createOne(printHtml: PrintHtml) {

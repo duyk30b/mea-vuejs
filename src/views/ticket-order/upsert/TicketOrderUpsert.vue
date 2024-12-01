@@ -15,12 +15,11 @@ import { Customer, CustomerApi, useCustomerStore } from '../../../modules/custom
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
-import type { TicketAttributeMap } from '../../../modules/ticket-attribute'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { DTimer } from '../../../utils'
+import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketOrderExpenseList from './TicketOrderExpenseList.vue'
@@ -443,10 +442,10 @@ const handleChangeTabs = (activeKey: any) => {
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
-                  - {{ data.phone }} -
+                  - {{ DString.formatPhone(data.phone) }} -
                   {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div>{{ data.addressString }}</div>
+                <div>{{ DString.formatAddress(data) }}</div>
               </template>
             </InputOptions>
           </div>

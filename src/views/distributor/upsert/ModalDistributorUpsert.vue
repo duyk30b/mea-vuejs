@@ -38,22 +38,18 @@ const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
 const openModal = async (instance?: Distributor) => {
-  try {
-    showModal.value = true
-    distributor.value = instance ? Distributor.from(instance) : Distributor.blank()
+  showModal.value = true
+  distributor.value = instance ? Distributor.from(instance) : Distributor.blank()
 
-    provinceList.value = await AddressInstance.getAllProvinces()
-    if (instance?.addressProvince) {
-      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
-      if (instance.addressDistrict) {
-        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-          instance.addressProvince,
-          instance.addressDistrict
-        )
-      }
+  provinceList.value = await AddressInstance.getAllProvinces()
+  if (instance?.addressProvince) {
+    districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
+    if (instance.addressDistrict) {
+      wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+        instance.addressProvince,
+        instance.addressDistrict
+      )
     }
-  } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:57 ~ openModal ~ error:', error)
   }
 }
 
@@ -115,11 +111,7 @@ const handleChangeProvince = async (province: string) => {
     wardList.value = []
     return
   }
-  try {
-    districtList.value = await AddressInstance.getDistrictsByProvince(province)
-  } catch (error) {
-    console.log('🚀 ~ handleChangeProvince ~ error:', error)
-  }
+  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
 const handleChangeDistrict = async (district: string) => {
@@ -127,14 +119,10 @@ const handleChangeDistrict = async (district: string) => {
     wardList.value = []
     return
   }
-  try {
-    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-      distributor.value.addressProvince || '',
-      district
-    )
-  } catch (error) {
-    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
-  }
+  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+    distributor.value.addressProvince || '',
+    district
+  )
 }
 
 defineExpose({ openModal })

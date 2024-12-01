@@ -46,7 +46,7 @@ export const ticketRouter: RouteRecordRaw[] = [
           {
             path: 'list',
             name: 'AppointmentList',
-            component: () => import('../views/appointment/AppointmentList.vue'),
+            component: () => import('../views/appointment/list/AppointmentList.vue'),
             meta: { title: 'Hẹn khám' },
           },
         ],
@@ -69,7 +69,7 @@ export const ticketRouter: RouteRecordRaw[] = [
               import('../views/ticket-clinic/detail/TicketClinicDetailContainer.vue'),
             meta: { title: 'Khám bệnh' },
             redirect: () => {
-              const ticketTypeDefault = useSettingStore().SCREEN_TICKET_CLINIC_LIST.ticketType
+              const ticketTypeDefault = useSettingStore().TICKET_CLINIC_LIST.ticketType
               if (ticketTypeDefault === TicketType.Clinic) {
                 return { name: 'TicketClinicDiagnosisGeneral' }
               }

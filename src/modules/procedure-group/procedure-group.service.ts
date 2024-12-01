@@ -10,28 +10,37 @@ export class ProcedureGroupService {
   static procedureGroupMap: Record<string, ProcedureGroup> = {}
 
   private static async getAll() {
-    if (!ProcedureGroupService.loadedAll) {
-      const { data } = await ProcedureGroupApi.list({ sort: { id: 'ASC' } })
-      const procedureGroupList = data
-      ProcedureGroupService.procedureGroupAll = procedureGroupList
-
-      ProcedureGroupService.procedureGroupMap = arrayToKeyValue(procedureGroupList, 'id')
-      ProcedureGroupService.loadedAll = true
-    }
-
-    return ProcedureGroupService.procedureGroupAll
+    if (ProcedureGroupService.loadedAll) return
+    const { data } = await ProcedureGroupApi.list({ sort: { id: 'ASC' } })
+    ProcedureGroupService.procedureGroupAll = data
+    ProcedureGroupService.loadedAll = true
   }
 
   static async getMap() {
     await ProcedureGroupService.getAll()
-    return ProcedureGroupService.procedureGroupMap
+    return arrayToKeyValue(ProcedureGroupService.procedureGroupAll, 'id')
   }
 
   static async pagination(options: ProcedureGroupPaginationQuery) {
     const page = options.page || 1
     const limit = options.limit || 10
     await ProcedureGroupService.getAll()
-    const data = ProcedureGroupService.procedureGroupAll.slice((page - 1) * limit, page * limit)
+    let data = ProcedureGroupService.procedureGroupAll
+    if (options.filter) {
+      data = data.filter((i) => {
+        return true
+      })
+    }
+    if (options.sort) {
+      if (options.sort?.id) {
+        data.sort((a, b) => {
+          if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
+    data = data.slice((page - 1) * limit, page * limit)
     return {
       data,
       meta: { total: ProcedureGroupService.procedureGroupAll.length },
@@ -40,8 +49,8 @@ export class ProcedureGroupService {
 
   static async list(options: ProcedureGroupListQuery) {
     const filter = options.filter || {}
-    const all = await ProcedureGroupService.getAll()
-    let data = all
+    await ProcedureGroupService.getAll()
+    let data = ProcedureGroupService.procedureGroupAll
     if (options.filter) {
       data = data.filter((i) => {
         return true

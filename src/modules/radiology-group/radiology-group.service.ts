@@ -5,33 +5,26 @@ import { RadiologyGroup } from './radiology-group.model'
 
 export class RadiologyGroupService {
   static loadedAll: boolean = false
-
   static radiologyGroupAll: RadiologyGroup[]
-  static radiologyGroupMap: Record<string, RadiologyGroup> = {}
 
   private static async getAll() {
-    if (!RadiologyGroupService.loadedAll) {
-      const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
-      const radiologyGroupList = data
-      RadiologyGroupService.radiologyGroupAll = radiologyGroupList
-
-      RadiologyGroupService.radiologyGroupMap = arrayToKeyValue(radiologyGroupList, 'id')
-      RadiologyGroupService.loadedAll = true
-    }
-
-    return RadiologyGroupService.radiologyGroupAll
+    if (RadiologyGroupService.loadedAll) return
+    const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
+    RadiologyGroupService.radiologyGroupAll = data
+    RadiologyGroupService.loadedAll = true
   }
 
   static async getMap() {
     await RadiologyGroupService.getAll()
-    return RadiologyGroupService.radiologyGroupMap
+    return arrayToKeyValue(RadiologyGroupService.radiologyGroupAll, 'id')
   }
 
   static async pagination(options: RadiologyGroupPaginationQuery) {
     const page = options.page || 1
     const limit = options.limit || 10
     await RadiologyGroupService.getAll()
-    const data = RadiologyGroupService.radiologyGroupAll.slice((page - 1) * limit, page * limit)
+    let data = RadiologyGroupService.radiologyGroupAll
+    data = data.slice((page - 1) * limit, page * limit)
     return {
       data,
       meta: { total: RadiologyGroupService.radiologyGroupAll.length },
@@ -39,21 +32,15 @@ export class RadiologyGroupService {
   }
 
   static async list(options: RadiologyGroupListQuery) {
-    const filter = options.filter || {}
-    const all = await RadiologyGroupService.getAll()
-    let data = all
+    await RadiologyGroupService.getAll()
+    let data = RadiologyGroupService.radiologyGroupAll
     if (options.filter) {
+      const filter = options.filter || {}
       data = data.filter((i) => {
         return true
       })
     }
     return RadiologyGroup.fromList(data)
-  }
-
-  static async replaceAll(body: RadiologyGroup[]) {
-    const result = await RadiologyGroupApi.replaceAll(body)
-    RadiologyGroupService.loadedAll = false
-    return result
   }
 
   static async createOne(radiologyGroup: RadiologyGroup) {
@@ -70,6 +57,12 @@ export class RadiologyGroupService {
 
   static async destroyOne(id: number) {
     const result = await RadiologyGroupApi.destroyOne(id)
+    RadiologyGroupService.loadedAll = false
+    return result
+  }
+
+  static async replaceAll(body: RadiologyGroup[]) {
+    const result = await RadiologyGroupApi.replaceAll(body)
     RadiologyGroupService.loadedAll = false
     return result
   }

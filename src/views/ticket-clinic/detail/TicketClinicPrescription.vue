@@ -1,25 +1,31 @@
 <script lang="ts" setup>
-import { DeleteOutlined, PlusOutlined, ShoppingCartOutlined } from '@ant-design/icons-vue'
+import { ShoppingCartOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputHint, InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
 import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, useBatchStore } from '../../../modules/batch'
+import { Batch, BatchService } from '../../../modules/batch'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import {
+  type MedicineType,
+  PrescriptionSample,
+  PrescriptionSampleService,
+} from '../../../modules/prescription-sample'
 import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
-import { Product, useProductStore } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
-import { customFilter, DDom, DTimer } from '../../../utils'
 import {
   TicketAttributeKeyAdviceList,
   type TicketAttributeKeyAdviceType,
 } from '../../../modules/ticket-attribute'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
+import { arrayToKeyArray, arrayToKeyValue, DDom, DString, DTimer } from '../../../utils'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -27,10 +33,23 @@ const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const productStore = useProductStore()
-const batchStore = useBatchStore()
 
-const productList = ref<Product[]>([])
+let prescriptionSampleAll: PrescriptionSample[] = []
+let productAll: Product[] = []
+let batchMapAll: Record<string, Batch[]> = {}
+
+const productOptions = ref<
+  {
+    value: number
+    text: string
+    data: {
+      type: 'product' | 'prescriptionSample'
+      product?: Product
+      prescriptionSample?: PrescriptionSample
+    }
+  }[]
+>([])
+
 const batchList = ref<Batch[]>([])
 
 const ticketProductPrescription = ref<TicketProduct>(TicketProduct.blank())
@@ -44,11 +63,31 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicPrescription.vue:42 ~ onMounted')
+  console.log('🚀 ~ file: TicketClinicPrescription.vue:70 ~ onMounted')
   try {
-    await Promise.all([productStore.refreshDB(), batchStore.refreshDB()])
+    const promiseResult = await Promise.all([
+      ProductService.list({}),
+      BatchService.list({ filter: { quantity: { GT: 0 } } }),
+      PrescriptionSampleService.list({}),
+    ])
+    productAll = promiseResult[0]
+    const batchAll = promiseResult[1]
+    prescriptionSampleAll = promiseResult[2]
+
+    batchMapAll = arrayToKeyArray(batchAll, 'productId')
+    const productMap = arrayToKeyValue(productAll, 'id')
+
+    prescriptionSampleAll.forEach((i) => {
+      try {
+        const medicineList: MedicineType[] = JSON.parse(i.medicines)
+        medicineList.forEach((i) => (i.product = productMap[i.productId]))
+        i.medicineList = medicineList.filter((i) => !!i.product)
+      } catch (error) {
+        i.medicineList = []
+      }
+    })
   } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicPrescription.vue:46 ~ onMounted ~ error:', error)
+    console.log('🚀 ~ file: TicketClinicPrescription.vue:90 ~ onMounted ~ error:', error)
   }
 })
 
@@ -109,52 +148,127 @@ const disabledButton = computed(() => {
 })
 
 const searchingProduct = async (text: string) => {
-  productList.value = await productStore.search(text)
   if (!text) {
-    clear()
+    productOptions.value = []
+    return
   }
+
+  const productList = productAll.filter((i) => {
+    return DString.customFilter(i.brandName, text) || DString.customFilter(i.substance, text)
+  })
+  const prescriptionSampleList: PrescriptionSample[] = prescriptionSampleAll.filter((i) => {
+    return DString.customFilter(i.name, text)
+  })
+  productOptions.value = [
+    ...prescriptionSampleList.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: { type: 'prescriptionSample' as any, prescriptionSample: i },
+    })),
+    ...productList.map((i) => {
+      return {
+        value: i.id,
+        text: i.brandName,
+        data: {
+          type: 'product' as any,
+          product: i,
+        },
+      }
+    }),
+  ]
 }
 
 const clear = () => {
   ticketProductPrescription.value = TicketProduct.blank()
-  productList.value = []
   batchList.value = []
 }
 
-const selectProduct = async (instance?: Product) => {
-  if (instance) {
-    const temp = TicketProduct.blank()
-    temp.customerId = ticketClinicRef.value.customerId
-    temp.product = Product.from(instance)
-    temp.productId = instance.id
-    temp.type = TicketProductType.Prescription
-    temp.unitRate = instance.unitDefaultRate
-    temp.expectedPrice = instance.retailPrice
-    temp.actualPrice = instance.retailPrice
-    temp.hintUsage = instance.hintUsage
+const selectProduct = async (productSelect: Product) => {
+  const temp = TicketProduct.blank()
+  temp.customerId = ticketClinicRef.value.customerId
+  temp.product = Product.from(productSelect)
+  temp.productId = productSelect.id
+  temp.type = TicketProductType.Prescription
+  temp.unitRate = productSelect.unitDefaultRate
+  temp.expectedPrice = productSelect.retailPrice
+  temp.actualPrice = productSelect.retailPrice
+  temp.hintUsage = productSelect.hintUsage
 
-    ticketProductPrescription.value = temp
-    if (instance.hasManageBatches) {
-      const batchListResponse = await batchStore.list({
-        filter: {
-          productId: instance.id,
-          quantity: { GT: 0 },
-        },
-      })
-      batchListResponse.forEach((i) => (i.product = instance))
-      batchList.value = batchListResponse
+  ticketProductPrescription.value = temp
+  if (productSelect.hasManageBatches) {
+    batchList.value = batchMapAll[productSelect.id] || []
+    batchList.value.forEach((i) => (i.product = productSelect))
 
-      if (batchListResponse.length) {
-        selectBatch(batchListResponse[0])
-      } else {
-        selectBatch(null)
-      }
-    } else {
-      batchList.value = []
-      selectBatch(null)
-    }
+    selectBatch(batchList.value[0])
   } else {
+    batchList.value = []
+    selectBatch(null)
+  }
+}
+
+const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) => {
+  prescriptionSampleSelect.medicineList.forEach((medicine) => {
+    const productCurrent = medicine.product
+    if (!productCurrent) return
+
+    if (!productCurrent.hasManageBatches) {
+      const temp = TicketProduct.blank()
+      temp.customerId = ticketClinicRef.value.customerId
+      temp.productId = productCurrent.id
+      temp.product = Product.from(productCurrent)
+
+      temp.type = TicketProductType.Prescription
+      temp.unitRate = productCurrent.unitDefaultRate
+      temp.hintUsage = productCurrent.hintUsage
+
+      temp.expectedPrice = productCurrent.retailPrice
+      temp.actualPrice = productCurrent.retailPrice
+      temp.quantity = medicine.quantity || 0
+      temp.quantityPrescription = medicine.quantity || 0
+      ticketProductPrescriptionList.value.push(temp)
+    } else {
+      const batchListCurrent = batchMapAll[productCurrent.id] || []
+      let quantityRemain = medicine.quantity
+      batchListCurrent.forEach((batch) => {
+        if (quantityRemain <= 0) return
+        const quantitySelect = Math.min(quantityRemain, batch.quantity)
+        quantityRemain = quantityRemain - quantitySelect
+
+        const temp = TicketProduct.blank()
+        temp.customerId = ticketClinicRef.value.customerId
+        temp.productId = productCurrent.id
+        temp.batchId = batch.id
+        temp.product = Product.from(productCurrent)
+        temp.batch = Batch.from(batch)
+
+        temp.type = TicketProductType.Prescription
+        temp.unitRate = productCurrent.unitDefaultRate
+        temp.hintUsage = medicine.hintUsage
+
+        temp.expectedPrice = batch.retailPrice
+        temp.actualPrice = batch.retailPrice
+        temp.quantity = quantitySelect
+        temp.quantityPrescription = quantitySelect
+        ticketProductPrescriptionList.value.push(temp)
+      })
+    }
+  })
+}
+
+const selectItemOptions = (dataSelected?: {
+  type: 'product' | 'prescriptionSample'
+  product: Product
+  prescriptionSample: PrescriptionSample
+}) => {
+  if (!dataSelected) {
+    return clear()
+  }
+  if (dataSelected.type === 'product') {
+    selectProduct(dataSelected.product)
+  }
+  if (dataSelected.type === 'prescriptionSample') {
     clear()
+    selectPrescriptionSample(dataSelected.prescriptionSample)
   }
 }
 
@@ -339,27 +453,43 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
       <InputOptions
         ref="inputSearchProduct"
         required
-        :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
+        :options="productOptions"
         :maxHeight="320"
         placeholder="Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
         :disabled="
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
         "
-        @selectItem="({ data }) => selectProduct(data)"
+        @selectItem="({ data }) => selectItemOptions(data)"
         @update:text="searchingProduct">
         <template #option="{ item: { data } }">
-          <div>
-            <b>{{ data.brandName }}</b>
-            -
-            <span style="font-weight: 700" :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
-              {{ data.unitQuantity }}
-            </span>
-            {{ data.unitDefaultName }}
-            - Giá
-            <span style="font-weight: 600">{{ formatMoney(data.unitRetailPrice) }}</span>
-            /{{ data.unitDefaultName }}
+          <div v-if="data.type === 'product'">
+            <div>
+              <b>{{ data.product.brandName }}</b>
+              -
+              <span
+                style="font-weight: 700"
+                :class="data.product.unitQuantity <= 0 ? 'text-red-500' : ''">
+                {{ data.product.unitQuantity }}
+              </span>
+              {{ data.product.unitDefaultName }}
+              - Giá
+              <span style="font-weight: 600">{{ formatMoney(data.product.unitRetailPrice) }}</span>
+              /{{ data.product.unitDefaultName }}
+            </div>
+            <div>{{ data.product.substance }}</div>
           </div>
-          <div>{{ data.substance }}</div>
+          <div v-if="data.type === 'prescriptionSample'">
+            <b>-- {{ data.prescriptionSample.name }}</b>
+            <div style="font-size: 13px; font-style: italic">
+              {{
+                data.prescriptionSample.medicineList
+                  .map((i: MedicineType) => {
+                    return `${i.product?.brandName} (${i.quantity} ${i.product?.unitBasicName})`
+                  })
+                  .join(', ')
+              }}
+            </div>
+          </div>
         </template>
       </InputOptions>
     </div>
@@ -460,16 +590,16 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
           ...settingStore.PRODUCT_HINT_USAGE,
         ]"
         :maxHeight="320"
-        :logic-filter="(item: any, text: string) => customFilter(item, text)"></InputHint>
+        :logic-filter="(item: any, text: string) => DString.customFilter(item, text)"></InputHint>
     </div>
     <div class="mt-4 flex justify-center">
       <VueButton
+        icon="plus"
         :disabled="
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
         "
         color="blue"
         type="submit">
-        <PlusOutlined />
         Thêm vào đơn
       </VueButton>
     </div>
@@ -553,17 +683,18 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="tpItem.quantityPrescription <= 0"
+                  type="button"
                   @click="changeQuantityTable(index, tpItem.unitQuantityPrescription - 1)">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
                   <InputNumber
                     :value="tpItem.unitQuantityPrescription"
-                    textAlign="right"
                     @update:value="(value) => changeQuantityTable(index, value)" />
                 </div>
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                  type="button"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   @click="changeQuantityTable(index, tpItem.unitQuantityPrescription + 1)">
                   <font-awesome-icon :icon="['fas', 'plus']" />
@@ -583,7 +714,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
                 v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered && tpItem.quantity == 0"
                 class="text-red-500"
                 @click="destroyTicketProductZeroQuantity(tpItem.id)">
-                <DeleteOutlined />
+                <IconTrash />
               </a>
               <a
                 v-else-if="
@@ -596,7 +727,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
                 "
                 class="text-red-500"
                 @click="ticketProductPrescriptionList!.splice(index, 1)">
-                <DeleteOutlined />
+                <IconTrash />
               </a>
               <a-tooltip
                 v-else-if="

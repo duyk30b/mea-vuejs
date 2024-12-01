@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputHint, InputText } from '../../../common/vue-form'
+import { InputDate, InputHint, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -14,6 +14,7 @@ import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
+import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
@@ -24,7 +25,6 @@ const emit = defineEmits<{
 
 const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
-const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -32,15 +32,19 @@ const showModal = ref(false)
 const customer = ref<Customer>(Customer.blank())
 const saveLoading = ref(false)
 
+const customerSourceAll = ref<CustomerSource[]>([])
+
 const provinceList = ref<string[]>([])
 const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
 const openModal = async (instance?: Customer) => {
-  try {
-    showModal.value = true
-    customer.value = instance ? Customer.from(instance) : Customer.blank()
-
+  showModal.value = true
+  customer.value = instance ? Customer.from(instance) : Customer.blank()
+  if (settingStore.SCREEN_CUSTOMER_UPSERT.customerSource) {
+    customerSourceAll.value = await CustomerSourceService.list({})
+  }
+  if (settingStore.SCREEN_CUSTOMER_UPSERT.addressFull) {
     provinceList.value = await AddressInstance.getAllProvinces()
     if (instance?.addressProvince) {
       districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
@@ -51,8 +55,6 @@ const openModal = async (instance?: Customer) => {
         )
       }
     }
-  } catch (error: any) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:50 ~ openModal ~ error:', error)
   }
 }
 
@@ -117,11 +119,7 @@ const handleChangeProvince = async (province: string) => {
     wardList.value = []
     return
   }
-  try {
-    districtList.value = await AddressInstance.getDistrictsByProvince(province)
-  } catch (error) {
-    console.log('🚀 ~ handleChangeProvince ~ error:', error)
-  }
+  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
 const handleChangeDistrict = async (district: string) => {
@@ -129,14 +127,10 @@ const handleChangeDistrict = async (district: string) => {
     wardList.value = []
     return
   }
-  try {
-    wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-      customer.value.addressProvince,
-      district
-    )
-  } catch (error) {
-    console.log('🚀 ~ handleChangeDistrict ~ error:', error)
-  }
+  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
+    customer.value.addressProvince,
+    district
+  )
 }
 
 defineExpose({ openModal })
@@ -169,9 +163,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.phone"
-          style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+        <div style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
           <div>Số điện thoại</div>
           <div>
             <InputText
@@ -189,6 +181,7 @@ defineExpose({ openModal })
           <div>
             <InputDate
               v-model:value="customer.birthday"
+              v-model:year="customer.yearOfBirth"
               format="DD/MM/YYYY"
               type-parser="number"
               class="w-full" />
@@ -208,18 +201,11 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="
-            settingStore.SCREEN_CUSTOMER_UPSERT.addressProvince ||
-            settingStore.SCREEN_CUSTOMER_UPSERT.addressDistrict ||
-            settingStore.SCREEN_CUSTOMER_UPSERT.addressWard ||
-            settingStore.SCREEN_CUSTOMER_UPSERT.addressStreet
-          "
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressFull"
           style="flex-basis: 80%; flex-grow: 1">
           <div>Địa chỉ</div>
-          <div class="flex flex-wrap gap-4">
-            <div
-              v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressProvince"
-              style="flex-basis: 30%; flex-grow: 1; min-width: 200px">
+          <div class="flex flex-wrap gap-x-4 gap-y-2">
+            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
               <InputHint
                 v-model:value="customer.addressProvince"
                 :options="provinceList"
@@ -228,9 +214,7 @@ defineExpose({ openModal })
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
                 @update:value="handleChangeProvince" />
             </div>
-            <div
-              v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressDistrict"
-              style="flex-basis: 30%; flex-grow: 1; min-width: 200px">
+            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
               <InputHint
                 v-model:value="customer.addressDistrict"
                 :maxHeight="180"
@@ -239,9 +223,7 @@ defineExpose({ openModal })
                 placeholder="Quận / Huyện"
                 @update:value="handleChangeDistrict" />
             </div>
-            <div
-              v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressWard"
-              style="flex-basis: 30%; flex-grow: 1; min-width: 200px">
+            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
               <InputHint
                 v-model:value="customer.addressWard"
                 :maxHeight="180"
@@ -250,13 +232,20 @@ defineExpose({ openModal })
                 :logic-filter="(item: string, text: string) => customFilter(item, text)" />
             </div>
 
-            <div
-              v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressStreet"
-              style="flex-basis: 90%; flex-grow: 1; min-width: 300px">
+            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
               <InputText
                 v-model:value="customer.addressStreet"
                 placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
             </div>
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressBasic"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+          <div>Địa chỉ</div>
+          <div>
+            <InputText v-model:value="customer.addressStreet" placeholder="" />
           </div>
         </div>
 
@@ -271,14 +260,27 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.customerSource"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+          <div>Nguồn khách hàng</div>
+          <div>
+            <VueSelect
+              v-model:value="customer.customerSourceId"
+              :options="customerSourceAll.map((i) => ({ text: i.name, value: i.id }))"></VueSelect>
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.note"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
           <div>Ghi chú</div>
           <div style="flex: 1">
             <InputText v-model:value="customer.note" />
           </div>
         </div>
 
-        <div class="flex items-center mt-3">
+        <div style="flex-basis: 90%; flex-grow: 1; min-width: 300px" class="flex">
           <div class="w-[100px] flex-none">Active</div>
           <a-switch
             :checked="Boolean(customer.isActive)"

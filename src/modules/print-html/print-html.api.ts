@@ -21,12 +21,6 @@ export class PrintHtmlApi {
     }
   }
 
-  static async exampleList() {
-    const response = await AxiosInstance.get('/print-html/example-list')
-    const { data, time } = response.data as BaseResponse
-    return PrintHtml.fromList(data)
-  }
-
   static async getList(options: PrintHtmlGetListQuery) {
     const params = PrintHtmlGetQuery.toQuery(options)
 
@@ -79,5 +73,11 @@ export class PrintHtmlApi {
     const response = await AxiosInstance.delete(`/print-html/destroy/${id}`)
     const { data, meta } = response.data as BaseResponse<boolean>
     return data
+  }
+
+  static async systemList() {
+    const response = await AxiosInstance.get('/print-html/system-list')
+    const { data, time } = response.data as BaseResponse
+    return PrintHtml.fromList(data)
   }
 }

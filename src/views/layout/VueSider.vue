@@ -150,6 +150,12 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryList">
         <router-link :to="{ name: 'LaboratoryList' }">Xét nghiệm</router-link>
       </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryKitList">
+        <router-link :to="{ name: 'LaboratoryKitList' }">Bộ xét nghiệm</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]" key="PrescriptionSampleList">
+        <router-link :to="{ name: 'PrescriptionSampleList' }">Đơn thuốc mẫu</router-link>
+      </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
         <router-link :to="{ name: 'RadiologyList' }">Phiếu CĐHA</router-link>
       </a-menu-item>

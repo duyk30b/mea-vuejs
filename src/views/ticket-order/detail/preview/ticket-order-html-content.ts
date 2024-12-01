@@ -1,7 +1,7 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Ticket } from '../../../../modules/ticket'
-import { timeToText } from '../../../../utils'
+import { DString, DTimer } from '../../../../utils'
 
 export const ticketOrderHtmlContent = (ticket: Ticket) => {
   const settingStore = useSettingStore()
@@ -179,7 +179,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
           </tr>
           <tr>
             <td>Địa chỉ: </td>
-            <td>  ${ticket.customer?.addressString} </td>
+            <td>  ${DString.formatAddress(ticket.customer)} </td>
           </tr>
         </table>
         <table class="data">
@@ -210,7 +210,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
           </tbody>
         </table>
         <div style="text-align:right; font-style:italic; margin-top: 1rem">
-          ${timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
+          ${DTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
         </div>
         <table style="width: 100%; margin-top: 0.5rem">
           <tr>

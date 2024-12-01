@@ -12,7 +12,7 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'list',
           name: 'ProcedureList',
-          component: () => import('../views/procedure/list/ProcedureList.vue'),
+          component: () => import('../views/master-data/procedure/list/ProcedureList.vue'),
           meta: { title: 'Dịch vụ' },
         },
       ],
@@ -27,6 +27,33 @@ export const masterDataRouter: RouteRecordRaw = {
           name: 'LaboratoryList',
           component: () => import('../views/master-data/laboratory/list/LaboratoryList.vue'),
           meta: { title: 'Xét nghiệm' },
+        },
+      ],
+    },
+    {
+      path: 'laboratory-kit',
+      name: 'LaboratoryKit',
+      redirect: () => ({ name: 'LaboratoryKitList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'LaboratoryKitList',
+          component: () => import('../views/master-data/laboratory-kit/list/LaboratoryKitList.vue'),
+          meta: { title: 'Bộ xét nghiệm' },
+        },
+      ],
+    },
+    {
+      path: 'prescription-sample',
+      name: 'PrescriptionSample',
+      redirect: () => ({ name: 'PrescriptionSampleList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'PrescriptionSampleList',
+          component: () =>
+            import('../views/master-data/prescription-sample/list/PrescriptionSampleList.vue'),
+          meta: { title: 'Bộ xét nghiệm' },
         },
       ],
     },

@@ -2,27 +2,15 @@ export class Distributor {
   id: number
   fullName: string
   phone?: string
-  addressProvince?: string
-  addressDistrict?: string
-  addressWard?: string
-  addressStreet?: string
+  addressProvince: string
+  addressDistrict: string
+  addressWard: string
+  addressStreet: string
   debt: number
   note?: string
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
   deletedAt: number
-
-  get addressString() {
-    return [this.addressWard, this.addressDistrict, this.addressProvince]
-      .filter((i) => !!i)
-      .join(' - ')
-      .replace('Tỉnh', '')
-      .replace('Thành phố', '')
-      .replace('Quận ', '')
-      .replace('Huyện ', '')
-      .replace('Phường ', '')
-      .replace('Xã ', '')
-  }
 
   static init(): Distributor {
     const ins = new Distributor()

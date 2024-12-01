@@ -19,9 +19,9 @@ let firstLoad = true
 
 const startFetchData = async () => {
   try {
-    printHtmlList.value = await PrintHtmlService.getExampleList()
+    printHtmlList.value = await PrintHtmlService.getSystemList()
   } catch (error) {
-    console.log('🚀 ~ file: ModalSelectTicketExample.vue:37 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: ModalSelectPrintHtmlExample.vue:24 ~ startFetchData ~ error:', error)
   }
 }
 

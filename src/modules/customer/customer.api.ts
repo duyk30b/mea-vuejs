@@ -46,6 +46,7 @@ export class CustomerApi {
       fullName: customer.fullName,
       phone: customer.phone,
       birthday: customer.birthday,
+      yearOfBirth: customer.yearOfBirth,
       gender: customer.gender,
       addressProvince: customer.addressProvince,
       addressDistrict: customer.addressDistrict,
@@ -54,6 +55,7 @@ export class CustomerApi {
       relative: customer.relative, // người thân
       healthHistory: customer.healthHistory, // Tiền sử bệnh
       note: customer.note,
+      customerSourceId: customer.customerSourceId || 0,
       isActive: customer.isActive, // Trạng thái
     })
     const { data } = response.data as BaseResponse<{ customer: any }>
@@ -64,7 +66,8 @@ export class CustomerApi {
     const response = await AxiosInstance.patch(`/customer/update/${id}`, {
       fullName: customer.fullName,
       phone: customer.phone,
-      birthday: customer.birthday,
+      birthday: customer.birthday || null,
+      yearOfBirth: customer.yearOfBirth || null,
       gender: customer.gender,
       addressProvince: customer.addressProvince,
       addressDistrict: customer.addressDistrict,
@@ -73,6 +76,7 @@ export class CustomerApi {
       relative: customer.relative, // người thân
       healthHistory: customer.healthHistory, // Tiền sử bệnh
       note: customer.note,
+      customerSourceId: customer.customerSourceId || 0,
       isActive: customer.isActive, // Trạng thái
     })
     const { data } = response.data as BaseResponse<{ customer: any }>

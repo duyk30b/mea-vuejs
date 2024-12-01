@@ -141,7 +141,7 @@ export const useProductStore = defineStore('product-store', {
     },
 
     async search(text: string) {
-      if (!text) return []
+      if (!text) text = ''
       const objects = await ProductDB.findManyBy({
         $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
         isActive: 1,

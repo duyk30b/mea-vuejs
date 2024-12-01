@@ -8,6 +8,7 @@ import IconClearCircle from '../icon/IconClearCircle.vue'
 const props = withDefaults(
   defineProps<{
     value?: string | number | Date | null
+    year?: number
     typeParser?: 'number' | 'string' | 'object'
     disabled?: boolean
     defaultType?: 'date' | 'month' | 'year'
@@ -15,6 +16,7 @@ const props = withDefaults(
   }>(),
   {
     value: undefined,
+    year: undefined,
     typeParser: 'string',
     disabled: false,
     defaultType: 'date',
@@ -23,6 +25,7 @@ const props = withDefaults(
 )
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | Date | null | undefined): void
+  (e: 'update:year', value: number | undefined): void
   (e: 'selectTime', value: string | number | Date | null | undefined): void
 }>()
 
@@ -38,19 +41,18 @@ const showDatePicker = ref<boolean>(false)
 
 onMounted(() => {
   watch(
-    () => props.value,
-    (newValue, oldValue) => {
-      const newDate = new Date(newValue as any)
-      if (newValue === null || newDate.toString() == 'Invalid Date') {
-        inputYear.value!.innerHTML = ''
-        inputMonth.value!.innerHTML = ''
-        inputDate.value!.innerHTML = ''
-
+    () => [props.value, props.year],
+    ([newTime, newYear], oldValue) => {
+      const newDate = new Date(newTime as any)
+      if (newTime === null || newDate.toString() == 'Invalid Date') {
         if (props.showTime) {
           inputHour.value!.innerHTML = ''
           inputMinute.value!.innerHTML = ''
           inputSecond.value!.innerHTML = ''
         }
+        inputDate.value!.innerHTML = ''
+        inputMonth.value!.innerHTML = ''
+        inputYear.value!.innerHTML = newYear != null ? newYear.toString() : ''
         return
       }
       const currentTime = getCurrentTime({ requireLength: true })
@@ -137,7 +139,13 @@ const handleBlur = (e: Event, LENGTH = 2) => {
   target.innerHTML = newValue
 
   const time = getCurrentTime({ requireLength: true })
-  if (!time) return
+  if (!time) {
+    const year = getCurrentYear()
+    if (year != null) {
+      emit('update:year', year)
+    }
+    return
+  }
   if (props.typeParser === 'number') {
     emit('update:value', time.getTime())
   }
@@ -153,7 +161,13 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Enter') {
     e.preventDefault() // Ngăn hành vi mặc định của phím Enter
     const time = getCurrentTime({ requireLength: false })
-    if (!time) return
+    if (!time) {
+      const year = getCurrentYear()
+      if (year != null) {
+        emit('update:year', year)
+      }
+      return
+    }
     if (props.typeParser === 'number') {
       emit('update:value', time.getTime())
       emit('selectTime', time.getTime())
@@ -175,7 +189,14 @@ const handleValueDatePicker = (value: number) => {
 }
 
 const getCurrentTime = (options: { requireLength: boolean }) => {
-  if (!inputDate.value || !inputMonth.value || !inputYear.value) {
+  if (
+    !inputDate.value ||
+    !inputMonth.value ||
+    !inputYear.value ||
+    !inputDate.value.innerHTML ||
+    !inputMonth.value.innerHTML ||
+    !inputYear.value.innerHTML
+  ) {
     return undefined
   }
 
@@ -203,12 +224,28 @@ const getCurrentTime = (options: { requireLength: boolean }) => {
   return time
 }
 
+const getCurrentYear = () => {
+  if (!inputYear.value || !inputYear.value.innerHTML) {
+    return undefined
+  }
+  return Number(inputYear.value.innerHTML)
+}
+
 const handleClickOutside = () => {
   showDatePicker.value = false
 }
 
 const handleClickClear = () => {
+  inputDate.value!.innerHTML = ''
+  inputMonth.value!.innerHTML = ''
+  inputYear.value!.innerHTML = ''
+  if (props.showTime) {
+    inputHour.value!.innerHTML = ''
+    inputMinute.value!.innerHTML = ''
+    inputSecond.value!.innerHTML = ''
+  }
   emit('update:value', undefined)
+  emit('update:year', undefined)
   emit('selectTime', undefined)
 }
 </script>

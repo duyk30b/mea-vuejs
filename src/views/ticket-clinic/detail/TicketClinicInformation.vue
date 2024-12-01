@@ -1,24 +1,24 @@
 <script lang="ts" setup>
-import { IdcardOutlined, PhoneOutlined, WarningOutlined } from '@ant-design/icons-vue'
-import { nextTick, onBeforeMount, ref, watch } from 'vue'
+import { PhoneOutlined, WarningOutlined } from '@ant-design/icons-vue'
+import { ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClock, IconDollar, IconFileSearch, IconSend } from '../../../common/icon'
+import { InputOptions } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment } from '../../../modules/appointment'
+import { Customer, CustomerService } from '../../../modules/customer'
 import { PaymentViewType } from '../../../modules/enum'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../modules/ticket'
 import { ticketClinicRef, ticketRefDeliveryStatus } from '../../../modules/ticket-clinic'
-import { DTimer } from '../../../utils'
+import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
-import { Customer, CustomerService, useCustomerStore } from '../../../modules/customer'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { InputOptions } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -131,10 +131,10 @@ const handleClickModalRegisterAppointment = () => {
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.fullName }}</b>
-              - {{ data.phone }} -
+              - {{ DString.formatPhone(data.phone) }} -
               {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
             </div>
-            <div>{{ data.addressString }}</div>
+            <div>{{ DString.formatAddress(data) }}</div>
           </template>
         </InputOptions>
       </div>
@@ -143,9 +143,9 @@ const handleClickModalRegisterAppointment = () => {
     <div class="mt-2 flex justify-between">
       <div class="">
         <PhoneOutlined />
-        <span class="ml-4">{{ ticketClinicRef.customer?.phone }}</span>
+        <span class="ml-4">{{ DString.formatPhone(ticketClinicRef.customer?.phone) }}</span>
       </div>
-      <div>{{ ticketClinicRef.customer?.addressString }}</div>
+      <div>{{ DString.formatAddress(ticketClinicRef.customer!) }}</div>
     </div>
     <div class="mt-2">
       <WarningOutlined />

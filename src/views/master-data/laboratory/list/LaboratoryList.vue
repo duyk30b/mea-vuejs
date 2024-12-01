@@ -11,10 +11,10 @@ import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/lab
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
-import type ModalCopyLaboratoryExample from './ModalCopyLaboratoryExample.vue'
+import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 
-const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratoryExample>>()
+const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
 const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
 
@@ -50,7 +50,7 @@ const startFetchData = async () => {
         laboratoryGroupId: laboratoryGroupId.value ? laboratoryGroupId.value : undefined,
         name: searchText.value ? { LIKE: searchText.value } : undefined,
       },
-      sort: { id: 'DESC' },
+      sort: { priority: 'ASC' },
     })
 
     laboratoryList.value = data
@@ -80,7 +80,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 onBeforeMount(async () => {
   try {
     await startFetchData()
-    laboratoryGroupAll.value = await LaboratoryGroupService.getAll()
+    laboratoryGroupAll.value = await LaboratoryGroupService.list({})
   } catch (error) {
     console.log('🚀 ~ file: LaboratoryList.vue:86 ~ onBeforeMount ~ error:', error)
   }
@@ -90,14 +90,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'LABORATORY_GROUP_MANAGER') {
     modalLaboratoryGroupManager.value?.openModal()
   }
+  if (menu.key === 'COPY_FROM_SYSTEM') {
+    modalCopyLaboratoryExample.value?.openModal()
+  }
 }
 
-const handleModalCopyLaboratoryExampleSuccess = async (menu: { key: string }) => {
+const handleModalCopyLaboratorySystemSuccess = async () => {
   await startFetchData()
 }
 
 const handleModalLaboratoryGroupManagerSuccess = async () => {
-  laboratoryGroupAll.value = await LaboratoryGroupService.getAll()
+  laboratoryGroupAll.value = await LaboratoryGroupService.list({})
 }
 
 const handleModalLaboratoryUpsertSuccess = async () => {
@@ -109,9 +112,9 @@ const handleModalLaboratoryUpsertSuccess = async () => {
   <ModalLaboratoryUpsert
     ref="modalLaboratoryUpsert"
     @success="handleModalLaboratoryUpsertSuccess" />
-  <!-- <ModalCopyLaboratoryExample
+  <ModalCopyLaboratorySystem
     ref="modalCopyLaboratoryExample"
-    @success="handleModalCopyLaboratoryExampleSuccess" /> -->
+    @success="handleModalCopyLaboratorySystemSuccess" />
   <ModalLaboratoryGroupManager
     ref="modalLaboratoryGroupManager"
     @success="handleModalLaboratoryGroupManagerSuccess" />
@@ -128,13 +131,6 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         @click="modalLaboratoryUpsert?.openModal()">
         Thêm mới
       </VueButton>
-      <!-- <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
-        color="blue"
-        icon="plus"
-        @click="modalCopyLaboratoryExample?.openModal()">
-        Copy từ danh sách mẫu
-      </VueButton> -->
     </div>
     <div>
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
@@ -144,6 +140,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="LABORATORY_GROUP_MANAGER">Quản lý nhóm xét nghiệm</a-menu-item>
+            <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -175,13 +172,13 @@ const handleModalLaboratoryUpsertSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th>Mã</th>
+            <th>STT</th>
             <th>Tên</th>
             <th>Nhóm</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá tiền</th>
-            <th>Action</th>
+            <th v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -203,10 +200,11 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
-            <td class="text-center">L{{ laboratory.id }}</td>
+            <td class="text-center">{{ laboratory.priority }}</td>
             <td>
-              <div class="flex items-center gap-1">
-                <span>{{ laboratory.name }}</span>
+              <div>{{ laboratory.name }}</div>
+              <div style="font-style: italic; font-size: 0.9em">
+                {{ laboratory.children?.map((i) => i.name).join(', ') }}
               </div>
             </td>
             <td class="text-center">

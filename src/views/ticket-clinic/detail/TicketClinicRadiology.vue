@@ -50,7 +50,7 @@ const disabledButton = computed(() => {
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicRadiology.vue:54 ~ onMounted ~ onMounted:')
   try {
-    radiologyAll = await RadiologyService.getAll()
+    radiologyAll = await RadiologyService.list({})
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }

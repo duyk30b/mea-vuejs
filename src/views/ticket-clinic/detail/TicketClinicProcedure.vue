@@ -8,22 +8,24 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, useProcedureStore } from '../../../modules/procedure'
+import { Procedure, ProcedureService } from '../../../modules/procedure'
 import { TicketStatus } from '../../../modules/ticket'
-import { TicketProcedure } from '../../../modules/ticket-procedure'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { TicketProcedure } from '../../../modules/ticket-procedure'
+import { DString } from '../../../utils'
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const procedureList = ref<Procedure[]>([])
-const procedureStore = useProcedureStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
+let procedureAll: Procedure[] = []
+const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
 const ticketProcedureList = ref<TicketProcedure[]>([])
+
 watch(
   () => ticketClinicRef.value.ticketProcedureList!,
   (newValue: TicketProcedure[]) => {
@@ -44,14 +46,16 @@ const disabledButton = computed(() => {
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
-    await procedureStore.refreshDB()
+    procedureAll = await ProcedureService.list({})
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
 
 const searchingProcedure = async (text: string) => {
-  procedureList.value = await procedureStore.search(text)
+  procedureOptions.value = procedureAll
+    .filter((i) => DString.customFilter(i.name, text))
+    .map((i) => ({ value: i.id, text: i.name, data: i }))
 }
 
 const selectProcedure = (instance?: Procedure) => {
@@ -71,7 +75,7 @@ const selectProcedure = (instance?: Procedure) => {
     ticketProcedureList.value.push(ticketProcedure)
   }
 
-  procedureList.value = []
+  procedureOptions.value = []
   if (!isMobile) {
     inputSearchProcedure.value?.focus()
   }
@@ -99,7 +103,7 @@ const saveTicketProcedureList = async () => {
   <div style="height: 40px">
     <InputOptions
       ref="inputSearchProcedure"
-      :options="procedureList.map((i) => ({ value: i.id, text: i.name, data: i }))"
+      :options="procedureOptions"
       :maxHeight="320"
       placeholder="Tìm kiếm tên dịch vụ"
       clear-after-selected

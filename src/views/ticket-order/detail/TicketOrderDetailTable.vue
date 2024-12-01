@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketStatus } from '../../../modules/ticket'
 import { timeToText } from '../../../utils'
-import ModalProcedureDetail from '../../../views/procedure/detail/ModalProcedureDetail.vue'
+import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
 

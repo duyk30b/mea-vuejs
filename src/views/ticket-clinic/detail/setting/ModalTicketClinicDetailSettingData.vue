@@ -112,7 +112,7 @@ defineExpose({ openModal })
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-if="settingStore.SCREEN_TICKET_CLINIC_LIST.ticketType === TicketType.Eye">
+                    <tr v-if="settingStore.TICKET_CLINIC_LIST.ticketType === TicketType.Eye">
                       <td>Đo thị lực</td>
                       <td>
                         <div>

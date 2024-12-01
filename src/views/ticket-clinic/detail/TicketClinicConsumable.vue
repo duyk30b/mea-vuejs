@@ -62,9 +62,10 @@ onMounted(async () => {
 })
 
 const searchingProduct = async (text: string) => {
-  productList.value = await productStore.search(text)
   if (!text) {
     clear()
+  } else {
+    productList.value = await productStore.search(text)
   }
 }
 

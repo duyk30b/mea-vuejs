@@ -9,7 +9,7 @@ import type { Procedure } from '../../../modules/procedure'
 import type { Product } from '../../../modules/product'
 import type { TicketProduct } from '../../../modules/ticket-product'
 import { timeToText } from '../../../utils'
-import ModalProcedureDetail from '../../procedure/detail/ModalProcedureDetail.vue'
+import ModalProcedureDetail from '../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { ticket } from './ticket-order-upsert.ref'
 

@@ -1,57 +1,53 @@
-import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { CustomerSourceApi } from './customer-source.api'
-import type { CustomerSource } from './customer-source.model'
+import type { CustomerSourceListQuery } from './customer-source.dto'
+import { CustomerSource } from './customer-source.model'
 
 export class CustomerSourceService {
-  static timeSync: string = ''
+  static loadedAll: boolean = false
   static customerSourceAll: CustomerSource[]
 
-  static async getAll() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER_SOURCE')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'CUSTOMER_SOURCE',
-        dataVersion: 0,
-        time: new Date(0).toISOString(),
+  private static async getAll() {
+    try {
+      if (!CustomerSourceService.loadedAll) {
+        const { data } = await CustomerSourceApi.list({})
+        const productGroupList = data
+        CustomerSourceService.customerSourceAll = productGroupList
+        CustomerSourceService.loadedAll = true
       }
+      return CustomerSourceService.customerSourceAll
+    } catch (error) {
+      console.log('🚀 ~ file: customer-source.service.ts:20 ~ getAll ~ error:', error)
+      return []
     }
-    if (refreshTime.time !== CustomerSourceService.timeSync) {
-      const now = new Date().toISOString()
-      refreshTime.time = now
-      CustomerSourceService.timeSync = now
-      const fetchData = await CustomerSourceApi.list({})
-      CustomerSourceService.customerSourceAll = fetchData.data
-      await RefreshTimeDB.upsertOne(refreshTime)
-    }
-
-    return CustomerSourceService.customerSourceAll
   }
 
-  static async updateTimeSyncDB() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('CUSTOMER_SOURCE')
-    if (!refreshTime) {
-      refreshTime = {
-        code: 'CUSTOMER_SOURCE',
-        dataVersion: 0,
-        time: '',
-      }
+  static async list(options: CustomerSourceListQuery) {
+    const filter = options.filter || {}
+    const all = await CustomerSourceService.getAll()
+    let data = all
+    if (options.filter) {
+      data = data.filter((i) => {
+        return true
+      })
     }
-    refreshTime.time = new Date().toISOString()
-    await RefreshTimeDB.upsertOne(refreshTime)
+    return CustomerSource.fromList(data)
   }
 
   static async createOne(customerSource: CustomerSource) {
-    await CustomerSourceService.updateTimeSyncDB()
-    return await CustomerSourceApi.createOne(customerSource)
+    const result = await CustomerSourceApi.createOne(customerSource)
+    CustomerSourceService.loadedAll = false
+    return result
   }
 
   static async updateOne(id: number, customerSource: CustomerSource) {
-    await CustomerSourceService.updateTimeSyncDB()
-    return await CustomerSourceApi.updateOne(id, customerSource)
+    const result = await CustomerSourceApi.updateOne(id, customerSource)
+    CustomerSourceService.loadedAll = false
+    return result
   }
 
   static async destroyOne(id: number) {
-    await CustomerSourceService.updateTimeSyncDB()
-    return await CustomerSourceApi.destroyOne(id)
+    const result = await CustomerSourceApi.destroyOne(id)
+    CustomerSourceService.loadedAll = false
+    return result
   }
 }

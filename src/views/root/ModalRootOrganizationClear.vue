@@ -3,11 +3,9 @@ import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { Organization } from '../../modules/organization'
-import type { PermissionId } from '../../modules/permission/permission.enum'
-import type { Permission } from '../../modules/permission/permission.model'
-import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
+import { Organization } from '../../modules/organization'
+import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -25,7 +23,10 @@ const tableNameMap: Record<string, any> = {
   Distributor: 1,
   DistributorPayment: 1,
   Image: 0,
-  Organization: 0,
+  Laboratory: 0,
+  LaboratoryGroup: 0,
+  LaboratoryKit: 0,
+  PrescriptionSample: 0,
   PrintHtml: 0,
   Procedure: 0,
   ProcedureGroup: 0,
@@ -41,13 +42,13 @@ const tableNameMap: Record<string, any> = {
   TicketAttribute: 1,
   TicketDiagnosis: 1,
   TicketExpense: 1,
+  TicketLaboratory: 1,
   TicketProcedure: 1,
   TicketProduct: 1,
   TicketRadiology: 1,
   TicketSurcharge: 1,
   TicketUser: 1,
   Ticket: 1,
-  User: 0,
   UserRole: 0,
   Warehouse: 0,
 }
@@ -105,6 +106,16 @@ defineExpose({ openModal })
         <div>Chọn bảng Database cần xóa</div>
         <div class="mt-4">
           <a-checkbox-group v-model:value="tableNameListClear">
+            <div>
+              <a-checkbox value="Organization">
+                <span style="font-weight: bold; color: red">ORGANIZATION</span>
+              </a-checkbox>
+            </div>
+            <div>
+              <a-checkbox value="User">
+                <span style="font-weight: bold; color: red">USER</span>
+              </a-checkbox>
+            </div>
             <div v-for="tableName in tableNameAll" :key="tableName" class="mb-3">
               <a-checkbox :value="tableName">{{ tableName }}</a-checkbox>
             </div>

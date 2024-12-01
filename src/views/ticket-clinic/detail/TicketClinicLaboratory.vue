@@ -2,21 +2,22 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconPrint } from '../../../common/icon'
-import { IconDelete, IconEditSquare, IconVisibility } from '../../../common/icon-google'
+import { IconDelete, IconEditSquare } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../modules/laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../../../modules/laboratory-group'
+import { LaboratoryKit, LaboratoryKitService } from '../../../modules/laboratory-kit'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketLaboratory } from '../../../modules/ticket-laboratory'
-import { arrayToKeyValue, customFilter, DDom } from '../../../utils'
+import { arrayToKeyValue, DDom, DString } from '../../../utils'
 import ModalTicketLaboratoryResult from './modal/ModalTicketLaboratoryResult.vue'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../modules/laboratory-group'
 
 const modalTicketLaboratoryResult = ref<InstanceType<typeof ModalTicketLaboratoryResult>>()
 const inputSearchLaboratory = ref<InstanceType<typeof InputOptions>>()
@@ -24,16 +25,29 @@ const inputSearchLaboratory = ref<InstanceType<typeof InputOptions>>()
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
 
-const laboratoryAll = ref<Laboratory[]>([])
-const laboratoryMap = ref<Record<string, Laboratory>>({})
+let laboratoryAll: Laboratory[] = []
+
+let laboratoryKitAll: LaboratoryKit[] = []
 let laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
-const laboratory = ref(Laboratory.blank())
-const laboratoryList = ref<Laboratory[]>([])
+const laboratoryMap = ref<Record<string, Laboratory>>({})
+
+const laboratoryOptions = ref<
+  {
+    value: number
+    text: string
+    data: {
+      type: 'laboratory' | 'laboratoryKit'
+      laboratory?: Laboratory
+      laboratoryKit?: LaboratoryKit
+    }
+  }[]
+>([])
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
 const ticketLaboratoryList = ref<TicketLaboratory[]>([])
+
 const ticketLaboratoryMapGroup = computed(() => {
   const map: Record<string, TicketLaboratory[]> = {}
   ticketLaboratoryList.value.forEach((i) => {
@@ -56,6 +70,38 @@ const ticketLaboratoryMapGroup = computed(() => {
   })
   return map
 })
+
+onMounted(async () => {
+  console.log('🚀 ~ file: TicketClinicLaboratory.vue:75 ~ onMounted ~ onMounted:')
+  try {
+    const promiseResult = await Promise.all([
+      LaboratoryService.list({}),
+      LaboratoryKitService.list({}),
+      LaboratoryGroupService.list({}),
+    ])
+    laboratoryAll = promiseResult[0]
+    laboratoryMap.value = await LaboratoryService.getMap()
+
+    laboratoryKitAll = promiseResult[1]
+    laboratoryKitAll.forEach((i) => {
+      try {
+        const laboratoryIdList: number[] = JSON.parse(i.laboratoryIds)
+        i.laboratoryList = laboratoryIdList
+          .map((i) => {
+            const laboratory = laboratoryMap.value[i]
+            return laboratory
+          })
+          .filter((i) => !!i)
+      } catch (error) {
+        i.laboratoryList = []
+      }
+    })
+    laboratoryGroupMap = arrayToKeyValue(promiseResult[2], 'id')
+  } catch (error: any) {
+    AlertStore.add({ type: 'error', message: error.message })
+  }
+})
+
 watch(
   () => ticketClinicRef.value.ticketLaboratoryList!,
   (newValue: TicketLaboratory[]) => {
@@ -73,41 +119,54 @@ const disabledButton = computed(() => {
   )
 })
 
-onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicLaboratory.vue:54 ~ onMounted ~ onMounted:')
-  try {
-    const promiseResult = await Promise.all([
-      LaboratoryService.list({}),
-      LaboratoryGroupService.list({}),
-    ])
-    laboratoryAll.value = promiseResult[0]
-    laboratoryMap.value = await LaboratoryService.getMap()
-    laboratoryGroupMap = arrayToKeyValue(promiseResult[1], 'id')
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
-
 const searchingLaboratory = async (text: string) => {
-  laboratoryList.value = laboratoryAll.value.filter((i) => customFilter(i.name, text))
+  const laboratoryList: Laboratory[] = laboratoryAll.filter((i) => {
+    return DString.customFilter(i.name, text)
+  })
+  const laboratoryKitList: LaboratoryKit[] = laboratoryKitAll.filter((i) => {
+    return DString.customFilter(i.name, text)
+  })
+  laboratoryOptions.value = [
+    ...laboratoryKitList.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: { type: 'laboratoryKit' as any, laboratoryKit: i },
+    })),
+    ...laboratoryList.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: { type: 'laboratory' as any, laboratory: i },
+    })),
+  ]
 }
 
-const selectLaboratory = (instance?: Laboratory) => {
-  if (instance) {
-    const ticketLaboratory = TicketLaboratory.blank()
-    ticketLaboratory.ticketId = ticketClinicRef.value.id
-    ticketLaboratory.customerId = ticketClinicRef.value.customerId
-    ticketLaboratory.laboratoryId = instance.id
+const selectLaboratory = (laboratorySelect: Laboratory) => {
+  const ticketLaboratory = TicketLaboratory.blank()
+  ticketLaboratory.ticketId = ticketClinicRef.value.id
+  ticketLaboratory.customerId = ticketClinicRef.value.customerId
+  ticketLaboratory.laboratoryId = laboratorySelect.id
 
-    ticketLaboratory.expectedPrice = instance.price
-    ticketLaboratory.discountMoney = 0
-    ticketLaboratory.discountPercent = 0
-    ticketLaboratory.discountType = DiscountType.VND
-    ticketLaboratory.actualPrice = instance.price
+  ticketLaboratory.expectedPrice = laboratorySelect.price
+  ticketLaboratory.discountMoney = 0
+  ticketLaboratory.discountPercent = 0
+  ticketLaboratory.discountType = DiscountType.VND
+  ticketLaboratory.actualPrice = laboratorySelect.price
 
-    ticketLaboratoryList.value.push(ticketLaboratory)
+  ticketLaboratoryList.value.push(ticketLaboratory)
+}
+
+const selectItemOptions = (dataSelected?: {
+  type: 'laboratory' | 'laboratoryKit'
+  laboratory: Laboratory
+  laboratoryKit: LaboratoryKit
+}) => {
+  if (!dataSelected) return
+  if (dataSelected.type === 'laboratory') {
+    selectLaboratory(dataSelected.laboratory)
   }
-  laboratory.value = Laboratory.blank()
+  if (dataSelected.type === 'laboratoryKit') {
+    ;(dataSelected.laboratoryKit.laboratoryList || []).forEach((i) => selectLaboratory(i))
+  }
 }
 
 const removeTicketLaboratory = (ins: TicketLaboratory) => {
@@ -172,17 +231,23 @@ const startPrint = async (
   <div style="height: 40px">
     <InputOptions
       ref="inputSearchLaboratory"
-      :options="laboratoryList.map((i) => ({ value: i.id, text: i.name, data: i }))"
+      :options="laboratoryOptions"
       :maxHeight="320"
       placeholder="Tìm kiếm tên dịch vụ"
       clear-after-selected
       :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
-      @selectItem="({ data }) => selectLaboratory(data)"
+      @selectItem="({ data }) => selectItemOptions(data)"
       @update:text="searchingLaboratory">
       <template #option="{ item: { data } }">
-        <div>
-          <b>{{ data.name }}</b>
-          - {{ formatMoney(data.price) }}
+        <div v-if="data.type === 'laboratory'">
+          <b>{{ data.laboratory.name }}</b>
+          - {{ formatMoney(data.laboratory.price) }}
+        </div>
+        <div v-if="data.type === 'laboratoryKit'">
+          <b>-- {{ data.laboratoryKit.name }}</b>
+          <div style="font-size: 13px; font-style: italic">
+            {{ data.laboratoryKit.laboratoryList.map((i: Laboratory) => i.name).join(', ') }}
+          </div>
         </div>
       </template>
     </InputOptions>

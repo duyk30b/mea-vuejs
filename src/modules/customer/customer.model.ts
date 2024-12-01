@@ -6,6 +6,7 @@ export class Customer {
   customerSourceId: number
   phone?: string
   birthday?: number
+  yearOfBirth?: number
   gender?: EGender
   addressProvince: string
   addressDistrict: string
@@ -19,22 +20,11 @@ export class Customer {
   updatedAt: number
   deletedAt: number
 
-  get addressString() {
-    return [this.addressWard, this.addressDistrict, this.addressProvince]
-      .filter((i) => !!i)
-      .join(' - ')
-      .replace('Tỉnh', '')
-      .replace('Thành phố', '')
-      .replace('Quận ', '')
-      .replace('Huyện ', '')
-      .replace('Phường ', '')
-      .replace('Xã ', '')
-  }
-
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0
     ins.isActive = 1
+    ins.customerSourceId = 0
     ins.debt = 0
     return ins
   }

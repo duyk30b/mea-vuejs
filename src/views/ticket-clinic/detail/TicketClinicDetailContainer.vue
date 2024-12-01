@@ -7,7 +7,7 @@ import {
   LoginOutlined,
   OneToOneOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting } from '../../../common/icon'
@@ -60,6 +60,21 @@ const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 const childComponent = ref<any>(null)
 
+onBeforeMount(async () => {
+  const ticketId = Number(route.params.id)
+  if (ticketId) {
+    await startFetchData(ticketId)
+  } else {
+    ticketClinicRef.value = Ticket.blank()
+    ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
+    ticketClinicRef.value.customer = Customer.init()
+  }
+})
+
+onUnmounted(async () => {
+  ticketClinicRef.value = Ticket.blank()
+})
+
 const startFetchData = async (ticketId: number) => {
   try {
     const ticketData = await ticketClinicStore.detail(ticketId, {
@@ -100,17 +115,6 @@ const startFetchData = async (ticketId: number) => {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
   }
 }
-
-onBeforeMount(async () => {
-  const ticketId = Number(route.params.id)
-  if (ticketId) {
-    await startFetchData(ticketId)
-  } else {
-    ticketClinicRef.value = Ticket.blank()
-    ticketClinicRef.value.ticketType = settingStore.SCREEN_TICKET_CLINIC_LIST.ticketType
-    ticketClinicRef.value.customer = Customer.init()
-  }
-})
 
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SETTING_DATA') {

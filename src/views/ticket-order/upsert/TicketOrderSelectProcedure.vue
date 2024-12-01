@@ -7,9 +7,10 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, useProcedureStore } from '../../../modules/procedure'
+import { Procedure, ProcedureService } from '../../../modules/procedure'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
-import ModalProcedureUpsert from '../../procedure/upsert/ModalProcedureUpsert.vue'
+import { DString } from '../../../utils'
+import ModalProcedureUpsert from '../../master-data/procedure/upsert/ModalProcedureUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
@@ -17,26 +18,31 @@ const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const procedureStore = useProcedureStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const procedureList = ref<Procedure[]>([])
+let procedureAll: Procedure[] = []
+const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
+
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 
 onMounted(async () => {
+  console.log('🚀 ~ file: TicketOrderSelectProcedure.vue:28 ~ onMounted ~ onMounted:', onMounted)
   try {
-    await procedureStore.refreshDB()
+    procedureAll = await ProcedureService.list({})
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
 
 const searchingProcedure = async (text: string) => {
-  procedureList.value = await procedureStore.search(text)
   if (!text) {
     ticketProcedure.value = TicketProcedure.blank()
+    procedureOptions.value = []
   }
+  procedureOptions.value = procedureAll
+    .filter((i) => DString.customFilter(i.name, text))
+    .map((i) => ({ value: i.id, text: i.name, data: i }))
 }
 
 const selectProcedure = (procedure: Procedure) => {
@@ -88,7 +94,7 @@ const handleChangeUnitActualPrice = (data: number) => {
 }
 
 const clear = () => {
-  procedureList.value = []
+  procedureOptions.value = []
   ticketProcedure.value = TicketProcedure.blank()
   inputOptionsProcedure.value?.clear()
 }
@@ -149,7 +155,7 @@ defineExpose({ focus })
       <div style="height: 40px">
         <InputOptions
           ref="inputOptionsProcedure"
-          :options="procedureList.map((i) => ({ value: i.id, text: i.name, data: i }))"
+          :options="procedureOptions"
           :maxHeight="320"
           placeholder="(F3) Tìm kiếm tên dịch vụ"
           @selectItem="({ data }) => selectProcedure(data)"

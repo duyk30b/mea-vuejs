@@ -143,13 +143,18 @@ export class DString {
     return DString.formatNumber({ number: money, fixed: 0 })
   }
 
-  static formatAddress = (address: {
-    addressProvince: string
-    addressDistrict: string
-    addressWard: string
-    addressStreet: string
+  static formatAddress = (address?: {
+    addressProvince?: string
+    addressDistrict?: string
+    addressWard?: string
+    addressStreet?: string
   }) => {
-    const { addressStreet, addressWard, addressDistrict, addressProvince } = address
+    if (!address) return ''
+    const addressStreet = address.addressStreet || ''
+    const addressWard = address.addressWard || ''
+    const addressDistrict = address.addressDistrict || ''
+    const addressProvince = address.addressProvince || ''
+
     return [addressStreet, addressWard, addressDistrict, addressProvince]
       .filter((i) => !!i)
       .join(' - ')
@@ -159,5 +164,19 @@ export class DString {
       .replace('Huyện ', '')
       .replace('Phường ', '')
       .replace('Xã ', '')
+  }
+
+  static customFilter = (str = '', filter = '', skip = 2): boolean => {
+    str = str || ''
+    filter = filter || ''
+    const key = convertViToEn(filter.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
+    const stringConvert = convertViToEn(str.trim()).replace(/[^a-zA-Z0-9 ]/g, '')
+    let pattern = ''
+    key.split('').forEach((item) => {
+      pattern = `${pattern}.{0,${skip}}${item}`
+    })
+    const regex = new RegExp(pattern, 'i')
+
+    return regex.test(stringConvert)
   }
 }

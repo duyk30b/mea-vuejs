@@ -49,4 +49,4 @@ export class TicketGetQuery {
 export class TicketPaginationQuery extends TicketGetQuery {}
 export class TicketListQuery extends OmitClass(TicketGetQuery, ['page']) {}
 export class TicketDetailQuery extends PickClass(TicketGetQuery, ['relation']) {}
-export class TicketSumDebtQuery extends PickClass(TicketGetQuery, ['filter']) {}
+export class TicketFilterQuery extends PickClass(TicketGetQuery, ['filter']) {}

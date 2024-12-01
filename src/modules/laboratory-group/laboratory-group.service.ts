@@ -12,17 +12,14 @@ export class LaboratoryGroupService {
   static laboratoryGroupAll: LaboratoryGroup[]
   static laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
-  static async getAll() {
-    if (!LaboratoryGroupService.loadedAll) {
-      const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
-      const laboratoryGroupList = data
-      LaboratoryGroupService.laboratoryGroupAll = laboratoryGroupList
+  private static async getAll() {
+    if (LaboratoryGroupService.loadedAll) return
+    const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
+    const laboratoryGroupList = data
+    LaboratoryGroupService.laboratoryGroupAll = laboratoryGroupList
 
-      LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(laboratoryGroupList, 'id')
-      LaboratoryGroupService.loadedAll = true
-    }
-
-    return LaboratoryGroup.fromList(LaboratoryGroupService.laboratoryGroupAll)
+    LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(laboratoryGroupList, 'id')
+    LaboratoryGroupService.loadedAll = true
   }
 
   static async getMap() {
@@ -34,7 +31,17 @@ export class LaboratoryGroupService {
     const page = options.page || 1
     const limit = options.limit || 10
     await LaboratoryGroupService.getAll()
-    const data = LaboratoryGroupService.laboratoryGroupAll.slice((page - 1) * limit, page * limit)
+    let data = LaboratoryGroupService.laboratoryGroupAll
+    if (options.sort) {
+      if (options.sort?.id) {
+        data.sort((a, b) => {
+          if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
+    data = data.slice((page - 1) * limit, page * limit)
     return {
       data,
       meta: { total: LaboratoryGroupService.laboratoryGroupAll.length },
@@ -43,20 +50,23 @@ export class LaboratoryGroupService {
 
   static async list(options: LaboratoryGroupListQuery) {
     const filter = options.filter || {}
-    const all = await LaboratoryGroupService.getAll()
-    let data = all
+    await LaboratoryGroupService.getAll()
+    let data = LaboratoryGroupService.laboratoryGroupAll
     if (options.filter) {
       data = data.filter((i) => {
         return true
       })
     }
+    if (options.sort) {
+      if (options.sort?.id) {
+        data.sort((a, b) => {
+          if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
     return LaboratoryGroup.fromList(data)
-  }
-
-  static async replaceAll(body: LaboratoryGroup[]) {
-    const result = await LaboratoryGroupApi.replaceAll(body)
-    LaboratoryGroupService.loadedAll = false
-    return result
   }
 
   static async createOne(laboratoryGroup: LaboratoryGroup) {
@@ -73,6 +83,12 @@ export class LaboratoryGroupService {
 
   static async destroyOne(id: number) {
     const result = await LaboratoryGroupApi.destroyOne(id)
+    LaboratoryGroupService.loadedAll = false
+    return result
+  }
+
+  static async replaceAll(body: LaboratoryGroup[]) {
+    const result = await LaboratoryGroupApi.replaceAll(body)
     LaboratoryGroupService.loadedAll = false
     return result
   }

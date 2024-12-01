@@ -59,7 +59,11 @@ onUnmounted(() => {
 
 const searchingProduct = async (text: string) => {
   product.value.id = 0
-  productList.value = await productStore.search(text)
+  if (!text) {
+    productList.value = []
+  } else {
+    productList.value = await productStore.search(text)
+  }
 }
 
 const createProduct = (instance?: Product) => {
