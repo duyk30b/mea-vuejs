@@ -41,14 +41,21 @@ export class Ticket {
   ticketStatus: TicketStatus
 
   totalCostAmount: number
-  proceduresMoney: number
-  productsMoney: number
+  procedureMoney: number
+  productMoney: number
   radiologyMoney: number
-  discountMoney: number // tiền giảm giá
-  discountPercent: number // % giảm giá
-  discountType: DiscountType // Loại giảm giá
+  laboratoryMoney: number
+  itemsActualMoney: number
+  itemsDiscount: number
+  itemsDiscountProduct: number // chỉ convert ở front-end
+  itemsDiscountProcedure: number // chỉ convert ở front-end
+
+  discountMoney: number
+  discountPercent: number
+  discountType: DiscountType
+
   surcharge: number // Phụ phí
-  totalMoney: number // Doanh thu = proceduresMoney + productsMoney + phụ phí - tiền giảm giá
+  totalMoney: number // Doanh thu = procedureMoney + productMoney + phụ phí - tiền giảm giá
   expense: number
   profit: number
   paid: number
@@ -90,9 +97,10 @@ export class Ticket {
     ins.id = 0
     ins.ticketStatus = TicketStatus.Draft
     ins.totalCostAmount = 0
-    ins.proceduresMoney = 0
-    ins.productsMoney = 0
+    ins.procedureMoney = 0
+    ins.productMoney = 0
     ins.radiologyMoney = 0
+    ins.laboratoryMoney = 0
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.discountType = DiscountType.Percent
@@ -213,5 +221,44 @@ export class Ticket {
 
   static fromList(sourceList: Ticket[]) {
     return sourceList.map((i) => Ticket.from(i))
+  }
+
+  static equal(a: Ticket, b: Ticket) {
+    if (a.id != b.id) return false
+    if (a.customerId != b.customerId) return false
+    if (a.customerSourceId != b.customerSourceId) return false
+    if (a.ticketType != b.ticketType) return false
+    if (a.ticketStatus != b.ticketStatus) return false
+
+    if (a.totalCostAmount != b.totalCostAmount) return false
+    if (a.procedureMoney != b.procedureMoney) return false
+    if (a.productMoney != b.productMoney) return false
+    if (a.radiologyMoney != b.radiologyMoney) return false
+    if (a.laboratoryMoney != b.laboratoryMoney) return false
+    if (a.itemsDiscount != b.itemsDiscount) return false
+
+    if (a.discountMoney != b.discountMoney) return false
+    if (a.discountPercent != b.discountPercent) return false
+    // if (a.discountType != b.discountType) return false
+
+    if (a.surcharge != b.surcharge) return false
+    if (a.totalMoney != b.totalMoney) return false
+    if (a.expense != b.expense) return false
+    if (a.profit != b.profit) return false
+    if (a.paid != b.paid) return false
+    if (a.debt != b.debt) return false
+
+    if (a.imageIds != b.imageIds) return false
+    if (a.year != b.year) return false
+    if (a.month != b.month) return false
+    if (a.date != b.date) return false
+    if (a.dailyIndex != b.dailyIndex) return false
+
+    if (a.registeredAt != b.registeredAt) return false
+    if (a.startedAt != b.startedAt) return false
+    if (a.endedAt != b.endedAt) return false
+    if (a.updatedAt != b.updatedAt) return false
+
+    return true
   }
 }

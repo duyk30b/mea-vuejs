@@ -95,8 +95,8 @@ export class ReceiptApi {
     return data
   }
 
-  static async destroyDraft(receiptId: number) {
-    const response = await AxiosInstance.delete(`/receipt/destroy-draft/${receiptId}`)
+  static async destroy(receiptId: number) {
+    const response = await AxiosInstance.delete(`/receipt/destroy/${receiptId}`)
     const { data } = response.data as BaseResponse<{ receiptId: number }>
     return data
   }

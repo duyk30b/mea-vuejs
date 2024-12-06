@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
+import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
 
 export class DistributorGetQuery {
   page?: number
@@ -10,6 +10,8 @@ export class DistributorGetQuery {
     searchText?: string
     debt?: ConditionNumber
     updatedAt?: ConditionDate
+    fullName?: ConditionString
+    $OR?: [{ fullName: ConditionString }, { phone: ConditionString }]
   }
 
   sort?: {

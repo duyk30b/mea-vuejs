@@ -3,26 +3,28 @@ import {
   CloseOutlined,
   DeploymentUnitOutlined,
   DollarOutlined,
-  PlusOutlined,
+  OneToOneOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor, useDistributorStore } from '../../../modules/distributor'
+import { Distributor, DistributorService } from '../../../modules/distributor'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
+import DistributorProductHistory from './DistributorProductHistory.vue'
 import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import VueButton from '../../../common/VueButton.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
   RECEIPT_HISTORY: 'RECEIPT_HISTORY',
+  PRODUCT_HISTORY: 'PRODUCT_HISTORY',
 }
 
 const emit = defineEmits<{ (e: 'update_distributor', value: Distributor): void }>()
@@ -34,7 +36,6 @@ const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const distributorStore = useDistributorStore()
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -44,8 +45,7 @@ const distributor = ref<Distributor>(Distributor.blank())
 
 const openModal = async (distributorId: number) => {
   showModal.value = true
-  const response = await distributorStore.getOne(distributorId)
-  distributor.value = response || Distributor.blank()
+  distributor.value = await DistributorService.detail(distributorId)
 }
 
 const closeModal = () => {
@@ -92,11 +92,13 @@ defineExpose({ openModal })
               <DollarOutlined />
               Thanh toán
             </VueTabMenu>
-            <VueTabMenu
-              v-if="permissionIdMap[PermissionId.RECEIPT_READ]"
-              :tabKey="TABS_KEY.RECEIPT_HISTORY">
+            <VueTabMenu :tabKey="TABS_KEY.RECEIPT_HISTORY">
               <DeploymentUnitOutlined />
               Lịch sử nhập hàng
+            </VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.PRODUCT_HISTORY">
+              <OneToOneOutlined />
+              Sản phẩm
             </VueTabMenu>
           </template>
           <template #panel>
@@ -132,6 +134,9 @@ defineExpose({ openModal })
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.RECEIPT_HISTORY">
               <DistributorReceiptHistory :distributor="distributor" />
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.PRODUCT_HISTORY">
+              <DistributorProductHistory :distributor="distributor" />
             </VueTabPanel>
           </template>
         </VueTabs>

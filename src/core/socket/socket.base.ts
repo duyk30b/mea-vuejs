@@ -36,6 +36,10 @@ export const socketInit = () => {
     SocketService.listenCustomerUpsert(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.DISTRIBUTOR_UPSERT, (data) => {
+    SocketService.listenDistributorUpsert(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.PRODUCT_UPSERT, (data) => {
     SocketService.listenProductUpsert(data)
   })

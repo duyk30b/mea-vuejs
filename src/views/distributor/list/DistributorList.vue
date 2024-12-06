@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import {
-  ApartmentOutlined,
-  CheckCircleOutlined,
-  FileSearchOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { ApartmentOutlined, CheckCircleOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
+import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconEditSquare } from '../../../common/icon-google'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useDistributorStore, type Distributor } from '../../../modules/distributor'
+import { DistributorService, type Distributor } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString } from '../../../utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
@@ -27,7 +21,6 @@ const modalDistributorPayDebt = ref<InstanceType<typeof ModalDistributorPayDebt>
 const modalDistributorListSettingScreen =
   ref<InstanceType<typeof ModalDistributorListSettingScreen>>()
 
-const distributorStore = useDistributorStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
@@ -49,12 +42,14 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    const response = await distributorStore.pagination({
+    const response = await DistributorService.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
         isActive: isActive.value !== '' ? isActive.value : undefined,
-        searchText: searchText.value ? searchText.value : undefined,
+        $OR: searchText.value
+          ? [{ fullName: { LIKE: searchText.value } }, { phone: { LIKE: searchText.value } }]
+          : undefined,
       },
       sort: sortValue.value
         ? {
@@ -66,32 +61,16 @@ const startFetchData = async () => {
     })
 
     distributorList.value = response.data
-    total.value = response.total
+    total.value = response.meta.total
   } catch (error) {
     console.log('🚀 ~ file: DistributorList.vue:65 ~ startFetchData ~ error:', error)
   }
 }
 
 onBeforeMount(async () => {
-  try {
-    dataLoading.value = true
-    await startFetchData()
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
-  }
-})
-
-onMounted(async () => {
-  try {
-    const { hasChange } = await distributorStore.refreshDB()
-    if (hasChange) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
 })
 
 const startSearch = async () => {
@@ -126,10 +105,7 @@ const updateDistributor = async (data: Distributor) => {
   await startFetchData()
 }
 
-const handleModalDistributorUpsertSuccess = async (
-  data: Distributor,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
-) => {
+const handleModalDistributorUpsertSuccess = async () => {
   await startFetchData()
 }
 
@@ -171,7 +147,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
@@ -236,7 +212,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :key="index"
             @dblclick="
               permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] &&
-                modalDistributorUpsert?.openModal(distributor)
+                modalDistributorUpsert?.openModal(distributor.id)
             ">
             <td style="border-right: none">
               <div class="font-medium text-justify">
@@ -245,7 +221,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="text-base"
                   @click="modalDistributorDetail?.openModal(distributor.id)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
@@ -377,7 +353,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="ml-1"
                   @click="modalDistributorDetail?.openModal(distributor.id)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div
@@ -433,8 +409,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalDistributorUpsert?.openModal(distributor)">
-                <FormOutlined />
+                @click="modalDistributorUpsert?.openModal(distributor.id)">
+                <IconEditSquare />
               </a>
             </td>
           </tr>

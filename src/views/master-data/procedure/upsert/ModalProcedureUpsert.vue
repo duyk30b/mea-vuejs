@@ -15,7 +15,7 @@ import {
   ProcedureType,
 } from '../../../../modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
-import { Product, useProductStore } from '../../../../modules/product'
+import { Product, ProductService } from '../../../../modules/product'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -24,7 +24,6 @@ const TABS_KEY = {
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const productStore = useProductStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -56,28 +55,28 @@ const openModal = async (procedureId?: number) => {
     procedure.value = await ProcedureApi.detail(procedureId, {})
 
     if (procedure.value?.consumablesHint) {
-      const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
-        productId: number
-        quantity: number
-      }[]
-      if (Array.isArray(consumableHint)) {
-        if (!consumableHint.length) {
-          consumableList.value = []
-        }
-        if (consumableHint.length) {
-          const productIdList = consumableHint.map((i) => i.productId)
-          const productListResponse = await productStore.list({
-            filter: { id: { IN: productIdList } },
-          })
-          consumableList.value = consumableHint.map((i) => {
-            const productFind = productListResponse.find((j) => j.id === i.productId)
-            return {
-              product: productFind,
-              quantity: i.quantity,
-            }
-          })
-        }
-      }
+      // const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
+      //   productId: number
+      //   quantity: number
+      // }[]
+      // if (Array.isArray(consumableHint)) {
+      //   if (!consumableHint.length) {
+      //     consumableList.value = []
+      //   }
+      //   if (consumableHint.length) {
+      //     const productIdList = consumableHint.map((i) => i.productId)
+      //     const productListResponse = await productStore.list({
+      //       filter: { id: { IN: productIdList } },
+      //     })
+      //     consumableList.value = consumableHint.map((i) => {
+      //       const productFind = productListResponse.find((j) => j.id === i.productId)
+      //       return {
+      //         product: productFind,
+      //         quantity: i.quantity,
+      //       }
+      //     })
+      //   }
+      // }
     }
   }
 
@@ -95,7 +94,7 @@ const searchingProduct = async (text: string) => {
     return
   }
 
-  const productList = await productStore.search(text)
+  const productList = await ProductService.search(text)
   consumableOptions.value = productList.map((i) => ({
     value: i.id,
     text: i.brandName,
@@ -142,8 +141,19 @@ const clickDestroy = () => {
     content: 'Dịch vụ đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
-        await ProcedureApi.destroyOne(procedure.value.id)
-        closeModal()
+        const response = await ProcedureService.destroyOne(procedure.value.id)
+        if (response.success) {
+          emit('success')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa dịch vụ khi đã được chỉ định',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám, hóa đơn trước',
+              `Hiện tại đang có ${response.data.countTicketProcedure} phiếu khám sử dụng dịch vụ này`,
+            ],
+          })
+        }
       } catch (error) {
         console.log('🚀 ~ file: ModalCustomerUpsert.vue:147 ~ handleDelete ~ error:', error)
       }

@@ -1,6 +1,10 @@
 import { arrayToKeyValue, customFilter } from '../../utils'
 import { LaboratoryApi } from './laboratory.api'
-import type { LaboratoryListQuery, LaboratoryPaginationQuery } from './laboratory.dto'
+import type {
+  LaboratoryGetQuery,
+  LaboratoryListQuery,
+  LaboratoryPaginationQuery,
+} from './laboratory.dto'
 import { Laboratory } from './laboratory.model'
 
 export class LaboratoryService {
@@ -36,13 +40,10 @@ export class LaboratoryService {
     return laboratoryMap
   }
 
-  static async pagination(options: LaboratoryPaginationQuery) {
-    const page = options.page || 1
-    const limit = options.limit || 10
-    const filter = options.filter || {}
-    await LaboratoryService.getAll()
-    let data = LaboratoryService.laboratoryAll
-    if (options.filter) {
+  private static executeQuery(all: Laboratory[], query: LaboratoryGetQuery) {
+    let data = all
+    if (query.filter) {
+      const filter = query.filter
       data = data.filter((i) => {
         if (filter.laboratoryGroupId != null) {
           if (filter.laboratoryGroupId !== i.laboratoryGroupId) {
@@ -60,63 +61,50 @@ export class LaboratoryService {
           }
         }
         if (filter.name) {
-          if (filter.name.LIKE) {
-            return customFilter(i.name || '', filter.name.LIKE, 2)
+          if (filter.name.LIKE && !customFilter(i.name || '', filter.name.LIKE, 2)) {
+            return false
           }
         }
         return true
       })
     }
-    if (options.sort) {
-      if (options.sort.id) {
+    if (query.sort) {
+      if (query.sort.id) {
         data.sort((a, b) => {
-          if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
           return a.id > b.id ? -1 : 1
         })
       }
-      if (options.sort.priority) {
+      if (query.sort.priority) {
         data.sort((a, b) => {
-          if (options.sort?.priority === 'ASC') return a.priority < b.priority ? -1 : 1
-          if (options.sort?.priority === 'DESC') return a.priority > b.priority ? -1 : 1
+          if (query.sort?.priority === 'ASC') return a.priority < b.priority ? -1 : 1
+          if (query.sort?.priority === 'DESC') return a.priority > b.priority ? -1 : 1
           return a.priority > b.priority ? -1 : 1
         })
       }
     }
+    return data
+  }
+
+  static async pagination(options: LaboratoryPaginationQuery) {
+    const page = options.page || 1
+    const limit = options.limit || 10
+    await LaboratoryService.getAll()
+
+    let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, options)
     data = data.slice((page - 1) * limit, page * limit)
-    data = Laboratory.fromList(data)
-    return { data, meta: { total: LaboratoryService.laboratoryAll.length } }
+
+    return {
+      data: Laboratory.fromList(data),
+      meta: { total: LaboratoryService.laboratoryAll.length },
+    }
   }
 
   static async list(options: LaboratoryListQuery) {
     const filter = options.filter || {}
     await LaboratoryService.getAll()
-    let data = LaboratoryService.laboratoryAll
-    if (options.filter) {
-      data = data.filter((i) => {
-        if (filter.laboratoryGroupId != null) {
-          if (filter.laboratoryGroupId !== i.laboratoryGroupId) {
-            return false
-          }
-        }
-        if (filter.level != null) {
-          if (filter.level !== i.level) {
-            return false
-          }
-        }
-        if (filter.parentId != null) {
-          if (filter.parentId !== i.parentId) {
-            return false
-          }
-        }
-        if (filter.name) {
-          if (filter.name.LIKE) {
-            return customFilter(i.name || '', filter.name.LIKE, 2)
-          }
-        }
-        return true
-      })
-    }
+    const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, options)
     return Laboratory.fromList(data)
   }
 
@@ -134,7 +122,9 @@ export class LaboratoryService {
 
   static async destroyOne(id: number) {
     const result = await LaboratoryApi.destroyOne(id)
-    LaboratoryService.loadedAll = false
+    if (result.success) {
+      LaboratoryService.loadedAll = false
+    }
     return result
   }
 

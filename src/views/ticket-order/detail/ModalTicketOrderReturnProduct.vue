@@ -1,21 +1,24 @@
 <script setup lang="ts">
 import { CloseOutlined } from '@ant-design/icons-vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { TicketStatus } from '../../../modules/ticket'
-import { ticket } from './ticket-order-detail.ref'
+import { DiscountType } from '../../../modules/enum'
+import { Ticket } from '../../../modules/ticket'
 import { TicketOrderApi } from '../../../modules/ticket-order'
+import { ticket } from './ticket-order-detail.ref'
 
 const emit = defineEmits<{ (e: 'success'): any }>()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const tpMapReturn = ref<
+
+const ticketUpdate = ref(Ticket.blank())
+const ticketProductMapReturn = ref<
   Record<
     string,
     {
@@ -26,20 +29,131 @@ const tpMapReturn = ref<
     }
   >
 >({})
+const ticketProcedureMapReturn = ref<
+  Record<
+    string,
+    {
+      quantityReturn: number
+      actualPrice: number
+      ticketProcedureId: number
+    }
+  >
+>({})
 const discountMoneyUpdate = ref<number>(0)
 const surchargeUpdate = ref<number>(0)
 
 const showModal = ref(false)
 const returnLoading = ref(false)
 
+watch(
+  () => ticketProductMapReturn.value,
+  (newValue) => {
+    Object.keys(newValue).forEach((i) => {
+      const ticketProduct = ticket.value.ticketProductList?.find((j) => {
+        return j.id === Number(i)
+      })
+      const ticketUpdateProduct = ticketUpdate.value.ticketProductList?.find((j) => {
+        return j.id === Number(i)
+      })
+      ticketUpdateProduct!.quantity = ticketProduct!.quantity - newValue[i].quantityReturn
+    })
+  },
+  { deep: true }
+)
+
+watch(
+  () => ticketProcedureMapReturn.value,
+  (newValue) => {
+    Object.keys(newValue).forEach((i) => {
+      const ticketProcedure = ticket.value.ticketProcedureList?.find((j) => {
+        return j.id === Number(i)
+      })
+      const ticketUpdateProcedure = ticketUpdate.value.ticketProcedureList?.find((j) => {
+        return j.id === Number(i)
+      })
+      ticketUpdateProcedure!.quantity = ticketProcedure!.quantity - newValue[i].quantityReturn
+    })
+  },
+  { deep: true }
+)
+
+watchEffect(() => {
+  let totalCostAmount = 0
+  let productMoney = 0
+  let procedureMoney = 0
+  let itemsActualMoney = 0
+  let itemsDiscountProduct = 0
+  let itemsDiscountProcedure = 0
+  let itemsDiscount = 0
+
+  ticketUpdate.value.ticketProductList?.forEach((item) => {
+    totalCostAmount += item.costAmount
+    productMoney += item.actualPrice * item.quantity
+    itemsDiscountProduct += item.discountMoney * item.quantity
+  })
+  ticketUpdate.value.ticketProcedureList?.forEach((item) => {
+    procedureMoney += item.actualPrice * item.quantity
+    itemsDiscountProcedure += item.discountMoney * item.quantity
+  })
+
+  itemsDiscount = itemsDiscountProduct + itemsDiscountProcedure
+  itemsActualMoney = productMoney + procedureMoney
+
+  const discountType: DiscountType = DiscountType.VND
+  const discountMoney = ticketUpdate.value.discountMoney || 0
+  const discountPercent =
+    itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
+
+  const surcharge = ticketUpdate.value.surcharge || 0
+  const expense = ticketUpdate.value.expense || 0
+  const totalMoney = itemsActualMoney - discountMoney + surcharge
+  const profit = totalMoney - totalCostAmount - expense
+
+  ticketUpdate.value.totalCostAmount = totalCostAmount
+  ticketUpdate.value.productMoney = productMoney
+  ticketUpdate.value.procedureMoney = procedureMoney
+  ticketUpdate.value.itemsActualMoney = itemsActualMoney
+  ticketUpdate.value.itemsDiscountProcedure = itemsDiscountProcedure
+  ticketUpdate.value.itemsDiscountProduct = itemsDiscountProduct
+  ticketUpdate.value.itemsDiscount = itemsDiscount
+
+  ticketUpdate.value.discountMoney = discountMoney
+  ticketUpdate.value.discountPercent = discountPercent
+  ticketUpdate.value.discountType = discountType
+  ticketUpdate.value.totalMoney = totalMoney
+  ticketUpdate.value.profit = profit
+})
+
+watch(
+  () => ticketUpdate.value.totalMoney,
+  (newValue) => {
+    const totalMoneyReturn = ticket.value.totalMoney - newValue
+    const debtReturn = Math.min(ticket.value.debt, totalMoneyReturn)
+    const paidReturn = totalMoneyReturn - debtReturn
+    ticketUpdate.value.debt = ticket.value.debt - debtReturn
+    ticketUpdate.value.paid = ticket.value.paid - paidReturn
+  }
+)
+
 const openModal = async () => {
   showModal.value = true
+  ticketUpdate.value = Ticket.from(ticket.value)
+
   ticket.value.ticketProductList = ticket.value.ticketProductList || []
+  ticket.value.ticketProcedureList = ticket.value.ticketProcedureList || []
+
   ticket.value.ticketProductList.forEach((i) => {
-    tpMapReturn.value[i.id] = {
+    ticketProductMapReturn.value[i.id] = {
       ticketProductId: i.id,
       quantityReturn: 0,
       costAmountReturn: 0,
+      actualPrice: i.actualPrice,
+    }
+  })
+  ticket.value.ticketProcedureList.forEach((i) => {
+    ticketProcedureMapReturn.value[i.id] = {
+      ticketProcedureId: i.id,
+      quantityReturn: 0,
       actualPrice: i.actualPrice,
     }
   })
@@ -47,48 +161,33 @@ const openModal = async () => {
   surchargeUpdate.value = ticket.value.surcharge
 }
 
-const productsMoneyReturn = computed(() => {
-  return Object.values(tpMapReturn.value).reduce((acc, item) => {
-    return acc + item.quantityReturn * item.actualPrice
-  }, 0)
-})
-
-const totalMoneyUpdate = computed(() => {
-  return (
-    ticket.value.totalMoney -
-    productsMoneyReturn.value +
-    ticket.value.discountMoney -
-    ticket.value.surcharge -
-    discountMoneyUpdate.value +
-    surchargeUpdate.value
-  )
-})
-
-const totalMoneyReturn = computed(() => {
-  return ticket.value.totalMoney - totalMoneyUpdate.value
-})
-
-const debtReturn = computed(() => {
-  return Math.min(totalMoneyReturn.value, ticket.value.debt)
-})
-
-const paidReturn = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticket.value.ticketStatus)) {
-    return totalMoneyReturn.value - debtReturn.value
+const hasChangeData = computed(() => {
+  if (Object.values(ticketProductMapReturn.value).some((i) => i.quantityReturn != 0)) {
+    return true
   }
-  return 0
-})
-
-const disableButton = computed(() => {
-  return Object.values(tpMapReturn.value).every((i) => i.quantityReturn <= 0)
+  if (Object.values(ticketProcedureMapReturn.value).some((i) => i.quantityReturn != 0)) {
+    return true
+  }
+  if (!Ticket.equal(ticket.value, ticketUpdate.value)) {
+    return true
+  }
+  return false
 })
 
 const setSelectAllQuantity = () => {
   ticket.value.ticketProductList!.forEach((i) => {
-    tpMapReturn.value[i.id] = {
+    ticketProductMapReturn.value[i.id] = {
       ticketProductId: i.id,
       quantityReturn: i.quantity,
       costAmountReturn: i.costAmount,
+      actualPrice: i.actualPrice,
+    }
+  })
+
+  ticket.value.ticketProcedureList!.forEach((i) => {
+    ticketProcedureMapReturn.value[i.id] = {
+      ticketProcedureId: i.id,
+      quantityReturn: i.quantity,
       actualPrice: i.actualPrice,
     }
   })
@@ -96,23 +195,24 @@ const setSelectAllQuantity = () => {
 
 const closeModal = () => {
   showModal.value = false
+  ticketUpdate.value = Ticket.blank()
 }
 
 const reCalculatorAndValidateQuantity = () => {
   let result = true
   ticket.value.ticketProductList!.forEach((i) => {
-    if (tpMapReturn.value[i.id]!.quantityReturn < 0) {
+    if (ticketProductMapReturn.value[i.id]!.quantityReturn < 0) {
       result = false
       AlertStore.addError(`Số lượng của sản phẩm ${i.product?.brandName} không hợp lệ`)
     }
-    if (tpMapReturn.value[i.id]!.quantityReturn > i.quantity) {
+    if (ticketProductMapReturn.value[i.id]!.quantityReturn > i.quantity) {
       result = false
       AlertStore.addError(`Sản phẩm ${i.product?.brandName} hoàn trả vượt quá số lượng mua`)
     }
     const costAmountReturn = Math.floor(
-      (i.costAmount * tpMapReturn.value[i.id]!.quantityReturn) / (i.quantity || 1)
+      (i.costAmount * ticketProductMapReturn.value[i.id]!.quantityReturn) / (i.quantity || 1)
     )
-    tpMapReturn.value[i.id]!.costAmountReturn = costAmountReturn
+    ticketProductMapReturn.value[i.id]!.costAmountReturn = costAmountReturn
   })
   return result
 }
@@ -123,33 +223,83 @@ const startReturnProduct = async () => {
     if (!reCalculatorAndValidateQuantity()) return
     await TicketOrderApi.returnProduct({
       ticketId: ticket.value.id,
-      returnList: Object.values(tpMapReturn.value).filter((i) => i.quantityReturn > 0),
-      discountMoneyReturn: ticket.value.discountMoney - discountMoneyUpdate.value,
-      surchargeReturn: ticket.value.surcharge - surchargeUpdate.value,
-      debtReturn: debtReturn.value,
-      paidReturn: paidReturn.value,
+      ticketProductReturnList: Object.values(ticketProductMapReturn.value).filter((i) => {
+        return i.quantityReturn > 0
+      }),
+      ticketProcedureReturnList: Object.values(ticketProcedureMapReturn.value).filter((i) => {
+        return i.quantityReturn > 0
+      }),
+      totalCostAmountUpdate: ticketUpdate.value.totalCostAmount,
+      productMoneyUpdate: ticketUpdate.value.productMoney,
+      procedureMoneyUpdate: ticketUpdate.value.procedureMoney,
+      itemsActualMoneyUpdate: ticketUpdate.value.itemsActualMoney,
+      itemsDiscountUpdate: ticketUpdate.value.itemsDiscount,
+
+      discountMoneyUpdate: ticketUpdate.value.discountMoney,
+      discountPercentUpdate: ticketUpdate.value.discountPercent,
+      surchargeUpdate: ticketUpdate.value.surcharge,
+      expenseUpdate: ticketUpdate.value.expense,
+
+      totalMoneyUpdate: ticketUpdate.value.totalMoney,
+      profitUpdate: ticketUpdate.value.profit,
+      paidUpdate: ticketUpdate.value.paid,
+      debtUpdate: ticketUpdate.value.debt,
     })
     emit('success')
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalVisitReturn.vue:157 ~ clickReturnProduct ~ error:', error)
+    console.log('🚀 ModalTicketOrderReturnProduct.vue:249 ~ startReturnProduct ~ error:', error)
   } finally {
     returnLoading.value = false
   }
 }
 
+const paidReturn = computed(() => {
+  return ticket.value.paid - ticketUpdate.value.paid
+})
+
 const clickReturnProduct = async () => {
-  if (totalMoneyUpdate.value < 0) {
+  if (ticket.value.totalMoney < 0) {
     return AlertStore.addError('Số tiền trong đơn không được phép nhỏ hơn 0')
   }
 
   ModalStore.confirm({
     title: 'Bạn có chắc chắn mở lại hồ sơ của phiếu khám này ?',
     content: [
-      '- Kho hàng sẽ nhập lại những sản phẩm trong danh sách trả',
-      ...(debtReturn.value > 0 ? [`- Trừ nợ khách hàng: ${formatMoney(debtReturn.value)}`] : []),
-      ...(paidReturn.value > 0
-        ? [`- Khách hàng nhận lại số tiền đã thanh toán là: ${formatMoney(paidReturn.value)}`]
+      '- Kho hàng sẽ nhập lại những sản phẩm trong danh sách trả (nếu có)',
+      ...(ticket.value.totalMoney > ticketUpdate.value.totalMoney
+        ? [
+            `- Đơn hàng giảm số tiền: ${formatMoney(
+              ticket.value.totalMoney - ticketUpdate.value.totalMoney
+            )}`,
+          ]
+        : []),
+      ...(ticket.value.totalMoney < ticketUpdate.value.totalMoney
+        ? [
+            `- Đơn hàng cần thanh toán thêm: ${formatMoney(
+              -ticket.value.totalMoney + ticketUpdate.value.totalMoney
+            )}`,
+          ]
+        : []),
+      ...(ticket.value.debt > ticketUpdate.value.debt
+        ? [`- Trừ nợ khách hàng: ${formatMoney(ticket.value.debt - ticketUpdate.value.debt)}`]
+        : []),
+      ...(ticket.value.debt < ticketUpdate.value.debt
+        ? [`- Khách hàng nợ thêm: ${formatMoney(-ticket.value.debt + ticketUpdate.value.debt)}`]
+        : []),
+      ...(ticket.value.paid > ticketUpdate.value.paid
+        ? [
+            `- Khách hàng nhận lại số tiền là: ${formatMoney(
+              ticket.value.paid - ticketUpdate.value.paid
+            )}`,
+          ]
+        : []),
+      ...(ticket.value.paid < ticketUpdate.value.paid
+        ? [
+            `- Khách hàng phải thanh toán thêm: ${formatMoney(
+              -ticket.value.paid + ticketUpdate.value.paid
+            )}`,
+          ]
         : []),
     ],
     async onOk() {
@@ -157,6 +307,14 @@ const clickReturnProduct = async () => {
     },
     okText: 'Xác nhận TRẢ HÀNG',
   })
+}
+
+const handleUpdateTicketDebt = (v: number) => {
+  ticketUpdate.value.paid = ticketUpdate.value.totalMoney - v
+}
+
+const handleUpdateTicketPaid = (v: number) => {
+  ticketUpdate.value.debt = ticketUpdate.value.totalMoney - v
 }
 
 defineExpose({ openModal })
@@ -197,9 +355,6 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-if="(ticket.ticketProductList || []).length == 0">
-                <td colspan="20" class="text-center">Chưa xuất thuốc</td>
-              </tr>
               <tr
                 v-for="(ticketProduct, index) in ticket.ticketProductList"
                 :key="ticketProduct.id">
@@ -219,27 +374,108 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-center">{{ ticketProduct.unitName }}</td>
-                <td class="text-right">{{ formatMoney(ticketProduct.unitActualPrice) }}</td>
+                <td class="text-right">
+                  <div
+                    v-if="ticketProduct.unitExpectedPrice != ticketProduct.unitActualPrice"
+                    style="font-size: 13px; font-style: italic"
+                    class="line-through">
+                    {{ formatMoney(ticketProduct.unitExpectedPrice) }}
+                  </div>
+                  <div>{{ formatMoney(ticketProduct.unitActualPrice) }}</div>
+                </td>
                 <td class="text-right">
                   <input
                     type="number"
                     style="width: 120px"
-                    :value="tpMapReturn[ticketProduct.id].quantityReturn / ticketProduct.unitRate"
+                    :value="
+                      ticketProductMapReturn[ticketProduct.id].quantityReturn /
+                      ticketProduct.unitRate
+                    "
                     min="0"
                     :max="ticketProduct.quantity / ticketProduct.unitRate"
                     @input="
                       (e) =>
-                        (tpMapReturn[ticketProduct.id].quantityReturn =
+                        (ticketProductMapReturn[ticketProduct.id].quantityReturn =
                           Number((e.target as HTMLInputElement).value || 0) *
                           ticketProduct.unitRate)
                     " />
                 </td>
                 <td class="text-right" style="padding-right: 20px">
-                  {{
-                    formatMoney(
-                      tpMapReturn[ticketProduct.id].quantityReturn * ticketProduct.actualPrice
-                    )
-                  }}
+                  <div
+                    v-if="ticketProduct.unitExpectedPrice != ticketProduct.unitActualPrice"
+                    style="font-size: 13px; font-style: italic"
+                    class="line-through">
+                    {{
+                      formatMoney(
+                        ticketProductMapReturn[ticketProduct.id].quantityReturn *
+                          ticketProduct.expectedPrice
+                      )
+                    }}
+                  </div>
+                  <div>
+                    {{
+                      formatMoney(
+                        ticketProductMapReturn[ticketProduct.id].quantityReturn *
+                          ticketProduct.actualPrice
+                      )
+                    }}
+                  </div>
+                </td>
+              </tr>
+              <tr
+                v-for="(ticketProcedure, index) in ticket.ticketProcedureList"
+                :key="ticketProcedure.id">
+                <td class="text-center">{{ index + 1 }}</td>
+                <td>
+                  <div style="font-weight: 500">{{ ticketProcedure.procedure?.name }}</div>
+                </td>
+                <td class="text-center">
+                  <div>{{ ticketProcedure.quantity }}</div>
+                </td>
+                <td class="text-center"></td>
+                <td class="text-right">
+                  <div
+                    v-if="ticketProcedure.expectedPrice != ticketProcedure.actualPrice"
+                    style="font-size: 13px; font-style: italic"
+                    class="line-through">
+                    {{ formatMoney(ticketProcedure.expectedPrice) }}
+                  </div>
+                  <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
+                </td>
+                <td class="text-right">
+                  <input
+                    type="number"
+                    style="width: 120px"
+                    :value="ticketProcedureMapReturn[ticketProcedure.id].quantityReturn"
+                    min="0"
+                    :max="ticketProcedure.quantity"
+                    @input="
+                      (e) =>
+                        (ticketProcedureMapReturn[ticketProcedure.id].quantityReturn = Number(
+                          (e.target as HTMLInputElement).value || 0
+                        ))
+                    " />
+                </td>
+                <td class="text-right" style="padding-right: 20px">
+                  <div
+                    v-if="ticketProcedure.expectedPrice != ticketProcedure.actualPrice"
+                    style="font-size: 13px; font-style: italic"
+                    class="line-through">
+                    {{
+                      formatMoney(
+                        ticketProcedureMapReturn[ticketProcedure.id].quantityReturn *
+                          ticketProcedure.expectedPrice
+                      )
+                    }}
+                  </div>
+                  <div>
+                    {{
+                      formatMoney(
+                        ticketProcedureMapReturn[ticketProcedure.id].quantityReturn *
+                          ticketProcedure.actualPrice
+                      )
+                    }}
+                  </div>
                 </td>
               </tr>
               ---
@@ -252,23 +488,49 @@ defineExpose({ openModal })
               <tr>
                 <td colspan="4" class="text-right">Tiền sản phẩm</td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.productsMoney) }}
+                  <div
+                    v-if="ticket.itemsDiscountProduct"
+                    style="font-size: 13px; font-style: italic">
+                    CK: {{ formatMoney(ticket.itemsDiscountProduct) }}
+                  </div>
+                  <div>
+                    {{ formatMoney(ticket.productMoney) }}
+                  </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(productsMoneyReturn) }}
+                  {{ formatMoney(ticket.productMoney - ticketUpdate.productMoney) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.productsMoney - productsMoneyReturn) }}
+                  <div
+                    v-if="ticketUpdate.itemsDiscountProduct"
+                    style="font-size: 13px; font-style: italic">
+                    CK: {{ formatMoney(ticketUpdate.itemsDiscountProduct) }}
+                  </div>
+                  {{ formatMoney(ticketUpdate.productMoney) }}
                 </td>
               </tr>
-              <tr v-if="ticket.proceduresMoney > 0">
+              <tr v-if="ticket.procedureMoney > 0">
                 <td colspan="4" class="text-right">Tiền dịch vụ</td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.proceduresMoney) }}
+                  <div
+                    v-if="ticket.itemsDiscountProcedure"
+                    style="font-size: 13px; font-style: italic">
+                    CK: {{ formatMoney(ticket.itemsDiscountProcedure) }}
+                  </div>
+                  <div>
+                    {{ formatMoney(ticket.procedureMoney) }}
+                  </div>
                 </td>
-                <td></td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.proceduresMoney) }}
+                  {{ formatMoney(ticket.procedureMoney - ticketUpdate.procedureMoney) }}
+                </td>
+                <td class="text-right">
+                  <div
+                    v-if="ticketUpdate.itemsDiscountProcedure"
+                    style="font-size: 13px; font-style: italic">
+                    CK: {{ formatMoney(ticketUpdate.itemsDiscountProcedure) }}
+                  </div>
+                  {{ formatMoney(ticketUpdate.procedureMoney) }}
                 </td>
               </tr>
               <tr v-if="ticket.discountMoney > 0">
@@ -279,7 +541,7 @@ defineExpose({ openModal })
                 <td></td>
                 <td class="text-right">
                   <div class="flex">
-                    <InputMoney v-model:value="discountMoneyUpdate" textAlign="right" />
+                    <InputMoney v-model:value="ticketUpdate.discountMoney" textAlign="right" />
                   </div>
                 </td>
               </tr>
@@ -292,7 +554,7 @@ defineExpose({ openModal })
                 <td></td>
                 <td class="text-right">
                   <div class="flex">
-                    <InputMoney v-model:value="surchargeUpdate" textAlign="right" />
+                    <InputMoney v-model:value="ticketUpdate.surcharge" textAlign="right" />
                   </div>
                 </td>
               </tr>
@@ -303,13 +565,13 @@ defineExpose({ openModal })
                   {{ formatMoney(ticket.totalMoney) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(totalMoneyReturn) }}
+                  {{ formatMoney(ticket.totalMoney - ticketUpdate.totalMoney) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(totalMoneyUpdate) }}
+                  {{ formatMoney(ticketUpdate.totalMoney) }}
                 </td>
               </tr>
-              <tr v-if="ticket.debt > 0">
+              <tr>
                 <td colspan="4" class="text-right">
                   <span class="uppercase">Nợ</span>
                 </td>
@@ -317,13 +579,18 @@ defineExpose({ openModal })
                   {{ formatMoney(ticket.debt) }}
                 </td>
                 <td class="text-right font-bold">
-                  {{ formatMoney(debtReturn) }}
+                  {{ formatMoney(ticket.debt - ticketUpdate.debt) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.debt - debtReturn) }}
+                  <div class="flex">
+                    <InputMoney
+                      v-model:value="ticketUpdate.debt"
+                      textAlign="right"
+                      @update:value="handleUpdateTicketDebt" />
+                  </div>
                 </td>
               </tr>
-              <tr v-if="ticket.debt > 0">
+              <tr>
                 <td colspan="4" class="text-right">
                   <span class="uppercase">Tiền thanh toán</span>
                 </td>
@@ -331,10 +598,15 @@ defineExpose({ openModal })
                   {{ formatMoney(ticket.paid) }}
                 </td>
                 <td class="text-right font-bold">
-                  {{ formatMoney(paidReturn) }}
+                  {{ formatMoney(ticket.paid - ticketUpdate.paid) }}
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticket.paid - paidReturn) }}
+                  <div class="flex">
+                    <InputMoney
+                      v-model:value="ticketUpdate.paid"
+                      textAlign="right"
+                      @update:value="handleUpdateTicketPaid" />
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -344,7 +616,7 @@ defineExpose({ openModal })
         <div class="pb-4 pt-8 flex justify-center gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
           <VueButton
-            :disabled="disableButton"
+            :disabled="!hasChangeData"
             color="blue"
             type="submit"
             :loading="returnLoading"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting, IconTrash } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -8,7 +8,7 @@ import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
@@ -17,12 +17,12 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
+import { fromTime, toTime } from './ticket-clinic-list.ref'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 const meStore = useMeStore()
@@ -30,10 +30,6 @@ const { permissionIdMap } = meStore
 
 const customerList = ref<Customer[]>([])
 const dataLoading = ref(false)
-
-const startDate = DTimer.startOfDate(new Date())
-const fromTime = ref<number>(startDate.getTime())
-const toTime = ref<number>()
 
 const customerId = ref<number>()
 const ticketStatus = ref<TicketStatus | null>(null)
@@ -86,26 +82,20 @@ onBeforeMount(async () => {
   await startFetchData()
 })
 
-onMounted(async () => {
-  try {
-    await customerStore.refreshDB()
-  } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicList.vue:98 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
-  } finally {
-    dataLoading.value = false
-  }
-})
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
 
 const searchingCustomer = async (text: string) => {
-  if (text) {
-    customerList.value = await customerStore.search(text)
-  } else {
+  if (!text) {
     customerList.value = []
     if (customerId.value) {
+      // nếu đang chọn customer rồi, thì khi xóa hết text đi thì quay về search với text = ''
       customerId.value = undefined
       await startFetchData()
     }
+  } else {
+    customerList.value = await CustomerService.search(text)
   }
 }
 
@@ -114,17 +104,17 @@ const selectCustomer = async (data?: Customer) => {
   await startFetchData()
 }
 
-const startSearch = async () => {
+const startFilter = async () => {
   page.value = 1
   await startFetchData()
 }
 
 const handleSelectTicketStatus = async () => {
-  await startSearch()
+  await startFilter()
 }
 
 const handleChangeTime = async (value: any) => {
-  await startSearch()
+  await startFilter()
 }
 
 const changeSort = async (column: 'id' | 'registeredAt') => {
@@ -138,7 +128,7 @@ const changeSort = async (column: 'id' | 'registeredAt') => {
     sortColumn.value = column
     sortValue.value = 'ASC'
   }
-  await startSearch()
+  await startFilter()
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -169,7 +159,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        await TicketClinicApi.destroyDraftSchedule(ticketId)
+        await TicketClinicApi.destroy(ticketId)
         await startFetchData()
         AlertStore.addSuccess('Xóa phiếu khám thành công')
       } catch (error) {
@@ -246,6 +236,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             :maxHeight="260"
             placeholder="Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
+            @onFocusinFirst="handleFocusFirstSearchCustomer"
             @update:text="searchingCustomer">
             <template #option="{ item: { data } }">
               <div>
@@ -304,7 +295,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
       <div>
         <div>&nbsp;</div>
         <div>
-          <VueButton color="blue" @click="startSearch">Tìm kiếm</VueButton>
+          <VueButton color="blue" @click="startFilter">Tìm kiếm</VueButton>
         </div>
       </div>
     </div>
@@ -374,9 +365,12 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                   :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }">
                   <div class="flex justify-center items-center gap-2">
                     <span>
-                      {{ ticket.date }}{{ ticket.month
-                      }}{{ ticket.year?.toString().slice(-2) || '' }}_{{
-                        ticket.dailyIndex?.toString().padStart(2, '0') || ''
+                      {{
+                        ticket.date?.toString().padStart(2, '0') +
+                        ticket.month?.toString().padStart(2, '0') +
+                        ticket.year?.toString().slice(-2) +
+                        '_' +
+                        ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
                     </span>
                     <span class="text-lg"><ReadOutlined /></span>

@@ -31,12 +31,12 @@ const startFetchData = async () => {
     const { data, meta } = await PrescriptionSampleService.pagination({
       page: page.value,
       limit: limit.value,
-      relation: {},
       filter: {},
       sort: { priority: 'ASC' },
     })
 
     prescriptionSampleList.value = data
+    console.log('🚀 ~ file: PrescriptionSampleList.vue:39 ~ startFetchData ~ data:', data)
     total.value = meta.total
     dataLoading.value = true
   } catch (error) {
@@ -122,8 +122,9 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
           <tr v-for="prescriptionSample in prescriptionSampleList" :key="prescriptionSample.id">
             <td class="text-center">{{ prescriptionSample.priority }}</td>
             <td>
-              <div class="flex items-center gap-1">
-                <span>{{ prescriptionSample.name }}</span>
+              <div>{{ prescriptionSample.name }}</div>
+              <div style="font-size: 13px; font-style: italic">
+                {{ prescriptionSample.medicineList.map((i) => i.product?.brandName).join(', ') }}
               </div>
             </td>
             <td

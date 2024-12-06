@@ -39,6 +39,7 @@ export class TicketRadiology {
     const ins = new TicketRadiology()
     ins.id = 0
     ins.imageIds = '[]'
+    ins.description = ''
     return ins
   }
 

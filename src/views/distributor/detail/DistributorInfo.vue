@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Distributor } from '../../../modules/distributor'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { Distributor } from '../../../modules/distributor'
 import { formatPhone } from '../../../utils'
-import { useMeStore } from '../../../modules/_me/me.store'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -10,7 +9,6 @@ const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-
 </script>
 
 <template>

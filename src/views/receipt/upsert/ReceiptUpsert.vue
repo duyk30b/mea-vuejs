@@ -8,10 +8,9 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor, DistributorApi, useDistributorStore } from '../../../modules/distributor'
+import { Distributor, DistributorApi, DistributorService } from '../../../modules/distributor'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useProductStore } from '../../../modules/product'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
@@ -38,12 +37,10 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 const router = useRouter()
 const route = useRoute()
 
-const productStore = useProductStore()
-const distributorStore = useDistributorStore()
 const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { formatMoney } = settingStore
+const { formatMoney, isMobile } = settingStore
 
 const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 
@@ -80,7 +77,7 @@ onBeforeMount(async () => {
   } else if (distributorId) {
     distributorDefault = await DistributorApi.detail(distributorId)
   } else {
-    distributorDefault = await meStore.getDistributorDefault()
+    distributorDefault = await DistributorService.getDistributorDefault()
   }
 
   distributor.value = distributorDefault
@@ -98,7 +95,6 @@ onBeforeMount(async () => {
 onMounted(async () => {
   try {
     window.addEventListener('keydown', handleDocumentKeyup)
-    await distributorStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -108,17 +104,24 @@ onUnmounted(() => {
   receipt.value = Receipt.blank()
 })
 
+const handleFocusFirstSearchDistributor = async () => {
+  await DistributorService.getAll()
+}
+const handleFocusSearchDistributor = async () => {
+  await searchingDistributor('')
+}
+
 const searchingDistributor = async (text: string) => {
   distributor.value.id = 0
-  if (text) {
-    const distributorList = await distributorStore.search(text)
+  if (!text && isMobile) {
+    distributorOptions.value = []
+  } else {
+    const distributorList = await DistributorService.search(text || '')
     distributorOptions.value = distributorList.map((i) => ({
       value: i.id,
       text: i.fullName,
       data: i,
     }))
-  } else {
-    distributorOptions.value = []
   }
 }
 
@@ -282,6 +285,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               :disabled="mode === EReceiptUpsertMode.UPDATE"
               required
+              @onFocusinFirst="handleFocusFirstSearchDistributor"
+              @onFocusin="handleFocusSearchDistributor"
               @selectItem="({ data }) => selectDistributor(data)"
               @update:text="searchingDistributor">
               <template #option="{ item: { data } }">

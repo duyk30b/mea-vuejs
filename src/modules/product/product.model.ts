@@ -24,7 +24,6 @@ export class Product {
 
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
-  deletedAt: number | null
 
   batchList?: Batch[]
   productGroup?: ProductGroup

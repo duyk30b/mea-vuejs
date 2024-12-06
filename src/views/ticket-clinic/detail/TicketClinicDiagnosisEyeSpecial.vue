@@ -69,7 +69,7 @@ const saveTicketDiagnosis = async () => {
     if (hasChangeAttribute.value) {
       ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
         .map(([key, value]) => ({ key, value }))
-        .filter((i) => !!i.key)
+        .filter((i) => !!i.value)
     }
 
     await TicketClinicApi.updateDiagnosis({

@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { IconClose } from '../../../common/icon'
 import { InputDate, InputMoney, InputText } from '../../../common/vue-form'
-import { Batch, useBatchStore } from '../../../modules/batch'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { Batch, BatchService } from '../../../modules/batch'
 import { Product } from '../../../modules/product'
 
 const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE'): void }>()
-
-const batchStore = useBatchStore()
 
 const showModal = ref(false)
 const batch = ref(Batch.blank())
@@ -23,7 +21,7 @@ const openModal = async (b: Batch) => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    const batchDraft = await batchStore.updateOne(batch.value.id, batch.value)
+    const batchDraft = await BatchService.updateOne(batch.value.id, batch.value)
     emit('success', batchDraft, 'UPDATE')
     handleClose()
   } catch (error) {

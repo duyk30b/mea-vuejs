@@ -81,8 +81,8 @@ export class RadiologyApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/radiology/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{ radiologyId: number }>
-    return data
+    const result = response.data as BaseResponse<{ radiologyId?: number; countTicketRadiology?: number }>
+    return result
   }
 
   static async systemList() {

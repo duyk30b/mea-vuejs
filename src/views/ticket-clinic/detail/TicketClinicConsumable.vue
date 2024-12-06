@@ -5,14 +5,14 @@ import VueButton from '../../../common/VueButton.vue'
 import { InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, useBatchStore } from '../../../modules/batch'
+import { Batch, BatchService } from '../../../modules/batch'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, useProductStore } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer } from '../../../utils'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -20,8 +20,6 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const productStore = useProductStore()
-const batchStore = useBatchStore()
 
 const ticketProductBlank = () => {
   const temp = TicketProduct.blank()
@@ -54,18 +52,21 @@ const disabledButton = computed(() => {
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicConsumable.vue:56  ~ onMounted')
-  try {
-    await Promise.all([productStore.refreshDB(), batchStore.refreshDB()])
-  } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicConsumable.vue:60 ~ onMounted ~ error:', error)
-  }
 })
+
+const handleFocusFirstSearchProduct = async () => {
+  try {
+    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicConsumable.vue:69  ~ error:', error)
+  }
+}
 
 const searchingProduct = async (text: string) => {
   if (!text) {
     clear()
   } else {
-    productList.value = await productStore.search(text)
+    productList.value = await ProductService.search(text)
   }
 }
 
@@ -88,7 +89,7 @@ const selectProduct = async (instance?: Product) => {
 
     ticketProductConsumable.value = temp
     if (instance.hasManageBatches) {
-      const batchListResponse = await batchStore.list({
+      const batchListResponse = await BatchService.list({
         filter: {
           productId: instance.id,
           quantity: { GT: 0 },
@@ -247,6 +248,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
           :disabled="
             [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
           "
+          @onFocusinFirst="handleFocusFirstSearchProduct"
           @selectItem="({ data }) => selectProduct(data)"
           @update:text="searchingProduct">
           <template #option="{ item: { data } }">

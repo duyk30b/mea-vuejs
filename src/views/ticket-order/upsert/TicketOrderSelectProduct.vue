@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
@@ -11,15 +11,14 @@ import {
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, useBatchStore } from '../../../modules/batch'
+import { Batch, BatchService } from '../../../modules/batch'
 import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, useProductStore } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { customFilter, DTimer, timeToText } from '../../../utils'
+import { customFilter, DTimer } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
-import { computed } from 'vue'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -28,8 +27,6 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const productStore = useProductStore()
-const batchStore = useBatchStore()
 
 const product = ref(Product.blank())
 const productList = ref<Product[]>([])
@@ -42,18 +39,22 @@ const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice' | 
 )
 
 onMounted(async () => {
-  try {
-    await Promise.all([productStore.refreshDB(), batchStore.refreshDB()])
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
+  console.log('🚀 ~ file: TicketOrderSelectProduct.vue:45  ~ onMounted')
 })
+
+const handleFocusFirstSearchProduct = async () => {
+  try {
+    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  } catch (error) {
+    console.log('🚀 ~ file: TicketOrderSelectProduct.vue:56 ~ error:', error)
+  }
+}
 
 const searchingProduct = async (text: string) => {
   if (!text) {
     productList.value = []
   } else {
-    productList.value = await productStore.search(text)
+    productList.value = await ProductService.search(text)
   }
 }
 
@@ -72,7 +73,7 @@ const selectProduct = async (instance?: Product) => {
   product.value = instance
   createTicketProduct(instance)
   if (instance.hasManageBatches) {
-    const batchListResponse = await batchStore.list({
+    const batchListResponse = await BatchService.list({
       filter: {
         productId: instance.id,
         quantity: { NOT: 0 },
@@ -322,6 +323,7 @@ defineExpose({ focus })
           :maxHeight="320"
           placeholder="(F3) Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
           @selectItem="({ data }) => selectProduct(data)"
+          @onFocusinFirst="handleFocusFirstSearchProduct"
           @update:text="searchingProduct">
           <template #option="{ item: { data } }">
             <div>

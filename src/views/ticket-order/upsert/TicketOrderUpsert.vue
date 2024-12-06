@@ -11,7 +11,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer, CustomerApi, useCustomerStore } from '../../../modules/customer'
+import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
@@ -48,7 +48,6 @@ const ticketUpsertForm = ref<InstanceType<typeof HTMLFormElement>>()
 const router = useRouter()
 const route = useRoute()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -111,7 +110,7 @@ onBeforeMount(async () => {
     } else if (customerId) {
       customerDefault = await CustomerApi.detail(customerId)
     } else {
-      customerDefault = await meStore.getCustomerDefault()
+      customerDefault = await CustomerService.getCustomerDefault()
     }
 
     customer.value = customerDefault
@@ -149,7 +148,6 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 onMounted(async () => {
   try {
     window.addEventListener('keydown', handleDocumentKeyup)
-    await customerStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -159,11 +157,15 @@ onUnmounted(() => {
   ticket.value = Ticket.blank()
 })
 
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
+
 const searchingCustomer = async (text: string) => {
   customer.value = Customer.blank()
   ticket.value.customerId = 0
   if (text) {
-    customerList.value = await customerStore.search(text)
+    customerList.value = await CustomerService.search(text)
   } else {
     customerList.value = []
   }
@@ -256,7 +258,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
         })
         ticket.value = Ticket.blank()
 
-        const customerRes = Customer.from(meStore.customerDefault)
+        const customerRes = Customer.from(CustomerService.customerDefault)
         customer.value = customerRes
         ticket.value.customer = customerRes
         ticket.value.customerId = customerRes.id
@@ -438,6 +440,7 @@ const handleChangeTabs = (activeKey: any) => {
               :disabled="mode == ETicketOrderUpsertMode.UPDATE"
               required
               @selectItem="({ data }) => selectCustomer(data)"
+              @onFocusinFirst="handleFocusFirstSearchCustomer"
               @update:text="searchingCustomer">
               <template #option="{ item: { data } }">
                 <div>
@@ -471,7 +474,13 @@ const handleChangeTabs = (activeKey: any) => {
                     Tiền hàng
                   </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticket.productsMoney + ticket.proceduresMoney) }}
+                    <span
+                      v-if="ticket.itemsDiscount"
+                      style="font-style: italic; font-size: 13px"
+                      class="mr-2">
+                      (CK {{ formatMoney(ticket.itemsDiscount) }})
+                    </span>
+                    <span>{{ formatMoney(ticket.itemsActualMoney) }}</span>
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
@@ -487,7 +496,7 @@ const handleChangeTabs = (activeKey: any) => {
                       <template #title>
                         <div>
                           Chiết khấu (Tiền hàng:
-                          <b>{{ formatMoney(ticket.productsMoney + ticket.proceduresMoney) }}</b>
+                          <b>{{ formatMoney(ticket.productMoney + ticket.procedureMoney) }}</b>
                           )
                         </div>
                         <div class="mt-2">

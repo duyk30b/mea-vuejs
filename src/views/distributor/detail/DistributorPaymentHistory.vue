@@ -75,7 +75,7 @@ defineExpose({ startFetchData })
     <table v-if="isMobile">
       <thead>
         <tr>
-          <th>Hóa đơn</th>
+          <th>Phiếu nhập</th>
           <th>Tiền</th>
         </tr>
       </thead>
@@ -126,7 +126,7 @@ defineExpose({ startFetchData })
     <table v-if="!isMobile">
       <thead>
         <tr>
-          <th>Hóa đơn</th>
+          <th>Phiếu nhập</th>
           <th>Loại</th>
           <th>Thanh toán</th>
           <th>Ghi nợ</th>

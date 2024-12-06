@@ -12,9 +12,9 @@ import {
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, BatchApi, useBatchStore } from '../../../modules/batch'
+import { Batch, BatchApi, BatchService } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, useProductStore } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
 import { timeToText } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
@@ -31,8 +31,6 @@ const handleDocumentKeyup = (e: KeyboardEvent) => {
 
 const emit = defineEmits<{ (e: 'addReceiptItem', value: ReceiptItem): void }>()
 
-const productStore = useProductStore()
-const batchStore = useBatchStore()
 const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -47,8 +45,6 @@ const receiptItem = ref<ReceiptItem>(ReceiptItem.blank())
 onMounted(async () => {
   try {
     window.addEventListener('keydown', handleDocumentKeyup)
-    await productStore.refreshDB()
-    await batchStore.refreshDB()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -57,12 +53,20 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
 })
 
+const handleFocusFirstSearchProduct = async () => {
+  try {
+    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  } catch (error) {
+    console.log('🚀 ~ file: ReceiptItemCreate.vue:61 ~ error:', error)
+  }
+}
+
 const searchingProduct = async (text: string) => {
   product.value.id = 0
   if (!text) {
     productList.value = []
   } else {
-    productList.value = await productStore.search(text)
+    productList.value = await ProductService.search(text)
   }
 }
 
@@ -96,7 +100,7 @@ const selectProduct = async (productData?: Product) => {
     receiptItem.value.unitRate = productData.unitDefault.rate
 
     if (productData.hasManageBatches) {
-      const batchListData = await batchStore.list({
+      const batchListData = await BatchService.list({
         filter: {
           productId: productData.id,
           // quantity: { NOT: 0 },
@@ -221,6 +225,7 @@ const clear = () => {
           placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
           required
           @selectItem="({ data }) => selectProduct(data)"
+          @onFocusinFirst="handleFocusFirstSearchProduct"
           @update:text="searchingProduct">
           <template #option="{ item: { data } }">
             <div>

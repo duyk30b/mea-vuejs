@@ -7,7 +7,7 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Customer, useCustomerStore } from '../../modules/customer'
+import { Customer, CustomerService } from '../../modules/customer'
 import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { DTimer } from '../../utils'
 import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
@@ -19,7 +19,6 @@ const emit = defineEmits<{
 }>()
 const router = useRouter()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -69,7 +68,7 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await customerStore.payDebt({
+    const data = await CustomerService.payDebt({
       customerId: customer.value.id,
       note: note.value,
       ticketPaymentList: ticketPaymentList.value

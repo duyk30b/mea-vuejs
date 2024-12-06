@@ -180,12 +180,14 @@ defineExpose({ openModal })
                   <b>Tiền hàng</b>
                 </td>
                 <td :colspan="2" style="text-align: right">
+                  <span
+                    v-if="ticket.itemsDiscount"
+                    style="font-style: italic; font-size: 13px"
+                    class="mr-2">
+                    (CK: {{ formatMoney(ticket.itemsDiscount) }})
+                  </span>
                   <b>
-                    {{
-                      formatMoney(
-                        ticket.proceduresMoney + ticket.productsMoney + ticket.radiologyMoney
-                      )
-                    }}
+                    {{ formatMoney(ticket.procedureMoney + ticket.productMoney) }}
                   </b>
                 </td>
               </tr>

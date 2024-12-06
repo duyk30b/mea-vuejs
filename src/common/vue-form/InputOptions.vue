@@ -35,6 +35,8 @@ const emit = defineEmits<{
   (e: 'update:text', value: string): void
   (e: 'update:value', value: string | number | boolean | null): void
   (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
+  (e: 'onFocusin'): void
+  (e: 'onFocusinFirst'): void
 }>()
 
 const inputRef = ref<HTMLInputElement>()
@@ -210,6 +212,16 @@ const setItem = (item: { text?: string; value?: any; data: any }) => {
   itemSelected.value = item.data || 0
 }
 
+let focusFirst = true
+const onFocusin = () => {
+  showOptions.value = true
+  emit('onFocusin')
+  if (focusFirst) {
+    emit('onFocusinFirst')
+    focusFirst = false
+  }
+}
+
 defineExpose({ focus, clear, setItem })
 </script>
 
@@ -225,7 +237,7 @@ defineExpose({ focus, clear, setItem })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
-        @focusin="showOptions = true" />
+        @focusin="onFocusin" />
     </div>
     <div class="icon-append">
       <IconSearch class="icon-blur" />

@@ -1,7 +1,6 @@
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
 import type { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
-import type { Role } from '../role'
 import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'

@@ -6,22 +6,16 @@ import type { BatchListQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
 export class BatchService {
-  private static async refreshDB() {
+  static async refreshDB() {
     let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
     if (!refreshTime) {
-      refreshTime = {
-        code: 'BATCH',
-        dataVersion: 0,
-        time: new Date(0).toISOString(),
-      }
+      refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
     }
-    const dataVersion = useMeStore().organization.dataVersion
+    const dataVersion = useMeStore().organization.dataVersionParse.batch
 
     let apiResponse: { time: Date; data: Batch[] }
-    let hasChange = false
 
     if (refreshTime.dataVersion !== dataVersion) {
-      hasChange = true
       await BatchDB.truncate()
       apiResponse = await BatchApi.list({})
     } else {
@@ -33,18 +27,15 @@ export class BatchService {
 
     if (apiResponse.data.length) {
       await BatchDB.upsertMany(apiResponse.data)
+      refreshTime.time = apiResponse.time.toISOString()
+      refreshTime.dataVersion = dataVersion
+      await RefreshTimeDB.upsertOne(refreshTime)
     }
-    refreshTime.time = apiResponse.time.toISOString()
-    refreshTime.dataVersion = dataVersion
-    await RefreshTimeDB.upsertOne(refreshTime)
 
-    return {
-      hasChange: hasChange || !!apiResponse.data.length,
-    }
+    return { numberChange: apiResponse.data.length }
   }
 
   static async list(params: BatchListQuery) {
-    await BatchService.refreshDB()
     const { filter, limit, sort } = params
     const objects = await BatchDB.findMany({
       limit,
@@ -57,5 +48,11 @@ export class BatchService {
       sort,
     })
     return Batch.fromList(objects)
+  }
+
+  static async updateOne(id: number, instance: Batch) {
+    const response = await BatchApi.updateOne(id, instance)
+    await BatchDB.replaceOne(id, response)
+    return response
   }
 }

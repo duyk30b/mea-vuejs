@@ -11,9 +11,11 @@ export class TicketOrderApi {
       ticketOrderDraftInsert: {
         customerId: ticket.customerId,
         totalCostAmount: ticket.totalCostAmount,
-        proceduresMoney: ticket.proceduresMoney,
-        productsMoney: ticket.productsMoney,
+        procedureMoney: ticket.procedureMoney,
+        productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
+        itemsActualMoney: ticket.itemsActualMoney,
+        itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -70,9 +72,11 @@ export class TicketOrderApi {
     const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-draft-approved`, {
       ticketOrderDraftApprovedUpdate: {
         totalCostAmount: ticket.totalCostAmount,
-        proceduresMoney: ticket.proceduresMoney,
-        productsMoney: ticket.productsMoney,
+        procedureMoney: ticket.procedureMoney,
+        productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
+        itemsActualMoney: ticket.itemsActualMoney,
+        itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -124,21 +128,17 @@ export class TicketOrderApi {
     return Ticket.from(data.ticketBasic)
   }
 
-  static async destroyDraft(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/destroy-draft`)
-    const { data } = response.data as BaseResponse<{ ticketId: number }>
-    return data
-  }
-
   static async createDebtSuccess(options: { ticket: Ticket }) {
     const { ticket } = options
     const response = await AxiosInstance.post('/ticket-order/create-debt-success', {
       ticketOrderDebtSuccessInsert: {
         customerId: ticket.customerId,
         totalCostAmount: ticket.totalCostAmount,
-        proceduresMoney: ticket.proceduresMoney,
-        productsMoney: ticket.productsMoney,
+        procedureMoney: ticket.procedureMoney,
+        productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
+        itemsActualMoney: ticket.itemsActualMoney,
+        itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -196,9 +196,11 @@ export class TicketOrderApi {
       ticketOrderDebtSuccessUpdate: {
         // customerId: ticket.customerId, // không cho thay đổi customerID
         totalCostAmount: ticket.totalCostAmount,
-        proceduresMoney: ticket.proceduresMoney,
-        productsMoney: ticket.productsMoney,
+        procedureMoney: ticket.procedureMoney,
+        productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
+        itemsActualMoney: ticket.itemsActualMoney,
+        itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
         discountPercent: ticket.discountPercent,
         discountType: ticket.discountType,
@@ -324,34 +326,67 @@ export class TicketOrderApi {
 
   static async returnProduct(options: {
     ticketId: number
-    returnList: {
+    ticketProductReturnList: {
       ticketProductId: number
       quantityReturn: number
-      actualPrice: number
       costAmountReturn: number
     }[]
-    discountMoneyReturn: number
-    surchargeReturn: number
-    debtReturn: number
-    paidReturn: number
+    ticketProcedureReturnList: {
+      ticketProcedureId: number
+      quantityReturn: number
+    }[]
+    totalCostAmountUpdate: number
+    productMoneyUpdate: number
+    procedureMoneyUpdate: number
+    itemsActualMoneyUpdate: number
+    itemsDiscountUpdate: number
+
+    discountMoneyUpdate: number
+    discountPercentUpdate: number
+    surchargeUpdate: number
+    expenseUpdate: number
+
+    totalMoneyUpdate: number
+    profitUpdate: number
+    paidUpdate: number
+    debtUpdate: number
   }) {
-    const { ticketId, returnList } = options
+    const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/return-product`, {
-      returnList,
-      discountMoneyReturn: options.discountMoneyReturn,
-      surchargeReturn: options.surchargeReturn,
-      debtReturn: options.debtReturn,
-      paidReturn: options.paidReturn,
+      ticketProductReturnList: options.ticketProductReturnList.map((i) => ({
+        ticketProductId: i.ticketProductId,
+        quantityReturn: i.quantityReturn,
+        costAmountReturn: i.costAmountReturn,
+      })),
+      ticketProcedureReturnList: options.ticketProcedureReturnList.map((i) => ({
+        ticketProcedureId: i.ticketProcedureId,
+        quantityReturn: i.quantityReturn,
+      })),
+      totalCostAmountUpdate: options.totalCostAmountUpdate,
+      productMoneyUpdate: options.productMoneyUpdate,
+      procedureMoneyUpdate: options.procedureMoneyUpdate,
+      itemsActualMoneyUpdate: options.itemsActualMoneyUpdate,
+      itemsDiscountUpdate: options.itemsDiscountUpdate,
+
+      discountMoneyUpdate: options.discountMoneyUpdate,
+      discountPercentUpdate: options.discountPercentUpdate,
+      surchargeUpdate: options.surchargeUpdate,
+      expenseUpdate: options.expenseUpdate,
+
+      totalMoneyUpdate: options.totalMoneyUpdate,
+      profitUpdate: options.profitUpdate,
+      paidUpdate: options.paidUpdate,
+      debtUpdate: options.debtUpdate,
     })
     const { data } = response.data as BaseResponse<{
       ticketBasic: any
       ticketProductList: any[]
+      ticketProcedureList: any[]
       customerPayment?: any
     }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
-      ticketProductList: TicketProduct.fromList(data.ticketProductList),
     }
   }
 
@@ -370,10 +405,20 @@ export class TicketOrderApi {
   static async cancel(options: { ticketId: number }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/cancel`)
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{
+      ticketBasic: any
+      customerPayment: any
+      customer: any
+    }>
     return {
       ticketBasic: Ticket.from(data.ticketBasic),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
+  }
+
+  static async destroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/destroy`)
+    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    return data
   }
 }

@@ -9,7 +9,7 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
-import { Customer, useCustomerStore } from '../../../../modules/customer'
+import { Customer, CustomerService } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
 import { DTimer } from '../../../../utils'
 
@@ -23,7 +23,6 @@ const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const customerStore = useCustomerStore()
 const store = useSettingStore()
 const meStore = useMeStore()
 
@@ -36,7 +35,11 @@ const saveLoading = ref(false)
 const activeTab = ref(TABS_KEY.SELECT_ITEM)
 
 const customerList = ref<Customer[]>([])
-const customerDefault = ref<Customer>(meStore.customerDefault)
+const customerDefault = ref<Customer>(Customer.blank())
+
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
 
 const selectCustomer = async (data?: Customer) => {
   settingDisplay.value.customer.idDefault = data?.id || 0
@@ -45,7 +48,7 @@ const selectCustomer = async (data?: Customer) => {
 
 const searchingCustomer = async (text: string) => {
   if (text) {
-    customerList.value = await customerStore.search(text)
+    customerList.value = await CustomerService.search(text)
   } else {
     customerList.value = []
     settingDisplay.value.customer.idDefault = 0
@@ -68,7 +71,7 @@ const handleSave = async () => {
     await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_UPSERT, settingData)
     AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
-    meStore.customerDefault = Customer.from(customerDefault.value)
+    CustomerService.customerDefault = Customer.from(customerDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -79,7 +82,7 @@ const handleSave = async () => {
 }
 
 const handleActiveTabPaymentSetting = async (v: any) => {
-  customerDefault.value = await meStore.getCustomerDefault()
+  customerDefault.value = await CustomerService.getCustomerDefault()
   inputOptionsCustomer.value?.setItem({
     value: customerDefault.value.id,
     text: customerDefault.value.fullName,
@@ -295,6 +298,7 @@ defineExpose({ openModal })
                             :maxHeight="180"
                             placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                             @selectItem="({ data }) => selectCustomer(data)"
+                            @onFocusinFirst="handleFocusFirstSearchCustomer"
                             @update:text="searchingCustomer">
                             <template #option="{ item: { data } }">
                               <div>

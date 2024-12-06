@@ -9,7 +9,7 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
-import { Distributor, useDistributorStore } from '../../../modules/distributor'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
 import { DTimer } from '../../../utils'
 
@@ -22,8 +22,6 @@ const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const distributorStore = useDistributorStore()
-
 const store = useSettingStore()
 const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
@@ -35,7 +33,7 @@ const saveLoading = ref(false)
 const activeTab = ref(TABS_KEY.RECEIPT_ITEMS)
 
 const distributorList = ref<Distributor[]>([])
-const distributorDefault = ref<Distributor>(meStore.distributorDefault)
+const distributorDefault = ref<Distributor>(DistributorService.distributorDefault)
 
 const selectDistributor = async (data?: Distributor) => {
   settingDisplay.value.distributor.idDefault = data?.id || 0
@@ -44,7 +42,7 @@ const selectDistributor = async (data?: Distributor) => {
 
 const searchingDistributor = async (text: string) => {
   if (text) {
-    distributorList.value = await distributorStore.search(text)
+    distributorList.value = await DistributorService.search(text)
   } else {
     distributorList.value = []
     settingDisplay.value.distributor.idDefault = 0
@@ -54,15 +52,6 @@ const searchingDistributor = async (text: string) => {
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
-
-  distributorDefault.value = await meStore.getDistributorDefault()
-  nextTick(() => {
-    inputOptionsDistributor.value?.setItem({
-      value: distributorDefault.value.id,
-      text: distributorDefault.value.fullName,
-      data: distributorDefault.value,
-    })
-  })
 }
 
 const handleClose = () => {
@@ -76,13 +65,26 @@ const handleSave = async () => {
     await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
     AlertStore.addSuccess('Cập nhật cài đặt thành công')
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
-    meStore.distributorDefault = Distributor.from(distributorDefault.value)
+    DistributorService.distributorDefault = Distributor.from(distributorDefault.value)
     emit('success')
     showModal.value = false
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:75 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
+  }
+}
+
+const handleUpdateTabShow = async (value: any) => {
+  if (value === TABS_KEY.RECEIPT_PAYMENT) {
+    distributorDefault.value = await DistributorService.getDistributorDefault()
+    nextTick(() => {
+      inputOptionsDistributor.value?.setItem({
+        value: distributorDefault.value.id,
+        text: distributorDefault.value.fullName,
+        data: distributorDefault.value,
+      })
+    })
   }
 }
 
@@ -100,7 +102,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="px-6 mt-4 receipt-upsert-setting-screen-tabs">
-        <VueTabs v-model:tabShow="activeTab">
+        <VueTabs v-model:tabShow="activeTab" @update:tabShow="handleUpdateTabShow">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.RECEIPT_ITEMS">Cài đặt danh sách</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.RECEIPT_PAYMENT">Cài đặt phiếu</VueTabMenu>

@@ -16,7 +16,7 @@ import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { useCustomerStore } from '../../../modules/customer'
+import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -39,7 +39,6 @@ const emit = defineEmits<{
   (e: 'success', value: { ticket: Ticket }): void
 }>()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 const meStore = useMeStore()
@@ -61,15 +60,22 @@ const provinceList = ref<string[]>([])
 const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
+let firstLoad = true
+
 const openModal = async (ticketStatus: TicketStatus) => {
   showModal.value = true
   ticketRegister.value.ticketStatus = ticketStatus
   ticketRegister.value.registeredAt = Date.now()
-  if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
-    customerSourceAll.value = await CustomerSourceService.list({})
-  }
-  if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
-    provinceList.value = await AddressInstance.getAllProvinces()
+
+  if (firstLoad) {
+    firstLoad = false
+    await CustomerService.refreshDB()
+    if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
+      customerSourceAll.value = await CustomerSourceService.list({})
+    }
+    if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
+      provinceList.value = await AddressInstance.getAllProvinces()
+    }
   }
 }
 
@@ -85,6 +91,8 @@ const closeModal = () => {
 
   showModal.value = false
 }
+
+const handleFocusFirstSearchCustomer = async () => {}
 
 const selectCustomer = async (customerSelect: Customer) => {
   if (!customerSelect) {
@@ -121,7 +129,7 @@ const searchingCustomer = async (text: string) => {
   }
   customer.value.fullName = text
   if (text) {
-    const customerList = await customerStore.search(text)
+    const customerList = await CustomerService.search(text)
     customerOptions.value = customerList.map((i) => ({
       value: i.id,
       text: i.fullName,
@@ -153,7 +161,7 @@ const handleChangeCheckboxAppointment = (e: any, appointment: Appointment) => {
   }
 }
 
-const handleRegisterVisit = async () => {
+const handleRegisterTicketClinic = async () => {
   if (DTimer.timeToText(ticketRegister.value.registeredAt) !== DTimer.timeToText(new Date())) {
     return AlertStore.addError(
       'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
@@ -174,15 +182,14 @@ const handleRegisterVisit = async () => {
         registeredAt: ticketRegister.value.registeredAt,
         customerSourceId: ticketRegister.value.customerSourceId,
       },
-      ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
-        key,
-        value: value || '',
-      })),
+      ticketAttributeList: Object.entries(ticketAttributeMap.value)
+        .map(([key, value]) => ({ key, value }))
+        .filter((i) => !!i.value),
     })
     emit('success', { ticket: ticketResponse })
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalTicketClinicCreate.vue:167 ~ handleRegisterVisit ~ error:', error)
+    console.log('🚀 ModalTicketClinicCreate.vue:184 ~ handleRegisterTicketClinic ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -293,7 +300,10 @@ defineExpose({ openModal })
 
 <template>
   <VueModal v-model:show="showModal" :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.modalStyle">
-    <form ref="ticketClinicCreateForm" class="bg-white" @submit.prevent="handleRegisterVisit">
+    <form
+      ref="ticketClinicCreateForm"
+      class="bg-white"
+      @submit.prevent="handleRegisterTicketClinic">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Tiếp đón khách hàng mới</div>
         <div
@@ -337,6 +347,7 @@ defineExpose({ openModal })
               required
               noClearTextWhenNotSelected
               message-no-result="Khách hàng này chưa từng đến khám"
+              @onFocusinFirst="handleFocusFirstSearchCustomer"
               @selectItem="({ data }) => selectCustomer(data)"
               @update:text="searchingCustomer">
               <template #option="{ item: { data } }">

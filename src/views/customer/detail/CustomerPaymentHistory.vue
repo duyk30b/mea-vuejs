@@ -164,7 +164,9 @@ defineExpose({ startFetchData })
           </tr>
           <tr v-for="(customerPayment, index) in customerPaymentList" :key="index">
             <td>
-              <LinkAndStatusTicket :ticket="customerPayment.ticket!" />
+              <LinkAndStatusTicket
+                :ticketId="customerPayment.ticketId"
+                :ticket="customerPayment.ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>

@@ -86,19 +86,6 @@ const startCopy = () => {
   })
 }
 
-const destroyDraft = async () => {
-  try {
-    loadingProcess.value = true
-    await ReceiptApi.destroyDraft(receipt.value.id!)
-    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
-    router.push({ name: 'ReceiptList' })
-  } catch (error) {
-    console.log('🚀 ~ destroyDraft ~ error:', error)
-  } finally {
-    loadingProcess.value = false
-  }
-}
-
 const startRefundPrepayment = async () => {
   try {
     loadingProcess.value = true
@@ -180,12 +167,21 @@ const clickRefundPrepayment = () => {
   })
 }
 
-const clickDestroyDraft = () => {
+const clickDestroy = () => {
   ModalStore.confirm({
-    title: 'Bạn có chắc chắn muốn xóa phiếu nhập này',
-    content: 'Phiếu nhập đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    title: 'Bạn có chắc chắn muốn xóa phiếu nhập này ?',
+    content: 'Phiếu nhập đã xóa vĩnh viễn khỏi hệ thống. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await destroyDraft()
+      try {
+        loadingProcess.value = true
+        await ReceiptApi.destroy(receipt.value.id!)
+        AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
+        router.push({ name: 'ReceiptList' })
+      } catch (error) {
+        console.log('🚀 ~ destroyDraft ~ error:', error)
+      } finally {
+        loadingProcess.value = false
+      }
     },
   })
 }
@@ -198,12 +194,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'REFUND_PREPAYMENT') clickRefundPrepayment()
-  if (menu.key === 'CANCEL') clickCancel()
-  if (menu.key === 'DESTROY_DRAFT') clickDestroyDraft()
+  if (menu.key === 'CANCEL_RECEIPT') clickCancel()
+  if (menu.key === 'DESTROY_RECEIPT') clickDestroy()
 }
 
-const openModalDistributorDetail = (data?: Distributor) => {
-  if (data) modalDistributorDetail.value?.openModal(data.id)
+const openModalDistributorDetail = (distributorId: number) => {
+  modalDistributorDetail.value?.openModal(distributorId)
 }
 </script>
 
@@ -252,7 +248,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">Nhà cung cấp</td>
         <td class="font-medium px-2 py-1">
           {{ receipt.distributor?.fullName }}
-          <a class="ml-1" @click="openModalDistributorDetail(receipt.distributor)">
+          <a class="ml-1" @click="openModalDistributorDetail(receipt.distributorId)">
             <IconFileSearch />
           </a>
         </td>
@@ -270,7 +266,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <tr>
         <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
         <td class="px-2 py-1">
-          <ReceiptStatusTag :status="receipt.status" />
+          <ReceiptStatusTag :receipt="receipt" />
         </td>
       </tr>
       <tr>
@@ -320,7 +316,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
                 permissionIdMap[PermissionId.RECEIPT_CANCEL] &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
-              key="CANCEL">
+              key="CANCEL_RECEIPT">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
                 Hủy phiếu
@@ -328,10 +324,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
             </a-menu-item>
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_DESTROY_DRAFT] &&
-                [ReceiptStatus.Draft].includes(receipt.status)
+                (permissionIdMap[PermissionId.RECEIPT_DESTROY_DRAFT] &&
+                  [ReceiptStatus.Draft].includes(receipt.status)) ||
+                receipt.status === ReceiptStatus.Cancelled
               "
-              key="DESTROY_DRAFT">
+              key="DESTROY_RECEIPT">
               <span class="text-red-500">
                 <IconDelete class="mr-2" />
                 Xóa phiếu

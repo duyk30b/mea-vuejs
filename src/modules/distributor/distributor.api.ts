@@ -41,8 +41,8 @@ export class DistributorApi {
   static async detail(id: number, options: DistributorDetailQuery = {}): Promise<Distributor> {
     const params = DistributorGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/distributor/detail/${id}`, { params })
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.from(data)
+    const { data, meta } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
   static async createOne(distributor: Distributor) {
@@ -56,8 +56,8 @@ export class DistributorApi {
       note: distributor.note,
       isActive: distributor.isActive,
     })
-    const { data } = response.data as BaseResponse
-    return Distributor.from(data)
+    const { data } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
   static async updateOne(id: number, distributor: Distributor) {
@@ -75,9 +75,9 @@ export class DistributorApi {
     return Distributor.from(data)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/distributor/delete/${id}`)
-    const { data, meta } = response.data as BaseResponse
-    return Distributor.from(data)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/distributor/destroy/${id}`)
+    const result = response.data as BaseResponse<{ distributorId?: number; countReceipt?: number }>
+    return result
   }
 }

@@ -116,7 +116,9 @@ export class ProcedureService {
 
   static async destroyOne(id: number) {
     const result = await ProcedureApi.destroyOne(id)
-    ProcedureService.loadedAll = false
+    if (result.success) {
+      ProcedureService.loadedAll = false
+    }
     return result
   }
 }

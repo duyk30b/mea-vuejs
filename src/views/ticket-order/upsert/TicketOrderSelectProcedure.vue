@@ -26,14 +26,9 @@ const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>
 
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 
-onMounted(async () => {
-  console.log('🚀 ~ file: TicketOrderSelectProcedure.vue:28 ~ onMounted ~ onMounted:', onMounted)
-  try {
-    procedureAll = await ProcedureService.list({})
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
+const handleFocusFirstSearchProcedure = async () => {
+  procedureAll = await ProcedureService.list({})
+}
 
 const searchingProcedure = async (text: string) => {
   if (!text) {
@@ -159,6 +154,7 @@ defineExpose({ focus })
           :maxHeight="320"
           placeholder="(F3) Tìm kiếm tên dịch vụ"
           @selectItem="({ data }) => selectProcedure(data)"
+          @onFocusinFirst="handleFocusFirstSearchProcedure"
           @update:text="searchingProcedure">
           <template #option="{ item: { data } }">
             <div>

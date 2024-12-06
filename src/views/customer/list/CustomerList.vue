@@ -14,7 +14,7 @@ import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { CustomerApi, useCustomerStore, type Customer } from '../../../modules/customer'
+import { CustomerApi, CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString, DTimer } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
@@ -27,7 +27,6 @@ const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -49,7 +48,7 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   try {
-    const response = await customerStore.pagination({
+    const response = await CustomerService.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -73,25 +72,26 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  try {
-    dataLoading.value = true
-    await startFetchData()
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
-  }
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
 })
 
 onMounted(async () => {
   try {
-    const { hasChange } = await customerStore.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (hasChange) {
+    const { numberChange } = await CustomerService.refreshDB() // reload nếu có dữ liệu mới nhất
+    if (numberChange > 0) {
       await startFetchData()
     }
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
+})
+
+onBeforeMount(async () => {
+  dataLoading.value = true
+  await startFetchData()
+  dataLoading.value = false
 })
 
 const startSearch = async () => {
@@ -126,14 +126,11 @@ const updateCustomer = async (data: Customer) => {
   await startFetchData()
 }
 
-const handleModalCustomerUpsertSuccess = async (
-  data: Customer,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
-) => {
+const handleModalCustomerUpsertSuccess = async () => {
   await startFetchData()
 }
 
-const handleModalDistributorPayDebtSuccess = async (data: { customer: Customer }) => {
+const handleModalCustomerPayDebtSuccess = async () => {
   await startFetchData()
 }
 
@@ -159,7 +156,7 @@ const downloadExcelCustomerList = async () => {
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <ModalCustomerPayDebt
     ref="modalCustomerPayDebt"
-    @success="handleModalDistributorPayDebtSuccess" />
+    @success="handleModalCustomerPayDebtSuccess" />
   <ModalCustomerListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen" />

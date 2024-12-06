@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconSetting } from '../../../../common/icon'
+import { IconFileSearch, IconSetting } from '../../../../common/icon'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -10,6 +10,7 @@ import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { arrayToKeyValue } from '../../../../utils'
+import ModalLaboratoryDetail from '../detail/ModalLaboratoryDetail.vue'
 import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
@@ -17,7 +18,7 @@ import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
 const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
-
+const modalLaboratoryDetail = ref<InstanceType<typeof ModalLaboratoryDetail>>()
 const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -118,6 +119,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
   <ModalLaboratoryGroupManager
     ref="modalLaboratoryGroupManager"
     @success="handleModalLaboratoryGroupManagerSuccess" />
+  <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
@@ -202,7 +204,12 @@ const handleModalLaboratoryUpsertSuccess = async () => {
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
             <td class="text-center">{{ laboratory.priority }}</td>
             <td>
-              <div>{{ laboratory.name }}</div>
+              <div class="flex items-center">
+                {{ laboratory.name }}
+                <a class="ml-1" @click="modalLaboratoryDetail?.openModal(laboratory)">
+                  <IconFileSearch />
+                </a>
+              </div>
               <div style="font-style: italic; font-size: 0.9em">
                 {{ laboratory.children?.map((i) => i.name).join(', ') }}
               </div>

@@ -165,8 +165,18 @@ const handleClickDelete = async () => {
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        await RadiologyService.destroyOne(radiology.value.id)
-        router.push({ name: 'RadiologyList' })
+        const response = await RadiologyService.destroyOne(radiology.value.id)
+        if (response.success) {
+          router.push({ name: 'RadiologyList' })
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa phiếu CĐHA khi đã được chỉ định',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám trước',
+              `Hiện tại đang có ${response.data.countTicketRadiology} phiếu khám sử dụng phiếu CĐHA này`,
+            ],
+          })
+        }
       } catch (error) {
         console.log('🚀 ~ file: RadiologyUpsert.vue:165 ~ onOk: ~ error:', error)
       }

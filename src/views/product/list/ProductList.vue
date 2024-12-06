@@ -5,8 +5,7 @@ import {
   MinusCircleOutlined,
   ShopOutlined,
 } from '@ant-design/icons-vue'
-import { storeToRefs } from 'pinia'
-import { computed, onBeforeMount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDownload, IconFileSearch, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -14,16 +13,16 @@ import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useBatchStore } from '../../../modules/batch'
+import { BatchService } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ProductApi, useProductStore, type Product } from '../../../modules/product'
-import { DTimer, arrayToKeyArray, arrayToKeyValue } from '../../../utils'
+import { ProductApi, ProductService, type Product } from '../../../modules/product'
+import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import { DTimer, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
-import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
-import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 import ModalProductGroupManager from './ModalProductGroupManager.vue'
+import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
@@ -32,12 +31,9 @@ const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 
 const settingStore = useSettingStore()
-const productStore = useProductStore()
-const batchStore = useBatchStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const { timeSync: productTimeSync } = storeToRefs(productStore)
 
 const productList = ref<Product[]>([])
 const productGroupAll = ref<ProductGroup[]>([])
@@ -57,13 +53,10 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const productGroupMap = computed(() => arrayToKeyValue(productGroupAll.value, 'id'))
 
-watch(productTimeSync, async () => {
-  startFetchData()
-})
-
 const startFetchData = async () => {
   try {
-    const data = await productStore.pagination({
+    const { data, meta } = await ProductService.pagination({
+      relation: { batchList: true },
       page: page.value,
       limit: limit.value,
       filter: {
@@ -80,22 +73,10 @@ const startFetchData = async () => {
           }
         : undefined,
     })
-    productList.value = data.data
-    total.value = data.total
-
-    const productIdList = productList.value.filter((i) => !!i.hasManageBatches).map((i) => i.id)
-    if (productIdList.length) {
-      const batchList = await batchStore.list({
-        filter: { productId: { IN: productIdList }, quantity: { NOT: 0 } },
-      })
-      const batchListMapProductId = arrayToKeyArray(batchList, 'productId')
-      productList.value.forEach((i) => {
-        i.batchList = batchListMapProductId[i.id] || []
-        i.batchList.forEach((j) => (j.product = i))
-      })
-    }
+    productList.value = data
+    total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: ProductList.vue:96 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: ProductList.vue:86 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -112,12 +93,13 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   try {
-    const { hasChange } = await productStore.refreshDB()
-    await batchStore.refreshDB()
-    if (hasChange) {
+    const { numberChange } = await ProductService.refreshDB()
+    await BatchService.refreshDB()
+    if (numberChange) {
       await startFetchData()
     }
   } catch (error: any) {
+    console.log('🚀 ~ file: ProductList.vue:102 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
@@ -153,7 +135,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalProductUpsertSuccess = async (
   data: Product,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY'
 ) => {
   await startFetchData()
 }

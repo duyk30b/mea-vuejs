@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { FileSearchOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting } from '../../../common/icon'
 import { IconVisibility } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer, useCustomerStore } from '../../../modules/customer'
+import { Customer, CustomerService } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
@@ -22,7 +21,6 @@ import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
 const modalTicketOrderListSetting = ref<InstanceType<typeof ModalTicketOrderListSetting>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
@@ -68,7 +66,7 @@ const startFetchData = async () => {
           GTE: fromTime ? fromTime : undefined,
           LTE: toTime ? toTime : undefined,
         },
-        ticketStatus: ticketStatus.value ? ticketStatus.value : { NOT: TicketStatus.Cancelled },
+        ticketStatus: ticketStatus.value ? ticketStatus.value : undefined,
         ticketType: TicketType.Order,
       },
       sort: sortValue.value
@@ -91,17 +89,13 @@ onBeforeMount(async () => {
   await startFetchData()
 })
 
-onMounted(async () => {
-  try {
-    await customerStore.refreshDB()
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
-})
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
 
 const searchingCustomer = async (text: string) => {
   if (text) {
-    customerList.value = await customerStore.search(text)
+    customerList.value = await CustomerService.search(text)
   } else {
     customerList.value = []
     if (customerId.value) {
@@ -205,6 +199,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :maxHeight="260"
             placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
+            @onFocusinFirst="handleFocusFirstSearchCustomer"
             @update:text="searchingCustomer">
             <template #option="{ item: { data } }">
               <div>

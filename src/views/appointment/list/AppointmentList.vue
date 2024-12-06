@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { ScheduleOutlined } from '@ant-design/icons-vue'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconFileSearch, IconSetting, IconTrash } from '../../../common/icon'
 import { IconEditSquare } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { useCustomerStore, type Customer } from '../../../modules/customer'
+import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -29,7 +28,6 @@ const modalAppointmentListSetting = ref<InstanceType<typeof ModalAppointmentList
 const router = useRouter()
 const route = useRoute()
 
-const customerStore = useCustomerStore()
 const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { permissionIdMap } = meStore
@@ -92,27 +90,12 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  try {
-    dataLoading.value = true
-    await startFetchData()
-  } catch (error) {
-    console.log('🚀 ~ onBeforeMount ~ error:', error)
-  } finally {
-    dataLoading.value = false
-  }
-})
-
-onMounted(async () => {
-  try {
-    const { hasChange } = await customerStore.refreshDB() // reload nếu có dữ liệu mới nhất
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
-  }
+  await startFetchData()
 })
 
 const searchingCustomer = async (text: string) => {
   if (text) {
-    customerList.value = await customerStore.search(text)
+    customerList.value = await CustomerService.search(text)
   } else {
     customerList.value = []
     if (customerId.value) {
@@ -177,6 +160,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     modalAppointmentListSetting.value?.openModal()
   }
 }
+
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
 </script>
 
 <template>
@@ -235,6 +222,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :maxHeight="260"
             placeholder="Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
+            @onFocusinFirst="handleFocusFirstSearchCustomer"
             @update:text="searchingCustomer">
             <template #option="{ item: { data } }">
               <div>

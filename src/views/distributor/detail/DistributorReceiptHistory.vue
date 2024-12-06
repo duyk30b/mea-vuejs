@@ -91,7 +91,8 @@ const openBlankReceiptUpsert = (distributorId: number) => {
         <thead>
           <tr>
             <th>Phiếu</th>
-            <th>Tiền</th>
+            <th>Phụ Phí</th>
+            <th>T.Tiền</th>
           </tr>
         </thead>
         <tbody>
@@ -103,11 +104,16 @@ const openBlankReceiptUpsert = (distributorId: number) => {
               <div>
                 <a @click="openBlankReceiptDetail(receipt.id)">NH{{ receipt.id }}</a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :status="receipt.status" />
+                  <ReceiptStatusTag :receipt="receipt" />
                 </span>
               </div>
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </td>
+            <td class="text-right">
+              <div>
+                {{ formatMoney(receipt.surcharge) }}
               </div>
             </td>
             <td class="text-right">

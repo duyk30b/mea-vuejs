@@ -164,7 +164,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 600px">
+  <VueModal v-model:show="showModal" style="width: 800px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thông tin thanh toán</div>
@@ -187,7 +187,8 @@ defineExpose({ openModal })
                 <th>#</th>
                 <th>Thời gian</th>
                 <th>Loại</th>
-                <th>Tiền</th>
+                <th>T.Toán</th>
+                <th>Ghi nợ</th>
               </tr>
             </thead>
             <tbody>
@@ -214,10 +215,14 @@ defineExpose({ openModal })
                 <td class="text-right">
                   <div>{{ formatMoney(customerPayment.paid) }}</div>
                 </td>
+                <td class="text-right">
+                  <div>{{ formatMoney(customerPayment.debit) }}</div>
+                </td>
               </tr>
               <tr>
                 <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
                 <td class="text-right font-bold">{{ formatMoney(ticket.paid) }}</td>
+                <td></td>
               </tr>
               <tr v-if="ticket.ticketStatus !== TicketStatus.Cancelled">
                 <td colspan="3" class="text-right">
@@ -229,6 +234,7 @@ defineExpose({ openModal })
                   {{ formatMoney(Math.abs(ticket.totalMoney - ticket.paid)) }}
                   <!-- không tính theo debt được, vì cancel thì debt = 0 -->
                 </td>
+                <td></td>
               </tr>
             </tbody>
           </table>

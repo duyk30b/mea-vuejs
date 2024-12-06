@@ -12,6 +12,7 @@ import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { timeToText } from '../../../../utils'
 import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
+import { ticket } from '../../../ticket-order/upsert/ticket-order-upsert.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -63,7 +64,7 @@ const startPrepayment = async () => {
 }
 
 const startRefundOverpaid = async () => {
-  if (ticketClone.value.paid - money.value < ticketClone.value.totalMoney) {
+  if (ticketClone.value.paid < money.value) {
     return AlertStore.addError('Số tiền hoàn trả không hợp lệ')
   }
   paymentLoading.value = true
@@ -255,7 +256,7 @@ defineExpose({ openModal })
                       <InputMoney
                         ref="inputMoneyPayment"
                         v-model:value="money"
-                        :validate="{ gt: 0, lte: -ticketClone.debt }"
+                        :validate="{ gt: 0, lte: ticketClone.paid }"
                         text-align="right" />
                     </div>
                   </div>
@@ -265,10 +266,10 @@ defineExpose({ openModal })
                 <td class="py-1"></td>
                 <td></td>
               </tr>
-              <tr>
+              <tr v-if="ticketClone.paid - ticketClone.totalMoney > money">
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">Còn thừa</td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(-ticketClone.debt - money) }}
+                  {{ formatMoney(ticketClone.paid - ticketClone.totalMoney - money) }}
                 </td>
               </tr>
             </tbody>

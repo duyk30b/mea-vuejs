@@ -176,16 +176,16 @@ const clickCloseVisit = () => {
       content: 'Cần thực hiện phiếu CĐHA trước khi đóng phiếu khám',
     })
   }
-  if (
-    (ticketClinicRef.value.ticketLaboratoryList || []).find(
-      (i) => i.status === TicketLaboratoryStatus.Pending
-    )
-  ) {
-    return ModalStore.alert({
-      title: 'Phiếu xét nghiệm vẫn chưa được thực hiện ?',
-      content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
-    })
-  }
+  // if (
+  //   (ticketClinicRef.value.ticketLaboratoryList || []).find(
+  //     (i) => i.status === TicketLaboratoryStatus.Pending
+  //   )
+  // ) {
+  //   return ModalStore.alert({
+  //     title: 'Phiếu xét nghiệm vẫn chưa được thực hiện ?',
+  //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
+  //   })
+  // }
   if (ticketClinicRef.value.paid > ticketClinicRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',

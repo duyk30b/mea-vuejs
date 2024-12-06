@@ -6,7 +6,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, useProductStore } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import { DTimer } from '../../../utils'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
 
@@ -18,7 +18,6 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const productStore = useProductStore()
 
 const product = ref<Product>(Product.blank())
 const hasZeroQuantity = ref<boolean>(false)
@@ -26,7 +25,7 @@ const startFetchData = async () => {
   if (!props.productId) return
 
   try {
-    const productResponse = await productStore.getOne(props.productId, {
+    const productResponse = await ProductService.getOne(props.productId, {
       relation: { batchList: true, productGroup: true },
       filter: { batchList: { quantity: hasZeroQuantity.value ? undefined : { NOT: 0 } } },
     })
@@ -166,7 +165,8 @@ const closeExpiryDate = computed(() => {
     <table>
       <thead>
         <tr>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
+          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Tổng Vốn</th>
+          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
           <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
           <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
           <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
@@ -176,6 +176,9 @@ const closeExpiryDate = computed(() => {
         <tr>
           <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
             {{ formatMoney(product.costAmount) }}
+          </td>
+          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
+            {{ formatMoney(Math.floor(product.costAmount / product.quantity)) }}
           </td>
           <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
             {{ formatMoney(product.unitCostPrice) }}

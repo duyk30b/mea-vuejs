@@ -108,8 +108,11 @@ export class LaboratoryApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/laboratory/destroy/${id}`)
-    const { data } = response.data as BaseResponse<{ laboratoryId: number }>
-    return data
+    const result = response.data as BaseResponse<{
+      laboratoryId?: number
+      countTicketLaboratory?: number
+    }>
+    return result
   }
 
   static async systemList() {

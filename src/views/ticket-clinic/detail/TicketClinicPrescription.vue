@@ -34,10 +34,6 @@ const { permissionIdMap, organization } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-let prescriptionSampleAll: PrescriptionSample[] = []
-let productAll: Product[] = []
-let batchMapAll: Record<string, Batch[]> = {}
-
 const productOptions = ref<
   {
     value: number
@@ -64,31 +60,6 @@ const saveLoading = ref(false)
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicPrescription.vue:70 ~ onMounted')
-  try {
-    const promiseResult = await Promise.all([
-      ProductService.list({}),
-      BatchService.list({ filter: { quantity: { GT: 0 } } }),
-      PrescriptionSampleService.list({}),
-    ])
-    productAll = promiseResult[0]
-    const batchAll = promiseResult[1]
-    prescriptionSampleAll = promiseResult[2]
-
-    batchMapAll = arrayToKeyArray(batchAll, 'productId')
-    const productMap = arrayToKeyValue(productAll, 'id')
-
-    prescriptionSampleAll.forEach((i) => {
-      try {
-        const medicineList: MedicineType[] = JSON.parse(i.medicines)
-        medicineList.forEach((i) => (i.product = productMap[i.productId]))
-        i.medicineList = medicineList.filter((i) => !!i.product)
-      } catch (error) {
-        i.medicineList = []
-      }
-    })
-  } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicPrescription.vue:90 ~ onMounted ~ error:', error)
-  }
 })
 
 watch(
@@ -147,18 +118,27 @@ const disabledButton = computed(() => {
   return true
 })
 
+const handleFocusFirstSearchProduct = async () => {
+  try {
+    await Promise.all([
+      ProductService.refreshDB(),
+      BatchService.refreshDB(),
+      PrescriptionSampleService.list({}),
+    ])
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicPrescription.vue:138 ~ ~ error:', error)
+  }
+}
+
 const searchingProduct = async (text: string) => {
   if (!text) {
     productOptions.value = []
     return
   }
 
-  const productList = productAll.filter((i) => {
-    return DString.customFilter(i.brandName, text) || DString.customFilter(i.substance, text)
-  })
-  const prescriptionSampleList: PrescriptionSample[] = prescriptionSampleAll.filter((i) => {
-    return DString.customFilter(i.name, text)
-  })
+  const productList = await ProductService.search(text)
+  const prescriptionSampleList: PrescriptionSample[] = await PrescriptionSampleService.search(text)
+
   productOptions.value = [
     ...prescriptionSampleList.map((i) => ({
       value: i.id,
@@ -196,7 +176,10 @@ const selectProduct = async (productSelect: Product) => {
 
   ticketProductPrescription.value = temp
   if (productSelect.hasManageBatches) {
-    batchList.value = batchMapAll[productSelect.id] || []
+    batchList.value = await BatchService.list({
+      filter: { productId: productSelect.id, quantity: { GT: 0 } },
+      sort: { expiryDate: 'ASC' },
+    })
     batchList.value.forEach((i) => (i.product = productSelect))
 
     selectBatch(batchList.value[0])
@@ -207,7 +190,7 @@ const selectProduct = async (productSelect: Product) => {
 }
 
 const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) => {
-  prescriptionSampleSelect.medicineList.forEach((medicine) => {
+  prescriptionSampleSelect.medicineList.forEach(async (medicine) => {
     const productCurrent = medicine.product
     if (!productCurrent) return
 
@@ -227,7 +210,10 @@ const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) 
       temp.quantityPrescription = medicine.quantity || 0
       ticketProductPrescriptionList.value.push(temp)
     } else {
-      const batchListCurrent = batchMapAll[productCurrent.id] || []
+      const batchListCurrent = await BatchService.list({
+        filter: { productId: productCurrent.id, quantity: { GT: 0 } },
+        sort: { expiryDate: 'ASC' },
+      })
       let quantityRemain = medicine.quantity
       batchListCurrent.forEach((batch) => {
         if (quantityRemain <= 0) return
@@ -382,7 +368,7 @@ const savePrescription = async () => {
   if (hasChangeAttribute.value) {
     ticketAttributeChangeList = Object.entries(ticketAttributeMap.value)
       .map(([key, value]) => ({ key, value }))
-      .filter((i) => !!i.key)
+      .filter((i) => !!i.value)
   }
 
   await TicketClinicApi.updateTicketProductPrescription({
@@ -460,6 +446,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
         "
         @selectItem="({ data }) => selectItemOptions(data)"
+        @onFocusinFirst="handleFocusFirstSearchProduct"
         @update:text="searchingProduct">
         <template #option="{ item: { data } }">
           <div v-if="data.type === 'product'">

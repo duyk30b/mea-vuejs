@@ -247,7 +247,7 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
                   N{{ productMovement.voucherId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :status="productMovement.receipt!.status" />
+                  <ReceiptStatusTag :receipt="productMovement.receipt" />
                 </span>
               </div>
             </div>
@@ -332,7 +332,7 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
                   N{{ batchMovement.voucherId }}
                 </a>
                 <span class="ml-2">
-                  <ReceiptStatusTag :status="batchMovement.receipt!.status" />
+                  <ReceiptStatusTag :receipt="batchMovement.receipt" />
                 </span>
               </div>
             </div>
@@ -428,11 +428,13 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
                 NH{{ productMovement.voucherId }}
               </a>
               <span class="ml-2">
-                <ReceiptStatusTag :status="productMovement.receipt!.status" />
+                <ReceiptStatusTag :receipt="productMovement.receipt" />
               </span>
             </div>
             <div v-if="productMovement.voucherType === VoucherType.Ticket">
-              <LinkAndStatusTicket :ticket="productMovement.ticket!" />
+              <LinkAndStatusTicket
+                :ticket="productMovement.ticket!"
+                :ticketId="productMovement.voucherId" />
             </div>
             <div style="font-size: 0.8rem; white-space: nowrap">
               {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
@@ -520,7 +522,7 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
               <a style="font-size: 0.8rem" @click="openBlankReceiptDetail(batchMovement.voucherId)">
                 NH{{ batchMovement.voucherId }}
               </a>
-              <span class="ml-2"><ReceiptStatusTag :status="batchMovement.receipt!.status" /></span>
+              <span class="ml-2"><ReceiptStatusTag :receipt="batchMovement.receipt" /></span>
             </div>
             <div v-if="batchMovement.voucherType === VoucherType.Ticket">
               <LinkAndStatusTicket :ticket="batchMovement.ticket!" />

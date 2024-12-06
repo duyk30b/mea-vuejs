@@ -77,7 +77,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
       <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tiền hàng</b></td>
       <td colspan="2" style="text-align: right">
         <b>
-        ${formatMoney(ticket.productsMoney + ticket.proceduresMoney + ticket.radiologyMoney)}
+        ${formatMoney(ticket.productMoney + ticket.procedureMoney + ticket.radiologyMoney)}
         </b>
       </td>
     </tr>`
@@ -119,106 +119,117 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
   <head>
     <title>&nbsp;</title>
     <style>
-      #print-container * {
+      #print-body * {
         all: revert;
         font-family: 'Arial', sans-serif;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
+        line-height: 1.7;
+        font-size: 14px;
       }
-      #print-container table.information td {
+
+      #print-body {
+        width: 190mm;
+        background-color: white;
+        margin: 0 auto;
+        color: #000;
+      }
+
+      #print-body table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      #print-body table.information td {
         border: 0;
         padding: 0.5em 0;
         vertical-align: top;
       }
-      #print-container table.data {
+      #print-body table.data {
         margin-top: 0.5rem;
-        width: 100%;
-        border-collapse: collapse;
         border-spacing: 0;
       }
-      #print-container table.data tbody {
+      #print-body table.data tbody {
         counter-reset: rowNumber 0;
       }
-      #print-container table.data tbody tr {
+      #print-body table.data tbody tr {
         counter-increment: rowNumber 1;
       }
-      #print-container table.data tbody tr td.auto-index:first-child::before {
+      #print-body table.data tbody tr td.auto-index:first-child::before {
         content: counter(rowNumber);
       }
-      #print-container table.data th {
+      #print-body table.data th {
         padding: 0.5rem;
         border: 1px solid #cdcdcd;
       }
-      #print-container table.data td {
+      #print-body table.data td {
         padding: 0.5rem;
         border: 1px solid #cdcdcd;
       }
     </style>
   </head>
-  <body>
-    <div id="print-container" style="width: 760px; background-color: white; padding: 10px">
-      <div>
-        <table style="width: 100%">
+  <body id="print-body">
+    <div>
+      <table>
+        <tr>
+          <td style="width: 50%">
+            <p>${meStore.organization.name} </p>
+            <p>${meStore.organization.phone} </p>
+          </td>
+          <td style="width: 50%; text-align:right">
+            <p>Mã KH: C${ticket.customerId}  </p>
+            <p>Mã HĐ: IV${ticket.id}  </p>
+          </td>
+        </tr>
+      </table>
+      <div style="text-align: center; font-size: 1.8rem; font-weight: bold; line-height: 2.5">HÓA ĐƠN</div>
+      <table class="information">
+        <tr>
+          <td style="width: 100px">Khách hàng: </td>
+          <td>${ticket.customer?.fullName} </td>
+        </tr>
+        <tr>
+          <td>Địa chỉ: </td>
+          <td>  ${DString.formatAddress(ticket.customer)} </td>
+        </tr>
+      </table>
+      <table class="data">
+        <thead>
           <tr>
-            <td style="width: 50%">
-              <p>${meStore.organization.name} </p>
-              <p>${meStore.organization.phone} </p>
-            </td>
-            <td style="width: 50%; text-align:right">
-              <p>Mã KH: C${ticket.customerId}  </p>
-              <p>Mã HĐ: IV${ticket.id}  </p>
-            </td>
+            <th style="width: 20px">#</th>
+            <th>Tên</th>
+            ${showUnit ? '<th>Đ.Vị</th>' : ''}
+            <th>SL</th>
+            <th>Đ.Giá</th>
+            <th>T.Tiền</th>
           </tr>
-        </table>
-        <div style="text-align: center; font-size: 1.8rem; font-weight: bold; line-height: 2.5">HÓA ĐƠN</div>
-        <table class="information">
+        </thead>
+        <tbody>
+          ${rowTicketProcedureList}
+          ${rowTicketProductList}
+          ${itemsActualMoney}
+          ${discount}
+          ${surcharge}
           <tr>
-            <td style="width: 100px">Khách hàng: </td>
-            <td>${ticket.customer?.fullName} </td>
+            <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tổng tiền</b></td>
+            <td colspan="2" style="text-align: right"><b>${formatMoney(
+              ticket.totalMoney
+            )}</b></td>
           </tr>
-          <tr>
-            <td>Địa chỉ: </td>
-            <td>  ${DString.formatAddress(ticket.customer)} </td>
-          </tr>
-        </table>
-        <table class="data">
-          <thead>
-            <tr>
-              <th style="width: 20px">#</th>
-              <th>Tên</th>
-              ${showUnit ? '<th>Đ.Vị</th>' : ''}
-              <th>SL</th>
-              <th>Đ.Giá</th>
-              <th>T.Tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowTicketProcedureList}
-            ${rowTicketProductList}
-            ${itemsActualMoney}
-            ${discount}
-            ${surcharge}
-            <tr>
-              <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tổng tiền</b></td>
-              <td colspan="2" style="text-align: right"><b>${formatMoney(
-                ticket.totalMoney
-              )}</b></td>
-            </tr>
-            ${paid}
-            ${debt}
-          </tbody>
-        </table>
-        <div style="text-align:right; font-style:italic; margin-top: 1rem">
-          ${DTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
-        </div>
-        <table style="width: 100%; margin-top: 0.5rem">
-          <tr>
-            <td style="width: 50%; text-align: center"> Khách hàng </td>
-            <td style="width: 50%; text-align: center"> Người thu tiền</td>
-          </tr>
-        </table>
-      </div> 
+          ${paid}
+          ${debt}
+        </tbody>
+      </table>
+      <div style="text-align:right; font-style:italic; margin-top: 1rem">
+        ${DTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
+      </div>
+      <table style="margin-top: 0.5rem">
+        <tr>
+          <td style="width: 50%; text-align: center"> Khách hàng </td>
+          <td style="width: 50%; text-align: center"> Người thu tiền</td>
+        </tr>
+      </table>
     </div>
   </body>`
 }

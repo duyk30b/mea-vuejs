@@ -10,7 +10,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useDistributorStore } from '../../../modules/distributor'
+import { DistributorApi, DistributorService } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
@@ -20,12 +20,10 @@ const modalDistributorUpsertSettingScreen =
   ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
 
 const emit = defineEmits<{
-  (e: 'success', value: Distributor, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+  (e: 'success', value: Distributor, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
 
-const distributorStore = useDistributorStore()
 const settingStore = useSettingStore()
-const { isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
@@ -37,54 +35,50 @@ const provinceList = ref<string[]>([])
 const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
-const openModal = async (instance?: Distributor) => {
+const openModal = async (distributorId?: number) => {
   showModal.value = true
-  distributor.value = instance ? Distributor.from(instance) : Distributor.blank()
+  if (!distributorId) {
+    distributor.value = Distributor.blank()
+  } else {
+    distributor.value = await DistributorApi.detail(distributorId)
+  }
 
   provinceList.value = await AddressInstance.getAllProvinces()
-  if (instance?.addressProvince) {
-    districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
-    if (instance.addressDistrict) {
+  if (distributor.value?.addressProvince) {
+    districtList.value = await AddressInstance.getDistrictsByProvince(
+      distributor.value.addressProvince
+    )
+    if (distributor.value.addressDistrict) {
       wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-        instance.addressProvince,
-        instance.addressDistrict
+        distributor.value.addressProvince,
+        distributor.value.addressDistrict
       )
     }
   }
 }
 
-const handleClose = () => {
+const closeModal = () => {
+  showModal.value = false
   distributor.value = Distributor.blank()
   districtList.value = []
   wardList.value = []
-  showModal.value = false
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
     if (!distributor.value.id) {
-      const response = await distributorStore.createOne(distributor.value)
+      const response = await DistributorService.createOne(distributor.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await distributorStore.updateOne(distributor.value.id, distributor.value)
+      const response = await DistributorService.updateOne(distributor.value.id, distributor.value)
       emit('success', response, 'UPDATE')
     }
-    showModal.value = false
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:42 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ file: ModalDistributorUpsert.vue:80 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
-  }
-}
-
-const handleDelete = async () => {
-  try {
-    await distributorStore.deleteOne(distributor.value.id)
-    emit('success', distributor.value, 'DELETE')
-    showModal.value = false
-  } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
   }
 }
 
@@ -100,7 +94,23 @@ const clickDelete = () => {
     title: 'Bạn có chắc chắn muốn xóa nhà cung cấp này',
     content: 'Nhà cung cấp đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await handleDelete()
+      try {
+        const response = await DistributorService.destroyOne(distributor.value.id)
+        if (response.success) {
+          emit('success', distributor.value, 'DESTROY')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa nhà cung cấp khi đã có phiếu nhập hàng',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng của nhà cung cấp này',
+              `Hiện tại đang có ${response.data.countReceipt} phiếu nhập đã sử dụng`,
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalDistributorUpsert.vue:109 ~ clickDelete ~ error:', error)
+      }
     },
   })
 }
@@ -142,7 +152,7 @@ defineExpose({ openModal })
           @click="modalDistributorUpsertSettingScreen?.openModal()">
           <IconSetting />
         </div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
       </div>
@@ -230,7 +240,7 @@ defineExpose({ openModal })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" @click="handleClose">
+          <VueButton class="ml-auto" type="reset" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

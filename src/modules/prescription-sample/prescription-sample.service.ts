@@ -1,3 +1,4 @@
+import { DString } from '../../utils'
 import { PrescriptionSampleApi } from './prescription-sample.api'
 import type {
   PrescriptionSampleListQuery,
@@ -13,7 +14,9 @@ export class PrescriptionSampleService {
   private static async getAll() {
     if (PrescriptionSampleService.loadedAll) return
 
-    const { data } = await PrescriptionSampleApi.list({})
+    const { data } = await PrescriptionSampleApi.list({
+      relation: { medicineList: true },
+    })
     const prescriptionSampleList = data
     PrescriptionSampleService.prescriptionSampleAll = prescriptionSampleList
     PrescriptionSampleService.loadedAll = true
@@ -91,5 +94,12 @@ export class PrescriptionSampleService {
     const result = await PrescriptionSampleApi.destroyOne(id)
     PrescriptionSampleService.loadedAll = false
     return result
+  }
+
+  static async search(text: string) {
+    if (!text) text = ''
+    return PrescriptionSampleService.prescriptionSampleAll.filter((i) => {
+      return DString.customFilter(i.name, text)
+    })
   }
 }

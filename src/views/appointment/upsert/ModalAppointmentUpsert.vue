@@ -9,7 +9,7 @@ import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { Customer, useCustomerStore } from '../../../modules/customer'
+import { Customer, CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString, DTimer } from '../../../utils'
@@ -29,7 +29,6 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 const meStore = useMeStore()
@@ -50,6 +49,21 @@ const wardList = ref<string[]>([])
 const now = new Date()
 now.setMinutes(0, 0)
 
+let firstLoad = true
+
+const firstLoadAction = async () => {
+  if (!firstLoad) return
+  firstLoad = false
+
+  await CustomerService.refreshDB()
+  if (settingStore.APPOINTMENT_UPSERT.customerSource) {
+    customerSourceAll.value = await CustomerSourceService.list({})
+  }
+  if (settingStore.APPOINTMENT_UPSERT.addressFull) {
+    provinceList.value = await AddressInstance.getAllProvinces()
+  }
+}
+
 const openModalForCreate = async () => {
   showModal.value = true
   appointment.value = Appointment.blank()
@@ -58,13 +72,7 @@ const openModalForCreate = async () => {
   now.setMinutes(0, 0)
   now.setHours(now.getHours() + 1)
   appointment.value.registeredAt = now.getTime()
-  customerSourceAll.value = await CustomerSourceService.list({})
-  if (settingStore.APPOINTMENT_UPSERT.customerSource) {
-    customerSourceAll.value = await CustomerSourceService.list({})
-  }
-  if (settingStore.APPOINTMENT_UPSERT.addressFull) {
-    provinceList.value = await AddressInstance.getAllProvinces()
-  }
+  await firstLoadAction()
 }
 
 const openModalForUpdate = async (appointmentProp: Appointment) => {
@@ -77,9 +85,7 @@ const openModalForUpdate = async (appointmentProp: Appointment) => {
       value: appointment.value.customer?.id,
     })
   })
-  if (settingStore.APPOINTMENT_UPSERT.customerSource) {
-    customerSourceAll.value = await CustomerSourceService.list({})
-  }
+  await firstLoadAction()
 }
 
 const closeModal = () => {
@@ -139,7 +145,7 @@ const searchingCustomer = async (text: string) => {
   appointment.value.customerId = 0
   appointment.value.customer.fullName = text
   if (text) {
-    const customerList = await customerStore.search(text)
+    const customerList = await CustomerService.search(text)
     customerOptions.value = customerList.map((i) => ({
       value: i.id,
       text: i.fullName,
@@ -176,6 +182,8 @@ const openBlankCustomerSourceList = async () => {
   })
   window.open(route.href, '_blank')
 }
+
+const handleFocusFirstSearchCustomer = async () => {}
 
 defineExpose({ openModalForCreate, openModalForUpdate })
 </script>
@@ -233,6 +241,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
               noClearTextWhenNotSelected
               message-no-result="Khách hàng này chưa từng đến khám"
               @selectItem="({ data }) => selectCustomer(data)"
+              @onFocusinFirst="handleFocusFirstSearchCustomer"
               @update:text="searchingCustomer">
               <template #option="{ item: { data } }">
                 <div>

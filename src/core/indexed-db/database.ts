@@ -5,10 +5,8 @@ export const MeaDatabase = new BaseIndexedDB({
   version: 1,
   collections: [
     { storeName: 'Customer', keyPath: 'id' },
-    { storeName: 'Distributor', keyPath: 'id' },
     { storeName: 'Product', keyPath: 'id' },
     { storeName: 'Batch', keyPath: 'id' },
-    { storeName: 'Procedure', keyPath: 'id' },
     { storeName: 'RefreshTime', keyPath: 'code' },
   ],
 })

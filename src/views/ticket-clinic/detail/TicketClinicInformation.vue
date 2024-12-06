@@ -48,6 +48,10 @@ watch(
   }
 )
 
+const handleFocusFirstSearchCustomer = async () => {
+  await CustomerService.refreshDB()
+}
+
 const searchingCustomer = async (text: string) => {
   ticketClinicRef.value.customer = Customer.blank()
   ticketClinicRef.value.customerId = 0
@@ -126,6 +130,7 @@ const handleClickModalRegisterAppointment = () => {
           placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
           :disabled="!!ticketClinicRef.id"
           required
+          @onFocusinFirst="handleFocusFirstSearchCustomer"
           @selectItem="({ data }) => selectCustomer(data)"
           @update:text="searchingCustomer">
           <template #option="{ item: { data } }">

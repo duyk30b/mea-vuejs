@@ -57,11 +57,6 @@ export class TicketClinicApi {
     return Ticket.from(data.ticket)
   }
 
-  static async destroyDraftSchedule(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy-draft-schedule`)
-    const { data } = response.data as BaseResponse
-  }
-
   static async startCheckup(params: { ticketId: number }) {
     const response = await AxiosInstance.post(`/ticket-clinic/${params.ticketId}/start-checkup`)
     const { data } = response.data as BaseResponse<{ ticketBasic: any }>
@@ -265,6 +260,7 @@ export class TicketClinicApi {
 
   static async updateItemsMoney(body: {
     ticketId: number
+    itemsActualMoney: number
     discountMoney: number
     discountPercent: number
     discountType: DiscountType
@@ -282,6 +278,8 @@ export class TicketClinicApi {
     } = body
 
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update-items-money`, {
+      itemsActualMoney: body.itemsActualMoney,
+      // itemsDiscount: body.itemsDiscount, // itemDiscount bị thay đổi khi thêm dịch vụ mà ko tính toán được, nên đợi đóng phiếu mới tính
       discountMoney: body.discountMoney,
       discountPercent: body.discountPercent,
       discountType: body.discountType,
@@ -380,6 +378,11 @@ export class TicketClinicApi {
 
   static async reopen(ticketId: number) {
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/reopen`)
+    const { data } = response.data as BaseResponse
+  }
+
+  static async destroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy`)
     const { data } = response.data as BaseResponse
   }
 }

@@ -3,7 +3,10 @@ import { OmitClass, PickClass } from '../../utils'
 export class PrescriptionSampleGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: {
+    medicineList?: boolean
+  }
+
   filter?: {}
 
   sort?: {

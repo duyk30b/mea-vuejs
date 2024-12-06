@@ -1,9 +1,10 @@
 import { MeService } from '../../modules/_me/me.service'
 import { useMeStore } from '../../modules/_me/me.store'
-import { Batch, useBatchStore } from '../../modules/batch'
-import { Customer, useCustomerStore } from '../../modules/customer'
+import { Batch } from '../../modules/batch'
+import { Customer } from '../../modules/customer'
+import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import { Product, useProductStore } from '../../modules/product'
+import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
 import { ticketClinicList, ticketClinicRef } from '../../modules/ticket-clinic'
@@ -33,35 +34,42 @@ export class SocketService {
   static async listenCustomerUpsert(data: { customer: any }) {
     const customer = Customer.from(data.customer)
     await CustomerDB.upsertOne(customer)
-    useCustomerStore().timeSync = Date.now()
 
     if (ticketClinicRef.value.customerId === customer.id) {
       ticketClinicRef.value.customer = customer
     }
   }
 
+  static async listenDistributorUpsert(data: { distributor: any }) {
+    const distributor = Distributor.from(data.distributor)
+    const findIndex = DistributorService.distributorAll.findIndex((i) => {
+      return i.id === distributor.id
+    })
+    if (findIndex !== -1) {
+      DistributorService.distributorAll[findIndex] = distributor
+    } else {
+      DistributorService.distributorAll.push(distributor)
+    }
+  }
+
   static async listenProductUpsert(data: { product: any }) {
     const product = Product.from(data.product)
     await ProductDB.upsertOne(product)
-    useProductStore().timeSync = Date.now()
   }
 
   static async listenProductListUpdate(data: { productList: any[] }) {
     const productList = Product.fromList(data.productList)
     await ProductDB.upsertMany(productList)
-    useProductStore().timeSync = Date.now()
   }
 
   static async listenBatchUpsert(data: { batch: any }) {
     const batch = Batch.from(data.batch)
     await BatchDB.upsertOne(batch)
-    useBatchStore().timeSync = Date.now()
   }
 
   static async listenBatchListUpdate(data: { batchList: any[] }) {
     const batchList = Batch.fromList(data.batchList)
     await BatchDB.upsertMany(batchList)
-    useBatchStore().timeSync = Date.now()
   }
 
   static async listenTicketClinicCreate(data: { ticket: any }) {

@@ -149,10 +149,10 @@ export class TicketProduct {
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.productId != b.productId) return false
-    if (a.batchId != b.batchId) return
-    if (a.deliveryStatus != b.deliveryStatus) return
-    if (a.unitRate != b.unitRate) return
-    if (a.quantityPrescription != b.quantityPrescription) return
+    if (a.batchId != b.batchId) return false
+    if (a.deliveryStatus != b.deliveryStatus) return false
+    if (a.unitRate != b.unitRate) return false
+    if (a.quantityPrescription != b.quantityPrescription) return false
     if (a.quantity != b.quantity) return false
     if (a.quantityReturn != b.quantityReturn) return false
     if (a.costAmount != b.costAmount) return false

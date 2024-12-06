@@ -314,8 +314,13 @@ const colspan = computed(() => {
       <tbody>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
           <td class="text-right font-medium" :colspan="colspan">Tiền hàng</td>
-          <td class="text-right font-medium" :colspan="2">
-            {{ formatMoney(ticket.productsMoney + ticket.proceduresMoney + ticket.radiologyMoney) }}
+          <td class="text-right" :colspan="2">
+            <span v-if="ticket.itemsDiscount" style="font-style: italic; font-size: 13px" class="mr-2">
+              (CK: {{ formatMoney(ticket.itemsDiscount) }})
+            </span>
+            <span class="font-medium">
+              {{ formatMoney(ticket.itemsActualMoney) }}
+            </span>
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || ticket.discountMoney">

@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { FileSyncOutlined, MoreOutlined } from '@ant-design/icons-vue'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconDollar, IconFileSearch } from '../../../common/icon'
+import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputNumber } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -21,19 +22,23 @@ import {
 import { TicketLaboratory } from '../../../modules/ticket-laboratory'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { TicketRadiology } from '../../../modules/ticket-radiology'
+import { TicketRadiology, TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import { DDom, timeToText } from '../../../utils'
-import ModalRadiologyDetail from '../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalProcedureDetail from '../../master-data/procedure/detail/ModalProcedureDetail.vue'
+import ModalRadiologyDetail from '../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from './modal/ModalTicketClinicReturnProduct.vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
+
+const route = useRoute()
+const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -60,6 +65,12 @@ const sendProductLoading = ref(false)
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicSummary.vue:46 ~ onMounted')
   laboratoryMap.value = await LaboratoryService.getMap()
+})
+
+watchEffect(() => {
+  ticketDiscount.discountPercent = ticketClinicRef.value.discountPercent
+  ticketDiscount.discountMoney = ticketClinicRef.value.discountMoney
+  ticketDiscount.discountType = ticketClinicRef.value.discountType
 })
 
 watch(
@@ -99,44 +110,76 @@ watch(
   { immediate: true }
 )
 
-const prescriptionMoney = computed(() => {
-  return ticketProductPrescriptionList.value.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-})
+const prescriptionMoney = ref(0)
+const consumableMoney = ref(0)
+const procedureMoney = ref(0)
+const laboratoryMoney = ref(0)
+const radiologyMoney = ref(0)
+const prescriptionDiscount = ref(0)
+const consumableDiscount = ref(0)
+const procedureDiscount = ref(0)
+const laboratoryDiscount = ref(0)
+const radiologyDiscount = ref(0)
+const itemsActualMoney = ref(0)
+const itemsDiscount = ref(0)
 
-const consumableMoney = computed(() => {
-  return ticketProductConsumableList.value.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-})
+watchEffect(() => {
+  let prescriptionMoneyTemp = 0
+  let consumableMoneyTemp = 0
+  let procedureMoneyTemp = 0
+  let laboratoryMoneyTemp = 0
+  let radiologyMoneyTemp = 0
+  let prescriptionDiscountTemp = 0
+  let consumableDiscountTemp = 0
+  let procedureDiscountTemp = 0
+  let laboratoryDiscountTemp = 0
+  let radiologyDiscountTemp = 0
 
-const proceduresMoney = computed(() => {
-  return ticketProcedureList.value.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-})
+  ticketProductPrescriptionList.value.forEach((item) => {
+    prescriptionMoneyTemp += item.actualPrice * item.quantity
+    prescriptionDiscountTemp += item.discountMoney * item.quantity
+  })
+  ticketProductConsumableList.value.forEach((item) => {
+    consumableMoneyTemp += item.actualPrice * item.quantity
+    consumableDiscountTemp += item.discountMoney * item.quantity
+  })
+  ticketProcedureList.value.forEach((item) => {
+    procedureMoneyTemp += item.actualPrice * item.quantity
+    procedureDiscountTemp += item.discountMoney * item.quantity
+  })
+  ticketLaboratoryList.value.forEach((item) => {
+    laboratoryMoneyTemp += item.actualPrice
+    laboratoryDiscountTemp += item.discountMoney
+  })
+  ticketRadiologyList.value.forEach((item) => {
+    radiologyMoneyTemp += item.actualPrice
+    radiologyDiscountTemp += item.discountMoney
+  })
+  const itemsDiscountTemp =
+    prescriptionDiscountTemp +
+    consumableDiscountTemp +
+    procedureDiscountTemp +
+    laboratoryDiscountTemp +
+    radiologyDiscountTemp
+  const itemsActualMoneyTemp =
+    prescriptionMoneyTemp +
+    consumableMoneyTemp +
+    procedureMoneyTemp +
+    laboratoryMoneyTemp +
+    radiologyMoneyTemp
 
-const laboratoryMoney = computed(() => {
-  return ticketLaboratoryList.value.reduce((acc, item) => {
-    return acc + item.actualPrice
-  }, 0)
-})
-
-const radiologyMoney = computed(() => {
-  return ticketRadiologyList.value.reduce((acc, item) => {
-    return acc + item.actualPrice
-  }, 0)
-})
-
-const itemsActualMoney = computed(() => {
-  return (
-    prescriptionMoney.value +
-    consumableMoney.value +
-    proceduresMoney.value +
-    laboratoryMoney.value +
-    radiologyMoney.value
-  )
+  prescriptionMoney.value = prescriptionMoneyTemp
+  consumableMoney.value = consumableMoneyTemp
+  procedureMoney.value = procedureMoneyTemp
+  laboratoryMoney.value = laboratoryMoneyTemp
+  radiologyMoney.value = radiologyMoneyTemp
+  prescriptionDiscount.value = prescriptionDiscountTemp
+  consumableDiscount.value = consumableDiscountTemp
+  procedureDiscount.value = procedureDiscountTemp
+  laboratoryDiscount.value = laboratoryDiscountTemp
+  radiologyDiscount.value = radiologyDiscountTemp
+  itemsDiscount.value = itemsDiscountTemp
+  itemsActualMoney.value = itemsActualMoneyTemp
 })
 
 watch(
@@ -201,19 +244,30 @@ const disabledSave = computed(() => {
     ticketDiscount.discountPercent !== ticketClinicRef.value.discountPercent ||
     ticketDiscount.discountType !== ticketClinicRef.value.discountType
   ) {
+    console.log(
+      '🚀 ~ file: TicketClinicSummary.vue:248 ~ disabledSave ~ ticketClinicRef:',
+      ticketClinicRef
+    )
+    console.log(
+      '🚀 ~ file: TicketClinicSummary.vue:248 ~ disabledSave ~ ticketDiscount:',
+      ticketDiscount
+    )
     return false
   }
-
+  console.log('🚀 ~ file: TicketClinicSummary.vue:252 ~ disabledSave ~ 7:', true)
   return true
 })
 
 const disableSendProduct = computed(() => {
+  // chỉ được phép khi ở trạng thái đang khám (Executing)
   if (ticketClinicRef.value.ticketStatus !== TicketStatus.Executing) {
     return true
   }
+  // chỉ được phép khi có hàng chưa gửi (Pending)
   if (ticketRefDeliveryStatus.value !== DeliveryStatus.Pending) {
     return true
   }
+
   if (
     !TicketProduct.equalList(
       ticketProductPrescriptionList.value,
@@ -408,6 +462,7 @@ const saveTicketItemsMoney = async () => {
 
     await TicketClinicApi.updateItemsMoney({
       ticketId: ticketClinicRef.value.id,
+      itemsActualMoney: itemsActualMoney.value,
       discountMoney: ticketDiscount.discountMoney,
       discountPercent: ticketDiscount.discountPercent,
       discountType: ticketDiscount.discountType,
@@ -484,7 +539,7 @@ const startReopenVisit = async () => {
   await TicketClinicApi.reopen(ticketClinicRef.value.id)
 }
 
-const clickReopenVisit = () => {
+const clickReopenTicket = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn mở lại hồ sơ của phiếu khám này ?',
     content: [
@@ -501,6 +556,49 @@ const clickReopenVisit = () => {
   })
 }
 
+const clickDestroyTicket = () => {
+  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.value.ticketStatus)) {
+    return ModalStore.alert({
+      title: 'Phiếu khám đã đóng',
+      content: ['- Bắt buộc MỞ LẠI hồ sơ trước khi HỦY phiếu khám'],
+    })
+  }
+
+  if (ticketRefDeliveryStatus.value === DeliveryStatus.Delivered) {
+    return ModalStore.alert({
+      title: 'Đã xuất thuốc - vật tư',
+      content: ['- Bắt buộc HOÀN TRẢ thuốc và vật tư trước khi HỦY phiếu khám'],
+    })
+  }
+  if (
+    (ticketClinicRef.value.ticketRadiologyList || []).find(
+      (i) => i.status == TicketRadiologyStatus.Completed
+    )
+  ) {
+    return ModalStore.alert({
+      title: 'Phiếu chẩn đoán hình ảnh đã được thực hiện ?',
+      content: 'Cần HỦY KẾT QUẢ phiếu CĐHA trước khi HỦY phiếu khám',
+    })
+  }
+
+  if (ticketClinicRef.value.paid > 0) {
+    return ModalStore.alert({
+      title: 'Khách hàng còn tiền tạm ứng',
+      content: 'Cần HOÀN TRẢ tất cả tiền đã thanh toán trước khi HỦY phiếu khám',
+    })
+  }
+
+  return ModalStore.confirm({
+    title: 'Bạn có chắc chắn HỦY phiếu khám này',
+    content: ['- Phiếu khám khi đã xóa không thể phục hồi lại được.', `- Vẫn hủy phiếu khám.`],
+    okText: 'Xác nhận HỦY phiếu',
+    async onOk() {
+      await TicketClinicApi.destroy(ticketClinicRef.value.id)
+      router.push({ name: 'TicketClinicList' })
+    },
+  })
+}
+
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'RETURN_PRODUCT_LIST') {
     if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
@@ -512,8 +610,14 @@ const handleMenuActionClick = (menu: { key: string }) => {
       modalTicketClinicReturnProduct.value?.openModal()
     }
   }
-  if (menu.key === 'REOPEN_VISIT') {
-    clickReopenVisit()
+  if (menu.key === 'REFUND_OVERPAID') {
+    modalTicketClinicPayment.value?.openModal(PaymentViewType.RefundOverpaid)
+  }
+  if (menu.key === 'REOPEN_TICKET') {
+    clickReopenTicket()
+  }
+  if (menu.key === 'DESTROY_TICKET') {
+    clickDestroyTicket()
   }
 }
 
@@ -589,6 +693,12 @@ const startPrint = async () => {
       <a-dropdown>
         <template #overlay>
           <a-menu @click="handleMenuActionClick">
+            <a-menu-item key="REFUND_OVERPAID">
+              <span class="text-red-500">
+                <IconDollar class="mr-2" />
+                Hoàn trả tiền
+              </span>
+            </a-menu-item>
             <a-menu-item key="RETURN_PRODUCT_LIST">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
@@ -599,10 +709,16 @@ const startPrint = async () => {
               v-if="
                 [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
               "
-              key="REOPEN_VISIT">
+              key="REOPEN_TICKET">
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
                 Mở lại phiếu khám
+              </span>
+            </a-menu-item>
+            <a-menu-item key="DESTROY_TICKET">
+              <span class="text-red-500">
+                <IconDelete class="mr-2" />
+                Xóa phiếu
               </span>
             </a-menu-item>
           </a-menu>
@@ -779,7 +895,14 @@ const startPrint = async () => {
             </td>
           </tr>
           <tr>
-            <td class="uppercase text-right" colspan="7">Tiền thuốc</td>
+            <td class="text-right" colspan="7">
+              <div class="flex items-center justify-end gap-2">
+                <span class="uppercase">Tiền thuốc</span>
+                <span v-if="prescriptionDiscount" class="italic" style="font-size: 13px">
+                  (CK: {{ formatMoney(prescriptionDiscount) }})
+                </span>
+              </div>
+            </td>
             <td class="font-bold text-right whitespace-nowrap">
               {{ formatMoney(prescriptionMoney) }}
             </td>
@@ -943,7 +1066,14 @@ const startPrint = async () => {
             </td>
           </tr>
           <tr>
-            <td class="uppercase text-right" colspan="7">Tiền vật tư</td>
+            <td class="text-right" colspan="7">
+              <div class="flex items-center justify-end gap-2">
+                <span class="uppercase">Tiền vật tư</span>
+                <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
+                  (CK: {{ formatMoney(consumableDiscount) }})
+                </span>
+              </div>
+            </td>
             <td class="font-bold text-right whitespace-nowrap">
               {{ formatMoney(consumableMoney) }}
             </td>
@@ -1048,9 +1178,16 @@ const startPrint = async () => {
             </td>
           </tr>
           <tr>
-            <td class="uppercase text-right" colspan="7">Tiền dịch vụ thủ thuật</td>
+            <td class="text-right" colspan="7">
+              <div class="flex items-center justify-end gap-2">
+                <span class="uppercase">Tiền dịch vụ</span>
+                <span v-if="procedureDiscount" class="italic" style="font-size: 13px">
+                  (CK: {{ formatMoney(procedureDiscount) }})
+                </span>
+              </div>
+            </td>
             <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(proceduresMoney) }}
+              {{ formatMoney(procedureMoney) }}
             </td>
           </tr>
         </tbody>
@@ -1146,7 +1283,14 @@ const startPrint = async () => {
             </td>
           </tr>
           <tr>
-            <td class="uppercase text-right" colspan="7">TIỀN XÉT NGHIỆM</td>
+            <td class="text-right" colspan="7">
+              <div class="flex items-center justify-end gap-2">
+                <span class="uppercase">Tiền xét nghiệm</span>
+                <span v-if="laboratoryDiscount" class="italic" style="font-size: 13px">
+                  (CK: {{ formatMoney(laboratoryDiscount) }})
+                </span>
+              </div>
+            </td>
             <td class="font-bold text-right whitespace-nowrap">
               {{ formatMoney(laboratoryMoney) }}
             </td>
@@ -1176,6 +1320,12 @@ const startPrint = async () => {
                   @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)">
                   <IconFileSearch />
                 </a>
+                <a-tag
+                  v-if="ticketRadiology.status === TicketRadiologyStatus.Pending"
+                  color="warning"
+                  style="cursor: pointer">
+                  Chưa hoàn thành
+                </a-tag>
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
@@ -1249,7 +1399,14 @@ const startPrint = async () => {
             </td>
           </tr>
           <tr>
-            <td class="uppercase text-right" colspan="7">Tiền CHẨN ĐOÁN HÌNH ẢNH</td>
+            <td class="text-right" colspan="7">
+              <div class="flex items-center justify-end gap-2">
+                <span class="uppercase">Tiền CĐHA</span>
+                <span v-if="radiologyDiscount" class="italic" style="font-size: 13px">
+                  (CK: {{ formatMoney(radiologyDiscount) }})
+                </span>
+              </div>
+            </td>
             <td class="font-bold text-right whitespace-nowrap">
               {{ formatMoney(radiologyMoney) }}
             </td>
@@ -1258,8 +1415,15 @@ const startPrint = async () => {
       </template>
       <tbody>
         <tr>
-          <td class="text-right" colspan="7">Tổng cộng</td>
-          <td class="text-right whitespace-nowrap">
+          <td class="text-right" colspan="7">
+            <div class="flex items-center justify-end gap-2">
+              <span>Tổng cộng</span>
+              <span v-if="itemsDiscount" class="italic" style="font-size: 13px">
+                (CK: {{ formatMoney(itemsDiscount) }})
+              </span>
+            </div>
+          </td>
+          <td class="font-bold text-right whitespace-nowrap">
             {{ formatMoney(itemsActualMoney) }}
           </td>
         </tr>

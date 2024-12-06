@@ -239,7 +239,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <div v-if="receipt.debt" class="text-xs">Nợ: {{ formatMoney(receipt.debt) }}</div>
               </td>
               <td class="text-left">
-                <ReceiptStatusTag :status="receipt.status" />
+                <ReceiptStatusTag :receipt="receipt" />
               </td>
             </tr>
           </tbody>
@@ -333,7 +333,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
             </td>
             <td class="text-center">
-              <ReceiptStatusTag :status="receipt.status" />
+              <ReceiptStatusTag :receipt="receipt" />
             </td>
           </tr>
         </tbody>

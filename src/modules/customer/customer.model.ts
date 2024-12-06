@@ -18,7 +18,6 @@ export class Customer {
   note: string
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
-  deletedAt: number
 
   static init(): Customer {
     const ins = new Customer()

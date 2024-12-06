@@ -51,7 +51,6 @@ export class StatisticService {
       i.costPrice = Number(i.costPrice)
       i.costAmount = Number(i.costAmount)
       i.updatedAt = Number(i.updatedAt)
-      i.deletedAt = i.deletedAt === null ? null : Number(i.deletedAt)
     })
     return data
   }

@@ -34,6 +34,8 @@ import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
 import { TicketOrderApi } from '../../../modules/ticket-order'
+import { IconDelete } from '../../../common/icon-google'
+import { IconClose } from '../../../common/icon'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketOrderReturnProduct = ref<InstanceType<typeof ModalTicketOrderReturnProduct>>()
@@ -121,37 +123,6 @@ const startCopy = () => {
   })
 }
 
-const destroyDraft = async () => {
-  try {
-    loadingProcess.value = true
-    await TicketOrderApi.destroyDraft(ticket.value.id!)
-    AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
-    router.push({ name: 'TicketOrderList' })
-  } catch (error) {
-    console.log('🚀 ~ destroyDraft ~ error:', error)
-  } finally {
-    loadingProcess.value = false
-  }
-}
-
-const startCancel = async () => {
-  try {
-    loadingProcess.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderApi.cancel({
-      ticketId: ticket.value.id!,
-    })
-    Object.assign(ticket.value, ticketBasic)
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    if (customerPayment) {
-      ticket.value.customerPaymentList.push(customerPayment!)
-    }
-  } catch (error) {
-    console.log('🚀 ~ startCancel ~ error:', error)
-  } finally {
-    loadingProcess.value = false
-  }
-}
-
 const sendProductAndClose = async () => {
   try {
     loadingProcess.value = true
@@ -207,17 +178,32 @@ const sendProduct = async () => {
 
 const clickCancel = () => {
   ModalStore.confirm({
-    title: 'Bạn có chắc chắn "HỦY" hóa đơn này',
+    title: 'Bạn có chắc chắn muốn "HỦY" hóa đơn này',
     content: [
       '- Kho hàng sẽ nhập lại tất cả hàng hóa trong đơn',
       ...(ticket.value.debt > 0 ? [`- Trừ nợ khách hàng: ${formatMoney(ticket.value.debt)}`] : []),
       ...(ticket.value.paid > 0
         ? [`- Khách hàng nhận lại số tiền đã thanh toán là: ${formatMoney(ticket.value.paid)}`]
         : []),
+      '- Đơn bị hủy sẽ không thể phục hồi lại được',
     ],
     okText: 'Xác nhận HỦY ĐƠN',
     async onOk() {
-      await startCancel()
+      try {
+        loadingProcess.value = true
+        const { ticketBasic, customerPayment } = await TicketOrderApi.cancel({
+          ticketId: ticket.value.id!,
+        })
+        Object.assign(ticket.value, ticketBasic)
+        ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
+        if (customerPayment) {
+          ticket.value.customerPaymentList.push(customerPayment!)
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: TicketOrderDetail.vue:203 ~ clickCancel ~ error:', error)
+      } finally {
+        loadingProcess.value = false
+      }
     },
   })
 }
@@ -226,12 +212,21 @@ const clickReturnProduct = () => {
   modalTicketOrderReturnProduct.value?.openModal()
 }
 
-const clickDestroyDraft = () => {
+const clickDestroy = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa hóa đơn này ?',
-    content: 'Đơn hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Đơn hàng sẽ bị xóa vĩnh viễn khỏi hệ thống. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await destroyDraft()
+      try {
+        loadingProcess.value = true
+        await TicketOrderApi.destroy(ticket.value.id!)
+        AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
+        router.push({ name: 'TicketOrderList' })
+      } catch (error) {
+        console.log('🚀 ~ file: TicketOrderDetail.vue:226 ~ clickDestroy ~ error:', error)
+      } finally {
+        loadingProcess.value = false
+      }
     },
   })
 }
@@ -245,8 +240,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'EDIT_INVOICE') startEdit()
   if (menu.key === 'RETURN_PRODUCT') clickReturnProduct()
-  if (menu.key === 'DESTROY_DRAFT') clickDestroyDraft()
-  if (menu.key === 'CANCEL') clickCancel()
+  if (menu.key === 'CANCEL_TICKET') clickCancel()
+  if (menu.key === 'DESTROY_TICKET') clickDestroy()
 }
 
 const startPrint = () => {
@@ -384,17 +379,6 @@ const openModalTicketOrderPreview = () => {
             </a-menu-item>
             <a-menu-item
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_DESTROY_DRAFT] &&
-                [TicketStatus.Draft].includes(ticket.ticketStatus)
-              "
-              key="DESTROY_DRAFT">
-              <span class="text-red-500">
-                <DeleteOutlined class="mr-2" />
-                Xóa Đơn
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
                 permissionIdMap[PermissionId.TICKET_ORDER_CANCEL] &&
                 [
                   TicketStatus.Approved,
@@ -403,10 +387,22 @@ const openModalTicketOrderPreview = () => {
                   TicketStatus.Completed,
                 ].includes(ticket.ticketStatus)
               "
-              key="CANCEL">
+              key="CANCEL_TICKET">
               <span class="text-red-500">
-                <CloseCircleOutlined class="mr-2" />
+                <IconClose class="mr-2" />
                 Hủy Đơn
+              </span>
+            </a-menu-item>
+            <a-menu-item
+              v-if="
+                (permissionIdMap[PermissionId.TICKET_ORDER_DESTROY_DRAFT] &&
+                  [TicketStatus.Draft].includes(ticket.ticketStatus)) ||
+                ticket.ticketStatus === TicketStatus.Cancelled
+              "
+              key="DESTROY_TICKET">
+              <span class="text-red-500">
+                <IconDelete class="mr-2" />
+                Xóa Đơn
               </span>
             </a-menu-item>
           </a-menu>

@@ -91,6 +91,16 @@ export class ProductApi {
     return Product.from(data.product)
   }
 
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/product/destroy/${id}`)
+    const result = response.data as BaseResponse<{
+      productId: number
+      countTicketProduct: number
+      countReceiptItem: number
+    }>
+    return result
+  }
+
   static async deleteOne(id: number) {
     const response = await AxiosInstance.delete(`/product/delete/${id}`)
     const { data } = response.data as BaseResponse<{ product: any }>

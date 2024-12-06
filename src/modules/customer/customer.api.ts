@@ -83,10 +83,10 @@ export class CustomerApi {
     return Customer.from(data.customer)
   }
 
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/customer/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ customer: any }>
-    return Customer.from(data.customer)
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/customer/destroy/${id}`)
+    const result = response.data as BaseResponse<{ customerId: number; countTicket: number }>
+    return result
   }
 
   static async downloadExcelCustomerList() {

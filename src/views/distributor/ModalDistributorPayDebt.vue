@@ -7,7 +7,7 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Distributor, useDistributorStore } from '../../modules/distributor'
+import { Distributor, DistributorService } from '../../modules/distributor'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { timeToText } from '../../utils'
 
@@ -18,7 +18,6 @@ const emit = defineEmits<{
 }>()
 const router = useRouter()
 
-const distributorStore = useDistributorStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -71,7 +70,7 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await distributorStore.payDebt({
+    const data = await DistributorService.payDebt({
       distributorId: distributorId.value,
       note: note.value,
       receiptPayments: receiptPayments.value

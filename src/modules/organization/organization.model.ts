@@ -6,7 +6,6 @@ export class Organization {
   phone: string
   email: string
   emailVerify: 0 | 1
-  dataVersion: number
   level: number
   name: string
   addressProvince: string
@@ -18,6 +17,9 @@ export class Organization {
 
   note: string // Ghi chú
   expiryDate: number
+
+  dataVersion: string
+  dataVersionParse: { product: number; batch: number; customer: number }
 
   createdAt: number
   updatedAt: number
@@ -31,7 +33,7 @@ export class Organization {
     ins.id = 0
     ins.level = 1
     ins.emailVerify = 0
-    ins.dataVersion = 1
+    ins.dataVersion = '{}'
     ins.isActive = 1
     return ins
   }

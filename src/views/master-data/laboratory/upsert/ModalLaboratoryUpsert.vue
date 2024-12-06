@@ -157,22 +157,28 @@ const handleSave = async () => {
   }
 }
 
-const handleDelete = async () => {
-  try {
-    await LaboratoryService.destroyOne(laboratory.value.id)
-    emit('success')
-    closeModal()
-  } catch (error) {
-    console.log('🚀 ~ file: ModalLaboratoryUpsert.vue:82 ~ handleDelete ~ error:', error)
-  }
-}
-
 const clickDelete = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa xét nghiệm này',
     content: ['Xét nghiệm đã xóa không thể khôi phục lại được.', 'Bạn chắc chắn vẫn muốn xóa ?'],
     async onOk() {
-      await handleDelete()
+      try {
+        const response = await LaboratoryService.destroyOne(laboratory.value.id)
+        if (response.success) {
+          emit('success')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa xét nghiệm khi đã được chỉ định',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám trước',
+              `Hiện tại đang có ${response.data.countTicketLaboratory} phiếu khám sử dụng xét nghiệm này`,
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalLaboratoryUpsert.vue:82 ~ handleDelete ~ error:', error)
+      }
     },
   })
 }

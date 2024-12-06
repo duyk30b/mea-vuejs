@@ -4,12 +4,13 @@ export class ReceiptItemGetQuery {
   page: number
   limit?: number
   relation?: {
-    receipt?: boolean | { distributor?: boolean }
+    receipt?: false | { distributor?: boolean }
     batch?: boolean
     product?: boolean
   }
 
   filter?: {
+    distributorId?: number
     receiptId?: number
     productId?: number
     batchId?: number

@@ -18,7 +18,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { UnitType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useProductStore } from '../../../modules/product'
+import { ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 import { Product } from '../../../modules/product/product.model'
 import { customFilter } from '../../../utils'
@@ -28,13 +28,14 @@ import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.v
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 
-const emit = defineEmits<{ (e: 'success', value: Product, type: 'CREATE' | 'UPDATE'): void }>()
+const emit = defineEmits<{
+  (e: 'success', value: Product, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
+}>()
 
 const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const productStore = useProductStore()
 
 const product = ref(Product.blank())
 const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
@@ -49,7 +50,7 @@ const openModal = async (productId?: number) => {
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
   } else {
-    const productFetch = await productStore.getOne(productId, {})
+    const productFetch = await ProductService.getOne(productId, {})
     product.value = productFetch
     unit.value = JSON.parse(
       productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }])
@@ -84,7 +85,7 @@ const handleChangeUnitDefault = (e: any, index: number) => {
   })
 }
 
-const handleClose = () => {
+const closeModal = () => {
   product.value = Product.blank()
   showModal.value = false
 }
@@ -94,14 +95,13 @@ const handleSave = async () => {
   product.value.unit = JSON.stringify(unit.value)
   try {
     if (!product.value.id) {
-      const data = await productStore.createOne(product.value)
+      const data = await ProductService.createOne(product.value)
       emit('success', data, 'CREATE')
     } else {
-      const data = await productStore.updateOne(product.value.id, product.value)
+      const data = await ProductService.updateOne(product.value.id, product.value)
       emit('success', data, 'UPDATE')
     }
-    product.value = Product.blank()
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:66 ~ handleSave ~ error:', error)
   } finally {
@@ -109,28 +109,36 @@ const handleSave = async () => {
   }
 }
 
-const handleDelete = async () => {
-  try {
-    await productStore.deleteOne(product.value.id)
-    showModal.value = false
-  } catch (error) {
-    console.log('🚀 ~ handleDelete ~ error:', error)
-  }
-}
-
 const clickDelete = () => {
   if (product.value.quantity != 0) {
-    return AlertStore.add({
-      type: 'error',
-      message: 'Không thể xóa sản phẩm có số lượng > 0',
-      time: 2000,
+    return ModalStore.alert({
+      title: 'Không thể xóa sản phẩm có số lượng > 0',
+      content: [
+        '- Nếu bắt buộc phải xoá, bạn cần phải hủy bỏ tất cả các phiếu nhập hàng đã từng nhập sản phẩm này'
+      ],
     })
   }
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa sản phẩm này',
     content: 'Sản phẩm đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await handleDelete()
+      try {
+        const response = await ProductService.destroyOne(product.value.id)
+        if (response.success) {
+          emit('success', product.value, 'DESTROY')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa sản phầm khi đã được nhập hàng hoặc bán hàng',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng và phiếu bán hàng trước',
+              `Hiện tại đang có ${response.data.countReceiptItem} phiếu nhập hàng và ${response.data.countTicketProduct} phiếu bán hàng`,
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalProductUpsert.vue:139 ~ handleDelete ~ error:', error)
+      }
     },
   })
 }
@@ -160,7 +168,7 @@ defineExpose({ openModal, openModalFromTicket })
           @click="modalProductUpsertSettingScreen?.openModal()">
           <IconSetting />
         </div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
       </div>
@@ -412,7 +420,7 @@ defineExpose({ openModal, openModalFromTicket })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton class="btn ml-auto" icon="close" type="reset" @click="handleClose">
+          <VueButton class="btn ml-auto" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

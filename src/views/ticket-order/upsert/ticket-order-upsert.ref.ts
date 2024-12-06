@@ -5,31 +5,22 @@ import { Ticket } from '../../../modules/ticket'
 export const ticket = ref<Ticket>(Ticket.blank())
 
 watchEffect(() => {
-  const totalCostAmount = ticket.value.ticketProductList!.reduce((acc, item) => {
-    // let itemCostAmount = 0
-    // if (item.batchId) {
-    //   itemCostAmount = item.quantity * item.batch!.costPrice
-    // } else if (item.product!.quantity <= 0) {
-    //   itemCostAmount = (item.product?.costPrice || 0) * item.quantity
-    // } else {
-    //   itemCostAmount = (item.product!.costAmount * item.quantity) / item.product!.quantity
-    // }
-    // const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-    // item.costAmount = itemCostAmountFix
-    return acc + item.costAmount
-  }, 0)
+  let totalCostAmount = 0
+  let productMoney = 0
+  let procedureMoney = 0
+  let itemsDiscount = 0
 
-  const productsMoney = ticket.value.ticketProductList!.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-  const proceduresMoney = ticket.value.ticketProcedureList!.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-  const radiologyMoney = (ticket.value.ticketRadiologyList || []).reduce((acc, item) => {
-    return acc + item.actualPrice
-  }, 0)
+  ticket.value.ticketProductList?.forEach((item) => {
+    totalCostAmount += item.costAmount
+    productMoney += item.actualPrice * item.quantity
+    itemsDiscount += item.discountMoney * item.quantity
+  })
+  ticket.value.ticketProcedureList?.forEach((item) => {
+    procedureMoney += item.actualPrice * item.quantity
+    itemsDiscount += item.discountMoney * item.quantity
+  })
 
-  const itemsActualMoney = productsMoney + proceduresMoney + radiologyMoney
+  const itemsActualMoney = productMoney + procedureMoney
 
   let discountMoney = 0
   let discountPercent = 0
@@ -52,15 +43,18 @@ watchEffect(() => {
   const profit = totalMoney - totalCostAmount - expense
 
   ticket.value.totalCostAmount = totalCostAmount
-  ticket.value.productsMoney = productsMoney
-  ticket.value.proceduresMoney = proceduresMoney
-  ticket.value.radiologyMoney = radiologyMoney
+  ticket.value.productMoney = productMoney
+  ticket.value.procedureMoney = procedureMoney
+  ticket.value.itemsActualMoney = itemsActualMoney
+  ticket.value.itemsDiscount = itemsDiscount
+
   ticket.value.discountMoney = discountMoney
   ticket.value.discountPercent = discountPercent
   ticket.value.discountType = discountType
+
   ticket.value.totalMoney = totalMoney
   ticket.value.profit = profit
-  // ticket.value.paid =
+  // ticket.value.paid = ...
   ticket.value.debt = totalMoney - ticket.value.paid
 })
 

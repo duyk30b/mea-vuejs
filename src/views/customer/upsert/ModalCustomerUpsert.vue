@@ -9,12 +9,12 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { useCustomerStore } from '../../../modules/customer'
+import { CustomerService } from '../../../modules/customer'
+import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
@@ -23,7 +23,6 @@ const emit = defineEmits<{
   (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const customerStore = useCustomerStore()
 const settingStore = useSettingStore()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -72,13 +71,13 @@ const handleSave = async () => {
   }
   try {
     if (!customer.value.id) {
-      const response = await customerStore.createOne(customer.value)
+      const response = await CustomerService.createOne(customer.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await customerStore.updateOne(customer.value.id, customer.value)
+      const response = await CustomerService.updateOne(customer.value.id, customer.value)
       emit('success', response, 'UPDATE')
     }
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
   } finally {
@@ -86,29 +85,36 @@ const handleSave = async () => {
   }
 }
 
-const handleDelete = async () => {
-  try {
-    await customerStore.deleteOne(customer.value.id)
-    emit('success', customer.value, 'DELETE')
-    closeModal()
-  } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:75 ~ handleDelete ~ error:', error)
-  }
-}
-
 const clickDelete = () => {
   if (customer.value.debt != 0) {
-    return AlertStore.add({
-      type: 'error',
-      message: 'Không thể xóa khách hàng đang có nợ',
-      time: 2000,
+    return ModalStore.alert({
+      title: 'Không thể xóa sản phẩm khách hàng đã từng thanh toán hoặc có nợ',
+      content: [
+        '- Nếu bắt buộc phải xoá, bạn cần phải xóa tất cả các hóa đơn, phiếu bán hàng liên quan trước',
+      ],
     })
   }
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa khách hàng này',
     content: 'Khách hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
-      await handleDelete()
+      try {
+        const response = await CustomerService.destroyOne(customer.value.id)
+        if (response.success) {
+          emit('success', customer.value, 'DELETE')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa khách hàng khi khách hàng đã từng được tiếp đón',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám và phiếu bán hàng của khách hàng này trước',
+              `Hiện tại khách hàng này đang có ${response.data.countTicket} phiếu bán hàng liên quan`,
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalCustomerUpsert.vue:112 ~ clickDelete ~ error:', error)
+      }
     },
   })
 }

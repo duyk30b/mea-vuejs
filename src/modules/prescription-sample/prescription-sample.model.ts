@@ -1,4 +1,4 @@
-import type { Product } from '../product'
+import { Product } from '../product'
 
 export type MedicineType = {
   productId: number
@@ -46,6 +46,15 @@ export class PrescriptionSample {
 
   static from(source: PrescriptionSample) {
     const target = PrescriptionSample.basic(source)
+
+    if (target.medicineList) {
+      target.medicineList = source.medicineList.map((i) => {
+        return {
+          ...i,
+          product: i.product ? Product.basic(i.product) : i.product,
+        }
+      })
+    }
     return target
   }
 

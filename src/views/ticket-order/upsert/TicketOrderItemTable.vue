@@ -544,7 +544,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
           <tr>
             <td colspan="2" class="text-right">Tổng tiền:</td>
             <td colspan="2" class="text-right">
-              {{ formatMoney(ticket.productsMoney + ticket.proceduresMoney) }}
+              {{ formatMoney(ticket.productMoney + ticket.procedureMoney) }}
             </td>
             <td></td>
           </tr>
@@ -900,7 +900,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
             <td colspan="100" class="text-right">
               <span class="mr-10">Tổng tiền:</span>
               <span class="mr-20">
-                {{ formatMoney(ticket.productsMoney + ticket.proceduresMoney) }}
+                {{ formatMoney(ticket.productMoney + ticket.procedureMoney) }}
               </span>
             </td>
           </tr>
