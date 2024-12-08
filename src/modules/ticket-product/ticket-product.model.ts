@@ -14,6 +14,7 @@ export class TicketProduct {
   customerId: number
   productId: number
   batchId: number
+  warehouseId: number
   type: TicketProductType
   deliveryStatus: DeliveryStatus
   unitRate: number
@@ -62,11 +63,11 @@ export class TicketProduct {
   }
 
   get lotNumber() {
-    return this.batch?.lotNumber || this.product?.lotNumber
+    return this.batch?.lotNumber
   }
 
   get expiryDate() {
-    return this.batch?.expiryDate || this.product?.expiryDate
+    return this.batch?.expiryDate
   }
 
   set unitQuantity(data: number) {
@@ -150,6 +151,7 @@ export class TicketProduct {
     if (a.customerId != b.customerId) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
+    if (a.warehouseId != b.warehouseId) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.unitRate != b.unitRate) return false
     if (a.quantityPrescription != b.quantityPrescription) return false

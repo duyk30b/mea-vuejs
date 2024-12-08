@@ -59,7 +59,7 @@ export class ProductService {
     const productList = Product.fromList(productPagination.data)
 
     if (relation?.batchList) {
-      const productIdList = productList.filter((i) => !!i.hasManageBatches).map((i) => i.id)
+      const productIdList = productList.map((i) => i.id)
       if (productIdList.length) {
         const batchList = await BatchDB.findMany({
           condition: { productId: { IN: productIdList }, quantity: { NOT: 0 } },
@@ -110,7 +110,12 @@ export class ProductService {
   static async getOne(id: number, options: ProductDetailQuery) {
     const product = await ProductApi.detail(id, options)
     // const product = await ProductDB.findOneByKey(id)
-    await ProductDB.upsertOne(product)
+    if (product) {
+      await ProductDB.upsertOne(product)
+    }
+    if (product.batchList?.length) {
+      await BatchDB.upsertMany(product.batchList)
+    }
     return product
   }
 

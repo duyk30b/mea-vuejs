@@ -5,10 +5,17 @@ import VueButton from '../../../common/VueButton.vue'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { Warehouse, WarehouseApi } from '../../../modules/warehouse'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const emit = defineEmits<{
-  (e: 'success', value: Warehouse, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
+  (e: 'success', value: Warehouse, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const warehouse = ref(Warehouse.blank())
@@ -46,6 +53,32 @@ const handleSave = async () => {
   }
 }
 
+const clickDelete = () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa kho hàng này',
+    content: 'Kho hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        const response = await WarehouseService.destroyOne(warehouse.value.id)
+        if (response.success) {
+          emit('success', warehouse.value, 'DESTROY')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa kho hàng khi kho hàng đã từng được tiếp đón',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả sản phẩm và lô hàng của kho hàng này trước',
+              `Hiện tại kho hàng này đang có ${response.data.countBatch} lô hàng liên quan`,
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalWarehouseUpsert.vue:76 ~ clickDelete ~ error:', error)
+      }
+    },
+  })
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -72,6 +105,12 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
+          <VueButton
+            v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] && warehouse.id"
+            color="red"
+            @click="clickDelete">
+            Xóa
+          </VueButton>
           <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>

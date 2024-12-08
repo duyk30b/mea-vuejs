@@ -7,6 +7,7 @@ import { Ticket } from '../ticket'
 
 export class ProductMovement {
   id: number
+  warehouseId: number
   productId: number
   voucherId: number
   contactId: number
@@ -18,9 +19,6 @@ export class ProductMovement {
   unitRate: number
   actualPrice: number // Giá
   expectedPrice: number // Giá
-  openCostAmount: number // Vốn
-  costAmount: number // Vốn
-  closeCostAmount: number // Vốn
   createdAt: number
 
   product?: Product

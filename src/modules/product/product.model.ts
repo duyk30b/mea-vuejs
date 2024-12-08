@@ -6,15 +6,10 @@ export class Product {
   id: number
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
-  lotNumber: string // Lô sản phẩm
-  expiryDate?: number
   quantity: number
-  costAmount: number // Tổng vốn
-  costPrice: number // Giá nhập
   wholesalePrice: number // Giá bán sỉ
   retailPrice: number // Giá bán lẻ
   hasManageQuantity: 0 | 1
-  hasManageBatches: 0 | 1
   productGroupId: number
   unit: string
   route: string // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
@@ -65,20 +60,12 @@ export class Product {
     return Number(((this.quantity || 0) / this.unitDefaultRate).toFixed(3))
   }
 
-  get unitCostPrice() {
-    return this.costPrice * this.unitDefaultRate
-  }
-
   get unitRetailPrice() {
     return this.retailPrice * this.unitDefaultRate
   }
 
   get unitWholesalePrice() {
     return this.wholesalePrice * this.unitDefaultRate
-  }
-
-  set unitCostPrice(data) {
-    this.costPrice = data / this.unitDefaultRate
   }
 
   set unitRetailPrice(data) {
@@ -89,11 +76,6 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
-  get costPriceAverage() {
-    if (this.quantity === 0) return this.costPrice
-    return Math.floor(this.costAmount / this.quantity)
-  }
-
   public getUnitNameByRate(rate: number) {
     return this.unitObject?.find((u) => u.rate === rate)?.name || ''
   }
@@ -101,10 +83,8 @@ export class Product {
   static init(): Product {
     const ins = new Product()
     ins.id = 0
-    ins.hasManageBatches = 0
     ins.hasManageQuantity = 1
     ins.quantity = 0
-    ins.costPrice = 0
     ins.wholesalePrice = 0
     ins.retailPrice = 0
     ins.unit = JSON.stringify([{ name: '', rate: 1, default: true }])

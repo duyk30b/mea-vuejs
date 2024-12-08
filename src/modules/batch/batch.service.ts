@@ -55,4 +55,12 @@ export class BatchService {
     await BatchDB.replaceOne(id, response)
     return response
   }
+
+  static async destroyOne(id: number) {
+    const response = await BatchApi.destroyOne(id)
+    if (response.success) {
+      await BatchDB.deleteOneByKey(id)
+    }
+    return response
+  }
 }

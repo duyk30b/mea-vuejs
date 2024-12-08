@@ -50,7 +50,7 @@ const startFetchData = async (receiptId: number) => {
     receipt.value = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: { product: true, batch: true },
+        receiptItemList: { product: true, batch: true },
         distributorPayments: true,
       },
     })
@@ -106,16 +106,12 @@ const startRefundPrepayment = async () => {
 const startCancel = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPaymentList } = await ReceiptApi.cancel(
-      receipt.value.id!,
-      receipt.value.paid
-    )
-    console.log('🚀 ~ file: ReceiptDetail.vue:126 ~ startCancel ~ receiptBasic:', receiptBasic)
-    Object.assign(receipt.value, receiptBasic)
-    receipt.value.distributorPayments = distributorPaymentList
+    const result = await ReceiptApi.cancel(receipt.value.id!)
+    Object.assign(receipt.value, result.receipt)
+    receipt.value.distributorPayments = result.distributorPaymentList
     AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
   } catch (error) {
-    console.log('🚀 ~ startCancel ~ error:', error)
+    console.log('🚀 ~ file: ReceiptDetail.vue:114 ~ startCancel ~ error:', error)
   } finally {
     loadingProcess.value = false
   }

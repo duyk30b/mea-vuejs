@@ -22,7 +22,6 @@ export class ProductGetQuery {
   filter?: ProductFilterQuery & {
     batchList?: {
       quantity?: ConditionNumber
-      expiryDate?: ConditionNumber
       updatedAt?: ConditionDate
     }
     $OR?: ProductFilterQuery[]
@@ -32,8 +31,6 @@ export class ProductGetQuery {
     id?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'
     brandName?: 'ASC' | 'DESC'
-    costAmount?: 'ASC' | 'DESC'
-    expiryDate?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<ProductGetQuery>) {

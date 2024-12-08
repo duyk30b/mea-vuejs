@@ -3,11 +3,13 @@ import { Product } from '../product/product.model'
 export class Batch {
   id: number
   productId: number
+  distributorId: number
+  warehouseId: number
+
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
   costPrice: number // Giá nhập
-  wholesalePrice: number
-  retailPrice: number
+
   quantity: number
   updatedAt: number
 
@@ -21,33 +23,19 @@ export class Batch {
     return this.costPrice * this.product!.unitDefaultRate
   }
 
-  get unitWholesalePrice() {
-    return this.wholesalePrice * this.product!.unitDefaultRate
-  }
-
-  get unitRetailPrice() {
-    return this.retailPrice * this.product!.unitDefaultRate
-  }
-
   set unitCostPrice(data) {
     this.costPrice = data / this.product!.unitDefaultRate
-  }
-
-  set unitWholesalePrice(data: number) {
-    this.wholesalePrice = data / this.product!.unitDefaultRate
-  }
-
-  set unitRetailPrice(data: number) {
-    this.retailPrice = data / this.product!.unitDefaultRate
   }
 
   static init() {
     const ins = new Batch()
     ins.id = 0
+    ins.productId = 0
+    ins.warehouseId = 0
+    ins.distributorId = 0
+
     ins.lotNumber = ''
     ins.costPrice = 0
-    ins.wholesalePrice = 0
-    ins.retailPrice = 0
     ins.quantity = 0
     return ins
   }

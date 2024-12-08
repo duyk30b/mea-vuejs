@@ -8,7 +8,7 @@ export class ReceiptGetQuery {
   relation?: {
     distributor?: boolean
     distributorPayments?: boolean
-    receiptItems?: { product?: boolean; batch?: boolean } | false
+    receiptItemList?: { product?: boolean; batch?: boolean } | false
   }
 
   filter?: {

@@ -350,18 +350,6 @@ const closeExpiryDate = computed(() => {
                 {{ productGroupMap[product.productGroupId]?.name }}
               </div>
               <template v-if="!product.batchList?.length">
-                <div class="flex text-xs gap-2">
-                  <div v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber && product.lotNumber">
-                    S.Lô {{ product.lotNumber }}
-                  </div>
-                  <div
-                    v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate && product.expiryDate"
-                    :style="
-                      product.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''
-                    ">
-                    - HSD {{ DTimer.timeToText(product.expiryDate) }}
-                  </div>
-                </div>
                 <div class="flex text-xs">
                   <div
                     v-if="
@@ -657,21 +645,8 @@ const closeExpiryDate = computed(() => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
                   {{ product.unitDefaultName }}
                 </td>
-                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
-                  {{ product.lotNumber }}
-                </td>
-                <td
-                  v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
-                  class="text-center"
-                  :style="
-                    product.expiryDate && product.expiryDate < closeExpiryDate
-                      ? 'color:red; font-weight:500'
-                      : ''
-                  ">
-                  {{
-                    product.expiryDate ? DTimer.timeToText(product.expiryDate, 'DD/MM/YYYY') : ''
-                  }}
-                </td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center"></td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center"></td>
 
                 <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
                   {{ product.unitQuantity || 0 }}

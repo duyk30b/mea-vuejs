@@ -39,7 +39,7 @@ const colspan = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
+        <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
           <td class="text-center">{{ index + 1 }}</td>
           <td>
             <div class="text-justify">

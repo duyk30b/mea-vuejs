@@ -5,7 +5,7 @@ import { RadiologyGroup } from './radiology-group.model'
 
 export class RadiologyGroupService {
   static loadedAll: boolean = false
-  static radiologyGroupAll: RadiologyGroup[]
+  static radiologyGroupAll: RadiologyGroup[] = []
 
   private static async getAll() {
     if (RadiologyGroupService.loadedAll) return

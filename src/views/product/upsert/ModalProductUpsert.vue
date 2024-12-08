@@ -69,7 +69,6 @@ const openModalFromTicket = () => {
   showModal.value = true
   product.value = Product.blank()
   unit.value = [{ name: '', rate: 1, default: true }]
-  product.value.hasManageBatches = 0
   product.value.hasManageQuantity = 0
 }
 
@@ -114,7 +113,7 @@ const clickDelete = () => {
     return ModalStore.alert({
       title: 'Không thể xóa sản phẩm có số lượng > 0',
       content: [
-        '- Nếu bắt buộc phải xoá, bạn cần phải hủy bỏ tất cả các phiếu nhập hàng đã từng nhập sản phẩm này'
+        '- Nếu bắt buộc phải xoá, bạn cần phải hủy bỏ tất cả các phiếu nhập hàng đã từng nhập sản phẩm này',
       ],
     })
   }
@@ -185,27 +184,6 @@ defineExpose({ openModal, openModalFromTicket })
           <div class="">Hoạt chất</div>
           <div class="">
             <InputText v-model:value="product.substance" />
-          </div>
-        </div>
-
-        <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.lotNumber && !product.hasManageBatches"
-          class="grow basis-[40%]">
-          <div class="">Số lô</div>
-          <div>
-            <InputText v-model:value="product.lotNumber" />
-          </div>
-        </div>
-
-        <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.expiryDate && !product.hasManageBatches"
-          class="grow basis-[40%]">
-          <div class="">Hạn sử dụng</div>
-          <div class="">
-            <InputDate
-              v-model:value="product.expiryDate"
-              format="DD/MM/YYYY"
-              type-parser="number" />
           </div>
         </div>
 
@@ -319,23 +297,6 @@ defineExpose({ openModal, openModalFromTicket })
           </div>
         </div>
 
-        <div class="grow basis-[40%]">
-          <div class="">
-            <span>Giá nhập</span>
-            <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
-              ({{ formatMoney(product.costPrice) }}/{{ unit.find((i) => i.default)?.name }})
-            </span>
-          </div>
-          <div class="">
-            <InputMoney
-              :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
-              :prepend="product.unitDefaultName"
-              @update:value="
-                (value) => (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))
-              " />
-          </div>
-        </div>
-
         <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
           <div class="">
             <span>Giá bán sỉ</span>
@@ -390,24 +351,12 @@ defineExpose({ openModal, openModalFromTicket })
         <div class="mt-2 grow basis-[600px] flex items-stretch">
           <div class="w-[60px] flex-none">
             <a-switch
-              :checked="Boolean(product.hasManageBatches)"
-              :disabled="!!product.quantity"
-              @change="(checked: Boolean) => (product.hasManageBatches = checked ? 1 : 0)" />
-          </div>
-          <div>
-            <span>Sản phẩm này có thể có nhiều lô hàng và nhiều hạn sử dụng khác nhau</span>
-          </div>
-        </div>
-
-        <div class="mt-2 grow basis-[600px] flex items-stretch">
-          <div class="w-[60px] flex-none">
-            <a-switch
               :checked="Boolean(product.isActive)"
               @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)" />
           </div>
           <div>
-            <span>Active</span>
-            <span v-if="!product.isActive">( Ngừng kinh doanh )</span>
+            <span v-if="product.isActive">Active</span>
+            <span v-else>Inactive (Ngừng kinh doanh)</span>
           </div>
         </div>
       </div>

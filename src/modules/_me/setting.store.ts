@@ -58,8 +58,6 @@ export const settingDefault = {
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
     substance: true,
-    lotNumber: true,
-    expiryDate: true,
     unit: true,
     group: true,
     source: true,
@@ -136,12 +134,17 @@ export const settingDefault = {
     },
   },
   SCREEN_RECEIPT_UPSERT: {
+    receiptItemsSelect: {
+      warehouse: true,
+      lotNumberAndExpiryDate: true,
+    },
     receiptItemsTable: {
       allowDuplicateItem: true,
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
       unit: true,
+      warehouse: true,
     },
     distributor: {
       idDefault: 0,

@@ -49,9 +49,6 @@ export class ProductApi {
     const response = await AxiosInstance.post('/product/create', {
       brandName: product.brandName,
       substance: product.substance,
-      lotNumber: product.lotNumber || '',
-      expiryDate: product.expiryDate,
-      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       productGroupId: product.productGroupId,
@@ -61,7 +58,6 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       hasManageQuantity: product.hasManageQuantity,
-      hasManageBatches: product.hasManageBatches,
       isActive: product.isActive,
     })
     const { data } = response.data as BaseResponse<{ product: any }>
@@ -72,9 +68,6 @@ export class ProductApi {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       brandName: product.brandName,
       substance: product.substance,
-      lotNumber: product.lotNumber || '',
-      expiryDate: product.expiryDate,
-      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       productGroupId: product.productGroupId,
@@ -84,7 +77,6 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       hasManageQuantity: product.hasManageQuantity,
-      hasManageBatches: product.hasManageBatches,
       isActive: product.isActive,
     })
     const { data } = response.data as BaseResponse<{ product: any }>
@@ -99,12 +91,6 @@ export class ProductApi {
       countReceiptItem: number
     }>
     return result
-  }
-
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/product/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ product: any }>
-    return Product.from(data.product)
   }
 
   static async downloadExcelProductList() {

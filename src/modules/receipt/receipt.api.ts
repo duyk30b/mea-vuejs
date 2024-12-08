@@ -39,8 +39,8 @@ export class ReceiptApi {
 
   static async createDraft(receipt: Receipt) {
     const response = await AxiosInstance.post('/receipt/create-draft', {
+      distributorId: receipt.distributorId,
       receipt: {
-        distributorId: receipt.distributorId,
         startedAt: receipt.startedAt,
         itemsActualMoney: receipt.itemsActualMoney,
         discountMoney: receipt.discountMoney,
@@ -50,15 +50,14 @@ export class ReceiptApi {
         totalMoney: receipt.totalMoney,
         note: receipt.note,
       },
-      receiptItemList: (receipt.receiptItems || []).map((i) => ({
+      receiptItemList: (receipt.receiptItemList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
-        wholesalePrice: i.wholesalePrice,
-        retailPrice: i.retailPrice,
         quantity: i.quantity,
       })),
     })
@@ -68,8 +67,8 @@ export class ReceiptApi {
 
   static async updateDraftPrepayment(receiptId: number, receipt: Receipt) {
     const response = await AxiosInstance.patch(`/receipt/update-draft-prepayment/${receiptId}`, {
+      distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
       receipt: {
-        // distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
         startedAt: receipt.startedAt,
         itemsActualMoney: receipt.itemsActualMoney,
         discountMoney: receipt.discountMoney,
@@ -79,15 +78,14 @@ export class ReceiptApi {
         totalMoney: receipt.totalMoney,
         note: receipt.note,
       },
-      receiptItemList: (receipt.receiptItems || []).map((i) => ({
+      receiptItemList: (receipt.receiptItemList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
-        wholesalePrice: i.wholesalePrice,
-        retailPrice: i.retailPrice,
         quantity: i.quantity,
       })),
     })
@@ -151,14 +149,14 @@ export class ReceiptApi {
     }
   }
 
-  static async cancel(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/cancel/${receiptId}`, { money })
+  static async cancel(receiptId: number) {
+    const response = await AxiosInstance.post(`/receipt/cancel/${receiptId}`)
     const { data } = response.data as BaseResponse<{
-      receiptBasic: any
+      receipt: any
       distributorPaymentList: any[]
     }>
     return {
-      receiptBasic: Receipt.from(data.receiptBasic || {}),
+      receipt: Receipt.from(data.receipt),
       distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
     }
   }
