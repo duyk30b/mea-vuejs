@@ -6,21 +6,21 @@ export class Product {
   id: number
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
-  lotNumber: string // Lô sản phẩm
-  expiryDate?: number
-  quantity: number
-  costAmount: number // Tổng vốn
-  costPrice: number // Giá nhập
-  wholesalePrice: number // Giá bán sỉ
-  retailPrice: number // Giá bán lẻ
-  hasManageQuantity: 0 | 1
-  hasManageBatches: 0 | 1
+
   productGroupId: number
   unit: string
   route: string // Đường dùng: ... Ấn Độ, Ý, Pháp, ...
   source: string // Nguồn gốc: ... Ấn Độ, Ý, Pháp, ...
   image: string
   hintUsage: string // Gợi ý cách sử dụng
+
+  quantity: number
+  costPrice: number
+  wholesalePrice: number // Giá bán sỉ
+  retailPrice: number // Giá bán lẻ
+
+  warehouseIds: string
+  warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
@@ -77,21 +77,12 @@ export class Product {
     return this.wholesalePrice * this.unitDefaultRate
   }
 
-  set unitCostPrice(data) {
-    this.costPrice = data / this.unitDefaultRate
-  }
-
   set unitRetailPrice(data) {
     this.retailPrice = data / this.unitDefaultRate
   }
 
   set unitWholesalePrice(data) {
     this.wholesalePrice = data / this.unitDefaultRate
-  }
-
-  get costPriceAverage() {
-    if (this.quantity === 0) return this.costPrice
-    return Math.floor(this.costAmount / this.quantity)
   }
 
   public getUnitNameByRate(rate: number) {
@@ -101,15 +92,14 @@ export class Product {
   static init(): Product {
     const ins = new Product()
     ins.id = 0
-    ins.hasManageBatches = 0
-    ins.hasManageQuantity = 1
     ins.quantity = 0
-    ins.costPrice = 0
     ins.wholesalePrice = 0
     ins.retailPrice = 0
     ins.unit = JSON.stringify([{ name: '', rate: 1, default: true }])
     ins.productGroupId = 0
 
+    ins.warehouseIds = JSON.stringify([0])
+    ins.warehouseIdList = [0]
     ins.isActive = 1
     return ins
   }
@@ -144,6 +134,12 @@ export class Product {
     }
     if (source.batchList) {
       target.batchList = Batch.basicList(source.batchList)
+    }
+
+    try {
+      target.warehouseIdList = JSON.parse(target.warehouseIds)
+    } catch (error) {
+      target.warehouseIdList = []
     }
     return target
   }

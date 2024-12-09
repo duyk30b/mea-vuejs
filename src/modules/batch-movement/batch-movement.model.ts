@@ -8,19 +8,19 @@ import { Ticket } from '../ticket'
 
 export class BatchMovement {
   id: number
+  warehouseId: number
   productId: number
   batchId: number
   voucherType: VoucherType
   voucherId: number
   contactId: number
   isRefund: boolean
+  unitRate: number
   openQuantity: number // Số lượng ban đầu
   quantity: number // Số lượng +/-
-  unitRate: number
   closeQuantity: number // Số lượng sau thay đổi
   actualPrice: number // Giá
   expectedPrice: number // Giá
-  costAmount: number // Vốn
   createdAt: number
 
   batch?: Batch

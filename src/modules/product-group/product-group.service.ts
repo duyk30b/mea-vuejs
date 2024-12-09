@@ -6,7 +6,7 @@ import { ProductGroup } from './product-group.model'
 export class ProductGroupService {
   static loadedAll: boolean = false
 
-  static productGroupAll: ProductGroup[]
+  static productGroupAll: ProductGroup[] = []
   static productGroupMap: Record<string, ProductGroup> = {}
 
   private static async getAll() {

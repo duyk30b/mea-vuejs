@@ -109,18 +109,7 @@ const closeExpiryDate = computed(() => {
                     {{ product.substance }}
                   </div>
                 </td>
-                <td
-                  class="text-center"
-                  style="white-space: nowrap"
-                  :style="
-                    product.expiryDate && product.expiryDate < now
-                      ? 'color:red; font-weight:500'
-                      : product.expiryDate && product.expiryDate < closeExpiryDate
-                        ? 'color:orange; font-weight:500'
-                        : ''
-                  ">
-                  {{ timeToText(product.expiryDate) }}
-                </td>
+                <td class="text-center" style="white-space: nowrap"></td>
                 <td class="text-center" style="white-space: nowrap">
                   {{ product.unitQuantity }}
                 </td>

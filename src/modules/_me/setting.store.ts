@@ -51,15 +51,13 @@ export const settingDefault = {
     lotNumber: false,
     expiryDate: true,
     unit: true,
+    warehouse: true,
     costPrice: true,
-    isActive: true,
     action: true,
   },
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
     substance: true,
-    lotNumber: true,
-    expiryDate: true,
     unit: true,
     group: true,
     source: true,
@@ -122,6 +120,7 @@ export const settingDefault = {
       detail: true,
       lotNumberAndExpiryDate: true,
       unit: true,
+      warehouse: true,
     },
     paymentInfo: {
       itemsActualMoney: true,
@@ -136,12 +135,17 @@ export const settingDefault = {
     },
   },
   SCREEN_RECEIPT_UPSERT: {
+    receiptItemsSelect: {
+      warehouse: true,
+      lotNumberAndExpiryDate: true,
+    },
     receiptItemsTable: {
       allowDuplicateItem: true,
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
       unit: true,
+      warehouse: true,
     },
     distributor: {
       idDefault: 0,
@@ -206,11 +210,11 @@ export const settingDefault = {
   },
   SCREEN_INVOICE_UPSERT: {
     invoiceItemInput: {
+      warehouseIdList: [0],
       customAfterSearch: true,
       hintUsage: false,
       expectedPrice: true,
       costPrice: true,
-      costPriceAverage: true,
       quantity: true,
       discount: true,
       actualPrice: true,

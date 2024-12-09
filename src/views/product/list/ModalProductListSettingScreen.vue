@@ -86,6 +86,16 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
+                <a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</a-checkbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
                 <a-checkbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</a-checkbox>
               </td>
             </tr>
@@ -96,23 +106,12 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <a-checkbox v-model:checked="settingDisplay.costPrice">
                   Hiển thị giá nhập
                 </a-checkbox>
               </td>
             </tr>
-            <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.isActive">
-                  Hiển thị trạng thái
-                </a-checkbox>
-              </td>
-            </tr>
+
             <tr>
               <td>
                 <a-checkbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</a-checkbox>

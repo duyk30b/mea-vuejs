@@ -85,7 +85,7 @@ export class LaboratoryApi {
       laboratoryGroupId: laboratory.laboratoryGroupId,
       lowValue: laboratory.lowValue,
       highValue: laboratory.highValue,
-      // valueType: laboratory.valueType, // không cho cập nhật loại giá trị
+      valueType: laboratory.valueType, // không cho cập nhật loại giá trị
       unit: laboratory.unit,
       options: laboratory.options,
       children: (laboratory.children || []).map((i) => {

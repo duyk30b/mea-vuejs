@@ -14,13 +14,13 @@ export class TicketProduct {
   customerId: number
   productId: number
   batchId: number
+  warehouseId: number
   type: TicketProductType
   deliveryStatus: DeliveryStatus
   unitRate: number
   quantityPrescription: number
   quantity: number
   quantityReturn: number
-  costAmount: number // Tổng giá cost
   expectedPrice: number // Giá dự kiến
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
@@ -62,11 +62,11 @@ export class TicketProduct {
   }
 
   get lotNumber() {
-    return this.batch?.lotNumber || this.product?.lotNumber
+    return this.batch?.lotNumber
   }
 
   get expiryDate() {
-    return this.batch?.expiryDate || this.product?.expiryDate
+    return this.batch?.expiryDate
   }
 
   set unitQuantity(data: number) {
@@ -100,7 +100,6 @@ export class TicketProduct {
     ins.quantity = 0
     ins.quantityPrescription = 0
     ins.quantityReturn = 0
-    ins.costAmount = 0
     ins.unitRate = 1
     ins.expectedPrice = 0
     ins.discountMoney = 0
@@ -150,12 +149,12 @@ export class TicketProduct {
     if (a.customerId != b.customerId) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
+    if (a.warehouseId != b.warehouseId) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.unitRate != b.unitRate) return false
     if (a.quantityPrescription != b.quantityPrescription) return false
     if (a.quantity != b.quantity) return false
     if (a.quantityReturn != b.quantityReturn) return false
-    if (a.costAmount != b.costAmount) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

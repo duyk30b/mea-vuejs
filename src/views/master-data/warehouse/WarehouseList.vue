@@ -7,6 +7,7 @@ import { Warehouse, WarehouseApi } from '../../../modules/warehouse'
 import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import VueButton from '../../../common/VueButton.vue'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const modalWarehouseUpsert = ref<InstanceType<typeof ModalWarehouseUpsert>>()
 
@@ -28,7 +29,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await WarehouseApi.pagination({
+    const { data, meta } = await WarehouseService.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -63,7 +64,7 @@ onBeforeMount(async () => {
 
 const handleModalWarehouseUpsertSuccess = async (
   data: Warehouse,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY'
 ) => {
   await startFetchData()
 }

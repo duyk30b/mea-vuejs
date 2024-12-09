@@ -29,9 +29,9 @@ export class Receipt {
   startedAt: number
   shippedAt: number
 
-  receiptItems?: ReceiptItem[]
+  receiptItemList?: ReceiptItem[]
   distributor?: Distributor
-  distributorPayments?: DistributorPayment[]
+  distributorPaymentList?: DistributorPayment[]
 
   static init(): Receipt {
     const ins = new Receipt()
@@ -51,9 +51,9 @@ export class Receipt {
 
   static blank(): Receipt {
     const ins = Receipt.init()
-    ins.receiptItems = []
+    ins.receiptItemList = []
     ins.distributor = Distributor.init()
-    ins.distributorPayments = []
+    ins.distributorPaymentList = []
     return ins
   }
 
@@ -83,8 +83,8 @@ export class Receipt {
         target.distributor = distributor
       }
     }
-    if (source.receiptItems) {
-      target.receiptItems = source.receiptItems.map((i) => {
+    if (source.receiptItemList) {
+      target.receiptItemList = source.receiptItemList.map((i) => {
         const receiptItem = new ReceiptItem()
         Object.assign(receiptItem, i)
         if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
@@ -108,8 +108,8 @@ export class Receipt {
         return receiptItem
       })
     }
-    if (source.distributorPayments) {
-      target.distributorPayments = source.distributorPayments.map((i) => {
+    if (source.distributorPaymentList) {
+      target.distributorPaymentList = source.distributorPaymentList.map((i) => {
         const distributorPayment = new DistributorPayment()
         Object.assign(distributorPayment, i)
         return distributorPayment

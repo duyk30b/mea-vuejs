@@ -16,7 +16,6 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import type { Distributor } from '../../../modules/distributor'
 import { PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
@@ -50,8 +49,8 @@ const startFetchData = async (receiptId: number) => {
     receipt.value = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: { product: true, batch: true },
-        distributorPayments: true,
+        receiptItemList: { product: true, batch: true },
+        distributorPaymentList: true,
       },
     })
   } catch (error) {
@@ -89,12 +88,12 @@ const startCopy = () => {
 const startRefundPrepayment = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPayments } = await ReceiptApi.refundPrepayment(
+    const { receiptBasic, distributorPaymentList } = await ReceiptApi.refundPrepayment(
       receipt.value.id,
       receipt.value.paid
     )
     Object.assign(receipt.value, receiptBasic)
-    receipt.value.distributorPayments = distributorPayments
+    receipt.value.distributorPaymentList = distributorPaymentList
     AlertStore.add({ type: 'success', message: 'Trả tiền tạm ứng thành công', time: 1000 })
   } catch (error) {
     console.log('🚀 ~ file: ReceiptDetail.vue:117 ~ startRefundPrepayment ~ error:', error)
@@ -106,16 +105,12 @@ const startRefundPrepayment = async () => {
 const startCancel = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPaymentList } = await ReceiptApi.cancel(
-      receipt.value.id!,
-      receipt.value.paid
-    )
-    console.log('🚀 ~ file: ReceiptDetail.vue:126 ~ startCancel ~ receiptBasic:', receiptBasic)
-    Object.assign(receipt.value, receiptBasic)
-    receipt.value.distributorPayments = distributorPaymentList
+    const result = await ReceiptApi.cancel(receipt.value.id!)
+    Object.assign(receipt.value, result.receipt)
+    receipt.value.distributorPaymentList = result.distributorPaymentList
     AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
   } catch (error) {
-    console.log('🚀 ~ startCancel ~ error:', error)
+    console.log('🚀 ~ file: ReceiptDetail.vue:114 ~ startCancel ~ error:', error)
   } finally {
     loadingProcess.value = false
   }
@@ -124,12 +119,9 @@ const startCancel = async () => {
 const sendProductAndDebit = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPayments } = await ReceiptApi.sendProductAndPayment(
-      receipt.value.id!,
-      0
-    )
-    Object.assign(receipt.value, receiptBasic)
-    receipt.value.distributorPayments = distributorPayments
+    const result = await ReceiptApi.sendProductAndPayment(receipt.value.id!, 0)
+    Object.assign(receipt.value, result.receipt)
+    receipt.value.distributorPaymentList = result.distributorPaymentList
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {

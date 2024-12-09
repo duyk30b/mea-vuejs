@@ -5,7 +5,7 @@ import { Procedure } from './procedure.model'
 
 export class ProcedureService {
   static loadedAll: boolean = false
-  static procedureAll: Procedure[]
+  static procedureAll: Procedure[] = []
 
   private static async getAll() {
     if (ProcedureService.loadedAll) return

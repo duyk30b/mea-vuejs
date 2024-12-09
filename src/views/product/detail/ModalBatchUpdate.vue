@@ -2,20 +2,44 @@
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
-import { InputDate, InputMoney, InputText } from '../../../common/vue-form'
+import { InputDate, InputMoney, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Product } from '../../../modules/product'
+import { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 
-const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE'): void }>()
+const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE' | 'DESTROY'): void }>()
+
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
+
+const batch = ref(Batch.blank())
+const warehouseOptions = ref<{ value: number; text: string; data: Warehouse }[]>([])
 
 const showModal = ref(false)
-const batch = ref(Batch.blank())
 const saveLoading = ref(false)
 
 const openModal = async (b: Batch) => {
   batch.value = Batch.from(b)
   showModal.value = true
+
+  const warehouseAll = await WarehouseService.list({})
+
+  if (b.product!.warehouseIds === JSON.stringify([0])) {
+    warehouseOptions.value = [
+      ...warehouseAll.map((i) => ({ value: i.id, text: i.name, data: i })),
+      { value: 0, text: 'Không chọn kho', data: Warehouse.blank() },
+    ]
+  } else {
+    warehouseOptions.value = warehouseAll
+      .filter((i) => b.product!.warehouseIdList.includes(i.id))
+      .map((i) => ({ value: i.id, text: i.name, data: i }))
+  }
 }
 
 const handleSave = async () => {
@@ -23,7 +47,7 @@ const handleSave = async () => {
   try {
     const batchDraft = await BatchService.updateOne(batch.value.id, batch.value)
     emit('success', batchDraft, 'UPDATE')
-    handleClose()
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:30 ~ handleSave ~ error:', error)
   } finally {
@@ -31,10 +55,44 @@ const handleSave = async () => {
   }
 }
 
-const handleClose = () => {
+const closeModal = () => {
   batch.value = Batch.blank()
   batch.value.product = Product.blank()
   showModal.value = false
+}
+
+const clickDelete = () => {
+  if (batch.value.quantity != 0) {
+    return AlertStore.add({
+      type: 'error',
+      message: 'Không thể xóa lô hàng có số lượng khác 0',
+      time: 2000,
+    })
+  }
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa lô hàng này',
+    content: 'Lô hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        const response = await BatchService.destroyOne(batch.value.id)
+        if (response.success) {
+          emit('success', batch.value, 'DESTROY')
+          closeModal()
+        } else {
+          ModalStore.alert({
+            title: 'Không thể xóa lô hàng khi đã tồn tại trong phiếu nhập hàng hoặc phiếu bán hàng',
+            content: [
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng và phiếu bán hàng có lô hàng này',
+              `Phiếu nhập hàng đang có: ` + response.data.receiptItemList.map((i) => i.receiptId),
+              `Phiếu ban hàng đang có: ` + response.data.ticketProductList.map((i) => i.ticketId),
+            ],
+          })
+        }
+      } catch (error) {
+        console.log('🚀 ~ file: ModalDistributorUpsert.vue:109 ~ clickDelete ~ error:', error)
+      }
+    },
+  })
 }
 
 defineExpose({ openModal })
@@ -48,7 +106,7 @@ defineExpose({ openModal })
           <span>Thông tin lô hàng</span>
         </div>
 
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
+        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
       </div>
@@ -85,22 +143,23 @@ defineExpose({ openModal })
           </div>
         </div>
         <div class="mt-2">
-          <div>Giá bán sỉ</div>
+          <div>Kho</div>
           <div>
-            <InputMoney v-model:value="batch.unitWholesalePrice" />
-          </div>
-        </div>
-        <div class="mt-2">
-          <div>Giá bán lẻ</div>
-          <div>
-            <InputMoney v-model:value="batch.unitRetailPrice" />
+            <VueSelect v-model:value="batch.warehouseId" :options="warehouseOptions"></VueSelect>
           </div>
         </div>
       </div>
 
-      <div class="pb-6 pt-4 px-4">
+      <div class="pb-6 pt-10 px-4">
         <div class="flex gap-4">
-          <VueButton class="ml-auto" type="reset" icon="close" @click="handleClose">
+          <VueButton
+            v-if="permissionIdMap[PermissionId.BATCH_DELETE] && batch.id"
+            color="red"
+            type="button"
+            @click="clickDelete">
+            Xóa
+          </VueButton>
+          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" icon="save" type="submit" :loading="saveLoading">

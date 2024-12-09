@@ -241,9 +241,6 @@ defineExpose({ openModal })
             <div>
               <VueSelect
                 v-model:value="laboratory.valueType"
-                :disabled="
-                  !!laboratory.id && laboratoryRoot?.valueType === LaboratoryValueType.Children
-                "
                 :options="[
                   {
                     value: LaboratoryValueType.Number,

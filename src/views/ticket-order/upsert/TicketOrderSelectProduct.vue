@@ -19,8 +19,13 @@ import { TicketProduct } from '../../../modules/ticket-product'
 import { customFilter, DTimer } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticket } from './ticket-order-upsert.ref'
+import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
+import { IconFileSearch } from '../../../common/icon'
+import { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
+const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
 const settingStore = useSettingStore()
@@ -34,12 +39,13 @@ const batch = ref(Batch.blank())
 const batchList = ref<Batch[]>([])
 
 const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
-const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice' | 'costPriceAverage'>(
-  'retailPrice'
-)
+const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
+
+const warehouseMap = ref<Record<string, Warehouse>>({})
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketOrderSelectProduct.vue:45  ~ onMounted')
+  warehouseMap.value = await WarehouseService.getMap()
 })
 
 const handleFocusFirstSearchProduct = async () => {
@@ -51,14 +57,41 @@ const handleFocusFirstSearchProduct = async () => {
 }
 
 const searchingProduct = async (text: string) => {
+  console.log('🚀 ~ file: TicketOrderSelectProduct.vue:56 ~ searchingProduct ~ text:', text)
   if (!text) {
     productList.value = []
   } else {
-    productList.value = await ProductService.search(text)
+    productList.value = await ProductService.list({
+      filter: {
+        isActive: 1,
+        $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+        warehouseIds: (value) => {
+          try {
+            const { warehouseIdList } = settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput
+            const v: number[] = JSON.parse(value)
+            if (!warehouseIdList.length || warehouseIdList.includes(0)) return true
+            if (!v.length || v.includes(0)) return true
+
+            for (let i = 0; i < v.length; i++) {
+              if (warehouseIdList.includes(v[i])) {
+                return true
+              }
+            }
+            return false
+          } catch (error) {
+            return true
+          }
+        },
+      },
+    })
+    console.log(
+      '🚀 ~ file: TicketOrderSelectProduct.vue:59 ~ searchingProduct ~ productList.value:',
+      productList.value
+    )
   }
 }
 
-const createProduct = (instance?: Product) => {
+const handleModalProductUpsertSuccess = (instance?: Product) => {
   inputOptionsProduct.value?.setItem({
     text: instance?.brandName,
     data: instance,
@@ -70,80 +103,62 @@ const createProduct = (instance?: Product) => {
 const selectProduct = async (instance?: Product) => {
   if (!instance) return clear()
 
-  product.value = instance
-  createTicketProduct(instance)
-  if (instance.hasManageBatches) {
-    const batchListResponse = await BatchService.list({
-      filter: {
-        productId: instance.id,
-        quantity: { NOT: 0 },
-      },
-    })
-    batchListResponse.forEach((i) => (i.product = instance))
-    batchList.value = batchListResponse
+  const vp = TicketProduct.blank()
+  vp.productId = instance.id
+  vp.deliveryStatus = DeliveryStatus.Pending
+  vp.unitRate = instance.unitDefaultRate
+  vp.quantity = 0
+  vp.quantityPrescription = 0
+  vp.expectedPrice = instance.retailPrice
+  vp.discountType = DiscountType.Percent
+  vp.discountPercent = 0
+  vp.discountMoney = 0
+  vp.actualPrice = instance.retailPrice
+  vp.hintUsage = instance?.hintUsage || ''
+  vp.product = Product.from(instance)
 
-    if (batchListResponse.length) {
-      batch.value = batchListResponse[0]
-      createTicketBatch(batchListResponse[0])
-    }
-  } else {
-    batchList.value = []
+  product.value = Product.from(instance)
+  productOutSellType.value = 'retailPrice'
+  ticketProduct.value = vp
+
+  const batchListResponse = await BatchService.list({
+    filter: {
+      productId: instance.id,
+      quantity: { NOT: 0 },
+    },
+  })
+  batchListResponse.forEach((i) => (i.product = instance))
+  batchList.value = batchListResponse
+
+  if (batchListResponse.length) {
+    batch.value = batchListResponse[0]
+    ticketProductSelectBatch(batchListResponse[0])
   }
 }
 
 const selectBatch = (instance: Batch) => {
   batch.value = instance
-  createTicketBatch(instance)
+  ticketProductSelectBatch(instance)
 }
 
-const createTicketProduct = (instance?: Product) => {
-  const vp = TicketProduct.blank()
-  if (instance) {
-    vp.productId = instance.id
-    vp.deliveryStatus = DeliveryStatus.Pending
-    vp.unitRate = instance.unitDefaultRate
-    vp.quantity = 0
-    vp.quantityPrescription = 0
-    vp.costAmount = 0
-    vp.expectedPrice = instance.retailPrice
-    vp.discountType = DiscountType.Percent
-    vp.discountPercent = 0
-    vp.discountMoney = 0
-    vp.actualPrice = instance.retailPrice
-    vp.hintUsage = instance?.hintUsage || ''
-
-    vp.product = Product.from(instance)
-
-    productOutSellType.value = 'retailPrice'
-  }
-  ticketProduct.value = vp
-}
-
-const createTicketBatch = (instance?: Batch) => {
+const ticketProductSelectBatch = (instance?: Batch) => {
   if (!instance) return
   ticketProduct.value.batch = Batch.from(instance)
   ticketProduct.value.batchId = instance.id
-
-  ticketProduct.value.expectedPrice = instance.retailPrice
-  ticketProduct.value.actualPrice = instance.retailPrice
-  ticketProduct.value.discountMoney = 0
-  ticketProduct.value.discountPercent = 0
-
-  productOutSellType.value = 'retailPrice'
 }
 
 const handleChangeInvoiceProductSellType = (
-  type: 'retailPrice' | 'wholesalePrice' | 'costPrice' | 'costPriceAverage'
+  type: 'costPrice' | 'wholesalePrice' | 'retailPrice'
 ) => {
   let expectedPrice = 0
-  if (type === 'costPriceAverage') {
-    expectedPrice = ticketProduct.value.product?.costPriceAverage || 0
-  } else {
-    if (ticketProduct.value.batchId) {
-      expectedPrice = ticketProduct.value.batch?.[type] || 0
-    } else {
-      expectedPrice = ticketProduct.value.product?.[type] || 0
-    }
+  if (type === 'costPrice') {
+    expectedPrice = ticketProduct.value.batch?.costPrice || 0
+  }
+  if (type === 'wholesalePrice') {
+    expectedPrice = ticketProduct.value.product?.wholesalePrice || 0
+  }
+  if (type === 'retailPrice') {
+    expectedPrice = ticketProduct.value.product?.retailPrice || 0
   }
 
   if (ticketProduct.value.discountType === '%') {
@@ -210,48 +225,20 @@ const addTicketProduct = () => {
   if (ticketProduct.value.quantity <= 0) {
     return AlertStore.addError('Lỗi: Số lượng không hợp lệ')
   }
-  if (product?.hasManageQuantity) {
-    if (product.hasManageBatches) {
-      if (!batch) {
-        return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
-      }
-      if (!settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
-        if (ticketProduct.value.quantity > batch!.quantity) {
-          return AlertStore.addError(
-            `Lỗi: Số lượng tồn kho không đủ, tồn ${batch!.quantity} lấy ${
-              ticketProduct.value.quantity
-            }`
-          )
-        }
-      }
+  if (product?.warehouseIds !== '[]') {
+    if (!batch) {
+      return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
     }
-
-    if (!product.hasManageBatches) {
-      if (!settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
-        if (ticketProduct.value.quantity > product!.quantity) {
-          return AlertStore.addError(
-            `Lỗi: Số lượng tồn kho không đủ, tồn ${product!.quantity} lấy ${
-              ticketProduct.value.quantity
-            }`
-          )
-        }
+    if (!settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+      if (ticketProduct.value.quantity > batch!.quantity) {
+        return AlertStore.addError(
+          `Lỗi: Số lượng tồn kho không đủ, tồn ${batch!.quantity} lấy ${
+            ticketProduct.value.quantity
+          }`
+        )
       }
     }
   }
-
-  // tính costAmount
-  let itemCostAmount = 0
-  if (ticketProduct.value.batchId) {
-    itemCostAmount = ticketProduct.value.quantity * ticketProduct.value.batch!.costPrice
-  } else if (ticketProduct.value.product!.quantity <= 0) {
-    itemCostAmount = (ticketProduct.value.product?.costPrice || 0) * ticketProduct.value.quantity
-  } else {
-    itemCostAmount =
-      (ticketProduct.value.product!.costAmount * ticketProduct.value.quantity) /
-      ticketProduct.value.product!.quantity
-  }
-  const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-  ticketProduct.value.costAmount = itemCostAmountFix
 
   if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
     ticket.value.ticketProductList?.push(ticketProduct.value)
@@ -265,7 +252,6 @@ const addTicketProduct = () => {
     })
     if (exist) {
       exist.quantity += ticketProduct.value.quantity
-      exist.costAmount += ticketProduct.value.costAmount
     } else {
       ticket.value.ticketProductList?.push(ticketProduct.value)
     }
@@ -288,32 +274,25 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <ModalProductUpsert ref="modalProductUpsert" @success="createProduct" />
+  <ModalProductDetail ref="modalProductDetail" />
+  <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
   <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addTicketProduct()">
     <div style="flex-grow: 1; flex-basis: 80%">
-      <div class="flex justify-between">
-        <div>
-          <span>Tên sản phẩm</span>
-          <span
-            v-if="ticketProduct.productId && ticketProduct.product?.hasManageQuantity"
-            :class="
-              ticketProduct.quantity > ticketProduct.product!.quantity
-                ? 'text-red-500 font-bold'
-                : ''
-            ">
-            ( tồn:
-            <b>
-              {{ ticketProduct.product?.unitQuantity }} {{ ticketProduct.product.unitDefaultName }}
-            </b>
-            )
-          </span>
-        </div>
-        <span>
-          <a
-            v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
-            @click="modalProductUpsert?.openModalFromTicket()">
-            Thêm sản phẩm mới
-          </a>
+      <div class="flex gap-1 flex-wrap">
+        <span>Tên sản phẩm</span>
+        <a v-if="product.id" c @click="modalProductDetail?.openModal(product)">
+          <IconFileSearch />
+        </a>
+        <span
+          v-if="ticketProduct.productId && ticketProduct.product?.warehouseIds != '[]'"
+          :class="
+            ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
+          ">
+          ( tồn:
+          <b>
+            {{ ticketProduct.product?.unitQuantity }} {{ ticketProduct.product?.unitDefaultName }}
+          </b>
+          )
         </span>
       </div>
       <div style="height: 40px">
@@ -345,7 +324,7 @@ defineExpose({ focus })
       </div>
     </div>
 
-    <div v-if="product.hasManageBatches" style="flex-grow: 1; flex-basis: 80%">
+    <div style="flex-grow: 1; flex-basis: 80%">
       <div>
         Lô hàng
         <span v-if="batch?.expiryDate && batch?.expiryDate < closeExpiryDate" class="text-red-500">
@@ -370,8 +349,8 @@ defineExpose({ focus })
               </span>
               - Tồn
               <b>{{ data.unitQuantity }}</b>
-              {{ product.unitDefaultName }} - G.Lẻ
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
+              {{ product.unitDefaultName }}
+              - {{ warehouseMap[data.warehouseId]?.name }}
             </div>
           </template>
           <template #text="{ content: { data } }">
@@ -385,9 +364,8 @@ defineExpose({ focus })
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>
                 {{ product!.unitDefaultName }}
+                - {{ warehouseMap[data.warehouseId]?.name }}
               </span>
-              - G.Lẻ
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
             </div>
           </template>
         </VueSelect>
@@ -428,10 +406,6 @@ defineExpose({ focus })
               ...(permissionIdMap[PermissionId.READ_COST_PRICE] &&
               settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
                 ? [{ value: 'costPrice', text: 'Giá nhập' }]
-                : []),
-              ...(permissionIdMap[PermissionId.READ_COST_PRICE] &&
-              settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPriceAverage
-                ? [{ value: 'costPriceAverage', text: 'Giá vốn TB' }]
                 : []),
               ...(settingStore.SYSTEM_SETTING.wholesalePrice
                 ? [{ value: 'wholesalePrice', text: 'Giá bán sỉ' }]

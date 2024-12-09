@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { ReceiptItem } from '../receipt-item/receipt-item.model'
+import { TicketProduct } from '../ticket-product'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -31,38 +32,34 @@ export class BatchApi {
     const params = BatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/batch/detail/${id}`, { params })
-    const { data } = response.data as BaseResponse
-    return Batch.from(data)
+    const { data } = response.data as BaseResponse<{ batch: any }>
+    return Batch.from(data.batch)
   }
 
   static async createOne(instance: Batch) {
     const plain = Batch.from(instance)
     const response = await AxiosInstance.post('/batch/create', plain)
-    const { data } = response.data as BaseResponse
-    return Batch.from(data)
+    const { data } = response.data as BaseResponse<{ batch: any }>
+    return Batch.from(data.batch)
   }
 
   static async updateOne(id: number, batch: Batch) {
     const response = await AxiosInstance.patch(`/batch/update/${id}`, {
       lotNumber: batch.lotNumber,
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
-      wholesalePrice: batch.wholesalePrice,
-      retailPrice: batch.retailPrice,
-    })
-    const { data } = response.data as BaseResponse
-    return Batch.from(data)
-  }
-
-  static async findOrCreate(receiptItem: ReceiptItem) {
-    const response = await AxiosInstance.post('/batch/find-or-create', {
-      productId: receiptItem.productId,
-      lotNumber: receiptItem.lotNumber || '',
-      expiryDate: receiptItem.expiryDate,
-      costPrice: receiptItem.costPrice,
-      wholesalePrice: receiptItem.wholesalePrice,
-      retailPrice: receiptItem.retailPrice,
+      warehouseId: batch.warehouseId,
     })
     const { data } = response.data as BaseResponse<{ batch: any }>
     return Batch.from(data.batch)
+  }
+
+  static async destroyOne(id: number) {
+    const response = await AxiosInstance.delete(`/batch/destroy/${id}`)
+    const result = response.data as BaseResponse<{
+      batchId: number
+      receiptItemList: ReceiptItem[]
+      ticketProductList: TicketProduct[]
+    }>
+    return result
   }
 }

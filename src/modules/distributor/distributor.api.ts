@@ -71,8 +71,8 @@ export class DistributorApi {
       note: distributor.note,
       isActive: distributor.isActive,
     })
-    const { data } = response.data as BaseResponse
-    return Distributor.from(data)
+    const { data } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
   static async destroyOne(id: number) {

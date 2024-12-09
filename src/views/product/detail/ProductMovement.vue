@@ -96,7 +96,6 @@ const startFetchData = async () => {
 }
 
 const startFetchBatchList = async () => {
-  if (!props.product.hasManageBatches) return
   try {
     const { data } = await BatchApi.list({
       filter: { productId: props.product.id },
@@ -114,7 +113,6 @@ watch(
   async (newValue) => {
     if (newValue) {
       await startFetchData()
-      await startFetchBatchList()
     } else {
       productMovementList.value = []
       batchMovementList.value = []
@@ -132,8 +130,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
+let loadedBatchList = false
 const handleChangeTypeHistory = async (value: 'PRODUCT' | 'BATCH') => {
   await startFetchData()
+  if (value === 'BATCH' && !loadedBatchList) {
+    await startFetchBatchList()
+    loadedBatchList = true
+  }
 }
 
 const openBlankReceiptDetail = async (receiptId: number) => {
@@ -143,35 +146,11 @@ const openBlankReceiptDetail = async (receiptId: number) => {
   })
   window.open(route.href, '_blank')
 }
-
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketEyeDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketEyeSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
 </script>
 
 <template>
   <div class="mt-3 flex flex-wrap justify-end gap-4 items-stretch">
-    <div v-if="product.hasManageBatches" style="flex-basis: 500px; flex-grow: 1">
+    <div style="flex-basis: 500px; flex-grow: 1">
       <span style="font-size: 0.8rem" class="whitespace-nowrap">Loại</span>
       <div class="flex">
         <div style="width: 180px">
@@ -203,7 +182,7 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
     </div>
 
     <div style="flex-basis: 300px; flex-grow: 1">
-      <span style="font-size: 0.8rem">Chọn loại</span>
+      <span style="font-size: 0.8rem">Phiếu</span>
       <div>
         <VueSelect
           v-model:value="voucherType"
@@ -291,13 +270,6 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
             <div class="flex justify-between">
               <span>SL:</span>
               <span>{{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Vốn:</span>
-              <span>
-                {{ formatMoney(productMovement.openCostAmount) }} ➞
-                {{ formatMoney(productMovement.closeCostAmount) }}
-              </span>
             </div>
           </td>
         </tr>
@@ -404,7 +376,6 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
           <th>Nhập/Xuất</th>
           <th>Tồn kho ({{ product.unitBasicName }})</th>
           <th>Giá</th>
-          <th>Vốn</th>
         </tr>
       </thead>
       <tbody>
@@ -482,10 +453,6 @@ const openBlankTicketEyeDetail = async (ticketId: number) => {
             <div v-if="productMovement.unitRate !== 1" class="text-xs">
               ({{ formatMoney(productMovement.actualPrice) }} / {{ product.unitBasicName }})
             </div>
-          </td>
-          <td class="text-center">
-            {{ formatMoney(productMovement.openCostAmount) }} ➞
-            {{ formatMoney(productMovement.closeCostAmount) }}
           </td>
         </tr>
       </tbody>

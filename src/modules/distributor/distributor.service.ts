@@ -13,7 +13,7 @@ import { Distributor } from './distributor.model'
 
 export class DistributorService {
   static loadedAll: boolean = false
-  static distributorAll: Distributor[]
+  static distributorAll: Distributor[] = []
   static distributorDefault = Distributor.blank()
 
   static async getAll() {

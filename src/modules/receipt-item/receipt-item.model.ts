@@ -7,12 +7,12 @@ export class ReceiptItem {
   receiptId: number
   distributorId: number
   productId: number
+  batchId: number
+  warehouseId: number
+
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
-  batchId: number
-  costPrice: number 
-  retailPrice: number 
-  wholesalePrice: number 
+  costPrice: number
   quantity: number = 0
   unitRate: number
 
@@ -32,14 +32,6 @@ export class ReceiptItem {
     return this.costPrice * this.unitRate
   }
 
-  get unitWholesalePrice() {
-    return this.wholesalePrice * this.unitRate
-  }
-
-  get unitRetailPrice() {
-    return this.retailPrice * this.unitRate
-  }
-
   set unitQuantity(data: number) {
     this.quantity = data * this.unitRate
   }
@@ -52,21 +44,16 @@ export class ReceiptItem {
     this.costPrice = data / this.unitRate
   }
 
-  set unitWholesalePrice(data: number) {
-    this.wholesalePrice = data / this.unitRate
-  }
-
-  set unitRetailPrice(data: number) {
-    this.retailPrice = data / this.unitRate
-  }
-
   static init() {
     const ins = new ReceiptItem()
     ins.id = 0
+    ins.batchId = 0
+    ins.productId = 0
+    ins.distributorId = 0
+    ins.warehouseId = 0
+
     ins.quantity = 0
     ins.costPrice = 0
-    ins.wholesalePrice = 0
-    ins.retailPrice = 0
     ins.unitRate = 1
     return ins
   }
