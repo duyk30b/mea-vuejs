@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import { Receipt } from '../receipt'
 import {
   DistributorDetailQuery,
   DistributorGetQuery,
@@ -71,13 +72,14 @@ export class DistributorApi {
       note: distributor.note,
       isActive: distributor.isActive,
     })
-    const { data } = response.data as BaseResponse
-    return Distributor.from(data)
+    const { data } = response.data as BaseResponse<{ distributor: any }>
+    return Distributor.from(data.distributor)
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/distributor/destroy/${id}`)
-    const result = response.data as BaseResponse<{ distributorId?: number; countReceipt?: number }>
+    const result = response.data as BaseResponse<{ distributorId?: number; receiptList: Receipt[] }>
+    result.data.receiptList = Receipt.fromList(result.data.receiptList)
     return result
   }
 }

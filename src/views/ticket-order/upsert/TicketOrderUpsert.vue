@@ -330,7 +330,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
+  if (menu.key === 'TICKET_ORDER_SETTING') {
     modalTicketOrderUpsertSetting.value?.openModal()
   }
   if (menu.key === 'data-setting') {
@@ -366,7 +366,7 @@ const handleChangeTabs = (activeKey: any) => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
+            <a-menu-item key="TICKET_ORDER_SETTING">Cài đặt bán hàng</a-menu-item>
             <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
           </a-menu>
         </template>

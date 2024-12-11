@@ -5,7 +5,7 @@ import { LaboratoryKit } from './laboratory-kit.model'
 export class LaboratoryKitService {
   static loadedAll: boolean = false
 
-  static laboratoryKitAll: LaboratoryKit[]
+  static laboratoryKitAll: LaboratoryKit[] = []
 
   private static async getAll() {
     if (LaboratoryKitService.loadedAll) return

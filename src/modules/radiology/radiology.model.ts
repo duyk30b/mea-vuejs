@@ -76,8 +76,8 @@ export class Radiology {
   static equal(a: Radiology, b: Radiology) {
     if (a.id != b.id) return false
     if (a.name != b.name) return false
-    if (a.radiologyGroupId != b.radiologyGroupId) return
-    if (a.printHtmlId != b.printHtmlId) return
+    if (a.radiologyGroupId != b.radiologyGroupId) return false
+    if (a.printHtmlId != b.printHtmlId) return false
     if (a.priority != b.priority) return false
     if (a.price != b.price) return false
     if (a.requestNoteDefault != b.requestNoteDefault) return false

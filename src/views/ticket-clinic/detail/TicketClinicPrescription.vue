@@ -136,7 +136,30 @@ const searchingProduct = async (text: string) => {
     return
   }
 
-  const productList = await ProductService.search(text)
+  const productList = await ProductService.list({
+    filter: {
+      isActive: 1,
+      $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+      warehouseIds: (value) => {
+        try {
+          const warehouseIdAcceptList =
+            settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
+          const v: number[] = JSON.parse(value)
+          if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) return true
+          if (!v.length || v.includes(0)) return true
+
+          for (let i = 0; i < v.length; i++) {
+            if (warehouseIdAcceptList.includes(v[i])) {
+              return true
+            }
+          }
+          return false
+        } catch (error) {
+          return true
+        }
+      },
+    },
+  })
   const prescriptionSampleList: PrescriptionSample[] = await PrescriptionSampleService.search(text)
 
   productOptions.value = [
@@ -170,23 +193,28 @@ const selectProduct = async (productSelect: Product) => {
   temp.productId = productSelect.id
   temp.type = TicketProductType.Prescription
   temp.unitRate = productSelect.unitDefaultRate
+  temp.costPrice = productSelect.costPrice
   temp.expectedPrice = productSelect.retailPrice
   temp.actualPrice = productSelect.retailPrice
   temp.hintUsage = productSelect.hintUsage
 
   ticketProductPrescription.value = temp
-  if (productSelect.hasManageBatches) {
-    batchList.value = await BatchService.list({
-      filter: { productId: productSelect.id, quantity: { GT: 0 } },
-      sort: { expiryDate: 'ASC' },
-    })
-    batchList.value.forEach((i) => (i.product = productSelect))
+  const batchListResponse = await BatchService.list({
+    filter: {
+      productId: productSelect.id,
+      quantity: { NOT: 0 },
+    },
+    sort: { expiryDate: 'ASC' },
+  })
+  batchListResponse.forEach((i) => (i.product = productSelect))
+  batchList.value = batchListResponse
 
-    selectBatch(batchList.value[0])
+  if (batchListResponse.length) {
+    selectBatch(batchListResponse[0])
   } else {
-    batchList.value = []
-    selectBatch(null)
+    selectBatch(Batch.blank())
   }
+  selectBatch(batchList.value[0])
 }
 
 const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) => {
@@ -194,7 +222,7 @@ const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) 
     const productCurrent = medicine.product
     if (!productCurrent) return
 
-    if (!productCurrent.hasManageBatches) {
+    if (productCurrent.warehouseIds === '[]') {
       const temp = TicketProduct.blank()
       temp.customerId = ticketClinicRef.value.customerId
       temp.productId = productCurrent.id
@@ -204,6 +232,7 @@ const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) 
       temp.unitRate = productCurrent.unitDefaultRate
       temp.hintUsage = productCurrent.hintUsage
 
+      temp.costPrice = productCurrent.costPrice
       temp.expectedPrice = productCurrent.retailPrice
       temp.actualPrice = productCurrent.retailPrice
       temp.quantity = medicine.quantity || 0
@@ -231,8 +260,9 @@ const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) 
         temp.unitRate = productCurrent.unitDefaultRate
         temp.hintUsage = medicine.hintUsage
 
-        temp.expectedPrice = batch.retailPrice
-        temp.actualPrice = batch.retailPrice
+        temp.costPrice = batch.costPrice
+        temp.expectedPrice = productCurrent.retailPrice
+        temp.actualPrice = productCurrent.retailPrice
         temp.quantity = quantitySelect
         temp.quantityPrescription = quantitySelect
         ticketProductPrescriptionList.value.push(temp)
@@ -258,13 +288,12 @@ const selectItemOptions = (dataSelected?: {
   }
 }
 
-const selectBatch = (instance: Batch | null) => {
-  if (instance) {
-    ticketProductPrescription.value.batch = Batch.from(instance)
-    ticketProductPrescription.value.batchId = instance.id
-
-    ticketProductPrescription.value.expectedPrice = instance.retailPrice
-    ticketProductPrescription.value.actualPrice = instance.retailPrice
+const selectBatch = (batchSelected: Batch | null) => {
+  if (batchSelected) {
+    ticketProductPrescription.value.batch = Batch.from(batchSelected)
+    ticketProductPrescription.value.batchId = batchSelected.id
+    ticketProductPrescription.value.warehouseId = batchSelected.warehouseId
+    ticketProductPrescription.value.costPrice = batchSelected.costPrice
   } else {
     ticketProductPrescription.value.batch = Batch.blank()
     ticketProductPrescription.value.batchId = 0
@@ -346,22 +375,6 @@ const savePrescription = async () => {
     ticketProductPrescriptionListChange = ticketProductPrescriptionList.value.filter((i) => {
       return [DeliveryStatus.NoStock, DeliveryStatus.Pending].includes(i.deliveryStatus)
     })
-    ticketProductPrescriptionListChange.forEach((i) => {
-      // luôn tính lại costAmount
-      let itemCostAmount = 0
-      if (i.batchId) {
-        itemCostAmount = i.quantity * i.batch!.costPrice
-      } else if (i.product!.quantity <= 0) {
-        itemCostAmount = (i.product?.costPrice || 0) * i.quantity
-      } else {
-        itemCostAmount = (i.product!.costAmount * i.quantity) / i.product!.quantity
-      }
-      const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
-      i.costAmount = itemCostAmountFix
-
-      // i.quantityPrescription = i.quantity // bỏ logic này vì có thể có những sản phẩm không bán
-    })
   }
 
   let ticketAttributeChangeList = undefined
@@ -404,8 +417,9 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
         <span>
           <span
             v-if="
-              ticketProductPrescription.product!.id &&
-              ticketProductPrescription.product?.hasManageQuantity
+              ticketProductPrescription.product &&
+              ticketProductPrescription.product.id &&
+              ticketProductPrescription.product.warehouseIds !== '[]'
             "
             :class="
               ticketProductPrescription.quantity > ticketProductPrescription.product!.quantity
@@ -416,11 +430,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
             <b>{{ ticketProductPrescription.product.unitQuantity }}</b>
             {{ ticketProductPrescription.product.unitDefaultName }}
           </span>
-          <span
-            v-if="
-              ticketProductPrescription.product!.id &&
-              !ticketProductPrescription.product?.hasManageBatches
-            ">
+          <span v-if="ticketProductPrescription.product!.id">
             - Giá
             <b>{{ formatMoney(ticketProductPrescription.product!.unitRetailPrice) }}</b>
           </span>
@@ -480,10 +490,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
         </template>
       </InputOptions>
     </div>
-    <div
-      v-if="ticketProductPrescription.product!.hasManageBatches"
-      class="mt-4"
-      style="flex-grow: 1; flex-basis: 80%">
+    <div class="mt-4" style="flex-grow: 1; flex-basis: 80%">
       <div>
         Lô hàng
         <span
@@ -511,8 +518,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
             <div v-if="data.id">
               Lô {{ data.lotNumber }} {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
               <b>{{ data.unitQuantity }}</b>
-              {{ ticketProductPrescription.product!.unitDefaultName }} - Giá
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
+              {{ ticketProductPrescription.product!.unitDefaultName }}
             </div>
           </template>
           <template #text="{ content: { data } }">
@@ -527,8 +533,6 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
                 <b>{{ data.unitQuantity }}</b>
                 {{ ticketProductPrescription.product!.unitDefaultName }}
               </span>
-              - Giá
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
             </div>
           </template>
         </VueSelect>

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { SisternodeOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
+  CheckboxList,
   InputDate,
   InputHint,
   InputMoney,
@@ -21,9 +22,11 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 import { Product } from '../../../modules/product/product.model'
-import { customFilter } from '../../../utils'
+import { customFilter, DTimer } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const modalProductUpsertSettingScreen = ref<InstanceType<typeof ModalProductUpsertSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
@@ -41,8 +44,15 @@ const product = ref(Product.blank())
 const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
 const unit = ref<UnitType[]>([{ name: '', rate: 1, default: true }])
 
+const warehouseAll = ref<Warehouse[]>([])
+const warehouseMap = ref<Record<string, Warehouse>>({})
+
 const showModal = ref(false)
 const saveLoading = ref(false)
+
+const warehouseIdSelect = ref<Record<string, boolean>>({})
+
+const randomId = computed(() => Math.random().toString(36).substring(2))
 
 const openModal = async (productId?: number) => {
   showModal.value = true
@@ -57,20 +67,24 @@ const openModal = async (productId?: number) => {
     )
   }
 
+  try {
+    const warehouseIdList: number[] = JSON.parse(product.value.warehouseIds)
+    warehouseIdList.forEach((id) => {
+      warehouseIdSelect.value[id] = true
+    })
+  } catch (error) {
+    warehouseIdSelect.value = { '0': true }
+  }
+
   const productGroupAll = await ProductGroupService.list({})
   productGroupOptions.value = productGroupAll.map((i) => ({
     value: i.id,
     text: i.name,
     data: i,
   }))
-}
 
-const openModalFromTicket = () => {
-  showModal.value = true
-  product.value = Product.blank()
-  unit.value = [{ name: '', rate: 1, default: true }]
-  product.value.hasManageBatches = 0
-  product.value.hasManageQuantity = 0
+  warehouseAll.value = await WarehouseService.list({})
+  warehouseMap.value = await WarehouseService.getMap()
 }
 
 const handleAddUnit = () => {
@@ -86,22 +100,67 @@ const handleChangeUnitDefault = (e: any, index: number) => {
 }
 
 const closeModal = () => {
-  product.value = Product.blank()
   showModal.value = false
+  product.value = Product.blank()
+  warehouseIdSelect.value = {}
+}
+
+const handleChangeSelectWarehouse = (e: Event, warehouseId: number) => {
+  const target = e.target as HTMLInputElement
+  if (target.checked) {
+    warehouseIdSelect.value[warehouseId] = true
+    warehouseIdSelect.value['0'] = false
+  } else {
+    warehouseIdSelect.value[warehouseId] = false
+  }
+}
+
+const handleChangeSelectWarehousePrime = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.checked) {
+    warehouseIdSelect.value = { '0': true }
+  } else {
+    warehouseIdSelect.value['0'] = false
+  }
+}
+
+const handleChangeSelectNoWarehouse = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.checked) {
+    warehouseIdSelect.value = {}
+  }
 }
 
 const handleSave = async () => {
   saveLoading.value = true
+  const warehouseIdList = Object.entries(warehouseIdSelect.value)
+    .filter(([key, value]) => value)
+    .map(([key, value]) => Number(key))
+  product.value.warehouseIds = JSON.stringify(warehouseIdList)
   product.value.unit = JSON.stringify(unit.value)
+
   try {
     if (!product.value.id) {
       const data = await ProductService.createOne(product.value)
       emit('success', data, 'CREATE')
+      closeModal()
     } else {
-      const data = await ProductService.updateOne(product.value.id, product.value)
-      emit('success', data, 'UPDATE')
+      const response = await ProductService.updateOne(product.value.id, product.value)
+      if (response.success) {
+        emit('success', response.data.product, 'UPDATE')
+        closeModal()
+      } else {
+        ModalStore.alert({
+          title: 'Không thể cập nhật kho hàng quản lý',
+          content: response.data.batchError.map((batch) => {
+            const warehouseName = warehouseMap.value[batch.warehouseId]?.name || ''
+            return `- Lô hàng ${batch.lotNumber} - HSD ${DTimer.timeToText(
+              batch.expiryDate
+            )} - đang được quản lý bởi "${warehouseName}"". Bắt buộc phải chọn "${warehouseName}" hoặc chọn "Tất cả kho"`
+          }),
+        })
+      }
     }
-    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:66 ~ handleSave ~ error:', error)
   } finally {
@@ -114,7 +173,7 @@ const clickDelete = () => {
     return ModalStore.alert({
       title: 'Không thể xóa sản phẩm có số lượng > 0',
       content: [
-        '- Nếu bắt buộc phải xoá, bạn cần phải hủy bỏ tất cả các phiếu nhập hàng đã từng nhập sản phẩm này'
+        '- Nếu bắt buộc phải xoá, bạn cần phải hủy bỏ tất cả các phiếu nhập hàng đã từng nhập sản phẩm này',
       ],
     })
   }
@@ -132,7 +191,12 @@ const clickDelete = () => {
             title: 'Không thể xóa sản phầm khi đã được nhập hàng hoặc bán hàng',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng và phiếu bán hàng trước',
-              `Hiện tại đang có ${response.data.countReceiptItem} phiếu nhập hàng và ${response.data.countTicketProduct} phiếu bán hàng`,
+              `- Phiếu nhập hàng liên quan ${response.data.receiptItemList
+                .map((i) => i.receiptId)
+                .join(', ')}`,
+              `- Phiếu bán hàng liên quan ${response.data.ticketProductList
+                .map((i) => i.ticketId)
+                .join(', ')}`,
             ],
           })
         }
@@ -143,7 +207,7 @@ const clickDelete = () => {
   })
 }
 
-defineExpose({ openModal, openModalFromTicket })
+defineExpose({ openModal })
 </script>
 
 <template>
@@ -185,27 +249,6 @@ defineExpose({ openModal, openModalFromTicket })
           <div class="">Hoạt chất</div>
           <div class="">
             <InputText v-model:value="product.substance" />
-          </div>
-        </div>
-
-        <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.lotNumber && !product.hasManageBatches"
-          class="grow basis-[40%]">
-          <div class="">Số lô</div>
-          <div>
-            <InputText v-model:value="product.lotNumber" />
-          </div>
-        </div>
-
-        <div
-          v-if="settingStore.SCREEN_PRODUCT_UPSERT.expiryDate && !product.hasManageBatches"
-          class="grow basis-[40%]">
-          <div class="">Hạn sử dụng</div>
-          <div class="">
-            <InputDate
-              v-model:value="product.expiryDate"
-              format="DD/MM/YYYY"
-              type-parser="number" />
           </div>
         </div>
 
@@ -319,23 +362,6 @@ defineExpose({ openModal, openModalFromTicket })
           </div>
         </div>
 
-        <div class="grow basis-[40%]">
-          <div class="">
-            <span>Giá nhập</span>
-            <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
-              ({{ formatMoney(product.costPrice) }}/{{ unit.find((i) => i.default)?.name }})
-            </span>
-          </div>
-          <div class="">
-            <InputMoney
-              :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
-              :prepend="product.unitDefaultName"
-              @update:value="
-                (value) => (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))
-              " />
-          </div>
-        </div>
-
         <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
           <div class="">
             <span>Giá bán sỉ</span>
@@ -371,31 +397,42 @@ defineExpose({ openModal, openModalFromTicket })
           </div>
         </div>
 
-        <div class="mt-2 grow basis-[600px] flex items-stretch">
-          <div class="w-[60px] flex-none">
-            <a-switch
-              :checked="Boolean(product.hasManageQuantity)"
-              :disabled="!!product.quantity"
-              @change="(checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)" />
+        <div style="flex-basis: 90%; flex-grow: 1">
+          <div class="italic font-bold">* Kho quản lý</div>
+          <div class="flex gap-4">
+            <div class="mt-2">
+              <input
+                :id="'MEA_' + randomId + '_' + 0"
+                style="cursor: pointer"
+                :checked="warehouseIdSelect['0']"
+                type="checkbox"
+                @change="(e) => handleChangeSelectWarehousePrime(e)" />
+              <label class="mx-2 cursor-pointer" :for="'MEA_' + randomId + '_' + 0">
+                Tất cả kho
+              </label>
+            </div>
+            <div v-for="warehouse in warehouseAll" :key="warehouse.id" class="mt-2">
+              <input
+                :id="'MEA_' + randomId + '_' + warehouse.id"
+                style="cursor: pointer"
+                :checked="warehouseIdSelect[warehouse.id]"
+                type="checkbox"
+                @change="(e) => handleChangeSelectWarehouse(e, warehouse.id)" />
+              <label class="mx-2 cursor-pointer" :for="'MEA_' + randomId + '_' + warehouse.id">
+                {{ warehouse.name }}
+              </label>
+            </div>
           </div>
-          <div>
-            <span>Quản lý tồn kho</span>
-            <span v-if="product.hasManageQuantity">
-              ( Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất )
-            </span>
-            <span v-if="!product.hasManageQuantity">( Sản phẩm này không quan tâm số lượng )</span>
-          </div>
-        </div>
-
-        <div class="mt-2 grow basis-[600px] flex items-stretch">
-          <div class="w-[60px] flex-none">
-            <a-switch
-              :checked="Boolean(product.hasManageBatches)"
-              :disabled="!!product.quantity"
-              @change="(checked: Boolean) => (product.hasManageBatches = checked ? 1 : 0)" />
-          </div>
-          <div>
-            <span>Sản phẩm này có thể có nhiều lô hàng và nhiều hạn sử dụng khác nhau</span>
+          <div class="mt-2">
+            <input
+              :id="'MEA_' + randomId"
+              style="cursor: pointer"
+              type="checkbox"
+              :checked="Object.keys(warehouseIdSelect).length == 0"
+              @change="(e) => handleChangeSelectNoWarehouse(e)" />
+            <label class="mx-2 cursor-pointer" :for="'MEA_' + randomId">
+              Không quản lý tồn kho (sản phẩm này không theo dõi số lượng)
+            </label>
           </div>
         </div>
 
@@ -406,8 +443,8 @@ defineExpose({ openModal, openModalFromTicket })
               @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)" />
           </div>
           <div>
-            <span>Active</span>
-            <span v-if="!product.isActive">( Ngừng kinh doanh )</span>
+            <span v-if="product.isActive">Active</span>
+            <span v-else>Inactive (Ngừng kinh doanh)</span>
           </div>
         </div>
       </div>

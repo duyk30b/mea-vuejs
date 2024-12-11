@@ -1,25 +1,26 @@
 <script setup lang="ts">
 import {
-  CloseCircleOutlined,
   CopyOutlined,
-  DeleteOutlined,
   ExceptionOutlined,
   EyeOutlined,
   FileSearchOutlined,
   FileSyncOutlined,
   MoreOutlined,
   ScheduleOutlined,
-  SettingOutlined,
+  SettingOutlined
 } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon'
+import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 import { useTicketOrderStore } from '../../../modules/ticket-order/ticket-order.store'
 import { timeToText } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -28,17 +29,14 @@ import TicketOrderStatusTag from '../TicketOrderStatusTag.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderDetailSetting from './ModalTicketOrderDetailSetting.vue'
 import ModalTicketOrderPayment from './ModalTicketOrderPayment.vue'
-import ModalTicketOrderReturnProduct from './ModalTicketOrderReturnProduct.vue'
+import ModalTicketOrderReturn from './ModalTicketOrderReturn.vue'
 import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticket } from './ticket-order-detail.ref'
-import { TicketOrderApi } from '../../../modules/ticket-order'
-import { IconDelete } from '../../../common/icon-google'
-import { IconClose } from '../../../common/icon'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
-const modalTicketOrderReturnProduct = ref<InstanceType<typeof ModalTicketOrderReturnProduct>>()
+const modalTicketOrderReturn = ref<InstanceType<typeof ModalTicketOrderReturn>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketOrderPreview = ref<InstanceType<typeof ModalTicketOrderPreview>>()
 const modalTicketOrderPayment = ref<InstanceType<typeof ModalTicketOrderPayment>>()
@@ -126,16 +124,15 @@ const startCopy = () => {
 const sendProductAndClose = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, customerPayment, ticketProductList } =
-      await TicketOrderApi.sendProductAndPaymentAndClose({
-        ticketId: ticket.value.id!,
-        money: 0,
-      })
-    Object.assign(ticket.value, ticketBasic)
-    ticket.value.ticketProductList = ticketProductList
+    const response = await TicketOrderApi.sendProductAndPaymentAndClose({
+      ticketId: ticket.value.id!,
+      money: 0,
+    })
+    Object.assign(ticket.value, response.ticket)
+    ticket.value.ticketProductList = response.ticketProductList
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    if (customerPayment) {
-      ticket.value.customerPaymentList.push(customerPayment!)
+    if (response.customerPayment) {
+      ticket.value.customerPaymentList.push(response.customerPayment!)
     }
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
@@ -147,13 +144,13 @@ const sendProductAndClose = async () => {
 const close = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderApi.paymentAndClose({
+    const response = await TicketOrderApi.paymentAndClose({
       ticketId: ticket.value.id!,
       money: 0,
     })
-    Object.assign(ticket.value, ticketBasic)
+    Object.assign(ticket.value, response.ticket)
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(customerPayment!)
+    ticket.value.customerPaymentList.push(response.customerPayment!)
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
@@ -164,11 +161,11 @@ const close = async () => {
 const sendProduct = async () => {
   try {
     loadingProcess.value = true
-    const { ticketBasic, ticketProductList } = await TicketOrderApi.sendProduct({
+    const response = await TicketOrderApi.sendProduct({
       ticketId: ticket.value.id!,
     })
-    Object.assign(ticket.value, ticketBasic)
-    ticket.value.ticketProductList = ticketProductList
+    Object.assign(ticket.value, response.ticket)
+    ticket.value.ticketProductList = response.ticketProductList
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
@@ -191,13 +188,13 @@ const clickCancel = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        const { ticketBasic, customerPayment } = await TicketOrderApi.cancel({
+        const response = await TicketOrderApi.cancel({
           ticketId: ticket.value.id!,
         })
-        Object.assign(ticket.value, ticketBasic)
+        Object.assign(ticket.value, response.ticket)
         ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-        if (customerPayment) {
-          ticket.value.customerPaymentList.push(customerPayment!)
+        if (response.customerPayment) {
+          ticket.value.customerPaymentList.push(response.customerPayment!)
         }
       } catch (error) {
         console.log('🚀 ~ file: TicketOrderDetail.vue:203 ~ clickCancel ~ error:', error)
@@ -209,7 +206,7 @@ const clickCancel = () => {
 }
 
 const clickReturnProduct = () => {
-  modalTicketOrderReturnProduct.value?.openModal()
+  modalTicketOrderReturn.value?.openModal()
 }
 
 const clickDestroy = () => {
@@ -262,8 +259,8 @@ const openModalTicketOrderPreview = () => {
 
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalTicketOrderReturnProduct
-    ref="modalTicketOrderReturnProduct"
+  <ModalTicketOrderReturn
+    ref="modalTicketOrderReturn"
     @success="() => startFetchData(ticket.id)" />
   <ModalTicketOrderPreview ref="modalTicketOrderPreview" />
   <ModalTicketOrderPayment ref="modalTicketOrderPayment" />

@@ -9,7 +9,7 @@ import { PrescriptionSample } from './prescription-sample.model'
 export class PrescriptionSampleService {
   static loadedAll: boolean = false
 
-  static prescriptionSampleAll: PrescriptionSample[]
+  static prescriptionSampleAll: PrescriptionSample[] = []
 
   private static async getAll() {
     if (PrescriptionSampleService.loadedAll) return

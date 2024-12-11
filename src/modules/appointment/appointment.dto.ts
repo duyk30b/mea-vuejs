@@ -1,6 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { VoucherType } from '../enum'
 import type { AppointmentStatus } from './appointment.model'
 
 export class AppointmentGetQuery {

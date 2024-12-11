@@ -1,5 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import { Batch } from '../batch'
+import { ReceiptItem } from '../receipt-item'
+import { TicketProduct } from '../ticket-product'
 import {
   ProductDetailQuery,
   ProductGetQuery,
@@ -49,9 +52,6 @@ export class ProductApi {
     const response = await AxiosInstance.post('/product/create', {
       brandName: product.brandName,
       substance: product.substance,
-      lotNumber: product.lotNumber || '',
-      expiryDate: product.expiryDate,
-      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       productGroupId: product.productGroupId,
@@ -60,8 +60,7 @@ export class ProductApi {
       source: product.source,
       image: product.image,
       hintUsage: product.hintUsage,
-      hasManageQuantity: product.hasManageQuantity,
-      hasManageBatches: product.hasManageBatches,
+      warehouseIds: product.warehouseIds,
       isActive: product.isActive,
     })
     const { data } = response.data as BaseResponse<{ product: any }>
@@ -72,9 +71,6 @@ export class ProductApi {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       brandName: product.brandName,
       substance: product.substance,
-      lotNumber: product.lotNumber || '',
-      expiryDate: product.expiryDate,
-      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       productGroupId: product.productGroupId,
@@ -83,28 +79,28 @@ export class ProductApi {
       source: product.source,
       image: product.image,
       hintUsage: product.hintUsage,
-      hasManageQuantity: product.hasManageQuantity,
-      hasManageBatches: product.hasManageBatches,
+      warehouseIds: product.warehouseIds,
       isActive: product.isActive,
     })
-    const { data } = response.data as BaseResponse<{ product: any }>
-    return Product.from(data.product)
+    const result = response.data as BaseResponse<{ product: any; batchError: any[] }>
+    if (result.success) {
+      result.data.product = Product.from(result.data.product)
+    } else {
+      result.data.batchError = Batch.fromList(result.data.batchError)
+    }
+    return result as BaseResponse<{ product: Product; batchError: Batch[] }>
   }
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/product/destroy/${id}`)
     const result = response.data as BaseResponse<{
       productId: number
-      countTicketProduct: number
-      countReceiptItem: number
+      receiptItemList: ReceiptItem[]
+      ticketProductList: TicketProduct[]
     }>
+    result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
+    result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
     return result
-  }
-
-  static async deleteOne(id: number) {
-    const response = await AxiosInstance.delete(`/product/delete/${id}`)
-    const { data } = response.data as BaseResponse<{ product: any }>
-    return Product.from(data.product)
   }
 
   static async downloadExcelProductList() {

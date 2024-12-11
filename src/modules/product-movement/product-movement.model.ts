@@ -1,16 +1,18 @@
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
-import type { VoucherType } from '../enum'
+import type { MovementType } from '../enum'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
 import { Ticket } from '../ticket'
+import { User } from '../user'
 
 export class ProductMovement {
   id: number
+  warehouseId: number
   productId: number
   voucherId: number
   contactId: number
-  voucherType: VoucherType
+  movementType: MovementType
   isRefund: 0 | 1
   openQuantity: number // Số lượng ban đầu
   quantity: number // Số lượng +/-
@@ -18,9 +20,6 @@ export class ProductMovement {
   unitRate: number
   actualPrice: number // Giá
   expectedPrice: number // Giá
-  openCostAmount: number // Vốn
-  costAmount: number // Vốn
-  closeCostAmount: number // Vốn
   createdAt: number
 
   product?: Product
@@ -28,6 +27,7 @@ export class ProductMovement {
   distributor?: Distributor
   ticket?: Ticket
   customer?: Customer
+  user?: User
 
   get unitQuantity() {
     return this.quantity / this.unitRate
@@ -64,6 +64,7 @@ export class ProductMovement {
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
     }
+
     if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
       target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
     }
@@ -77,6 +78,10 @@ export class ProductMovement {
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+
+    if (Object.prototype.hasOwnProperty.call(source, 'user')) {
+      target.user = source.user ? User.basic(source.user) : source.user
     }
     return target
   }

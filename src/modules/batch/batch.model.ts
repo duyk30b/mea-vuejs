@@ -3,6 +3,9 @@ import { Product } from '../product/product.model'
 export class Batch {
   id: number
   productId: number
+  distributorId: number
+  warehouseId: number
+
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
   costPrice: number // Giá nhập
@@ -14,7 +17,7 @@ export class Batch {
   product?: Product
 
   get unitQuantity() {
-    return Number(((this.quantity || 0) / this.product!.unitDefaultRate).toFixed(3))
+    return Number(((this.quantity || 0) / (this.product?.unitDefaultRate || 1)).toFixed(3))
   }
 
   get unitCostPrice() {
@@ -44,6 +47,10 @@ export class Batch {
   static init() {
     const ins = new Batch()
     ins.id = 0
+    ins.productId = 0
+    ins.warehouseId = 0
+    ins.distributorId = 0
+
     ins.lotNumber = ''
     ins.costPrice = 0
     ins.wholesalePrice = 0
@@ -82,5 +89,21 @@ export class Batch {
 
   static fromList(sourceList: Batch[]): Batch[] {
     return sourceList.map((i) => Batch.from(i))
+  }
+
+  static equal(a: Batch, b: Batch) {
+    if (a.id != b.id) return false
+    if (a.productId != b.productId) return false
+    if (a.distributorId != b.distributorId) return false
+    if (a.warehouseId != b.warehouseId) return false
+
+    if (a.lotNumber != b.lotNumber) return false
+    if (a.expiryDate != b.expiryDate) return false
+
+    if (a.costPrice != b.costPrice) return false
+    if (a.wholesalePrice != b.wholesalePrice) return false
+    if (a.retailPrice != b.retailPrice) return false
+    if (a.quantity != b.quantity) return false
+    return true
   }
 }

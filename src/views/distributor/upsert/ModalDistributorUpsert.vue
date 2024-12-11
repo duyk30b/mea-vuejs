@@ -14,10 +14,9 @@ import { DistributorApi, DistributorService } from '../../../modules/distributor
 import { Distributor } from '../../../modules/distributor/distributor.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
-import ModalDistributorUpsertSettingScreen from './ModalDistributorUpsertSettingScreen.vue'
+import ModalDistributorUpsertSetting from './ModalDistributorUpsertSetting.vue'
 
-const modalDistributorUpsertSettingScreen =
-  ref<InstanceType<typeof ModalDistributorUpsertSettingScreen>>()
+const modalDistributorUpsertSetting = ref<InstanceType<typeof ModalDistributorUpsertSetting>>()
 
 const emit = defineEmits<{
   (e: 'success', value: Distributor, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -104,8 +103,9 @@ const clickDelete = () => {
             title: 'Không thể xóa nhà cung cấp khi đã có phiếu nhập hàng',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng của nhà cung cấp này',
-              `Hiện tại đang có ${response.data.countReceipt} phiếu nhập đã sử dụng`,
+              `Phiếu nhập hàng liên quan: ${response.data.receiptList.map((i) => i.id).join(', ')}`,
             ],
+            contentType: 'text',
           })
         }
       } catch (error) {
@@ -149,7 +149,7 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDistributorUpsertSettingScreen?.openModal()">
+          @click="modalDistributorUpsertSetting?.openModal()">
           <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -253,7 +253,7 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
-  <ModalDistributorUpsertSettingScreen
+  <ModalDistributorUpsertSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalDistributorUpsertSettingScreen" />
+    ref="modalDistributorUpsertSetting" />
 </template>

@@ -409,45 +409,11 @@ const handleChangeTicketDiscountPercent = (discountPercent: number) => {
 }
 
 const updateTicketProductConsumableQuantity = (index: number, unitQuantity: number) => {
-  const ticketProductCurrent = ticketProductConsumableList.value[index]
-
-  ticketProductCurrent.unitQuantity = unitQuantity
-
-  // tính costAmount
-  let itemCostAmount = 0
-  if (ticketProductCurrent.batchId) {
-    itemCostAmount = ticketProductCurrent.quantity * ticketProductCurrent.batch!.costPrice
-  } else if (ticketProductCurrent.product!.quantity <= 0) {
-    itemCostAmount = (ticketProductCurrent.product?.costPrice || 0) * ticketProductCurrent.quantity
-  } else {
-    itemCostAmount =
-      (ticketProductCurrent.product!.costAmount * ticketProductCurrent.quantity) /
-      ticketProductCurrent.product!.quantity
-  }
-  const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
-  ticketProductCurrent.costAmount = itemCostAmountFix
+  ticketProductConsumableList.value[index].unitQuantity = unitQuantity
 }
 
 const updateTicketProductPrescriptionQuantity = (index: number, unitQuantity: number) => {
-  const ticketProductCurrent = ticketProductPrescriptionList.value[index]
-
-  ticketProductCurrent.unitQuantity = unitQuantity
-
-  // tính costAmount
-  let itemCostAmount = 0
-  if (ticketProductCurrent.batchId) {
-    itemCostAmount = ticketProductCurrent.quantity * ticketProductCurrent.batch!.costPrice
-  } else if (ticketProductCurrent.product!.quantity <= 0) {
-    itemCostAmount = (ticketProductCurrent.product?.costPrice || 0) * ticketProductCurrent.quantity
-  } else {
-    itemCostAmount =
-      (ticketProductCurrent.product!.costAmount * ticketProductCurrent.quantity) /
-      ticketProductCurrent.product!.quantity
-  }
-  const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
-  ticketProductCurrent.costAmount = itemCostAmountFix
+  ticketProductPrescriptionList.value[index].unitQuantity = unitQuantity
 }
 
 const saveTicketItemsMoney = async () => {
@@ -510,14 +476,12 @@ const validateQuantity = () => {
       return false
     }
 
-    if (product?.hasManageBatches) {
-      if (ticketProductUnsent.quantity > (batch?.quantity || 0)) {
-        AlertStore.addError(
-          `Lô hàng ${timeToText(batch!.expiryDate)} của Sản phẩm ${product?.brandName} ` +
-            `không đủ (tồn ${batch!.quantity} - lấy ${ticketProductUnsent.quantity})`
-        )
-        return false
-      }
+    if (ticketProductUnsent.quantity > (batch?.quantity || 0)) {
+      AlertStore.addError(
+        `Lô hàng ${timeToText(batch!.expiryDate)} của Sản phẩm ${product?.brandName} ` +
+          `không đủ (tồn ${batch!.quantity} - lấy ${ticketProductUnsent.quantity})`
+      )
+      return false
     }
   }
   return true

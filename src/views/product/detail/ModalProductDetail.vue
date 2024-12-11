@@ -9,7 +9,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
-import ProductMovement from './ProductMovement.vue'
+import ProductAndBatchMovement from './ProductAndBatchMovement.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
@@ -24,14 +24,21 @@ const tabShow = ref(TABS_KEY.INFO)
 
 const product = ref<Product>(Product.blank())
 
-const openModal = async (productProp: Product) => {
+const openModal = async (productProp?: Product) => {
   showModal.value = true
-  product.value = Product.from(productProp)
+  if (productProp) {
+    product.value = Product.from(productProp)
+  }
 }
 
 const closeModal = () => {
   showModal.value = false
   product.value = Product.blank()
+}
+
+const handleChangeProduct = (p: Product) => {
+  console.log('🚀 ~ file: ModalProductDetail.vue:38 ~ handleChangeProduct ~ p:', p)
+  product.value = Product.from(p)
 }
 
 defineExpose({ openModal })
@@ -67,10 +74,12 @@ defineExpose({ openModal })
           </template>
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.INFO">
-              <ProductInfoAndBatchList :productId="product.id" />
+              <ProductInfoAndBatchList
+                :productId="product.id"
+                @change-product="handleChangeProduct" />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.MOVEMENT">
-              <ProductMovement :product="product" />
+              <ProductAndBatchMovement :product="product" />
             </VueTabPanel>
           </template>
         </VueTabs>
