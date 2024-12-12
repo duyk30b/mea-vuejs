@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import { TicketLaboratory } from '../ticket-laboratory'
 import {
   LaboratoryDetailQuery,
   LaboratoryGetQuery,
@@ -85,7 +86,7 @@ export class LaboratoryApi {
       laboratoryGroupId: laboratory.laboratoryGroupId,
       lowValue: laboratory.lowValue,
       highValue: laboratory.highValue,
-      // valueType: laboratory.valueType, // không cho cập nhật loại giá trị
+      valueType: laboratory.valueType, // không cho cập nhật loại giá trị
       unit: laboratory.unit,
       options: laboratory.options,
       children: (laboratory.children || []).map((i) => {
@@ -109,9 +110,10 @@ export class LaboratoryApi {
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/laboratory/destroy/${id}`)
     const result = response.data as BaseResponse<{
-      laboratoryId?: number
-      countTicketLaboratory?: number
+      laboratoryId: number
+      ticketLaboratoryList: TicketLaboratory[]
     }>
+    result.data.ticketLaboratoryList = TicketLaboratory.fromList(result.data.ticketLaboratoryList)
     return result
   }
 

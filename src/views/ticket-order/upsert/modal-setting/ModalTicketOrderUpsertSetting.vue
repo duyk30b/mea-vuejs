@@ -12,6 +12,8 @@ import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, CustomerService } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
 import { DTimer } from '../../../../utils'
+import { Warehouse } from '../../../../modules/warehouse'
+import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
   SELECT_ITEM: 'SELECT_ITEM',
@@ -29,6 +31,8 @@ const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
 )
+
+const warehouseOptions = ref<{ value: number; label: string }[]>([])
 const showModal = ref(false)
 const saveLoading = ref(false)
 
@@ -58,6 +62,12 @@ const searchingCustomer = async (text: string) => {
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
+
+  const warehouseAll = await WarehouseService.list({})
+  warehouseOptions.value = [
+    { value: 0, label: 'Tất cả kho' },
+    ...warehouseAll.map((i) => ({ value: i.id, label: i.name })),
+  ]
 }
 
 const closeModal = () => {
@@ -67,9 +77,15 @@ const closeModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
+    if (settingDisplay.value.invoiceItemInput.warehouseIdList.length === 0) {
+      settingDisplay.value.invoiceItemInput.warehouseIdList = [0]
+    }
+    if (settingDisplay.value.invoiceItemInput.warehouseIdList.includes(0)) {
+      settingDisplay.value.invoiceItemInput.warehouseIdList = [0]
+    }
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_INVOICE_UPSERT, settingData)
-    AlertStore.addSuccess('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công', 500)
     store.SCREEN_INVOICE_UPSERT = JSON.parse(settingData)
     CustomerService.customerDefault = Customer.from(customerDefault.value)
     emit('success')
@@ -124,6 +140,21 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
+                        <div class="flex gap-4 items-center">
+                          <div>Kho bán hàng</div>
+                          <div style="flex: 1">
+                            <a-select
+                              v-model:value="settingDisplay.invoiceItemInput.warehouseIdList"
+                              mode="multiple"
+                              style="width: 100%"
+                              placeholder="Please select"
+                              :options="warehouseOptions"></a-select>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
                         <div>
                           <a-checkbox
                             v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch">
@@ -153,16 +184,6 @@ defineExpose({ openModal })
                                 !settingDisplay.invoiceItemInput.expectedPrice
                               ">
                               Thêm lựa chọn giá bán = giá nhập
-                            </a-checkbox>
-                          </div>
-                          <div class="pt-3">
-                            <a-checkbox
-                              v-model:checked="settingDisplay.invoiceItemInput.costPriceAverage"
-                              :disabled="
-                                !settingDisplay.invoiceItemInput.customAfterSearch ||
-                                !settingDisplay.invoiceItemInput.expectedPrice
-                              ">
-                              Thêm lựa chọn giá bán = giá vốn trung bình
                             </a-checkbox>
                           </div>
                           <div class="pt-3">

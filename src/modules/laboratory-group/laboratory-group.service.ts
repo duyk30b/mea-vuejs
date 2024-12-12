@@ -9,7 +9,7 @@ import { LaboratoryGroup } from './laboratory-group.model'
 export class LaboratoryGroupService {
   static loadedAll: boolean = false
 
-  static laboratoryGroupAll: LaboratoryGroup[]
+  static laboratoryGroupAll: LaboratoryGroup[] = []
   static laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
   private static async getAll() {

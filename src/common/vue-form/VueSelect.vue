@@ -115,9 +115,11 @@ const handleSelectItem = (index: number) => {
   showOptions.value = false
 
   const item = props.options[index]
-
-  emit('update:value', item.value)
-  emit('selectItem', item) // phải để event này cuối cùng, để ghi đè: update:text
+  const value = item.value
+  if (value !== props.value) {
+    emit('update:value', value)
+    emit('selectItem', item) // phải để event này cuối cùng, để ghi đè: update:text
+  }
 }
 
 const handleClear = () => {

@@ -78,7 +78,7 @@ const startFetchHighProfit = async () => {
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
     limit: isMobile ? 10 : 20,
-    orderBy: 'sumProfit',
+    orderBy: 'sumProfitAmount',
   })
   barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
@@ -109,7 +109,7 @@ const startFetchHighProfit = async () => {
     0,
     data.length,
     ...data.map((i) => {
-      return i.sumProfit / moneyDivision
+      return i.sumProfitAmount / moneyDivision
     })
   )
 }
@@ -119,7 +119,7 @@ const startFetchHighActualMoney = async () => {
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
     limit: isMobile ? 10 : 20,
-    orderBy: 'sumActualMoney',
+    orderBy: 'sumActualAmount',
   })
   barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
@@ -150,7 +150,7 @@ const startFetchHighActualMoney = async () => {
     0,
     data.length,
     ...data.map((i) => {
-      return i.sumProfit / moneyDivision
+      return i.sumProfitAmount / moneyDivision
     })
   )
 }
@@ -184,8 +184,7 @@ onBeforeMount(async () => await startFetchData())
   <div class="flex flex-col" style="height: 100%">
     <div
       class="flex flex-col md:flex-row md:items-center justify-between gap-4"
-      style="height: 80px"
-    >
+      style="height: 80px">
       <div class="flex items-center gap-4">
         <span style="font-size: 18px; font-weight: 500">Hàng bán chạy nhất:</span>
         <div style="width: 140px">
@@ -196,16 +195,14 @@ onBeforeMount(async () => await startFetchData())
               { text: 'Tiền bán', value: 'topActualMoney' },
               { text: 'Tiền lãi', value: 'topProfit' },
             ]"
-            @selectItem="startFetchData"
-          />
+            @selectItem="startFetchData" />
         </div>
       </div>
       <a-range-picker
         v-model:value="timeRanger"
         :onChange="handleChangeTime"
         format="DD-MM-YYYY"
-        :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-      />
+        :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
     </div>
     <div class="flex-1">
       <Bar v-if="loaded" :data="barData" :options="options as any" />

@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import { TicketProcedure } from '../ticket-procedure'
 import {
   ProcedureDetailQuery,
   ProcedureGetQuery,
@@ -86,9 +87,10 @@ export class ProcedureApi {
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/procedure/destroy/${id}`)
     const result = response.data as BaseResponse<{
-      procedureId?: number
-      countTicketProcedure?: number
+      procedureId: number
+      ticketProcedureList: TicketProcedure[]
     }>
+    result.data.ticketProcedureList = TicketProcedure.fromList(result.data.ticketProcedureList)
     return result
   }
 }

@@ -19,25 +19,10 @@ const { formatMoney } = settingStore
 
 const ticketUpdate = ref(Ticket.blank())
 const ticketProductMapReturn = ref<
-  Record<
-    string,
-    {
-      quantityReturn: number
-      costAmountReturn: number
-      actualPrice: number
-      ticketProductId: number
-    }
-  >
+  Record<string, { quantityReturn: number; ticketProductId: number }>
 >({})
 const ticketProcedureMapReturn = ref<
-  Record<
-    string,
-    {
-      quantityReturn: number
-      actualPrice: number
-      ticketProcedureId: number
-    }
-  >
+  Record<string, { quantityReturn: number; ticketProcedureId: number }>
 >({})
 const discountMoneyUpdate = ref<number>(0)
 const surchargeUpdate = ref<number>(0)
@@ -87,7 +72,7 @@ watchEffect(() => {
   let itemsDiscount = 0
 
   ticketUpdate.value.ticketProductList?.forEach((item) => {
-    totalCostAmount += item.costAmount
+    totalCostAmount += item.quantity * item.costPrice
     productMoney += item.actualPrice * item.quantity
     itemsDiscountProduct += item.discountMoney * item.quantity
   })
@@ -146,15 +131,12 @@ const openModal = async () => {
     ticketProductMapReturn.value[i.id] = {
       ticketProductId: i.id,
       quantityReturn: 0,
-      costAmountReturn: 0,
-      actualPrice: i.actualPrice,
     }
   })
   ticket.value.ticketProcedureList.forEach((i) => {
     ticketProcedureMapReturn.value[i.id] = {
       ticketProcedureId: i.id,
       quantityReturn: 0,
-      actualPrice: i.actualPrice,
     }
   })
   discountMoneyUpdate.value = ticket.value.discountMoney
@@ -179,8 +161,6 @@ const setSelectAllQuantity = () => {
     ticketProductMapReturn.value[i.id] = {
       ticketProductId: i.id,
       quantityReturn: i.quantity,
-      costAmountReturn: i.costAmount,
-      actualPrice: i.actualPrice,
     }
   })
 
@@ -188,7 +168,6 @@ const setSelectAllQuantity = () => {
     ticketProcedureMapReturn.value[i.id] = {
       ticketProcedureId: i.id,
       quantityReturn: i.quantity,
-      actualPrice: i.actualPrice,
     }
   })
 }
@@ -209,10 +188,6 @@ const reCalculatorAndValidateQuantity = () => {
       result = false
       AlertStore.addError(`Sản phẩm ${i.product?.brandName} hoàn trả vượt quá số lượng mua`)
     }
-    const costAmountReturn = Math.floor(
-      (i.costAmount * ticketProductMapReturn.value[i.id]!.quantityReturn) / (i.quantity || 1)
-    )
-    ticketProductMapReturn.value[i.id]!.costAmountReturn = costAmountReturn
   })
   return result
 }
@@ -248,7 +223,7 @@ const startReturnProduct = async () => {
     emit('success')
     closeModal()
   } catch (error) {
-    console.log('🚀 ModalTicketOrderReturnProduct.vue:249 ~ startReturnProduct ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketOrderReturn.vue:251 ~ startReturnProduct ~ error:', error)
   } finally {
     returnLoading.value = false
   }
@@ -365,14 +340,7 @@ defineExpose({ openModal })
                     {{ ticketProduct.product.substance }}
                   </div>
                 </td>
-                <td class="text-center">
-                  <div>{{ ticketProduct.unitQuantity }}</div>
-                  <div
-                    v-if="ticketProduct.quantityReturn"
-                    style="font-size: 0.9em; font-style: italic">
-                    Hoàn trả: {{ ticketProduct.quantityReturn / ticketProduct.unitRate }}
-                  </div>
-                </td>
+                <td class="text-center">{{ ticketProduct.unitQuantity }}</td>
                 <td class="text-center">{{ ticketProduct.unitName }}</td>
                 <td class="text-right">
                   <div

@@ -1,8 +1,11 @@
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
+import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { arrayToKeyValue } from '../../utils'
 import { useMeStore } from '../_me/me.store'
+import { Product } from '../product'
 import { BatchApi } from './batch.api'
-import type { BatchListQuery } from './batch.dto'
+import type { BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
 export class BatchService {
@@ -35,12 +38,65 @@ export class BatchService {
     return { numberChange: apiResponse.data.length }
   }
 
+  static async pagination(params: BatchPaginationQuery) {
+    const { page, limit, relation, filter, sort } = params
+
+    let productList: Product[] | undefined
+    if (filter?.product) {
+      productList = await ProductDB.findManyBy({
+        isActive: filter.product.isActive,
+        productGroupId: filter.product.productGroupId,
+        $OR: filter?.product.searchText
+          ? [
+              { brandName: { LIKE: filter.product.searchText } },
+              { substance: { LIKE: filter.product.searchText } },
+            ]
+          : undefined,
+      })
+    }
+    const batchPagination = await BatchDB.pagination({
+      page: page || 1,
+      limit: limit || 10,
+      condition: {
+        productId: productList ? { IN: productList.map((i) => i.id) } : undefined,
+        expiryDate: filter?.expiryDate,
+        warehouseId: filter?.warehouseId,
+        quantity: filter?.quantity,
+        $OR: filter?.$OR,
+      },
+      sort: sort || { id: 'DESC' },
+    })
+    const batchList = Batch.fromList(batchPagination.data)
+
+    if (relation?.product && batchList.length) {
+      if (!productList) {
+        productList = await ProductDB.findMany({
+          condition: { id: { IN: batchList.map((i) => i.productId) } },
+        })
+      }
+      const productListMap = arrayToKeyValue(productList, 'id')
+      batchList.forEach((i) => {
+        i.product = Product.from(productListMap[i.productId])
+      })
+    }
+
+    return {
+      data: batchList,
+      meta: {
+        page,
+        limit,
+        total: batchPagination.total,
+      },
+    }
+  }
+
   static async list(params: BatchListQuery) {
     const { filter, limit, sort } = params
     const objects = await BatchDB.findMany({
       limit,
       condition: {
         expiryDate: filter?.expiryDate,
+        warehouseId: filter?.warehouseId,
         quantity: filter?.quantity,
         productId: filter?.productId,
         $OR: filter?.$OR,
@@ -50,9 +106,26 @@ export class BatchService {
     return Batch.fromList(objects)
   }
 
-  static async updateOne(id: number, instance: Batch) {
-    const response = await BatchApi.updateOne(id, instance)
+  static async updateInfo(id: number, instance: Batch) {
+    const response = await BatchApi.updateInfo(id, instance)
     await BatchDB.replaceOne(id, response)
+    return response
+  }
+
+  static async updateInfoAndQuantity(id: number, instance: Batch) {
+    const response = await BatchApi.updateInfoAndQuantity(id, instance)
+    await BatchDB.replaceOne(id, response.batch)
+    if (response.product) {
+      await ProductDB.replaceOne(response.product.id, response.product)
+    }
+    return response
+  }
+
+  static async destroyOne(id: number) {
+    const response = await BatchApi.destroyOne(id)
+    if (response.success) {
+      await BatchDB.deleteOneByKey(id)
+    }
     return response
   }
 }

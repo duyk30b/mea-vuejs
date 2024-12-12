@@ -7,10 +7,12 @@ export class ReceiptItem {
   receiptId: number
   distributorId: number
   productId: number
+  batchId: number
+  warehouseId: number
+
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
-  batchId: number
-  costPrice: number 
+  costPrice: number
   retailPrice: number 
   wholesalePrice: number 
   quantity: number = 0
@@ -63,6 +65,11 @@ export class ReceiptItem {
   static init() {
     const ins = new ReceiptItem()
     ins.id = 0
+    ins.batchId = 0
+    ins.productId = 0
+    ins.distributorId = 0
+    ins.warehouseId = 0
+
     ins.quantity = 0
     ins.costPrice = 0
     ins.wholesalePrice = 0

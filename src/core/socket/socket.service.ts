@@ -94,14 +94,14 @@ export class SocketService {
     }
   }
 
-  static async listenTicketClinicUpdate(data: { ticketBasic: any }) {
-    const ticketBasic = Ticket.from(data.ticketBasic)
-    const ticketFind = ticketClinicList.value.find((i) => i.id === ticketBasic.id)
+  static async listenTicketClinicUpdate(data: { ticket: any }) {
+    const ticket = Ticket.from(data.ticket)
+    const ticketFind = ticketClinicList.value.find((i) => i.id === ticket.id)
     if (ticketFind) {
-      Object.assign(ticketFind, ticketBasic)
+      Object.assign(ticketFind, ticket)
     }
-    if (ticketClinicRef.value.id === ticketBasic.id) {
-      Object.assign(ticketClinicRef.value, ticketBasic)
+    if (ticketClinicRef.value.id === ticket.id) {
+      Object.assign(ticketClinicRef.value, ticket)
     }
   }
 

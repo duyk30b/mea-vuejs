@@ -1,26 +1,27 @@
 import { Batch } from '../batch/batch.model'
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
-import type { VoucherType } from '../enum'
+import type { MovementType } from '../enum'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
 import { Ticket } from '../ticket'
+import { User } from '../user'
 
 export class BatchMovement {
   id: number
+  warehouseId: number
   productId: number
   batchId: number
-  voucherType: VoucherType
+  movementType: MovementType
   voucherId: number
   contactId: number
   isRefund: boolean
+  unitRate: number
   openQuantity: number // Số lượng ban đầu
   quantity: number // Số lượng +/-
-  unitRate: number
   closeQuantity: number // Số lượng sau thay đổi
   actualPrice: number // Giá
   expectedPrice: number // Giá
-  costAmount: number // Vốn
   createdAt: number
 
   batch?: Batch
@@ -29,6 +30,7 @@ export class BatchMovement {
   distributor?: Distributor
   ticket?: Ticket
   customer?: Customer
+  user?: User
 
   get unitQuantity() {
     return this.quantity / this.unitRate
@@ -68,6 +70,7 @@ export class BatchMovement {
     if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
       target.batch = source.batch ? Batch.basic(source.batch) : source.batch
     }
+
     if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
       target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
     }
@@ -76,11 +79,16 @@ export class BatchMovement {
         ? Distributor.basic(source.distributor)
         : source.distributor
     }
+
     if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
       target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+
+    if (Object.prototype.hasOwnProperty.call(source, 'user')) {
+      target.user = source.user ? User.basic(source.user) : source.user
     }
     return target
   }

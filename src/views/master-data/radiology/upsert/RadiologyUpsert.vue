@@ -51,7 +51,7 @@ ticketDemo.customer = Customer.example()
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
     RadiologyGroupService.list({}),
-    PrintHtmlService.getAll(),
+    PrintHtmlService.list({}),
     PrintHtmlService.getSystemList(),
   ])
   radiologyGroupAll.value = promiseInit[0]
@@ -172,8 +172,10 @@ const handleClickDelete = async () => {
           ModalStore.alert({
             title: 'Không thể xóa phiếu CĐHA khi đã được chỉ định',
             content: [
-              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám trước',
-              `Hiện tại đang có ${response.data.countTicketRadiology} phiếu khám sử dụng phiếu CĐHA này`,
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám liên quan trước',
+              `Phiếu khám liên quan: ${response.data.ticketRadiologyList
+                .map((i) => i.ticketId)
+                .join(', ')}`,
             ],
           })
         }

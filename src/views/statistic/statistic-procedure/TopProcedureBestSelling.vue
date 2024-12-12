@@ -80,7 +80,7 @@ const startFetchHighActualMoney = async () => {
     fromTime: timeRanger.value?.[0].startOf('day').toISOString(),
     toTime: timeRanger.value?.[1].endOf('day').toISOString(),
     limit: isMobile ? 10 : 20,
-    orderBy: 'sumActualMoney',
+    orderBy: 'sumActualAmount',
   })
   barData.labels = Array.from({ length: isMobile ? 10 : 20 }, (_, i) => '')
   barData.datasets = [
@@ -102,7 +102,7 @@ const startFetchHighActualMoney = async () => {
   barData.datasets[0].data.splice(
     0,
     data.length,
-    ...data.map((i) => i.sumActualMoney / moneyDivision)
+    ...data.map((i) => i.sumActualAmount / moneyDivision)
   )
 }
 

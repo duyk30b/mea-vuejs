@@ -63,7 +63,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.SCREEN_RECEIPT_UPSERT, settingData)
-    AlertStore.addSuccess('Cập nhật cài đặt thành công')
+    AlertStore.addSuccess('Cập nhật cài đặt thành công', 1000)
     store.SCREEN_RECEIPT_UPSERT = JSON.parse(settingData)
     DistributorService.distributorDefault = Distributor.from(distributorDefault.value)
     emit('success')
@@ -111,6 +111,30 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.RECEIPT_ITEMS">
               <div class="mt-4 table-wrapper">
                 <table>
+                  <thead>
+                    <tr>
+                      <th>Chọn sản phẩm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.receiptItemsSelect.warehouse">
+                          Hiển thị chọn kho
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox
+                          v-model:checked="
+                            settingDisplay.receiptItemsSelect.lotNumberAndExpiryDate
+                          ">
+                          Hiển thị số lô và HSD
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                  </tbody>
                   <thead>
                     <tr>
                       <th>Danh sách hàng trong phiếu</th>
@@ -163,6 +187,13 @@ defineExpose({ openModal })
                       <td>
                         <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
                           Hiển thị đơn vị
+                        </a-checkbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.warehouse">
+                          Hiển thị kho được nhập
                         </a-checkbox>
                       </td>
                     </tr>

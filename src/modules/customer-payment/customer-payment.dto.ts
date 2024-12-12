@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { PaymentType, VoucherType } from '../enum'
+import type { PaymentType } from '../enum'
 
 export interface CustomerPaymentPayDebtBody {
   customerId: number

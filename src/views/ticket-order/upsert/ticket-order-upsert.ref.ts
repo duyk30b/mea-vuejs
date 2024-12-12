@@ -11,7 +11,7 @@ watchEffect(() => {
   let itemsDiscount = 0
 
   ticket.value.ticketProductList?.forEach((item) => {
-    totalCostAmount += item.costAmount
+    totalCostAmount += item.batch!.costPrice * item.quantity
     productMoney += item.actualPrice * item.quantity
     itemsDiscount += item.discountMoney * item.quantity
   })

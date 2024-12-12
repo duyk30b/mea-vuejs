@@ -1,6 +1,7 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import { TicketRadiology } from '../ticket-radiology'
 import {
   RadiologyDetailQuery,
   RadiologyGetQuery,
@@ -81,7 +82,11 @@ export class RadiologyApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/radiology/destroy/${id}`)
-    const result = response.data as BaseResponse<{ radiologyId?: number; countTicketRadiology?: number }>
+    const result = response.data as BaseResponse<{
+      radiologyId: number
+      ticketRadiologyList: TicketRadiology[]
+    }>
+    result.data.ticketRadiologyList = TicketRadiology.fromList(result.data.ticketRadiologyList)
     return result
   }
 

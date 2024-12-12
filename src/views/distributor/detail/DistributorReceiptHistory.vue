@@ -30,7 +30,7 @@ const startFetchData = async () => {
     page: page.value,
     limit: limit.value,
     filter: { distributorId: props.distributor.id! },
-    relation: { distributor: false, receiptItems: false },
+    relation: { distributor: false, receiptItemList: false },
     sort: { id: 'DESC' },
   })
   receipts.value = data

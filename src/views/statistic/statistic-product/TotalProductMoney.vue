@@ -1,42 +1,27 @@
 <script setup lang="ts">
-import type { ChartData } from 'chart.js'
-import { onBeforeMount, reactive, ref } from 'vue'
-import { Pie } from 'vue-chartjs'
-import { StatisticService } from '../../../modules/statistics'
+import { onBeforeMount, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { StatisticService } from '../../../modules/statistics'
+import type { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-
-const pieData = reactive<ChartData<'pie', number[], unknown>>({ labels: [], datasets: [] })
-const options = reactive({
-  responsive: true,
-  // maintainAspectRatio: false,
-  plugins: {
-    title: {
-      display: true,
-      text: 'Tổng tồn kho: 0',
-      position: 'top',
-      font: { size: 16 },
-    },
-    legend: { reverse: true },
-  },
-})
+const warehouseMap = ref<Record<string, Warehouse>>({})
 
 const loaded = ref(false)
+const statisticWarehouse = ref<
+  {
+    warehouseId: number
+    sumCostAmount: number
+    sumRetailAmount: number
+  }[]
+>([])
 
 const startFetchData = async () => {
   try {
     loaded.value = false
-    const data = await StatisticService.sumWarehouse()
-    pieData.labels = ['Lãi dự kiến', 'Tổng vốn']
-    pieData.datasets = [
-      {
-        // backgroundColor: ['#41B883', '#E46651'],
-        data: [data.totalRetailMoney - data.totalCostAmount, data.totalCostAmount],
-      },
-    ]
-    options.plugins.title.text = 'Tổng tồn kho: ' + formatMoney(data.totalRetailMoney)
+    statisticWarehouse.value = await StatisticService.sumWarehouse()
   } catch (error) {
     console.log('🚀 ~ file: ProductReport.vue:28 ~ startFetchData ~ error:', error)
   } finally {
@@ -44,13 +29,45 @@ const startFetchData = async () => {
   }
 }
 
-onBeforeMount(async () => await startFetchData())
+onBeforeMount(async () => {
+  const promise = await Promise.all([WarehouseService.getMap(), startFetchData()])
+  warehouseMap.value = promise[0]
+})
 </script>
 
 <template>
-  <div>
-    <div>
-      <Pie v-if="loaded" :data="pieData" :options="options as any" />
+  <div class="flex flex-col" style="height: 100%">
+    <div class="flex justify-between items-center">
+      <span style="font-size: 18px; font-weight: 500">Thống kê kho:</span>
+    </div>
+    <div class="mt-2 table-wrapper">
+      <table class="">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên Kho</th>
+            <th>Tổng vốn</th>
+            <th>Dự kiến bán</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="statisticWarehouse.length === 0">
+            <td colspan="20" class="text-center">Không có sản phẩm cận date</td>
+          </tr>
+          <tr v-for="(w, index) in statisticWarehouse" :key="index">
+            <td class="text-center" style="white-space: nowrap">
+              {{ index + 1 }}
+            </td>
+            <td>{{ warehouseMap[w.warehouseId]?.name || 'Kho mặc định' }}</td>
+            <td class="text-right" style="white-space: nowrap">
+              {{ formatMoney(w.sumCostAmount || 0) }}
+            </td>
+            <td class="text-right" style="white-space: nowrap">
+              {{ formatMoney(w.sumRetailAmount || 0) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

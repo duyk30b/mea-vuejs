@@ -12,15 +12,20 @@ export class BatchGetQuery {
     quantity?: ConditionNumber
     expiryDate?: ConditionNumber
     productId?: number | ConditionNumber
+    warehouseId?: number | ConditionNumber
     updatedAt?: ConditionDate
     product?: {
+      isActive?: 1 | 0
       searchText?: string
       productGroupId?: number
       quantity?: ConditionNumber
-      isActive?: 1 | 0
       updatedAt?: ConditionDate
     }
-    $OR?: { expiryDate?: ConditionNumber; quantity?: ConditionNumber }[]
+    $OR?: {
+      expiryDate?: ConditionNumber
+      quantity?: ConditionNumber
+      warehouseId?: ConditionNumber
+    }[]
   }
 
   sort?: {

@@ -9,48 +9,52 @@ import { TicketGetQuery, type TicketFilterQuery, type TicketType } from '../tick
 export class StatisticService {
   static async sumWarehouse() {
     const response = await AxiosInstance.get('/statistic/sum-warehouse')
-    const { data } = response.data as BaseResponse
-    return {
-      totalCostAmount: data.totalCostAmount,
-      totalRetailMoney: data.totalRetailMoney,
-    }
+    const { data } = response.data as BaseResponse<
+      {
+        warehouseId: number
+        sumCostAmount: number
+        sumRetailAmount: number
+      }[]
+    >
+    return data
   }
 
   static async topProductBestSelling(params: {
     fromTime: string
     toTime: string
     limit: number
-    orderBy: 'sumActualMoney' | 'sumProfit' | 'sumQuantity'
+    orderBy: 'sumActualAmount' | 'sumProfitAmount' | 'sumQuantity'
   }) {
     const response = await AxiosInstance.get('/statistic/top-product-best-selling', { params })
     const { data } = response.data as BaseResponse<any[]>
 
     return data.map((i: any) => ({
       productId: i.productId as number,
-      sumActualMoney: i.sumActualMoney as number,
+      sumActualAmount: i.sumActualMoney as number,
       sumCostAmount: i.sumCostAmount as number,
+      sumProfitAmount: i.sumProfitAmount as number,
       sumQuantity: i.sumQuantity as number,
-      sumProfit: i.sumProfit as number,
       product: Product.from(i.product),
     }))
   }
 
   static async topProductHightMoney(params: {
     limit: number
-    orderBy: 'quantity' | 'costAmount' | 'sumRetailMoney'
+    orderBy: 'quantity' | 'costAmount' | 'retailAmount'
   }) {
     const response = await AxiosInstance.get('/statistic/top-product-high-money', {
       params,
     })
     const { data } = response.data as BaseResponse<any[]>
 
-    data.forEach((i: Product & { sumRetailMoney: number }) => {
+    data.forEach((i: Product & { retailAmount: number; costAmount: number }) => {
       i.quantity = Number(i.quantity)
       i.wholesalePrice = Number(i.wholesalePrice)
       i.retailPrice = Number(i.retailPrice)
       i.costPrice = Number(i.costPrice)
-      i.costAmount = Number(i.costAmount)
       i.updatedAt = Number(i.updatedAt)
+      i.costAmount = Number(i.costAmount)
+      i.retailAmount = Number(i.retailAmount)
     })
     return data
   }
@@ -59,7 +63,7 @@ export class StatisticService {
     fromTime: string
     toTime: string
     limit: number
-    orderBy: 'sumActualMoney' | 'sumQuantity'
+    orderBy: 'sumActualAmount' | 'sumQuantity'
   }) {
     const response = await AxiosInstance.get('/statistic/top-procedure-best-selling', {
       params,
@@ -68,7 +72,7 @@ export class StatisticService {
     return data.map((i: any) => ({
       procedureId: i.procedureId as number,
       sumQuantity: i.sumQuantity as number,
-      sumActualMoney: i.sumActualMoney as number,
+      sumActualAmount: i.sumActualAmount as number,
       procedure: Procedure.from(i.procedure),
     }))
   }

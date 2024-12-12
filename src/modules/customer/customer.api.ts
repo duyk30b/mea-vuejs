@@ -1,7 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
-import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
-import { USER_CREATE, USER_UPDATE } from '../_base/base-expose'
+import { Ticket } from '../ticket'
 import { CustomerGetQuery, CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
 
@@ -85,7 +84,8 @@ export class CustomerApi {
 
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/customer/destroy/${id}`)
-    const result = response.data as BaseResponse<{ customerId: number; countTicket: number }>
+    const result = response.data as BaseResponse<{ customerId: number; ticketList: Ticket[] }>
+    result.data.ticketList = Ticket.fromList(result.data.ticketList)
     return result
   }
 

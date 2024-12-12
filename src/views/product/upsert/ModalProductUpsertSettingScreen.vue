@@ -73,18 +73,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <a-checkbox v-model:checked="settingDisplay.expiryDate">
-                  Hiển thị hạn sử dụng
-                </a-checkbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox>
               </td>
             </tr>

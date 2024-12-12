@@ -5,10 +5,9 @@ import { Receipt } from '../../../modules/receipt'
 const receipt = ref<Receipt>(Receipt.blank())
 
 watchEffect(() => {
-  const itemsActualMoney = receipt.value.receiptItems!.reduce(
-    (acc, item) => acc + item.costPrice * item.quantity,
-    0
-  )
+  const itemsActualMoney = receipt.value.receiptItemList!.reduce((acc, item) => {
+    return acc + item.costPrice * item.quantity
+  }, 0)
 
   let discountMoney = 0
   let discountPercent = 0

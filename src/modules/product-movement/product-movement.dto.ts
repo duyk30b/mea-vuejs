@@ -1,6 +1,6 @@
 import { OmitClass } from '../../utils'
 import type { ConditionEnum, ConditionNumber } from '../_base/base-condition'
-import type { VoucherType } from '../enum'
+import type { MovementType } from '../enum'
 
 export class ProductMovementGetQuery {
   page?: number
@@ -11,12 +11,13 @@ export class ProductMovementGetQuery {
     ticket?: boolean
     distributor?: boolean
     customer?: boolean
+    user?: boolean
   }
 
   filter?: {
     productId?: number
     batchId?: number
-    voucherType?: VoucherType | ConditionEnum<VoucherType>
+    movementType?: MovementType | ConditionEnum<MovementType>
     voucherId?: number | ConditionNumber
     contactId?: number | ConditionNumber
   }

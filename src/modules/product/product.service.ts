@@ -46,20 +46,16 @@ export class ProductService {
       condition: {
         isActive: filter?.isActive,
         productGroupId: filter?.productGroupId,
-        $OR: filter?.searchText
-          ? [
-              { brandName: { LIKE: filter?.searchText } },
-              { substance: { LIKE: filter?.searchText } },
-            ]
-          : undefined,
         quantity: filter?.quantity,
+        warehouseIds: filter?.warehouseIds,
+        $OR: filter?.$OR,
       },
       sort: sort || { id: 'DESC' },
     })
     const productList = Product.fromList(productPagination.data)
 
     if (relation?.batchList) {
-      const productIdList = productList.filter((i) => !!i.hasManageBatches).map((i) => i.id)
+      const productIdList = productList.map((i) => i.id)
       if (productIdList.length) {
         const batchList = await BatchDB.findMany({
           condition: { productId: { IN: productIdList }, quantity: { NOT: 0 } },
@@ -84,7 +80,7 @@ export class ProductService {
   }
 
   static async list(params: ProductListQuery) {
-    const { filter, limit, sort } = params
+    const { filter, limit, sort, relation } = params
     const objects = await ProductDB.findMany({
       limit,
       condition: {
@@ -92,10 +88,29 @@ export class ProductService {
         isActive: filter?.isActive,
         productGroupId: filter?.productGroupId,
         quantity: filter?.quantity,
+        warehouseIds: filter?.warehouseIds,
+        $OR: filter?.$OR,
       },
       sort,
     })
-    return Product.fromList(objects)
+    const productList = Product.fromList(objects)
+    if (relation?.batchList && productList.length) {
+      const productIdList = productList.map((i) => i.id)
+      const batchList = await BatchDB.findMany({
+        condition: {
+          productId: { IN: productIdList },
+          quantity: filter?.batchList?.quantity,
+          warehouseId: filter?.batchList?.warehouseId,
+        },
+      })
+      const batchListMapProductId = arrayToKeyArray(batchList, 'productId')
+      productList.forEach((i) => {
+        batchListMapProductId[i.id] ||= []
+        i.batchList = Batch.fromList(batchListMapProductId[i.id])
+        i.batchList.forEach((j) => (j.product = i))
+      })
+    }
+    return productList
   }
 
   static async search(text: string) {
@@ -110,7 +125,12 @@ export class ProductService {
   static async getOne(id: number, options: ProductDetailQuery) {
     const product = await ProductApi.detail(id, options)
     // const product = await ProductDB.findOneByKey(id)
-    await ProductDB.upsertOne(product)
+    if (product) {
+      await ProductDB.upsertOne(product)
+    }
+    if (product.batchList?.length) {
+      await BatchDB.upsertMany(product.batchList)
+    }
     return product
   }
 
@@ -122,7 +142,9 @@ export class ProductService {
 
   static async updateOne(id: number, instance: Product) {
     const response = await ProductApi.updateOne(id, instance)
-    await ProductDB.replaceOne(id, response)
+    if (response.success) {
+      await ProductDB.replaceOne(id, response.data.product)
+    }
     return response
   }
 

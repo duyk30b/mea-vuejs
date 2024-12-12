@@ -47,7 +47,7 @@ const startFetchData = async () => {
     const { data, meta } = await ReceiptApi.pagination({
       relation: {
         distributor: true,
-        receiptItems: settingStore.SCREEN_RECEIPT_LIST.receiptItems
+        receiptItemList: settingStore.SCREEN_RECEIPT_LIST.receiptItems
           ? { product: true, batch: false }
           : false,
       },
@@ -231,7 +231,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   {{ receipt.distributor?.note }}
                 </div>
                 <div class="text-xs">
-                  {{ (receipt.receiptItems || []).map((i) => i.product?.brandName).join(', ') }}
+                  {{ (receipt.receiptItemList || []).map((i) => i.product?.brandName).join(', ') }}
                 </div>
               </td>
               <td class="text-right">
@@ -324,7 +324,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">
-              {{ (receipt.receiptItems || []).map((i) => i.product?.brandName).join(', ') }}
+              {{ (receipt.receiptItemList || []).map((i) => i.product?.brandName).join(', ') }}
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.totalMoney) }}</div>

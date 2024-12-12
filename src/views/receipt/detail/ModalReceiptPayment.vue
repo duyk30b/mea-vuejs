@@ -45,28 +45,25 @@ const handlePayment = async () => {
   paymentLoading.value = true
   try {
     if (paymentView.value === PaymentViewType.Prepayment) {
-      const { receiptBasic, distributorPayments } = await ReceiptApi.prepayment(
+      const { receiptBasic, distributorPaymentList } = await ReceiptApi.prepayment(
         receipt.value.id,
         money.value
       )
       Object.assign(receipt.value, receiptBasic)
-      receipt.value.distributorPayments = distributorPayments
+      receipt.value.distributorPaymentList = distributorPaymentList
     }
     if (paymentView.value === PaymentViewType.SendProductAndPaymentAndClose) {
-      const { receiptBasic, distributorPayments } = await ReceiptApi.sendProductAndPayment(
-        receipt.value.id,
-        money.value
-      )
-      Object.assign(receipt.value, receiptBasic)
-      receipt.value.distributorPayments = distributorPayments
+      const result = await ReceiptApi.sendProductAndPayment(receipt.value.id, money.value)
+      Object.assign(receipt.value, result.receipt)
+      receipt.value.distributorPaymentList = result.distributorPaymentList
     }
     if (paymentView.value === PaymentViewType.PayDebt) {
-      const { receiptBasic, distributorPayments } = await ReceiptApi.payDebt(
+      const { receiptBasic, distributorPaymentList } = await ReceiptApi.payDebt(
         receipt.value.id,
         money.value
       )
       Object.assign(receipt.value, receiptBasic)
-      receipt.value.distributorPayments = distributorPayments
+      receipt.value.distributorPaymentList = distributorPaymentList
     }
 
     emit('success')
@@ -109,10 +106,12 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-if="receipt.distributorPayments!.length == 0">
+              <tr v-if="receipt.distributorPaymentList!.length == 0">
                 <td colspan="20" class="text-center">Chưa thanh toán</td>
               </tr>
-              <tr v-for="(distributorPayment, index) in receipt.distributorPayments" :key="index">
+              <tr
+                v-for="(distributorPayment, index) in receipt.distributorPaymentList"
+                :key="index">
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>

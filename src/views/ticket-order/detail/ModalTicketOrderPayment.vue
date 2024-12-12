@@ -47,13 +47,13 @@ const startPrepayment = async () => {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     paymentLoading.value = true
-    const { ticketBasic, customerPayment } = await TicketOrderApi.prepayment({
+    const response = await TicketOrderApi.prepayment({
       ticketId: ticket.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, ticketBasic)
+    Object.assign(ticket.value, response.ticket)
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(customerPayment)
+    ticket.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -70,16 +70,15 @@ const startSendProductAndPaymentAndClose = async () => {
     if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment, ticketProductList } =
-      await TicketOrderApi.sendProductAndPaymentAndClose({
-        ticketId: ticket.value.id,
-        money: money.value,
-      })
-    Object.assign(ticket.value, ticketBasic)
-    ticket.value.ticketProductList = ticketProductList
+    const response = await TicketOrderApi.sendProductAndPaymentAndClose({
+      ticketId: ticket.value.id,
+      money: money.value,
+    })
+    Object.assign(ticket.value, response.ticket)
+    ticket.value.ticketProductList = response.ticketProductList
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    if (customerPayment) {
-      ticket.value.customerPaymentList.push(customerPayment!)
+    if (response.customerPayment) {
+      ticket.value.customerPaymentList.push(response.customerPayment!)
     }
 
     emit('success')
@@ -97,13 +96,13 @@ const startPaymentAndClose = async () => {
     if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderApi.paymentAndClose({
+    const response = await TicketOrderApi.paymentAndClose({
       ticketId: ticket.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, ticketBasic)
+    Object.assign(ticket.value, response.ticket)
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(customerPayment!)
+    ticket.value.customerPaymentList.push(response.customerPayment!)
 
     emit('success')
     showModal.value = false
@@ -120,13 +119,13 @@ const startRefundOverpaid = async () => {
     if (money.value <= 0 || ticket.value.totalMoney > ticket.value.paid - money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderApi.refundOverpaid({
+    const response = await TicketOrderApi.refundOverpaid({
       ticketId: ticket.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, ticketBasic)
+    Object.assign(ticket.value, response.ticket)
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(customerPayment)
+    ticket.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -143,13 +142,13 @@ const startPayDebt = async () => {
     if (money.value <= 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const { ticketBasic, customerPayment } = await TicketOrderApi.payDebt({
+    const response = await TicketOrderApi.payDebt({
       ticketId: ticket.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, ticketBasic)
+    Object.assign(ticket.value, response.ticket)
     ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(customerPayment)
+    ticket.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -164,7 +163,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 800px">
+  <VueModal v-model:show="showModal" style="width: 600px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thông tin thanh toán</div>
@@ -230,11 +229,11 @@ defineExpose({ openModal })
                   <span v-else-if="ticket.paid > ticket.totalMoney">Đang thừa :</span>
                   <span v-else-if="ticket.paid <= ticket.totalMoney">Đang thiếu :</span>
                 </td>
+                <td></td>
                 <td class="text-right font-bold">
                   {{ formatMoney(Math.abs(ticket.totalMoney - ticket.paid)) }}
                   <!-- không tính theo debt được, vì cancel thì debt = 0 -->
                 </td>
-                <td></td>
               </tr>
             </tbody>
           </table>

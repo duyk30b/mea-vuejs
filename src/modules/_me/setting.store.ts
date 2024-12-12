@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { formatNumber } from '../../utils'
 import { TicketStatus, TicketType } from '../ticket'
+import { Distributor } from '../distributor'
 
 export const settingDefault = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -51,15 +52,14 @@ export const settingDefault = {
     lotNumber: false,
     expiryDate: true,
     unit: true,
+    warehouse: true,
+    distributor: true,
     costPrice: true,
-    isActive: true,
     action: true,
   },
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
     substance: true,
-    lotNumber: true,
-    expiryDate: true,
     unit: true,
     group: true,
     source: true,
@@ -122,6 +122,7 @@ export const settingDefault = {
       detail: true,
       lotNumberAndExpiryDate: true,
       unit: true,
+      warehouse: true,
     },
     paymentInfo: {
       itemsActualMoney: true,
@@ -136,12 +137,17 @@ export const settingDefault = {
     },
   },
   SCREEN_RECEIPT_UPSERT: {
+    receiptItemsSelect: {
+      warehouse: false,
+      lotNumberAndExpiryDate: true,
+    },
     receiptItemsTable: {
       allowDuplicateItem: true,
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
       unit: true,
+      warehouse: false,
     },
     distributor: {
       idDefault: 0,
@@ -206,11 +212,11 @@ export const settingDefault = {
   },
   SCREEN_INVOICE_UPSERT: {
     invoiceItemInput: {
+      warehouseIdList: [0],
       customAfterSearch: true,
       hintUsage: false,
       expectedPrice: true,
       costPrice: true,
-      costPriceAverage: true,
       quantity: true,
       discount: true,
       actualPrice: true,
@@ -271,6 +277,12 @@ export const settingDefault = {
     address: false,
   },
   TICKET_CLINIC_DETAIL: {
+    consumable: {
+      warehouseIdList: [0],
+    },
+    prescriptions: {
+      warehouseIdList: [0],
+    },
     printHtmlIdSetting: {
       invoice: 0,
       prescription: 0,

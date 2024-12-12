@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CloseOutlined, DollarOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconClose } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -80,19 +80,9 @@ const startReturnProduct = async () => {
       returnList: ticketProductReturnList.value
         .filter((i) => i.quantityReturn > 0)
         .map((i) => {
-          let itemCostAmount = 0
-          if (i.tpRoot.batchId) {
-            itemCostAmount = i.quantityReturn * i.tpRoot.batch!.costPrice
-          } else {
-            itemCostAmount = (i.tpRoot!.costAmount * i.quantityReturn) / (i.tpRoot!.quantity || 1)
-          }
-          const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
           return {
             ticketProductId: i.ticketProductId,
             quantityReturn: i.quantityReturn,
-            actualPrice: i.tpRoot.actualPrice,
-            costAmountReturn: itemCostAmountFix,
           }
         }),
     })
@@ -115,7 +105,7 @@ defineExpose({ openModal })
           Thông tin hoàn trả: {{ ticketClinicRef.customer?.fullName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -159,11 +149,6 @@ defineExpose({ openModal })
                 </td>
                 <td class="text-center">
                   <div>{{ tpReturn.tpRoot.unitQuantity }}</div>
-                  <div
-                    v-if="tpReturn.tpRoot.quantityReturn"
-                    style="font-size: 0.9em; font-style: italic">
-                    Hoàn trả: {{ tpReturn.tpRoot.unitQuantityReturn }}
-                  </div>
                 </td>
                 <td class="text-center">{{ tpReturn.tpRoot.unitName }}</td>
                 <td class="text-right">{{ formatMoney(tpReturn.tpRoot.unitActualPrice) }}</td>
@@ -197,16 +182,13 @@ defineExpose({ openModal })
         </div>
 
         <div class="pb-4 pt-8 flex justify-center gap-4">
-          <VueButton type="reset" @click="closeModal">
-            <CloseOutlined />
-            Đóng lại
-          </VueButton>
+          <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
           <VueButton
             color="blue"
             type="submit"
+            icon="dollar"
             :loading="returnLoading"
             :disabled="ticketProductReturnList.length === 0">
-            <DollarOutlined />
             <span>HOÀN TRẢ</span>
           </VueButton>
         </div>

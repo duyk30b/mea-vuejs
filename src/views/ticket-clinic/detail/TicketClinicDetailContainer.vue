@@ -44,12 +44,11 @@ import TicketClinicPrescription from './TicketClinicPrescription.vue'
 import TicketClinicProcedure from './TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
-import ModalTicketClinicDetailSettingData from './setting/ModalTicketClinicDetailSettingData.vue'
+import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'
 import { Customer } from '../../../modules/customer'
 import TicketClinicDiagnosisObstetric from './TicketClinicDiagnosisObstetric.vue'
 
-const modalTicketClinicDetailSettingData =
-  ref<InstanceType<typeof ModalTicketClinicDetailSettingData>>()
+const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -118,7 +117,7 @@ const startFetchData = async (ticketId: number) => {
 
 const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SETTING_DATA') {
-    modalTicketClinicDetailSettingData.value?.openModal()
+    modalTicketClinicDetailSetting.value?.openModal()
   }
 }
 
@@ -212,7 +211,7 @@ const clickCloseVisit = () => {
 </script>
 
 <template>
-  <ModalTicketClinicDetailSettingData ref="modalTicketClinicDetailSettingData" />
+  <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">

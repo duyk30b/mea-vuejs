@@ -108,7 +108,7 @@ const clickDelete = () => {
             title: 'Không thể xóa khách hàng khi khách hàng đã từng được tiếp đón',
             content: [
               'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám và phiếu bán hàng của khách hàng này trước',
-              `Hiện tại khách hàng này đang có ${response.data.countTicket} phiếu bán hàng liên quan`,
+              `Các phiếu liên quan: ${response.data.ticketList.map((i) => i.id).join(', ')}`,
             ],
           })
         }
