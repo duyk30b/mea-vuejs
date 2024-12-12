@@ -3,6 +3,7 @@ import { customFilter } from '../../../utils'
 export type BaseCondition<T> = {
   [P in keyof T]?:
     | T[P]
+    | ((value: any) => boolean)
     | ({
         [Q in
           | '>'
@@ -36,6 +37,9 @@ export class IndexedDBCondition<T> {
       }
       if (['number', 'string', 'boolean', null].includes(typeof target)) {
         return record[column] === target
+      }
+      if (typeof target === 'function') {
+        return target(record[column])
       }
       if (typeof target === 'object') {
         if (Object.keys(target).length === 0) return true

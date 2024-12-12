@@ -1,4 +1,5 @@
 import { PrintHtmlApi } from './print-html.api'
+import type { PrintHtmlGetListQuery } from './print-html.dto'
 import { PrintHtml } from './print-html.model'
 
 export class PrintHtmlService {
@@ -8,13 +9,27 @@ export class PrintHtmlService {
   static loadedSystem = false
   static printHtmlSystemList: PrintHtml[] = []
 
-  static async getAll() {
-    if (!PrintHtmlService.loadedAll) {
-      const fetchData = await PrintHtmlApi.getList({})
-      PrintHtmlService.printHtmlAll = fetchData.data
-      PrintHtmlService.loadedAll = true
+  static getAll = (() => {
+    const start = async () => {
+      try {
+        const { data } = await PrintHtmlApi.getList({})
+        PrintHtmlService.printHtmlAll = data
+      } catch (error: any) {
+        console.log('🚀 ~ file: warehouse.service.ts:20 ~ PrintHtmlService ~ start ~ error:', error)
+      }
     }
+    let fetching: any = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetching || !PrintHtmlService.loadedAll || options.refresh) {
+        PrintHtmlService.loadedAll = true
+        fetching = start()
+      }
+      await fetching
+    }
+  })()
 
+  static async list(options: PrintHtmlGetListQuery) {
+    await PrintHtmlService.getAll()
     return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
   }
 

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
+import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
+import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Warehouse, WarehouseApi } from '../../../modules/warehouse'
-import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import VueButton from '../../../common/VueButton.vue'
+import type { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
 
 const modalWarehouseUpsert = ref<InstanceType<typeof ModalWarehouseUpsert>>()
 
@@ -28,7 +29,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await WarehouseApi.pagination({
+    const { data, meta } = await WarehouseService.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -63,7 +64,7 @@ onBeforeMount(async () => {
 
 const handleModalWarehouseUpsertSuccess = async (
   data: Warehouse,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY'
 ) => {
   await startFetchData()
 }

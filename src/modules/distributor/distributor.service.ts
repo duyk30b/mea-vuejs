@@ -13,15 +13,28 @@ import { Distributor } from './distributor.model'
 
 export class DistributorService {
   static loadedAll: boolean = false
-  static distributorAll: Distributor[]
+  static distributorAll: Distributor[] = []
   static distributorDefault = Distributor.blank()
 
-  static async getAll() {
-    if (DistributorService.loadedAll) return
-    const { data } = await DistributorApi.list({})
-    DistributorService.distributorAll = data
-    DistributorService.loadedAll = true
-  }
+  // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
+  static getAll = (() => {
+    const start = async () => {
+      try {
+        const { data } = await DistributorApi.list({})
+        DistributorService.distributorAll = data
+      } catch (error: any) {
+        console.log('🚀 ~ file: distributor.service.ts:33 ~ :', error)
+      }
+    }
+    let fetching: any = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetching || !DistributorService.loadedAll || options.refresh) {
+        DistributorService.loadedAll = true
+        fetching = start()
+      }
+      await fetching
+    }
+  })()
 
   static async getMap() {
     await DistributorService.getAll()

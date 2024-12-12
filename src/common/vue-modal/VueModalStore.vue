@@ -57,14 +57,18 @@ const handleCancel = async (func: Function, key: string) => {
             <IconClose />
           </div>
         </div>
-        <div class="p-4">
-          <template v-if="typeof modal.content === 'string'">
-            <p>{{ modal.content }}</p>
-          </template>
+        <div v-if="modal.contentType === 'text'" class="p-4">
           <template v-if="Array.isArray(modal.content)">
             <p v-for="(content, index) in modal.content" :key="index">{{ content }}</p>
           </template>
+          <template v-if="typeof modal.content === 'string'">
+            <p>{{ modal.content }}</p>
+          </template>
         </div>
+        <div
+          v-if="modal.contentType === 'html' && typeof modal.content === 'string'"
+          class="p-4"
+          v-html="modal.content"></div>
         <div class="p-4">
           <div class="flex gap-4">
             <VueButton class="ml-auto" type="reset" @click="handleCancel(modal.onCancel, key)">

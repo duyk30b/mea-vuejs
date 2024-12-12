@@ -42,7 +42,7 @@ const options: ChartOptions = {
 }
 
 const loaded = ref(false)
-const typeHighMoney = ref<'quantity' | 'costAmount' | 'sumRetailMoney'>('costAmount')
+const typeHighMoney = ref<'quantity' | 'costAmount' | 'retailAmount'>('costAmount')
 
 const startFetchData = async () => {
   try {
@@ -103,7 +103,7 @@ onBeforeMount(async () => await startFetchData())
           v-model:value="typeHighMoney"
           :options="[
             { text: 'Tiền vốn', value: 'costAmount' },
-            { text: 'Tiền bán', value: 'sumRetailMoney' },
+            { text: 'Tiền bán', value: 'retailAmount' },
             // { text: 'Số lượng', value: 'quantity' },
           ]"
           @update:value="startFetchData" />

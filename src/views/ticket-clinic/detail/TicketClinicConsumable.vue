@@ -1,36 +1,40 @@
 <script lang="ts" setup>
-import { DeleteOutlined, PlusOutlined, ShoppingCartOutlined } from '@ant-design/icons-vue'
+import {
+  DeleteOutlined,
+  FileSearchOutlined,
+  PlusOutlined,
+  ShoppingCartOutlined,
+} from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconFileSearch } from '../../../common/icon'
 import { InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
-import { DeliveryStatus } from '../../../modules/enum'
+import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { TicketStatus } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductApi, TicketProductType } from '../../../modules/ticket-product'
 import { DTimer } from '../../../utils'
+import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
+import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 
-const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
+const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
+const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const ticketProductBlank = () => {
-  const temp = TicketProduct.blank()
-  temp.product!.hasManageBatches = 0
-  return temp
-}
-
 const productList = ref<Product[]>([])
 const batchList = ref<Batch[]>([])
 
-const ticketProductConsumable = ref<TicketProduct>(ticketProductBlank())
+const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
 const ticketProductConsumableList = ref<TicketProduct[]>([])
 
 watch(
@@ -66,76 +70,103 @@ const searchingProduct = async (text: string) => {
   if (!text) {
     clear()
   } else {
-    productList.value = await ProductService.search(text)
+    productList.value = await ProductService.list({
+      filter: {
+        isActive: 1,
+        $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+        warehouseIds: (value) => {
+          try {
+            const warehouseIdAcceptList =
+              settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
+            const v: number[] = JSON.parse(value)
+            if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) return true
+            if (!v.length || v.includes(0)) return true
+
+            for (let i = 0; i < v.length; i++) {
+              if (warehouseIdAcceptList.includes(v[i])) {
+                return true
+              }
+            }
+            return false
+          } catch (error) {
+            return true
+          }
+        },
+      },
+    })
   }
 }
 
 const clear = () => {
-  ticketProductConsumable.value = ticketProductBlank()
+  ticketProductConsumable.value = TicketProduct.blank()
   productList.value = []
   batchList.value = []
 }
 
 const selectProduct = async (instance?: Product) => {
   if (instance) {
-    const temp = ticketProductBlank()
+    const temp = TicketProduct.blank()
     temp.customerId = ticketClinicRef.value.customerId
-    temp.product = Product.from(instance)
     temp.productId = instance.id
+    temp.product = Product.from(instance)
+
     temp.type = TicketProductType.Consumable
+    temp.deliveryStatus = DeliveryStatus.Pending
     temp.unitRate = instance.unitDefaultRate
+
     temp.expectedPrice = instance.retailPrice
+    temp.discountType = DiscountType.Percent
+    temp.discountPercent = 0
+    temp.discountMoney = 0
     temp.actualPrice = instance.retailPrice
 
-    ticketProductConsumable.value = temp
-    if (instance.hasManageBatches) {
-      const batchListResponse = await BatchService.list({
-        filter: {
-          productId: instance.id,
-          quantity: { GT: 0 },
-        },
-      })
-      batchListResponse.forEach((i) => (i.product = instance))
-      batchList.value = batchListResponse
+    if (!instance.hasManageQuantity) {
+      temp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
+      temp.costPrice = instance.costPrice // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
+    }
 
-      if (batchListResponse.length) {
-        selectBatch(batchListResponse[0])
-      } else {
-        selectBatch(null)
-      }
+    ticketProductConsumable.value = temp
+
+    const warehouseIdAcceptList = settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
+    const batchListResponse = await BatchService.list({
+      filter: {
+        productId: instance.id,
+        quantity: { NOT: 0 },
+        $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+      },
+    })
+    batchListResponse.forEach((i) => (i.product = instance))
+    batchList.value = batchListResponse
+
+    if (batchListResponse.length) {
+      selectBatch(batchListResponse[0])
     } else {
-      batchList.value = []
-      selectBatch(null)
+      selectBatch(Batch.blank())
     }
   } else {
     clear()
   }
 }
 
-const selectBatch = (instance: Batch | null) => {
-  if (instance) {
-    ticketProductConsumable.value.batch = Batch.from(instance)
-    ticketProductConsumable.value.batchId = instance.id
-
-    ticketProductConsumable.value.expectedPrice = instance.retailPrice
-    ticketProductConsumable.value.actualPrice = instance.retailPrice
-  } else {
-    ticketProductConsumable.value.batch = Batch.blank()
-    ticketProductConsumable.value.batchId = 0
-  }
+const selectBatch = (batchSelected: Batch | null) => {
+  if (!batchSelected) return
+  ticketProductConsumable.value.batch = Batch.from(batchSelected)
+  ticketProductConsumable.value.batchId = batchSelected.id
+  ticketProductConsumable.value.warehouseId = batchSelected.warehouseId
+  ticketProductConsumable.value.costPrice = batchSelected.costPrice
 }
 
-const addPrescriptionItem = () => {
+const addConsumableItem = () => {
   if (!ticketProductConsumable.value.productId) {
-    return inputSearchProduct.value?.focus()
+    return inputOptionsProduct.value?.focus()
   }
   ticketProductConsumableList.value.push(ticketProductConsumable.value)
 
   clear()
-  inputSearchProduct.value?.clear()
+  inputOptionsProduct.value?.clear()
 
   if (!isMobile) {
-    inputSearchProduct.value?.focus()
+    inputOptionsProduct.value?.focus()
   }
 }
 
@@ -161,25 +192,9 @@ const handleUpdateUnitActualPrice = (price: number) => {
   ticketProductConsumable.value.unitExpectedPrice = price
 }
 
-const savePrescription = async () => {
+const saveConsumable = async () => {
   const ticketProductConsumableListChange = ticketProductConsumableList.value.filter((i) => {
     return [DeliveryStatus.NoStock, DeliveryStatus.Pending].includes(i.deliveryStatus)
-  })
-  ticketProductConsumableListChange.forEach((i) => {
-    // luôn tính lại costAmount
-    let itemCostAmount = 0
-    if (i.batchId) {
-      itemCostAmount = i.quantity * i.batch!.costPrice
-    } else if (i.product!.quantity <= 0) {
-      itemCostAmount = (i.product?.costPrice || 0) * i.quantity
-    } else {
-      itemCostAmount = (i.product!.costAmount * i.quantity) / i.product!.quantity
-    }
-    const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-
-    i.costAmount = itemCostAmountFix
-
-    // i.quantityPrescription = i.quantity // bỏ logic này vì có thể có những sản phẩm không bán
   })
 
   await TicketClinicApi.updateTicketProductConsumable({
@@ -204,43 +219,63 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
     ticketClinicRef.value.ticketProductConsumableList!.splice(findIndexCurrent, 1)
   }
 }
+
+const handleModalProductUpsertSuccess = (instance?: Product) => {
+  inputOptionsProduct.value?.setItem({
+    text: instance?.brandName,
+    data: instance,
+    value: instance?.id,
+  })
+  selectProduct(instance)
+}
+
+const openModalProductDetail = (product?: Product) => {
+  if (product) modalProductDetail.value?.openModal(product)
+}
 </script>
 <template>
-  <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addPrescriptionItem()">
+  <ModalProductDetail ref="modalProductDetail" />
+  <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
+  <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addConsumableItem()">
     <div style="flex-grow: 1; flex-basis: 80%">
-      <div class="flex justify-between">
-        <div>
-          <span>Tên vật tư</span>
-          <span>
-            <span
-              v-if="
-                ticketProductConsumable.product!.id &&
-                ticketProductConsumable.product?.hasManageQuantity
-              "
-              :class="
-                ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
-                  ? 'text-red-500 font-bold'
-                  : ''
-              ">
-              - Tồn kho:
-              <b>{{ ticketProductConsumable.product.unitQuantity }}</b>
-              {{ ticketProductConsumable.product.unitDefaultName }}
-            </span>
-            <span
-              v-if="
-                ticketProductConsumable.product!.id &&
-                !ticketProductConsumable.product?.hasManageBatches
-              ">
-              - Giá
-              <b>{{ formatMoney(ticketProductConsumable.product!.unitRetailPrice) }}</b>
-            </span>
+      <div class="flex gap-1 flex-wrap">
+        <span>Tên vật tư</span>
+        <a
+          v-if="ticketProductConsumable.product?.id"
+          @click="modalProductDetail?.openModal(ticketProductConsumable.product)">
+          <IconFileSearch />
+        </a>
+        <div v-if="ticketProductConsumable.product">
+          (
+          <span
+            v-if="ticketProductConsumable.product?.hasManageQuantity"
+            :class="
+              ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
+                ? 'text-red-500 font-bold'
+                : ''
+            ">
+            Tồn:
+            <b>
+              {{ ticketProductConsumable.product?.unitQuantity }}
+              {{ ticketProductConsumable.product?.unitDefaultName }}
+            </b>
           </span>
+          <span>
+            - Giá
+            <b>{{ formatMoney(ticketProductConsumable.product!.unitRetailPrice) }}</b>
+          </span>
+          )
         </div>
-        <span></span>
+
+        <a
+          v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && ticketProductConsumable.product?.id"
+          @click="modalProductUpsert?.openModal(ticketProductConsumable.product.id)">
+          Sửa thông tin sản phẩm
+        </a>
       </div>
       <div style="height: 40px">
         <InputOptions
-          ref="inputSearchProduct"
+          ref="inputOptionsProduct"
           required
           :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
           :maxHeight="320"
@@ -268,9 +303,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
         </InputOptions>
       </div>
     </div>
-    <div
-      v-if="ticketProductConsumable.product!.hasManageBatches"
-      style="flex-grow: 1; flex-basis: 80%">
+    <div style="flex-grow: 1; flex-basis: 80%">
       <div>
         Lô hàng
         <span
@@ -298,8 +331,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
             <div v-if="data.id">
               Lô {{ data.lotNumber }} {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
               <b>{{ data.unitQuantity }}</b>
-              {{ ticketProductConsumable.product!.unitDefaultName }} - Giá
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
+              {{ ticketProductConsumable.product!.unitDefaultName }}
             </div>
           </template>
           <template #text="{ content: { data } }">
@@ -314,8 +346,6 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
                 <b>{{ data.unitQuantity }}</b>
                 {{ ticketProductConsumable.product!.unitDefaultName }}
               </span>
-              - Giá
-              <b>{{ formatMoney(data.unitRetailPrice) }}</b>
             </div>
           </template>
         </VueSelect>
@@ -444,7 +474,12 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
               </div>
             </td>
             <td>
-              <div style="font-weight: 500">{{ tpItem.product?.brandName }}</div>
+              <div style="font-weight: 500">
+                {{ tpItem.product?.brandName }}
+                <a class="ml-1" @click="openModalProductDetail(tpItem.product!)">
+                  <FileSearchOutlined />
+                </a>
+              </div>
               <div class="text-xs">{{ tpItem.product?.substance }}</div>
             </td>
             <td style="width: 150px">
@@ -541,7 +576,7 @@ const destroyTicketProductZeroQuantity = async (ticketProductId: number) => {
       class="ml-auto"
       :disabled="disabledButton"
       icon="save"
-      @click="savePrescription">
+      @click="saveConsumable">
       Lưu lại
     </VueButton>
   </div>

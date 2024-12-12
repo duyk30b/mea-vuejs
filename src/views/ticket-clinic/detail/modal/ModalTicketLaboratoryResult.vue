@@ -4,15 +4,14 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { InputDate, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import {
   TicketLaboratory,
   TicketLaboratoryApi,
   TicketLaboratoryStatus,
 } from '../../../../modules/ticket-laboratory'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 

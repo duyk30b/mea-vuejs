@@ -4,7 +4,9 @@ import { IndexedDBCondition, type BaseCondition } from './indexed-db.condition'
 
 export class BaseRepository<
   _ENTITY,
-  _SORT = { [P in keyof _ENTITY]?: 'ASC' | 'DESC' },
+  _SORT = {
+    [P in keyof _ENTITY]?: 'ASC' | 'DESC' | ((a: string, b: string) => 1 | -1)
+  },
 > extends IndexedDBCondition<_ENTITY> {
   public storeName: string
   public baseDB: BaseIndexedDB
@@ -100,6 +102,9 @@ export class BaseRepository<
             else if (a[key] == null) return 1
             else return a[key] > b[key] ? -1 : 1
           }
+          if (typeof value === 'function') {
+            return value(a, b)
+          }
           // if (value === 'ASC') return a[key] < b[key] ? -1 : 1
           // if (value === 'DESC') return a[key] > b[key] ? -1 : 1
           return a.id > b.id ? -1 : 1
@@ -128,8 +133,19 @@ export class BaseRepository<
       Object.entries(sort).forEach(([key, value]) => {
         if (!key || !value) return
         data.sort((a: any, b: any) => {
-          if (value === 'ASC') return a[key] < b[key] ? -1 : 1
-          if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+          if (value === 'ASC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] < b[key] ? -1 : 1
+          }
+          if (value === 'DESC') {
+            if (b[key] == null) return -1 // tăng hay giảm thì cũng để NULL ở cuối
+            else if (a[key] == null) return 1
+            else return a[key] > b[key] ? -1 : 1
+          }
+          if (typeof value === 'function') {
+            return value(a, b)
+          }
           return a.id > b.id ? -1 : 1
         })
       })

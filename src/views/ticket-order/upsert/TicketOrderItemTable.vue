@@ -25,11 +25,7 @@ const handleChangeHintUsage = (data: string, index: number) => {
 
 const overQuantityTicketProduct = (ticketProduct: TicketProduct): boolean => {
   if (ticketProduct.product?.hasManageQuantity) {
-    if (!ticketProduct.product!.hasManageBatches) {
-      return ticketProduct.quantity >= ticketProduct.product!.quantity
-    } else {
-      return ticketProduct.quantity >= ticketProduct.batch!.quantity
-    }
+    return ticketProduct.quantity >= ticketProduct.batch!.quantity
   }
   return false
 }
@@ -67,20 +63,7 @@ const handleChangeTicketProductUnitActualPrice = (data: number, index: number) =
 }
 
 const handleChangeTicketProductUnitQuantity = (unitQuantity: number, index: number) => {
-  const ticketProduct = ticket.value.ticketProductList![index]
-  ticketProduct.unitQuantity = unitQuantity
-
-  let itemCostAmount = 0
-  if (ticketProduct.batchId) {
-    itemCostAmount = ticketProduct.quantity * ticketProduct.batch!.costPrice
-  } else if (ticketProduct.product!.quantity <= 0) {
-    itemCostAmount = (ticketProduct.product?.costPrice || 0) * ticketProduct.quantity
-  } else {
-    itemCostAmount =
-      (ticketProduct.product!.costAmount * ticketProduct.quantity) / ticketProduct.product!.quantity
-  }
-  const itemCostAmountFix = Math.floor(itemCostAmount / 10) * 10
-  ticketProduct.costAmount = itemCostAmountFix
+  ticket.value.ticketProductList![index].unitQuantity = unitQuantity
 }
 
 const handleChangeTicketProcedureDiscountMoney = (data: number, index: number) => {

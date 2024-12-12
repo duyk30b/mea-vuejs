@@ -5,6 +5,7 @@ export interface IModalData {
   type: 'confirm' | 'alert'
   title: string
   content: string | string[]
+  contentType: 'text' | 'html'
   show: boolean
   onOk: Function
   onCancel: Function
@@ -19,6 +20,7 @@ const add = (
   options: {
     title: string
     content: string | string[]
+    contentType?: 'text' | 'html'
     onOk?: Function
     onCancel?: Function
     okText?: string
@@ -32,6 +34,7 @@ const add = (
     type,
     title: options.title,
     content: options.content,
+    contentType: options.contentType || 'text',
     show: false,
     onOk: options.onOk || funcEmpty,
     onCancel: options.onCancel || funcEmpty,
@@ -46,6 +49,7 @@ const add = (
 const confirm = (options: {
   title: string
   content: string | string[]
+  contentType?: 'text' | 'html'
   onOk?: Function
   onCancel?: Function
   okText?: string
@@ -57,6 +61,7 @@ const confirm = (options: {
 const alert = (options: {
   title: string
   content: string | string[]
+  contentType?: 'text' | 'html'
   onOk?: Function
   okText?: string
 }) => {

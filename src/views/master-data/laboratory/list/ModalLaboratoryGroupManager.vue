@@ -19,7 +19,7 @@ const saveLoading = ref(false)
 const startFetchData = async () => {
   try {
     laboratoryGroupList.value = await LaboratoryGroupService.list({})
-    const printHtmlAll = await PrintHtmlService.getAll()
+    const printHtmlAll = await PrintHtmlService.list({})
     printHtmlOptions.value = [
       { value: 0, text: 'Mặc định' },
       ...printHtmlAll.map((i) => ({ value: i.id, text: i.name })),

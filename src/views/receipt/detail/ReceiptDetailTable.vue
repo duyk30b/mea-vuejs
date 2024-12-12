@@ -1,26 +1,37 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { ReceiptStatus } from '../../../modules/receipt'
+import type { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-detail.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
+const warehouseMap = ref<Record<string, Warehouse>>({})
 
 const showModalReceiptPayment = (paymentView: PaymentViewType) => {
   emit('showReceiptPayment', paymentView)
 }
 
+onMounted(async () => {
+  warehouseMap.value = await WarehouseService.getMap()
+})
+
 const colspan = computed(() => {
-  return 3 + Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit)
+  return (
+    3 +
+    Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit) +
+    Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse)
+  )
 })
 </script>
 
@@ -32,6 +43,7 @@ const colspan = computed(() => {
         <tr>
           <th>#</th>
           <th>Sản phẩm</th>
+          <th v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse">Kho</th>
           <th>SL</th>
           <th v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit">ĐV</th>
           <th>G.Nhập</th>
@@ -39,7 +51,7 @@ const colspan = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
+        <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
           <td class="text-center">{{ index + 1 }}</td>
           <td>
             <div class="text-justify">
@@ -67,6 +79,11 @@ const colspan = computed(() => {
                 </div>
               </div>
             </div>
+          </td>
+          <td
+            v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse"
+            class="text-center">
+            {{ warehouseMap[receiptItem.warehouseId]?.name }}
           </td>
           <td class="text-center">
             {{ receiptItem.unitQuantity }}

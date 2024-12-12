@@ -1,6 +1,5 @@
 import { Customer } from '../customer'
 import { CustomerSource } from '../customer-source'
-import type { VoucherType } from '../enum'
 
 export enum AppointmentStatus {
   Waiting = 1, // Đợi - Nhắc khám

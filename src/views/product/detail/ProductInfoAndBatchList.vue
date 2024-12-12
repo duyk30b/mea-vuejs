@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { FileDoneOutlined } from '@ant-design/icons-vue'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../common/icon-google'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
+import type { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { DTimer } from '../../../utils'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
+
+const emit = defineEmits<{ (e: 'changeProduct', value: Product): void }>()
 
 const props = withDefaults(defineProps<{ productId: number }>(), { productId: 0 })
 
@@ -21,6 +26,13 @@ const { permissionIdMap } = meStore
 
 const product = ref<Product>(Product.blank())
 const hasZeroQuantity = ref<boolean>(false)
+const warehouseMap = ref<Record<string, Warehouse>>({})
+const distributorMap = ref<Record<string, Distributor>>({})
+onMounted(async () => {
+  warehouseMap.value = await WarehouseService.getMap()
+  distributorMap.value = await DistributorService.getMap()
+})
+
 const startFetchData = async () => {
   if (!props.productId) return
 
@@ -44,8 +56,11 @@ watch(
   { immediate: true }
 )
 
-const handleModalBatchUpdateSuccess = async (data: Batch, type: 'UPDATE') => {
+const handleModalBatchUpdateSuccess = async (data: Batch, type: 'UPDATE' | 'DESTROY') => {
   await startFetchData()
+  if (data.product) {
+    emit('changeProduct', data.product)
+  }
 }
 
 const unitString = (data: Product) => {
@@ -72,130 +87,80 @@ const closeExpiryDate = computed(() => {
     ref="modalBatchUpdate"
     @success="handleModalBatchUpdateSuccess" />
   <div class="mt-4">
-    <table class="w-full">
-      <tbody>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Mã sản phẩm</td>
-          <td class="px-2 font-medium">SP{{ product.id }}</td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Tên sản phẩm</td>
-          <td class="px-2">
+    <div class="flex flex-wrap">
+      <div style="flex-basis: 45%; flex: 1; min-width: 300px">
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
+            SP{{ product.id }}
+          </div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Tên sản phẩm</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
             {{ product.brandName }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
-          <td class="px-2">
-            {{ product.productGroup?.name }}
-          </td>
-        </tr>
-        <tr v-if="product.substance">
-          <td class="px-2 py-1 whitespace-nowrap">Hoạt chất</td>
-          <td class="px-2">
-            {{ product.substance }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Số lượng</td>
-          <td class="px-2">
-            <b>{{ product.unitQuantity }}</b>
+          </div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Số lượng</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+            <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
             {{ product.unitDefaultName }}
             <span v-if="product.unitDefaultRate != 1" class="ml-2">
               (
               <b>{{ product.quantity }}</b>
               {{ product.unitBasicName }})
             </span>
-          </td>
-        </tr>
-        <tr v-if="!product.hasManageBatches">
-          <td class="px-2 py-1 whitespace-nowrap">Số lô</td>
-          <td class="px-2">
-            {{ product.lotNumber }}
-          </td>
-        </tr>
-        <tr v-if="!product.hasManageBatches">
-          <td class="px-2 py-1 whitespace-nowrap">HSD</td>
-          <td
-            class="px-2"
-            :style="
-              product.expiryDate && product.expiryDate < closeExpiryDate
-                ? 'color:red; font-weight:500'
-                : ''
-            ">
-            {{ product.expiryDate ? DTimer.timeToText(product.expiryDate) : '' }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Nhóm</td>
-          <td class="px-2">
+          </div>
+        </div>
+        <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Giá bán sỉ</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+            <b>{{ formatMoney(product.unitWholesalePrice) }}</b>
+            / {{ product.unitDefaultName }}
+          </div>
+        </div>
+        <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Giá bán lẻ</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+            <b>{{ formatMoney(product.unitRetailPrice) }}</b>
+            / {{ product.unitDefaultName }}
+          </div>
+        </div>
+      </div>
+      <div style="flex-basis: 45%; flex: 1; min-width: 300px">
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Nhóm</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
             {{ product.productGroup?.name }}
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Đơn vị</td>
-          <td class="px-2">
-            {{ unitString(product) }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Đường dùng</td>
-          <td class="px-2">
-            {{ product.route }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Nguồn gốc</td>
-          <td class="px-2">
-            {{ product.source }}
-          </td>
-        </tr>
-        <tr>
-          <td class="px-2 py-1 whitespace-nowrap">Gợi ý cách dùng</td>
-          <td class="px-2">
-            {{ product.hintUsage }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          </div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ unitString(product) }}</div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Đường dùng</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.route }}</div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Nguồn gốc</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.source }}</div>
+        </div>
+        <div class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Gợi ý cách dùng</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.hintUsage }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div v-if="!product.hasManageBatches" class="table-wrapper mt-4">
-    <table>
-      <thead>
-        <tr>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Tổng Vốn</th>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
-          <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
-          <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
-            {{ formatMoney(product.costAmount) }}
-          </td>
-          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
-            {{ formatMoney(Math.floor(product.costAmount / product.quantity)) }}
-          </td>
-          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" style="text-align: center">
-            {{ formatMoney(product.unitCostPrice) }}
-          </td>
-          <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" style="text-align: center">
-            {{ formatMoney(product.unitWholesalePrice) }}
-          </td>
-          <td v-if="settingStore.SYSTEM_SETTING.retailPrice" style="text-align: center">
-            {{ formatMoney(product.unitRetailPrice) }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div v-if="product.hasManageBatches" class="mt-6">
-    <div class="flex justify-between items-end">
+  <div class="mt-6">
+    <div class="flex justify-between items-end flex-wrap">
       <div style="font-size: 1.2rem">
         <FileDoneOutlined style="margin-right: 10px" />
         <span>Lô Hàng</span>
@@ -203,7 +168,7 @@ const closeExpiryDate = computed(() => {
 
       <div class="cursor-pointer">
         <a-checkbox v-model:checked="hasZeroQuantity" @change="handleZeroQuantity">
-          Hiển thị lô hàng đã hết
+          Hiển thị lô hàng có số lượng = 0
         </a-checkbox>
       </div>
     </div>
@@ -235,13 +200,9 @@ const closeExpiryDate = computed(() => {
                 v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
                 class="flex justify-between"
                 style="font-size: 0.9em">
-                <span>Vốn: {{ formatMoney(batch.costPrice * batch.quantity) }}</span>
-                <span>Nhập: {{ formatMoney(batch.costPrice) }}</span>
+                <span>G.Nhập: {{ formatMoney(batch.costPrice) }}</span>
               </div>
-              <div class="flex justify-between" style="font-size: 0.9em">
-                <span>G.Sỉ: {{ formatMoney(batch.wholesalePrice) }}</span>
-                <span>G.Lẻ: {{ formatMoney(batch.retailPrice) }}</span>
-              </div>
+              <div>Kho: {{ warehouseMap[batch.warehouseId]?.name }}</div>
             </td>
             <td class="text-right whitespace-nowrap">
               {{ batch.quantity }}
@@ -265,12 +226,10 @@ const closeExpiryDate = computed(() => {
           <tr>
             <th>Mã</th>
             <th>Lô-HSD</th>
-            <th>Đ.Vị</th>
             <th>SL</th>
-            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
             <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
-            <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
-            <th v-if="settingStore.SYSTEM_SETTING.retailPrice">G.Lẻ</th>
+            <th>Kho</th>
+            <th>NCC</th>
             <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
           </tr>
         </thead>
@@ -292,22 +251,16 @@ const closeExpiryDate = computed(() => {
               </div>
             </td>
             <td class="text-center">
-              {{ batch.product?.unitDefaultName }}
-            </td>
-            <td class="text-center">
               {{ batch.unitQuantity }}
-            </td>
-            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
-              {{ formatMoney(batch.costPrice * batch.quantity) }}
             </td>
             <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
               {{ formatMoney(batch.unitCostPrice) }}
             </td>
-            <td v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="text-right">
-              {{ formatMoney(batch.unitWholesalePrice) }}
+            <td class="text-center">
+              {{ warehouseMap[batch.warehouseId]?.name }}
             </td>
-            <td v-if="settingStore.SYSTEM_SETTING.retailPrice" class="text-right">
-              {{ formatMoney(batch.unitRetailPrice) }}
+            <td class="text-center">
+              {{ distributorMap[batch.distributorId]?.fullName }}
             </td>
             <td>
               <div

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { IconFileSearch, IconTrash } from '../../../common/icon'
 import { InputNumber } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import type { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-upsert.store'
@@ -10,17 +12,21 @@ import { receipt } from './receipt-upsert.store'
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const warehouseMap = ref<Record<string, Warehouse>>({})
+onMounted(async () => {
+  warehouseMap.value = await WarehouseService.getMap()
+})
 
 const changeItemPosition = (index: number, count: number) => {
-  const temp = receipt.value.receiptItems![index]
-  receipt.value.receiptItems![index] = receipt.value.receiptItems![index + count]
-  receipt.value.receiptItems![index + count] = temp
+  const temp = receipt.value.receiptItemList![index]
+  receipt.value.receiptItemList![index] = receipt.value.receiptItemList![index + count]
+  receipt.value.receiptItemList![index + count] = temp
 }
 </script>
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <div>Giỏ hàng ({{ receipt.receiptItems?.length || 0 }})</div>
+  <div>Giỏ hàng ({{ receipt.receiptItemList?.length || 0 }})</div>
   <div v-if="isMobile" class="table-wrapper mt-2">
     <table>
       <thead>
@@ -34,10 +40,10 @@ const changeItemPosition = (index: number, count: number) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="receipt.receiptItems!.length === 0">
+        <tr v-if="receipt.receiptItemList!.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(receiptItem, index) in receipt.receiptItems || []" :key="index">
+        <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
             <div class="flex flex-col items-center">
               <button
@@ -65,7 +71,7 @@ const changeItemPosition = (index: number, count: number) => {
                   margin-top: -0.5rem;
                 "
                 class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                :disabled="index === (receipt.receiptItemList?.length || 0) - 1"
                 @click="changeItemPosition(index, 1)">
                 <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
               </button>
@@ -94,6 +100,11 @@ const changeItemPosition = (index: number, count: number) => {
                 - HSD {{ timeToText(receiptItem.expiryDate) }}
               </div>
             </div>
+            <div
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse"
+              style="font-size: 0.8rem">
+              {{ warehouseMap[receiptItem.warehouseId]?.name }}
+            </div>
           </td>
           <td class="text-center whitespace-nowrap">
             <div class="item-quantity">
@@ -113,7 +124,7 @@ const changeItemPosition = (index: number, count: number) => {
             {{ formatMoney(receiptItem.amount) }}
           </td>
           <td class="text-center">
-            <a class="text-red-500" @click="receipt.receiptItems!.splice(index, 1)">
+            <a class="text-red-500" @click="receipt.receiptItemList!.splice(index, 1)">
               <IconTrash />
             </a>
           </td>
@@ -121,12 +132,17 @@ const changeItemPosition = (index: number, count: number) => {
       </tbody>
     </table>
   </div>
-  <div v-if="!isMobile" class="table-wrapper mt-2">
+  <div v-if="!isMobile" class="table-wrapper mt-2 pb-10">
     <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Sản phẩm</th>
+          <th
+            v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse"
+            style="width: 200px">
+            Nhập kho
+          </th>
           <th>S.Lượng</th>
           <th v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
           <th>G.Nhập</th>
@@ -135,10 +151,10 @@ const changeItemPosition = (index: number, count: number) => {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="receipt.receiptItems!.length === 0">
+        <tr v-if="receipt.receiptItemList!.length === 0">
           <td colspan="20" class="text-center">Chưa có dữ liệu</td>
         </tr>
-        <tr v-for="(receiptItem, index) in receipt.receiptItems" :key="index">
+        <tr v-for="(receiptItem, index) in receipt.receiptItemList" :key="index">
           <td>
             <div class="flex flex-col items-center">
               <button
@@ -166,7 +182,7 @@ const changeItemPosition = (index: number, count: number) => {
                   margin-top: -0.5rem;
                 "
                 class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                :disabled="index === (receipt.receiptItems?.length || 0) - 1"
+                :disabled="index === (receipt.receiptItemList?.length || 0) - 1"
                 @click="changeItemPosition(index, 1)">
                 <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
               </button>
@@ -198,23 +214,26 @@ const changeItemPosition = (index: number, count: number) => {
               </div>
             </div>
           </td>
+          <td v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse">
+            {{ warehouseMap[receiptItem.warehouseId]?.name }}
+          </td>
           <td class="text-center" style="width: 150px">
             <div class="flex items-center justify-between">
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity--">
+                @click="receipt.receiptItemList![index].unitQuantity--">
                 <font-awesome-icon :icon="['fas', 'minus']" />
               </div>
               <div style="width: calc(100% - 60px); min-width: 50px">
                 <InputNumber
-                  v-model:value="receipt.receiptItems![index].unitQuantity"
+                  v-model:value="receipt.receiptItemList![index].unitQuantity"
                   :textAlign="'right'" />
               </div>
               <div
                 style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                 class="flex items-center justify-center cursor-pointer hover:bg-[#dedede]"
-                @click="receipt.receiptItems![index].unitQuantity++">
+                @click="receipt.receiptItemList![index].unitQuantity++">
                 <font-awesome-icon :icon="['fas', 'plus']" />
               </div>
             </div>
@@ -229,7 +248,7 @@ const changeItemPosition = (index: number, count: number) => {
             {{ formatMoney(receiptItem.amount) }}
           </td>
           <td class="text-center">
-            <a class="text-red-500 text-xl" @click="receipt.receiptItems!.splice(index, 1)">
+            <a class="text-red-500 text-xl" @click="receipt.receiptItemList!.splice(index, 1)">
               <IconTrash />
             </a>
           </td>

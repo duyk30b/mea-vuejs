@@ -9,7 +9,7 @@ import { Radiology } from './radiology.model'
 
 export class RadiologyService {
   static loadedAll: boolean = false
-  static radiologyAll: Radiology[]
+  static radiologyAll: Radiology[] = []
 
   private static async getAll() {
     if (RadiologyService.loadedAll) return

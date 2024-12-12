@@ -1,14 +1,15 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
+import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
 
 export class ProductFilterQuery {
   id?: number | ConditionNumber
   isActive?: 1 | 0
   productGroupId?: number
-  searchText?: string
+  brandName?: ConditionString
+  substance?: ConditionString
   quantity?: ConditionNumber
   updatedAt?: ConditionDate
-  expiryDate?: ConditionNumber
+  warehouseIds?: string | ((value: string) => boolean)
 }
 
 export class ProductGetQuery {
@@ -22,18 +23,16 @@ export class ProductGetQuery {
   filter?: ProductFilterQuery & {
     batchList?: {
       quantity?: ConditionNumber
-      expiryDate?: ConditionNumber
+      warehouseId?: ConditionNumber
       updatedAt?: ConditionDate
     }
-    $OR?: ProductFilterQuery[]
+    $OR?: [{ brandName: { LIKE: string } }, { substance: { LIKE: string } }]
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'
     brandName?: 'ASC' | 'DESC'
-    costAmount?: 'ASC' | 'DESC'
-    expiryDate?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<ProductGetQuery>) {

@@ -149,8 +149,10 @@ const clickDestroy = () => {
           ModalStore.alert({
             title: 'Không thể xóa dịch vụ khi đã được chỉ định',
             content: [
-              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám, hóa đơn trước',
-              `Hiện tại đang có ${response.data.countTicketProcedure} phiếu khám sử dụng dịch vụ này`,
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám, hóa đơn liên quan trước',
+              `Các phiếu liên quan ${response.data.ticketProcedureList
+                .map((i) => i.ticketId)
+                .join(', ')} `,
             ],
           })
         }

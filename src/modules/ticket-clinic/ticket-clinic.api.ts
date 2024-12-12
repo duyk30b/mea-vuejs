@@ -59,7 +59,7 @@ export class TicketClinicApi {
 
   static async startCheckup(params: { ticketId: number }) {
     const response = await AxiosInstance.post(`/ticket-clinic/${params.ticketId}/start-checkup`)
-    const { data } = response.data as BaseResponse<{ ticketBasic: any }>
+    const { data } = response.data as BaseResponse<{ ticket: any }>
   }
 
   static async updateDiagnosis(options: {
@@ -203,9 +203,10 @@ export class TicketClinicApi {
         ticketProductConsumableList: ticketProductConsumableList.map((i) => ({
           productId: i.productId,
           batchId: i.batchId,
+          warehouseId: i.warehouseId,
           unitRate: i.unitRate,
           quantity: i.quantity,
-          costAmount: i.costAmount,
+          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
@@ -236,10 +237,11 @@ export class TicketClinicApi {
           ? ticketProductPrescriptionList.map((i) => ({
               productId: i.productId,
               batchId: i.batchId,
+              warehouseId: i.warehouseId,
               unitRate: i.unitRate,
               quantityPrescription: i.quantityPrescription,
               quantity: i.quantity,
-              costAmount: i.costAmount,
+              costPrice: i.costPrice,
               expectedPrice: i.expectedPrice,
               discountMoney: i.discountMoney,
               discountPercent: i.discountPercent,
@@ -286,9 +288,7 @@ export class TicketClinicApi {
       ticketProductUpdateList: ticketProductList.map((item) => {
         return {
           ticketProductId: item.id,
-          productId: item.productId,
           quantity: item.quantity,
-          costAmount: item.costAmount,
           discountMoney: item.discountMoney,
           discountPercent: item.discountPercent,
           discountType: item.discountType,
@@ -298,7 +298,6 @@ export class TicketClinicApi {
       ticketProcedureUpdateList: ticketProcedureList.map((item) => {
         return {
           ticketProcedureId: item.id,
-          procedureId: item.procedureId,
           discountMoney: item.discountMoney,
           discountPercent: item.discountPercent,
           discountType: item.discountType,
@@ -308,7 +307,6 @@ export class TicketClinicApi {
       ticketLaboratoryUpdateList: ticketLaboratoryList.map((item) => {
         return {
           ticketLaboratoryId: item.id,
-          laboratoryId: item.laboratoryId,
           discountMoney: item.discountMoney,
           discountPercent: item.discountPercent,
           discountType: item.discountType,
@@ -318,7 +316,6 @@ export class TicketClinicApi {
       ticketRadiologyUpdateList: ticketRadiologyList.map((item) => {
         return {
           ticketRadiologyId: item.id,
-          radiologyId: item.radiologyId,
           discountMoney: item.discountMoney,
           discountPercent: item.discountPercent,
           discountType: item.discountType,
@@ -340,8 +337,6 @@ export class TicketClinicApi {
     returnList: {
       ticketProductId: number
       quantityReturn: number
-      actualPrice: number
-      costAmountReturn: number
     }[]
   }) {
     const { ticketId, returnList } = body

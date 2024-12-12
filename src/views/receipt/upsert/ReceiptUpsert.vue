@@ -62,7 +62,7 @@ onBeforeMount(async () => {
     const receiptResponse = await ReceiptApi.detail(receiptId, {
       relation: {
         distributor: true,
-        receiptItems: { product: true, batch: true },
+        receiptItemList: { product: true, batch: true },
       },
     })
 
@@ -106,9 +106,10 @@ onUnmounted(() => {
 
 const handleFocusFirstSearchDistributor = async () => {
   await DistributorService.getAll()
+  await searchingDistributor('')
 }
 const handleFocusSearchDistributor = async () => {
-  await searchingDistributor('')
+  // await searchingDistributor('')
 }
 
 const searchingDistributor = async (text: string) => {
@@ -125,7 +126,7 @@ const searchingDistributor = async (text: string) => {
   }
 }
 
-const createDistributor = (instance?: Distributor) => {
+const handleUpsertDistributorSuccess = (instance?: Distributor) => {
   inputOptionsDistributor.value?.setItem({
     text: instance?.fullName,
     data: instance,
@@ -155,10 +156,10 @@ const saveReceipt = async (type: EReceiptSave) => {
   if (!validForm) {
     return receiptUpsertForm.value?.reportValidity()
   }
-  if (receipt.value.receiptItems!.length == 0) {
+  if (receipt.value.receiptItemList!.length == 0) {
     return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm trong phiếu')
   }
-  const invalidReceiptItem = receipt.value.receiptItems!.find((ri) => ri.quantity === 0)
+  const invalidReceiptItem = receipt.value.receiptItemList!.find((ri) => ri.quantity === 0)
   if (invalidReceiptItem) {
     return AlertStore.addError(
       `Lỗi: sản phẩm ${invalidReceiptItem!.product!.brandName} có số lượng 0`
@@ -184,7 +185,7 @@ const saveReceipt = async (type: EReceiptSave) => {
         break
     }
   } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
+    console.log('🚀 ~ file: ReceiptUpsert.vue:187 ~ saveReceipt ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -193,15 +194,15 @@ const saveReceipt = async (type: EReceiptSave) => {
 const handleAddReceiptItem = (ri: ReceiptItem) => {
   const receiptItem = ReceiptItem.from(ri)
   if (settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
-    receipt.value.receiptItems!.unshift(receiptItem)
+    receipt.value.receiptItemList!.unshift(receiptItem)
   } else {
-    const exist = receipt.value.receiptItems?.find((i) => {
+    const exist = receipt.value.receiptItemList?.find((i) => {
       return i.batchId === receiptItem.batchId
     })
     if (exist) {
       exist.quantity += ri.quantity
     } else {
-      receipt.value.receiptItems!.unshift(receiptItem)
+      receipt.value.receiptItemList!.unshift(receiptItem)
     }
   }
 }
@@ -218,7 +219,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
 </script>
 
 <template>
-  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="createDistributor" />
+  <ModalDistributorUpsert ref="modalDistributorUpsert" @success="handleUpsertDistributorSuccess" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
@@ -248,29 +249,24 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="flex flex-wrap gap-4">
       <div style="flex-basis: 600px; flex-grow: 2">
         <div class="bg-white p-4">
-          <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
-        </div>
-        <div class="mt-4 bg-white p-4">
-          <ReceiptItemTable />
-        </div>
-      </div>
-      <form ref="receiptUpsertForm" style="flex-basis: 300px; flex-grow: 1">
-        <div class="bg-white p-4">
-          <div class="flex justify-between">
-            <div>
-              Tên NCC (nợ cũ:
+          <div class="flex gap-1 flex-wrap">
+            <span>Tên NCC</span>
+            <a v-if="!!distributor.id" @click="openModalDistributorDetail(receipt.distributor)">
+              <FileSearchOutlined />
+            </a>
+            <span>
+              (nợ cũ:
               <b>{{ formatMoney(distributor.debt) }}</b>
               )
+            </span>
+            <a
+              v-if="permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] && distributor.id"
+              @click="modalDistributorUpsert?.openModal(distributor.id)">
+              Sửa thông tin NCC
+            </a>
+            <div class="ml-auto">
               <a
-                v-if="!!distributor.id"
-                class="ml-1"
-                @click="openModalDistributorDetail(receipt.distributor)">
-                <FileSearchOutlined />
-              </a>
-            </div>
-            <div>
-              <a
-                v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
+                v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE] && !distributor.id"
                 @click="modalDistributorUpsert?.openModal()">
                 Thêm NCC mới
               </a>
@@ -283,7 +279,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
               :options="distributorOptions"
               :max-height="260"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-              :disabled="mode === EReceiptUpsertMode.UPDATE"
+              :disabled="mode === EReceiptUpsertMode.UPDATE || !!receipt.receiptItemList?.length"
               required
               @onFocusinFirst="handleFocusFirstSearchDistributor"
               @onFocusin="handleFocusSearchDistributor"
@@ -299,8 +295,15 @@ const openModalDistributorDetail = (data?: Distributor) => {
             </InputOptions>
           </div>
         </div>
-
-        <div class="mt-4 p-4 bg-white">
+        <div class="bg-white px-4 pb-4">
+          <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
+        </div>
+        <div class="mt-4 bg-white p-4">
+          <ReceiptItemTable />
+        </div>
+      </div>
+      <form ref="receiptUpsertForm" style="flex-basis: 300px; flex-grow: 1">
+        <div class="p-4 bg-white">
           <div>Thông tin thanh toán</div>
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">

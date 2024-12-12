@@ -13,7 +13,6 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
-        // radiologyMoney: ticket.radiologyMoney,
         itemsActualMoney: ticket.itemsActualMoney,
         itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
@@ -30,9 +29,10 @@ export class TicketOrderApi {
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         unitRate: i.unitRate,
         quantity: i.quantity,
-        costAmount: i.costAmount,
+        costPrice: i.costPrice,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -63,8 +63,8 @@ export class TicketOrderApi {
         return { key: i.key, value: i.value }
       }),
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any }>
-    return Ticket.from(data.ticketBasic)
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 
   static async updateDraftApproved(options: { ticketId: number; ticket: Ticket }) {
@@ -74,7 +74,6 @@ export class TicketOrderApi {
         totalCostAmount: ticket.totalCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
-        // radiologyMoney: ticket.radiologyMoney,
         itemsActualMoney: ticket.itemsActualMoney,
         itemsDiscount: ticket.itemsDiscount,
         discountMoney: ticket.discountMoney,
@@ -91,9 +90,10 @@ export class TicketOrderApi {
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         unitRate: i.unitRate,
         quantity: i.quantity,
-        costAmount: i.costAmount,
+        costPrice: i.costPrice,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -124,8 +124,8 @@ export class TicketOrderApi {
         return { key: i.key, value: i.value }
       }),
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any }>
-    return Ticket.from(data.ticketBasic)
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 
   static async createDebtSuccess(options: { ticket: Ticket }) {
@@ -153,9 +153,10 @@ export class TicketOrderApi {
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         unitRate: i.unitRate,
         quantity: i.quantity,
-        costAmount: i.costAmount,
+        costPrice: i.costPrice,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -186,8 +187,8 @@ export class TicketOrderApi {
         return { key: i.key, value: i.value }
       }),
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any }>
-    return Ticket.from(data.ticketBasic)
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 
   static async updateDebtSuccess(options: { ticketId: number; ticket: Ticket }) {
@@ -215,9 +216,10 @@ export class TicketOrderApi {
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
         productId: i.productId,
         batchId: i.batchId,
+        warehouseId: i.warehouseId,
         unitRate: i.unitRate,
         quantity: i.quantity,
-        costAmount: i.costAmount,
+        costPrice: i.costPrice,
         expectedPrice: i.expectedPrice,
         discountMoney: i.discountMoney,
         discountPercent: i.discountPercent,
@@ -248,8 +250,8 @@ export class TicketOrderApi {
         return { key: i.key, value: i.value }
       }),
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any }>
-    return Ticket.from(data.ticketBasic)
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 
   static async prepayment(options: { ticketId: number; money: number }) {
@@ -257,9 +259,9 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/prepayment`, {
       money,
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: CustomerPayment.from(data.customerPayment),
     }
   }
@@ -271,12 +273,12 @@ export class TicketOrderApi {
       { money }
     )
     const { data } = response.data as BaseResponse<{
-      ticketBasic: any
+      ticket: any
       ticketProductList: any[]
       customerPayment?: any
     }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       ticketProductList: TicketProduct.fromList(data.ticketProductList),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
@@ -287,9 +289,9 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/payment-and-close`, {
       money,
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
   }
@@ -300,12 +302,12 @@ export class TicketOrderApi {
       money,
     })
     const { data } = response.data as BaseResponse<{
-      ticketBasic: any
+      ticket: any
 
       customerPayment: any
     }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: CustomerPayment.from(data.customerPayment),
     }
   }
@@ -314,12 +316,12 @@ export class TicketOrderApi {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/send-product`)
     const { data } = response.data as BaseResponse<{
-      ticketBasic: any
+      ticket: any
       ticketProductList: any[]
       customerPayment: any
     }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       ticketProductList: TicketProduct.fromList(data.ticketProductList),
     }
   }
@@ -329,7 +331,6 @@ export class TicketOrderApi {
     ticketProductReturnList: {
       ticketProductId: number
       quantityReturn: number
-      costAmountReturn: number
     }[]
     ticketProcedureReturnList: {
       ticketProcedureId: number
@@ -356,7 +357,6 @@ export class TicketOrderApi {
       ticketProductReturnList: options.ticketProductReturnList.map((i) => ({
         ticketProductId: i.ticketProductId,
         quantityReturn: i.quantityReturn,
-        costAmountReturn: i.costAmountReturn,
       })),
       ticketProcedureReturnList: options.ticketProcedureReturnList.map((i) => ({
         ticketProcedureId: i.ticketProcedureId,
@@ -379,13 +379,13 @@ export class TicketOrderApi {
       debtUpdate: options.debtUpdate,
     })
     const { data } = response.data as BaseResponse<{
-      ticketBasic: any
+      ticket: any
       ticketProductList: any[]
       ticketProcedureList: any[]
       customerPayment?: any
     }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
   }
@@ -395,9 +395,9 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/pay-debt`, {
       money,
     })
-    const { data } = response.data as BaseResponse<{ ticketBasic: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: CustomerPayment.from(data.customerPayment),
     }
   }
@@ -406,12 +406,12 @@ export class TicketOrderApi {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/cancel`)
     const { data } = response.data as BaseResponse<{
-      ticketBasic: any
+      ticket: any
       customerPayment: any
       customer: any
     }>
     return {
-      ticketBasic: Ticket.from(data.ticketBasic),
+      ticket: Ticket.from(data.ticket),
       customerPayment: data.customerPayment ? CustomerPayment.from(data.customerPayment) : null,
     }
   }

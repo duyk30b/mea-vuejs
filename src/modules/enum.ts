@@ -35,9 +35,10 @@ export enum PaymentType {
 
 export type UnitType = { name: string; rate: number; default?: boolean }
 
-export enum VoucherType {
+export enum MovementType {
   Receipt = 1,
   Ticket = 2,
+  UserChange = 3,
 }
 
 export enum DeliveryStatus {

@@ -6,7 +6,7 @@ import { ProcedureGroup } from './procedure-group.model'
 export class ProcedureGroupService {
   static loadedAll: boolean = false
 
-  static procedureGroupAll: ProcedureGroup[]
+  static procedureGroupAll: ProcedureGroup[] = []
   static procedureGroupMap: Record<string, ProcedureGroup> = {}
 
   private static async getAll() {

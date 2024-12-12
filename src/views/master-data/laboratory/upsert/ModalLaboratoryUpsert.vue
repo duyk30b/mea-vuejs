@@ -171,8 +171,10 @@ const clickDelete = () => {
           ModalStore.alert({
             title: 'Không thể xóa xét nghiệm khi đã được chỉ định',
             content: [
-              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám trước',
-              `Hiện tại đang có ${response.data.countTicketLaboratory} phiếu khám sử dụng xét nghiệm này`,
+              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu khám liên quan trước',
+              `Phiếu khám liên quan: ${response.data.ticketLaboratoryList
+                .map((i) => i.ticketId)
+                .join(', ')}`,
             ],
           })
         }
@@ -241,9 +243,6 @@ defineExpose({ openModal })
             <div>
               <VueSelect
                 v-model:value="laboratory.valueType"
-                :disabled="
-                  !!laboratory.id && laboratoryRoot?.valueType === LaboratoryValueType.Children
-                "
                 :options="[
                   {
                     value: LaboratoryValueType.Number,
