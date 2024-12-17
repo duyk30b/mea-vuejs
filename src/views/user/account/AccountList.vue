@@ -6,13 +6,13 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { UserApi, type User } from '../../modules/user'
-import ModalUserUpsert from './ModalUserUpsert.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { UserApi, type User } from '../../../modules/user'
+import ModalAccountUpsert from './ModalAccountUpsert.vue'
 
-const modalUserUpsert = ref<InstanceType<typeof ModalUserUpsert>>()
+const modalAccountUpsert = ref<InstanceType<typeof ModalAccountUpsert>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -60,7 +60,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalUserUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE' | 'DELETE') => {
+const handleModalAccountUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE' | 'DELETE') => {
   await startFetchData()
 }
 
@@ -71,7 +71,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
 </script>
 
 <template>
-  <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
+  <ModalAccountUpsert ref="modalAccountUpsert" @success="handleModalAccountUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
@@ -82,7 +82,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
         v-if="permissionIdMap[PermissionId.USER_CREATE]"
         color="blue"
         icon="plus"
-        @click="modalUserUpsert?.openModal()">
+        @click="modalAccountUpsert?.openModal()">
         Thêm mới
       </VueButton>
     </div>
@@ -162,7 +162,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalUserUpsert?.openModal(user.id)">
+                @click="modalAccountUpsert?.openModal(user.id)">
                 <FormOutlined />
               </a>
             </td>

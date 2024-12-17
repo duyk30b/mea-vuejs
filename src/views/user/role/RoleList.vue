@@ -6,10 +6,10 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { RoleApi, type Role } from '../../modules/role'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { RoleApi, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -81,7 +81,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Tên</th>
+            <th>Tên vai trò</th>
+            <th>Tên hiển thị</th>
             <th>Trạng thái</th>
             <th v-if="permissionIdMap[PermissionId.ROLE_UPDATE]">Sửa</th>
           </tr>
@@ -93,6 +94,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           <tr v-for="(role, index) in roleList" :key="index">
             <td class="text-center">R{{ role.id }}</td>
             <td>{{ role.name }}</td>
+            <td>{{ role.displayName }}</td>
             <td class="text-center">
               <a-tag v-if="role.isActive" color="success">
                 <template #icon>

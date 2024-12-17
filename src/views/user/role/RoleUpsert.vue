@@ -2,13 +2,14 @@
 import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../common/VueButton.vue'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputText } from '../../common/vue-form'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { usePermissionStore } from '../../modules/permission/permission.store'
-import { Role, RoleApi } from '../../modules/role'
-import { useMeStore } from '../../modules/_me/me.store'
+import VueButton from '../../../common/VueButton.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputText } from '../../../common/vue-form'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { usePermissionStore } from '../../../modules/permission/permission.store'
+import { Role, RoleService } from '../../../modules/role'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 
 const settingStore = useSettingStore()
 const permissionStore = usePermissionStore()
@@ -33,7 +34,7 @@ const treeSelectRole = computed(() => {
 
 const startFetchData = async (roleId: number) => {
   try {
-    const rootRole = await RoleApi.detail(roleId)
+    const rootRole = await RoleService.detail(roleId, {})
     role.value = rootRole
     permissionIds.value = JSON.parse(rootRole.permissionIds || '[]')
   } catch (error) {
@@ -56,9 +57,9 @@ const handleSave = async () => {
     permissionIds.value.sort()
     role.value.permissionIds = JSON.stringify(permissionIds.value)
     if (!role.value.id) {
-      await RoleApi.createOne(role.value)
+      await RoleService.createOne(role.value)
     } else {
-      await RoleApi.updateOne(role.value.id, role.value)
+      await RoleService.updateOne(role.value.id, role.value)
       AlertStore.addSuccess('Cập nhật vai trò thành công')
     }
     router.push({ name: 'RoleList' })
@@ -67,6 +68,21 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const clickDelete = () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa vai trò này',
+    content: 'Vai trò đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        await RoleService.destroyOne(role.value.id)
+        router.push({ name: 'RoleList' })
+      } catch (error) {
+        console.log('🚀 ~ file: RoleUpsert.vue:82 ~ onOk ~ error:', error)
+      }
+    },
+  })
 }
 </script>
 
@@ -83,6 +99,10 @@ const handleSave = async () => {
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Tên vai trò</div>
         <InputText v-model:value="role.name" required />
+      </div>
+      <div class="flex mt-4" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Tên hiển thị</div>
+        <InputText v-model:value="role.displayName" required />
       </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>
@@ -108,8 +128,11 @@ const handleSave = async () => {
         :height="500"
         :tree-data="treeSelectRole"></a-tree>
     </div>
-    <div class="mt-8">
-      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
+    <div class="mt-8 flex gap-4">
+      <VueButton color="red" type="button" @click="clickDelete">Xóa</VueButton>
+      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save" class="ml-auto">
+        Lưu lại
+      </VueButton>
     </div>
   </form>
 </template>

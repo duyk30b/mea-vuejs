@@ -150,10 +150,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryList">
         <router-link :to="{ name: 'LaboratoryList' }">Xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryKitList">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        key="LaboratoryKitList">
         <router-link :to="{ name: 'LaboratoryKitList' }">Bộ xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]" key="PrescriptionSampleList">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+        key="PrescriptionSampleList">
         <router-link :to="{ name: 'PrescriptionSampleList' }">Đơn thuốc mẫu</router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
@@ -201,7 +205,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </a-sub-menu>
     <a-sub-menu
       v-if="permissionIdMap[PermissionId.ROLE_READ] || permissionIdMap[PermissionId.USER_READ]"
-      key="Account">
+      key="User">
       <template #icon>
         <TeamOutlined />
       </template>
@@ -209,8 +213,11 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.ROLE_READ]" key="Role">
         <router-link :to="{ name: 'Role' }">Vai trò</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.USER_READ]" key="User">
-        <router-link :to="{ name: 'User' }">Tài khoản</router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.USER_READ]" key="Account">
+        <router-link :to="{ name: 'Account' }">Tài khoản</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.ROLE_READ]" key="RoleCommission">
+        <router-link :to="{ name: 'RoleCommission' }">Vị trí & Hoa hồng</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">

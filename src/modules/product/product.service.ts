@@ -1,8 +1,10 @@
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { arrayToKeyArray } from '../../utils'
 import { useMeStore } from '../_me/me.store'
+import { AuthService } from '../auth/auth.service'
 import { Batch } from '../batch'
 import { ProductApi } from './product.api'
 import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
@@ -10,32 +12,39 @@ import { Product } from './product.model'
 
 export class ProductService {
   static async refreshDB() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
-    if (!refreshTime) {
-      refreshTime = { code: 'PRODUCT', dataVersion: 0, time: new Date(0).toISOString() }
+    try {
+      let refreshTime = await RefreshTimeDB.findOneByCode('PRODUCT')
+      if (!refreshTime) {
+        refreshTime = { code: 'PRODUCT', dataVersion: 0, time: new Date(0).toISOString() }
+      }
+      const dataVersion = useMeStore().organization.dataVersionParse.product
+
+      let apiResponse: { time: Date; data: Product[] }
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        await ProductDB.truncate()
+        apiResponse = await ProductApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await ProductApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
+      }
+
+      if (apiResponse.data.length) {
+        await ProductDB.upsertMany(apiResponse.data)
+        refreshTime.time = apiResponse.time.toISOString()
+        refreshTime.dataVersion = dataVersion
+        await RefreshTimeDB.upsertOne(refreshTime)
+      }
+
+      return { numberChange: apiResponse.data.length }
+    } catch (error: any) {
+      console.log('🚀 ~ file: product.service.ts:43 ~ ProductService ~ refreshDB ~ error:', error)
+      AlertStore.add({ type: 'error', message: error.message })
+      AuthService.logout()
+      return
     }
-    const dataVersion = useMeStore().organization.dataVersionParse.product
-
-    let apiResponse: { time: Date; data: Product[] }
-
-    if (refreshTime.dataVersion !== dataVersion) {
-      await ProductDB.truncate()
-      apiResponse = await ProductApi.list({})
-    } else {
-      const lastTime = new Date(refreshTime.time)
-      apiResponse = await ProductApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-    }
-
-    if (apiResponse.data.length) {
-      await ProductDB.upsertMany(apiResponse.data)
-      refreshTime.time = apiResponse.time.toISOString()
-      refreshTime.dataVersion = dataVersion
-      await RefreshTimeDB.upsertOne(refreshTime)
-    }
-
-    return { numberChange: apiResponse.data.length }
   }
 
   static async pagination(params: ProductPaginationQuery) {

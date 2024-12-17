@@ -172,15 +172,10 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    const { numberChange } = await ProductService.refreshDB()
-    await BatchService.refreshDB()
-    if (numberChange) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    console.log('🚀 ~ file: ProductList.vue:102 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
+  const productRefresh = await ProductService.refreshDB()
+  await BatchService.refreshDB()
+  if (productRefresh?.numberChange) {
+    await startFetchData()
   }
 })
 

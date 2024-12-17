@@ -59,11 +59,7 @@ onMounted(async () => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicConsumable.vue:69  ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {

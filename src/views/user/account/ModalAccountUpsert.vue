@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
-import { CheckboxList, InputDate, InputText } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../common/vue-modal/vue-modal.store'
-import { RoleApi, type Role } from '../../modules/role'
-import { User, UserApi } from '../../modules/user'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { CheckboxList, InputDate, InputText } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { RoleApi } from '../../../modules/role'
+import { User, UserService } from '../../../modules/user'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
@@ -23,7 +23,7 @@ const openModal = async (userId?: number) => {
   showModal.value = true
   try {
     const [userData, roleList] = await Promise.all([
-      userId ? UserApi.detail(userId, { relation: { userRoleList: true } }) : User.blank(),
+      userId ? UserService.detail(userId, { relation: { userRoleList: true } }) : User.blank(),
       RoleApi.list({}),
     ])
     user.value = User.from(userData)
@@ -45,10 +45,10 @@ const handleSave = async () => {
   try {
     roleIdList.value.sort((a, b) => (a > b ? 1 : -1))
     if (!user.value.id) {
-      const response = await UserApi.createOne(user.value, roleIdList.value)
+      const response = await UserService.createOne(user.value, roleIdList.value)
       emit('success', response, 'CREATE')
     } else {
-      const response = await UserApi.updateOne(user.value.id, user.value, roleIdList.value)
+      const response = await UserService.updateOne(user.value.id, user.value, roleIdList.value)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false

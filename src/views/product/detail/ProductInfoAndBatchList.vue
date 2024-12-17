@@ -86,75 +86,73 @@ const closeExpiryDate = computed(() => {
     v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
     ref="modalBatchUpdate"
     @success="handleModalBatchUpdateSuccess" />
-  <div class="mt-4">
-    <div class="flex flex-wrap">
-      <div style="flex-basis: 45%; flex: 1; min-width: 300px">
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-            SP{{ product.id }}
-          </div>
-        </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Tên sản phẩm</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-            {{ product.brandName }}
-          </div>
-        </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
-        </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Số lượng</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-            <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
-            {{ product.unitDefaultName }}
-            <span v-if="product.unitDefaultRate != 1" class="ml-2">
-              (
-              <b>{{ product.quantity }}</b>
-              {{ product.unitBasicName }})
-            </span>
-          </div>
-        </div>
-        <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Giá bán sỉ</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-            <b>{{ formatMoney(product.unitWholesalePrice) }}</b>
-            / {{ product.unitDefaultName }}
-          </div>
-        </div>
-        <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Giá bán lẻ</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-            <b>{{ formatMoney(product.unitRetailPrice) }}</b>
-            / {{ product.unitDefaultName }}
-          </div>
+  <div class="mt-4 flex flex-wrap">
+    <div style="flex-basis: 45%; flex: 1; min-width: 300px">
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
+          SP{{ product.id }}
         </div>
       </div>
-      <div style="flex-basis: 45%; flex: 1; min-width: 300px">
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Nhóm</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-            {{ product.productGroup?.name }}
-          </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Tên sản phẩm</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
+          {{ product.brandName }}
         </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ unitString(product) }}</div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Số lượng</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
+          {{ product.unitDefaultName }}
+          <span v-if="product.unitDefaultRate != 1" class="ml-2">
+            (
+            <b>{{ product.quantity }}</b>
+            {{ product.unitBasicName }})
+          </span>
         </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Đường dùng</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.route }}</div>
+      </div>
+      <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Giá bán sỉ</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          <b>{{ formatMoney(product.unitWholesalePrice) }}</b>
+          / {{ product.unitDefaultName }}
         </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Nguồn gốc</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.source }}</div>
+      </div>
+      <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Giá bán lẻ</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          <b>{{ formatMoney(product.unitRetailPrice) }}</b>
+          / {{ product.unitDefaultName }}
         </div>
-        <div class="my-2 flex gap-4">
-          <div style="width: 100px; flex-shrink: 0">Gợi ý cách dùng</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.hintUsage }}</div>
+      </div>
+    </div>
+    <div style="flex-basis: 45%; flex: 1; min-width: 300px">
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Nhóm</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          {{ product.productGroup?.name }}
         </div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ unitString(product) }}</div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Đường dùng</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.route }}</div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Nguồn gốc</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.source }}</div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Gợi ý cách dùng</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.hintUsage }}</div>
       </div>
     </div>
   </div>

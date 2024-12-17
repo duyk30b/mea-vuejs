@@ -27,6 +27,14 @@ import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
+import {
+  RoleCommission,
+  RoleCommissionService,
+  RoleInteractType,
+  RoleScreenType,
+} from '../../../modules/role-commission'
+import { Role, RoleService } from '../../../modules/role'
+import { User, UserService } from '../../../modules/user'
 
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -52,6 +60,9 @@ const customer = ref<Customer>(Customer.blank())
 const ticketRegister = ref<Ticket>(Ticket.blank())
 const fromAppointmentId = ref(0)
 const ticketAttributeMap = ref<TicketAttributeMap>({})
+const roleCommissionList = ref<RoleCommission[]>([])
+const userList = ref<User[]>([])
+const roleMap = ref<Record<string, Role>>({})
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -69,12 +80,39 @@ const openModal = async (ticketStatus: TicketStatus) => {
 
   if (firstLoad) {
     firstLoad = false
-    await CustomerService.refreshDB()
+    CustomerService.refreshDB()
+    RoleCommissionService.list({})
+      .then((result) => (roleCommissionList.value = result))
+      .catch((e) => {
+        console.log('🚀 ~ file: ModalTicketClinicCreate.vue RoleCommissionService ~ e:', e)
+      })
+
+    RoleService.getMap()
+      .then((result) => (roleMap.value = result))
+      .catch((e) => {
+        console.log('🚀 ~ file: ModalTicketClinicCreate.vue~ RoleService ~ e:', e)
+      })
+
+    UserService.list({})
+      .then((result) => (userList.value = result))
+      .catch((e) => {
+        console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ UserService ~ e:', e)
+      })
+
     if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
-      customerSourceAll.value = await CustomerSourceService.list({})
+      CustomerSourceService.list({})
+        .then((result) => (customerSourceAll.value = result))
+        .catch((e) => {
+          console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ CustomerSourceService ~ e:', e)
+        })
     }
+
     if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
-      provinceList.value = await AddressInstance.getAllProvinces()
+      AddressInstance.getAllProvinces()
+        .then((result) => (provinceList.value = result))
+        .catch((e) => {
+          console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ AddressInstance ~ e:', e)
+        })
     }
   }
 }
@@ -633,6 +671,23 @@ defineExpose({ openModal })
           <div>Lý do khám</div>
           <div>
             <InputText v-model:value="ticketAttributeMap.reason" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2" style="flex-basis: 90%; flex: 1; min-width: 600px">
+          <div
+            v-for="(roleCommission, index) in roleCommissionList"
+            :key="index"
+            style="flex-basis: 45%; flex: 1; min-width: 300px">
+            <div>{{ roleMap[roleCommission.roleId]?.displayName }}</div>
+            <div>
+              <InputText
+                v-model:value="customer.phone"
+                :disabled="!!customer.id"
+                pattern="[0][356789][0-9]{8}"
+                title="Định dạng số điện thoại không đúng"
+                @update:value="(e) => (customer.phone = e.replace(/ /g, ''))" />
+            </div>
           </div>
         </div>
       </div>

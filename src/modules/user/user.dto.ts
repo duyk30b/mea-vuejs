@@ -18,8 +18,6 @@ export class UserGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    phone?: 'ASC' | 'DESC'
-    username?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<UserGetQuery>) {

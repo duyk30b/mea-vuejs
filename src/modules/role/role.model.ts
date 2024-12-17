@@ -1,6 +1,7 @@
 export class Role {
   id: number
   name: string
+  displayName: string
   permissionIds: string
   isActive: 0 | 1
   updatedAt: number

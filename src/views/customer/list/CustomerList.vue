@@ -78,13 +78,9 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    const { numberChange } = await CustomerService.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (numberChange > 0) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
+  const { numberChange } = await CustomerService.refreshDB() // reload nếu có dữ liệu mới nhất
+  if (numberChange > 0) {
+    await startFetchData()
   }
 })
 
@@ -154,9 +150,7 @@ const downloadExcelCustomerList = async () => {
 <template>
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
-  <ModalCustomerPayDebt
-    ref="modalCustomerPayDebt"
-    @success="handleModalCustomerPayDebtSuccess" />
+  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
   <ModalCustomerListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen" />
