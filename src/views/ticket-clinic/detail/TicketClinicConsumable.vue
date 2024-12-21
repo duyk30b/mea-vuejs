@@ -128,11 +128,18 @@ const selectProduct = async (instance?: Product) => {
     ticketProductConsumable.value = temp
 
     const warehouseIdAcceptList = settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
+    let canGetWarehouse = false
+    if (!warehouseIdAcceptList.length) canGetWarehouse = true
+    else if (warehouseIdAcceptList.includes(0)) canGetWarehouse = true
+
     const batchListResponse = await BatchService.list({
       filter: {
         productId: instance.id,
         quantity: { NOT: 0 },
-        $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+        $OR: [
+          { warehouseId: { EQUAL: 0 } },
+          { warehouseId: canGetWarehouse ? undefined : { IN: warehouseIdAcceptList } },
+        ],
       },
     })
     batchListResponse.forEach((i) => (i.product = instance))
