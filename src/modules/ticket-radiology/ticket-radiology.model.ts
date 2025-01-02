@@ -12,6 +12,7 @@ export enum TicketRadiologyStatus {
 }
 export class TicketRadiology {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   radiologyId: number

@@ -68,7 +68,7 @@ const selectCustomer = (data?: Customer) => {
   ticketClinicRef.value.ticketAttributeMap!.healthHistory = data?.healthHistory || ''
 }
 
-const createCustomer = (instance?: Customer) => {
+const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
     text: instance?.fullName,
     data: instance,
@@ -96,31 +96,29 @@ const handleClickModalRegisterAppointment = () => {
 }
 </script>
 <template>
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
   <ModalTicketClinicRegisterAppointment ref="modalTicketClinicRegisterAppointment" />
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <div class="bg-white p-4">
     <div class="">
       <div class="flex justify-between">
-        <span>
-          Tên KH (nợ cũ:
-          <b>{{ formatMoney(ticketClinicRef.customer?.debt || 0) }}</b>
-          )
-          <a
-            v-if="ticketClinicRef.customerId"
-            class="ml-1"
-            @click="modalCustomerDetail?.openModal(ticketClinicRef.customer!)">
-            <IconFileSearch />
-          </a>
-        </span>
-        <span>
-          <a
-            v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-            @click="modalCustomerUpsert?.openModal()">
-            Thêm KH mới
-          </a>
-        </span>
+        <div>
+          <span>Tên KH</span>
+          <span v-if="ticketClinicRef.customer!.id" class="ml-1">
+            <a @click="modalCustomerDetail?.openModal(ticketClinicRef.customerId)">
+              <IconFileSearch />
+            </a>
+            (nợ cũ:
+            <b>{{ formatMoney(ticketClinicRef.customer?.debt || 0) }}</b>
+            )
+          </span>
+        </div>
+        <a
+          v-if="ticketClinicRef.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+          @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)">
+          Sửa thông tin khách hàng
+        </a>
       </div>
       <div style="height: 40px">
         <InputOptions

@@ -64,6 +64,16 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       hasManageQuantity: product.hasManageQuantity,
       isActive: product.isActive,
+
+      commissionList: (product.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ product: any }>
     return Product.from(data.product)
@@ -85,6 +95,16 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       hasManageQuantity: product.hasManageQuantity,
       isActive: product.isActive,
+
+      commissionList: (product.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const result = response.data as BaseResponse<{ product: any; batchError: any[] }>
     if (result.success) {

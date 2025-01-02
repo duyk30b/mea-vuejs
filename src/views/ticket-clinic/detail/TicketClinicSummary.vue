@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { FileSyncOutlined, MoreOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDollar, IconFileSearch } from '../../../common/icon'
 import { IconDelete } from '../../../common/icon-google'
@@ -13,6 +14,7 @@ import { DeliveryStatus, DiscountType, PaymentViewType } from '../../../modules/
 import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
+import { Procedure, ProcedureService } from '../../../modules/procedure'
 import { TicketStatus } from '../../../modules/ticket'
 import {
   TicketClinicApi,
@@ -29,7 +31,7 @@ import ModalRadiologyDetail from '../../master-data/radiology/detail/ModalRadiol
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from './modal/ModalTicketClinicReturnProduct.vue'
-import { useRoute, useRouter } from 'vue-router'
+import { Radiology, RadiologyService } from '../../../modules/radiology'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
@@ -45,7 +47,9 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
 
+const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
+const radiologyMap = ref<Record<string, Radiology>>({})
 
 const ticketProductConsumableList = ref<TicketProduct[]>([])
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
@@ -64,7 +68,14 @@ const sendProductLoading = ref(false)
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicSummary.vue:46 ~ onMounted')
-  laboratoryMap.value = await LaboratoryService.getMap()
+  const fetchData = await Promise.all([
+    ProcedureService.getMap(),
+    LaboratoryService.getMap(),
+    RadiologyService.getMap(),
+  ])
+  procedureMap.value = fetchData[0]
+  laboratoryMap.value = fetchData[1]
+  radiologyMap.value = fetchData[2]
 })
 
 watchEffect(() => {
@@ -244,17 +255,8 @@ const disabledSave = computed(() => {
     ticketDiscount.discountPercent !== ticketClinicRef.value.discountPercent ||
     ticketDiscount.discountType !== ticketClinicRef.value.discountType
   ) {
-    console.log(
-      '🚀 ~ file: TicketClinicSummary.vue:248 ~ disabledSave ~ ticketClinicRef:',
-      ticketClinicRef
-    )
-    console.log(
-      '🚀 ~ file: TicketClinicSummary.vue:248 ~ disabledSave ~ ticketDiscount:',
-      ticketDiscount
-    )
     return false
   }
-  console.log('🚀 ~ file: TicketClinicSummary.vue:252 ~ disabledSave ~ 7:', true)
   return true
 })
 
@@ -1072,10 +1074,12 @@ const startPrint = async () => {
             </td>
             <td colspan="3">
               <div class="flex items-center gap-1">
-                <span>{{ ticketProcedure.procedure?.name }}</span>
+                <span>{{ procedureMap[ticketProcedure.procedureId]?.name }}</span>
                 <a
                   style="line-height: 0"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)">
+                  @click="
+                    modalProcedureDetail?.openModal(procedureMap[ticketProcedure.procedureId])
+                  ">
                   <IconFileSearch />
                 </a>
               </div>
@@ -1288,10 +1292,12 @@ const startPrint = async () => {
             </td>
             <td colspan="4">
               <div class="flex items-center gap-1">
-                <span>{{ ticketRadiology.radiology?.name }}</span>
+                <span>{{ radiologyMap[ticketRadiology.radiologyId]?.name }}</span>
                 <a
                   style="line-height: 0"
-                  @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)">
+                  @click="
+                    modalRadiologyDetail?.openModal(radiologyMap[ticketRadiology.radiologyId])
+                  ">
                   <IconFileSearch />
                 </a>
                 <a-tag

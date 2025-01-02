@@ -11,6 +11,7 @@ export enum TicketLaboratoryStatus {
 }
 export class TicketLaboratory {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   laboratoryId: number

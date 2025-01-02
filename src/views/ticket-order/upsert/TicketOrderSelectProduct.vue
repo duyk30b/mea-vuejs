@@ -49,11 +49,7 @@ onMounted(async () => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketOrderSelectProduct.vue:56 ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {
@@ -113,7 +109,6 @@ const selectProduct = async (instance?: Product) => {
   tp.discountMoney = 0
   tp.actualPrice = instance.retailPrice
   tp.hintUsage = instance?.hintUsage || ''
-  
 
   if (!instance.hasManageQuantity) {
     tp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
@@ -533,7 +528,7 @@ defineExpose({ focus })
       </div>
     </div>
 
-    <div class="grow basis-[90%] flex justify-center">
+    <div style="flex-grow: 1; flex-basis: 80%" class="flex justify-center">
       <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>

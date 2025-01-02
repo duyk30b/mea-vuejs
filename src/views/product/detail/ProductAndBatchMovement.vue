@@ -173,7 +173,9 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               { value: 0, text: 'Tất cả' },
               ...batchList.map((i) => ({
                 value: i.id,
-                text: `Lô ${timeToText(i.expiryDate)} - (${i.quantity} ${product.unitBasicName})`,
+                text: `B${i.id} - Lô ${timeToText(i.expiryDate)} - (${i.quantity} ${
+                  product.unitBasicName
+                })`,
               })),
             ]"
             :maxHeight="260"

@@ -75,7 +75,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal v-model:show="showModal" style="margin-top: 100px">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">Cài đặt dữ liệu</div>
@@ -153,5 +153,4 @@ defineExpose({ openModal })
   </VueModal>
 </template>
 
-<style lang="scss">
-</style>
+<style lang="scss"></style>

@@ -142,6 +142,13 @@ export const ticketRouter: RouteRecordRaw[] = [
                 meta: { keepAlive: true, title: 'Kê đơn thuốc' },
               },
               {
+                path: 'user-commission',
+                name: 'TicketClinicUserCommission',
+                component: () =>
+                  import('../views/ticket-clinic/detail/TicketClinicUserCommission.vue'),
+                meta: { title: 'Nhân viên và hoa hồng' },
+              },
+              {
                 path: 'summary',
                 name: 'TicketClinicSummary',
                 component: () => import('../views/ticket-clinic/detail/TicketClinicSummary.vue'),

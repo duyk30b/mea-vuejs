@@ -23,6 +23,7 @@ onBeforeMount(async () => {
     }
   } catch (error) {
     console.log('🚀 ~ file: AppContainer.vue:26 ~ onBeforeMount ~ error:', error)
+    await AuthService.logout()
   } finally {
     loaded.value = true
   }

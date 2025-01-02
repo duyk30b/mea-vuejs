@@ -115,10 +115,9 @@ export class Ticket {
 
   static blank(): Ticket {
     const ins = Ticket.init()
-    // ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
+    ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
     ins.customerPaymentList = []
     ins.ticketAttributeList = []
-    ins.ticketAttributeMap = {}
     ins.ticketProcedureList = []
     ins.ticketProductList = []
     ins.ticketRadiologyList = []
@@ -127,6 +126,7 @@ export class Ticket {
     ins.ticketExpenseList = [TicketExpense.init()]
     ins.imageList = []
 
+    ins.ticketAttributeMap = {}
     return ins
   }
 
@@ -164,6 +164,9 @@ export class Ticket {
     if (target.ticketAttributeList) {
       target.ticketAttributeList = TicketAttribute.basicList(target.ticketAttributeList)
       target.ticketAttributeMap = TicketAttribute.basicMap(target.ticketAttributeList)
+    }
+    if (target.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
     }
 
     if (target.customerPaymentList) {
@@ -203,9 +206,7 @@ export class Ticket {
     if (target.ticketRadiologyList) {
       target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
     }
-    if (target.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
-    }
+
     if (target.ticketSurchargeList) {
       target.ticketSurchargeList = TicketSurcharge.basicList(target.ticketSurchargeList)
     }

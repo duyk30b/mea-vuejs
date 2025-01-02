@@ -1,31 +1,26 @@
 <script setup lang="ts">
-import {
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  ShopOutlined,
-} from '@ant-design/icons-vue'
+import { ShopOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDownload, IconFileSearch, IconSetting, IconSort } from '../../../common/icon'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductApi, ProductService, type Product } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { DTimer, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
-import { Warehouse } from '../../../modules/warehouse'
-import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { Distributor, DistributorService } from '../../../modules/distributor'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
@@ -172,15 +167,10 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    const { numberChange } = await ProductService.refreshDB()
-    await BatchService.refreshDB()
-    if (numberChange) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    console.log('🚀 ~ file: ProductList.vue:102 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
+  const productRefresh = await ProductService.refreshDB()
+  await BatchService.refreshDB()
+  if (productRefresh?.numberChange) {
+    await startFetchData()
   }
 })
 
@@ -274,8 +264,10 @@ const closeExpiryDate = computed(() => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ShopOutlined />
-        Tồn kho
+        <div class="flex items-center gap-2">
+          <IconWarehouse />
+          Tồn kho
+        </div>
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
@@ -732,7 +724,7 @@ const closeExpiryDate = computed(() => {
                     style="color: #eca52b"
                     class="text-xl"
                     @click="modalProductUpsert?.openModal(product.id)">
-                    <FormOutlined />
+                    <IconEditSquare />
                   </a>
                 </td>
               </tr>
@@ -828,7 +820,7 @@ const closeExpiryDate = computed(() => {
                     style="color: #eca52b"
                     class="text-xl"
                     @click="modalProductUpsert?.openModal(product.id)">
-                    <FormOutlined />
+                    <IconEditSquare />
                   </a>
                 </td>
               </tr>
@@ -908,7 +900,7 @@ const closeExpiryDate = computed(() => {
                 style="color: #eca52b"
                 class="text-xl"
                 @click="modalProductUpsert?.openModal(batch.productId)">
-                <FormOutlined />
+                <IconEditSquare />
               </a>
             </td>
           </tr>

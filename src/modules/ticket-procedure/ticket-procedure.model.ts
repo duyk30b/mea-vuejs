@@ -5,6 +5,7 @@ import { Ticket } from '../ticket/ticket.model'
 
 export class TicketProcedure {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   procedureId: number
@@ -23,6 +24,7 @@ export class TicketProcedure {
   static init(): TicketProcedure {
     const ins = new TicketProcedure()
     ins.id = 0
+    ins.procedureId = 0
     ins.quantity = 0
     ins.expectedPrice = 0
     ins.discountMoney = 0

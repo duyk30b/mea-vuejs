@@ -269,9 +269,9 @@ export const settingDefault = {
 
   TICKET_CLINIC_LIST: {
     ticketType: TicketType.Clinic,
-    ticketStatus: TicketStatus.Executing,
     buttonShowModalCreate: true,
     buttonShowTicketDetailBlank: false,
+    roleIdList: [],
     birthday: false,
     phone: false,
     address: false,
@@ -280,6 +280,7 @@ export const settingDefault = {
     consumable: {
       warehouseIdList: [0],
     },
+    procedure: {},
     prescriptions: {
       warehouseIdList: [0],
     },
@@ -290,6 +291,7 @@ export const settingDefault = {
     },
   },
   TICKET_CLINIC_CREATE: {
+    ticketStatus: TicketStatus.Executing,
     birthday: true,
     gender: true,
     addressFull: false,
@@ -297,6 +299,7 @@ export const settingDefault = {
     relative: false,
     note: false,
     customerSource: false,
+    roleIdList: [],
     SCREEN: {
       modalStyle: 'margin-top: 100px; width: 800px',
       itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',

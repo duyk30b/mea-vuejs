@@ -1,5 +1,5 @@
-import type { Role } from '../role/role.model'
-import type { User } from '../user/user.model'
+import { Role } from '../role/role.model'
+import { User } from '../user/user.model'
 
 export class UserRole {
   oid: number
@@ -34,5 +34,21 @@ export class UserRole {
 
   static basicList(sources: UserRole[]): UserRole[] {
     return sources.map((i) => UserRole.basic(i))
+  }
+
+  static from(source: UserRole) {
+    const target = UserRole.basic(source)
+    if (Object.prototype.hasOwnProperty.call(source, 'user')) {
+      target.user = target.user ? User.basic(target.user) : target.user
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'role')) {
+      target.role = target.role ? Role.basic(target.role) : target.role
+    }
+
+    return target
+  }
+
+  static fromList(sourceList: UserRole[]) {
+    return sourceList.map((i) => UserRole.from(i))
   }
 }

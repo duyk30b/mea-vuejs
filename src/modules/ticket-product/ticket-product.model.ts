@@ -10,6 +10,7 @@ export enum TicketProductType {
 }
 export class TicketProduct {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   productId: number

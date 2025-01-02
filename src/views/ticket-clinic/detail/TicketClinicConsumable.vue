@@ -1,13 +1,10 @@
 <script lang="ts" setup>
 import {
-  DeleteOutlined,
-  FileSearchOutlined,
-  PlusOutlined,
-  ShoppingCartOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileSearch, IconTrash } from '../../../common/icon'
 import { InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -59,11 +56,7 @@ onMounted(async () => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicConsumable.vue:69  ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {
@@ -417,8 +410,8 @@ const openModalProductDetail = (product?: Product) => {
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
         "
         color="blue"
+        icon="plus"
         type="submit">
-        <PlusOutlined />
         Thêm vào danh sách
       </VueButton>
     </div>
@@ -484,7 +477,7 @@ const openModalProductDetail = (product?: Product) => {
               <div style="font-weight: 500">
                 {{ tpItem.product?.brandName }}
                 <a class="ml-1" @click="openModalProductDetail(tpItem.product!)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div class="text-xs">{{ tpItem.product?.substance }}</div>
@@ -534,7 +527,7 @@ const openModalProductDetail = (product?: Product) => {
                 v-if="tpItem.deliveryStatus === DeliveryStatus.Delivered && tpItem.quantity == 0"
                 class="text-red-500"
                 @click="destroyTicketProductZeroQuantity(tpItem.id)">
-                <DeleteOutlined />
+                <IconTrash />
               </a>
               <a
                 v-else-if="
@@ -547,7 +540,7 @@ const openModalProductDetail = (product?: Product) => {
                 "
                 class="text-red-500"
                 @click="ticketProductConsumableList!.splice(index, 1)">
-                <DeleteOutlined />
+                <IconTrash />
               </a>
               <a-tooltip v-else-if="tpItem.deliveryStatus === DeliveryStatus.Delivered">
                 <template #title>Đã xuất vật tư</template>

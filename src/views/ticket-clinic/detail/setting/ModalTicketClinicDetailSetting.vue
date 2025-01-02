@@ -11,11 +11,13 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
 import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
+import { RoleService } from '../../../../modules/role'
 import { TicketType } from '../../../../modules/ticket'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
-  DIAGNOSIS_EYE: 'DIAGNOSIS_EYE',
+  GENERAL: 'GENERAL',
+  DIAGNOSIS: 'DIAGNOSIS',
   CONSUMABLE: 'CONSUMABLE',
   PRESCRIPTION: 'PRESCRIPTION',
   INVOICE: 'INVOICE',
@@ -36,23 +38,33 @@ const printHtmlOptions = ref<{ value: number; text: string; data: PrintHtml }[]>
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref(TABS_KEY.PRESCRIPTION)
+const activeTab = ref(TABS_KEY.GENERAL)
 
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL))
 
-  const printHtmlAll = await PrintHtmlService.list({})
-  printHtmlOptions.value = [
-    { value: 0, text: 'Mặc định', data: PrintHtml.blank() },
-    ...printHtmlAll.map((i) => ({ value: i.id, text: i.name, data: i })),
-  ]
+  PrintHtmlService.list({})
+    .then((result) => {
+      printHtmlOptions.value = [
+        { value: 0, text: 'Mặc định', data: PrintHtml.blank() },
+        ...result.map((i) => ({ value: i.id, text: i.name, data: i })),
+      ]
+    })
+    .catch((e) => {
+      console.log('🚀: ModalTicketClinicDetailSetting.vue:64 ~ PrintHtmlService.list ~ e:', e)
+    })
 
-  const warehouseAll = await WarehouseService.list({})
-  warehouseOptions.value = [
-    { value: 0, label: 'Tất cả kho' },
-    ...warehouseAll.map((i) => ({ value: i.id, label: i.name })),
-  ]
+  WarehouseService.list({})
+    .then((result) => {
+      warehouseOptions.value = [
+        { value: 0, label: 'Tất cả kho' },
+        ...result.map((i) => ({ value: i.id, label: i.name })),
+      ]
+    })
+    .catch((e) => {
+      console.log('🚀: ModalTicketClinicDetailSetting.vue:78 ~ WarehouseService.list ~ e:', e)
+    })
 }
 
 const closeModal = () => {
@@ -107,26 +119,37 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
-            <VueTabMenu
-              v-if="settingStore.TICKET_CLINIC_LIST.ticketType === TicketType.Eye"
-              :tabKey="TABS_KEY.DIAGNOSIS_EYE">
-              Hóa đơn
-            </VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.GENERAL">Cài đặt chung</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.DIAGNOSIS">Khám</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.CONSUMABLE">Vật tư</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRESCRIPTION">Đơn thuốc</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.INVOICE">Hóa đơn</VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS_EYE">
+            <VueTabPanel :tabKey="TABS_KEY.GENERAL">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">
                   <thead>
                     <tr>
-                      <th colspan="2">Cài đặt khám mắt</th>
+                      <th colspan="2">Cài đặt chung</th>
                     </tr>
                   </thead>
                   <tbody>
+                    <tr></tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS">
+              <div class="mt-4 pb-20 table-wrapper">
+                <table class="">
+                  <thead>
                     <tr>
+                      <th colspan="2">Cài đặt khám</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="settingStore.TICKET_CLINIC_LIST.ticketType === TicketType.Eye">
                       <td>Mẫu in phiếu đo thị lực</td>
                       <td>
                         <div>

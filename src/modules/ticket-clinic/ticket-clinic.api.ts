@@ -1,56 +1,89 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import { RoleInteractType } from '../commission'
 import type { Customer } from '../customer'
 import type { DiscountType } from '../enum'
 import type { TicketLaboratory } from '../ticket-laboratory'
-import type { TicketProcedure } from '../ticket-procedure'
+import { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
+import type { TicketUser } from '../ticket-user'
 import { Ticket, TicketStatus, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async create(body: {
-    customerId: number
-    fromAppointmentId: number
     customer?: Customer
-    ticket: {
+    ticketInformation: {
       ticketType: TicketType
       ticketStatus: TicketStatus
       customerSourceId: number
       registeredAt: number
+      customerId: number
+      fromAppointmentId: number
     }
     ticketAttributeList: { key: string; value: any }[]
+    ticketUserList: TicketUser[]
   }) {
+    const { customer, ticketInformation, ticketAttributeList, ticketUserList } = body
     const response = await AxiosInstance.post('/ticket-clinic/create', {
-      customerId: body.customerId,
-      fromAppointmentId: body.fromAppointmentId,
       customer:
-        body.customerId === 0 && body.customer
+        ticketInformation.customerId === 0 && customer
           ? {
-              fullName: body.customer.fullName,
-              phone: body.customer.phone,
-              birthday: body.customer.birthday,
-              yearOfBirth: body.customer.yearOfBirth,
-              gender: body.customer.gender,
-              addressProvince: body.customer.addressProvince,
-              addressDistrict: body.customer.addressDistrict,
-              addressWard: body.customer.addressWard,
-              addressStreet: body.customer.addressStreet,
-              relative: body.customer.relative,
-              healthHistory: body.customer.healthHistory,
-              customerSourceId: body.customer.customerSourceId || 0,
-              note: body.customer.note,
-              isActive: body.customer.isActive,
+              fullName: customer.fullName,
+              phone: customer.phone,
+              birthday: customer.birthday,
+              yearOfBirth: customer.yearOfBirth,
+              gender: customer.gender,
+              addressProvince: customer.addressProvince,
+              addressDistrict: customer.addressDistrict,
+              addressWard: customer.addressWard,
+              addressStreet: customer.addressStreet,
+              relative: customer.relative,
+              healthHistory: customer.healthHistory,
+              customerSourceId: customer.customerSourceId || 0,
+              note: customer.note,
+              isActive: customer.isActive,
             }
           : undefined,
-      ticket: {
-        customerSourceId: body.ticket.customerSourceId || 0,
-        ticketType: body.ticket.ticketType,
-        ticketStatus: body.ticket.ticketStatus,
-        registeredAt: body.ticket.registeredAt,
+      ticketInformation: {
+        customerId: ticketInformation.customerId,
+        fromAppointmentId: ticketInformation.fromAppointmentId,
+        customerSourceId: ticketInformation.customerSourceId || 0,
+        ticketType: ticketInformation.ticketType,
+        ticketStatus: ticketInformation.ticketStatus,
+        registeredAt: ticketInformation.registeredAt,
       },
       ticketAttributeList: body.ticketAttributeList.map((i) => {
         return { key: i.key, value: i.value }
+      }),
+      ticketUserList: body.ticketUserList.map((i) => {
+        return { userId: i.userId, roleId: i.roleId }
+      }),
+    })
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
+  }
+
+  static async update(body: {
+    ticketId: number
+    ticketInformation: {
+      customerSourceId: number
+      registeredAt: number
+    }
+    ticketAttributeList: { key: string; value: any }[]
+    ticketUserList: TicketUser[]
+  }) {
+    const { ticketId, ticketInformation, ticketAttributeList, ticketUserList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update`, {
+      ticketInformation: {
+        customerSourceId: ticketInformation.customerSourceId || 0,
+        registeredAt: ticketInformation.registeredAt,
+      },
+      ticketAttributeList: ticketAttributeList.map((i) => {
+        return { key: i.key, value: i.value }
+      }),
+      ticketUserList: ticketUserList.map((i) => {
+        return { userId: i.userId, roleId: i.roleId }
       }),
     })
     const { data } = response.data as BaseResponse<{ ticket: any }>
@@ -118,24 +151,79 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
+  static async updateTicketUserList(body: {
+    ticketId: number
+    interactId: number
+    interactType: number
+    ticketUserList: TicketUser[]
+  }) {
+    const { ticketId, interactId, interactType, ticketUserList } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-ticket-user-list`,
+      {
+        interactType: interactType,
+        interactId: interactId,
+        ticketUserList: ticketUserList.map((i) => ({
+          userId: i.userId || 0,
+          roleId: i.roleId || 0,
+        })),
+      }
+    )
+    const { data } = response.data as BaseResponse
+  }
+
+  static async addTicketProcedure(body: {
+    ticketId: number
+    ticketProcedure: TicketProcedure
+    ticketUserList: TicketUser[]
+  }) {
+    const { ticketId, ticketProcedure, ticketUserList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/add-ticket-procedure`, {
+      ticketProcedure: {
+        priority: ticketProcedure.priority,
+        procedureId: ticketProcedure.procedureId,
+        quantity: ticketProcedure.quantity,
+        expectedPrice: ticketProcedure.expectedPrice,
+        discountMoney: ticketProcedure.discountMoney,
+        discountPercent: ticketProcedure.discountPercent,
+        discountType: ticketProcedure.discountType,
+        actualPrice: ticketProcedure.actualPrice,
+      },
+      ticketUserList: ticketUserList.map((i) => ({
+        roleId: i.roleId,
+        userId: i.userId,
+      })),
+    })
+    const { data } = response.data as BaseResponse<{ ticket: any; ticketProcedure: any }>
+    return {
+      ticket: Ticket.from(data.ticket),
+      ticketProcedure: TicketProcedure.from(data.ticketProcedure),
+    }
+  }
+
+  static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
+    const { ticketId, ticketProcedureId } = body
+    const response = await AxiosInstance.delete(
+      `/ticket-clinic/${ticketId}/destroy-ticket-procedure/${ticketProcedureId}`
+    )
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return {
+      ticket: Ticket.from(data.ticket),
+    }
+  }
+
   static async updateTicketProcedureList(body: {
     ticketId: number
-    customerId: number
     ticketProcedureList: TicketProcedure[]
   }) {
-    const { ticketId, customerId, ticketProcedureList } = body
+    const { ticketId, ticketProcedureList } = body
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/update-ticket-procedure-list`,
       {
-        customerId: customerId,
         ticketProcedureList: ticketProcedureList.map((i) => ({
-          procedureId: i.procedureId,
+          ticketProcedureId: i.id,
           quantity: i.quantity,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
+          priority: i.priority,
         })),
       }
     )

@@ -27,10 +27,7 @@ export class ProcedureApi {
 
     const response = await AxiosInstance.get('/procedure/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: Procedure.fromList(data),
-    }
+    return Procedure.fromList(data)
   }
 
   static search: (params: ProcedureListQuery) => Promise<Procedure[]> = debounceAsync(
@@ -62,6 +59,16 @@ export class ProcedureApi {
 
       consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
+
+      commissionList: (procedure.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
     return Procedure.from(data.procedure)
@@ -79,6 +86,16 @@ export class ProcedureApi {
 
       consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
+
+      commissionList: (procedure.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
     return Procedure.from(data.procedure)

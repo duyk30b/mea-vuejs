@@ -236,7 +236,7 @@ defineExpose({ getDataTicketDiagnosis })
       <div></div>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_BASIC]
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS]
         "
         color="blue"
         :disabled="!hasChangeData"

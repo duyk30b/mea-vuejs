@@ -501,7 +501,7 @@ const startPrint = async () => {
       <VueButton color="blue" icon="print" @click="startPrint">In phiếu</VueButton>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_SPECIAL]
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS]
         "
         color="blue"
         :disabled="!hasChangeData"

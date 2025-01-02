@@ -5,9 +5,9 @@ import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputDate,
+  InputFilter,
   InputHint,
   InputNumber,
-  InputOptions,
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
@@ -16,19 +16,24 @@ import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
+import { RoleInteractType } from '../../../modules/commission'
 import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
-import type { TicketAttributeMap } from '../../../modules/ticket-attribute'
+import { Role, RoleService } from '../../../modules/role'
+import { Ticket, TicketService, TicketType } from '../../../modules/ticket'
+import { TicketAttributeMap } from '../../../modules/ticket-attribute'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { TicketUser } from '../../../modules/ticket-user'
+import { User, UserService } from '../../../modules/user'
+import { UserRole, UserRoleService } from '../../../modules/user-role'
 import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
 
-const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
+const inputFilterCustomer = ref<InstanceType<typeof InputFilter>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinicCreateSetting>>()
@@ -49,9 +54,15 @@ const customerOptions = ref<{ value: number; text: string; data: Customer }[]>([
 const appointmentOptions = ref<Appointment[]>([])
 
 const customer = ref<Customer>(Customer.blank())
-const ticketRegister = ref<Ticket>(Ticket.blank())
-const fromAppointmentId = ref(0)
+const ticket = ref<Ticket>(Ticket.blank())
+
+const ticketUserList = ref<TicketUser[]>([])
 const ticketAttributeMap = ref<TicketAttributeMap>({})
+
+const fromAppointmentId = ref(0)
+const roleMap = ref<Record<string, Role>>({})
+const userMap = ref<Record<string, User>>({})
+const userRoleList = ref<UserRole[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -60,22 +71,55 @@ const provinceList = ref<string[]>([])
 const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
-let firstLoad = true
-
-const openModal = async (ticketStatus: TicketStatus) => {
+const openModal = async (ticketId?: number) => {
   showModal.value = true
-  ticketRegister.value.ticketStatus = ticketStatus
-  ticketRegister.value.registeredAt = Date.now()
 
-  if (firstLoad) {
-    firstLoad = false
-    await CustomerService.refreshDB()
-    if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
-      customerSourceAll.value = await CustomerSourceService.list({})
-    }
-    if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
-      provinceList.value = await AddressInstance.getAllProvinces()
-    }
+  Promise.all([
+    ticketId
+      ? TicketService.detail(ticketId, {
+          relation: { customer: true, ticketAttributeList: true, ticketUserList: {} },
+        })
+      : Ticket.blank(),
+    RoleService.getMap(),
+    UserService.getMap(),
+  ])
+    .then((result) => {
+      if (!ticketId) {
+        ticket.value.registeredAt = Date.now()
+        customer.value = Customer.blank()
+      } else {
+        ticket.value = result[0]
+        customer.value = Customer.from(result[0].customer || Customer.blank())
+      }
+      roleMap.value = result[1]
+      userMap.value = result[2]
+
+      refreshTicketUserList()
+    })
+    .catch((e) => {
+      console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ openModal 91 ~ e:', e)
+    })
+
+  UserRoleService.list()
+    .then((result) => (userRoleList.value = result))
+    .catch((e) => {
+      console.log('🚀 ~ file: ModalTicketClinicCreate.vue:115 ~ UserRoleService ~ e:', e)
+    })
+
+  if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
+    CustomerSourceService.list({})
+      .then((result) => (customerSourceAll.value = result))
+      .catch((e) => {
+        console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ CustomerSourceService ~ e:', e)
+      })
+  }
+
+  if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
+    AddressInstance.getAllProvinces()
+      .then((result) => (provinceList.value = result))
+      .catch((e) => {
+        console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ AddressInstance ~ e:', e)
+      })
   }
 }
 
@@ -84,24 +128,23 @@ const closeModal = () => {
   appointmentOptions.value = []
 
   customer.value = Customer.blank()
-  ticketRegister.value = Ticket.blank()
+  ticket.value = Ticket.blank()
+  ticketUserList.value = []
+  ticketAttributeMap.value = {}
 
   fromAppointmentId.value = 0
-  ticketAttributeMap.value = {}
 
   showModal.value = false
 }
 
-const handleFocusFirstSearchCustomer = async () => {}
-
 const selectCustomer = async (customerSelect: Customer) => {
   if (!customerSelect) {
-    return (customer.value = Customer.blank())
+    customer.value = Customer.blank()
+    return
   }
-
+  customer.value = Customer.from(customerSelect)
   try {
-    ticketRegister.value.customerSourceId = customerSelect.customerSourceId
-    customer.value = Customer.from(customerSelect)
+    ticket.value.customerSourceId = customerSelect.customerSourceId
 
     const appointmentList = await AppointmentApi.list({
       filter: {
@@ -119,17 +162,20 @@ const selectCustomer = async (customerSelect: Customer) => {
       }
     })
   } catch (error) {
-    console.log('🚀 ~ file: ModalTicketClinicCreate.vue:114 ~ selectCustomer ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketClinicCreate.vue:167 ~ selectCustomer ~ error:', error)
   }
 }
 
 const searchingCustomer = async (text: string) => {
-  if (customer.value.id) {
-    customer.value = Customer.blank()
-  }
-  customer.value.fullName = text
+  customer.value = Customer.blank()
   if (text) {
-    const customerList = await CustomerService.search(text)
+    const customerList = await CustomerService.list({
+      filter: {
+        isActive: 1,
+        searchText: text,
+      },
+      limit: 20,
+    })
     customerOptions.value = customerList.map((i) => ({
       value: i.id,
       text: i.fullName,
@@ -137,16 +183,14 @@ const searchingCustomer = async (text: string) => {
     }))
   } else {
     customerOptions.value = []
-    appointmentOptions.value = []
   }
+  appointmentOptions.value = []
 }
 
-const createCustomer = (customerSelect: Customer) => {
-  inputOptionsCustomer.value?.setItem({
-    text: customerSelect?.fullName,
-    data: customerSelect,
-    value: customerSelect?.id,
-  })
+const handleModalCustomerUpsertSuccess = (
+  customerSelect: Customer,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+) => {
   selectCustomer(customerSelect)
 }
 
@@ -154,44 +198,10 @@ const handleChangeCheckboxAppointment = (e: any, appointment: Appointment) => {
   if (e.target.checked) {
     fromAppointmentId.value = appointment.id
     ticketAttributeMap.value.reason = appointment.reason || ''
-    ticketRegister.value.customerSourceId = appointment.customerSourceId
+    ticket.value.customerSourceId = appointment.customerSourceId
   } else {
     fromAppointmentId.value = 0
-    ticketRegister.value.customerSourceId = 0
-  }
-}
-
-const handleRegisterTicketClinic = async () => {
-  if (DTimer.timeToText(ticketRegister.value.registeredAt) !== DTimer.timeToText(new Date())) {
-    return AlertStore.addError(
-      'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
-    )
-  }
-  saveLoading.value = true
-  if (!customer.value.id) {
-    customer.value.customerSourceId = ticketRegister.value.customerSourceId || 0
-  }
-  try {
-    const ticketResponse = await TicketClinicApi.create({
-      customerId: customer.value.id,
-      fromAppointmentId: fromAppointmentId.value,
-      customer: customer.value,
-      ticket: {
-        ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
-        ticketStatus: settingStore.TICKET_CLINIC_LIST.ticketStatus,
-        registeredAt: ticketRegister.value.registeredAt,
-        customerSourceId: ticketRegister.value.customerSourceId,
-      },
-      ticketAttributeList: Object.entries(ticketAttributeMap.value)
-        .map(([key, value]) => ({ key, value }))
-        .filter((i) => !!i.value),
-    })
-    emit('success', { ticket: ticketResponse })
-    closeModal()
-  } catch (error) {
-    console.log('🚀 ModalTicketClinicCreate.vue:184 ~ handleRegisterTicketClinic ~ error:', error)
-  } finally {
-    saveLoading.value = false
+    ticket.value.customerSourceId = 0
   }
 }
 
@@ -215,17 +225,17 @@ const handleChangeDistrict = async (district: string) => {
   )
 }
 
-const updateDuKienSinh = (value: any) => {
-  if (!value) {
+const updateDuKienSinh = (DuKienSinhAny: any) => {
+  if (!DuKienSinhAny) {
     ticketAttributeMap.value.TuoiThai_Tuan = undefined
     ticketAttributeMap.value.TuoiThai_Ngay = undefined
     return
   }
-
   const toDay = new Date()
   toDay.setHours(0, 0, 0, 0)
-  const DuKienSinh = new Date(value)
+  const DuKienSinh = new Date(DuKienSinhAny)
   DuKienSinh.setHours(0, 0, 0, 0)
+  ticketAttributeMap.value.NgayDuKienSinh = DuKienSinh.toISOString()
 
   const timeDuKienSinh = DuKienSinh.getTime()
   const timeNgayThuThai = timeDuKienSinh - 40 * 7 * 24 * 60 * 60 * 1000
@@ -243,6 +253,7 @@ const updateDuKienSinh = (value: any) => {
 }
 
 const updateTuoiThaiTuan = (value: number) => {
+  ticketAttributeMap.value.TuoiThai_Tuan = value
   const Tuan = value || 0
   const Ngay = ticketAttributeMap.value.TuoiThai_Ngay || 0
   const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
@@ -255,6 +266,7 @@ const updateTuoiThaiTuan = (value: number) => {
   ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
 }
 const updateTuoiThaiNgay = (value: number) => {
+  ticketAttributeMap.value.TuoiThai_Ngay = value
   const Tuan = ticketAttributeMap.value.TuoiThai_Tuan || 0
   const Ngay = value || 0
   const timeDistance = (Tuan * 7 + Ngay) * 24 * 60 * 60 * 1000
@@ -268,6 +280,7 @@ const updateTuoiThaiNgay = (value: number) => {
 }
 
 const updateTuoiPhoi = (TuoiPhoi: number) => {
+  ticketAttributeMap.value.TuoiPhoi = TuoiPhoi
   if (!TuoiPhoi) return
   const NgayChuyenPhoiString = ticketAttributeMap.value.NgayChuyenPhoi
   if (!NgayChuyenPhoiString) return
@@ -277,11 +290,11 @@ const updateTuoiPhoi = (TuoiPhoi: number) => {
   const timeNgayThuThai = NgayChuyenPhoi.getTime() - (TuoiPhoi + 14) * 24 * 60 * 60 * 1000
   const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
 
-  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
   updateDuKienSinh(timeDuKienSinh)
 }
 
 const updateNgayChuyenPhoi = (NgayChuyenPhoiString: any) => {
+  ticketAttributeMap.value.NgayChuyenPhoi = NgayChuyenPhoiString
   if (!NgayChuyenPhoiString) return
   const TuoiPhoi = Number(ticketAttributeMap.value.TuoiPhoi)
   if (!TuoiPhoi) return
@@ -291,8 +304,83 @@ const updateNgayChuyenPhoi = (NgayChuyenPhoiString: any) => {
   const timeNgayThuThai = NgayChuyenPhoi.getTime() - (TuoiPhoi + 14) * 24 * 60 * 60 * 1000
   const timeDuKienSinh = timeNgayThuThai + 40 * 7 * 24 * 60 * 60 * 1000
 
-  ticketAttributeMap.value.NgayDuKienSinh = new Date(timeDuKienSinh).toISOString()
   updateDuKienSinh(timeDuKienSinh)
+}
+
+const refreshTicketUserList = () => {
+  const screenRoleIdList = settingStore.TICKET_CLINIC_CREATE.roleIdList
+  ticketUserList.value = screenRoleIdList.map((roleId) => {
+    let findExist = (ticket.value.ticketUserList || []).find((i) => {
+      if (i.roleId !== roleId) return false
+      if (i.interactType !== RoleInteractType.Ticket) return false
+      if (i.interactId !== 0) return false
+      return true
+    })
+    let temp: TicketUser
+    if (findExist) {
+      temp = TicketUser.from(findExist)
+    } else {
+      temp = TicketUser.blank()
+      temp.roleId = roleId
+    }
+    return temp
+  })
+}
+
+const handleModalTicketClinicCreateSettingSuccess = () => {
+  refreshTicketUserList()
+}
+
+const handleSubmitFormTicketClinic = async () => {
+  saveLoading.value = true
+  try {
+    if (!ticket.value.id) {
+      if (DTimer.timeToText(ticket.value.registeredAt) !== DTimer.timeToText(new Date())) {
+        return AlertStore.addError(
+          'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
+        )
+      }
+      const ticketResponse = await TicketClinicApi.create({
+        customer: customer.value,
+        ticketInformation: {
+          ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
+          ticketStatus: settingStore.TICKET_CLINIC_CREATE.ticketStatus,
+          registeredAt: ticket.value.registeredAt,
+          customerSourceId: ticket.value.customerSourceId,
+          customerId: customer.value.id,
+          fromAppointmentId: fromAppointmentId.value,
+        },
+        ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
+          key,
+          value: value != null ? value : '',
+        })),
+        ticketUserList: ticketUserList.value,
+      })
+      emit('success', { ticket: ticketResponse })
+    }
+    if (ticket.value.id) {
+      const ticketResponse = await TicketClinicApi.update({
+        ticketId: ticket.value.id,
+        ticketInformation: {
+          registeredAt: ticket.value.registeredAt,
+          customerSourceId: ticket.value.customerSourceId,
+        },
+        ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
+          key,
+          value: value != null ? value : '',
+        })),
+        ticketUserList: ticketUserList.value,
+      })
+      ticketResponse.customer = Customer.from(customer.value)
+      emit('success', { ticket: ticketResponse })
+    }
+
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ModalTicketClinicCreate.vue:369 ~ handleSubmitFormTicketClinic ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
 }
 
 defineExpose({ openModal })
@@ -303,9 +391,12 @@ defineExpose({ openModal })
     <form
       ref="ticketClinicCreateForm"
       class="bg-white"
-      @submit.prevent="handleRegisterTicketClinic">
+      @submit.prevent="handleSubmitFormTicketClinic">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 text-lg font-medium">Tiếp đón khách hàng mới</div>
+        <div class="flex-1 text-lg font-medium">
+          <span v-if="!ticket.customerId">Tiếp đón khách hàng mới</span>
+          <span v-if="!!ticket.customerId">Sửa thông tin tiếp đón</span>
+        </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
@@ -327,29 +418,31 @@ defineExpose({ openModal })
                 (nợ cũ:
                 <b>{{ formatMoney(customer.debt) }}</b>
                 )
-                <a class="ml-1" @click="modalCustomerDetail?.openModal(customer!)">
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(customer.id)">
                   <IconFileSearch />
                 </a>
               </span>
             </div>
             <a
-              v-if="customer.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="customer?.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(customer)">
               Sửa thông tin khách hàng
             </a>
           </div>
           <div style="height: 40px">
-            <InputOptions
-              ref="inputOptionsCustomer"
+            <InputFilter
+              ref="inputFilterCustomer"
+              v-model:value="customer.id"
+              v-model:text="customer.fullName"
               :options="customerOptions"
               :maxHeight="200"
+              :disabled="!!ticket.customerId"
               placeholder="Tìm kiếm bằng tên hoặc SĐT"
               required
               noClearTextWhenNotSelected
               message-no-result="Khách hàng này chưa từng đến khám"
-              @onFocusinFirst="handleFocusFirstSearchCustomer"
               @selectItem="({ data }) => selectCustomer(data)"
-              @update:text="searchingCustomer">
+              @searching="searchingCustomer">
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
@@ -358,7 +451,7 @@ defineExpose({ openModal })
                 </div>
                 <div>{{ DString.formatAddress(data) }}</div>
               </template>
-            </InputOptions>
+            </InputFilter>
           </div>
         </div>
 
@@ -374,111 +467,115 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.birthday"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Ngày sinh</div>
-          <div>
-            <InputDate
-              v-model:value="customer.birthday"
-              v-model:year="customer.yearOfBirth"
-              :disabled="!!customer.id"
-              format="DD/MM/YYYY"
-              type-parser="number"
-              class="w-full" />
+        <template v-if="!ticket.customerId">
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.birthday"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            <div>Ngày sinh</div>
+            <div>
+              <InputDate
+                v-model:value="customer.birthday"
+                v-model:year="customer.yearOfBirth"
+                :disabled="!!customer.id"
+                format="DD/MM/YYYY"
+                type-parser="number"
+                class="w-full" />
+            </div>
           </div>
-        </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.gender"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Giới tính</div>
-          <div>
-            <a-radio-group v-model:value="customer.gender" :disabled="!!customer.id">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.gender"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            <div>Giới tính</div>
+            <div>
+              <a-radio-group v-model:value="customer.gender" :disabled="!!customer.id">
+                <a-radio :value="1">Nam</a-radio>
+                <a-radio :value="0">Nữ</a-radio>
+              </a-radio-group>
+            </div>
           </div>
-        </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.addressFull"
-          style="flex-basis: 80%; flex-grow: 1">
-          <div>Địa chỉ</div>
-          <div class="flex flex-wrap gap-x-2 gap-y-2">
-            <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-              <InputHint
-                v-model:value="customer.addressProvince"
-                :options="provinceList"
-                :disabled="!!customer.id"
-                :maxHeight="180"
-                placeholder="Thành Phố / Tỉnh"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                @update:value="handleChangeProvince" />
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.addressFull"
+            style="flex-basis: 80%; flex-grow: 1">
+            <div>Địa chỉ</div>
+            <div class="flex flex-wrap gap-x-2 gap-y-2">
+              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+                <InputHint
+                  v-model:value="customer.addressProvince"
+                  :options="provinceList"
+                  :disabled="!!customer.id"
+                  :maxHeight="180"
+                  placeholder="Thành Phố / Tỉnh"
+                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
+                  @update:value="handleChangeProvince" />
+              </div>
+              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+                <InputHint
+                  v-model:value="customer.addressDistrict"
+                  :maxHeight="180"
+                  :disabled="!!customer.id"
+                  :options="districtList"
+                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
+                  placeholder="Quận / Huyện"
+                  @update:value="handleChangeDistrict" />
+              </div>
+              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+                <InputHint
+                  v-model:value="customer.addressWard"
+                  :maxHeight="180"
+                  :disabled="!!customer.id"
+                  :options="wardList"
+                  placeholder="Phường / Xã"
+                  :logic-filter="
+                    (item: string, text: string) => DString.customFilter(item, text)
+                  " />
+              </div>
+              <div
+                :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+                :disabled="!!customer.id">
+                <InputText
+                  v-model:value="customer.addressStreet"
+                  :disabled="!!customer.id"
+                  placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+              </div>
             </div>
-            <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-              <InputHint
-                v-model:value="customer.addressDistrict"
-                :maxHeight="180"
-                :disabled="!!customer.id"
-                :options="districtList"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict" />
-            </div>
-            <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-              <InputHint
-                v-model:value="customer.addressWard"
-                :maxHeight="180"
-                :disabled="!!customer.id"
-                :options="wardList"
-                placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)" />
-            </div>
-            <div
-              :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-              :disabled="!!customer.id">
+          </div>
+
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.addressBasic"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            <div>Địa chỉ</div>
+            <div style="flex: 1">
               <InputText
                 v-model:value="customer.addressStreet"
                 :disabled="!!customer.id"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+                placeholder="" />
             </div>
           </div>
-        </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.addressBasic"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Địa chỉ</div>
-          <div style="flex: 1">
-            <InputText
-              v-model:value="customer.addressStreet"
-              :disabled="!!customer.id"
-              placeholder="" />
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.relative"
+            :disabled="!!customer.id"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            <div>Liên hệ khác</div>
+            <div>
+              <InputText
+                v-model:value="customer.relative"
+                :disabled="!!customer.id"
+                placeholder="Tên người thân, số điện thoại" />
+            </div>
           </div>
-        </div>
 
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.relative"
-          :disabled="!!customer.id"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Liên hệ khác</div>
-          <div>
-            <InputText
-              v-model:value="customer.relative"
-              :disabled="!!customer.id"
-              placeholder="Tên người thân, số điện thoại" />
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.note"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            <div>Ghi chú</div>
+            <div style="flex: 1">
+              <InputText v-model:value="customer.note" :disabled="!!customer.id" />
+            </div>
           </div>
-        </div>
-
-        <div
-          v-if="settingStore.TICKET_CLINIC_CREATE.note"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Ghi chú</div>
-          <div style="flex: 1">
-            <InputText v-model:value="customer.note" :disabled="!!customer.id" />
-          </div>
-        </div>
+        </template>
 
         <div v-if="appointmentOptions.length" class="grow basis-[80%]">
           <div>Khách hàng đến theo hẹn ?</div>
@@ -500,7 +597,7 @@ defineExpose({ openModal })
           <div>Nguồn khách hàng</div>
           <div>
             <VueSelect
-              v-model:value="ticketRegister.customerSourceId"
+              v-model:value="ticket.customerSourceId"
               :options="customerSourceAll.map((i) => ({ text: i.name, value: i.id }))"></VueSelect>
           </div>
         </div>
@@ -514,14 +611,27 @@ defineExpose({ openModal })
               <div style="flex-basis: 60px">Cơ bản:</div>
               <div style="flex-grow: 2">
                 <div style="">PARA</div>
-                <div><InputText v-model:value="ticketAttributeMap.PARA" /></div>
+                <div>
+                  <InputText
+                    :value="
+                      ticketAttributeMap.PARA != null
+                        ? ticketAttributeMap.PARA
+                        : ticket.ticketAttributeMap.PARA || ''
+                    "
+                    @update:value="(v) => (ticketAttributeMap.PARA = v)" />
+                </div>
               </div>
               <div style="flex-basis: 200px; flex-grow: 1">
                 <div style="">Ngày đầu - KKC:</div>
                 <div>
                   <InputDate
-                    v-model:value="ticketAttributeMap.NgayDauKyKinhCuoi"
-                    typeParser="string" />
+                    :value="
+                      ticketAttributeMap.NgayDauKyKinhCuoi != null
+                        ? ticketAttributeMap.NgayDauKyKinhCuoi
+                        : ticket.ticketAttributeMap.NgayDauKyKinhCuoi || ''
+                    "
+                    typeParser="string"
+                    @update:value="(v) => (ticketAttributeMap.NgayDauKyKinhCuoi = v)" />
                 </div>
               </div>
             </div>
@@ -531,7 +641,11 @@ defineExpose({ openModal })
                 <div style="">Tuổi phôi (ngày)</div>
                 <div>
                   <InputNumber
-                    v-model:value="ticketAttributeMap.TuoiPhoi"
+                    :value="
+                      ticketAttributeMap.TuoiPhoi != null
+                        ? ticketAttributeMap.TuoiPhoi
+                        : ticket.ticketAttributeMap.TuoiPhoi || ''
+                    "
                     @update:value="updateTuoiPhoi" />
                 </div>
               </div>
@@ -539,7 +653,11 @@ defineExpose({ openModal })
                 <div style="">Ngày chuyển phôi</div>
                 <div>
                   <InputDate
-                    v-model:value="ticketAttributeMap.NgayChuyenPhoi"
+                    :value="
+                      ticketAttributeMap.NgayChuyenPhoi != null
+                        ? ticketAttributeMap.NgayChuyenPhoi
+                        : ticket.ticketAttributeMap.NgayChuyenPhoi || ''
+                    "
                     typeParser="string"
                     @update:value="updateNgayChuyenPhoi" />
                 </div>
@@ -552,7 +670,11 @@ defineExpose({ openModal })
                 <div style="">Tuần</div>
                 <div>
                   <InputNumber
-                    v-model:value="ticketAttributeMap.TuoiThai_Tuan"
+                    :value="
+                      ticketAttributeMap.TuoiThai_Tuan != null
+                        ? ticketAttributeMap.TuoiThai_Tuan
+                        : ticket.ticketAttributeMap.TuoiThai_Tuan || ''
+                    "
                     @update:value="updateTuoiThaiTuan" />
                 </div>
               </div>
@@ -560,7 +682,11 @@ defineExpose({ openModal })
                 <div style="">Ngày</div>
                 <div>
                   <InputNumber
-                    v-model:value="ticketAttributeMap.TuoiThai_Ngay"
+                    :value="
+                      ticketAttributeMap.TuoiThai_Ngay != null
+                        ? ticketAttributeMap.TuoiThai_Ngay
+                        : ticket.ticketAttributeMap.TuoiThai_Ngay || ''
+                    "
                     @update:value="updateTuoiThaiNgay" />
                 </div>
               </div>
@@ -568,7 +694,11 @@ defineExpose({ openModal })
                 <div style="">Dự kiến sinh</div>
                 <div>
                   <InputDate
-                    v-model:value="ticketAttributeMap.NgayDuKienSinh"
+                    :value="
+                      ticketAttributeMap.NgayDuKienSinh != null
+                        ? ticketAttributeMap.NgayDuKienSinh
+                        : ticket.ticketAttributeMap.NgayDuKienSinh || ''
+                    "
                     typeParser="string"
                     @update:value="updateDuKienSinh" />
                 </div>
@@ -584,7 +714,14 @@ defineExpose({ openModal })
                     <td class="title-vital-signs">Mạch</td>
                     <td>:</td>
                     <td class="input-vital-signs">
-                      <input v-model="ticketAttributeMap.pulse" type="number" />
+                      <input
+                        :value="
+                          ticketAttributeMap.pulse != null
+                            ? ticketAttributeMap.pulse
+                            : ticket.ticketAttributeMap.pulse || ''
+                        "
+                        type="number"
+                        @input="(e: any) => (ticketAttributeMap.pulse = e.target.value)" />
                     </td>
                     <td class="unit-vital-signs">l/p</td>
                   </tr>
@@ -592,7 +729,13 @@ defineExpose({ openModal })
                     <td class="title-vital-signs">Huyết áp</td>
                     <td>:</td>
                     <td class="input-vital-signs">
-                      <input v-model="ticketAttributeMap.bloodPressure" />
+                      <input
+                        :value="
+                          ticketAttributeMap.bloodPressure != null
+                            ? ticketAttributeMap.bloodPressure
+                            : ticket.ticketAttributeMap.bloodPressure || ''
+                        "
+                        @input="(e: any) => (ticketAttributeMap.bloodPressure = e.target.value)" />
                     </td>
                     <td class="unit-vital-signs">mmHg</td>
                   </tr>
@@ -600,7 +743,14 @@ defineExpose({ openModal })
                     <td class="title-vital-signs">Chiều cao</td>
                     <td>:</td>
                     <td class="input-vital-signs">
-                      <input v-model="ticketAttributeMap.height" type="number" />
+                      <input
+                        type="number"
+                        :value="
+                          ticketAttributeMap.height != null
+                            ? ticketAttributeMap.height
+                            : ticket.ticketAttributeMap.height || ''
+                        "
+                        @input="(e: any) => (ticketAttributeMap.height = e.target.value)" />
                     </td>
                     <td class="unit-vital-signs">cm</td>
                   </tr>
@@ -608,7 +758,14 @@ defineExpose({ openModal })
                     <td class="title-vital-signs">Cân nặng</td>
                     <td>:</td>
                     <td class="input-vital-signs">
-                      <input v-model="ticketAttributeMap.weight" type="number" />
+                      <input
+                        type="number"
+                        :value="
+                          ticketAttributeMap.weight != null
+                            ? ticketAttributeMap.weight
+                            : ticket.ticketAttributeMap.weight || ''
+                        "
+                        @input="(e: any) => (ticketAttributeMap.weight = e.target.value)" />
                     </td>
                     <td class="unit-vital-signs">kg</td>
                   </tr>
@@ -622,7 +779,7 @@ defineExpose({ openModal })
           <div>Thời gian đăng ký khám</div>
           <div>
             <InputDate
-              v-model:value="ticketRegister.registeredAt"
+              v-model:value="ticket.registeredAt"
               type-parser="number"
               class="w-full"
               show-time />
@@ -632,7 +789,53 @@ defineExpose({ openModal })
         <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
           <div>Lý do khám</div>
           <div>
-            <InputText v-model:value="ticketAttributeMap.reason" />
+            <InputText
+              :value="
+                ticketAttributeMap.reason != null
+                  ? ticketAttributeMap.reason
+                  : ticket.ticketAttributeMap.reason || ''
+              "
+              @update:value="(v) => (ticketAttributeMap.reason = v)" />
+          </div>
+        </div>
+
+        <div
+          v-if="ticketUserList?.length"
+          class="flex flex-wrap gap-2 mb-10"
+          style="flex-basis: 90%; flex: 1; min-width: 700px">
+          <div
+            v-for="(ticketUser, index) in ticketUserList"
+            :key="index"
+            style="flex-basis: 45%; flex: 1; min-width: 300px">
+            <div>
+              {{
+                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
+              }}
+            </div>
+            <div>
+              <InputFilter
+                v-model:value="ticketUserList[index].userId"
+                :options="
+                  userRoleList
+                    .filter((i) => i.roleId === ticketUserList[index].roleId)
+                    .map((i) => {
+                      return {
+                        value: userMap[i.userId]?.id || 0,
+                        text: userMap[i.userId]?.fullName || '',
+                        data: userMap[i.userId],
+                      }
+                    })
+                "
+                :maxHeight="200"
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                <template #option="{ item: { data } }">
+                  <div>
+                    <b>{{ data.fullName }}</b>
+                    - {{ DString.formatPhone(data.phone) }} -
+                  </div>
+                </template>
+              </InputFilter>
+            </div>
           </div>
         </div>
       </div>
@@ -643,17 +846,19 @@ defineExpose({ openModal })
             Hủy bỏ
           </VueButton>
           <VueButton class="btn btn-blue" icon="save" type="submit" :loading="saveLoading">
-            ĐĂNG KÝ KHÁM
+            <span v-if="!ticket.id">ĐĂNG KÝ KHÁM</span>
+            <span v-else>CẬP NHẬT THÔNG TIN</span>
           </VueButton>
         </div>
       </div>
     </form>
   </VueModal>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalTicketClinicCreateSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalTicketClinicCreateSetting" />
+    ref="modalTicketClinicCreateSetting"
+    @success="handleModalTicketClinicCreateSettingSuccess" />
 </template>
 
 <style lang="scss" scoped>

@@ -27,10 +27,7 @@ export class RadiologyApi {
 
     const response = await AxiosInstance.get('/radiology/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: Radiology.fromList(data),
-    }
+    return Radiology.fromList(data)
   }
 
   static search: (params: RadiologyListQuery) => Promise<Radiology[]> = debounceAsync(

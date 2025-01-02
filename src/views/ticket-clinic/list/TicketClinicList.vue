@@ -3,25 +3,31 @@ import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting, IconTrash } from '../../../common/icon'
+import { IconEditSquare } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { RoleInteractType } from '../../../modules/commission'
 import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Role, RoleService } from '../../../modules/role'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
+import { User, UserService } from '../../../modules/user'
 import { DString, DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
+import ModalTicketClinicCommission from './ModalTicketClinicCommission.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
+const modalTicketClinicCommission = ref<InstanceType<typeof ModalTicketClinicCommission>>()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -33,6 +39,9 @@ const dataLoading = ref(false)
 
 const customerId = ref<number>()
 const ticketStatus = ref<TicketStatus | null>(null)
+
+const roleMap = ref<Record<string, Role>>({})
+const userMap = ref<Record<string, User>>({})
 
 const sortColumn = ref<'registeredAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -48,7 +57,11 @@ const startFetchData = async () => {
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { customer: true, ticketAttributeList: true },
+      relation: {
+        customer: true,
+        ticketAttributeList: true,
+        ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : false,
+      },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
         registeredAt:
@@ -79,7 +92,19 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  await startFetchData()
+  Promise.all([
+    RoleService.getMap(),
+    UserService.getMap(),
+    CustomerService.refreshDB(),
+    startFetchData(),
+  ])
+    .then((result) => {
+      roleMap.value = result[0]
+      userMap.value = result[1]
+    })
+    .catch((e) => {
+      console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ openModal 105 ~ e:', e)
+    })
 })
 
 const handleFocusFirstSearchCustomer = async () => {
@@ -144,12 +169,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   if (menu.key === 'SCREEN_SETTING') {
     modalTicketClinicListSetting.value?.openModal()
   }
+  if (menu.key === 'ROLE_AND_COMMISSION') {
+    modalTicketClinicCommission.value?.openModal()
+  }
 }
 
 const handleModalTicketClinicCreateSuccess = (data: { ticket: Ticket }) => {
-  const ticketFind = ticketClinicList.value.find((i) => i.id === data.ticket.id)
-  if (!ticketFind) {
+  const findIndex = ticketClinicList.value.findIndex((i) => i.id === data.ticket.id)
+  if (findIndex == -1) {
     ticketClinicList.value.unshift(data.ticket)
+  }
+  if (findIndex !== -1) {
+    ticketClinicList.value[findIndex] = data.ticket
   }
 }
 
@@ -168,6 +199,10 @@ const handleClickDestroyDraft = async (ticketId: number) => {
     },
   })
 }
+
+const handleModalTicketClinicListSettingSuccess = async () => {
+  // await startFetchData()
+}
 </script>
 
 <template>
@@ -177,7 +212,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalTicketClinicListSetting" />
+    ref="modalTicketClinicListSetting"
+    @success="handleModalTicketClinicListSettingSuccess" />
+  <ModalTicketClinicCommission ref="modalTicketClinicCommission" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
@@ -194,7 +231,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
           "
           color="blue"
           icon="plus"
-          @click="modalTicketClinicCreate?.openModal(TicketStatus.Draft)">
+          @click="modalTicketClinicCreate?.openModal()">
           TIẾP ĐÓN
         </VueButton>
       </div>
@@ -219,6 +256,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
             <a-menu-item key="SCREEN_SETTING">Cài đặt phòng khám</a-menu-item>
+            <a-menu-item key="ROLE_AND_COMMISSION">Vai trò và hoa hồng</a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -252,7 +290,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 200px">
+      <div style="flex: 1; flex-basis: 150px">
         <div>Từ ngày</div>
         <div>
           <InputDate
@@ -263,7 +301,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 200px">
+      <div style="flex: 1; flex-basis: 150px">
         <div>Đến ngày</div>
         <div>
           <InputDate
@@ -274,7 +312,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
         </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 250px">
+      <div style="flex: 1; flex-basis: 150px">
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
@@ -336,6 +374,9 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.address">Địa chỉ</th>
             <th style="white-space: nowrap">Lý do / Chẩn đoán</th>
+            <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
+              {{ roleMap[roleId]?.displayName || roleMap[roleId]?.name || '' }}
+            </th>
             <th>Thanh toán</th>
             <th></th>
           </tr>
@@ -389,7 +430,7 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             <td>
               <div>
                 {{ ticket.customer?.fullName }}
-                <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customer!)">
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -414,6 +455,18 @@ const handleClickDestroyDraft = async (ticketId: number) => {
             <td>
               {{ ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || '' }}
             </td>
+            <td
+              v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList"
+              :key="i"
+              class="text-center">
+              {{
+                userMap[
+                  ticket.ticketUserList?.find((i) => {
+                    return i.interactType === RoleInteractType.Ticket && i.roleId === roleId
+                  })?.userId || 0
+                ]?.fullName
+              }}
+            </td>
             <td class="text-center">
               {{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}
             </td>
@@ -423,6 +476,20 @@ const handleClickDestroyDraft = async (ticketId: number) => {
                 class="text-red-500"
                 @click="handleClickDestroyDraft(ticket.id)">
                 <IconTrash />
+              </a>
+              <a
+                v-if="
+                  [
+                    TicketStatus.Schedule,
+                    TicketStatus.Draft,
+                    TicketStatus.Approved,
+                    TicketStatus.Executing,
+                  ].includes(ticket.ticketStatus)
+                "
+                style="color: #eca52b"
+                class="text-xl"
+                @click="modalTicketClinicCreate?.openModal(ticket.id)">
+                <IconEditSquare />
               </a>
             </td>
           </tr>

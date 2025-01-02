@@ -6,7 +6,7 @@ export class UserGetQuery {
   limit?: number
   relation?: {
     organization?: boolean
-    userRoleList?: boolean
+    userRoleList?: { role?: boolean } | false
   }
 
   filter?: {
@@ -18,8 +18,6 @@ export class UserGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    phone?: 'ASC' | 'DESC'
-    username?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<UserGetQuery>) {
