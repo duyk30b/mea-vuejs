@@ -113,7 +113,6 @@ const selectProduct = async (instance?: Product) => {
   tp.discountMoney = 0
   tp.actualPrice = instance.retailPrice
   tp.hintUsage = instance?.hintUsage || ''
-  
 
   if (!instance.hasManageQuantity) {
     tp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
@@ -125,11 +124,19 @@ const selectProduct = async (instance?: Product) => {
   ticketProduct.value = tp
 
   const warehouseIdAcceptList = settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
+  let canGetAllWarehouse = false
+  if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+  else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+
   const batchListResponse = await BatchService.list({
     filter: {
       productId: instance.id,
-      quantity: { GT: 0 },
-      $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+      quantity: { NOT: 0 },
+      ...(canGetAllWarehouse
+        ? {}
+        : {
+            $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+          }),
     },
     sort: { expiryDate: 'ASC' },
   })

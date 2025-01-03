@@ -269,18 +269,22 @@ const selectPrescriptionSample = (prescriptionSampleSelect: PrescriptionSample) 
       ticketProductPrescriptionList.value.push(temp)
     } else {
       const warehouseIdAcceptList = settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
-      let canGetWarehouse = false
-      if (!warehouseIdAcceptList.length) canGetWarehouse = true
-      else if (warehouseIdAcceptList.includes(0)) canGetWarehouse = true
+      let canGetAllWarehouse = false
+      if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+      else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
 
       const batchListCurrent = await BatchService.list({
         filter: {
           productId: productCurrent.id,
           quantity: { GT: 0 },
-          $OR: [
-            { warehouseId: { EQUAL: 0 } },
-            { warehouseId: canGetWarehouse ? undefined : { IN: warehouseIdAcceptList } },
-          ],
+          ...(canGetAllWarehouse
+            ? {}
+            : {
+                $OR: [
+                  { warehouseId: { EQUAL: 0 } },
+                  { warehouseId: { IN: warehouseIdAcceptList } },
+                ],
+              }),
         },
         sort: { expiryDate: 'ASC' },
       })
