@@ -42,6 +42,11 @@ export class CommissionService {
             return false
           }
         }
+        if (filter.interactId != null) {
+          if (filter.interactId !== i.interactId) {
+            return false
+          }
+        }
         if (filter.roleId != null) {
           if (filter.roleId !== i.roleId) {
             return false

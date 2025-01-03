@@ -113,7 +113,7 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'procedure',
                 name: 'TicketClinicProcedure',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicProcedure.vue'),
+                component: () => import('../views/ticket-clinic/detail/procedure/TicketClinicProcedure.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
               },
               {

@@ -63,7 +63,7 @@ const optionsFilter = computed(() => {
 
 const randomId = computed(() => Math.random().toString(36).substring(2))
 onUpdated(() => {
-  console.log(`InputFilter ${randomId.value} rerender`)
+  // console.log(`InputFilter ${randomId.value} rerender`)
 })
 
 watch(

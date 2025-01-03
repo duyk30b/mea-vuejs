@@ -1,20 +1,18 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconDelete } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputNumber, InputOptions } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DiscountType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '../../../modules/procedure'
-import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { TicketProcedure } from '../../../modules/ticket-procedure'
-
-const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
+import VueButton from '../../../../common/VueButton.vue'
+import { IconDelete } from '../../../../common/icon-google'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputNumber, InputOptions } from '../../../../common/vue-form'
+import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { TicketStatus } from '../../../../modules/ticket'
+import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketProcedure } from '../../../../modules/ticket-procedure'
+import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -22,8 +20,6 @@ const { permissionIdMap } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
-const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 const ticketProcedureList = ref<TicketProcedure[]>([])
 
 const procedureMap = ref<Record<string, Procedure>>({})
@@ -51,39 +47,12 @@ const hasChangeData = computed(() => {
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
-    const procedureAll = await ProcedureService.list({ filter: { isActive: 1 } })
-    procedureOptions.value = procedureAll.map((i) => ({ value: i.id, text: i.name, data: i }))
-
     procedureMap.value = await ProcedureService.getMap()
   } catch (error: any) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:52 ~ ProcedureService.list ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
-
-const selectProcedure = (instance?: Procedure) => {
-  if (instance) {
-    const temp = TicketProcedure.blank()
-
-    temp.ticketId = ticketClinicRef.value.id
-    temp.priority = (ticketClinicRef.value.ticketProcedureList || []).length + 1
-    temp.procedureId = instance.id
-    temp.procedure = instance
-
-    temp.expectedPrice = instance.price
-    temp.discountMoney = 0
-    temp.discountPercent = 0
-    temp.discountType = DiscountType.VND
-    temp.expectedPrice = instance.price
-    temp.actualPrice = instance.price
-    temp.quantity = 1
-    temp.startedAt = Date.now()
-
-    ticketProcedure.value = temp
-  } else {
-    ticketProcedure.value = TicketProcedure.blank()
-  }
-}
 
 const changeItemPosition = (index: number, count: number) => {
   const temp = ticketProcedureList.value[index]
@@ -99,19 +68,6 @@ const saveTicketProcedureList = async () => {
     })
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:97 ~ saveTicketProcedureList ~ error:', error)
-  }
-}
-
-const addTicketProcedure = async () => {
-  try {
-    await TicketClinicApi.addTicketProcedure({
-      ticketId: ticketClinicRef.value.id,
-      ticketProcedure: ticketProcedure.value,
-      ticketUserList: [],
-    })
-    ticketProcedure.value = TicketProcedure.blank()
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicProcedure.vue:109 ~ addTicketProcedure ~ error:', error)
   }
 }
 
@@ -140,49 +96,7 @@ const destroyTicketProcedure = async (ticketProcedureId: number) => {
 }
 </script>
 <template>
-  <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addTicketProcedure()">
-    <div style="flex-grow: 1; flex-basis: 80%">
-      <div>Chỉ định dịch vụ {{ ticketProcedure.procedureId }}</div>
-      <div style="height: 40px">
-        <InputFilter
-          ref="inputSearchProcedure"
-          :value="ticketProcedure.procedureId"
-          :options="procedureOptions"
-          :maxHeight="320"
-          placeholder="Tìm kiếm tên dịch vụ"
-          :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
-          "
-          @selectItem="({ data }) => selectProcedure(data)">
-          <template #option="{ item: { data } }">
-            <div>
-              <b>{{ data.name }}</b>
-              - {{ formatMoney(data.price) }}
-            </div>
-          </template>
-        </InputFilter>
-      </div>
-    </div>
-
-    <div style="flex-grow: 1; flex-basis: 80%">
-      <div>Số lượng</div>
-      <div>
-        <InputNumber v-model:value="ticketProcedure.quantity" required :validate="{ gt: 0 }" />
-      </div>
-    </div>
-
-    <div style="flex-grow: 1; flex-basis: 80%" class="flex justify-center">
-      <VueButton
-        icon="plus"
-        :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
-        "
-        color="blue"
-        type="submit">
-        Thêm vào đơn
-      </VueButton>
-    </div>
-  </form>
+  <TicketClinicProcedureSelectItem />
   <div class="mt-4">
     <div>Danh sách các dịch vụ, thủ thuật</div>
     <div class="table-wrapper">

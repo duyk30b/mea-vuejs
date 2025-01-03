@@ -109,7 +109,7 @@ const saveTicketItemsMoney = async () => {
           </td>
           <td class="text-right">
             <template v-if="ticketUser.interactType !== RoleInteractType.Ticket">
-              {{ formatMoney(ticketUser.interactMoney) }}
+              <!-- {{ formatMoney(ticketUser.interactMoney) }} -->
             </template>
           </td>
           <td>

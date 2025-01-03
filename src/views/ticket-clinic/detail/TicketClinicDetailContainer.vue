@@ -41,7 +41,7 @@ import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.v
 import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicLaboratory from './TicketClinicLaboratory.vue'
 import TicketClinicPrescription from './TicketClinicPrescription.vue'
-import TicketClinicProcedure from './TicketClinicProcedure.vue'
+import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './TicketClinicRadiology.vue'
 import TicketClinicSummary from './TicketClinicSummary.vue'
 import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'

@@ -44,7 +44,7 @@ const refreshRoleIdList = () => {
       const ticketUserBlank = TicketUser.blank()
       ticketUserBlank.interactType = RoleInteractType.Ticket
       ticketUserBlank.interactId = 0
-      ticketUserBlank.interactMoney = 0
+      ticketUserBlank.ticketItemId = 0
       ticketUserBlank.roleId = roleId
       ticketUserTicketMap.value[roleId] = ticketUserBlank
     }

@@ -15,6 +15,7 @@ export class CommissionGetQuery {
   filter?: {
     roleId?: number
     interactType?: RoleInteractType
+    interactId?: number
   }
 
   sort?: {
