@@ -284,18 +284,6 @@ const clear = () => {
       </div>
 
       <div style="flex-basis: 80%; flex-grow: 1" class="flex flex-wrap gap-4">
-        <div
-          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.warehouse"
-          style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div>Nhập vào kho hàng</div>
-          <div>
-            <VueSelect
-              v-model:value="receiptItem.warehouseId"
-              :options="warehouseOptions"
-              @update:value="receiptItem.batchId = 0"></VueSelect>
-          </div>
-        </div>
-
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Nhập vào lô hàng</div>
           <div>
@@ -340,6 +328,19 @@ const clear = () => {
                 </div>
               </template>
             </VueSelect>
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.warehouse"
+          style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+          <div>Nhập vào kho hàng</div>
+          <div>
+            <VueSelect
+              v-model:value="receiptItem.warehouseId"
+              :options="warehouseOptions"
+              :disabled="!!receiptItem.batchId"
+              @update:value="receiptItem.batchId = 0"></VueSelect>
           </div>
         </div>
       </div>
