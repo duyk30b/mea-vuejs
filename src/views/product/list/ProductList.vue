@@ -189,6 +189,8 @@ const startSearch = async () => {
   page.value = 1
   if (sortColumn.value === 'expiryDate' && sortValue.value != '') {
     tableType.value = 'TABLE_BATCH'
+  } else {
+    tableType.value = 'TABLE_PRODUCT'
   }
   // else if (warehouseId.value != 0) {
   //   tableType.value = 'TABLE_BATCH'
@@ -776,7 +778,7 @@ const closeExpiryDate = computed(() => {
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
-                  {{ distributorMap[batch.distributorId]?.fullName }} {{ batch.distributorId }}
+                  {{ distributorMap[batch.distributorId]?.fullName }}
                 </td>
 
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
@@ -866,6 +868,9 @@ const closeExpiryDate = computed(() => {
             </td>
             <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
               {{ warehouseMap[batch.warehouseId]?.name }}
+            </td>
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
+              {{ distributorMap[batch.distributorId]?.fullName }}
             </td>
             <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
               {{ batch.lotNumber }}
