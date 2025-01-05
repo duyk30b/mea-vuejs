@@ -31,13 +31,15 @@ const refreshRoleIdList = () => {
   ticketUserTicketMap.value = {}
   const roleIdList = commissionList.value.map((i) => i.roleId)
 
-  ticketClinicRef.value.ticketUserList?.forEach((i) => {
-    ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
+  ticketClinicRef.value.ticketUserList
+    ?.filter((i) => i.interactType === RoleInteractType.Ticket)
+    .forEach((i) => {
+      ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
 
-    if (!roleIdList.includes(i.roleId)) {
-      roleIdList.push(i.roleId)
-    }
-  })
+      if (!roleIdList.includes(i.roleId)) {
+        roleIdList.push(i.roleId)
+      }
+    })
 
   roleIdList.forEach((roleId) => {
     if (!ticketUserTicketMap.value[roleId]) {
@@ -93,6 +95,7 @@ const saveTicketUserList = async () => {
       ticketId: ticketClinicRef.value.id,
       interactId: 0,
       interactType: RoleInteractType.Ticket,
+      ticketItemId: 0,
       ticketUserList: Object.values(ticketUserTicketMap.value),
     })
   } catch (error) {

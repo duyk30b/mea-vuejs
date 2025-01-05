@@ -5,17 +5,17 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { Commission, CommissionService, RoleInteractType } from '../../../../modules/commission'
 import { DiscountType } from '../../../../modules/enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { Role, RoleService } from '../../../../modules/role'
+import { TicketStatus } from '../../../../modules/ticket'
+import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketProcedure } from '../../../../modules/ticket-procedure'
+import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRole, UserRoleService } from '../../../../modules/user-role'
-import { TicketUser } from '../../../../modules/ticket-user'
 import { DArray, DString } from '../../../../utils'
-import { Commission, CommissionService, RoleInteractType } from '../../../../modules/commission'
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 
@@ -24,18 +24,16 @@ const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const ticketUserTicketMap = ref<Record<string, TicketUser>>({})
-
 const roleMap = ref<Record<string, Role>>({})
-const userMap = ref<Record<string, User>>({})
-const userRoleMapRoleId = ref<Record<string, UserRole[]>>({})
-const commissionList = ref<Commission[]>([])
+const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
+  {}
+)
+const ticketUserList = ref<TicketUser[]>([])
 
 const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
 const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
     const fetchPromise = await Promise.all([
       ProcedureService.list({ filter: { isActive: 1 } }),
@@ -46,13 +44,68 @@ onMounted(async () => {
 
     procedureOptions.value = fetchPromise[0].map((i) => ({ value: i.id, text: i.name, data: i }))
     roleMap.value = fetchPromise[1]
-    userMap.value = fetchPromise[2]
-    userRoleMapRoleId.value = DArray.arrayToKeyArray(fetchPromise[3], 'roleId')
+    const userMap = fetchPromise[2]
+    const userRoleList = fetchPromise[3]
+
+    userRoleList.forEach((i) => {
+      const key = i.roleId
+      if (!userRoleMapRoleIdOptions.value[key]) {
+        userRoleMapRoleIdOptions.value[key] = []
+      }
+      userRoleMapRoleIdOptions.value[key].push({
+        value: userMap[i.userId]?.id || 0,
+        text: userMap[i.userId]?.fullName || '',
+        data: userMap[i.userId],
+      })
+    })
   } catch (error: any) {
     console.log('🚀 ~ file: TicketClinicProcedureSelectItem.vue:51 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
+
+const reset = () => {
+  ticketProcedure.value = TicketProcedure.blank()
+  ticketUserList.value = []
+}
+
+const refreshTicketUserList = async () => {
+  ticketUserList.value = []
+  const ticketUserListOrigin: TicketUser[] = []
+  // const ticketUserListOrigin =
+  //   ticketClinicRef.value.ticketUserGroup?.[RoleInteractType.Procedure]?.[
+  //     ticketProcedure.value.id
+  //   ] || []
+
+  const commissionList = await CommissionService.list({
+    filter: {
+      interactType: RoleInteractType.Procedure,
+      interactId: ticketProcedure.value.procedureId,
+    },
+  })
+
+  // lấy tất cả role có trong commission trước
+  commissionList.forEach((i) => {
+    const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      ticketUserList.value.push(TicketUser.from(findExist))
+    } else {
+      const ticketUserBlank = TicketUser.blank()
+      ticketUserBlank.roleId = i.roleId
+      ticketUserList.value.push(ticketUserBlank)
+    }
+  })
+
+  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
+  ticketUserListOrigin.forEach((i) => {
+    const findExist = ticketUserList.value.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      return // nếu đã có rồi thì bỏ qua
+    } else {
+      ticketUserList.value.push(TicketUser.from(i))
+    }
+  })
+}
 
 const selectProcedure = async (instance?: Procedure) => {
   if (instance) {
@@ -74,18 +127,7 @@ const selectProcedure = async (instance?: Procedure) => {
 
     ticketProcedure.value = temp
 
-    commissionList.value = await CommissionService.list({
-      filter: {
-        interactType: RoleInteractType.Procedure,
-        interactId: instance.id,
-      },
-    })
-    ticketUserTicketMap.value = {}
-    commissionList.value.forEach((c) => {
-      const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.roleId = c.roleId
-      ticketUserTicketMap.value[c.roleId] = ticketUserBlank
-    })
+    await refreshTicketUserList()
   } else {
     ticketProcedure.value = TicketProcedure.blank()
   }
@@ -93,12 +135,12 @@ const selectProcedure = async (instance?: Procedure) => {
 
 const addTicketProcedure = async () => {
   try {
-    await TicketClinicApi.addTicketProcedure({
+    await TicketClinicProcedureApi.addTicketProcedure({
       ticketId: ticketClinicRef.value.id,
       ticketProcedure: ticketProcedure.value,
-      ticketUserList: [],
+      ticketUserList: ticketUserList.value,
     })
-    ticketProcedure.value = TicketProcedure.blank()
+    reset()
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:109 ~ addTicketProcedure ~ error:', error)
   }
@@ -131,33 +173,25 @@ const addTicketProcedure = async () => {
 
     <div
       style="flex-grow: 1"
-      :style="commissionList.length % 2 == 0 ? 'flex-basis: 80%' : 'flex-basis: 45%'">
+      :style="ticketUserList.length % 2 == 0 ? 'flex-basis: 80%' : 'flex-basis: 45%'">
       <div>Số lượng</div>
       <div>
         <InputNumber v-model:value="ticketProcedure.quantity" required :validate="{ gt: 0 }" />
       </div>
     </div>
 
-    <template v-if="commissionList.length">
+    <template v-if="ticketUserList.length">
       <div
-        v-for="(commission, index) in commissionList"
+        v-for="(ticketUser, index) in ticketUserList"
         :key="index"
         style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
         <div>
-          {{ roleMap[commission.roleId]?.displayName || roleMap[commission.roleId]?.name || '' }}
+          {{ roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || '' }}
         </div>
         <div>
           <InputFilter
-            v-model:value="ticketUserTicketMap[commission.roleId]!.userId"
-            :options="
-              userRoleMapRoleId[commission.roleId]?.map((i) => {
-                return {
-                  value: userMap[i.userId]?.id || 0,
-                  text: userMap[i.userId]?.fullName || '',
-                  data: userMap[i.userId],
-                }
-              }) || []
-            "
+            v-model:value="ticketUserList[index].userId"
+            :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
             :maxHeight="200"
             placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
             <template #option="{ item: { data } }">

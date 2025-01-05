@@ -14,6 +14,9 @@ import { ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import { TicketUser } from '../../../modules/ticket-user'
 import { User, UserService } from '../../../modules/user'
+import { Procedure, ProcedureService } from '../../../modules/procedure'
+import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
+import { Radiology, RadiologyService } from '../../../modules/radiology'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -24,19 +27,39 @@ const ticketUserList = ref<TicketUser[]>([])
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
 
+const procedureMap = ref<Record<string, Procedure>>({})
+const laboratoryMap = ref<Record<string, Laboratory>>({})
+const radiologyMap = ref<Record<string, Radiology>>({})
+
 const saveLoading = ref(false)
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
-  const fetchPromise = await Promise.all([UserService.getMap(), RoleService.getMap()])
+  const fetchPromise = await Promise.all([
+    UserService.getMap(),
+    RoleService.getMap(),
+    ProcedureService.getMap(),
+    LaboratoryService.getMap(),
+    RadiologyService.getMap(),
+  ])
   userMap.value = fetchPromise[0]
   roleMap.value = fetchPromise[1]
+  procedureMap.value = fetchPromise[2]
+  laboratoryMap.value = fetchPromise[3]
+  radiologyMap.value = fetchPromise[4]
 })
 
 watch(
   () => ticketClinicRef.value.ticketUserList,
   (newValue, oldValue) => {
     ticketUserList.value = TicketUser.fromList(newValue || [])
+    ticketUserList.value.forEach((i) => {
+      if (i.interactType === RoleInteractType.Procedure) {
+        i.ticketProcedure = (ticketClinicRef.value.ticketProcedureList || []).find((j) => {
+          return j.id === i.ticketItemId
+        })
+      }
+    })
   },
   { immediate: true }
 )
@@ -103,17 +126,40 @@ const saveTicketItemsMoney = async () => {
             </div>
           </td>
           <td>
-            <template v-if="ticketUser.interactType === RoleInteractType.Ticket">
-              Phiếu khám
-            </template>
+            <div style="min-width: 100px;">
+              <template v-if="ticketUser.interactType === RoleInteractType.Ticket">
+                Phiếu khám
+              </template>
+              <template v-if="ticketUser.interactType === RoleInteractType.Procedure">
+                {{ procedureMap[ticketUser.ticketProcedure?.procedureId || 0]?.name }}
+              </template>
+            </div>
           </td>
           <td class="text-right">
-            <template v-if="ticketUser.interactType !== RoleInteractType.Ticket">
-              <!-- {{ formatMoney(ticketUser.interactMoney) }} -->
+            <template
+              v-if="
+                ticketUser.interactType === RoleInteractType.Procedure && ticketUser.ticketProcedure
+              ">
+              <div
+                v-if="ticketUser.ticketProcedure.discountMoney"
+                class="text-xs italic text-red-500">
+                <del>
+                  {{
+                    formatMoney(
+                      ticketUser.ticketProcedure.expectedPrice * ticketUser.ticketProcedure.quantity
+                    )
+                  }}
+                </del>
+              </div>
+              {{
+                formatMoney(
+                  ticketUser.ticketProcedure.actualPrice * ticketUser.ticketProcedure.quantity
+                )
+              }}
             </template>
           </td>
           <td>
-            <div style="max-width: 120px">
+            <div style="width: 180px">
               <VueSelect
                 :value="ticketUser.commissionCalculatorType"
                 :options="[
@@ -134,7 +180,7 @@ const saveTicketItemsMoney = async () => {
           <td>
             <div
               v-if="ticketUser.commissionCalculatorType !== CommissionCalculatorType.VND"
-              style="max-width: 120px">
+              style="max-width: 100px">
               <InputNumber
                 :value="ticketUser.commissionPercent"
                 textAlign="right"
@@ -143,7 +189,7 @@ const saveTicketItemsMoney = async () => {
           </td>
 
           <td>
-            <div style="max-width: 120px">
+            <div style="max-width: 100px">
               <InputNumber
                 :value="ticketUser.commissionMoney"
                 textAlign="right"

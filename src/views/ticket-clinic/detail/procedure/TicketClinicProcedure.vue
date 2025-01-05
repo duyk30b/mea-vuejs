@@ -1,18 +1,19 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconDelete } from '../../../../common/icon-google'
+import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputNumber, InputOptions } from '../../../../common/vue-form'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
+import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
+
+const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -62,7 +63,7 @@ const changeItemPosition = (index: number, count: number) => {
 
 const saveTicketProcedureList = async () => {
   try {
-    const ticketProcedureUpdate = await TicketClinicApi.updateTicketProcedureList({
+    const ticketProcedureUpdate = await TicketClinicProcedureApi.updateTicketProcedureList({
       ticketId: ticketClinicRef.value.id,
       ticketProcedureList: ticketProcedureList.value,
     })
@@ -70,32 +71,9 @@ const saveTicketProcedureList = async () => {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:97 ~ saveTicketProcedureList ~ error:', error)
   }
 }
-
-const destroyTicketProcedure = async (ticketProcedureId: number) => {
-  ModalStore.confirm({
-    title: 'Xác nhận xóa dịch vụ ?',
-    content: [
-      '- Hệ thống sẽ xóa dịch vụ này khỏi phiếu khám',
-      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
-    ],
-    onOk: async () => {
-      try {
-        const indexDestroy = ticketProcedureList.value.findIndex((i) => i.id === ticketProcedureId)
-        if (indexDestroy !== -1) {
-          ticketProcedureList.value.splice(indexDestroy, 1)
-        }
-        await TicketClinicApi.destroyTicketProcedure({
-          ticketId: ticketClinicRef.value.id,
-          ticketProcedureId,
-        })
-      } catch (error) {
-        console.log('🚀 ~ file: TicketClinicProcedure.vue:118 ~ onOk: ~ error:', error)
-      }
-    },
-  })
-}
 </script>
 <template>
+  <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <TicketClinicProcedureSelectItem />
   <div class="mt-4">
     <div>Danh sách các dịch vụ, thủ thuật</div>
@@ -150,33 +128,7 @@ const destroyTicketProcedure = async (ticketProcedureId: number) => {
               </div>
             </td>
             <td>{{ procedureMap[tpItem.procedureId]?.name }}</td>
-            <td style="width: 150px">
-              <div
-                v-if="
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
-                "
-                class="text-center">
-                {{ tpItem.quantity }}
-              </div>
-              <div v-else class="flex items-center justify-between">
-                <button
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  :disabled="tpItem.quantity <= 0"
-                  @click="ticketProcedureList[index].quantity--">
-                  <font-awesome-icon :icon="['fas', 'minus']" />
-                </button>
-                <div style="width: calc(100% - 60px); min-width: 50px">
-                  <InputNumber v-model:value="tpItem.quantity" textAlign="right" />
-                </div>
-                <button
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  @click="ticketProcedureList[index].quantity++">
-                  <font-awesome-icon :icon="['fas', 'plus']" />
-                </button>
-              </div>
-            </td>
+            <td class="text-center">{{ tpItem.quantity }}</td>
             <td class="text-right">{{ formatMoney(tpItem.actualPrice) }}</td>
             <td class="text-right">
               {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
@@ -188,9 +140,9 @@ const destroyTicketProcedure = async (ticketProcedureId: number) => {
                     ticketClinicRef.ticketStatus
                   )
                 "
-                class="text-red-500"
-                @click="destroyTicketProcedure(tpItem.id)">
-                <IconDelete width="18" height="18" />
+                class="text-orange-500"
+                @click="modalTicketProcedureUpdate?.openModal(tpItem)">
+                <IconEditSquare width="20" height="20" />
               </a>
             </td>
           </tr>
@@ -220,10 +172,10 @@ const destroyTicketProcedure = async (ticketProcedureId: number) => {
     <VueButton
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+        hasChangeData
       "
       color="blue"
-      :disabled="!hasChangeData"
       icon="save"
       @click="saveTicketProcedureList">
       Lưu lại

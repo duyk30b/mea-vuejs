@@ -158,9 +158,10 @@ export class SocketService {
   static async listenTicketClinicChangeTicketProcedureList(data: {
     ticketId: number
     ticketProcedureInsert?: TicketProcedure
-    ticketProcedureUpdateList?: TicketProcedure[]
+    ticketProcedureUpdate?: TicketProcedure
     ticketProcedureDestroy?: TicketProcedure
-    ticketProcedureList?: TicketProcedure[] 
+    ticketProcedureUpdateList?: TicketProcedure[]
+    ticketProcedureList?: TicketProcedure[]
   }) {
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach((ticket) => {
@@ -172,13 +173,13 @@ export class SocketService {
           ticket.ticketProcedureList?.push(TicketProcedure.from(data.ticketProcedureInsert))
         }
       }
-      if (data.ticketProcedureUpdateList) {
-        data.ticketProcedureUpdateList.forEach((i) => {
-          const findExist = ticket.ticketProcedureList?.find((j) => j.id === i.id)
-          if (findExist) {
-            Object.assign(findExist, i)
-          }
+      if (data.ticketProcedureUpdate) {
+        const findExist = (ticket.ticketProcedureList || []).findIndex((i) => {
+          return data.ticketProcedureInsert?.id === i.id
         })
+        if (findExist) {
+          Object.assign(findExist, TicketProcedure.from(data.ticketProcedureUpdate))
+        }
       }
       if (data.ticketProcedureDestroy) {
         const indexDestroy = (ticket.ticketProcedureList || []).findIndex((i) => {
@@ -187,6 +188,17 @@ export class SocketService {
         if (indexDestroy !== -1) {
           ticket.ticketProcedureList?.splice(indexDestroy, 1)
         }
+      }
+      if (data.ticketProcedureUpdateList) {
+        data.ticketProcedureUpdateList.forEach((i) => {
+          const findExist = ticket.ticketProcedureList?.find((j) => j.id === i.id)
+          if (findExist) {
+            Object.assign(findExist, i)
+          }
+        })
+      }
+      if (data.ticketProcedureList) {
+        ticket.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
       }
     })
   }
@@ -199,28 +211,64 @@ export class SocketService {
   }) {
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach((ticket) => {
+      if (!ticket.ticketUserList) ticket.ticketUserList = []
+
       data.ticketUserInsertList?.forEach((i) => {
-        const indexInsert = (ticket.ticketUserList || []).findIndex((j) => {
+        if (!ticket.ticketUserGroup[i.interactType]) {
+          ticket.ticketUserGroup[i.interactType] = {}
+        }
+        if (!ticket.ticketUserGroup[i.interactType][i.ticketItemId]) {
+          ticket.ticketUserGroup[i.interactType][i.ticketItemId] = []
+        }
+        const currentTicketUserGroup = ticket.ticketUserGroup[i.interactType][i.ticketItemId]
+
+        const indexInsert = ticket.ticketUserList!.findIndex((j) => {
           return j.id === i.id
         })
         if (indexInsert === -1) {
-          ticket.ticketUserList?.push(TicketUser.from(i))
+          const ticketUserNew = TicketUser.from(i)
+          ticket.ticketUserList?.push(ticketUserNew)
+          currentTicketUserGroup.push(ticketUserNew)
         }
       })
       data.ticketUserUpdateList?.forEach((i) => {
-        const findExist = ticket.ticketUserList?.find((j) => {
-          return j.id === i.id
-        })
-        if (findExist) {
-          Object.assign(findExist, i)
+        if (!ticket.ticketUserGroup[i.interactType]) {
+          ticket.ticketUserGroup[i.interactType] = {}
+        }
+        if (!ticket.ticketUserGroup[i.interactType][i.ticketItemId]) {
+          ticket.ticketUserGroup[i.interactType][i.ticketItemId] = []
+        }
+        const currentTicketUserGroup = ticket.ticketUserGroup[i.interactType][i.ticketItemId]
+
+        const findExistInList = ticket.ticketUserList?.find((j) => j.id === i.id)
+        if (findExistInList) {
+          Object.assign(findExistInList, i)
+        }
+        const findExistInGroup = currentTicketUserGroup.find((j) => j.id === i.id)
+        if (findExistInGroup) {
+          Object.assign(findExistInGroup, i)
         }
       })
       data.ticketUserDestroyList?.forEach((i) => {
-        const indexDestroy = (ticket.ticketUserList || []).findIndex((j) => {
+        if (!ticket.ticketUserGroup[i.interactType]) {
+          ticket.ticketUserGroup[i.interactType] = {}
+        }
+        if (!ticket.ticketUserGroup[i.interactType][i.ticketItemId]) {
+          ticket.ticketUserGroup[i.interactType][i.ticketItemId] = []
+        }
+        const currentTicketUserGroup = ticket.ticketUserGroup[i.interactType][i.ticketItemId]
+
+        const indexDestroyInList = ticket.ticketUserList!.findIndex((j) => {
           return j.id === i.id
         })
-        if (indexDestroy !== -1) {
-          ticket.ticketUserList?.splice(indexDestroy, 1)
+        if (indexDestroyInList !== -1) {
+          ticket.ticketUserList?.splice(indexDestroyInList, 1)
+        }
+        const indexDestroyInGroup = currentTicketUserGroup.findIndex((j) => {
+          return j.id === i.id
+        })
+        if (indexDestroyInGroup !== -1) {
+          currentTicketUserGroup.splice(indexDestroyInGroup, 1)
         }
       })
     })

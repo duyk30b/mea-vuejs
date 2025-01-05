@@ -1,5 +1,9 @@
 import { CommissionCalculatorType, RoleInteractType } from '../commission'
 import type { Role } from '../role'
+import { TicketLaboratory } from '../ticket-laboratory'
+import { TicketProcedure } from '../ticket-procedure'
+import { TicketProduct } from '../ticket-product'
+import { TicketRadiology } from '../ticket-radiology'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
 
@@ -22,6 +26,11 @@ export class TicketUser {
   ticket?: Ticket
   user?: User
   role?: Role
+
+  ticketProcedure?: TicketProcedure
+  ticketProduct?: TicketProduct
+  ticketLaboratory?: TicketLaboratory
+  ticketRadiology?: TicketRadiology
 
   static init(): TicketUser {
     const ins = new TicketUser()

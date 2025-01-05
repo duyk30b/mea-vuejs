@@ -61,8 +61,10 @@ const ticketAttributeMap = ref<TicketAttributeMap>({})
 
 const fromAppointmentId = ref(0)
 const roleMap = ref<Record<string, Role>>({})
-const userMap = ref<Record<string, User>>({})
-const userRoleList = ref<UserRole[]>([])
+
+const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
+  {}
+)
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -82,6 +84,7 @@ const openModal = async (ticketId?: number) => {
       : Ticket.blank(),
     RoleService.getMap(),
     UserService.getMap(),
+    UserRoleService.list(),
   ])
     .then((result) => {
       if (!ticketId) {
@@ -92,18 +95,24 @@ const openModal = async (ticketId?: number) => {
         customer.value = Customer.from(result[0].customer || Customer.blank())
       }
       roleMap.value = result[1]
-      userMap.value = result[2]
+      const userMap = result[2]
+      const userRoleList = result[3]
 
+      userRoleList.forEach((i) => {
+        const key = i.roleId
+        if (!userRoleMapRoleIdOptions.value[key]) {
+          userRoleMapRoleIdOptions.value[key] = []
+        }
+        userRoleMapRoleIdOptions.value[key].push({
+          value: userMap[i.userId]?.id || 0,
+          text: userMap[i.userId]?.fullName || '',
+          data: userMap[i.userId],
+        })
+      })
       refreshTicketUserList()
     })
     .catch((e) => {
       console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ openModal 91 ~ e:', e)
-    })
-
-  UserRoleService.list()
-    .then((result) => (userRoleList.value = result))
-    .catch((e) => {
-      console.log('🚀 ~ file: ModalTicketClinicCreate.vue:115 ~ UserRoleService ~ e:', e)
     })
 
   if (settingStore.TICKET_CLINIC_CREATE.customerSource) {
@@ -131,6 +140,7 @@ const closeModal = () => {
   ticket.value = Ticket.blank()
   ticketUserList.value = []
   ticketAttributeMap.value = {}
+  userRoleMapRoleIdOptions.value = {}
 
   fromAppointmentId.value = 0
 
@@ -815,17 +825,7 @@ defineExpose({ openModal })
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
-                :options="
-                  userRoleList
-                    .filter((i) => i.roleId === ticketUserList[index].roleId)
-                    .map((i) => {
-                      return {
-                        value: userMap[i.userId]?.id || 0,
-                        text: userMap[i.userId]?.fullName || '',
-                        data: userMap[i.userId],
-                      }
-                    })
-                "
+                :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
                 placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
                 <template #option="{ item: { data } }">

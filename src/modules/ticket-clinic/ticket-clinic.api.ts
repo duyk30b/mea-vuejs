@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { RoleInteractType } from '../commission'
 import type { Customer } from '../customer'
 import type { DiscountType } from '../enum'
 import type { TicketLaboratory } from '../ticket-laboratory'
@@ -155,75 +154,19 @@ export class TicketClinicApi {
     ticketId: number
     interactId: number
     interactType: number
+    ticketItemId: number
     ticketUserList: TicketUser[]
   }) {
-    const { ticketId, interactId, interactType, ticketUserList } = body
+    const { ticketId } = body
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/update-ticket-user-list`,
       {
-        interactType: interactType,
-        interactId: interactId,
-        ticketUserList: ticketUserList.map((i) => ({
+        interactType: body.interactType,
+        interactId: body.interactId,
+        ticketItemId: body.ticketItemId,
+        ticketUserList: body.ticketUserList.map((i) => ({
           userId: i.userId || 0,
           roleId: i.roleId || 0,
-        })),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async addTicketProcedure(body: {
-    ticketId: number
-    ticketProcedure: TicketProcedure
-    ticketUserList: TicketUser[]
-  }) {
-    const { ticketId, ticketProcedure, ticketUserList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/add-ticket-procedure`, {
-      ticketProcedure: {
-        priority: ticketProcedure.priority,
-        procedureId: ticketProcedure.procedureId,
-        quantity: ticketProcedure.quantity,
-        expectedPrice: ticketProcedure.expectedPrice,
-        discountMoney: ticketProcedure.discountMoney,
-        discountPercent: ticketProcedure.discountPercent,
-        discountType: ticketProcedure.discountType,
-        actualPrice: ticketProcedure.actualPrice,
-      },
-      ticketUserList: ticketUserList.map((i) => ({
-        roleId: i.roleId,
-        userId: i.userId,
-      })),
-    })
-    const { data } = response.data as BaseResponse<{ ticket: any; ticketProcedure: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      ticketProcedure: TicketProcedure.from(data.ticketProcedure),
-    }
-  }
-
-  static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
-    const { ticketId, ticketProcedureId } = body
-    const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-procedure/${ticketProcedureId}`
-    )
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-    }
-  }
-
-  static async updateTicketProcedureList(body: {
-    ticketId: number
-    ticketProcedureList: TicketProcedure[]
-  }) {
-    const { ticketId, ticketProcedureList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-procedure-list`,
-      {
-        ticketProcedureList: ticketProcedureList.map((i) => ({
-          ticketProcedureId: i.id,
-          quantity: i.quantity,
-          priority: i.priority,
         })),
       }
     )

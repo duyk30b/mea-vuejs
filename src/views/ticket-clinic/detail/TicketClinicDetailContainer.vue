@@ -350,7 +350,7 @@ const clickCloseVisit = () => {
     </div>
     <div style="flex-basis: 300px; flex-grow: 1" class="">
       <TicketClinicInformation />
-      <!-- <TicketClinicUserList /> -->
+      <TicketClinicUserList />
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
           v-if="

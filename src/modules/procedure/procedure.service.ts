@@ -1,4 +1,5 @@
 import { arrayToKeyValue, DString } from '../../utils'
+import { CommissionService } from '../commission'
 import { ProcedureApi } from './procedure.api'
 import type {
   ProcedureDetailQuery,
@@ -91,7 +92,7 @@ export class ProcedureService {
     const page = query.page || 1
     const limit = query.limit || 10
     await ProcedureService.fetchAll({ refresh: !!options?.refresh })
-    
+
     let data = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
     data = data.slice((page - 1) * limit, page * limit)
     return {
@@ -120,12 +121,14 @@ export class ProcedureService {
 
   static async createOne(procedure: Procedure) {
     const result = await ProcedureApi.createOne(procedure)
+    CommissionService.loadedAll = false
     ProcedureService.loadedAll = false
     return result
   }
 
   static async updateOne(id: number, procedure: Procedure) {
     const result = await ProcedureApi.updateOne(id, procedure)
+    CommissionService.loadedAll = false
     ProcedureService.loadedAll = false
     return result
   }
@@ -134,6 +137,7 @@ export class ProcedureService {
     const result = await ProcedureApi.destroyOne(id)
     if (result.success) {
       ProcedureService.loadedAll = false
+      CommissionService.loadedAll = false
     }
     return result
   }

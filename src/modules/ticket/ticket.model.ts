@@ -57,6 +57,7 @@ export class Ticket {
   surcharge: number // Phụ phí
   totalMoney: number // Doanh thu = procedureMoney + productMoney + phụ phí - tiền giảm giá
   expense: number
+  commissionMoney: number
   profit: number
   paid: number
   debt: number
@@ -91,6 +92,7 @@ export class Ticket {
   imageList: Image[]
 
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
+  ticketUserGroup: Record<string, Record<string, TicketUser[]>> // chỉ convert tại front-end
 
   static init(): Ticket {
     const ins = new Ticket()
@@ -127,6 +129,7 @@ export class Ticket {
     ins.imageList = []
 
     ins.ticketAttributeMap = {}
+    ins.ticketUserGroup = {}
     return ins
   }
 
@@ -161,61 +164,71 @@ export class Ticket {
         : target.toAppointment
     }
 
-    if (target.ticketAttributeList) {
-      target.ticketAttributeList = TicketAttribute.basicList(target.ticketAttributeList)
-      target.ticketAttributeMap = TicketAttribute.basicMap(target.ticketAttributeList)
+    if (source.ticketAttributeList) {
+      target.ticketAttributeList = TicketAttribute.basicList(source.ticketAttributeList)
+      target.ticketAttributeMap = TicketAttribute.basicMap(source.ticketAttributeList)
     }
-    if (target.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
+    if (source.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(source.ticketUserList)
+      target.ticketUserGroup = {}
+      target.ticketUserList.forEach((i) => {
+        if (!target.ticketUserGroup[i.interactType]) {
+          target.ticketUserGroup[i.interactType] = {}
+        }
+        if (!target.ticketUserGroup[i.interactType][i.ticketItemId]) {
+          target.ticketUserGroup[i.interactType][i.ticketItemId] = []
+        }
+        target.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+      })
     }
 
-    if (target.customerPaymentList) {
-      target.customerPaymentList = CustomerPayment.basicList(target.customerPaymentList)
+    if (source.customerPaymentList) {
+      target.customerPaymentList = CustomerPayment.basicList(source.customerPaymentList)
     }
-    if (target.ticketProductList) {
-      target.ticketProductList = TicketProduct.basicList(target.ticketProductList)
+    if (source.ticketProductList) {
+      target.ticketProductList = TicketProduct.basicList(source.ticketProductList)
       target.ticketProductList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProductPrescriptionList) {
+    if (source.ticketProductPrescriptionList) {
       target.ticketProductPrescriptionList = TicketProduct.basicList(
-        target.ticketProductPrescriptionList
+        source.ticketProductPrescriptionList
       )
       target.ticketProductPrescriptionList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProductConsumableList) {
+    if (source.ticketProductConsumableList) {
       target.ticketProductConsumableList = TicketProduct.basicList(
-        target.ticketProductConsumableList
+        source.ticketProductConsumableList
       )
       target.ticketProductConsumableList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProcedureList) {
-      target.ticketProcedureList = TicketProcedure.basicList(target.ticketProcedureList)
+    if (source.ticketProcedureList) {
+      target.ticketProcedureList = TicketProcedure.basicList(source.ticketProcedureList)
       target.ticketProcedureList.forEach((i) => {
         i.procedure = Procedure.basic(i.procedure!)
       })
     }
-    if (target.ticketLaboratoryList) {
-      target.ticketLaboratoryList = TicketLaboratory.basicList(target.ticketLaboratoryList)
+    if (source.ticketLaboratoryList) {
+      target.ticketLaboratoryList = TicketLaboratory.basicList(source.ticketLaboratoryList)
     }
-    if (target.ticketRadiologyList) {
-      target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
-    }
-
-    if (target.ticketSurchargeList) {
-      target.ticketSurchargeList = TicketSurcharge.basicList(target.ticketSurchargeList)
-    }
-    if (target.ticketExpenseList) {
-      target.ticketExpenseList = TicketExpense.basicList(target.ticketExpenseList)
+    if (source.ticketRadiologyList) {
+      target.ticketRadiologyList = TicketRadiology.basicList(source.ticketRadiologyList)
     }
 
-    if (target.imageList) {
-      target.imageList = Image.basicList(target.imageList)
+    if (source.ticketSurchargeList) {
+      target.ticketSurchargeList = TicketSurcharge.basicList(source.ticketSurchargeList)
+    }
+    if (source.ticketExpenseList) {
+      target.ticketExpenseList = TicketExpense.basicList(source.ticketExpenseList)
+    }
+
+    if (source.imageList) {
+      target.imageList = Image.basicList(source.imageList)
     }
     return target
   }
@@ -245,6 +258,7 @@ export class Ticket {
     if (a.surcharge != b.surcharge) return false
     if (a.totalMoney != b.totalMoney) return false
     if (a.expense != b.expense) return false
+    if (a.commissionMoney != b.commissionMoney) return false
     if (a.profit != b.profit) return false
     if (a.paid != b.paid) return false
     if (a.debt != b.debt) return false
