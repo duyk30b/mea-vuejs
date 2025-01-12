@@ -60,6 +60,7 @@ export class BatchApi {
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       warehouseId: batch.warehouseId,
       quantity: batch.quantity,
+      costPrice: batch.costPrice,
     })
     const { data } = response.data as BaseResponse<{ batch: any; product?: any }>
     return {
