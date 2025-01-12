@@ -18,6 +18,7 @@ import { TicketProduct, TicketProductApi, TicketProductType } from '../../../mod
 import { DTimer } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -96,26 +97,26 @@ const clear = () => {
   batchList.value = []
 }
 
-const selectProduct = async (instance?: Product) => {
-  if (instance) {
+const selectProduct = async (productSelect?: Product) => {
+  if (productSelect) {
     const temp = TicketProduct.blank()
     temp.customerId = ticketClinicRef.value.customerId
-    temp.productId = instance.id
-    temp.product = Product.from(instance)
+    temp.productId = productSelect.id
+    temp.product = Product.from(productSelect)
 
     temp.type = TicketProductType.Consumable
     temp.deliveryStatus = DeliveryStatus.Pending
-    temp.unitRate = instance.unitDefaultRate
+    temp.unitRate = productSelect.unitDefaultRate
 
-    temp.expectedPrice = instance.retailPrice
+    temp.expectedPrice = productSelect.retailPrice
     temp.discountType = DiscountType.Percent
     temp.discountPercent = 0
     temp.discountMoney = 0
-    temp.actualPrice = instance.retailPrice
+    temp.actualPrice = productSelect.retailPrice
 
-    if (!instance.hasManageQuantity) {
+    if (!productSelect.hasManageQuantity) {
       temp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
-      temp.costPrice = instance.costPrice // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
+      temp.costPrice = productSelect.costPrice // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
     }
 
     ticketProductConsumable.value = temp
@@ -125,10 +126,9 @@ const selectProduct = async (instance?: Product) => {
     if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
     else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
 
-    const batchListResponse = await BatchService.list({
+    const batchListFetch = await BatchService.list({
       filter: {
-        productId: instance.id,
-        quantity: { NOT: 0 },
+        productId: productSelect.id,
         ...(canGetAllWarehouse
           ? {}
           : {
@@ -136,7 +136,38 @@ const selectProduct = async (instance?: Product) => {
             }),
       },
     })
-    batchListResponse.forEach((i) => (i.product = instance))
+    let batchListResponse = batchListFetch
+      .filter((i) => !!i.quantity)
+      .sort((a, b) => {
+        if (b.expiryDate == null) return -1 // để NULL ở cuối
+        else if (a.expiryDate == null) return 1
+        else return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
+      })
+
+    if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+      const batchZero = batchListFetch
+        .filter((i) => !i.quantity)
+        .sort((a, b) => {
+          if (b.expiryDate == null) return 1 // để NULL ở đầu
+          else if (a.expiryDate == null) return -1
+          else return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
+        })
+      batchListResponse = [...batchListResponse, ...batchZero]
+    }
+    batchListResponse = batchListResponse.slice(0, 5)
+
+    // const batchListResponse = await BatchService.list({
+    //   filter: {
+    //     productId: instance.id,
+    //     quantity: { NOT: 0 },
+    //     ...(canGetAllWarehouse
+    //       ? {}
+    //       : {
+    //           $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+    //         }),
+    //   },
+    // })
+    batchListResponse.forEach((i) => (i.product = productSelect))
     batchList.value = batchListResponse
 
     if (batchListResponse.length) {
@@ -158,9 +189,27 @@ const selectBatch = (batchSelected: Batch | null) => {
 }
 
 const addConsumableItem = () => {
+  const { product, batch } = ticketProductConsumable.value
   if (!ticketProductConsumable.value.productId) {
+    AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
+
+  if (product?.hasManageQuantity) {
+    if (!ticketProductConsumable.value.batchId) {
+      return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
+    }
+    if (!settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+      if (ticketProductConsumable.value.quantity > batch!.quantity) {
+        return AlertStore.addError(
+          `Lỗi: Số lượng tồn kho không đủ, tồn ${batch!.quantity} lấy ${
+            ticketProductConsumable.value.quantity
+          }`
+        )
+      }
+    }
+  }
+
   ticketProductConsumableList.value.push(ticketProductConsumable.value)
 
   clear()
@@ -174,12 +223,6 @@ const addConsumableItem = () => {
 const changeQuantityTable = (index: number, unitQuantity: number) => {
   const ticketProductCurrent = ticketProductConsumableList.value[index]
   ticketProductCurrent.unitQuantity = unitQuantity
-}
-
-const changePriceTable = (index: number, unitPrice: number) => {
-  const ticketProductCurrent = ticketProductConsumableList.value[index]
-  ticketProductCurrent.unitActualPrice = unitPrice
-  ticketProductCurrent.unitExpectedPrice = unitPrice
 }
 
 const changeItemPosition = (index: number, count: number) => {
