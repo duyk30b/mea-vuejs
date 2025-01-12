@@ -216,21 +216,51 @@ const selectProduct = async (productSelect: Product) => {
   ticketProductPrescription.value = temp
 
   const warehouseIdAcceptList = settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
-  let canGetWarehouse = false
-  if (!warehouseIdAcceptList.length) canGetWarehouse = true
-  else if (warehouseIdAcceptList.includes(0)) canGetWarehouse = true
+  let canGetAllWarehouse = false
+  if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+  else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
 
-  const batchListResponse = await BatchService.list({
+  const batchListFetch = await BatchService.list({
     filter: {
       productId: productSelect.id,
-      quantity: { NOT: 0 },
-      $OR: [
-        { warehouseId: { EQUAL: 0 } },
-        { warehouseId: canGetWarehouse ? undefined : { IN: warehouseIdAcceptList } },
-      ],
+      ...(canGetAllWarehouse
+        ? {}
+        : {
+            $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+          }),
     },
-    sort: { expiryDate: 'ASC' },
   })
+  let batchListResponse = batchListFetch
+    .filter((i) => !!i.quantity)
+    .sort((a, b) => {
+      if (b.expiryDate == null) return -1 // để NULL ở cuối
+      else if (a.expiryDate == null) return 1
+      else return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
+    })
+
+  if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+    const batchZero = batchListFetch
+      .filter((i) => !i.quantity)
+      .sort((a, b) => {
+        if (b.expiryDate == null) return 1 // để NULL ở đầu
+        else if (a.expiryDate == null) return -1
+        else return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
+      })
+    batchListResponse = [...batchListResponse, ...batchZero]
+  }
+  batchListResponse = batchListResponse.slice(0, 5)
+
+  // const batchListResponse = await BatchService.list({
+  //   filter: {
+  //     productId: productSelect.id,
+  //     quantity: { NOT: 0 },
+  //     $OR: [
+  //       { warehouseId: { EQUAL: 0 } },
+  //       { warehouseId: canGetAllWarehouse ? undefined : { IN: warehouseIdAcceptList } },
+  //     ],
+  //   },
+  //   sort: { expiryDate: 'ASC' },
+  // })
   batchListResponse.forEach((i) => (i.product = productSelect))
   batchList.value = batchListResponse
 
@@ -353,14 +383,6 @@ const addPrescriptionItem = () => {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
-  if (product?.hasManageQuantity && batchList.value.length <= 0) {
-    return AlertStore.addError(
-      'Lỗi: Sản phẩm này không còn hàng trong kho. Vui lòng nhập thêm hàng trước khi bán'
-    )
-  }
-  if (ticketProductPrescription.value.quantity <= 0) {
-    return AlertStore.addError('Lỗi: Số lượng không hợp lệ')
-  }
 
   if (product?.hasManageQuantity) {
     if (!ticketProductPrescription.value.batchId) {
@@ -379,6 +401,7 @@ const addPrescriptionItem = () => {
 
   // gán số lượng trong đơn
   ticketProductPrescription.value.quantityPrescription = ticketProductPrescription.value.quantity
+
   ticketProductPrescriptionList.value.push(ticketProductPrescription.value)
 
   clear()

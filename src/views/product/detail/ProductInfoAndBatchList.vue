@@ -105,9 +105,9 @@ const closeExpiryDate = computed(() => {
           <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
           <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
         </div>
-        <div class="my-2 flex gap-4">
+        <div class="my-2 flex gap-4 items-center">
           <div style="width: 100px; flex-shrink: 0">Số lượng</div>
-          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+          <div v-if="product.hasManageQuantity" style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
             <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
             {{ product.unitDefaultName }}
             <span v-if="product.unitDefaultRate != 1" class="ml-2">
@@ -115,6 +115,16 @@ const closeExpiryDate = computed(() => {
               <b>{{ product.quantity }}</b>
               {{ product.unitBasicName }})
             </span>
+          </div>
+          <div v-else style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+            <span style="font-size: 1.2em; color: var(--text-red)">Không quản lý tồn kho</span>
+          </div>
+        </div>
+        <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="my-2 flex gap-4">
+          <div style="width: 100px; flex-shrink: 0">Giá nhập</div>
+          <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+            <b>{{ formatMoney(product.unitCostPrice) }}</b>
+            / {{ product.unitDefaultName }}
           </div>
         </div>
         <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="my-2 flex gap-4">
