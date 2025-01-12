@@ -147,6 +147,19 @@ export class Ticket {
     return sources.map((i) => Ticket.basic(i))
   }
 
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    ;(this.ticketUserList || []).forEach((i) => {
+      if (!this.ticketUserGroup[i.interactType]) {
+        this.ticketUserGroup[i.interactType] = {}
+      }
+      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
+        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
   static from(source: Ticket) {
     const target = Ticket.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
@@ -170,16 +183,7 @@ export class Ticket {
     }
     if (source.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(source.ticketUserList)
-      target.ticketUserGroup = {}
-      target.ticketUserList.forEach((i) => {
-        if (!target.ticketUserGroup[i.interactType]) {
-          target.ticketUserGroup[i.interactType] = {}
-        }
-        if (!target.ticketUserGroup[i.interactType][i.ticketItemId]) {
-          target.ticketUserGroup[i.interactType][i.ticketItemId] = []
-        }
-        target.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
-      })
+      target.refreshTicketUserGroup()
     }
 
     if (source.customerPaymentList) {

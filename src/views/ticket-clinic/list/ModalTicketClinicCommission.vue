@@ -9,7 +9,7 @@ import {
   Commission,
   CommissionCalculatorType,
   CommissionService,
-  RoleInteractType,
+  InteractType,
 } from '../../../modules/commission'
 import { Role, RoleService } from '../../../modules/role'
 import { DArray } from '../../../utils'
@@ -38,7 +38,7 @@ const hasChangeData = computed(() => {
 const openModal = async () => {
   showModal.value = true
 
-  CommissionService.list({ filter: { interactType: RoleInteractType.Ticket } })
+  CommissionService.list({ filter: { interactType: InteractType.Ticket } })
     .then((result) => {
       commissionListOrigin.value = Commission.fromList(result)
       commissionList.value = result
@@ -71,7 +71,7 @@ const handleSave = async () => {
   saveLoading.value = true
   try {
     await CommissionService.replaceList({
-      filter: { interactType: RoleInteractType.Ticket },
+      filter: { interactType: InteractType.Ticket },
       commissionData: commissionList.value.filter((i) => !!i.roleId),
     })
     AlertStore.addSuccess('Cập nhật cài đặt thành công', 500)
@@ -87,7 +87,7 @@ const handleSave = async () => {
 const handleAddCommission = () => {
   const commissionBlank = Commission.blank()
   commissionBlank.interactId = 0
-  commissionBlank.interactType = RoleInteractType.Ticket
+  commissionBlank.interactType = InteractType.Ticket
   commissionBlank.commissionCalculatorType = CommissionCalculatorType.VND
   commissionList.value!.push(commissionBlank)
 }

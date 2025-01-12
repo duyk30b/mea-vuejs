@@ -1,3 +1,4 @@
+import { Commission } from '../commission'
 import { PrintHtml } from '../print-html'
 import { RadiologyGroup } from '../radiology-group'
 
@@ -19,6 +20,7 @@ export class Radiology {
 
   radiologyGroup?: RadiologyGroup
   printHtml?: PrintHtml
+  commissionList?: Commission[]
 
   static init() {
     const ins = new Radiology()
@@ -39,6 +41,7 @@ export class Radiology {
   static blank() {
     const ins = Radiology.init()
     ins.printHtml = PrintHtml.init()
+    ins.commissionList = []
     return ins
   }
 
@@ -65,6 +68,9 @@ export class Radiology {
     }
     if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
       target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    }
+    if (target.commissionList) {
+      target.commissionList = Commission.basicList(target.commissionList)
     }
     return target
   }

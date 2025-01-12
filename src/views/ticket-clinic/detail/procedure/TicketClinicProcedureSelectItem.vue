@@ -5,7 +5,7 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Commission, CommissionService, RoleInteractType } from '../../../../modules/commission'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DiscountType } from '../../../../modules/enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
@@ -14,10 +14,13 @@ import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/t
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
-import { UserRole, UserRoleService } from '../../../../modules/user-role'
-import { DArray, DString } from '../../../../utils'
+import { UserRoleService } from '../../../../modules/user-role'
+import { DString } from '../../../../utils'
+import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
+import { IconFileSearch } from '../../../../common/icon'
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
+const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const meStore = useMeStore()
 
@@ -73,13 +76,13 @@ const refreshTicketUserList = async () => {
   ticketUserList.value = []
   const ticketUserListOrigin: TicketUser[] = []
   // const ticketUserListOrigin =
-  //   ticketClinicRef.value.ticketUserGroup?.[RoleInteractType.Procedure]?.[
+  //   ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[
   //     ticketProcedure.value.id
   //   ] || []
 
   const commissionList = await CommissionService.list({
     filter: {
-      interactType: RoleInteractType.Procedure,
+      interactType: InteractType.Procedure,
       interactId: ticketProcedure.value.procedureId,
     },
   })
@@ -109,10 +112,15 @@ const refreshTicketUserList = async () => {
 
 const selectProcedure = async (instance?: Procedure) => {
   if (instance) {
+    const priorityList = (ticketClinicRef.value.ticketProcedureList || []).map((i) => i.priority)
+    priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
+    const priorityMax = Math.max(...priorityList)
+
     const temp = TicketProcedure.blank()
 
     temp.ticketId = ticketClinicRef.value.id
-    temp.priority = (ticketClinicRef.value.ticketProcedureList || []).length + 1
+    temp.priority = priorityMax + 1
+    temp.customerId = ticketClinicRef.value.customerId
     temp.procedureId = instance.id
     temp.procedure = instance
 
@@ -147,9 +155,17 @@ const addTicketProcedure = async () => {
 }
 </script>
 <template>
+  <ModalProcedureDetail ref="modalProcedureDetail" />
   <form class="mt-4 flex flex-wrap gap-4" @submit.prevent="(e) => addTicketProcedure()">
     <div style="flex-grow: 1; flex-basis: 80%">
-      <div>Chỉ định dịch vụ</div>
+      <div class="flex gap-1 flex-wrap items-center">
+        <span>Chỉ định dịch vụ</span>
+        <a
+          v-if="ticketProcedure.procedureId && ticketProcedure.procedure"
+          @click="modalProcedureDetail?.openModal(ticketProcedure.procedure)">
+          <IconFileSearch />
+        </a>
+      </div>
       <div style="height: 40px">
         <InputFilter
           ref="inputSearchProcedure"

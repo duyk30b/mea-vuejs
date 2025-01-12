@@ -4,7 +4,7 @@ import { Product } from '../product'
 import { Radiology } from '../radiology'
 import { Role } from '../role/role.model'
 
-export enum RoleInteractType {
+export enum InteractType {
   Ticket = 1,
   Product = 2,
   Procedure = 3,
@@ -12,7 +12,7 @@ export enum RoleInteractType {
   Laboratory = 5,
 }
 
-export enum RoleInteractTypeText {
+export enum InteractTypeText {
   Ticket = 'Phòng khám',
   Procedure = 'Dịch vụ',
   Product = 'Sản phẩm',
@@ -22,14 +22,14 @@ export enum RoleInteractTypeText {
 
 export enum CommissionCalculatorType {
   VND = 1,
-  PercentRetail = 2,
+  PercentExpected = 2,
   PercentActual = 3,
 }
 
 export class Commission {
   id: number
   roleId: number
-  interactType: RoleInteractType
+  interactType: InteractType
   interactId: number
   commissionCalculatorType: CommissionCalculatorType
   commissionValue: number
@@ -44,7 +44,7 @@ export class Commission {
     const ins = new Commission()
     ins.id = 0
     ins.roleId = 0
-    ins.interactType = RoleInteractType.Ticket
+    ins.interactType = InteractType.Ticket
     ins.interactId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0

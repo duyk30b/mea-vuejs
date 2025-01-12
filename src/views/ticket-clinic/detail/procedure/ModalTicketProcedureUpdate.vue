@@ -6,7 +6,7 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import { CommissionService, RoleInteractType } from '../../../../modules/commission'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
@@ -37,13 +37,13 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin.value = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[RoleInteractType.Procedure]?.[
+    ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[
       ticketProcedure.value.id
     ] || []
 
   const commissionList = await CommissionService.list({
     filter: {
-      interactType: RoleInteractType.Procedure,
+      interactType: InteractType.Procedure,
       interactId: ticketProcedure.value.procedureId,
     },
   })

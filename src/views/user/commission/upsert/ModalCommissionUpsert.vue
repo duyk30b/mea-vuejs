@@ -11,8 +11,8 @@ import {
   Commission,
   CommissionApi,
   CommissionCalculatorType,
-  RoleInteractType,
-  RoleInteractTypeText,
+  InteractType,
+  InteractTypeText,
   CommissionService,
 } from '../../../../modules/commission'
 import { Role, RoleService } from '../../../../modules/role'
@@ -102,7 +102,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="commission.interactType === RoleInteractType.Ticket"
+          v-if="commission.interactType === InteractType.Ticket"
           style="flex-basis: 90%; flex-grow: 1">
           <div class="">Phiếu</div>
           <div>
@@ -111,7 +111,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="commission.interactType === RoleInteractType.Product"
+          v-if="commission.interactType === InteractType.Product"
           style="flex-basis: 90%; flex-grow: 1">
           <div class="">Sản phẩm</div>
           <div>
@@ -120,7 +120,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="commission.interactType === RoleInteractType.Procedure"
+          v-if="commission.interactType === InteractType.Procedure"
           style="flex-basis: 90%; flex-grow: 1">
           <div class="">Dịch vụ</div>
           <div>
@@ -129,7 +129,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="commission.interactType === RoleInteractType.Radiology"
+          v-if="commission.interactType === InteractType.Radiology"
           style="flex-basis: 90%; flex-grow: 1">
           <div class="">Phiếu CĐHA</div>
           <div>
@@ -138,7 +138,7 @@ defineExpose({ openModal })
         </div>
 
         <div
-          v-if="commission.interactType === RoleInteractType.Laboratory"
+          v-if="commission.interactType === InteractType.Laboratory"
           style="flex-basis: 90%; flex-grow: 1">
           <div class="">Xét nghiệm</div>
           <div>
@@ -154,7 +154,7 @@ defineExpose({ openModal })
               style="width: 200px"
               :options="[
                 { value: CommissionCalculatorType.VND, text: 'VNĐ' },
-                { value: CommissionCalculatorType.PercentRetail, text: '% Giá niêm yết' },
+                { value: CommissionCalculatorType.PercentExpected, text: '% Giá niêm yết' },
                 { value: CommissionCalculatorType.PercentActual, text: '% Giá sau chiết khấu' },
               ]" />
             <div style="width: calc(100% - 200px)">

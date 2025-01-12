@@ -61,22 +61,25 @@ export class CustomerApi {
     return Customer.from(data.customer)
   }
 
-  static async updateOne(id: number, customer: Customer) {
+  static async updateOne(id: number, customer: Partial<Customer>) {
     const response = await AxiosInstance.patch(`/customer/update/${id}`, {
-      fullName: customer.fullName,
-      phone: customer.phone,
-      birthday: customer.birthday || null,
-      yearOfBirth: customer.yearOfBirth || null,
-      gender: customer.gender,
-      addressProvince: customer.addressProvince,
-      addressDistrict: customer.addressDistrict,
-      addressWard: customer.addressWard,
-      addressStreet: customer.addressStreet,
-      relative: customer.relative, // người thân
-      healthHistory: customer.healthHistory, // Tiền sử bệnh
-      note: customer.note,
-      customerSourceId: customer.customerSourceId || 0,
-      isActive: customer.isActive, // Trạng thái
+      fullName: customer.fullName !== undefined ? customer.fullName : undefined,
+      phone: customer.phone !== undefined ? customer.phone : undefined,
+      birthday: customer.birthday !== undefined ? customer.birthday || null : undefined,
+      yearOfBirth: customer.yearOfBirth !== undefined ? customer.yearOfBirth || null : undefined,
+      gender: customer.gender !== undefined ? customer.gender : undefined,
+      addressProvince:
+        customer.addressProvince !== undefined ? customer.addressProvince : undefined,
+      addressDistrict:
+        customer.addressDistrict !== undefined ? customer.addressDistrict : undefined,
+      addressWard: customer.addressWard !== undefined ? customer.addressWard : undefined,
+      addressStreet: customer.addressStreet !== undefined ? customer.addressStreet : undefined,
+      relative: customer.relative !== undefined ? customer.relative : undefined, // người thân
+      healthHistory: customer.healthHistory !== undefined ? customer.healthHistory : undefined, // Tiền sử bệnh
+      note: customer.note !== undefined ? customer.note : undefined,
+      customerSourceId:
+        customer.customerSourceId !== undefined ? customer.customerSourceId || 0 : undefined,
+      isActive: customer.isActive !== undefined ? customer.isActive : undefined, // Trạng thái
     })
     const { data } = response.data as BaseResponse<{ customer: any }>
     return Customer.from(data.customer)

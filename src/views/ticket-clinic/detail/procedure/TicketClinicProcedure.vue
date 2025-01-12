@@ -33,7 +33,7 @@ watch(
   { immediate: true, deep: true }
 )
 
-const hasChangeData = computed(() => {
+const hasChangePriority = computed(() => {
   if (
     !TicketProcedure.equalList(
       ticketProcedureList.value,
@@ -61,14 +61,14 @@ const changeItemPosition = (index: number, count: number) => {
   ticketProcedureList.value[index + count] = temp
 }
 
-const saveTicketProcedureList = async () => {
+const savePriorityTicketProcedure = async () => {
   try {
-    const ticketProcedureUpdate = await TicketClinicProcedureApi.updateTicketProcedureList({
+    await TicketClinicProcedureApi.updatePriorityTicketProcedure({
       ticketId: ticketClinicRef.value.id,
       ticketProcedureList: ticketProcedureList.value,
     })
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicProcedure.vue:97 ~ saveTicketProcedureList ~ error:', error)
+    console.log('🚀  TicketClinicProcedure.vue:71 ~ savePriorityTicketProcedure ~ error:', error)
   }
 }
 </script>
@@ -173,11 +173,11 @@ const saveTicketProcedureList = async () => {
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] &&
         ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
-        hasChangeData
+        hasChangePriority
       "
       color="blue"
       icon="save"
-      @click="saveTicketProcedureList">
+      @click="savePriorityTicketProcedure">
       Lưu lại
     </VueButton>
   </div>

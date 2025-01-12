@@ -16,7 +16,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Commission, CommissionCalculatorType, RoleInteractType } from '../../../modules/commission'
+import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
 import type { UnitType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService } from '../../../modules/product'
@@ -81,7 +81,7 @@ const hasChangeData = computed(() => {
 
 const handleAddCommission = () => {
   const commissionBlank = Commission.blank()
-  commissionBlank.interactType = RoleInteractType.Product
+  commissionBlank.interactType = InteractType.Product
   commissionBlank.interactId = product.value.id
 
   product.value.commissionList!.push(commissionBlank)
@@ -579,7 +579,7 @@ defineExpose({ openModal })
                         :options="[
                           { value: CommissionCalculatorType.VND, text: 'VNĐ' },
                           {
-                            value: CommissionCalculatorType.PercentRetail,
+                            value: CommissionCalculatorType.PercentExpected,
                             text: '% Giá niêm yết',
                           },
                           {

@@ -1,0 +1,95 @@
+import { AxiosInstance } from '../../core/axios.instance'
+import type { BaseResponse } from '../_base/base-dto'
+import { TicketRadiology } from '../ticket-radiology'
+import type { TicketUser } from '../ticket-user'
+
+export class TicketClinicRadiologyApi {
+  static async addTicketRadiology(body: { ticketId: number; ticketRadiology: TicketRadiology }) {
+    const { ticketId, ticketRadiology } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/add-ticket-radiology`, {
+      priority: ticketRadiology.priority,
+      customerId: ticketRadiology.customerId,
+      radiologyId: ticketRadiology.radiologyId,
+      expectedPrice: ticketRadiology.expectedPrice,
+      discountMoney: ticketRadiology.discountMoney,
+      discountPercent: ticketRadiology.discountPercent,
+      discountType: ticketRadiology.discountType,
+      actualPrice: ticketRadiology.actualPrice,
+    })
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async destroyTicketRadiology(body: { ticketId: number; ticketRadiologyId: number }) {
+    const { ticketId, ticketRadiologyId } = body
+    const response = await AxiosInstance.delete(
+      `/ticket-clinic/${ticketId}/destroy-ticket-radiology/${ticketRadiologyId}`
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async updateTicketRadiology(options: {
+    ticketId: number
+    ticketRadiologyId: number
+    ticketRadiology: TicketRadiology
+    imageIdsKeep: number[]
+    files: File[]
+    filesPosition: number[]
+    ticketUserList?: TicketUser[]
+  }) {
+    const { ticketId, ticketRadiologyId, ticketRadiology, imageIdsKeep, files, filesPosition } =
+      options
+
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    formData.append('imageIdsKeep', JSON.stringify(imageIdsKeep))
+    formData.append('filesPosition', JSON.stringify(filesPosition))
+    formData.append(
+      'ticketRadiology',
+      JSON.stringify({
+        description: ticketRadiology.description,
+        result: ticketRadiology.result,
+        startedAt: ticketRadiology.startedAt,
+      })
+    )
+    if (options.ticketUserList) {
+      formData.append(
+        'ticketUserList',
+        JSON.stringify(
+          options.ticketUserList.map((i) => ({
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
+        )
+      )
+    }
+
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-ticket-radiology/${ticketRadiologyId}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    const { data } = response.data as BaseResponse<boolean>
+    return data
+  }
+
+  static async updatePriorityTicketRadiology(body: {
+    ticketId: number
+    ticketRadiologyList: TicketRadiology[]
+  }) {
+    const { ticketId, ticketRadiologyList } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-priority-ticket-radiology`,
+      {
+        ticketRadiologyList: ticketRadiologyList.map((i, index) => ({
+          id: i.id,
+          priority: index + 1,
+        })),
+      }
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+}

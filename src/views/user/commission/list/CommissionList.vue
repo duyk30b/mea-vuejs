@@ -10,8 +10,8 @@ import {
   Commission,
   CommissionCalculatorType,
   CommissionService,
-  RoleInteractType,
-  RoleInteractTypeText,
+  InteractType,
+  InteractTypeText,
 } from '../../../../modules/commission'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
@@ -39,7 +39,7 @@ const laboratoryMap = ref<Record<string, Laboratory>>({})
 
 const dataLoading = ref(false)
 
-const interactType = ref<RoleInteractType | null>(null)
+const interactType = ref<InteractType | null>(null)
 const roleId = ref<number>()
 
 const sortColumn = ref<'id' | 'interactType' | 'roleId' | ''>('')
@@ -76,11 +76,11 @@ const startFetchData = async () => {
     dataLoading.value = false
 
     const productIdList = commissionList.value
-      .filter((i) => i.interactType === RoleInteractType.Product)
+      .filter((i) => i.interactType === InteractType.Product)
       .map((i) => i.interactId)
     const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
     commissionList.value.forEach((i) => {
-      if (i.interactType !== RoleInteractType.Product) return
+      if (i.interactType !== InteractType.Product) return
       i.product = productList.find((p) => p.id === i.interactId)
     })
   } catch (error) {
@@ -190,11 +190,11 @@ const handleSelectItemFilterRole = (item: any) => {
             v-model:value="interactType"
             :options="[
               { text: 'Tất cả', value: null },
-              { text: 'Phiếu khám', value: RoleInteractType.Ticket },
-              { text: 'Sản phẩm', value: RoleInteractType.Product },
-              { text: 'Dịch vụ', value: RoleInteractType.Procedure },
-              { text: 'Phiếu CĐHA', value: RoleInteractType.Radiology },
-              { text: 'Xét nghiệm', value: RoleInteractType.Laboratory },
+              { text: 'Phiếu khám', value: InteractType.Ticket },
+              { text: 'Sản phẩm', value: InteractType.Product },
+              { text: 'Dịch vụ', value: InteractType.Procedure },
+              { text: 'Phiếu CĐHA', value: InteractType.Radiology },
+              { text: 'Xét nghiệm', value: InteractType.Laboratory },
             ]"
             @update:value="() => startSearch()"></VueSelect>
         </div>
@@ -230,22 +230,22 @@ const handleSelectItemFilterRole = (item: any) => {
             <td>{{ roleMap[commission.roleId]?.name }}</td>
             <td>
               {{
-                RoleInteractTypeText[
-                  RoleInteractType[commission.interactType] as keyof typeof RoleInteractTypeText
+                InteractTypeText[
+                  InteractType[commission.interactType] as keyof typeof InteractTypeText
                 ]
               }}
             </td>
             <td>
-              <template v-if="commission.interactType === RoleInteractType.Product">
+              <template v-if="commission.interactType === InteractType.Product">
                 {{ commission.product?.brandName }}
               </template>
-              <template v-if="commission.interactType === RoleInteractType.Procedure">
+              <template v-if="commission.interactType === InteractType.Procedure">
                 {{ procedureMap[commission.interactId]?.name }}
               </template>
-              <template v-if="commission.interactType === RoleInteractType.Radiology">
+              <template v-if="commission.interactType === InteractType.Radiology">
                 {{ radiologyMap[commission.interactId]?.name }}
               </template>
-              <template v-if="commission.interactType === RoleInteractType.Laboratory">
+              <template v-if="commission.interactType === InteractType.Laboratory">
                 {{ laboratoryMap[commission.interactId]?.name }}
               </template>
             </td>
@@ -255,7 +255,7 @@ const handleSelectItemFilterRole = (item: any) => {
                 commission.commissionCalculatorType === CommissionCalculatorType.VND ? 'VNĐ' : ''
               }}
               {{
-                commission.commissionCalculatorType === CommissionCalculatorType.PercentRetail
+                commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected
                   ? '% Niêm Yết'
                   : ''
               }}

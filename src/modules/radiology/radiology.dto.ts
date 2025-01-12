@@ -7,6 +7,7 @@ export class RadiologyGetQuery {
   relation?: {
     radiologyGroup?: boolean
     printHtml?: boolean
+    commissionList?: boolean
   }
 
   filter?: {

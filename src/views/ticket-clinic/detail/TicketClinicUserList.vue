@@ -4,9 +4,11 @@ import { InputFilter } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Commission, CommissionService, RoleInteractType } from '../../../modules/commission'
+import { Commission, CommissionService, InteractType } from '../../../modules/commission'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Role, RoleService } from '../../../modules/role'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { TicketStatus } from '../../../modules/ticket'
+import { ticketClinicRef, TicketClinicUserApi } from '../../../modules/ticket-clinic'
 import { TicketUser } from '../../../modules/ticket-user'
 import { User, UserService } from '../../../modules/user'
 import { UserRole, UserRoleService } from '../../../modules/user-role'
@@ -31,20 +33,17 @@ const refreshRoleIdList = () => {
   ticketUserTicketMap.value = {}
   const roleIdList = commissionList.value.map((i) => i.roleId)
 
-  ticketClinicRef.value.ticketUserList
-    ?.filter((i) => i.interactType === RoleInteractType.Ticket)
-    .forEach((i) => {
-      ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
-
-      if (!roleIdList.includes(i.roleId)) {
-        roleIdList.push(i.roleId)
-      }
-    })
+  ticketClinicRef.value.ticketUserGroup?.[InteractType.Ticket]?.[0].forEach((i) => {
+    ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
+    if (!roleIdList.includes(i.roleId)) {
+      roleIdList.push(i.roleId)
+    }
+  })
 
   roleIdList.forEach((roleId) => {
     if (!ticketUserTicketMap.value[roleId]) {
       const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.interactType = RoleInteractType.Ticket
+      ticketUserBlank.interactType = InteractType.Ticket
       ticketUserBlank.interactId = 0
       ticketUserBlank.ticketItemId = 0
       ticketUserBlank.roleId = roleId
@@ -69,7 +68,7 @@ onMounted(async () => {
   Promise.all([
     RoleService.getMap(),
     UserService.getMap(),
-    CommissionService.list({ filter: { interactType: RoleInteractType.Ticket } }),
+    CommissionService.list({ filter: { interactType: InteractType.Ticket } }),
   ])
     .then((result) => {
       roleMap.value = result[0]
@@ -91,10 +90,10 @@ onMounted(async () => {
 const saveTicketUserList = async () => {
   try {
     saveLoading.value = true
-    await TicketClinicApi.updateTicketUserList({
+    await TicketClinicUserApi.updateTicketUserItem({
       ticketId: ticketClinicRef.value.id,
       interactId: 0,
-      interactType: RoleInteractType.Ticket,
+      interactType: InteractType.Ticket,
       ticketItemId: 0,
       ticketUserList: Object.values(ticketUserTicketMap.value),
     })
@@ -106,12 +105,13 @@ const saveTicketUserList = async () => {
 }
 
 const hasChangeData = computed(() => {
+  const ticketUserOrigin = ticketClinicRef.value.ticketUserGroup?.[InteractType.Ticket]?.[0] || []
   const ticketUserTicketList = Object.values(ticketUserTicketMap.value).filter((i) => !!i.userId)
-  if (ticketUserTicketList.length !== ticketClinicRef.value.ticketUserList?.length) {
+  if (ticketUserTicketList.length !== ticketUserOrigin.length) {
     return true
   }
-  for (let i = 0; i < ticketClinicRef.value.ticketUserList.length || 0; i++) {
-    const cur = ticketClinicRef.value.ticketUserList[i]
+  for (let i = 0; i < ticketUserOrigin.length || 0; i++) {
+    const cur = ticketClinicRef.value.ticketUserGroup[InteractType.Ticket][0][i]
     if (!TicketUser.equal(cur, ticketUserTicketMap.value[cur.roleId])) {
       return true
     }
@@ -132,6 +132,10 @@ const hasChangeData = computed(() => {
       <div>
         <InputFilter
           v-model:value="ticketUserTicketMap[roleId]!.userId"
+          :disabled="
+            !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_USER_LIST] ||
+            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+          "
           :options="
             userRoleList
               .filter((i) => i.roleId === roleId)
@@ -144,7 +148,7 @@ const hasChangeData = computed(() => {
               })
           "
           :maxHeight="200"
-          placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+          placeholder="Tên nhân viên">
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.fullName }}</b>
@@ -156,6 +160,10 @@ const hasChangeData = computed(() => {
     </div>
     <div class="flex gap-4">
       <VueButton
+        v-if="
+          permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_USER_LIST] &&
+          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+        "
         class="ml-auto"
         color="blue"
         :disabled="!hasChangeData"

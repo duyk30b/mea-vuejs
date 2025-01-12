@@ -7,7 +7,7 @@ import { VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
-import { CommissionService, RoleInteractType } from '../../../modules/commission'
+import { CommissionService, InteractType } from '../../../modules/commission'
 import { OrganizationService } from '../../../modules/organization'
 import { RoleService } from '../../../modules/role'
 import { TicketType } from '../../../modules/ticket'
@@ -29,7 +29,7 @@ const openModal = async () => {
 
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    CommissionService.list({ filter: { interactType: RoleInteractType.Ticket } }),
+    CommissionService.list({ filter: { interactType: InteractType.Ticket } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

@@ -5,7 +5,7 @@ import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { DTimer } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()

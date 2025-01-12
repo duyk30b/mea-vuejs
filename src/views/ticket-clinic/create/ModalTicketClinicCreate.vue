@@ -12,22 +12,26 @@ import {
   VueSelect,
 } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { RoleInteractType } from '../../../modules/commission'
+import { InteractType } from '../../../modules/commission'
 import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Role, RoleService } from '../../../modules/role'
-import { Ticket, TicketService, TicketType } from '../../../modules/ticket'
-import { TicketAttributeMap } from '../../../modules/ticket-attribute'
+import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
+import {
+  TicketAttributeKeyGeneralType,
+  TicketAttributeMap,
+} from '../../../modules/ticket-attribute'
 import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketUser } from '../../../modules/ticket-user'
 import { User, UserService } from '../../../modules/user'
-import { UserRole, UserRoleService } from '../../../modules/user-role'
+import { UserRoleService } from '../../../modules/user-role'
 import { DString, DTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
@@ -41,7 +45,7 @@ const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinic
 const ticketClinicCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
-  (e: 'success', value: { ticket: Ticket }): void
+  (e: 'success'): void
 }>()
 
 const settingStore = useSettingStore()
@@ -322,7 +326,7 @@ const refreshTicketUserList = () => {
   ticketUserList.value = screenRoleIdList.map((roleId) => {
     let findExist = (ticket.value.ticketUserList || []).find((i) => {
       if (i.roleId !== roleId) return false
-      if (i.interactType !== RoleInteractType.Ticket) return false
+      if (i.interactType !== InteractType.Ticket) return false
       if (i.interactId !== 0) return false
       return true
     })
@@ -341,16 +345,45 @@ const handleModalTicketClinicCreateSettingSuccess = () => {
   refreshTicketUserList()
 }
 
+const handleClickDestroy = async () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc muốn xóa lượt khám này ?',
+    content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    onOk: async () => {
+      try {
+        await TicketClinicApi.destroy(ticket.value.id)
+        AlertStore.addSuccess('Xóa phiếu khám thành công')
+        emit('success')
+        closeModal()
+      } catch (error) {
+        console.log('🚀 ModalTicketClinicCreate.vue:356 ~ handleClickDestroy: ~ error:', error)
+      }
+    },
+  })
+}
+
 const handleSubmitFormTicketClinic = async () => {
   saveLoading.value = true
   try {
+    const ticketAttributeList = Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
+      key,
+      value: value != null ? value : '',
+    }))
+
     if (!ticket.value.id) {
       if (DTimer.timeToText(ticket.value.registeredAt) !== DTimer.timeToText(new Date())) {
         return AlertStore.addError(
           'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
         )
       }
-      const ticketResponse = await TicketClinicApi.create({
+      if (customer.value.healthHistory) {
+        const key: TicketAttributeKeyGeneralType = 'healthHistory'
+        ticketAttributeList.push({
+          value: customer.value.healthHistory,
+          key,
+        })
+      }
+      await TicketClinicApi.create({
         customer: customer.value,
         ticketInformation: {
           ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
@@ -360,29 +393,22 @@ const handleSubmitFormTicketClinic = async () => {
           customerId: customer.value.id,
           fromAppointmentId: fromAppointmentId.value,
         },
-        ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
-          key,
-          value: value != null ? value : '',
-        })),
+        ticketAttributeList,
         ticketUserList: ticketUserList.value,
       })
-      emit('success', { ticket: ticketResponse })
+      emit('success')
     }
     if (ticket.value.id) {
-      const ticketResponse = await TicketClinicApi.update({
+      await TicketClinicApi.update({
         ticketId: ticket.value.id,
         ticketInformation: {
           registeredAt: ticket.value.registeredAt,
           customerSourceId: ticket.value.customerSourceId,
         },
-        ticketAttributeList: Object.entries(ticketAttributeMap.value).map(([key, value]) => ({
-          key,
-          value: value != null ? value : '',
-        })),
+        ticketAttributeList,
         ticketUserList: ticketUserList.value,
       })
-      ticketResponse.customer = Customer.from(customer.value)
-      emit('success', { ticket: ticketResponse })
+      emit('success')
     }
 
     closeModal()
@@ -827,7 +853,7 @@ defineExpose({ openModal })
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tên của nhân viên">
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -842,7 +868,16 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex flex-wrap gap-4">
-          <VueButton class="mr-auto btn" icon="close" type="reset" @click="closeModal">
+          <VueButton
+            v-if="
+              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.ticketStatus)
+            "
+            color="red"
+            icon="trash"
+            @click="handleClickDestroy">
+            Xóa
+          </VueButton>
+          <VueButton class="ml-auto" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton class="btn btn-blue" icon="save" type="submit" :loading="saveLoading">

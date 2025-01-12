@@ -125,7 +125,7 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'radiology',
                 name: 'TicketClinicRadiology',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicRadiology.vue'),
+                component: () => import('../views/ticket-clinic/detail/radiology/TicketClinicRadiology.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
               },
               {

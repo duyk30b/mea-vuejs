@@ -3,7 +3,7 @@ import { Ticket } from '../../modules/ticket'
 import { DeliveryStatus } from '../enum'
 
 export const ticketClinicRef = ref<Ticket>(Ticket.blank())
-export const ticketClinicList = ref<Ticket[]>([])
+export const ticketClinicPagination = ref<Ticket[]>([])
 
 export const ticketRefDeliveryStatus = computed(() => {
   let ticketProductList = ticketClinicRef.value.ticketProductList

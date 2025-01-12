@@ -57,6 +57,16 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+
+      commissionList: (radiology.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
@@ -72,6 +82,16 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+
+      commissionList: (radiology.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)

@@ -27,11 +27,7 @@ export class TicketClinicProcedureApi {
         userId: i.userId || 0,
       })),
     })
-    const { data } = response.data as BaseResponse<{ ticket: any; ticketProcedure: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      ticketProcedure: TicketProcedure.from(data.ticketProcedure),
-    }
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
@@ -53,9 +49,8 @@ export class TicketClinicProcedureApi {
   }) {
     const { ticketId, ticketProcedure, ticketProcedureId, ticketUserList } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-procedure`,
+      `/ticket-clinic/${ticketId}/update-ticket-procedure/${ticketProcedureId}`,
       {
-        ticketProcedureId: ticketProcedureId,
         ticketProcedure: ticketProcedure ? { quantity: ticketProcedure.quantity } : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
@@ -68,21 +63,20 @@ export class TicketClinicProcedureApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async updateTicketProcedureList(body: {
+  static async updatePriorityTicketProcedure(body: {
     ticketId: number
     ticketProcedureList: TicketProcedure[]
   }) {
     const { ticketId, ticketProcedureList } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-procedure-list`,
+      `/ticket-clinic/${ticketId}/update-priority-ticket-procedure`,
       {
-        ticketProcedureList: ticketProcedureList.map((i) => ({
-          ticketProcedureId: i.id,
-          quantity: i.quantity,
-          priority: i.priority,
+        ticketProcedureList: ticketProcedureList.map((i, index) => ({
+          id: i.id,
+          priority: index + 1,
         })),
       }
     )
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<boolean>
   }
 }

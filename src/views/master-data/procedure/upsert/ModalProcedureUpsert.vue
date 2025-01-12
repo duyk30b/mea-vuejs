@@ -16,7 +16,7 @@ import { useMeStore } from '../../../../modules/_me/me.store'
 import {
   Commission,
   CommissionCalculatorType,
-  RoleInteractType,
+  InteractType,
 } from '../../../../modules/commission'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService, ProcedureType } from '../../../../modules/procedure'
@@ -65,9 +65,12 @@ const hasChangeData = computed(() => {
 
 const handleAddCommission = () => {
   const commissionBlank = Commission.blank()
-  commissionBlank.interactType = RoleInteractType.Procedure
+  commissionBlank.interactType = InteractType.Procedure
   commissionBlank.interactId = procedure.value.id
 
+  if (!procedure.value.commissionList) {
+    procedure.value.commissionList = []
+  }
   procedure.value.commissionList!.push(commissionBlank)
 }
 
@@ -496,7 +499,7 @@ defineExpose({ openModal })
                         :options="[
                           { value: CommissionCalculatorType.VND, text: 'VNĐ' },
                           {
-                            value: CommissionCalculatorType.PercentRetail,
+                            value: CommissionCalculatorType.PercentExpected,
                             text: '% Giá niêm yết',
                           },
                           {

@@ -2,19 +2,17 @@
 import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting, IconTrash } from '../../../common/icon'
+import { IconSetting } from '../../../common/icon'
 import { IconEditSquare } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { RoleInteractType } from '../../../modules/commission'
+import { InteractType } from '../../../modules/commission'
 import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Role, RoleService } from '../../../modules/role'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicList } from '../../../modules/ticket-clinic'
+import { ticketClinicPagination } from '../../../modules/ticket-clinic'
 import { User, UserService } from '../../../modules/user'
 import { DString, DTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -82,7 +80,7 @@ const startFetchData = async () => {
         : { registeredAt: 'DESC' },
     })
 
-    ticketClinicList.value = data
+    ticketClinicPagination.value = data
     total.value = meta.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
@@ -174,30 +172,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   }
 }
 
-const handleModalTicketClinicCreateSuccess = (data: { ticket: Ticket }) => {
-  const findIndex = ticketClinicList.value.findIndex((i) => i.id === data.ticket.id)
-  if (findIndex == -1) {
-    ticketClinicList.value.unshift(data.ticket)
-  }
-  if (findIndex !== -1) {
-    ticketClinicList.value[findIndex] = data.ticket
-  }
-}
-
-const handleClickDestroyDraft = async (ticketId: number) => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc muốn xóa lượt khám này ?',
-    content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
-    onOk: async () => {
-      try {
-        await TicketClinicApi.destroy(ticketId)
-        await startFetchData()
-        AlertStore.addSuccess('Xóa phiếu khám thành công')
-      } catch (error) {
-        console.log('🚀 ~ file: TicketClinicList.vue:179 ~ onOk: ~ error:', error)
-      }
-    },
-  })
+const handleModalTicketClinicCreateSuccess = () => {
+  // await startFetchData()
 }
 
 const handleModalTicketClinicListSettingSuccess = async () => {
@@ -396,10 +372,10 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           </tr>
         </tbody>
         <tbody v-else>
-          <tr v-if="ticketClinicList.length === 0">
+          <tr v-if="ticketClinicPagination.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(ticket, index) in ticketClinicList" :key="index">
+          <tr v-for="(ticket, index) in ticketClinicPagination" :key="index">
             <td class="text-center">
               <div class="flex gap-4 justify-center">
                 <router-link
@@ -462,7 +438,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               {{
                 userMap[
                   ticket.ticketUserList?.find((i) => {
-                    return i.interactType === RoleInteractType.Ticket && i.roleId === roleId
+                    return i.interactType === InteractType.Ticket && i.roleId === roleId
                   })?.userId || 0
                 ]?.fullName
               }}
@@ -471,12 +447,6 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               {{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}
             </td>
             <td class="text-center">
-              <a
-                v-if="[TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.ticketStatus)"
-                class="text-red-500"
-                @click="handleClickDestroyDraft(ticket.id)">
-                <IconTrash />
-              </a>
               <a
                 v-if="
                   [

@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import { RoleInteractType } from './commission.model'
+import { InteractType } from './commission.model'
 
 export class CommissionGetQuery {
   page?: number
@@ -14,7 +14,7 @@ export class CommissionGetQuery {
 
   filter?: {
     roleId?: number
-    interactType?: RoleInteractType
+    interactType?: InteractType
     interactId?: number
   }
 

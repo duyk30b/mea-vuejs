@@ -8,7 +8,7 @@ import { ImageHost } from '../../../modules/image/image.model'
 import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DImage, DTimer, formatPhone } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../modules/laboratory'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()

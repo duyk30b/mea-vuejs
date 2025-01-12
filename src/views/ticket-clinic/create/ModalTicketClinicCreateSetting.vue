@@ -11,7 +11,7 @@ import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
 import { Role, RoleService } from '../../../modules/role'
 import { TicketStatus } from '../../../modules/ticket'
-import { CommissionService, RoleInteractType } from '../../../modules/commission'
+import { CommissionService, InteractType } from '../../../modules/commission'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -36,7 +36,7 @@ const openModal = async () => {
   settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
   const fetchData = await Promise.all([
     RoleService.getMap(),
-    CommissionService.list({ filter: { interactType: RoleInteractType.Ticket } }),
+    CommissionService.list({ filter: { interactType: InteractType.Ticket } }),
   ])
   const roleMap = fetchData[0]
   roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))

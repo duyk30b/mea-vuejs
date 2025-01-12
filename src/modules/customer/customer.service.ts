@@ -119,7 +119,7 @@ export class CustomerService {
     return response
   }
 
-  static async updateOne(id: number, instance: Customer) {
+  static async updateOne(id: number, instance: Partial<Customer>) {
     const response = await CustomerApi.updateOne(id, instance)
     await CustomerDB.replaceOne(id, response)
     return response
