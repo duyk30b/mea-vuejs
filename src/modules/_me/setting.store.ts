@@ -142,7 +142,6 @@ export const settingDefault = {
       lotNumberAndExpiryDate: true,
     },
     receiptItemsTable: {
-      allowDuplicateItem: true,
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
