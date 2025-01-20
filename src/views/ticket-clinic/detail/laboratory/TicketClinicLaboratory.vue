@@ -1,48 +1,42 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconPrint } from '../../../common/icon'
-import { IconDelete, IconEditSquare } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputOptions } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DiscountType } from '../../../modules/enum'
-import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../modules/laboratory'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../modules/laboratory-group'
-import { LaboratoryKit, LaboratoryKitService } from '../../../modules/laboratory-kit'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
-import { TicketStatus } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { TicketLaboratory } from '../../../modules/ticket-laboratory'
-import { arrayToKeyValue, DDom, DString } from '../../../utils'
-import ModalTicketLaboratoryResult from './modal/ModalTicketLaboratoryResult.vue'
+import VueButton from '../../../../common/VueButton.vue'
+import { IconPrint, IconSpin } from '../../../../common/icon'
+import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
+import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import {
+  PrintHtml,
+  printHtmlCompiledTemplate,
+  PrintHtmlService,
+} from '../../../../modules/print-html'
+import { TicketStatus } from '../../../../modules/ticket'
+import {
+  TicketClinicApi,
+  TicketClinicLaboratoryApi,
+  ticketClinicRef,
+} from '../../../../modules/ticket-clinic'
+import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
+import { arrayToKeyValue, DDom, sleep } from '../../../../utils'
+import ModalTicketLaboratoryResult from './ModalTicketLaboratoryResult.vue'
+import TicketClinicLaboratorySelectItem from './TicketClinicLaboratorySelectItem.vue'
 
 const modalTicketLaboratoryResult = ref<InstanceType<typeof ModalTicketLaboratoryResult>>()
-const inputSearchLaboratory = ref<InstanceType<typeof InputOptions>>()
 
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
-
-let laboratoryAll: Laboratory[] = []
 
 let laboratoryKitAll: LaboratoryKit[] = []
 let laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 
-const laboratoryOptions = ref<
-  {
-    value: number
-    text: string
-    data: {
-      type: 'laboratory' | 'laboratoryKit'
-      laboratory?: Laboratory
-      laboratoryKit?: LaboratoryKit
-    }
-  }[]
->([])
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
@@ -75,14 +69,12 @@ onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicLaboratory.vue:75 ~ onMounted ~ onMounted:')
   try {
     const promiseResult = await Promise.all([
-      LaboratoryService.list({}),
       LaboratoryKitService.list({}),
       LaboratoryGroupService.list({}),
     ])
-    laboratoryAll = promiseResult[0]
     laboratoryMap.value = await LaboratoryService.getMap()
 
-    laboratoryKitAll = promiseResult[1]
+    laboratoryKitAll = promiseResult[0]
     laboratoryKitAll.forEach((i) => {
       try {
         const laboratoryIdList: number[] = JSON.parse(i.laboratoryIds)
@@ -96,7 +88,7 @@ onMounted(async () => {
         i.laboratoryList = []
       }
     })
-    laboratoryGroupMap = arrayToKeyValue(promiseResult[2], 'id')
+    laboratoryGroupMap = arrayToKeyValue(promiseResult[1], 'id')
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -118,62 +110,6 @@ const disabledButton = computed(() => {
     ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)
   )
 })
-
-const searchingLaboratory = async (text: string) => {
-  const laboratoryList: Laboratory[] = laboratoryAll.filter((i) => {
-    return DString.customFilter(i.name, text)
-  })
-  const laboratoryKitList: LaboratoryKit[] = laboratoryKitAll.filter((i) => {
-    return DString.customFilter(i.name, text)
-  })
-  laboratoryOptions.value = [
-    ...laboratoryKitList.map((i) => ({
-      value: i.id,
-      text: i.name,
-      data: { type: 'laboratoryKit' as any, laboratoryKit: i },
-    })),
-    ...laboratoryList.map((i) => ({
-      value: i.id,
-      text: i.name,
-      data: { type: 'laboratory' as any, laboratory: i },
-    })),
-  ]
-}
-
-const selectLaboratory = (laboratorySelect: Laboratory) => {
-  const ticketLaboratory = TicketLaboratory.blank()
-  ticketLaboratory.ticketId = ticketClinicRef.value.id
-  ticketLaboratory.customerId = ticketClinicRef.value.customerId
-  ticketLaboratory.laboratoryId = laboratorySelect.id
-
-  ticketLaboratory.expectedPrice = laboratorySelect.price
-  ticketLaboratory.discountMoney = 0
-  ticketLaboratory.discountPercent = 0
-  ticketLaboratory.discountType = DiscountType.VND
-  ticketLaboratory.actualPrice = laboratorySelect.price
-
-  ticketLaboratoryList.value.push(ticketLaboratory)
-}
-
-const selectItemOptions = (dataSelected?: {
-  type: 'laboratory' | 'laboratoryKit'
-  laboratory: Laboratory
-  laboratoryKit: LaboratoryKit
-}) => {
-  if (!dataSelected) return
-  if (dataSelected.type === 'laboratory') {
-    selectLaboratory(dataSelected.laboratory)
-  }
-  if (dataSelected.type === 'laboratoryKit') {
-    ;(dataSelected.laboratoryKit.laboratoryList || []).forEach((i) => selectLaboratory(i))
-  }
-}
-
-const removeTicketLaboratory = (ins: TicketLaboratory) => {
-  ticketLaboratoryList.value = ticketLaboratoryList.value.filter((i) => {
-    return !(i.id === ins.id && i.laboratoryId === ins.laboratoryId)
-  })
-}
 
 const saveTicketLaboratoryList = async () => {
   await TicketClinicApi.updateTicketLaboratoryList({
@@ -221,37 +157,51 @@ const startPrint = async (
     console.log('🚀 ~ file: TicketClinicLaboratory.vue:154 ~ startPrint ~ error:', error)
   }
 }
+
+const handleAddTicketLaboratoryList = async (ticketLaboratoryAddList: TicketLaboratory[]) => {
+  try {
+    ticketLaboratoryList.value = [...ticketLaboratoryList.value, ...ticketLaboratoryAddList]
+    await TicketClinicLaboratoryApi.addTicketLaboratoryList({
+      ticketId: ticketClinicRef.value.id,
+      ticketLaboratoryList: ticketLaboratoryAddList,
+    })
+  } catch (error) {
+    console.log('🚀: TicketClinicLaboratory.vue:178 ~ handleAddTicketLaboratoryList :', error)
+  }
+}
+
+const destroyTicketLaboratory = async (ticketLaboratoryId: number) => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    return ModalStore.alert({
+      title: 'Không thể xóa xét nghiệm ?',
+      content: [
+        '- Phiếu khám đã đóng không thể xóa xét nghiệm',
+        '- Nếu bắt buộc phải xóa xét nghiệm này, bạn cần mở lại phiếu khám',
+      ],
+    })
+  }
+  ModalStore.confirm({
+    title: 'Xác nhận xóa xét nghiệm ?',
+    content: [
+      '- Hệ thống sẽ xóa xét nghiệm này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketClinicLaboratoryApi.destroyTicketLaboratory({
+          ticketId: ticketClinicRef.value.id,
+          ticketLaboratoryId,
+        })
+      } catch (error) {
+        console.log('🚀: TicketClinicLaboratory.vue:137 ~ destroyTicketLaboratory:', error)
+      }
+    },
+  })
+}
 </script>
 <template>
   <ModalTicketLaboratoryResult ref="modalTicketLaboratoryResult" />
-  <div class="mt-4 flex justify-between">
-    <span>Chỉ định xét nghiệm</span>
-    <span></span>
-  </div>
-  <div style="height: 40px">
-    <InputOptions
-      ref="inputSearchLaboratory"
-      :options="laboratoryOptions"
-      :maxHeight="320"
-      placeholder="Tìm kiếm tên dịch vụ"
-      clear-after-selected
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
-      @selectItem="({ data }) => selectItemOptions(data)"
-      @update:text="searchingLaboratory">
-      <template #option="{ item: { data } }">
-        <div v-if="data.type === 'laboratory'">
-          <b>{{ data.laboratory.name }}</b>
-          - {{ formatMoney(data.laboratory.price) }}
-        </div>
-        <div v-if="data.type === 'laboratoryKit'">
-          <b>-- {{ data.laboratoryKit.name }}</b>
-          <div style="font-size: 13px; font-style: italic">
-            {{ data.laboratoryKit.laboratoryList.map((i: Laboratory) => i.name).join(', ') }}
-          </div>
-        </div>
-      </template>
-    </InputOptions>
-  </div>
+  <TicketClinicLaboratorySelectItem @success="handleAddTicketLaboratoryList" />
   <div class="mt-4">
     <div>Danh sách các xét nghiệm</div>
     <div class="table-wrapper">
@@ -296,13 +246,13 @@ const startPrint = async (
               <td colspan="3"></td>
               <td class="text-center"></td>
             </tr>
-            <template v-for="(ticketLaboratory, index) in tlGroup" :key="ticketLaboratory.id">
+            <template v-for="(tpItem, index) in tlGroup" :key="tpItem.id">
               <tr
-                v-for="(laboratoryParent, i) in laboratoryMap[ticketLaboratory.laboratoryId]
-                  ? [laboratoryMap[ticketLaboratory.laboratoryId]]
+                v-for="(laboratoryParent, i) in laboratoryMap[tpItem.laboratoryId]
+                  ? [laboratoryMap[tpItem.laboratoryId]]
                   : []"
                 :key="i"
-                :style="ticketLaboratory.attentionParse[laboratoryParent.id] ? 'color: red' : ''">
+                :style="tpItem.attentionParse[laboratoryParent.id] ? 'color: red' : ''">
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
@@ -310,7 +260,7 @@ const startPrint = async (
                   {{ laboratoryParent?.name }}
                 </td>
                 <td class="text-center">
-                  <div>{{ ticketLaboratory.resultParse[laboratoryParent.id] }}</div>
+                  <div>{{ tpItem.resultParse[laboratoryParent.id] }}</div>
                 </td>
                 <td class="text-center">
                   <span v-if="laboratoryParent?.valueType === LaboratoryValueType.Number">
@@ -323,29 +273,29 @@ const startPrint = async (
                     {{ laboratoryParent?.unit }}
                   </span>
                 </td>
-                <td class="text-right">{{ formatMoney(ticketLaboratory.expectedPrice) }}</td>
+                <td class="text-right">{{ formatMoney(tpItem.expectedPrice) }}</td>
                 <td class="text-center">
+                  <a v-if="!tpItem.id">
+                    <IconSpin width="16" height="16" />
+                  </a>
                   <a
-                    v-if="
-                      ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                        ticketClinicRef.ticketStatus
-                      ) && ticketLaboratory.startedAt == null
+                    v-else-if="
+                      permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     class="text-red-500"
-                    @click="removeTicketLaboratory(ticketLaboratory)">
+                    @click="destroyTicketLaboratory(tpItem.id)">
                     <IconDelete width="20" height="20" />
                   </a>
                 </td>
               </tr>
               <tr
-                v-for="(laboratoryItem, i) in laboratoryMap[ticketLaboratory.laboratoryId]
-                  ?.children || []"
+                v-for="(laboratoryItem, i) in laboratoryMap[tpItem.laboratoryId]?.children || []"
                 :key="i"
-                :style="ticketLaboratory.attentionParse[laboratoryItem.id] ? 'color: red' : ''">
+                :style="tpItem.attentionParse[laboratoryItem.id] ? 'color: red' : ''">
                 <td></td>
                 <td>{{ laboratoryItem?.name }}</td>
                 <td class="text-center">
-                  <div>{{ ticketLaboratory?.resultParse[laboratoryItem.id] }}</div>
+                  <div>{{ tpItem?.resultParse[laboratoryItem.id] }}</div>
                 </td>
                 <td class="text-center">
                   <span v-if="laboratoryItem?.valueType === LaboratoryValueType.Number">

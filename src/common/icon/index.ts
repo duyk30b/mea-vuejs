@@ -15,6 +15,6 @@ export { default as IconSave } from './IconSave.vue'
 export { default as IconSend } from './IconSend.vue'
 export { default as IconSetting } from './IconSetting.vue'
 export { default as IconSort } from './IconSort.vue'
+export { default as IconSpin } from './IconSpin.vue'
 export { default as IconTrash } from './IconTrash.vue'
 export { default as IconUser } from './IconUser.vue'
-

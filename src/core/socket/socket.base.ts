@@ -86,21 +86,12 @@ export const socketInit = () => {
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
     SocketService.listenTicketClinicChangeTicketRadiologyList(data)
   })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketProductConsumableList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_LABORATORY_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketLaboratoryList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketProductPrescriptionList(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketLaboratoryList(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_RESULT, (data) => {
-    SocketService.listenTicketClinicUpdateTicketLaboratoryResult(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductList(data)
   })
 }
 

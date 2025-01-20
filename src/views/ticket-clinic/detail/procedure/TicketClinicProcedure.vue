@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconSpin } from '../../../../common/icon'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -10,6 +11,8 @@ import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { sleep } from '../../../../utils'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
 
@@ -61,6 +64,22 @@ const changeItemPosition = (index: number, count: number) => {
   ticketProcedureList.value[index + count] = temp
 }
 
+const handleAddTicketProcedure = async (data: {
+  ticketProcedure: TicketProcedure
+  ticketUserList: TicketUser[]
+}) => {
+  try {
+    ticketProcedureList.value = [...ticketProcedureList.value, data.ticketProcedure]
+    await TicketClinicProcedureApi.addTicketProcedure({
+      ticketId: ticketClinicRef.value.id,
+      ticketProcedure: data.ticketProcedure,
+      ticketUserList: data.ticketUserList,
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicProcedure.vue:76 ~ handleAddTicketProcedure:', error)
+  }
+}
+
 const savePriorityTicketProcedure = async () => {
   try {
     await TicketClinicProcedureApi.updatePriorityTicketProcedure({
@@ -74,7 +93,7 @@ const savePriorityTicketProcedure = async () => {
 </script>
 <template>
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
-  <TicketClinicProcedureSelectItem />
+  <TicketClinicProcedureSelectItem @success="handleAddTicketProcedure" />
   <div class="mt-4">
     <div>Danh sách các dịch vụ, thủ thuật</div>
     <div class="table-wrapper">
@@ -134,11 +153,14 @@ const savePriorityTicketProcedure = async () => {
               {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
             </td>
             <td class="text-center">
+              <a v-if="!tpItem.id">
+                <IconSpin width="20" height="20" />
+              </a>
               <a
-                v-if="
+                v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
                     ticketClinicRef.ticketStatus
-                  )
+                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
                 @click="modalTicketProcedureUpdate?.openModal(tpItem)">

@@ -1,22 +1,21 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconTrash } from '../../../common/icon'
-import { InputMoney, InputNumber, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { CommissionCalculatorType, InteractType } from '../../../modules/commission'
-import { DiscountType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Role, RoleService } from '../../../modules/role'
-import { TicketStatus } from '../../../modules/ticket'
-import { ticketClinicRef } from '../../../modules/ticket-clinic'
-import { TicketProcedure } from '../../../modules/ticket-procedure'
-import { TicketUser } from '../../../modules/ticket-user'
-import { User, UserService } from '../../../modules/user'
-import { Procedure, ProcedureService } from '../../../modules/procedure'
-import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
-import { Radiology, RadiologyService } from '../../../modules/radiology'
+import VueButton from '../../../../common/VueButton.vue'
+import { IconTrash } from '../../../../common/icon'
+import { InputNumber, VueSelect } from '../../../../common/vue-form'
+import { useMeStore } from '../../../../modules/_me/me.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { CommissionCalculatorType, InteractType } from '../../../../modules/commission'
+import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { Radiology, RadiologyService } from '../../../../modules/radiology'
+import { Role, RoleService } from '../../../../modules/role'
+import { TicketStatus } from '../../../../modules/ticket'
+import { ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { User, UserService } from '../../../../modules/user'
+import { IconEditSquare } from '../../../../common/icon-google'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -27,33 +26,40 @@ const ticketUserList = ref<TicketUser[]>([])
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
 
-const procedureMap = ref<Record<string, Procedure>>({})
-const laboratoryMap = ref<Record<string, Laboratory>>({})
-const radiologyMap = ref<Record<string, Radiology>>({})
-
 const saveLoading = ref(false)
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
-  const fetchPromise = await Promise.all([
-    UserService.getMap(),
-    RoleService.getMap(),
-    ProcedureService.getMap(),
-    LaboratoryService.getMap(),
-    RadiologyService.getMap(),
-  ])
+  const fetchPromise = await Promise.all([UserService.getMap(), RoleService.getMap()])
   userMap.value = fetchPromise[0]
   roleMap.value = fetchPromise[1]
-  procedureMap.value = fetchPromise[2]
-  laboratoryMap.value = fetchPromise[3]
-  radiologyMap.value = fetchPromise[4]
 })
 
 watch(
   () => ticketClinicRef.value.ticketUserList,
-  (newValue, oldValue) => {
+  async (newValue, oldValue) => {
     ticketUserList.value = TicketUser.fromList(newValue || [])
     ticketUserList.value.forEach((i) => {
+      if (i.interactType === InteractType.Product) {
+        if (ticketClinicRef.value.ticketProductList) {
+          const itemFind = (ticketClinicRef.value.ticketProductList || []).find((j) => {
+            return j.id === i.ticketItemId
+          })
+          if (itemFind) i.ticketProduct = itemFind
+        }
+        if (ticketClinicRef.value.ticketProductConsumableList) {
+          const itemFind = (ticketClinicRef.value.ticketProductConsumableList || []).find((j) => {
+            return j.id === i.ticketItemId
+          })
+          if (itemFind) i.ticketProduct = itemFind
+        }
+        if (ticketClinicRef.value.ticketProductPrescriptionList) {
+          const itemFind = (ticketClinicRef.value.ticketProductPrescriptionList || []).find((j) => {
+            return j.id === i.ticketItemId
+          })
+          if (itemFind) i.ticketProduct = itemFind
+        }
+      }
       if (i.interactType === InteractType.Procedure) {
         i.ticketProcedure = (ticketClinicRef.value.ticketProcedureList || []).find((j) => {
           return j.id === i.ticketItemId
@@ -70,7 +76,9 @@ watch(
 )
 
 const totalCommissionMoney = computed(() => {
-  return ticketUserList.value.reduce((acc, item) => acc + item.commissionMoney, 0)
+  return ticketUserList.value.reduce((acc, item) => {
+    return acc + item.commissionMoney * item.quantity
+  }, 0)
 })
 
 const disabledSave = computed(() => {
@@ -112,9 +120,9 @@ const saveTicketItemsMoney = async () => {
             <th>Nhân viên</th>
             <th>Phiếu</th>
             <th>Giá DV</th>
-            <th>Tính Hoa hồng</th>
-            <th>% Hoa hồng</th>
-            <th>Tiền Hoa Hồng</th>
+            <th>SL</th>
+            <th>Hoa hồng</th>
+            <th>T.Tiền</th>
             <th></th>
           </tr>
         </thead>
@@ -139,15 +147,29 @@ const saveTicketItemsMoney = async () => {
                 <template v-if="ticketUser.interactType === InteractType.Ticket">
                   Phiếu khám
                 </template>
+                <template v-if="ticketUser.interactType === InteractType.Product">
+                  {{ ticketUser.ticketProduct?.product?.brandName }}
+                </template>
                 <template v-if="ticketUser.interactType === InteractType.Procedure">
-                  {{ procedureMap[ticketUser.interactId || 0]?.name }}
+                  {{ ticketUser.ticketProcedure?.procedure?.name }}
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Radiology">
-                  {{ radiologyMap[ticketUser.interactId || 0]?.name }}
+                  {{ ticketUser.ticketRadiology?.radiology?.name }}
                 </template>
               </div>
             </td>
             <td class="text-right">
+              <template
+                v-if="ticketUser.interactType === InteractType.Product && ticketUser.ticketProduct">
+                <div
+                  v-if="ticketUser.ticketProduct.discountMoney"
+                  class="text-xs italic text-red-500">
+                  <del>
+                    {{ formatMoney(ticketUser.ticketProduct.expectedPrice) }}
+                  </del>
+                </div>
+                {{ formatMoney(ticketUser.ticketProduct.actualPrice) }}
+              </template>
               <template
                 v-if="
                   ticketUser.interactType === InteractType.Procedure && ticketUser.ticketProcedure
@@ -156,19 +178,10 @@ const saveTicketItemsMoney = async () => {
                   v-if="ticketUser.ticketProcedure.discountMoney"
                   class="text-xs italic text-red-500">
                   <del>
-                    {{
-                      formatMoney(
-                        ticketUser.ticketProcedure.expectedPrice *
-                          ticketUser.ticketProcedure.quantity
-                      )
-                    }}
+                    {{ formatMoney(ticketUser.ticketProcedure.expectedPrice) }}
                   </del>
                 </div>
-                {{
-                  formatMoney(
-                    ticketUser.ticketProcedure.actualPrice * ticketUser.ticketProcedure.quantity
-                  )
-                }}
+                {{ formatMoney(ticketUser.ticketProcedure.actualPrice) }}
               </template>
               <template
                 v-if="
@@ -184,50 +197,32 @@ const saveTicketItemsMoney = async () => {
                 {{ formatMoney(ticketUser.ticketRadiology.actualPrice) }}
               </template>
             </td>
+            <td class="text-center">{{ ticketUser.quantity }}</td>
             <td>
-              <div style="width: 180px">
-                <VueSelect
-                  :value="ticketUser.commissionCalculatorType"
-                  :options="[
-                    { value: CommissionCalculatorType.VND, text: 'VNĐ' },
-                    ...(ticketUser.interactType !== InteractType.Ticket
-                      ? [
-                          {
-                            value: CommissionCalculatorType.PercentExpected,
-                            text: '% Giá niêm yết',
-                          },
-                          {
-                            value: CommissionCalculatorType.PercentActual,
-                            text: '% Giá sau chiết khấu',
-                          },
-                        ]
-                      : []),
-                  ]"
-                  @update:value="(v) => (ticketUserList[index].commissionCalculatorType = v)" />
+              <div v-if="ticketUser.commissionCalculatorType === CommissionCalculatorType.VND">
+                {{ formatMoney(ticketUser.commissionMoney) }}
               </div>
-            </td>
-            <td>
               <div
-                v-if="ticketUser.commissionCalculatorType !== CommissionCalculatorType.VND"
-                style="max-width: 100px">
-                <InputNumber
-                  :value="ticketUser.commissionPercent"
-                  textAlign="right"
-                  @update:value="(v) => (ticketUserList[index].commissionPercent = v)" />
+                v-if="
+                  ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected
+                ">
+                {{ ticketUser.commissionPercent }} % Giá niêm yết
+              </div>
+              <div
+                v-if="
+                  ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentActual
+                ">
+                {{ ticketUser.commissionPercent }} % Giá sau chiết khấu
               </div>
             </td>
-
-            <td>
-              <div style="max-width: 100px">
-                <InputNumber
-                  :value="ticketUser.commissionMoney"
-                  textAlign="right"
-                  @update:value="(v) => (ticketUserList[index].commissionMoney = v)" />
-              </div>
+            <td class="text-right">
+              {{ formatMoney(ticketUser.commissionMoney * ticketUser.quantity) }}
             </td>
             <td class="text-center">
-              <a class="text-red-500" @click="destroyTicketUser(ticketUser.id)">
-                <IconTrash />
+              <a
+                v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_USER_COMMISSION]"
+                class="text-orange-500">
+                <IconEditSquare width="20" height="20" />
               </a>
             </td>
           </tr>

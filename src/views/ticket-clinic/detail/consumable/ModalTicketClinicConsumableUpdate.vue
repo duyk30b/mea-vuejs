@@ -3,32 +3,33 @@ import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputNumber } from '../../../../common/vue-form'
+import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { DeliveryStatus } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
-import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketProcedure } from '../../../../modules/ticket-procedure'
+import { TicketStatus } from '../../../../modules/ticket'
+import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketProduct } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
 
-const emit = defineEmits<{
-  (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
-}>()
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
-const procedureMap = ref<Record<string, Procedure>>({})
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
   {}
 )
 
-const ticketProcedureOrigin = ref<TicketProcedure>(TicketProcedure.blank())
+let ticketProductOrigin = TicketProduct.blank()
+const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
+
 let ticketUserListOrigin: TicketUser[] = []
-const ticketProcedure = ref<TicketProcedure>(TicketProcedure.blank())
 const ticketUserList = ref<TicketUser[]>([])
 
 const showModal = ref(false)
@@ -37,13 +38,12 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[ticketProcedure.value.id] ||
-    []
+    ticketClinicRef.value.ticketUserGroup?.[InteractType.Product]?.[ticketProduct.value.id] || []
 
   const commissionList = await CommissionService.list({
     filter: {
-      interactType: InteractType.Procedure,
-      interactId: ticketProcedure.value.procedureId,
+      interactType: InteractType.Product,
+      interactId: ticketProduct.value.productId,
     },
   })
 
@@ -74,16 +74,14 @@ const refreshTicketUserList = async () => {
 onMounted(async () => {
   try {
     const fetchPromise = await Promise.all([
-      ProcedureService.getMap(),
       RoleService.getMap(),
       UserService.getMap(),
       UserRoleService.list(),
     ])
 
-    procedureMap.value = fetchPromise[0]
-    roleMap.value = fetchPromise[1]
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
+    roleMap.value = fetchPromise[0]
+    const userMap = fetchPromise[1]
+    const userRoleList = fetchPromise[2]
 
     userRoleList.forEach((i) => {
       const key = i.roleId
@@ -97,21 +95,21 @@ onMounted(async () => {
       })
     })
   } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicProcedureSelectItem.vue:51 ~ onMounted ~ error:', error)
+    console.log('🚀 ~ file: TicketClinicProductSelectItem.vue:51 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
 
-const openModal = async (ticketProcedureProp: TicketProcedure) => {
+const openModal = async (ticketProductProp: TicketProduct) => {
   showModal.value = true
-  ticketProcedureOrigin.value = TicketProcedure.from(ticketProcedureProp)
-  ticketProcedure.value = TicketProcedure.from(ticketProcedureProp)
+  ticketProductOrigin = TicketProduct.from(ticketProductProp)
+  ticketProduct.value = TicketProduct.from(ticketProductProp)
 
   await refreshTicketUserList()
 }
 
-const hasChangeTicketProcedure = computed(() => {
-  const result = !TicketProcedure.equal(ticketProcedureOrigin.value, ticketProcedure.value)
+const hasChangeTicketProduct = computed(() => {
+  const result = !TicketProduct.equal(ticketProductOrigin, ticketProduct.value)
   return result
 })
 
@@ -121,55 +119,77 @@ const hasChangeTicketUserList = computed(() => {
 })
 
 const hasChangeData = computed(() => {
-  const result = hasChangeTicketProcedure.value || hasChangeTicketUserList.value
+  const result = hasChangeTicketProduct.value || hasChangeTicketUserList.value
   return result
 })
 
+const handleUpdateUnitActualPrice = (price: number) => {
+  ticketProduct.value.unitActualPrice = price
+  ticketProduct.value.unitExpectedPrice = price
+}
+
 const closeModal = () => {
   showModal.value = false
-  ticketProcedure.value = TicketProcedure.blank()
-  ticketProcedureOrigin.value = TicketProcedure.blank()
+  ticketProduct.value = TicketProduct.blank()
+  ticketProductOrigin = TicketProduct.blank()
   ticketUserList.value = []
   ticketUserListOrigin = []
 }
 
 const clickDestroy = async () => {
+  if (ticketProductOrigin.deliveryStatus === DeliveryStatus.Delivered) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư ?',
+      content: [
+        '- Vật tư đã được xuất khỏi kho sẽ không thể xóa',
+        '- Chỉ có thể hoàn trả vật tư nếu bắt buộc phải thay đổi số lượng ?',
+      ],
+    })
+  }
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư ?',
+      content: [
+        '- Phiếu khám đã đóng không thể xóa vật tư',
+        '- Nếu bắt buộc phải thay đổi số lượng, bạn cần mở lại phiếu khám',
+      ],
+    })
+  }
   ModalStore.confirm({
-    title: 'Xác nhận xóa dịch vụ ?',
+    title: 'Xác nhận xóa vật tư ?',
     content: [
-      '- Hệ thống sẽ xóa dịch vụ này khỏi phiếu khám',
+      '- Hệ thống sẽ xóa vật tư này khỏi phiếu khám',
       '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     ],
     onOk: async () => {
       try {
-        await TicketClinicProcedureApi.destroyTicketProcedure({
+        await TicketClinicProductApi.destroyTicketProductConsumable({
           ticketId: ticketClinicRef.value.id,
-          ticketProcedureId: ticketProcedure.value.id,
+          ticketProductId: ticketProductOrigin.id,
         })
-        emit('success', ticketProcedure.value, 'DESTROY')
         closeModal()
       } catch (error) {
-        console.log('🚀 ~ file: TicketClinicProcedure.vue:118 ~ onOk: ~ error:', error)
+        console.log('🚀 ~ file: ModalTicketClinicConsumableUpdate.vue:155 ~ onOk: ~ error:', error)
       }
     },
   })
 }
 
-const updateTicketProcedure = async () => {
+const updateTicketProduct = async () => {
   saveLoading.value = true
   try {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
-    await TicketClinicProcedureApi.updateTicketProcedure({
+
+    await TicketClinicProductApi.updateTicketProduct({
       ticketId: ticketClinicRef.value.id,
-      ticketProcedureId: ticketProcedure.value.id,
-      ticketProcedure: hasChangeTicketProcedure.value ? ticketProcedure.value : undefined,
+      ticketProductId: ticketProduct.value.id,
+      ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
     })
-    emit('success', ticketProcedure.value, 'UPDATE')
     closeModal()
   } catch (error) {
-    console.log('🚀: ModalTicketProcedureUpdate.vue:139 ~ updateTicketProcedure ~ error:', error)
+    console.log('🚀: ModalTicketProductUpdate.vue:139 ~ updateTicketProduct ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -182,17 +202,42 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ procedureMap[ticketProcedure.procedureId]?.name }}
+          {{ ticketProduct.product?.brandName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
       </div>
-      <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketProcedure()">
+      <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketProduct()">
         <div style="flex-grow: 1; flex-basis: 80%">
           <div>Số lượng</div>
           <div>
-            <InputNumber v-model:value="ticketProcedure.quantity" required :validate="{ gt: 0 }" />
+            <InputNumber v-model:value="ticketProduct.quantity" required :validate="{ gt: 0 }" />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 80%">
+          <div>Giá tiền</div>
+          <div>
+            <InputMoney
+              :value="ticketProduct.actualPrice"
+              required
+              :validate="{ gte: 0 }"
+              @update:value="handleUpdateUnitActualPrice" />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 80%">
+          <div>Xuất kho</div>
+          <div>
+            <VueSelect
+              :value="ticketProduct.deliveryStatus"
+              :options="[
+                { value: DeliveryStatus.NoStock, text: 'Không xuất hàng' },
+                { value: DeliveryStatus.Pending, text: 'Chưa xuất kho' },
+                { value: DeliveryStatus.Delivered, text: 'Đã xuất kho' },
+              ]"
+              disabled />
           </div>
         </div>
 

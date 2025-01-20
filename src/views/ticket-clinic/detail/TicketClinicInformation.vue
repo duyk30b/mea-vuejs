@@ -225,50 +225,6 @@ const handleClickModalRegisterAppointment = () => {
         {{ formatMoney(Math.abs(ticketClinicRef.totalMoney - ticketClinicRef.paid)) }}
       </div>
     </div>
-    <template v-if="CONFIG.MODE === 'development'">
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền sản phẩm
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.productMoney) }}</div>
-      </div>
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền dịch vụ
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.procedureMoney) }}</div>
-      </div>
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền xét nghiệm
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.laboratoryMoney) }}</div>
-      </div>
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền CĐHA
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.radiologyMoney) }}</div>
-      </div>
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền lãi
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.profit) }}</div>
-      </div>
-      <div class="mt-2 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <IconDollar />
-          Tiền hoa hồng
-        </div>
-        <div>{{ formatMoney(ticketClinicRef.commissionMoney) }}</div>
-      </div>
-    </template>
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <IconSend />
@@ -293,5 +249,28 @@ const handleClickModalRegisterAppointment = () => {
         {{ DTimer.timeToText(ticketClinicRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
       </div>
     </div>
+    <template v-if="CONFIG.MODE === 'development'">
+      <pre>
+        {{
+          JSON.stringify(
+            {
+              productMoney: ticketClinicRef.productMoney,
+              procedureMoney: ticketClinicRef.procedureMoney,
+              laboratoryMoney: ticketClinicRef.laboratoryMoney,
+              radiologyMoney: ticketClinicRef.radiologyMoney,
+              itemsActualMoney: ticketClinicRef.itemsActualMoney,
+              itemsDiscount: ticketClinicRef.itemsDiscount,
+              commissionMoney: ticketClinicRef.commissionMoney,
+              totalMoney: ticketClinicRef.totalMoney,
+              profit: ticketClinicRef.profit,
+              paid: ticketClinicRef.paid,
+              debt: ticketClinicRef.debt,
+            },
+            null,
+            2
+          )
+        }}
+      </pre>
+    </template>
   </div>
 </template>

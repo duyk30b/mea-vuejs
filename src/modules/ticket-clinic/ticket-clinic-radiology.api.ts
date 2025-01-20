@@ -73,7 +73,6 @@ export class TicketClinicRadiologyApi {
       }
     )
     const { data } = response.data as BaseResponse<boolean>
-    return data
   }
 
   static async updatePriorityTicketRadiology(body: {

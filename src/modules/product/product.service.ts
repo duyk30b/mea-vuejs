@@ -131,6 +131,11 @@ export class ProductService {
     return Product.fromList(objects)
   }
 
+  static async getOne(id: number) {
+    const product = await ProductDB.findOneByKey(id)
+    return product
+  }
+
   static async detail(id: number, options: ProductDetailQuery) {
     const product = await ProductApi.detail(id, options)
     // const product = await ProductDB.findOneByKey(id)

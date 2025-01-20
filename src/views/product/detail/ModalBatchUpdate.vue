@@ -54,7 +54,10 @@ const handleSave = async () => {
       const batchDraft = await BatchService.updateInfo(batch.value.id, batch.value)
       emit('success', batchDraft, 'UPDATE')
     } else {
-      const response = await BatchService.updateInfoAndQuantity(batch.value.id, batch.value)
+      const response = await BatchService.updateInfoAndQuantityAndCostPrice(
+        batch.value.id,
+        batch.value
+      )
       response.batch.product = response.product
       emit('success', response.batch, 'UPDATE')
     }
@@ -150,7 +153,7 @@ defineExpose({ openModal })
           <div>
             <InputMoney
               v-model:value="batch.quantity"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY]" />
+              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]" />
           </div>
         </div>
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
@@ -158,7 +161,7 @@ defineExpose({ openModal })
           <div>
             <InputMoney
               v-model:value="batch.unitCostPrice"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY]" />
+              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]" />
           </div>
         </div>
         <div style="flex-basis: 90%; flex-grow: 1">

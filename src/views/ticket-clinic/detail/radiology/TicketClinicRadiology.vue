@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconPrint } from '../../../../common/icon'
-import { IconEditSquare, IconVisibility } from '../../../../common/icon-google'
+import { IconPrint, IconSpin } from '../../../../common/icon'
+import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -19,7 +19,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology } from '../../../../modules/ticket-radiology'
-import { DDom } from '../../../../utils'
+import { DDom, sleep } from '../../../../utils'
 import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -86,6 +86,8 @@ const selectRadiology = async (instance?: Radiology) => {
     temp.discountPercent = 0
     temp.discountType = DiscountType.VND
     temp.actualPrice = instance.price
+
+    ticketRadiologyList.value.push(temp)
 
     await TicketClinicRadiologyApi.addTicketRadiology({
       ticketId: ticketClinicRef.value.id,
@@ -239,8 +241,11 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
             </td>
             <td class="text-right">{{ formatMoney(tpItem.expectedPrice) }}</td>
             <td class="text-center">
+              <a v-if="!tpItem.id">
+                <IconSpin width="20" height="20" />
+              </a>
               <a
-                v-if="
+                v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
                     ticketClinicRef.ticketStatus
                   ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]

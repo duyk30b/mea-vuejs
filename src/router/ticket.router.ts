@@ -119,7 +119,7 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'laboratory',
                 name: 'TicketClinicLaboratory',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicLaboratory.vue'),
+                component: () => import('../views/ticket-clinic/detail/laboratory/TicketClinicLaboratory.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định Xét nghiệm' },
               },
               {
@@ -131,21 +131,21 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'consumable',
                 name: 'TicketClinicConsumable',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicConsumable.vue'),
+                component: () => import('../views/ticket-clinic/detail/consumable/TicketClinicConsumable.vue'),
                 meta: { keepAlive: true, title: 'Vật tư' },
               },
               {
                 path: 'prescription',
                 name: 'TicketClinicPrescription',
                 component: () =>
-                  import('../views/ticket-clinic/detail/TicketClinicPrescription.vue'),
+                  import('../views/ticket-clinic/detail/prescription/TicketClinicPrescription.vue'),
                 meta: { keepAlive: true, title: 'Kê đơn thuốc' },
               },
               {
                 path: 'user-commission',
                 name: 'TicketClinicUserCommission',
                 component: () =>
-                  import('../views/ticket-clinic/detail/TicketClinicUserCommission.vue'),
+                  import('../views/ticket-clinic/detail/commission/TicketClinicUserCommission.vue'),
                 meta: { title: 'Nhân viên và hoa hồng' },
               },
               {

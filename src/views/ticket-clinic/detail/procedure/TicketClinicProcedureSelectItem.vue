@@ -18,11 +18,17 @@ import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
 import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import { IconFileSearch } from '../../../../common/icon'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+
+const emit = defineEmits<{
+  (e: 'success', value: { ticketProcedure: TicketProcedure; ticketUserList: TicketUser[] }): void
+}>()
 
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -142,16 +148,11 @@ const selectProcedure = async (instance?: Procedure) => {
 }
 
 const addTicketProcedure = async () => {
-  try {
-    await TicketClinicProcedureApi.addTicketProcedure({
-      ticketId: ticketClinicRef.value.id,
-      ticketProcedure: ticketProcedure.value,
-      ticketUserList: ticketUserList.value,
-    })
-    reset()
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicProcedure.vue:109 ~ addTicketProcedure ~ error:', error)
-  }
+  emit('success', {
+    ticketProcedure: ticketProcedure.value,
+    ticketUserList: ticketUserList.value
+  })
+  reset()
 }
 </script>
 <template>
@@ -225,7 +226,8 @@ const addTicketProcedure = async () => {
       <VueButton
         icon="plus"
         :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus) ||
+          !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"
         type="submit">

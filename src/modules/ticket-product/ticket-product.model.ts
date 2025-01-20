@@ -132,6 +132,9 @@ export class TicketProduct {
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      target.batch = source.batch ? Batch.basic(source.batch) : source.batch
+    }
     return target
   }
 

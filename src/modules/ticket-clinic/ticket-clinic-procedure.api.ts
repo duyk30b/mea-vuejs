@@ -35,10 +35,7 @@ export class TicketClinicProcedureApi {
     const response = await AxiosInstance.delete(
       `/ticket-clinic/${ticketId}/destroy-ticket-procedure/${ticketProcedureId}`
     )
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-    }
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async updateTicketProcedure(body: {

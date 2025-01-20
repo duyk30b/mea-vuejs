@@ -121,8 +121,8 @@ export class BatchService {
     return response
   }
 
-  static async updateInfoAndQuantity(id: number, instance: Batch) {
-    const response = await BatchApi.updateInfoAndQuantity(id, instance)
+  static async updateInfoAndQuantityAndCostPrice(id: number, instance: Batch) {
+    const response = await BatchApi.updateInfoAndQuantityAndCostPrice(id, instance)
     await BatchDB.replaceOne(id, response.batch)
     if (response.product) {
       await ProductDB.replaceOne(response.product.id, response.product)
