@@ -193,18 +193,7 @@ const saveReceipt = async (type: EReceiptSave) => {
 
 const handleAddReceiptItem = (ri: ReceiptItem) => {
   const receiptItem = ReceiptItem.from(ri)
-  if (settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
-    receipt.value.receiptItemList!.unshift(receiptItem)
-  } else {
-    const exist = receipt.value.receiptItemList?.find((i) => {
-      return i.batchId === receiptItem.batchId
-    })
-    if (exist) {
-      exist.quantity += ri.quantity
-    } else {
-      receipt.value.receiptItemList!.unshift(receiptItem)
-    }
-  }
+  receipt.value.receiptItemList!.unshift(receiptItem)
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
