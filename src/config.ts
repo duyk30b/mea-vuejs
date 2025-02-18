@@ -13,4 +13,4 @@ export const CONFIG = {
       : `http://${location.hostname}:20000`,
 }
 
-// CONFIG.API_URL = 'https://api.medihome.vn'
+CONFIG.API_URL = 'https://api.medihome.vn'

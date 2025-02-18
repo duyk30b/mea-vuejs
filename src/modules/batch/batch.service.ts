@@ -70,6 +70,7 @@ export class BatchService {
         productId: productList ? { IN: productList.map((i) => i.id) } : undefined,
         expiryDate: filter?.expiryDate,
         warehouseId: filter?.warehouseId,
+        distributorId: filter?.distributorId,
         quantity: filter?.quantity,
         $OR: filter?.$OR,
       },
