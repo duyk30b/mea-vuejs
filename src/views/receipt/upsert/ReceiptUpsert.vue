@@ -383,6 +383,22 @@ const openModalDistributorDetail = (data?: Distributor) => {
           </div>
         </div>
 
+        <div class="mt-4 p-4 bg-white">
+          <div>Thông tin khác</div>
+          <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
+            <table class="table w-full mt-2 table-payment">
+              <tbody>
+                <tr>
+                  <td class="whitespace-nowrap">Ghi chú</td>
+                  <td>
+                    <a-input v-model:value="receipt.note" class="input-payment" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="

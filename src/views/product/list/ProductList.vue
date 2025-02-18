@@ -106,6 +106,7 @@ const startFetchBatch = async () => {
     page: page.value,
     limit: limit.value,
     filter: {
+      distributorId: distributorId.value ? distributorId.value : undefined,
       quantity: { NOT: 0 },
       product: {
         productGroupId: productGroupId.value ? productGroupId.value : undefined,
@@ -161,6 +162,10 @@ const startFetchWarehouse = async () => {
 
 const startFetchDistributor = async () => {
   const distributorAll = await DistributorService.list({})
+  distributorOptions.value = [
+    { value: 0, text: 'Tất cả', data: Distributor.blank() },
+    ...distributorAll.map((i) => ({ value: i.id, text: i.fullName, data: i })),
+  ]
   distributorMap.value = arrayToKeyValue(distributorAll, 'id')
 }
 
@@ -185,18 +190,14 @@ onMounted(async () => {
 })
 
 const startSearch = async () => {
-  // console.log('🚀 ~ file: ProductList.vue:155 ~ startSearch ~ tableType.value:', tableType.value)
   page.value = 1
   if (sortColumn.value === 'expiryDate' && sortValue.value != '') {
+    tableType.value = 'TABLE_BATCH'
+  } else if (distributorId.value != 0) {
     tableType.value = 'TABLE_BATCH'
   } else {
     tableType.value = 'TABLE_PRODUCT'
   }
-  // else if (warehouseId.value != 0) {
-  //   tableType.value = 'TABLE_BATCH'
-  // } else {
-  //   tableType.value = 'TABLE_PRODUCT'
-  // }
   await startFetchData()
 }
 
@@ -312,7 +313,7 @@ const closeExpiryDate = computed(() => {
 
   <div class="page-main">
     <div class="page-main-options">
-      <div style="flex: 5; flex-basis: 400px">
+      <div style="flex: 5; flex-basis: 300px">
         <div>Tìm kiếm</div>
         <div>
           <InputText
@@ -322,7 +323,7 @@ const closeExpiryDate = computed(() => {
         </div>
       </div>
 
-      <div style="flex: 2; flex-basis: 200px">
+      <div style="flex: 2; flex-basis: 160px">
         <div>Chọn kho</div>
         <div>
           <VueSelect
@@ -332,7 +333,17 @@ const closeExpiryDate = computed(() => {
         </div>
       </div>
 
-      <div style="flex: 2; flex-basis: 200px">
+      <div style="flex: 2; flex-basis: 180px">
+        <div>Chọn nhà cung cấp</div>
+        <div>
+          <VueSelect
+            v-model:value="distributorId"
+            :options="distributorOptions"
+            @update:value="startSearch" />
+        </div>
+      </div>
+
+      <div style="flex: 2; flex-basis: 180px">
         <div>Chọn nhóm sản phẩm</div>
         <div>
           <VueSelect
@@ -341,7 +352,7 @@ const closeExpiryDate = computed(() => {
             @update:value="startSearch" />
         </div>
       </div>
-      <div style="flex: 1; flex-basis: 180px">
+      <div style="flex: 1; flex-basis: 150px">
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
