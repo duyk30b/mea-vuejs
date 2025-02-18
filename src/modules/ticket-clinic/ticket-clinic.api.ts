@@ -7,7 +7,7 @@ import { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
 import type { TicketRadiology } from '../ticket-radiology'
 import type { TicketUser } from '../ticket-user'
-import { Ticket, TicketStatus, type TicketType } from '../ticket/ticket.model'
+import { TicketStatus, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async create(body: {
@@ -136,57 +136,6 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async updateTicketLaboratoryList(body: {
-    ticketId: number
-    customerId: number
-    ticketLaboratoryList: TicketLaboratory[]
-  }) {
-    const { ticketId, customerId, ticketLaboratoryList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-laboratory-list`,
-      {
-        customerId: customerId,
-        ticketLaboratoryList: ticketLaboratoryList.map((i) => {
-          const plain: { [P in keyof TicketLaboratory]?: any } = {}
-          plain.laboratoryId = i.laboratoryId
-          plain.expectedPrice = i.expectedPrice
-          plain.discountMoney = i.discountMoney
-          plain.discountPercent = i.discountPercent
-          plain.discountType = i.discountType
-          plain.actualPrice = i.actualPrice
-          return plain
-        }),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async updateTicketProductConsumable(body: {
-    ticketId: number
-    ticketProductConsumableList: TicketProduct[]
-  }) {
-    const { ticketId, ticketProductConsumableList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-product-consumable`,
-      {
-        ticketProductConsumableList: ticketProductConsumableList.map((i) => ({
-          productId: i.productId,
-          batchId: i.batchId,
-          warehouseId: i.warehouseId,
-          unitRate: i.unitRate,
-          quantity: i.quantity,
-          costPrice: i.costPrice,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-        })),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
   static async updateTicketProductPrescription(body: {
     ticketId: number
     ticketProductPrescriptionList?: TicketProduct[]
@@ -227,72 +176,6 @@ export class TicketClinicApi {
       }
     )
     const { data } = response.data as BaseResponse<boolean>
-  }
-
-  static async updateItemsMoney(body: {
-    ticketId: number
-    itemsActualMoney: number
-    discountMoney: number
-    discountPercent: number
-    discountType: DiscountType
-    ticketProductList: TicketProduct[]
-    ticketProcedureList: TicketProcedure[]
-    ticketLaboratoryList: TicketLaboratory[]
-    ticketRadiologyList: TicketRadiology[]
-  }) {
-    const {
-      ticketId,
-      ticketProductList,
-      ticketProcedureList,
-      ticketRadiologyList,
-      ticketLaboratoryList,
-    } = body
-
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update-items-money`, {
-      itemsActualMoney: body.itemsActualMoney,
-      // itemsDiscount: body.itemsDiscount, // itemDiscount bị thay đổi khi thêm dịch vụ mà ko tính toán được, nên đợi đóng phiếu mới tính
-      discountMoney: body.discountMoney,
-      discountPercent: body.discountPercent,
-      discountType: body.discountType,
-      ticketProductUpdateList: ticketProductList.map((item) => {
-        return {
-          ticketProductId: item.id,
-          quantity: item.quantity,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketProcedureUpdateList: ticketProcedureList.map((item) => {
-        return {
-          ticketProcedureId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketLaboratoryUpdateList: ticketLaboratoryList.map((item) => {
-        return {
-          ticketLaboratoryId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketRadiologyUpdateList: ticketRadiologyList.map((item) => {
-        return {
-          ticketRadiologyId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-    })
-    const { data } = response.data as BaseResponse
   }
 
   static async sendProduct(body: { ticketId: number }) {

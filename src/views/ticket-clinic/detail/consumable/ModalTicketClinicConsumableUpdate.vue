@@ -8,7 +8,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
-import { DeliveryStatus } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
@@ -17,6 +17,7 @@ import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
+import TicketClinicDeliveryStatusTag from '../../TicketClinicDeliveryStatusTag.vue'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -123,9 +124,32 @@ const hasChangeData = computed(() => {
   return result
 })
 
-const handleUpdateUnitActualPrice = (price: number) => {
-  ticketProduct.value.unitActualPrice = price
-  ticketProduct.value.unitExpectedPrice = price
+const handleChangeUnitDiscountMoney = (data: number) => {
+  const discountMoney = data / ticketProduct.value.unitRate
+  const expectedPrice = ticketProduct.value.expectedPrice || 0
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProduct.value.discountPercent = discountPercent
+  ticketProduct.value.discountMoney = discountMoney
+  ticketProduct.value.actualPrice = expectedPrice - discountMoney
+}
+
+const handleChangeDiscountPercent = (data: number) => {
+  const expectedPrice = ticketProduct.value.expectedPrice || 0
+  const discountMoney = Math.round((expectedPrice * (data || 0)) / 100)
+  ticketProduct.value.discountPercent = data
+  ticketProduct.value.discountMoney = discountMoney
+  ticketProduct.value.actualPrice = expectedPrice - discountMoney
+}
+
+const handleChangeUnitActualPrice = (data: number) => {
+  const actualPrice = data / ticketProduct.value.unitRate
+  const expectedPrice = ticketProduct.value.expectedPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProduct.value.discountPercent = discountPercent
+  ticketProduct.value.discountMoney = discountMoney
+  ticketProduct.value.discountType = DiscountType.VND
+  ticketProduct.value.actualPrice = actualPrice
 }
 
 const closeModal = () => {
@@ -209,35 +233,110 @@ defineExpose({ openModal })
         </div>
       </div>
       <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketProduct()">
-        <div style="flex-grow: 1; flex-basis: 80%">
-          <div>Số lượng</div>
-          <div>
-            <InputNumber v-model:value="ticketProduct.quantity" required :validate="{ gt: 0 }" />
+        <div style="flex-grow: 1; flex-basis: 300px">
+          <div class="flex gap-2 justify-between">
+            <div class="flex gap-1">
+              <span>Số lượng</span>
+              <span v-if="ticketProduct.unitRate !== 1">
+                (
+                <b>{{ ticketProduct.quantity }}</b>
+                {{ ticketProduct?.product?.unitBasicName }} )
+              </span>
+            </div>
+            <div>
+              <TicketClinicDeliveryStatusTag :deliveryStatus="ticketProduct.deliveryStatus" />
+            </div>
+          </div>
+          <div class="flex">
+            <div style="width: 120px">
+              <VueSelect
+                v-model:value="ticketProduct.unitRate"
+                :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
+                :options="
+                  ticketProduct.product?.unitObject.map((i) => ({
+                    value: i.rate,
+                    text: i.name,
+                    data: i,
+                  }))
+                "
+                required />
+            </div>
+            <div class="flex-1">
+              <InputNumber
+                v-model:value="ticketProduct.unitQuantity"
+                :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
+                :validate="{ gt: 0 }" />
+            </div>
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 80%">
-          <div>Giá tiền</div>
+        <div style="flex-grow: 1; flex-basis: 300px">
           <div>
-            <InputMoney
-              :value="ticketProduct.actualPrice"
-              required
-              :validate="{ gte: 0 }"
-              @update:value="handleUpdateUnitActualPrice" />
+            Giá niêm yết
+            <span v-if="ticketProduct.unitRate !== 1">
+              (
+              <b>{{ formatMoney(ticketProduct.expectedPrice) }} /</b>
+              {{ ticketProduct?.product?.unitBasicName }})
+            </span>
+          </div>
+
+          <div style="width: 100%">
+            <InputMoney :value="ticketProduct.unitExpectedPrice" disabled />
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 80%">
-          <div>Xuất kho</div>
+        <div style="flex-grow: 1; flex-basis: 300px">
           <div>
+            Chiết khấu
+            <span
+              v-if="
+                (ticketProduct.discountType === DiscountType.Percent &&
+                  ticketProduct.discountPercent !== 0) ||
+                ticketProduct.unitRate > 1
+              ">
+              (
+              <b>{{ formatMoney(ticketProduct.discountMoney) }}</b>
+              <span v-if="ticketProduct?.product?.unitBasicName">
+                / {{ ticketProduct?.product?.unitBasicName }}
+              </span>
+              )
+            </span>
+          </div>
+          <div class="flex">
             <VueSelect
-              :value="ticketProduct.deliveryStatus"
+              v-model:value="ticketProduct.discountType"
+              style="width: 120px"
               :options="[
-                { value: DeliveryStatus.NoStock, text: 'Không xuất hàng' },
-                { value: DeliveryStatus.Pending, text: 'Chưa xuất kho' },
-                { value: DeliveryStatus.Delivered, text: 'Đã xuất kho' },
-              ]"
-              disabled />
+                { value: DiscountType.Percent, text: '%' },
+                { value: DiscountType.VND, text: 'VNĐ' },
+              ]" />
+            <div style="width: calc(100% - 120px)">
+              <InputMoney
+                v-if="ticketProduct.discountType === DiscountType.VND"
+                :value="ticketProduct.unitDiscountMoney"
+                @update:value="handleChangeUnitDiscountMoney" />
+              <InputNumber
+                v-else
+                :value="ticketProduct.discountPercent"
+                @update:value="handleChangeDiscountPercent" />
+            </div>
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 300px">
+          <div class="flex gap-1">
+            <span>Đơn giá</span>
+            <span v-if="ticketProduct.unitRate !== 1">
+              (
+              <b>{{ formatMoney(ticketProduct.actualPrice) }} /</b>
+              {{ ticketProduct.product?.unitBasicName }})
+            </span>
+          </div>
+          <div style="width: 100%">
+            <InputMoney
+              :value="ticketProduct.unitActualPrice"
+              :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
+              @update:value="handleChangeUnitActualPrice" />
           </div>
         </div>
 

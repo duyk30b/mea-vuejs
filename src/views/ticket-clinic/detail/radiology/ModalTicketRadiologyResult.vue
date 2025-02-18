@@ -149,7 +149,7 @@ const startSave = async () => {
       files: [],
     }
 
-    await TicketClinicRadiologyApi.updateTicketRadiology({
+    await TicketClinicRadiologyApi.updateResultTicketRadiology({
       ticketId: ticketRadiology.value.ticketId,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: ticketRadiology.value,

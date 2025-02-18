@@ -4,14 +4,10 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { InputDate, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import {
-  TicketLaboratory,
-  TicketLaboratoryApi,
-  TicketLaboratoryStatus,
-} from '../../../../modules/ticket-laboratory'
+import { TicketClinicLaboratoryApi } from '../../../../modules/ticket-clinic'
+import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -30,34 +26,21 @@ const openModal = async (
   ticketLaboratoryPropList: TicketLaboratory[]
 ) => {
   showModal.value = true
+  
   laboratoryMap.value = await LaboratoryService.getMap()
   const laboratoryGroupMap = await LaboratoryGroupService.getMap()
   laboratoryGroup.value = laboratoryGroupMap[laboratoryGroupId]
 
   ticketLaboratoryResultList.value = TicketLaboratory.fromList(ticketLaboratoryPropList)
-  ticketLaboratoryResultList.value.forEach((i) => {
-    try {
-      i.resultParse = JSON.parse(i.result)
-    } catch (error) {
-      i.resultParse = {}
-    }
-    try {
-      i.attentionParse = JSON.parse(i.attention)
-    } catch (error) {
-      i.attentionParse = {}
-    }
-  })
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    await TicketLaboratoryApi.updateResult({
+    await TicketClinicLaboratoryApi.updateResult({
       ticketId: ticketLaboratoryResultList.value[0].ticketId,
-      customerId: ticketLaboratoryResultList.value[0].customerId,
       startedAt: startedAt.value,
-      ticketLaboratoryCreateList: ticketLaboratoryResultList.value.filter((i) => !i.id),
-      ticketLaboratoryUpdateList: ticketLaboratoryResultList.value.filter((i) => !!i.id),
+      ticketLaboratoryUpdateList: ticketLaboratoryResultList.value,
     })
     emit('success')
     showModal.value = false
@@ -92,25 +75,6 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const cancelResult = async (id: number) => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc chắn muốn hủy kết quả xét nghiệm này',
-    content: [''],
-    async onOk() {
-      await TicketLaboratoryApi.cancelResult(id)
-      const tl = ticketLaboratoryResultList.value.find((i) => i.id === id)
-      if (tl) {
-        tl.result = JSON.stringify({})
-        tl.attention = JSON.stringify({})
-        tl.resultParse = {}
-        tl.attentionParse = {}
-        tl.startedAt = null
-        tl.status = TicketLaboratoryStatus.Pending
-      }
-    },
-  })
-}
-
 defineExpose({ openModal })
 </script>
 
@@ -127,7 +91,7 @@ defineExpose({ openModal })
       </div>
 
       <form class="p-4" @submit.prevent="handleSave">
-        <div class="table-wrapper mt-2 pb-20">
+        <div class="table-wrapper mt-2">
           <table>
             <thead>
               <tr>
@@ -137,7 +101,6 @@ defineExpose({ openModal })
                 <th>Tham chiếu</th>
                 <th>Đơn vị</th>
                 <th style="width: 40px">Đánh dấu</th>
-                <th style="width: 40px"></th>
               </tr>
             </thead>
             <tbody>
@@ -207,11 +170,6 @@ defineExpose({ openModal })
                       type="checkbox"
                       name="isRegimen" />
                   </td>
-                  <td class="text-center">
-                    <a v-if="ticketLaboratory.startedAt" @click="cancelResult(ticketLaboratory.id)">
-                      Hủy
-                    </a>
-                  </td>
                 </tr>
                 <tr
                   v-for="(laboratoryItem, i) in laboratoryMap[ticketLaboratory.laboratoryId]
@@ -270,14 +228,13 @@ defineExpose({ openModal })
                       type="checkbox"
                       name="isRegimen" />
                   </td>
-                  <td></td>
                 </tr>
               </template>
             </tbody>
           </table>
         </div>
 
-        <div class="">
+        <div class="mt-6">
           <div>Thời gian trả kết quả:</div>
           <div><InputDate v-model:value="startedAt" show-time typeParser="number" /></div>
         </div>

@@ -90,8 +90,12 @@ export const socketInit = () => {
     SocketService.listenTicketClinicChangeTicketLaboratoryList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketProductList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductConsumableList(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductPrescriptionList(data)
   })
 }
 

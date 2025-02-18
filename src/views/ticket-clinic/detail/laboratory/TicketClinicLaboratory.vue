@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
 import { IconPrint, IconSpin } from '../../../../common/icon'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
@@ -17,13 +16,9 @@ import {
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { TicketStatus } from '../../../../modules/ticket'
-import {
-  TicketClinicApi,
-  TicketClinicLaboratoryApi,
-  ticketClinicRef,
-} from '../../../../modules/ticket-clinic'
+import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
-import { arrayToKeyValue, DDom, sleep } from '../../../../utils'
+import { arrayToKeyValue, DDom } from '../../../../utils'
 import ModalTicketLaboratoryResult from './ModalTicketLaboratoryResult.vue'
 import TicketClinicLaboratorySelectItem from './TicketClinicLaboratorySelectItem.vue'
 
@@ -47,19 +42,7 @@ const ticketLaboratoryMapGroup = computed(() => {
   ticketLaboratoryList.value.forEach((i) => {
     const laboratory = laboratoryMap.value[i.laboratoryId]
     const laboratoryGroupId = laboratory?.laboratoryGroupId || 0
-    if (!map[laboratoryGroupId]) {
-      map[laboratoryGroupId] = []
-    }
-    try {
-      i.resultParse = JSON.parse(i.result)
-    } catch (error) {
-      i.resultParse = {}
-    }
-    try {
-      i.attentionParse = JSON.parse(i.attention)
-    } catch (error) {
-      i.attentionParse = {}
-    }
+    if (!map[laboratoryGroupId]) map[laboratoryGroupId] = []
     map[laboratoryGroupId].push(i)
   })
   return map
@@ -102,23 +85,6 @@ watch(
   { immediate: true, deep: true }
 )
 
-const disabledButton = computed(() => {
-  return (
-    TicketLaboratory.equalList(
-      ticketLaboratoryList.value,
-      ticketClinicRef.value.ticketLaboratoryList || []
-    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)
-  )
-})
-
-const saveTicketLaboratoryList = async () => {
-  await TicketClinicApi.updateTicketLaboratoryList({
-    ticketId: ticketClinicRef.value.id,
-    customerId: ticketClinicRef.value.customerId || 0,
-    ticketLaboratoryList: ticketLaboratoryList.value.filter((i) => i.startedAt == null),
-  })
-}
-
 const startPrint = async (
   ticketLaboratoryDataList: TicketLaboratory[],
   laboratoryGroup: LaboratoryGroup
@@ -154,7 +120,7 @@ const startPrint = async (
 
     await DDom.startPrint('iframe-print', textDom)
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicLaboratory.vue:154 ~ startPrint ~ error:', error)
+    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
   }
 }
 
@@ -166,7 +132,7 @@ const handleAddTicketLaboratoryList = async (ticketLaboratoryAddList: TicketLabo
       ticketLaboratoryList: ticketLaboratoryAddList,
     })
   } catch (error) {
-    console.log('🚀: TicketClinicLaboratory.vue:178 ~ handleAddTicketLaboratoryList :', error)
+    console.log('🚀: TicketClinicLaboratory.vue:148 ~ handleAddTicketLaboratoryList :', error)
   }
 }
 
@@ -193,7 +159,7 @@ const destroyTicketLaboratory = async (ticketLaboratoryId: number) => {
           ticketLaboratoryId,
         })
       } catch (error) {
-        console.log('🚀: TicketClinicLaboratory.vue:137 ~ destroyTicketLaboratory:', error)
+        console.log('🚀: TicketClinicLaboratory.vue:176 ~ destroyTicketLaboratory:', error)
       }
     },
   })
@@ -320,7 +286,9 @@ const destroyTicketLaboratory = async (ticketLaboratoryId: number) => {
               <b>
                 {{
                   formatMoney(
-                    ticketLaboratoryList.reduce((acc, item) => acc + item.expectedPrice, 0)
+                    ticketLaboratoryList.reduce((acc, item) => {
+                      return acc + item.expectedPrice
+                    }, 0)
                   )
                 }}
               </b>
@@ -333,14 +301,6 @@ const destroyTicketLaboratory = async (ticketLaboratoryId: number) => {
   </div>
   <div class="mt-4 flex justify-between">
     <div></div>
-    <VueButton
-      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]"
-      color="blue"
-      :disabled="disabledButton"
-      icon="save"
-      @click="saveTicketLaboratoryList">
-      Lưu lại
-    </VueButton>
   </div>
 </template>
 <style lang="scss" scope></style>

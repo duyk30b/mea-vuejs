@@ -48,7 +48,16 @@ export class TicketClinicProcedureApi {
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/update-ticket-procedure/${ticketProcedureId}`,
       {
-        ticketProcedure: ticketProcedure ? { quantity: ticketProcedure.quantity } : undefined,
+        ticketProcedure: ticketProcedure
+          ? {
+              quantity: ticketProcedure.quantity,
+              expectedPrice: ticketProcedure.expectedPrice,
+              discountType: ticketProcedure.discountType,
+              discountMoney: ticketProcedure.discountMoney,
+              discountPercent: ticketProcedure.discountPercent,
+              actualPrice: ticketProcedure.actualPrice,
+            }
+          : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
               roleId: i.roleId || 0,

@@ -25,55 +25,27 @@ const { permissionIdMap, organization } = meStore
 const ticketUserList = ref<TicketUser[]>([])
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
+const procedureMap = ref<Record<string, Procedure>>({})
+const laboratoryMap = ref<Record<string, Laboratory>>({})
+const radiologyMap = ref<Record<string, Radiology>>({})
 
 const saveLoading = ref(false)
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
-  const fetchPromise = await Promise.all([UserService.getMap(), RoleService.getMap()])
-  userMap.value = fetchPromise[0]
-  roleMap.value = fetchPromise[1]
+  const fetchData = await Promise.all([
+    UserService.getMap(),
+    RoleService.getMap(),
+    ProcedureService.getMap(),
+    LaboratoryService.getMap(),
+    RadiologyService.getMap(),
+  ])
+  userMap.value = fetchData[0]
+  roleMap.value = fetchData[1]
+  procedureMap.value = fetchData[2]
+  laboratoryMap.value = fetchData[3]
+  radiologyMap.value = fetchData[4]
 })
-
-watch(
-  () => ticketClinicRef.value.ticketUserList,
-  async (newValue, oldValue) => {
-    ticketUserList.value = TicketUser.fromList(newValue || [])
-    ticketUserList.value.forEach((i) => {
-      if (i.interactType === InteractType.Product) {
-        if (ticketClinicRef.value.ticketProductList) {
-          const itemFind = (ticketClinicRef.value.ticketProductList || []).find((j) => {
-            return j.id === i.ticketItemId
-          })
-          if (itemFind) i.ticketProduct = itemFind
-        }
-        if (ticketClinicRef.value.ticketProductConsumableList) {
-          const itemFind = (ticketClinicRef.value.ticketProductConsumableList || []).find((j) => {
-            return j.id === i.ticketItemId
-          })
-          if (itemFind) i.ticketProduct = itemFind
-        }
-        if (ticketClinicRef.value.ticketProductPrescriptionList) {
-          const itemFind = (ticketClinicRef.value.ticketProductPrescriptionList || []).find((j) => {
-            return j.id === i.ticketItemId
-          })
-          if (itemFind) i.ticketProduct = itemFind
-        }
-      }
-      if (i.interactType === InteractType.Procedure) {
-        i.ticketProcedure = (ticketClinicRef.value.ticketProcedureList || []).find((j) => {
-          return j.id === i.ticketItemId
-        })
-      }
-      if (i.interactType === InteractType.Radiology) {
-        i.ticketRadiology = (ticketClinicRef.value.ticketRadiologyList || []).find((j) => {
-          return j.id === i.ticketItemId
-        })
-      }
-    })
-  },
-  { immediate: true }
-)
 
 const totalCommissionMoney = computed(() => {
   return ticketUserList.value.reduce((acc, item) => {
@@ -81,33 +53,7 @@ const totalCommissionMoney = computed(() => {
   }, 0)
 })
 
-const disabledSave = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
-    return true
-  }
-
-  if (!TicketUser.equalList(ticketUserList.value, ticketClinicRef.value.ticketUserList || [])) {
-    return false
-  }
-
-  return true
-})
-
 const destroyTicketUser = async (ticketUserId: number) => {}
-
-const saveTicketItemsMoney = async () => {
-  saveLoading.value = true
-  try {
-    console.log(
-      '🚀 ~ file: TicketClinicUserCommission.vue:137 ~ saveTicketItemsMoney ~ saveLoading:',
-      saveLoading
-    )
-  } catch (e) {
-    console.log('🚀 ~ file: TicketClinicSummary.vue:321 ~ saveTicketItemsMoney ~ e:', e)
-  } finally {
-    saveLoading.value = false
-  }
-}
 </script>
 <template>
   <div>
@@ -127,7 +73,7 @@ const saveTicketItemsMoney = async () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ticketUser, index) in ticketUserList || []" :key="index">
+          <tr v-for="(ticketUser, index) in ticketClinicRef.ticketUserList || []" :key="index">
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               <!-- {{ index + 1 }} -->
               {{ ticketUser.id }}
@@ -237,18 +183,6 @@ const saveTicketItemsMoney = async () => {
           </tr>
         </tbody>
       </table>
-    </div>
-    <div class="mt-8 flex gap-4">
-      <VueButton
-        v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_ITEMS_MONEY]"
-        class="ml-auto"
-        color="blue"
-        :disabled="disabledSave"
-        :loading="saveLoading"
-        icon="save"
-        @click="saveTicketItemsMoney">
-        Lưu lại
-      </VueButton>
     </div>
   </div>
 </template>

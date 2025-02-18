@@ -89,6 +89,16 @@ export class TicketLaboratory {
     if (target.laboratoryList) {
       target.laboratoryList = Laboratory.basicList(target.laboratoryList)
     }
+    try {
+      target.resultParse = JSON.parse(source.result)
+    } catch (error) {
+      target.resultParse = {}
+    }
+    try {
+      target.attentionParse = JSON.parse(source.attention)
+    } catch (error) {
+      target.attentionParse = {}
+    }
     return target
   }
 
@@ -108,6 +118,7 @@ export class TicketLaboratory {
 
   static equal(a: TicketLaboratory, b: TicketLaboratory) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.laboratoryId != b.laboratoryId) return false

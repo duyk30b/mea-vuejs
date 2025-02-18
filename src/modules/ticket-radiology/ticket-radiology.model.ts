@@ -101,6 +101,7 @@ export class TicketRadiology {
 
   static equal(a: TicketRadiology, b: TicketRadiology) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.radiologyId != b.radiologyId) return false

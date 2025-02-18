@@ -151,7 +151,7 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'summary',
                 name: 'TicketClinicSummary',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicSummary.vue'),
+                component: () => import('../views/ticket-clinic/detail/summary/TicketClinicSummary.vue'),
                 meta: { title: 'Tổng kết' },
               },
             ],

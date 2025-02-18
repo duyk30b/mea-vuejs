@@ -41,7 +41,7 @@ import TicketClinicDiagnosisObstetric from './TicketClinicDiagnosisObstetric.vue
 import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
 import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
-import TicketClinicSummary from './TicketClinicSummary.vue'
+import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUserCommission from './commission/TicketClinicUserCommission.vue'
 import TicketClinicUserList from './TicketClinicUserList.vue'
 import TicketClinicConsumable from './consumable/TicketClinicConsumable.vue'

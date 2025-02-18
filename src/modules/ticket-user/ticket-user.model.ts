@@ -23,7 +23,7 @@ export class TicketUser {
   commissionPercent: number
   commissionMoney: number
 
-  createdAt: number
+  createdAt!: number
 
   ticket?: Ticket
   user?: User

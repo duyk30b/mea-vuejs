@@ -36,11 +36,10 @@ const startFetchData = async () => {
     })
 
     prescriptionSampleList.value = data
-    console.log('🚀 ~ file: PrescriptionSampleList.vue:39 ~ startFetchData ~ data:', data)
     total.value = meta.total
     dataLoading.value = true
   } catch (error) {
-    console.log('🚀 ~ file: LaboratoryList.vue:59 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: LaboratoryList.vue:42 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }

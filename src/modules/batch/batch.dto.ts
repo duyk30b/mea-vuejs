@@ -9,6 +9,7 @@ export class BatchGetQuery {
   }
 
   filter?: {
+    id?: number | ConditionNumber
     quantity?: ConditionNumber
     expiryDate?: ConditionNumber
     productId?: number | ConditionNumber

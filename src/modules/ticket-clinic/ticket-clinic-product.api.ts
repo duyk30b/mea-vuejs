@@ -84,6 +84,9 @@ export class TicketClinicProductApi {
               quantity: ticketProduct.quantity,
               quantityPrescription: ticketProduct.quantityPrescription,
               expectedPrice: ticketProduct.expectedPrice,
+              discountType: ticketProduct.discountType,
+              discountMoney: ticketProduct.discountMoney,
+              discountPercent: ticketProduct.discountPercent,
               actualPrice: ticketProduct.actualPrice,
               hintUsage: ticketProduct.hintUsage,
             }

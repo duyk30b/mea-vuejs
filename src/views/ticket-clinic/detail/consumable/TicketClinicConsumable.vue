@@ -163,16 +163,19 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               <div class="text-xs">{{ tpItem.product?.substance }}</div>
             </td>
             <td class="text-center">
-              {{ formatMoney(tpItem.quantity) }}
+              {{ formatMoney(tpItem.unitQuantity) }}
             </td>
             <td class="text-center whitespace-nowrap">
               {{ tpItem.unitName }}
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(tpItem.unitExpectedPrice || 0) }}
+              <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(tpItem.unitExpectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(tpItem.unitActualPrice) }}</div>
             </td>
             <td class="text-right whitespace-nowrap">
-              {{ formatMoney(tpItem.expectedPrice * tpItem.quantity || 0) }}
+              {{ formatMoney(tpItem.actualPrice * tpItem.quantity || 0) }}
             </td>
             <td class="text-center">
               <a v-if="!tpItem.id">
@@ -197,7 +200,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                 {{
                   formatMoney(
                     ticketProductConsumableList.reduce((acc, item) => {
-                      return (acc += item.expectedPrice * item.quantity)
+                      return (acc += item.actualPrice * item.quantity)
                     }, 0)
                   )
                 }}

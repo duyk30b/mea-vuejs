@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputNumber } from '../../../../common/vue-form'
+import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
@@ -15,10 +15,15 @@ import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
+import { DiscountType } from '../../../../modules/enum'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
+
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 
 const procedureMap = ref<Record<string, Procedure>>({})
 const roleMap = ref<Record<string, Role>>({})
@@ -97,7 +102,7 @@ onMounted(async () => {
       })
     })
   } catch (error: any) {
-    console.log('🚀 ~ file: TicketClinicProcedureSelectItem.vue:51 ~ onMounted ~ error:', error)
+    console.log('🚀 ~ file: ModalTicketProcedureUpdate.vue:105 ~ onMounted ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
@@ -125,6 +130,34 @@ const hasChangeData = computed(() => {
   return result
 })
 
+const handleChangeUnitDiscountMoney = (data: number) => {
+  const discountMoney = data
+  const expectedPrice = ticketProcedure.value.expectedPrice || 0
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProcedure.value.discountPercent = discountPercent
+  ticketProcedure.value.discountMoney = discountMoney
+  ticketProcedure.value.actualPrice = expectedPrice - discountMoney
+}
+
+const handleChangeDiscountPercent = (data: number) => {
+  const expectedPrice = ticketProcedure.value.expectedPrice || 0
+  const discountMoney = Math.round((expectedPrice * (data || 0)) / 100)
+  ticketProcedure.value.discountPercent = data
+  ticketProcedure.value.discountMoney = discountMoney
+  ticketProcedure.value.actualPrice = expectedPrice - discountMoney
+}
+
+const handleChangeActualPrice = (data: number) => {
+  const actualPrice = data
+  const expectedPrice = ticketProcedure.value.expectedPrice
+  const discountMoney = expectedPrice - actualPrice
+  const discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+  ticketProcedure.value.discountPercent = discountPercent
+  ticketProcedure.value.discountMoney = discountMoney
+  ticketProcedure.value.discountType = DiscountType.VND
+  ticketProcedure.value.actualPrice = actualPrice
+}
+
 const closeModal = () => {
   showModal.value = false
   ticketProcedure.value = TicketProcedure.blank()
@@ -149,7 +182,7 @@ const clickDestroy = async () => {
         emit('success', ticketProcedure.value, 'DESTROY')
         closeModal()
       } catch (error) {
-        console.log('🚀 ~ file: TicketClinicProcedure.vue:118 ~ onOk: ~ error:', error)
+        console.log('🚀 ~ file: TicketClinicProcedure.vue:185 ~ onOk: ~ error:', error)
       }
     },
   })
@@ -169,7 +202,7 @@ const updateTicketProcedure = async () => {
     emit('success', ticketProcedure.value, 'UPDATE')
     closeModal()
   } catch (error) {
-    console.log('🚀: ModalTicketProcedureUpdate.vue:139 ~ updateTicketProcedure ~ error:', error)
+    console.log('🚀: ModalTicketProcedureUpdate.vue:205 ~ updateTicketProcedure ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -189,10 +222,60 @@ defineExpose({ openModal })
         </div>
       </div>
       <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketProcedure()">
-        <div style="flex-grow: 1; flex-basis: 80%">
+        <div style="flex-grow: 1; flex-basis: 300px">
           <div>Số lượng</div>
           <div>
             <InputNumber v-model:value="ticketProcedure.quantity" required :validate="{ gt: 0 }" />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 300px">
+          <div>Giá niêm yết</div>
+          <div>
+            <InputMoney v-model:value="ticketProcedure.expectedPrice" disabled />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 300px">
+          <div>
+            Chiết khấu
+            <span
+              v-if="
+                ticketProcedure.discountType === DiscountType.Percent &&
+                ticketProcedure.discountPercent !== 0
+              ">
+              (
+              <b>{{ formatMoney(ticketProcedure.discountMoney) }}</b>
+              )
+            </span>
+          </div>
+          <div class="flex">
+            <VueSelect
+              v-model:value="ticketProcedure.discountType"
+              style="width: 120px"
+              :options="[
+                { value: DiscountType.Percent, text: '%' },
+                { value: DiscountType.VND, text: 'VNĐ' },
+              ]" />
+            <div style="width: calc(100% - 120px)">
+              <InputMoney
+                v-if="ticketProcedure.discountType === DiscountType.VND"
+                :value="ticketProcedure.discountMoney"
+                @update:value="handleChangeUnitDiscountMoney" />
+              <InputNumber
+                v-else
+                :value="ticketProcedure.discountPercent"
+                @update:value="handleChangeDiscountPercent" />
+            </div>
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 300px">
+          <div>Đơn giá</div>
+          <div style="width: 100%">
+            <InputMoney
+              :value="ticketProcedure.actualPrice"
+              @update:value="handleChangeActualPrice" />
           </div>
         </div>
 

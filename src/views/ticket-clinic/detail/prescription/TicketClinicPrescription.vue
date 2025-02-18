@@ -3,7 +3,7 @@ import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconSpin } from '../../../../common/icon'
-import { IconEditSquare } from '../../../../common/icon-google'
+import { IconAddCircle, IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputNumber } from '../../../../common/vue-form'
 import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
@@ -32,11 +32,13 @@ import { DDom } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
+import ModalSelectPrescriptionSample from './ModalSelectPrescriptionSample.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
+const modalSelectPrescriptionSample = ref<InstanceType<typeof ModalSelectPrescriptionSample>>()
 
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
@@ -112,10 +114,12 @@ const disabledButton = computed(() => {
   return true
 })
 
-const changeQuantityTable = (index: number, unitQuantity: number) => {
+const changeQuantityPrescriptionTable = (index: number, unitQuantityPrescription: number) => {
   const ticketProductCurrent = ticketProductPrescriptionList.value[index]
-  ticketProductCurrent.unitQuantityPrescription = unitQuantity
-  ticketProductCurrent.unitQuantity = unitQuantity
+  ticketProductCurrent.unitQuantityPrescription = unitQuantityPrescription
+  if (ticketProductCurrent.deliveryStatus === DeliveryStatus.Pending) {
+    ticketProductCurrent.unitQuantity = unitQuantityPrescription
+  }
 }
 
 const changeItemPosition = (index: number, count: number) => {
@@ -203,13 +207,23 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
 }
+
+const addPrescriptionSample = ()=>{
+  
+} 
 </script>
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <TicketClinicPrescriptionSelectItem @success="handleAddTicketProductPrescription" />
   <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
+  <ModalSelectPrescriptionSample ref="modalSelectPrescriptionSample" />
   <div class="mt-4">
-    <div>Đơn thuốc</div>
+    <div class="flex justify-between items-center">
+      <span>Đơn thuốc</span>
+      <div>
+        <a @click="modalSelectPrescriptionSample?.openModal()">Chọn đơn mẫu</a>
+      </div>
+    </div>
     <div class="table-wrapper">
       <table>
         <thead>
@@ -292,19 +306,23 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                   :disabled="tpItem.quantityPrescription <= 0"
                   type="button"
-                  @click="changeQuantityTable(index, tpItem.unitQuantityPrescription - 1)">
+                  @click="
+                    changeQuantityPrescriptionTable(index, tpItem.unitQuantityPrescription - 1)
+                  ">
                   <font-awesome-icon :icon="['fas', 'minus']" />
                 </button>
                 <div style="width: calc(100% - 60px); min-width: 50px">
                   <InputNumber
                     :value="tpItem.unitQuantityPrescription"
-                    @update:value="(value) => changeQuantityTable(index, value)" />
+                    @update:value="(value) => changeQuantityPrescriptionTable(index, value)" />
                 </div>
                 <button
                   style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
                   type="button"
                   class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  @click="changeQuantityTable(index, tpItem.unitQuantityPrescription + 1)">
+                  @click="
+                    changeQuantityPrescriptionTable(index, tpItem.unitQuantityPrescription + 1)
+                  ">
                   <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
               </div>
@@ -350,6 +368,12 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="flex justify-end">
+      <a class="flex items-center gap-1" @click="addPrescriptionSample">
+        <IconAddCircle />
+        Lưu đơn mẫu
+      </a>
     </div>
 
     <div class="mt-4">

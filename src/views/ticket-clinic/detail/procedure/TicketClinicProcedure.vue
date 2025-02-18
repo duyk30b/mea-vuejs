@@ -148,7 +148,12 @@ const savePriorityTicketProcedure = async () => {
             </td>
             <td>{{ procedureMap[tpItem.procedureId]?.name }}</td>
             <td class="text-center">{{ tpItem.quantity }}</td>
-            <td class="text-right">{{ formatMoney(tpItem.actualPrice) }}</td>
+            <td class="text-right">
+              <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(tpItem.expectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(tpItem.actualPrice) }}</div>
+            </td>
             <td class="text-right">
               {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
             </td>
