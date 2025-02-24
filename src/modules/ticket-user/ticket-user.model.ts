@@ -14,13 +14,17 @@ export class TicketUser {
   userId: number
 
   interactType: InteractType
-  interactId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
+  interactId: number // procedureId hoặc productId hoặc radiologyId
+
   ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
+  ticketItemExpectedPrice: number
+  ticketItemActualPrice: number
 
   quantity: number
 
   commissionCalculatorType: CommissionCalculatorType
-  commissionPercent: number
+  commissionPercentActual: number
+  commissionPercentExpected: number
   commissionMoney: number
 
   createdAt!: number
@@ -45,9 +49,10 @@ export class TicketUser {
     ins.interactId = 0
     ins.ticketItemId = 0
 
-    ins.commissionMoney = 0
-    ins.commissionPercent = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
+    ins.commissionMoney = 0
+    ins.commissionPercentActual = 0
+    ins.commissionPercentExpected = 0
 
     return ins
   }
@@ -94,11 +99,12 @@ export class TicketUser {
     if (a.interactType != b.interactType) return false
     if (a.interactId != b.interactId) return false
     if (a.ticketItemId != b.ticketItemId) return false
-    
+
     if (a.quantity != b.quantity) return false
 
     if (a.commissionCalculatorType != b.commissionCalculatorType) return false
-    if (a.commissionPercent != b.commissionPercent) return false
+    if (a.commissionPercentActual != b.commissionPercentActual) return false
+    if (a.commissionPercentExpected != b.commissionPercentExpected) return false
     if (a.commissionMoney != b.commissionMoney) return false
     return true
   }

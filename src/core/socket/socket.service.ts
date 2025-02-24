@@ -125,6 +125,7 @@ export class SocketService {
     ticketId: number
     ticketUserDestroyList?: TicketUser[]
     ticketUserUpdateList?: TicketUser[]
+    ticketUserUpdate?: TicketUser
     ticketUserInsertList?: TicketUser[]
     replace?: {
       interactType: InteractType
@@ -169,6 +170,16 @@ export class SocketService {
           }
         }
       }
+      if (data.ticketUserUpdate) {
+        const ticketUserUpdate = TicketUser.from(data.ticketUserUpdate)
+        const indexUpdate = ticket.ticketUserList.findIndex((i) => {
+          return data.ticketUserUpdate?.id === i.id
+        })
+        if (indexUpdate !== -1) {
+          Object.assign(ticket.ticketUserList[indexUpdate], ticketUserUpdate)
+        }
+      }
+
       if (data.ticketUserInsertList) {
         const insertList = TicketUser.fromList(data.ticketUserInsertList)
         ticket.ticketUserList = ticket.ticketUserList.concat(insertList)
@@ -515,7 +526,9 @@ export class SocketService {
         })
       }
       if (data.replace?.ticketProductList) {
-        const ticketProductPrescriptionList = TicketProduct.fromList(data.replace?.ticketProductList)
+        const ticketProductPrescriptionList = TicketProduct.fromList(
+          data.replace?.ticketProductList
+        )
         ticketProductPrescriptionList.forEach((i) => {
           i.product = productMap[i.productId]
           i.batch = batchMap[i.batchId]

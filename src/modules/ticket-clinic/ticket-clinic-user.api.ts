@@ -9,10 +9,26 @@ export class TicketClinicUserApi {
     const response = await AxiosInstance.delete(
       `/ticket-clinic/${ticketId}/destroy-ticket-user/${ticketUserId}`
     )
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-    }
+    const { data } = response.data as BaseResponse<boolean>
+    return data
+  }
+
+  static async updateTicketUser(body: {
+    ticketId: number
+    ticketUserId: number
+    ticketUser: TicketUser
+  }) {
+    const { ticketId, ticketUser, ticketUserId } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-ticket-user/${ticketUserId}`,
+      {
+        commissionCalculatorType: ticketUser.commissionCalculatorType,
+        commissionMoney: ticketUser.commissionMoney,
+        commissionPercentActual: ticketUser.commissionPercentActual,
+        commissionPercentExpected: ticketUser.commissionPercentExpected,
+      }
+    )
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async updateTicketUserItem(body: {

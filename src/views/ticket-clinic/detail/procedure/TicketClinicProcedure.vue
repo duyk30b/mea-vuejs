@@ -12,7 +12,6 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { TicketUser } from '../../../../modules/ticket-user'
-import { sleep } from '../../../../utils'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
 
@@ -37,13 +36,11 @@ watch(
 )
 
 const hasChangePriority = computed(() => {
-  if (
-    !TicketProcedure.equalList(
-      ticketProcedureList.value,
-      ticketClinicRef.value.ticketProcedureList || []
-    )
-  ) {
-    return true
+  for (let index = 0; index < (ticketClinicRef.value.ticketProcedureList || []).length; index++) {
+    const tpRoot = ticketClinicRef.value.ticketProcedureList![index]
+    if (tpRoot.priority !== ticketProcedureList.value[index].priority) {
+      return true
+    }
   }
   return false
 })
@@ -199,7 +196,6 @@ const savePriorityTicketProcedure = async () => {
     <VueButton
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
         hasChangePriority
       "
       color="blue"

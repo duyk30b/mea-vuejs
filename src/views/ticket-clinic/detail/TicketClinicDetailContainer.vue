@@ -39,15 +39,15 @@ import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.v
 import TicketClinicDiagnosisGeneral from './TicketClinicDiagnosisGeneral.vue'
 import TicketClinicDiagnosisObstetric from './TicketClinicDiagnosisObstetric.vue'
 import TicketClinicInformation from './TicketClinicInformation.vue'
-import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
-import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
-import TicketClinicSummary from './summary/TicketClinicSummary.vue'
-import TicketClinicUserCommission from './commission/TicketClinicUserCommission.vue'
 import TicketClinicUserList from './TicketClinicUserList.vue'
 import TicketClinicConsumable from './consumable/TicketClinicConsumable.vue'
+import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
+import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
 import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'
+import TicketClinicSummary from './summary/TicketClinicSummary.vue'
+import TicketClinicUser from './user/TicketClinicUser.vue'
 
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 
@@ -313,8 +313,8 @@ const clickCloseVisit = () => {
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
-              :tabKey="TicketClinicUserCommission.__name!"
-              @active="router.push({ name: TicketClinicUserCommission.__name })">
+              :tabKey="TicketClinicUser.__name!"
+              @active="router.push({ name: TicketClinicUser.__name })">
               <IconUser />
               Nhân Viên
             </VueTabMenu>

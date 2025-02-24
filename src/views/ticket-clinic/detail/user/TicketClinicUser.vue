@@ -1,8 +1,6 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconTrash } from '../../../../common/icon'
-import { InputNumber, VueSelect } from '../../../../common/vue-form'
+import { onMounted, ref } from 'vue'
+import { IconEditSquare } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionCalculatorType, InteractType } from '../../../../modules/commission'
@@ -11,18 +9,17 @@ import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
-import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
-import { IconEditSquare } from '../../../../common/icon-google'
+import ModalTicketUserUpdate from './ModalTicketUserUpdate.vue'
+
+const modalTicketUserUpdate = ref<InstanceType<typeof ModalTicketUserUpdate>>()
 
 const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
+const { formatMoney } = settingStore
 const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { permissionIdMap } = meStore
 
-const ticketUserList = ref<TicketUser[]>([])
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
 const procedureMap = ref<Record<string, Procedure>>({})
@@ -46,16 +43,9 @@ onMounted(async () => {
   laboratoryMap.value = fetchData[3]
   radiologyMap.value = fetchData[4]
 })
-
-const totalCommissionMoney = computed(() => {
-  return ticketUserList.value.reduce((acc, item) => {
-    return acc + item.commissionMoney * item.quantity
-  }, 0)
-})
-
-const destroyTicketUser = async (ticketUserId: number) => {}
 </script>
 <template>
+  <ModalTicketUserUpdate ref="modalTicketUserUpdate" />
   <div>
     <div class="mt-4 table-wrapper">
       <table>
@@ -75,8 +65,8 @@ const destroyTicketUser = async (ticketUserId: number) => {}
         <tbody>
           <tr v-for="(ticketUser, index) in ticketClinicRef.ticketUserList || []" :key="index">
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              <!-- {{ index + 1 }} -->
-              {{ ticketUser.id }}
+              {{ index + 1 }}
+              -- {{ ticketUser.id }}
             </td>
             <td>
               {{
@@ -97,51 +87,25 @@ const destroyTicketUser = async (ticketUserId: number) => {}
                   {{ ticketUser.ticketProduct?.product?.brandName }}
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Procedure">
-                  {{ ticketUser.ticketProcedure?.procedure?.name }}
+                  {{ procedureMap[ticketUser.interactId]?.name }}
+                </template>
+                <template v-if="ticketUser.interactType === InteractType.Laboratory">
+                  {{ laboratoryMap[ticketUser.interactId]?.name }}
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Radiology">
-                  {{ ticketUser.ticketRadiology?.radiology?.name }}
+                  {{ radiologyMap[ticketUser.interactId]?.name }}
                 </template>
               </div>
             </td>
             <td class="text-right">
-              <template
-                v-if="ticketUser.interactType === InteractType.Product && ticketUser.ticketProduct">
-                <div
-                  v-if="ticketUser.ticketProduct.discountMoney"
-                  class="text-xs italic text-red-500">
-                  <del>
-                    {{ formatMoney(ticketUser.ticketProduct.expectedPrice) }}
-                  </del>
-                </div>
-                {{ formatMoney(ticketUser.ticketProduct.actualPrice) }}
-              </template>
-              <template
-                v-if="
-                  ticketUser.interactType === InteractType.Procedure && ticketUser.ticketProcedure
-                ">
-                <div
-                  v-if="ticketUser.ticketProcedure.discountMoney"
-                  class="text-xs italic text-red-500">
-                  <del>
-                    {{ formatMoney(ticketUser.ticketProcedure.expectedPrice) }}
-                  </del>
-                </div>
-                {{ formatMoney(ticketUser.ticketProcedure.actualPrice) }}
-              </template>
-              <template
-                v-if="
-                  ticketUser.interactType === InteractType.Radiology && ticketUser.ticketRadiology
-                ">
-                <div
-                  v-if="ticketUser.ticketRadiology.discountMoney"
-                  class="text-xs italic text-red-500">
-                  <del>
-                    {{ formatMoney(ticketUser.ticketRadiology.expectedPrice) }}
-                  </del>
-                </div>
-                {{ formatMoney(ticketUser.ticketRadiology.actualPrice) }}
-              </template>
+              <div
+                v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice "
+                class="text-xs italic text-red-500">
+                <del>
+                  {{ formatMoney(ticketUser.ticketItemExpectedPrice) }}
+                </del>
+              </div>
+              {{ formatMoney(ticketUser.ticketItemActualPrice) }}
             </td>
             <td class="text-center">{{ ticketUser.quantity }}</td>
             <td>
@@ -152,13 +116,13 @@ const destroyTicketUser = async (ticketUserId: number) => {}
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected
                 ">
-                {{ ticketUser.commissionPercent }} % Giá niêm yết
+                {{ ticketUser.commissionPercentExpected }} % Giá niêm yết
               </div>
               <div
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentActual
                 ">
-                {{ ticketUser.commissionPercent }} % Giá sau chiết khấu
+                {{ ticketUser.commissionPercentActual }} % Giá sau chiết khấu
               </div>
             </td>
             <td class="text-right">
@@ -167,7 +131,8 @@ const destroyTicketUser = async (ticketUserId: number) => {}
             <td class="text-center">
               <a
                 v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_USER_COMMISSION]"
-                class="text-orange-500">
+                class="text-orange-500"
+                @click="modalTicketUserUpdate?.openModal(ticketUser)">
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
@@ -177,7 +142,7 @@ const destroyTicketUser = async (ticketUserId: number) => {}
               <span class="uppercase">Tổng tiền hoa hồng</span>
             </td>
             <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(totalCommissionMoney) }}
+              {{ formatMoney(ticketClinicRef.commissionMoney) }}
             </td>
             <td></td>
           </tr>
