@@ -285,7 +285,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 300px">
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 500px">
           <div>Tổng tiền hoa hồng</div>
           <div style="width: 100%">
             <InputMoney

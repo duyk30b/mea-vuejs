@@ -2,10 +2,7 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 import type { DiscountType } from '../enum'
-import type { TicketLaboratory } from '../ticket-laboratory'
-import { TicketProcedure } from '../ticket-procedure'
 import type { TicketProduct } from '../ticket-product'
-import type { TicketRadiology } from '../ticket-radiology'
 import type { TicketUser } from '../ticket-user'
 import { TicketStatus, type TicketType } from '../ticket/ticket.model'
 
@@ -197,6 +194,22 @@ export class TicketClinicApi {
     })
     const { data } = response.data as BaseResponse
     return data
+  }
+
+  static async changeDiscount(
+    ticketId: number,
+    body: {
+      discountType: DiscountType
+      discountMoney: number
+      discountPercent: number
+    }
+  ) {
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-discount`, {
+      discountType: body.discountType,
+      discountMoney: body.discountMoney,
+      discountPercent: body.discountPercent,
+    })
+    const { data } = response.data as BaseResponse
   }
 
   static async prepayment(ticketId: number, money: number) {

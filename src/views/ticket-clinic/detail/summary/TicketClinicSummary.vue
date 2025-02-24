@@ -38,6 +38,7 @@ import ModalTicketClinicPayment from '../modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicReturnProduct from '../modal/ModalTicketClinicReturnProduct.vue'
 import ModalTicketProcedureUpdate from '../procedure/ModalTicketProcedureUpdate.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
+import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 const modalTicketLaboratoryUpdateMoney =
@@ -51,6 +52,7 @@ const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinic
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
+const modalTicketClinicChangeDiscount = ref<InstanceType<typeof ModalTicketClinicChangeDiscount>>()
 
 const route = useRoute()
 const router = useRouter()
@@ -358,6 +360,7 @@ const startPrint = async () => {
 </script>
 <template>
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
+  <ModalTicketClinicChangeDiscount ref="modalTicketClinicChangeDiscount" />
   <ModalTicketLaboratoryUpdateMoney ref="modalTicketLaboratoryUpdateMoney" />
   <ModalTicketRadiologyUpdateMoney ref="modalTicketRadiologyUpdateMoney" />
   <ModalTicketClinicConsumableUpdate ref="modalTicketClinicConsumableUpdate" />
@@ -974,7 +977,7 @@ const startPrint = async () => {
         <tr>
           <td class="text-right" colspan="7">
             <div class="flex items-center justify-end gap-2">
-              <span>Tổng cộng</span>
+              <span>Tổng thành phần</span>
               <span v-if="itemsDiscount" class="italic" style="font-size: 13px">
                 (CK: {{ formatMoney(itemsDiscount) }})
               </span>
@@ -988,79 +991,24 @@ const startPrint = async () => {
         <tr>
           <td class="text-right" colspan="7">Chiết khấu</td>
           <td class="text-center" style="width: 40px">
-            <a-popconfirm>
-              <template #cancelButton>
-                <div></div>
-              </template>
-              <template #okButton>
-                <div></div>
-              </template>
-              <template #title>
-                <div>
-                  Chiết khấu (Tổng tiền hiện tại:
-                  <b>{{ formatMoney(itemsActualMoney) }}</b>
-                  )
-                </div>
-                <div class="mt-2">
-                  <div>
-                    <InputNumber
-                      :value="ticketDiscount.discountMoney"
-                      append="VNĐ"
-                      :disabled="
-                        [TicketStatus.Debt, TicketStatus.Completed].includes(
-                          ticketClinicRef.ticketStatus
-                        )
-                      "
-                      @update:value="handleChangeTicketDiscountMoney" />
-                  </div>
-                  <div class="mt-2">
-                    <div class="w-full">
-                      <InputNumber
-                        :value="ticketDiscount.discountPercent"
-                        append="%"
-                        :disabled="
-                          [TicketStatus.Debt, TicketStatus.Completed].includes(
-                            ticketClinicRef.ticketStatus
-                          )
-                        "
-                        @update:value="handleChangeTicketDiscountPercent" />
-                    </div>
-                  </div>
-                </div>
-              </template>
-              <a-tag
-                v-if="ticketDiscount.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
-                {{ formatMoney(ticketDiscount.discountMoney) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketDiscount.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
-                {{ ticketDiscount.discountPercent || 0 }}%
-              </a-tag>
-            </a-popconfirm>
-          </td>
-        </tr>
-        <tr>
-          <td class="text-right" colspan="7">Chiết khấu</td>
-          <td class="text-center" style="width: 40px">
             <a-tag
-              v-if="ticketDiscount.discountType === 'VNĐ'"
+              v-if="ticketClinicRef.discountType === 'VNĐ'"
               color="success"
               style="cursor: pointer">
-              {{ formatMoney(ticketDiscount.discountMoney) }}
+              {{ formatMoney(ticketClinicRef.discountMoney) }}
             </a-tag>
             <a-tag
-              v-if="ticketDiscount.discountType === '%'"
+              v-if="ticketClinicRef.discountType === '%'"
               color="success"
               style="cursor: pointer">
-              {{ ticketDiscount.discountPercent || 0 }}%
+              {{ ticketClinicRef.discountPercent || 0 }}%
             </a-tag>
           </td>
           <td class="text-center">
-            <a class="text-orange-500">
+            <a
+              v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]"
+              class="text-orange-500"
+              @click="modalTicketClinicChangeDiscount?.openModal()">
               <IconEditSquare width="20" height="20" />
             </a>
           </td>
