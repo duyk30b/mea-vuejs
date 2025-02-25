@@ -20,6 +20,7 @@ import {
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
+import { Product, ProductService } from '../../../../modules/product'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketUser, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -33,6 +34,8 @@ const ticketUser = ref<TicketUser>(TicketUser.blank())
 
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
+
+const product = ref<Product>(Product.blank())
 const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
@@ -64,6 +67,13 @@ const openModal = async (ticketUserProp: TicketUser) => {
   showModal.value = true
   ticketUserOrigin.value = TicketUser.from(ticketUserProp)
   ticketUser.value = TicketUser.from(ticketUserProp)
+
+  if (ticketUserProp.interactType === InteractType.Product) {
+    const productLocal = await ProductService.getOne(ticketUser.value.interactId)
+    if (productLocal) {
+      product.value = productLocal
+    }
+  }
 }
 
 const hasChangeData = computed(() => {
@@ -194,7 +204,7 @@ defineExpose({ openModal })
           <template v-if="ticketUser.interactType === InteractType.Product">
             <div>Sản phẩm</div>
             <div>
-              <InputText :value="ticketUser.ticketProduct?.product?.brandName" disabled />
+              <InputText :value="product?.brandName" disabled />
             </div>
           </template>
           <template v-if="ticketUser.interactType === InteractType.Procedure">
@@ -258,7 +268,7 @@ defineExpose({ openModal })
           <div class="flex">
             <VueSelect
               v-model:value="ticketUser.commissionCalculatorType"
-              style="width: 300px"
+              style="width: 220px"
               :options="[
                 { value: CommissionCalculatorType.PercentExpected, text: '% Giá niêm yết' },
                 { value: CommissionCalculatorType.PercentActual, text: '% Giá sau chiết khấu' },

@@ -11,7 +11,6 @@ import { Product } from '../../../../modules/product'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
-import { sleep } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
@@ -28,13 +27,15 @@ const { formatMoney, isMobile } = settingStore
 const ticketProductConsumableList = ref<TicketProduct[]>([])
 
 const hasChangePriority = computed(() => {
-  if (
-    !TicketProduct.equalList(
-      ticketProductConsumableList.value,
-      ticketClinicRef.value.ticketProductConsumableList || []
-    )
+  for (
+    let index = 0;
+    index < (ticketClinicRef.value.ticketProductConsumableList || []).length;
+    index++
   ) {
-    return true
+    const tpRoot = ticketClinicRef.value.ticketProductConsumableList![index]
+    if (tpRoot.priority !== ticketProductConsumableList.value[index].priority) {
+      return true
+    }
   }
   return false
 })
@@ -216,7 +217,6 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
     <VueButton
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
         hasChangePriority
       "
       color="blue"

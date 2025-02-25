@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -7,10 +7,12 @@ import { CommissionCalculatorType, InteractType } from '../../../../modules/comm
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { Product, ProductService } from '../../../../modules/product'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { User, UserService } from '../../../../modules/user'
+import { arrayToKeyValue } from '../../../../utils'
 import ModalTicketUserUpdate from './ModalTicketUserUpdate.vue'
 
 const modalTicketUserUpdate = ref<InstanceType<typeof ModalTicketUserUpdate>>()
@@ -22,14 +24,15 @@ const { permissionIdMap } = meStore
 
 const userMap = ref<Record<string, User>>({})
 const roleMap = ref<Record<string, Role>>({})
+
+const productMap = ref<Record<string, Product>>({})
 const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
 
-const saveLoading = ref(false)
-
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
+
   const fetchData = await Promise.all([
     UserService.getMap(),
     RoleService.getMap(),
@@ -43,6 +46,26 @@ onMounted(async () => {
   laboratoryMap.value = fetchData[3]
   radiologyMap.value = fetchData[4]
 })
+
+watch(
+  () => ticketClinicRef.value.ticketUserList,
+  async (newValue, oldValue) => {
+    const productIdList = (newValue || [])
+      .filter((i) => i.interactType === InteractType.Product)
+      .map((i) => i.interactId)
+    let productMapLocal: Record<string, Product> = {}
+    if (productIdList.length) {
+      const productList = await ProductService.list({
+        filter: {
+          id: { IN: productIdList },
+        },
+      })
+      productMapLocal = arrayToKeyValue(productList, 'id')
+    }
+    productMap.value = productMapLocal
+  },
+  { immediate: true, deep: true }
+)
 </script>
 <template>
   <ModalTicketUserUpdate ref="modalTicketUserUpdate" />
@@ -84,7 +107,7 @@ onMounted(async () => {
                   Phiếu khám
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Product">
-                  {{ ticketUser.ticketProduct?.product?.brandName }}
+                  {{ productMap[ticketUser.interactId]?.brandName }}
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Procedure">
                   {{ procedureMap[ticketUser.interactId]?.name }}
@@ -98,16 +121,24 @@ onMounted(async () => {
               </div>
             </td>
             <td class="text-right">
-              <div
-                v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice "
-                class="text-xs italic text-red-500">
-                <del>
-                  {{ formatMoney(ticketUser.ticketItemExpectedPrice) }}
-                </del>
-              </div>
-              {{ formatMoney(ticketUser.ticketItemActualPrice) }}
+              <template v-if="ticketUser.interactType !== InteractType.Ticket">
+                <div
+                  v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
+                  class="text-xs italic text-red-500">
+                  <del>
+                    {{ formatMoney(ticketUser.ticketItemExpectedPrice) }}
+                  </del>
+                </div>
+                <div>
+                  {{ formatMoney(ticketUser.ticketItemActualPrice) }}
+                </div>
+              </template>
             </td>
-            <td class="text-center">{{ ticketUser.quantity }}</td>
+            <td class="text-center">
+              <template v-if="ticketUser.interactType !== InteractType.Ticket">
+                {{ ticketUser.quantity }}
+              </template>
+            </td>
             <td>
               <div v-if="ticketUser.commissionCalculatorType === CommissionCalculatorType.VND">
                 {{ formatMoney(ticketUser.commissionMoney) }}
