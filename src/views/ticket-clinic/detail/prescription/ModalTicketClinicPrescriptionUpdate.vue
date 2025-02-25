@@ -140,37 +140,37 @@ const closeModal = () => {
 const clickDestroy = async () => {
   if (ticketProductOrigin.deliveryStatus === DeliveryStatus.Delivered) {
     return ModalStore.alert({
-      title: 'Không thể xóa vật tư ?',
+      title: 'Không thể xóa thuốc ?',
       content: [
-        '- Vật tư đã được xuất khỏi kho sẽ không thể xóa',
-        '- Chỉ có thể hoàn trả vật tư nếu bắt buộc phải thay đổi số lượng ?',
+        '- Thuốc đã được xuất khỏi kho sẽ không thể xóa',
+        '- Chỉ có thể hoàn trả thuốc nếu bắt buộc phải thay đổi số lượng ?',
       ],
     })
   }
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
     return ModalStore.alert({
-      title: 'Không thể xóa vật tư ?',
+      title: 'Không thể xóa thuốc ?',
       content: [
-        '- Phiếu khám đã đóng không thể xóa vật tư',
+        '- Phiếu khám đã đóng không thể xóa thuốc',
         '- Nếu bắt buộc phải thay đổi số lượng, bạn cần mở lại phiếu khám',
       ],
     })
   }
   ModalStore.confirm({
-    title: 'Xác nhận xóa vật tư ?',
+    title: 'Xác nhận xóa thuốc ?',
     content: [
-      '- Hệ thống sẽ xóa vật tư này khỏi phiếu khám',
+      '- Hệ thống sẽ xóa thuốc này khỏi phiếu khám',
       '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     ],
     onOk: async () => {
       try {
-        await TicketClinicProductApi.destroyTicketProductConsumable({
+        await TicketClinicProductApi.destroyTicketProductPrescription({
           ticketId: ticketClinicRef.value.id,
           ticketProductId: ticketProductOrigin.id,
         })
         closeModal()
       } catch (error) {
-        console.log('🚀 ~ file: ModalTicketClinicConsumableUpdate.vue:155 ~ onOk: ~ error:', error)
+        console.log('🚀 ~ ModalTicketClinicPrescriptionUpdate.vue:173 ~ onOk: ~ error:', error)
       }
     },
   })

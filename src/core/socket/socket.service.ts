@@ -199,6 +199,16 @@ export class SocketService {
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach((ticket) => {
       if (!ticket.ticketProcedureList) return
+
+      if (data.ticketProcedureDestroy) {
+        const indexDestroy = ticket.ticketProcedureList.findIndex((i) => {
+          return i.id === data.ticketProcedureDestroy!.id
+        })
+        if (indexDestroy !== -1) {
+          ticket.ticketProcedureList?.splice(indexDestroy, 1)
+        }
+      }
+
       if (data.ticketProcedureInsert) {
         const indexInsert = ticket.ticketProcedureList.findIndex((i) => {
           return data.ticketProcedureInsert?.id === i.id
@@ -207,6 +217,7 @@ export class SocketService {
           ticket.ticketProcedureList?.push(TicketProcedure.from(data.ticketProcedureInsert))
         }
       }
+
       if (data.ticketProcedureUpdate) {
         const indexUpdate = ticket.ticketProcedureList.findIndex((i) => {
           return data.ticketProcedureUpdate?.id === i.id
@@ -218,14 +229,7 @@ export class SocketService {
           )
         }
       }
-      if (data.ticketProcedureDestroy) {
-        const indexDestroy = ticket.ticketProcedureList.findIndex((i) => {
-          return i.id === data.ticketProcedureDestroy!.id
-        })
-        if (indexDestroy !== -1) {
-          ticket.ticketProcedureList?.splice(indexDestroy, 1)
-        }
-      }
+
       if (data.ticketProcedureList) {
         ticket.ticketProcedureList = TicketProcedure.fromList(data.ticketProcedureList)
       }
@@ -345,10 +349,10 @@ export class SocketService {
   static async listenTicketClinicChangeTicketProductConsumableList(data: {
     ticketId: number
     ticketProductDestroy?: TicketProduct
-    ticketProductUpdate?: TicketProduct
-    ticketProductUpdateList?: TicketProduct[]
     ticketProductInsert?: TicketProduct
     ticketProductInsertList?: TicketProduct[]
+    ticketProductUpdate?: TicketProduct
+    ticketProductUpdateList?: TicketProduct[]
     replace?: {
       ticketProductList?: TicketProduct[]
     }
@@ -382,9 +386,8 @@ export class SocketService {
     }
 
     ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketProductConsumableList) {
-        return
-      }
+      if (!ticket.ticketProductConsumableList) return
+
       if (data.ticketProductDestroy) {
         const indexDestroy = ticket.ticketProductConsumableList.findIndex((i) => {
           return i.id === data.ticketProductDestroy!.id
@@ -393,17 +396,7 @@ export class SocketService {
           ticket.ticketProductConsumableList.splice(indexDestroy, 1)
         }
       }
-      if (data.ticketProductUpdate) {
-        const indexUpdate = ticket.ticketProductConsumableList.findIndex((i) => {
-          return data.ticketProductUpdate?.id === i.id
-        })
-        if (indexUpdate !== -1) {
-          const temp = TicketProduct.from(data.ticketProductUpdate)
-          temp.product = productMap[temp.productId]
-          temp.batch = batchMap[temp.batchId]
-          Object.assign(ticket.ticketProductConsumableList[indexUpdate], temp)
-        }
-      }
+
       if (data.ticketProductInsert) {
         const indexInsert = ticket.ticketProductConsumableList.findIndex((i) => {
           return data.ticketProductInsert?.id === i.id
@@ -415,6 +408,7 @@ export class SocketService {
           ticket.ticketProductConsumableList.push(temp)
         }
       }
+
       if (data.ticketProductInsertList) {
         data.ticketProductInsertList.forEach((i) => {
           const indexInsert = (ticket.ticketProductConsumableList || []).findIndex((j) => {
@@ -428,6 +422,33 @@ export class SocketService {
           }
         })
       }
+
+      if (data.ticketProductUpdate) {
+        const indexUpdate = ticket.ticketProductConsumableList.findIndex((i) => {
+          return data.ticketProductUpdate?.id === i.id
+        })
+        if (indexUpdate !== -1) {
+          const temp = TicketProduct.from(data.ticketProductUpdate)
+          temp.product = productMap[temp.productId]
+          temp.batch = batchMap[temp.batchId]
+          Object.assign(ticket.ticketProductConsumableList[indexUpdate], temp)
+        }
+      }
+
+      if (data.ticketProductUpdateList) {
+        data.ticketProductUpdateList.forEach((i) => {
+          const indexUpdate = (ticket.ticketProductConsumableList || []).findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexUpdate !== -1) {
+            const temp = TicketProduct.from(i)
+            temp.product = productMap[temp.productId]
+            temp.batch = batchMap[temp.batchId]
+            Object.assign(ticket.ticketProductConsumableList![indexUpdate], temp)
+          }
+        })
+      }
+
       if (data.replace?.ticketProductList) {
         const ticketProductConsumableList = TicketProduct.fromList(data.replace?.ticketProductList)
         ticketProductConsumableList.forEach((i) => {
@@ -442,10 +463,10 @@ export class SocketService {
   static async listenTicketClinicChangeTicketProductPrescriptionList(data: {
     ticketId: number
     ticketProductDestroy?: TicketProduct
-    ticketProductUpdate?: TicketProduct
-    ticketProductUpdateList?: TicketProduct[]
     ticketProductInsert?: TicketProduct
     ticketProductInsertList?: TicketProduct[]
+    ticketProductUpdate?: TicketProduct
+    ticketProductUpdateList?: TicketProduct[]
     replace?: {
       ticketProductList?: TicketProduct[]
     }
@@ -479,9 +500,8 @@ export class SocketService {
     }
 
     ticketAction.forEach(async (ticket) => {
-      if (!ticket.ticketProductPrescriptionList) {
-        return
-      }
+      if (!ticket.ticketProductPrescriptionList) return
+
       if (data.ticketProductDestroy) {
         const indexDestroy = ticket.ticketProductPrescriptionList.findIndex((i) => {
           return i.id === data.ticketProductDestroy!.id
@@ -490,17 +510,7 @@ export class SocketService {
           ticket.ticketProductPrescriptionList.splice(indexDestroy, 1)
         }
       }
-      if (data.ticketProductUpdate) {
-        const indexUpdate = ticket.ticketProductPrescriptionList.findIndex((i) => {
-          return data.ticketProductUpdate?.id === i.id
-        })
-        if (indexUpdate !== -1) {
-          const temp = TicketProduct.from(data.ticketProductUpdate)
-          temp.product = productMap[temp.productId]
-          temp.batch = batchMap[temp.batchId]
-          Object.assign(ticket.ticketProductPrescriptionList[indexUpdate], temp)
-        }
-      }
+
       if (data.ticketProductInsert) {
         const indexInsert = ticket.ticketProductPrescriptionList.findIndex((i) => {
           return data.ticketProductInsert?.id === i.id
@@ -512,6 +522,7 @@ export class SocketService {
           ticket.ticketProductPrescriptionList.push(temp)
         }
       }
+
       if (data.ticketProductInsertList) {
         data.ticketProductInsertList.forEach((i) => {
           const indexInsert = (ticket.ticketProductPrescriptionList || []).findIndex((j) => {
@@ -525,6 +536,33 @@ export class SocketService {
           }
         })
       }
+
+      if (data.ticketProductUpdate) {
+        const indexUpdate = ticket.ticketProductPrescriptionList.findIndex((i) => {
+          return data.ticketProductUpdate?.id === i.id
+        })
+        if (indexUpdate !== -1) {
+          const temp = TicketProduct.from(data.ticketProductUpdate)
+          temp.product = productMap[temp.productId]
+          temp.batch = batchMap[temp.batchId]
+          Object.assign(ticket.ticketProductPrescriptionList[indexUpdate], temp)
+        }
+      }
+
+      if (data.ticketProductUpdateList) {
+        data.ticketProductUpdateList.forEach((i) => {
+          const indexUpdate = (ticket.ticketProductPrescriptionList || []).findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexUpdate !== -1) {
+            const temp = TicketProduct.from(i)
+            temp.product = productMap[temp.productId]
+            temp.batch = batchMap[temp.batchId]
+            Object.assign(ticket.ticketProductPrescriptionList![indexUpdate], temp)
+          }
+        })
+      }
+
       if (data.replace?.ticketProductList) {
         const ticketProductPrescriptionList = TicketProduct.fromList(
           data.replace?.ticketProductList

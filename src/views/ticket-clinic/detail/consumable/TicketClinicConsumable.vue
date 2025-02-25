@@ -48,17 +48,8 @@ watch(
   { immediate: true, deep: true }
 )
 
-const disabledButton = computed(() => {
-  return (
-    TicketProduct.equalList(
-      ticketProductConsumableList.value,
-      ticketClinicRef.value.ticketProductConsumableList || []
-    ) || [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)
-  )
-})
-
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicConsumable.vue:59  ~ onMounted')
+  console.log('🚀 ~ file: TicketClinicConsumable.vue:52  ~ onMounted')
 })
 
 const changeItemPosition = (index: number, count: number) => {
@@ -68,10 +59,14 @@ const changeItemPosition = (index: number, count: number) => {
 }
 
 const savePriorityTicketProductConsumable = async () => {
-  await TicketClinicProductApi.updatePriorityTicketProductConsumable({
-    ticketId: ticketClinicRef.value.id,
-    ticketProductList: ticketProductConsumableList.value,
-  })
+  try {
+    await TicketClinicProductApi.updatePriorityTicketProductConsumable({
+      ticketId: ticketClinicRef.value.id,
+      ticketProductList: ticketProductConsumableList.value,
+    })
+  } catch (e: any) {
+    console.log('🚀 ~ TicketClinicConsumable.vue:70 ~ savePriorityTicketProductConsumable ~ e:', e)
+  }
 }
 
 const openModalProductDetail = (product?: Product) => {
@@ -221,7 +216,6 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
       "
       color="blue"
       class="ml-auto"
-      :disabled="disabledButton"
       icon="save"
       @click="savePriorityTicketProductConsumable">
       Lưu lại

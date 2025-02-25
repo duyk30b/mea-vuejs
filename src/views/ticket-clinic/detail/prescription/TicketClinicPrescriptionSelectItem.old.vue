@@ -33,14 +33,29 @@ const { permissionIdMap, organization } = meStore
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
+const productAndPrescriptionOptions = ref<
+  {
+    value: number
+    text: string
+    data: {
+      type: 'product' | 'prescriptionSample'
+      product?: Product
+      prescriptionSample?: PrescriptionSample
+    }
+  }[]
+>([])
+
 const batchList = ref<Batch[]>([])
 
 const ticketProductPrescription = ref<TicketProduct>(TicketProduct.blank())
 
 const handleFocusFirstSearchProduct = async () => {
   try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+    await Promise.all([
+      ProductService.refreshDB(),
+      BatchService.refreshDB(),
+      PrescriptionSampleService.list({}),
+    ])
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicPrescription.vue:138 ~ ~ error:', error)
   }
@@ -48,7 +63,7 @@ const handleFocusFirstSearchProduct = async () => {
 
 const searchingProduct = async (text: string) => {
   if (!text) {
-    productOptions.value = []
+    productAndPrescriptionOptions.value = []
     return
   }
 
@@ -76,17 +91,35 @@ const searchingProduct = async (text: string) => {
       },
     },
   })
-  productOptions.value = productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))
+  const prescriptionSampleList: PrescriptionSample[] = await PrescriptionSampleService.search(text)
+
+  productAndPrescriptionOptions.value = [
+    ...prescriptionSampleList.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: { type: 'prescriptionSample' as any, prescriptionSample: i },
+    })),
+    ...productList.map((i) => {
+      return {
+        value: i.id,
+        text: i.brandName,
+        data: {
+          type: 'product' as any,
+          product: i,
+        },
+      }
+    }),
+  ]
 }
 
 const clear = () => {
   ticketProductPrescription.value = TicketProduct.blank()
   batchList.value = []
-  productOptions.value = []
+  productAndPrescriptionOptions.value = []
 }
 
 const selectProduct = async (productSelect: Product) => {
-  const priorityList = (ticketClinicRef.value.ticketProductPrescriptionList || []).map(
+  const priorityList = (ticketClinicRef.value.ticketProductConsumableList || []).map(
     (i) => i.priority
   )
   priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
@@ -151,6 +184,17 @@ const selectProduct = async (productSelect: Product) => {
   }
   batchListResponse = batchListResponse.slice(0, 5)
 
+  // const batchListResponse = await BatchService.list({
+  //   filter: {
+  //     productId: productSelect.id,
+  //     quantity: { NOT: 0 },
+  //     $OR: [
+  //       { warehouseId: { EQUAL: 0 } },
+  //       { warehouseId: canGetAllWarehouse ? undefined : { IN: warehouseIdAcceptList } },
+  //     ],
+  //   },
+  //   sort: { expiryDate: 'ASC' },
+  // })
   batchListResponse.forEach((i) => (i.product = productSelect))
   batchList.value = batchListResponse
 
@@ -160,6 +204,129 @@ const selectProduct = async (productSelect: Product) => {
     selectBatch(Batch.blank())
   }
   selectBatch(batchList.value[0])
+}
+
+const selectPrescriptionSample = async (prescriptionSampleSelect: PrescriptionSample) => {
+  let ticketProductSelectList: TicketProduct[] = []
+  const priorityList = (ticketClinicRef.value.ticketProductConsumableList || []).map(
+    (i) => i.priority
+  )
+  priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
+  let priorityMax = Math.max(...priorityList)
+
+  for (let i = 0; i < prescriptionSampleSelect.medicineList.length; i++) {
+    const medicine = prescriptionSampleSelect.medicineList[i]
+    const productCurrent = medicine.product
+    if (!productCurrent) return
+
+    if (!productCurrent.hasManageQuantity) {
+      const temp = TicketProduct.blank()
+      priorityMax++
+      temp.priority = priorityMax
+      temp.customerId = ticketClinicRef.value.customerId
+      temp.productId = productCurrent.id
+      temp.product = Product.from(productCurrent)
+
+      temp.type = TicketProductType.Prescription
+      temp.deliveryStatus = DeliveryStatus.Pending
+      temp.unitRate = productCurrent.unitDefaultRate
+      temp.hintUsage = productCurrent.hintUsage
+
+      temp.warehouseId = 0
+      temp.costPrice = productCurrent.costPrice
+      temp.expectedPrice = productCurrent.retailPrice
+      temp.discountType = DiscountType.Percent
+      temp.discountPercent = 0
+      temp.discountMoney = 0
+      temp.actualPrice = productCurrent.retailPrice
+      temp.quantity = medicine.quantity || 0
+      temp.quantityPrescription = medicine.quantity || 0
+
+      ticketProductSelectList.push(temp)
+    }
+    if (productCurrent.hasManageQuantity) {
+      const warehouseIdAcceptList = settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList
+      let canGetAllWarehouse = false
+      if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+      else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+
+      const batchListCurrent = await BatchService.list({
+        filter: {
+          productId: productCurrent.id,
+          quantity: { GT: 0 },
+          ...(canGetAllWarehouse
+            ? {}
+            : {
+                $OR: [
+                  { warehouseId: { EQUAL: 0 } },
+                  { warehouseId: { IN: warehouseIdAcceptList } },
+                ],
+              }),
+        },
+        sort: { expiryDate: 'ASC' },
+      })
+
+      if (medicine.quantity > productCurrent.quantity) {
+        AlertStore.addError(
+          `Lỗi: ${productCurrent.brandName} không đủ tồn kho: Tồn ${productCurrent.quantity}, Lấy ${medicine.quantity}`
+        )
+      }
+      let quantityRemain = medicine.quantity
+      batchListCurrent.forEach((batch) => {
+        if (quantityRemain <= 0) return
+        const quantitySelect = Math.min(quantityRemain, batch.quantity)
+        quantityRemain = quantityRemain - quantitySelect
+
+        priorityMax++
+
+        const temp = TicketProduct.blank()
+        temp.priority = priorityMax
+        temp.customerId = ticketClinicRef.value.customerId
+        temp.productId = productCurrent.id
+        temp.batchId = batch.id
+        temp.product = Product.from(productCurrent)
+        temp.batch = Batch.from(batch)
+
+        temp.type = TicketProductType.Prescription
+        temp.deliveryStatus = DeliveryStatus.Pending
+        temp.unitRate = productCurrent.unitDefaultRate
+        temp.hintUsage = medicine.hintUsage
+
+        temp.warehouseId = batch.warehouseId
+        temp.costPrice = batch.costPrice
+        temp.expectedPrice = productCurrent.retailPrice
+        temp.discountType = DiscountType.Percent
+        temp.discountPercent = 0
+        temp.discountMoney = 0
+        temp.actualPrice = productCurrent.retailPrice
+        temp.quantity = quantitySelect
+        temp.quantityPrescription = quantitySelect
+
+        ticketProductSelectList.push(temp)
+      })
+    }
+  }
+
+  if (ticketProductSelectList.length) {
+    emit('success', ticketProductSelectList)
+  }
+}
+
+const selectItemOptions = (dataSelected?: {
+  type: 'product' | 'prescriptionSample'
+  product: Product
+  prescriptionSample: PrescriptionSample
+}) => {
+  if (!dataSelected) {
+    return clear()
+  }
+  if (dataSelected.type === 'product') {
+    selectProduct(dataSelected.product)
+  }
+  if (dataSelected.type === 'prescriptionSample') {
+    clear()
+    selectPrescriptionSample(dataSelected.prescriptionSample)
+  }
 }
 
 const selectBatch = (batchSelected: Batch | null) => {
@@ -261,28 +428,46 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <InputOptions
           ref="inputOptionsProduct"
           required
-          :options="productOptions"
+          :options="productAndPrescriptionOptions"
           :maxHeight="320"
           placeholder="Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
           :disabled="
             [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
           "
+          @selectItem="({ data }) => selectItemOptions(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
-          @selectItem="({ data }) => selectProduct(data)"
           @update:text="searchingProduct">
           <template #option="{ item: { data } }">
-            <div>
-              <b>{{ data.brandName }}</b>
-              -
-              <span style="font-weight: 700" :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
-                {{ data.unitQuantity }}
-              </span>
-              {{ data.unitDefaultName }}
-              - Giá
-              <span style="font-weight: 600">{{ formatMoney(data.unitRetailPrice) }}</span>
-              /{{ data.unitDefaultName }}
+            <div v-if="data.type === 'product'">
+              <div>
+                <b>{{ data.product.brandName }}</b>
+                -
+                <span
+                  style="font-weight: 700"
+                  :class="data.product.unitQuantity <= 0 ? 'text-red-500' : ''">
+                  {{ data.product.unitQuantity }}
+                </span>
+                {{ data.product.unitDefaultName }}
+                - Giá
+                <span style="font-weight: 600">
+                  {{ formatMoney(data.product.unitRetailPrice) }}
+                </span>
+                /{{ data.product.unitDefaultName }}
+              </div>
+              <div>{{ data.product.substance }}</div>
             </div>
-            <div>{{ data.substance }}</div>
+            <div v-if="data.type === 'prescriptionSample'">
+              <b>-- {{ data.prescriptionSample.name }}</b>
+              <div style="font-size: 13px; font-style: italic">
+                {{
+                  data.prescriptionSample.medicineList
+                    .map((i: MedicineType) => {
+                      return `${i.product?.brandName} (${i.quantity} ${i.product?.unitBasicName})`
+                    })
+                    .join(', ')
+                }}
+              </div>
+            </div>
           </template>
         </InputOptions>
       </div>

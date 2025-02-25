@@ -286,7 +286,7 @@ const destroyTicketLaboratory = async (ticketLaboratoryId: number) => {
               <b>
                 {{
                   formatMoney(
-                    ticketLaboratoryList.reduce((acc, item) => {
+                    ticketLaboratoryList.reduce((acc: number, item) => {
                       return acc + item.expectedPrice
                     }, 0)
                   )

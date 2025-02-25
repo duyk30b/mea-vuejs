@@ -69,6 +69,51 @@ export class TicketClinicProductApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
+  static async destroyTicketProductPrescription(body: {
+    ticketId: number
+    ticketProductId: number
+  }) {
+    const { ticketId, ticketProductId } = body
+    const response = await AxiosInstance.delete(
+      `/ticket-clinic/${ticketId}/destroy-ticket-product-prescription/${ticketProductId}`
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async updatePriorityTicketProductConsumable(body: {
+    ticketId: number
+    ticketProductList: TicketProduct[]
+  }) {
+    const { ticketId, ticketProductList } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-priority-ticket-product-consumable`,
+      {
+        ticketProductList: ticketProductList.map((i, index) => ({
+          id: i.id,
+          priority: index + 1,
+        })),
+      }
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async updatePriorityTicketProductPrescription(body: {
+    ticketId: number
+    ticketProductList: TicketProduct[]
+  }) {
+    const { ticketId, ticketProductList } = body
+    const response = await AxiosInstance.post(
+      `/ticket-clinic/${ticketId}/update-priority-ticket-product-prescription`,
+      {
+        ticketProductList: ticketProductList.map((i, index) => ({
+          id: i.id,
+          priority: index + 1,
+        })),
+      }
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
   static async updateTicketProduct(body: {
     ticketId: number
     ticketProductId: number
@@ -97,23 +142,6 @@ export class TicketClinicProductApi {
               userId: i.userId || 0,
             }))
           : undefined,
-      }
-    )
-    const { data } = response.data as BaseResponse<boolean>
-  }
-
-  static async updatePriorityTicketProductConsumable(body: {
-    ticketId: number
-    ticketProductList: TicketProduct[]
-  }) {
-    const { ticketId, ticketProductList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-priority-ticket-product-consumable`,
-      {
-        ticketProductList: ticketProductList.map((i, index) => ({
-          id: i.id,
-          priority: index + 1,
-        })),
       }
     )
     const { data } = response.data as BaseResponse<boolean>

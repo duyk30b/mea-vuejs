@@ -34,7 +34,11 @@ const batchList = ref<Batch[]>([])
 const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
 
 const handleFocusFirstSearchProduct = async () => {
-  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  try {
+    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  } catch (error) {
+    console.log('🚀 ~ TicketClinicConsumableSelectItem.vue:41 ~ error:', error)
+  }
 }
 
 const searchingProduct = async (text: string) => {

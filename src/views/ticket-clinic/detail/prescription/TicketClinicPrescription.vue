@@ -52,8 +52,6 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
   advice: '',
 })
 
-const saveLoading = ref(false)
-
 onMounted(async () => {
   console.log('🚀 ~ file: TicketClinicPrescription.vue:70 ~ onMounted')
 })
@@ -83,6 +81,20 @@ watch(
   { immediate: true, deep: true }
 )
 
+const hasChangePriority = computed(() => {
+  for (
+    let index = 0;
+    index < (ticketClinicRef.value.ticketProductPrescriptionList || []).length;
+    index++
+  ) {
+    const tpRoot = ticketClinicRef.value.ticketProductPrescriptionList![index]
+    if (tpRoot.priority !== ticketProductPrescriptionList.value[index].priority) {
+      return true
+    }
+  }
+  return false
+})
+
 const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
@@ -99,28 +111,14 @@ const disabledButton = computed(() => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
     return true
   }
-  if (
-    !TicketProduct.equalList(
-      ticketProductPrescriptionList.value,
-      ticketClinicRef.value.ticketProductPrescriptionList || []
-    )
-  ) {
+  if (hasChangePriority.value) {
     return false
   }
-
   if (hasChangeAttribute.value) {
     return false
   }
   return true
 })
-
-const changeQuantityPrescriptionTable = (index: number, unitQuantityPrescription: number) => {
-  const ticketProductCurrent = ticketProductPrescriptionList.value[index]
-  ticketProductCurrent.unitQuantityPrescription = unitQuantityPrescription
-  if (ticketProductCurrent.deliveryStatus === DeliveryStatus.Pending) {
-    ticketProductCurrent.unitQuantity = unitQuantityPrescription
-  }
-}
 
 const changeItemPosition = (index: number, count: number) => {
   const temp = ticketProductPrescriptionList.value[index]
@@ -159,18 +157,26 @@ const startPrint = async () => {
   }
 }
 
-const savePrescription = async () => {
-  let ticketProductPrescriptionListChange: TicketProduct[] | undefined = undefined
-
-  if (
-    !TicketProduct.equalList(
-      ticketProductPrescriptionList.value,
-      ticketClinicRef.value.ticketProductPrescriptionList || []
-    )
-  ) {
-    ticketProductPrescriptionListChange = ticketProductPrescriptionList.value.filter((i) => {
-      return [DeliveryStatus.NoStock, DeliveryStatus.Pending].includes(i.deliveryStatus)
+const savePriorityTicketProductPrescription = async () => {
+  try {
+    await TicketClinicProductApi.updatePriorityTicketProductPrescription({
+      ticketId: ticketClinicRef.value.id,
+      ticketProductList: ticketProductPrescriptionList.value,
     })
+  } catch (e: any) {
+    console.log('🚀 ~ TicketClinicPrescription.vue:167 ~ e:', e)
+  }
+}
+
+const savePriorityTicketProductPrescriptionAndAdvice = async () => {
+  if (hasChangePriority.value) {
+    savePriorityTicketProductPrescription()
+  }
+  if (hasChangeAttribute.value) {
+    console.log(
+      '🚀 ~ TicketClinicPrescription.vue:179 ~ ~ hasChangeAttribute.value:',
+      hasChangeAttribute.value
+    )
   }
 
   let ticketAttributeChangeList = undefined
@@ -180,12 +186,12 @@ const savePrescription = async () => {
       .filter((i) => !!i.value)
   }
 
-  await TicketClinicApi.updateTicketProductPrescription({
-    ticketId: ticketClinicRef.value.id,
-    ticketProductPrescriptionList: ticketProductPrescriptionListChange,
-    ticketAttributeChangeList,
-    ticketAttributeKeyList: TicketAttributeKeyAdviceList as any,
-  })
+  // await TicketClinicApi.updateTicketProductPrescription({
+  //   ticketId: ticketClinicRef.value.id,
+  //   ticketProductPrescriptionList: ticketProductPrescriptionListChange,
+  //   ticketAttributeChangeList,
+  //   ticketAttributeKeyList: TicketAttributeKeyAdviceList as any,
+  // })
 }
 
 const openModalProductDetail = (product?: Product) => {
@@ -207,10 +213,6 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
 }
-
-const addPrescriptionSample = ()=>{
-  
-} 
 </script>
 <template>
   <ModalProductDetail ref="modalProductDetail" />
@@ -221,7 +223,7 @@ const addPrescriptionSample = ()=>{
     <div class="flex justify-between items-center">
       <span>Đơn thuốc</span>
       <div>
-        <a @click="modalSelectPrescriptionSample?.openModal()">Chọn đơn mẫu</a>
+        <!-- <a @click="modalSelectPrescriptionSample?.openModal()">Chọn đơn mẫu</a> -->
       </div>
     </div>
     <div class="table-wrapper">
@@ -291,42 +293,7 @@ const addPrescriptionSample = ()=>{
               <div class="text-xs">{{ tpItem.product?.substance }}</div>
               <div class="text-xs italic">{{ tpItem.hintUsage }}</div>
             </td>
-            <td style="width: 150px">
-              <div
-                v-if="
-                  tpItem.deliveryStatus === DeliveryStatus.Delivered ||
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
-                "
-                class="text-center">
-                {{ tpItem.unitQuantityPrescription }}
-              </div>
-              <div v-else class="flex items-center justify-between">
-                <button
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  :disabled="tpItem.quantityPrescription <= 0"
-                  type="button"
-                  @click="
-                    changeQuantityPrescriptionTable(index, tpItem.unitQuantityPrescription - 1)
-                  ">
-                  <font-awesome-icon :icon="['fas', 'minus']" />
-                </button>
-                <div style="width: calc(100% - 60px); min-width: 50px">
-                  <InputNumber
-                    :value="tpItem.unitQuantityPrescription"
-                    @update:value="(value) => changeQuantityPrescriptionTable(index, value)" />
-                </div>
-                <button
-                  style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
-                  type="button"
-                  class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                  @click="
-                    changeQuantityPrescriptionTable(index, tpItem.unitQuantityPrescription + 1)
-                  ">
-                  <font-awesome-icon :icon="['fas', 'plus']" />
-                </button>
-              </div>
-            </td>
+            <td class="text-center whitespace-nowrap">{{ tpItem.unitQuantityPrescription }}</td>
             <td class="text-center whitespace-nowrap">{{ tpItem.unitQuantity }}</td>
             <td class="text-center whitespace-nowrap">{{ tpItem.unitName }}</td>
             <td class="text-right whitespace-nowrap">
@@ -370,15 +337,15 @@ const addPrescriptionSample = ()=>{
       </table>
     </div>
     <div class="flex justify-end">
-      <a class="flex items-center gap-1" @click="addPrescriptionSample">
+      <!-- <a class="flex items-center gap-1" @click="addPrescriptionSample">
         <IconAddCircle />
         Lưu đơn mẫu
-      </a>
+      </a> -->
     </div>
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
-      <div style="min-height: 100px">
+      <div style="height: 140px">
         <WysiwygEditor v-model:value="ticketAttributeMap.advice" menuType="COLLAPSE" />
       </div>
     </div>
@@ -391,7 +358,7 @@ const addPrescriptionSample = ()=>{
       class="ml-auto"
       :disabled="disabledButton"
       icon="save"
-      @click="savePrescription">
+      @click="savePriorityTicketProductPrescriptionAndAdvice">
       Lưu lại
     </VueButton>
   </div>
