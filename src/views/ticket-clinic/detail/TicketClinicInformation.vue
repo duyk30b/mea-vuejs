@@ -258,6 +258,7 @@ const handleClickModalRegisterAppointment = () => {
               procedureMoney: ticketClinicRef.procedureMoney,
               laboratoryMoney: ticketClinicRef.laboratoryMoney,
               radiologyMoney: ticketClinicRef.radiologyMoney,
+              totalCostAmount: ticketClinicRef.totalCostAmount,
               itemsActualMoney: ticketClinicRef.itemsActualMoney,
               itemsDiscount: ticketClinicRef.itemsDiscount,
               discountMoney: ticketClinicRef.discountMoney,
