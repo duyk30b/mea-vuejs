@@ -1,3 +1,4 @@
+import { Laboratory } from '../laboratory/laboratory.model'
 import { PrintHtml } from '../print-html'
 
 export class LaboratoryGroup {
@@ -6,6 +7,7 @@ export class LaboratoryGroup {
   printHtmlId: number
 
   printHtml?: PrintHtml
+  laboratoryList?: Laboratory[]
 
   static init(): LaboratoryGroup {
     const ins = new LaboratoryGroup()
@@ -16,6 +18,7 @@ export class LaboratoryGroup {
 
   static blank(): LaboratoryGroup {
     const ins = LaboratoryGroup.init()
+    ins.name = "Chưa phân nhóm phiếu"
     return ins
   }
 
@@ -37,6 +40,9 @@ export class LaboratoryGroup {
     const target = LaboratoryGroup.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
       target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
+    }
+    if (source.laboratoryList) {
+      target.laboratoryList = Laboratory.basicList(source.laboratoryList)
     }
     return target
   }

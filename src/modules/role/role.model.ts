@@ -1,9 +1,15 @@
+import { User } from '../user'
+import { UserRole } from '../user-role/user-role.model'
+
 export class Role {
   id: number
   name: string
+  displayName: string
   permissionIds: string
   isActive: 0 | 1
   updatedAt: number
+
+  userRoleList?: UserRole[]
 
   static init(): Role {
     const ins = new Role()
@@ -32,6 +38,13 @@ export class Role {
 
   static from(source: Role) {
     const target = Role.basic(source)
+    if (target.userRoleList) {
+      target.userRoleList = UserRole.basicList(target.userRoleList)
+      target.userRoleList.forEach((userRole) => {
+        userRole.role = userRole.role ? Role.basic(userRole.role) : userRole.role
+        userRole.user = userRole.user ? User.basic(userRole.user) : userRole.user
+      })
+    }
     return target
   }
 

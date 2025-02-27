@@ -52,7 +52,12 @@ const openModal = async (prescriptionSampleId?: number) => {
   if (!prescriptionSampleId) {
     prescriptionSample.value = PrescriptionSample.blank()
     prescriptionSampleRoot.value = PrescriptionSample.blank()
-    const prescriptionSampleAll = await PrescriptionSampleService.list({})
+
+    const [prescriptionSampleAll] = await Promise.all([
+      PrescriptionSampleService.list({}),
+      ProductService.refreshDB(),
+    ])
+
     prescriptionSample.value.priority = prescriptionSampleAll.length + 1
     if (!productAllLoaded) {
       productAll.value = await ProductService.list({})

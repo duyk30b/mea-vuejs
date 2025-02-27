@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import {
-  CheckCircleOutlined,
   ContactsOutlined,
   FileSearchOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
+  FormOutlined
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { IconDownload, IconSetting } from '../../../common/icon'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -78,13 +76,9 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    const { numberChange } = await CustomerService.refreshDB() // reload nếu có dữ liệu mới nhất
-    if (numberChange > 0) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    AlertStore.add({ type: 'error', message: error.message })
+  const customerRefresh = await CustomerService.refreshDB() // reload nếu có dữ liệu mới nhất
+  if (customerRefresh?.numberChange) {
+    await startFetchData()
   }
 })
 
@@ -154,9 +148,7 @@ const downloadExcelCustomerList = async () => {
 <template>
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
-  <ModalCustomerPayDebt
-    ref="modalCustomerPayDebt"
-    @success="handleModalCustomerPayDebtSuccess" />
+  <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
   <ModalCustomerListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen" />
@@ -272,7 +264,7 @@ const downloadExcelCustomerList = async () => {
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
-                  @click="modalCustomerDetail?.openModal(customer)">
+                  @click="modalCustomerDetail?.openModal(customer.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -306,7 +298,7 @@ const downloadExcelCustomerList = async () => {
                 <VueButton
                   color="default"
                   size="small"
-                  @click="modalCustomerPayDebt?.openModal(customer)">
+                  @click="modalCustomerPayDebt?.openModal(customer.id)">
                   Trả nợ
                 </VueButton>
               </div>
@@ -410,7 +402,7 @@ const downloadExcelCustomerList = async () => {
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
-                  @click="modalCustomerDetail?.openModal(customer)">
+                  @click="modalCustomerDetail?.openModal(customer.id)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -439,7 +431,7 @@ const downloadExcelCustomerList = async () => {
                   <VueButton
                     v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT] && customer.debt != 0"
                     size="small"
-                    @click="modalCustomerPayDebt?.openModal(customer)">
+                    @click="modalCustomerPayDebt?.openModal(customer.id)">
                     Trả nợ
                   </VueButton>
                 </div>
@@ -449,18 +441,8 @@ const downloadExcelCustomerList = async () => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
-              <a-tag v-if="customer.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="customer.isActive" color="green" icon="check">Active</VueTag>
+              <VueTag v-else color="orange" icon="minus">Inactive</VueTag>
             </td>
             <td
               v-if="

@@ -1,31 +1,26 @@
 <script setup lang="ts">
-import {
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  ShopOutlined,
-} from '@ant-design/icons-vue'
+import { ShopOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDownload, IconFileSearch, IconSetting, IconSort } from '../../../common/icon'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductApi, ProductService, type Product } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import { Warehouse } from '../../../modules/warehouse'
+import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { DTimer, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
-import { Warehouse } from '../../../modules/warehouse'
-import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { Distributor, DistributorService } from '../../../modules/distributor'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
@@ -106,6 +101,7 @@ const startFetchBatch = async () => {
     page: page.value,
     limit: limit.value,
     filter: {
+      distributorId: distributorId.value ? distributorId.value : undefined,
       quantity: { NOT: 0 },
       product: {
         productGroupId: productGroupId.value ? productGroupId.value : undefined,
@@ -161,6 +157,10 @@ const startFetchWarehouse = async () => {
 
 const startFetchDistributor = async () => {
   const distributorAll = await DistributorService.list({})
+  distributorOptions.value = [
+    { value: 0, text: 'Tất cả', data: Distributor.blank() },
+    ...distributorAll.map((i) => ({ value: i.id, text: i.fullName, data: i })),
+  ]
   distributorMap.value = arrayToKeyValue(distributorAll, 'id')
 }
 
@@ -172,29 +172,22 @@ onBeforeMount(async () => {
 })
 
 onMounted(async () => {
-  try {
-    const { numberChange } = await ProductService.refreshDB()
-    await BatchService.refreshDB()
-    if (numberChange) {
-      await startFetchData()
-    }
-  } catch (error: any) {
-    console.log('🚀 ~ file: ProductList.vue:102 ~ onMounted ~ error:', error)
-    AlertStore.add({ type: 'error', message: error.message })
+  const productRefresh = await ProductService.refreshDB()
+  await BatchService.refreshDB()
+  if (productRefresh?.numberChange) {
+    await startFetchData()
   }
 })
 
 const startSearch = async () => {
-  // console.log('🚀 ~ file: ProductList.vue:155 ~ startSearch ~ tableType.value:', tableType.value)
   page.value = 1
   if (sortColumn.value === 'expiryDate' && sortValue.value != '') {
     tableType.value = 'TABLE_BATCH'
+  } else if (distributorId.value != 0) {
+    tableType.value = 'TABLE_BATCH'
+  } else {
+    tableType.value = 'TABLE_PRODUCT'
   }
-  // else if (warehouseId.value != 0) {
-  //   tableType.value = 'TABLE_BATCH'
-  // } else {
-  //   tableType.value = 'TABLE_PRODUCT'
-  // }
   await startFetchData()
 }
 
@@ -274,8 +267,10 @@ const closeExpiryDate = computed(() => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ShopOutlined />
-        Tồn kho
+        <div class="flex items-center gap-2">
+          <IconWarehouse />
+          Tồn kho
+        </div>
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
@@ -310,7 +305,7 @@ const closeExpiryDate = computed(() => {
 
   <div class="page-main">
     <div class="page-main-options">
-      <div style="flex: 5; flex-basis: 400px">
+      <div style="flex: 5; flex-basis: 300px">
         <div>Tìm kiếm</div>
         <div>
           <InputText
@@ -320,7 +315,7 @@ const closeExpiryDate = computed(() => {
         </div>
       </div>
 
-      <div style="flex: 2; flex-basis: 200px">
+      <div style="flex: 2; flex-basis: 160px">
         <div>Chọn kho</div>
         <div>
           <VueSelect
@@ -330,7 +325,17 @@ const closeExpiryDate = computed(() => {
         </div>
       </div>
 
-      <div style="flex: 2; flex-basis: 200px">
+      <div style="flex: 2; flex-basis: 180px">
+        <div>Chọn nhà cung cấp</div>
+        <div>
+          <VueSelect
+            v-model:value="distributorId"
+            :options="distributorOptions"
+            @update:value="startSearch" />
+        </div>
+      </div>
+
+      <div style="flex: 2; flex-basis: 180px">
         <div>Chọn nhóm sản phẩm</div>
         <div>
           <VueSelect
@@ -339,7 +344,7 @@ const closeExpiryDate = computed(() => {
             @update:value="startSearch" />
         </div>
       </div>
-      <div style="flex: 1; flex-basis: 180px">
+      <div style="flex: 1; flex-basis: 150px">
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
@@ -732,7 +737,7 @@ const closeExpiryDate = computed(() => {
                     style="color: #eca52b"
                     class="text-xl"
                     @click="modalProductUpsert?.openModal(product.id)">
-                    <FormOutlined />
+                    <IconEditSquare />
                   </a>
                 </td>
               </tr>
@@ -775,8 +780,8 @@ const closeExpiryDate = computed(() => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse">
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
-                <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
-                  {{ distributorMap[batch.distributorId]?.fullName }} {{ batch.distributorId }}
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.distributor" class="text-center">
+                  {{ distributorMap[batch.distributorId]?.fullName }}
                 </td>
 
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
@@ -828,7 +833,7 @@ const closeExpiryDate = computed(() => {
                     style="color: #eca52b"
                     class="text-xl"
                     @click="modalProductUpsert?.openModal(product.id)">
-                    <FormOutlined />
+                    <IconEditSquare />
                   </a>
                 </td>
               </tr>
@@ -866,6 +871,9 @@ const closeExpiryDate = computed(() => {
             </td>
             <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
               {{ warehouseMap[batch.warehouseId]?.name }}
+            </td>
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
+              {{ distributorMap[batch.distributorId]?.fullName }}
             </td>
             <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
               {{ batch.lotNumber }}
@@ -908,7 +916,7 @@ const closeExpiryDate = computed(() => {
                 style="color: #eca52b"
                 class="text-xl"
                 @click="modalProductUpsert?.openModal(batch.productId)">
-                <FormOutlined />
+                <IconEditSquare />
               </a>
             </td>
           </tr>

@@ -8,12 +8,12 @@ import { ImageHost } from '../../../modules/image/image.model'
 import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
 import { useTicketClinicStore } from '../../../modules/ticket-clinic/ticket-clinic.store'
 import { DImage, DTimer, formatPhone } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../modules/laboratory'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 
 const settingStore = useSettingStore()
@@ -41,8 +41,8 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       filter: {
-        customerId: props.customer.id!,
-        ticketType: { IN: [TicketType.Clinic, TicketType.Eye] },
+        customerId: props.customerId,
+        ticketType: { NOT: TicketType.Order },
       },
       relation: { ticketAttributeList: true },
       sort: { id: 'DESC' },
@@ -68,7 +68,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else ticketList.value = []
@@ -80,17 +80,6 @@ watch(
 <template>
   <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
   <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
-      <div class="ml-auto"></div>
-    </div>
-
     <div class="flex flex-wrap mt-4 gap-2 p-2" style="background-color: var(--color-body-bg)">
       <div class="grow w-full lg:w-[200px]" style="background-color: white">
         <div class="text-center py-2 ticket-title-header">Lịch sử khám</div>
@@ -258,7 +247,7 @@ watch(
             </table>
           </div>
 
-          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+          <!-- <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">7. Xét nghiệm:</div>
             <table v-if="ticket.ticketLaboratoryList?.length">
               <thead>
@@ -340,7 +329,7 @@ watch(
                 </template>
               </tbody>
             </table>
-          </div>
+          </div> -->
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">8. CĐHA:</div>
@@ -365,8 +354,8 @@ watch(
                   <td class="text-center">
                     <a
                       @click="
-                        modalTicketRadiologyResult?.openModalByInstance(ticketRadiology, {
-                          editable: false,
+                        modalTicketRadiologyResult?.openModal(ticketRadiology.id, {
+                          noEdit: true,
                         })
                       ">
                       <IconVisibility width="22" height="22" />

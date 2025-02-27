@@ -4,17 +4,19 @@ import { useRouter } from 'vue-router'
 import { IconTrash } from '../../../common/icon'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { Customer } from '../../../modules/customer'
-import { DTimer, formatPhone } from '../../../utils'
+import { DTimer } from '../../../utils'
 import AppointmentStatusTag from '../../appointment/AppointmentStatusTag.vue'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 const router = useRouter()
 
 const meStore = useMeStore()
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const { permissionIdMap } = meStore
 
 const appointmentList = ref<Appointment[]>([])
@@ -29,7 +31,7 @@ const startFetchData = async () => {
     const { data, meta } = await AppointmentApi.pagination({
       page: page.value,
       limit: limit.value,
-      filter: { customerId: props.customer.id! },
+      filter: { customerId: props.customerId },
       relation: { customer: false },
       sort: { registeredAt: 'DESC' },
     })
@@ -50,7 +52,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else appointmentList.value = []
@@ -76,16 +78,60 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
 
 <template>
   <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
+    <div v-if="isMobile" class="mt-4 w-full table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Lý do</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="appointmentList.length === 0">
+            <td colspan="20" class="text-center">Không có dữ liệu</td>
+          </tr>
+          <tr v-for="(appointment, index) in appointmentList" :key="index">
+            <td>
+              <div>HK{{ appointment.id }}</div>
+              <div>
+                <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
+              </div>
+              <div style="white-space: nowrap; font-size: 0.9em;">
+                {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
+              </div>
+            </td>
+            <td>{{ appointment.reason }}</td>
+            <td class="text-center">
+              <a
+                v-if="
+                  [
+                    AppointmentStatus.Waiting,
+                    AppointmentStatus.Confirm,
+                    AppointmentStatus.Cancelled,
+                  ].includes(appointment.appointmentStatus)
+                "
+                class="text-red-500"
+                @click="handleClickDeleteAppointment(appointment.id)">
+                <IconTrash width="18" height="18" />
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="mt-4 float-right mb-2">
+        <a-pagination
+          v-model:current="page"
+          v-model:pageSize="limit"
+          :total="total"
+          size="small"
+          show-size-changer
+          @change="
+            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
+          " />
+      </div>
     </div>
-    <div class="mt-4 w-full table-wrapper">
+    <div v-if="!isMobile" class="mt-4 w-full table-wrapper">
       <table>
         <thead>
           <tr>

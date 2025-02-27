@@ -1,36 +1,23 @@
 <script setup lang="ts">
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-} from '@ant-design/icons-vue'
+import VueTag from '../../common/VueTag.vue'
 import { AppointmentStatus } from '../../modules/appointment'
 
 const props = defineProps<{ appointmentStatus: AppointmentStatus }>()
 </script>
 
 <template>
-  <a-tag v-if="appointmentStatus === AppointmentStatus.Waiting" color="warning">
-    <template #icon><ClockCircleOutlined /></template>
+  <VueTag v-if="appointmentStatus === AppointmentStatus.Waiting" color="orange" icon="clock">
     Chờ xác nhận
-  </a-tag>
-  <a-tag v-if="appointmentStatus === AppointmentStatus.Confirm" color="processing">
-    <template #icon><ExclamationCircleOutlined /></template>
+  </VueTag>
+  <VueTag v-if="appointmentStatus === AppointmentStatus.Confirm" color="blue" icon="exclamation">
     Đã xác nhận
-  </a-tag>
-  <a-tag v-if="appointmentStatus === AppointmentStatus.Completed" color="success">
-    <template #icon>
-      <CheckCircleOutlined />
-    </template>
+  </VueTag>
+  <VueTag v-if="appointmentStatus === AppointmentStatus.Completed" color="green" icon="check">
     Đã đến khám
-  </a-tag>
-  <a-tag v-if="appointmentStatus === AppointmentStatus.Cancelled" color="default">
-    <template #icon>
-      <CloseCircleOutlined />
-    </template>
+  </VueTag>
+  <VueTag v-if="appointmentStatus === AppointmentStatus.Cancelled" color="default" icon="close">
     Hủy hẹn
-  </a-tag>
+  </VueTag>
 </template>
 
 <style lang="scss" scoped></style>

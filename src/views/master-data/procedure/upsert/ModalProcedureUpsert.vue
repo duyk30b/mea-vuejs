@@ -1,25 +1,32 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
-import { InputMoney, InputText, VueSelect } from '../../../../common/vue-form'
+import { IconClose, IconTrash } from '../../../../common/icon'
+import {
+  InputFilter,
+  InputMoney,
+  InputNumber,
+  InputText,
+  VueSelect,
+} from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
-  Procedure,
-  ProcedureApi,
-  ProcedureService,
-  ProcedureType,
-} from '../../../../modules/procedure'
+  Commission,
+  CommissionCalculatorType,
+  InteractType,
+} from '../../../../modules/commission'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { Procedure, ProcedureService, ProcedureType } from '../../../../modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
 import { Product, ProductService } from '../../../../modules/product'
+import { Role, RoleService } from '../../../../modules/role'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
-  DISCOUNT_AND_BOLUS: 'DISCOUNT_AND_BOLUS',
+  ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -27,10 +34,13 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
+const procedureOrigin = ref<Procedure>(Procedure.blank())
 const procedure = ref(Procedure.blank())
 const procedureGroupOptions = ref<{ text: string; value: number; data: ProcedureGroup }[]>([])
 const consumableOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const consumableList = ref<{ product?: Product; quantity: number }[]>([])
+
+const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
 const gapHoursType = ref(24)
 const activeTab = ref(TABS_KEY.BASIC)
@@ -38,22 +48,41 @@ const activeTab = ref(TABS_KEY.BASIC)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-onMounted(async () => {
-  try {
-    // const { hasChange } = await productStore.refreshDB()
-  } catch (error: any) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:57 ~ onMounted ~ error:', error)
+const hasChangeData = computed(() => {
+  if (!Procedure.equal(procedure.value, procedureOrigin.value)) {
+    return true
   }
+  if (
+    !Commission.equalList(
+      (procedure.value.commissionList || []).filter((i) => !!i.roleId),
+      procedureOrigin.value.commissionList || []
+    )
+  ) {
+    return true
+  }
+  return false
 })
+
+const handleAddCommission = () => {
+  const commissionBlank = Commission.blank()
+  commissionBlank.interactType = InteractType.Procedure
+  commissionBlank.interactId = procedure.value.id
+
+  if (!procedure.value.commissionList) {
+    procedure.value.commissionList = []
+  }
+  procedure.value.commissionList!.push(commissionBlank)
+}
 
 const openModal = async (procedureId?: number) => {
   showModal.value = true
 
-  if (!procedureId) {
-    procedure.value = Procedure.blank()
-  } else {
-    procedure.value = await ProcedureApi.detail(procedureId, {})
-
+  if (procedureId) {
+    const procedureResponse = await ProcedureService.detail(procedureId, {
+      relation: { commissionList: true },
+    })
+    procedureOrigin.value = Procedure.from(procedureResponse)
+    procedure.value = Procedure.from(procedureResponse)
     if (procedure.value?.consumablesHint) {
       // const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
       //   productId: number
@@ -79,13 +108,25 @@ const openModal = async (procedureId?: number) => {
       // }
     }
   }
+  if (procedure.value.commissionList?.length == 0) {
+    handleAddCommission()
+  }
 
-  const procedureGroupAll = await ProcedureGroupService.list({})
-  procedureGroupOptions.value = procedureGroupAll.map((i) => ({
-    value: i.id,
-    text: i.name,
-    data: i,
-  }))
+  ProcedureGroupService.list({})
+    .then((result) => {
+      procedureGroupOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
+    })
+    .catch((e) => {
+      console.log('🚀 ~ file: ModalProcedureUpsert.vue:105 ~ ProcedureGroupService ~ e:', e)
+    })
+
+  RoleService.list({})
+    .then((result) => {
+      roleOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
+    })
+    .catch((e) => {
+      console.log('🚀: ModalProcedureUpsert.vue:51 ~ RoleService.list ~ e:', e)
+    })
 }
 
 const searchingProduct = async (text: string) => {
@@ -108,31 +149,12 @@ const selectProduct = (p: Product) => {
 
 const closeModal = () => {
   showModal.value = false
+
   procedure.value = Procedure.blank()
+  procedureOrigin.value = Procedure.blank()
+
   consumableList.value = []
   consumableOptions.value = []
-}
-
-const handleSave = async () => {
-  saveLoading.value = true
-  const consumablesHint = consumableList.value.map((i) => ({
-    productId: i.product!.id,
-    quantity: i.quantity,
-  }))
-  procedure.value.consumablesHint = JSON.stringify(consumablesHint)
-  try {
-    if (!procedure.value.id) {
-      await ProcedureService.createOne(procedure.value)
-    } else {
-      await ProcedureService.updateOne(procedure.value.id, procedure.value)
-    }
-    emit('success')
-    closeModal()
-  } catch (error) {
-    console.log('🚀 ~ file: ModalProcedureUpsert.vue:140 ~ handleSave ~ error:', error)
-  } finally {
-    saveLoading.value = false
-  }
 }
 
 const clickDestroy = () => {
@@ -174,6 +196,28 @@ const handleChangeProcedureType = (e: Event) => {
   }
 }
 
+const handleSave = async () => {
+  saveLoading.value = true
+  const consumablesHint = consumableList.value.map((i) => ({
+    productId: i.product!.id,
+    quantity: i.quantity,
+  }))
+  procedure.value.consumablesHint = JSON.stringify(consumablesHint)
+  try {
+    if (!procedure.value.id) {
+      await ProcedureService.createOne(procedure.value)
+    } else {
+      await ProcedureService.updateOne(procedure.value.id, procedure.value)
+    }
+    emit('success')
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ file: ModalProcedureUpsert.vue:140 ~ handleSave ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -193,7 +237,7 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
-            <!-- <VueTabMenu :tabKey="TABS_KEY.DISCOUNT_AND_BOLUS">Khuyến mãi và Hoa hồng</VueTabMenu> -->
+            <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.BASIC">
@@ -353,9 +397,9 @@ defineExpose({ openModal })
                 </div> -->
               </div>
             </VueTabPanel>
-            <!-- <VueTabPanel :tabKey="TABS_KEY.DISCOUNT_AND_BOLUS">
-              <div class="mt-4 flex flex-wrap gap-4">
-                <div class="font-bold" style="flex-grow: 1; flex-basis: 90%">
+            <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_COMMISSION">
+              <div class="mt-4">
+                <!-- <div class="font-bold" style="flex-grow: 1; flex-basis: 90%">
                   <DoubleRightOutlined />
                   <span class="ml-2">Khuyến mãi</span>
                 </div>
@@ -415,115 +459,77 @@ defineExpose({ openModal })
                       showTime
                       typeParser="number" />
                   </div>
-                </div>
+                </div> -->
 
-                <div class="mt-10 font-bold" style="flex-grow: 1; flex-basis: 90%">
+                <!-- <div class="mt-10 font-bold" style="flex-grow: 1; flex-basis: 90%">
                   <DoubleRightOutlined />
                   <span class="ml-2">Hoa hồng</span>
-                </div>
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div>Hoa hồng nhân viên chốt sale</div>
-                  <div class="flex">
-                    <VueSelect
-                      v-model:value="procedure.saleBolusType"
-                      style="width: 120px"
-                      :options="[
-                        { value: DiscountType.Percent, text: '%' },
-                        { value: DiscountType.VND, text: 'VNĐ' },
-                      ]" />
-                    <div style="width: calc(100% - 120px)">
-                      <InputMoney
-                        v-if="procedure.saleBolusType === DiscountType.VND"
-                        v-model:value="procedure.saleBolusMoney"
-                        @update:value="
-                          (v) =>
-                            (procedure.saleBolusType = DiscountType.VND) &&
-                            (procedure.saleBolusPercent =
-                              procedure.price == 0 ? 0 : Math.round((v * 100) / procedure.price))
-                        " />
+                </div> -->
+
+                <div
+                  v-for="(commission, index) in procedure.commissionList"
+                  :key="index"
+                  class="mt-4 flex flex-wrap gap-2">
+                  <div style="flex-grow: 1; flex-basis: 250px">
+                    <div>Vai trò</div>
+                    <div>
+                      <InputFilter
+                        v-model:value="procedure.commissionList![index].roleId"
+                        :options="roleOptions"
+                        :maxHeight="120">
+                        <template #option="{ item: { data } }">{{ data.name }}</template>
+                      </InputFilter>
+                    </div>
+                  </div>
+                  <div style="flex-grow: 1; flex-basis: 100px">
+                    <div>Hoa hồng</div>
+                    <div>
                       <InputNumber
-                        v-else
-                        v-model:value="procedure.saleBolusPercent"
+                        :value="commission.commissionValue"
                         @update:value="
-                          (v) =>
-                            (procedure.saleBolusType = DiscountType.Percent) &&
-                            (procedure.saleBolusMoney = Math.round(
-                              ((procedure.price || 0) * (v || 0)) / 100
-                            ))
+                          (v: number) => (procedure.commissionList![index].commissionValue = v)
                         " />
+                    </div>
+                  </div>
+                  <div style="flex-grow: 1; flex-basis: 150px">
+                    <div>Công thức</div>
+                    <div>
+                      <VueSelect
+                        :value="commission.commissionCalculatorType"
+                        :options="[
+                          { value: CommissionCalculatorType.VND, text: 'VNĐ' },
+                          {
+                            value: CommissionCalculatorType.PercentExpected,
+                            text: '% Giá niêm yết',
+                          },
+                          {
+                            value: CommissionCalculatorType.PercentActual,
+                            text: '% Giá sau chiết khấu',
+                          },
+                        ]"
+                        @update:value="
+                          (v: number) =>
+                            (procedure.commissionList![index].commissionCalculatorType = v)
+                        " />
+                    </div>
+                  </div>
+                  <div style="width: 30px">
+                    <div>&nbsp;</div>
+                    <div class="pt-2 flex justify-center">
+                      <a
+                        style="color: var(--text-red)"
+                        @click="procedure.commissionList!.splice(index, 1)">
+                        <IconTrash width="18" height="18" />
+                      </a>
                     </div>
                   </div>
                 </div>
 
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div>Hoa hồng kỹ thuật viên chính</div>
-                  <div class="flex">
-                    <VueSelect
-                      v-model:value="procedure.primaryBolusType"
-                      style="width: 120px"
-                      :options="[
-                        { value: DiscountType.Percent, text: '%' },
-                        { value: DiscountType.VND, text: 'VNĐ' },
-                      ]" />
-                    <div style="width: calc(100% - 120px)">
-                      <InputMoney
-                        v-if="procedure.primaryBolusType === DiscountType.VND"
-                        v-model:value="procedure.primaryBolusMoney"
-                        @update:value="
-                          (v) =>
-                            (procedure.primaryBolusType = DiscountType.VND) &&
-                            (procedure.primaryBolusPercent =
-                              procedure.price == 0 ? 0 : Math.round((v * 100) / procedure.price))
-                        " />
-                      <InputNumber
-                        v-else
-                        v-model:value="procedure.primaryBolusPercent"
-                        @update:value="
-                          (v) =>
-                            (procedure.primaryBolusType = DiscountType.Percent) &&
-                            (procedure.primaryBolusMoney = Math.round(
-                              ((procedure.price || 0) * (v || 0)) / 100
-                            ))
-                        " />
-                    </div>
-                  </div>
-                </div>
-
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div>Hoa hồng kỹ thuật viên phụ</div>
-                  <div class="flex">
-                    <VueSelect
-                      v-model:value="procedure.secondaryBolusType"
-                      style="width: 120px"
-                      :options="[
-                        { value: DiscountType.Percent, text: '%' },
-                        { value: DiscountType.VND, text: 'VNĐ' },
-                      ]" />
-                    <div style="width: calc(100% - 120px)">
-                      <InputMoney
-                        v-if="procedure.secondaryBolusType === DiscountType.VND"
-                        v-model:value="procedure.secondaryBolusMoney"
-                        @update:value="
-                          (v) =>
-                            (procedure.secondaryBolusType = DiscountType.VND) &&
-                            (procedure.secondaryBolusPercent =
-                              procedure.price == 0 ? 0 : Math.round((v * 100) / procedure.price))
-                        " />
-                      <InputNumber
-                        v-else
-                        v-model:value="procedure.secondaryBolusPercent"
-                        @update:value="
-                          (v) =>
-                            (procedure.secondaryBolusType = DiscountType.Percent) &&
-                            (procedure.secondaryBolusMoney = Math.round(
-                              ((procedure.price || 0) * (v || 0)) / 100
-                            ))
-                        " />
-                    </div>
-                  </div>
+                <div class="mt-2">
+                  <a @click="handleAddCommission">✚ Thêm vai trò</a>
                 </div>
               </div>
-            </VueTabPanel> -->
+            </VueTabPanel>
           </template>
         </VueTabs>
       </div>
@@ -539,7 +545,12 @@ defineExpose({ openModal })
           <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
+          <VueButton
+            color="blue"
+            type="submit"
+            :loading="saveLoading"
+            :disabled="!hasChangeData"
+            icon="save">
             Lưu lại
           </VueButton>
         </div>

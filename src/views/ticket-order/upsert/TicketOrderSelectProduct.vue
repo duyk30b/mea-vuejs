@@ -49,11 +49,7 @@ onMounted(async () => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
-  } catch (error) {
-    console.log('🚀 ~ file: TicketOrderSelectProduct.vue:56 ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {
@@ -113,7 +109,6 @@ const selectProduct = async (instance?: Product) => {
   tp.discountMoney = 0
   tp.actualPrice = instance.retailPrice
   tp.hintUsage = instance?.hintUsage || ''
-  
 
   if (!instance.hasManageQuantity) {
     tp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
@@ -125,14 +120,52 @@ const selectProduct = async (instance?: Product) => {
   ticketProduct.value = tp
 
   const warehouseIdAcceptList = settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
-  const batchListResponse = await BatchService.list({
+  let canGetAllWarehouse = false
+  if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+  else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+
+  const batchListFetch = await BatchService.list({
     filter: {
       productId: instance.id,
-      quantity: { GT: 0 },
-      $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+      ...(canGetAllWarehouse
+        ? {}
+        : {
+            $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+          }),
     },
-    sort: { expiryDate: 'ASC' },
   })
+  let batchListResponse = batchListFetch
+    .filter((i) => !!i.quantity)
+    .sort((a, b) => {
+      if (b.expiryDate == null) return -1 // để NULL ở cuối
+      else if (a.expiryDate == null) return 1
+      else return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
+    })
+
+  if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+    const batchZero = batchListFetch
+      .filter((i) => !i.quantity)
+      .sort((a, b) => {
+        if (b.expiryDate == null) return 1 // để NULL ở đầu
+        else if (a.expiryDate == null) return -1
+        else return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
+      })
+    batchListResponse = [...batchListResponse, ...batchZero]
+  }
+  batchListResponse = batchListResponse.slice(0, 5)
+
+  // const batchListResponse = await BatchService.list({
+  //   filter: {
+  //     productId: instance.id,
+  //     quantity: { NOT: 0 },
+  //     ...(canGetAllWarehouse
+  //       ? {}
+  //       : {
+  //           $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+  //         }),
+  //   },
+  //   sort: { expiryDate: 'ASC' },
+  // })
   batchListResponse.forEach((i) => (i.product = instance))
   batchList.value = batchListResponse
 
@@ -230,14 +263,7 @@ const addTicketProduct = () => {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
-  if (product?.hasManageQuantity && batchList.value.length <= 0) {
-    return AlertStore.addError(
-      'Lỗi: Sản phẩm này không còn hàng để bán. Vui lòng nhập thêm hàng trước khi bán'
-    )
-  }
-  if (ticketProduct.value.quantity <= 0) {
-    return AlertStore.addError('Lỗi: Số lượng không hợp lệ')
-  }
+
   if (product?.hasManageQuantity) {
     if (!ticketProduct.value.batchId) {
       return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
@@ -533,7 +559,7 @@ defineExpose({ focus })
       </div>
     </div>
 
-    <div class="grow basis-[90%] flex justify-center">
+    <div style="flex-grow: 1; flex-basis: 80%" class="flex justify-center">
       <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>

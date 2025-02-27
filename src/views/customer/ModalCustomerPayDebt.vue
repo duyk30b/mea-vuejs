@@ -31,22 +31,25 @@ const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (customerProp: Customer) => {
-  customer.value = Customer.from(customerProp)
+const openModal = async (customerId: number) => {
   showModal.value = true
   if (!isMobile) {
     nextTick(() => inputMoneyPay.value?.focus())
   }
   try {
     dataLoading.value = true
-    const response = await TicketApi.list({
-      filter: {
-        customerId: customerProp.id,
-        ticketStatus: TicketStatus.Debt,
-      },
-      sort: { id: 'ASC' },
-    })
-    ticketPaymentList.value = response.map((i) => ({ ticket: i, money: 0 }))
+    const fetchPromise = await Promise.all([
+      CustomerService.detail(customerId),
+      TicketApi.list({
+        filter: {
+          customerId,
+          ticketStatus: TicketStatus.Debt,
+        },
+        sort: { id: 'ASC' },
+      }),
+    ])
+    customer.value = fetchPromise[0] || Customer.blank()
+    ticketPaymentList.value = fetchPromise[1].map((i) => ({ ticket: i, money: 0 }))
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerPayDebt.vue:52 ~ openModal ~ error:', error)
   } finally {
@@ -83,22 +86,6 @@ const handleSave = async () => {
   } finally {
     saveLoading.value = false
   }
-}
-
-const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketOrderDetail',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
-}
-
-const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
-    name: 'TicketClinicSummary',
-    params: { id: ticketId },
-  })
-  window.open(route.href, '_blank')
 }
 
 const handleClickPayAllDebt = () => {

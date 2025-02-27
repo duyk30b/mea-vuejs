@@ -31,7 +31,7 @@ export class RootOrganizationApi {
       addressWard: organization.addressWard || '',
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,
-      isActive: organization.isActive,
+      status: organization.status,
       note: organization.note,
       expiryDate: organization.expiryDate,
     })
@@ -53,7 +53,7 @@ export class RootOrganizationApi {
       addressWard: organization.addressWard || '',
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,
-      isActive: organization.isActive,
+      status: organization.status,
       note: organization.note,
       expiryDate: organization.expiryDate,
     })

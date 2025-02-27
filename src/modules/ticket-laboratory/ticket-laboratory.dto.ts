@@ -1,4 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate } from '../_base/base-condition'
 
 export class TicketLaboratoryGetQuery {
   page: number
@@ -6,7 +7,6 @@ export class TicketLaboratoryGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
-    laboratory?: { laboratoryGroup?: boolean } | false
     imageList?: boolean
   }
 
@@ -14,9 +14,13 @@ export class TicketLaboratoryGetQuery {
     laboratoryId?: number
     customerId?: number
     ticketId?: number
+    startedAt?: ConditionDate
   }
 
-  sort?: { id?: 'ASC' | 'DESC' }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    startedAt?: 'ASC' | 'DESC'
+  }
 
   static toQuery(instance: Partial<TicketLaboratoryGetQuery>) {
     return {

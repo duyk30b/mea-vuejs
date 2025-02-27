@@ -89,7 +89,6 @@ export class StatisticService {
     return data.map((i: any) => ({
       customerId: i.customerId as number,
       sumTotalCostAmount: i.sumTotalCostAmount as number,
-      sumItemActual: i.sumItemActual as number,
       sumExpense: i.sumExpense as number,
       sumRevenue: i.sumRevenue as number,
       sumProfit: i.sumProfit as number,

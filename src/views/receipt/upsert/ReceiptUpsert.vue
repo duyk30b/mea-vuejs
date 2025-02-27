@@ -19,6 +19,7 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
+import VueTag from '../../../common/VueTag.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -193,18 +194,7 @@ const saveReceipt = async (type: EReceiptSave) => {
 
 const handleAddReceiptItem = (ri: ReceiptItem) => {
   const receiptItem = ReceiptItem.from(ri)
-  if (settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.allowDuplicateItem) {
-    receipt.value.receiptItemList!.unshift(receiptItem)
-  } else {
-    const exist = receipt.value.receiptItemList?.find((i) => {
-      return i.batchId === receiptItem.batchId
-    })
-    if (exist) {
-      exist.quantity += ri.quantity
-    } else {
-      receipt.value.receiptItemList!.unshift(receiptItem)
-    }
-  }
+  receipt.value.receiptItemList!.unshift(receiptItem)
 }
 
 const handleMenuSettingClick = (menu: { key: string }) => {
@@ -360,7 +350,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success">{{ receipt.discountPercent || 0 }}%</a-tag>
+                          <VueTag color="green">{{ receipt.discountPercent || 0 }}%</VueTag>
                         </div>
                         <div
                           class="flex-1 text-right"
@@ -387,6 +377,22 @@ const openModalDistributorDetail = (data?: Distributor) => {
                   </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
                     {{ formatMoney(receipt.totalMoney) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-4 p-4 bg-white">
+          <div>Thông tin khác</div>
+          <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
+            <table class="table w-full mt-2 table-payment">
+              <tbody>
+                <tr>
+                  <td class="whitespace-nowrap">Ghi chú</td>
+                  <td>
+                    <a-input v-model:value="receipt.note" class="input-payment" />
                   </td>
                 </tr>
               </tbody>

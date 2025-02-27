@@ -27,10 +27,7 @@ export class LaboratoryApi {
 
     const response = await AxiosInstance.get('/laboratory/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: Laboratory.fromList(data),
-    }
+    return Laboratory.fromList(data)
   }
 
   static search: (params: LaboratoryListQuery) => Promise<Laboratory[]> = debounceAsync(
@@ -56,6 +53,7 @@ export class LaboratoryApi {
       name: laboratory.name,
       laboratoryGroupId: laboratory.laboratoryGroupId,
       price: laboratory.price,
+      costPrice: laboratory.costPrice,
       valueType: laboratory.valueType,
       lowValue: laboratory.lowValue,
       highValue: laboratory.highValue,
@@ -65,7 +63,8 @@ export class LaboratoryApi {
         return {
           name: i.name,
           priority: i.priority,
-          price: i.price,
+          price: 0,
+          costPrice: 0,
           lowValue: i.lowValue,
           highValue: i.highValue,
           valueType: i.valueType,
@@ -83,6 +82,7 @@ export class LaboratoryApi {
       priority: laboratory.priority,
       name: laboratory.name,
       price: laboratory.price,
+      costPrice: laboratory.costPrice,
       laboratoryGroupId: laboratory.laboratoryGroupId,
       lowValue: laboratory.lowValue,
       highValue: laboratory.highValue,
@@ -94,7 +94,8 @@ export class LaboratoryApi {
           id: i.id,
           priority: i.priority,
           name: i.name,
-          price: i.price,
+          price: 0,
+          costPrice: 0,
           lowValue: i.lowValue,
           highValue: i.highValue,
           valueType: i.valueType,

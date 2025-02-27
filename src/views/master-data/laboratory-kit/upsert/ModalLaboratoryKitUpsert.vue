@@ -175,7 +175,7 @@ defineExpose({ openModal })
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.name }}</b>
-                  - {{ DString.formatMoney(data.price) }}
+                  - {{ formatMoney(data.price) }}
                 </div>
               </template>
             </InputOptions>

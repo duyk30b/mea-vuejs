@@ -142,7 +142,6 @@ export const settingDefault = {
       lotNumberAndExpiryDate: true,
     },
     receiptItemsTable: {
-      allowDuplicateItem: true,
       detail: true,
       substance: true,
       lotNumberAndExpiryDate: true,
@@ -183,7 +182,7 @@ export const settingDefault = {
       itemsActualMoney: true,
       discount: true,
       surcharge: true,
-      totalCostAmount: true,
+      itemsCostAmount: true,
       expense: true,
       profit: true,
       paid: true,
@@ -243,7 +242,7 @@ export const settingDefault = {
       paid: false,
       debt: false,
       expense: false,
-      totalCostAmount: true,
+      itemsCostAmount: true,
       profit: true,
     },
     other: { expense: false },
@@ -269,9 +268,11 @@ export const settingDefault = {
 
   TICKET_CLINIC_LIST: {
     ticketType: TicketType.Clinic,
-    ticketStatus: TicketStatus.Executing,
+    customTypeText: <string[]>['Mặc định'],
+    showCustomType: false,
     buttonShowModalCreate: true,
     buttonShowTicketDetailBlank: false,
+    roleIdList: [],
     birthday: false,
     phone: false,
     address: false,
@@ -280,6 +281,7 @@ export const settingDefault = {
     consumable: {
       warehouseIdList: [0],
     },
+    procedure: {},
     prescriptions: {
       warehouseIdList: [0],
     },
@@ -290,6 +292,7 @@ export const settingDefault = {
     },
   },
   TICKET_CLINIC_CREATE: {
+    ticketStatus: TicketStatus.Executing,
     birthday: true,
     gender: true,
     addressFull: false,
@@ -297,6 +300,7 @@ export const settingDefault = {
     relative: false,
     note: false,
     customerSource: false,
+    roleIdList: [],
     SCREEN: {
       modalStyle: 'margin-top: 100px; width: 800px',
       itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',

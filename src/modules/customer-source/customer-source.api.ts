@@ -25,13 +25,13 @@ export class CustomerSourceApi {
 
     const response = await AxiosInstance.get('/customer-source/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: CustomerSource.fromList(data),
-    }
+    return CustomerSource.fromList(data)
   }
 
-  static async detail(id: number, options: CustomerSourceDetailQuery = {}): Promise<CustomerSource> {
+  static async detail(
+    id: number,
+    options: CustomerSourceDetailQuery = {}
+  ): Promise<CustomerSource> {
     const params = CustomerSourceGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/customer-source/detail/${id}`, { params })
     const { data, meta } = response.data as BaseResponse

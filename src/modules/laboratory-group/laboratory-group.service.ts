@@ -12,25 +12,35 @@ export class LaboratoryGroupService {
   static laboratoryGroupAll: LaboratoryGroup[] = []
   static laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
 
-  private static async getAll() {
-    if (LaboratoryGroupService.loadedAll) return
-    const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
-    const laboratoryGroupList = data
-    LaboratoryGroupService.laboratoryGroupAll = laboratoryGroupList
-
-    LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(laboratoryGroupList, 'id')
-    LaboratoryGroupService.loadedAll = true
-  }
+  private static fetchAll = (() => {
+    const start = async () => {
+      try {
+        const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
+        LaboratoryGroupService.laboratoryGroupAll = data
+        LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(data, 'id')
+      } catch (error: any) {
+        console.log('🚀 ~ laboratory-group.service.ts:22 ~ LaboratoryGroupService ~ error:', error)
+      }
+    }
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetchPromise || !LaboratoryGroupService.loadedAll || options.refresh) {
+        LaboratoryGroupService.loadedAll = true
+        fetchPromise = start()
+      }
+      await fetchPromise
+    }
+  })()
 
   static async getMap() {
-    await LaboratoryGroupService.getAll()
+    await LaboratoryGroupService.fetchAll()
     return LaboratoryGroupService.laboratoryGroupMap
   }
 
   static async pagination(options: LaboratoryGroupPaginationQuery) {
     const page = options.page || 1
     const limit = options.limit || 10
-    await LaboratoryGroupService.getAll()
+    await LaboratoryGroupService.fetchAll()
     let data = LaboratoryGroupService.laboratoryGroupAll
     if (options.sort) {
       if (options.sort?.id) {
@@ -50,7 +60,7 @@ export class LaboratoryGroupService {
 
   static async list(options: LaboratoryGroupListQuery) {
     const filter = options.filter || {}
-    await LaboratoryGroupService.getAll()
+    await LaboratoryGroupService.fetchAll()
     let data = LaboratoryGroupService.laboratoryGroupAll
     if (options.filter) {
       data = data.filter((i) => {

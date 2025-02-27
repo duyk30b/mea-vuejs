@@ -8,21 +8,23 @@ export const PickClass = <T, K extends keyof T>(
   keys: K[]
 ): new () => Pick<T, (typeof keys)[number]> => Class
 
-export const keysEnum = (e: Record<string, any>) => {
-  return Object.keys(e).filter((key) => isNaN(parseInt(key)))
+export const keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
+  return Object.keys(e).filter((key) => isNaN(Number(key))) as (keyof T)[]
 }
 
-export const valuesEnum = (e: Record<string, any>) => {
+export const valuesEnum = <T extends Record<string, string | number>>(e: T): T[keyof T][] => {
   return keysEnum(e).map((key) => e[key])
 }
 
-export const objectEnum = (e: Record<string, any>) => {
+export const objectEnum = <T extends Record<string, string | number>>(
+  e: T
+): { [K in keyof T]: T[K] } => {
   return keysEnum(e).reduce(
     (acc, key) => {
       acc[key] = e[key]
       return acc
     },
-    {} as Record<string, any>
+    {} as { [K in keyof T]: T[K] }
   )
 }
 

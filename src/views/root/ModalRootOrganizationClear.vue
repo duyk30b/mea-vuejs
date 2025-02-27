@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
+import { InputCheckbox } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { Organization } from '../../modules/organization'
@@ -14,9 +15,12 @@ const organization = ref<Organization>(Organization.blank())
 const saveLoading = ref(false)
 
 const tableNameMap: Record<string, any> = {
+  Organization: 0,
+  User: 0,
   Appointment: 1,
   Batch: 1,
   BatchMovement: 1,
+  Commission: 1,
   Customer: 1,
   CustomerPayment: 1,
   CustomerSource: 1,
@@ -39,27 +43,20 @@ const tableNameMap: Record<string, any> = {
   ReceiptItem: 1,
   Role: 0,
   Setting: 0,
+  Ticket: 1,
   TicketAttribute: 1,
-  TicketDiagnosis: 1,
   TicketExpense: 1,
   TicketLaboratory: 1,
+  TicketLaboratoryGroup: 1,
+  TicketLaboratoryResult: 1,
   TicketProcedure: 1,
   TicketProduct: 1,
   TicketRadiology: 1,
   TicketSurcharge: 1,
   TicketUser: 1,
-  Ticket: 1,
   UserRole: 0,
   Warehouse: 0,
 }
-
-const tableNameAll = Object.keys(tableNameMap)
-
-const tableNameListClear = ref<string[]>(
-  Object.keys(tableNameMap).filter((i) => {
-    return tableNameMap[i] === 1
-  })
-)
 
 const openModal = async (organizationProp: Organization) => {
   showModal.value = true
@@ -72,14 +69,16 @@ const closeModal = () => {
 }
 
 const startClear = async () => {
+  const tableNameList = Object.keys(tableNameMap).filter((i) => {
+    return tableNameMap[i] === 1
+  })
+
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa DATA của cơ sở: ' + organization.value.name,
     content: 'Bạn đã cân nhắc lại một lần nữa trước khi xóa chưa ?',
     async onOk() {
       try {
-        await RootOrganizationApi.clearOne(organization.value.id, {
-          tableNameList: tableNameListClear.value,
-        })
+        await RootOrganizationApi.clearOne(organization.value.id, { tableNameList })
         emit('success')
         closeModal()
       } catch (error) {
@@ -104,22 +103,19 @@ defineExpose({ openModal })
 
       <div class="px-4 mt-4">
         <div>Chọn bảng Database cần xóa</div>
-        <div class="mt-4">
-          <a-checkbox-group v-model:value="tableNameListClear">
-            <div>
-              <a-checkbox value="Organization">
-                <span style="font-weight: bold; color: red">ORGANIZATION</span>
-              </a-checkbox>
-            </div>
-            <div>
-              <a-checkbox value="User">
-                <span style="font-weight: bold; color: red">USER</span>
-              </a-checkbox>
-            </div>
-            <div v-for="tableName in tableNameAll" :key="tableName" class="mb-3">
-              <a-checkbox :value="tableName">{{ tableName }}</a-checkbox>
-            </div>
-          </a-checkbox-group>
+        <div class="mt-4 flex flex-wrap gap-4">
+          <div v-for="(v, key) in tableNameMap" :key="key" style="width: 30%">
+            <InputCheckbox v-model:value="tableNameMap[key]" type-parser="number">
+              <span
+                :style="
+                  ['Organization', 'User'].includes(key)
+                    ? { fontWeight: 'bold', color: 'red', textTransform: 'uppercase' }
+                    : {}
+                ">
+                {{ key }}
+              </span>
+            </InputCheckbox>
+          </div>
         </div>
       </div>
 

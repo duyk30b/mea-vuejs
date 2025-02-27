@@ -29,6 +29,9 @@
         &:nth-child(even) {
           background-color: var(--color-table-td-even-bg);
         }
+        &:hover {
+          background-color: var(--color-table-td-hover-bg);
+        }
 
         & > td {
           border: 1px solid #e8e8e8;

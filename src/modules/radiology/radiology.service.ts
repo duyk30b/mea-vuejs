@@ -1,4 +1,4 @@
-import { customFilter, DString } from '../../utils'
+import { arrayToKeyValue, customFilter } from '../../utils'
 import { RadiologyApi } from './radiology.api'
 import type {
   RadiologyGetQuery,
@@ -11,12 +11,23 @@ export class RadiologyService {
   static loadedAll: boolean = false
   static radiologyAll: Radiology[] = []
 
-  private static async getAll() {
-    if (RadiologyService.loadedAll) return
-    const { data } = await RadiologyApi.list({})
-    RadiologyService.radiologyAll = data
-    RadiologyService.loadedAll = true
-  }
+  private static fetchAll = (() => {
+    const start = async () => {
+      try {
+        RadiologyService.radiologyAll = await RadiologyApi.list({})
+      } catch (error: any) {
+        console.log('🚀 ~ file: radiology.service.ts:19 ~ RadiologyService ~ start ~ error:', error)
+      }
+    }
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetchPromise || !RadiologyService.loadedAll || options.refresh) {
+        RadiologyService.loadedAll = true
+        fetchPromise = start()
+      }
+      await fetchPromise
+    }
+  })()
 
   private static executeQuery(all: Radiology[], query: RadiologyGetQuery) {
     let data = all
@@ -55,12 +66,18 @@ export class RadiologyService {
     return data
   }
 
-  static async pagination(options: RadiologyPaginationQuery) {
-    const page = options.page || 1
-    const limit = options.limit || 10
-    await RadiologyService.getAll()
+  static async getMap() {
+    await RadiologyService.fetchAll()
+    const procedureMap = arrayToKeyValue(RadiologyService.radiologyAll, 'id')
+    return procedureMap
+  }
 
-    let data = RadiologyService.executeQuery(RadiologyService.radiologyAll, options)
+  static async pagination(query: RadiologyPaginationQuery, options?: { refresh: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await RadiologyService.fetchAll({ refresh: !!options?.refresh })
+
+    let data = RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     data = data.slice((page - 1) * limit, page * limit)
     return {
       data: Radiology.fromList(data),
@@ -68,10 +85,9 @@ export class RadiologyService {
     }
   }
 
-  static async list(options: RadiologyListQuery) {
-    const filter = options.filter || {}
-    await RadiologyService.getAll()
-    const data = RadiologyService.executeQuery(RadiologyService.radiologyAll, options)
+  static async list(query: RadiologyListQuery, options?: { refresh: boolean }) {
+    await RadiologyService.fetchAll({ refresh: !!options?.refresh })
+    const data = RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     return Radiology.fromList(data)
   }
 

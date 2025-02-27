@@ -4,7 +4,10 @@ import type { ConditionDate } from '../_base/base-condition'
 export class RoleGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: {
+    userRoleList?: { user?: boolean } | false
+  }
+
   filter?: {
     isActive?: 1 | 0
     updatedAt?: ConditionDate

@@ -217,7 +217,7 @@ defineExpose({ openModal })
             </div>
           </div>
 
-          <div style="flex-basis: 300px; flex-grow: 1">
+          <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px;">
             <div class="">Nhóm</div>
             <div>
               <VueSelect
@@ -228,8 +228,18 @@ defineExpose({ openModal })
             </div>
           </div>
 
-          <div style="flex-basis: 300px; flex-grow: 1">
-            <div>Giá tiền</div>
+          <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px;">
+            <div>Giá vốn</div>
+            <div>
+              <InputMoney
+                v-model:value="laboratory.costPrice"
+                :validate="{ GTE: 0 }"
+                style="width: 100%" />
+            </div>
+          </div>
+
+          <div style="flex-grow: 1; flex-basis: 45%; min-width: 300px;">
+            <div>Giá bán</div>
             <div>
               <InputMoney
                 v-model:value="laboratory.price"
@@ -238,7 +248,7 @@ defineExpose({ openModal })
             </div>
           </div>
 
-          <div style="flex-basis: 90%; flex-grow: 1">
+          <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px;">
             <div>Kiểu giá trị</div>
             <div>
               <VueSelect

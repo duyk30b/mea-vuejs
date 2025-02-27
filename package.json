@@ -12,7 +12,8 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "prettier": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}\" \"!dist/**\"",
-    "git-logs": "git log --all --oneline --graph -10"
+    "git:logs": "git log --all --oneline --graph -10",
+    "git:master-upgrade": "git branch -f master HEAD"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-alignment": "^41.3.1",
@@ -43,7 +44,7 @@
     "ant-design-vue": "^3.2.20",
     "axios": "^1.2.1",
     "chart.js": "^4.3.0",
-    "monaco-editor": "^0.52.0",
+    "monaco-editor": "^0.52.2",
     "pinia": "^2.0.23",
     "socket.io-client": "^4.6.0",
     "vue": "^3.2.45",

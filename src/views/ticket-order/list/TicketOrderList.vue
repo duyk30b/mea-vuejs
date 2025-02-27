@@ -278,7 +278,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div class="font-medium text-justify">
                 {{ ticket.customer?.fullName }}
-                <a class="text-base" @click="modalCustomerDetail?.openModal(ticket.customer!)">
+                <a class="text-base" @click="modalCustomerDetail?.openModal(ticket.customerId)">
                   <FileSearchOutlined />
                 </a>
               </div>
@@ -383,7 +383,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>
               <div>
                 {{ ticket.customer?.fullName }}
-                <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customer!)">
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
                   <FileSearchOutlined />
                 </a>
               </div>

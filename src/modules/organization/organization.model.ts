@@ -1,6 +1,12 @@
 import { Image } from '../image/image.model'
 import { User } from '../user'
 
+export enum OrganizationStatus {
+  Inactive = 0,
+  Active = 1,
+  Frequent = 2,
+}
+
 export class Organization {
   id: number
   phone: string
@@ -13,7 +19,7 @@ export class Organization {
   addressWard: string
   addressStreet: string
   permissionIds: string
-  isActive: 1 | 0 // Trạng thái
+  status: OrganizationStatus
 
   note: string // Ghi chú
   expiryDate: number
@@ -34,7 +40,7 @@ export class Organization {
     ins.level = 1
     ins.emailVerify = 0
     ins.dataVersion = '{}'
-    ins.isActive = 1
+    ins.status = OrganizationStatus.Active
     return ins
   }
 

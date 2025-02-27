@@ -45,14 +45,14 @@ const Router = createRouter({
           ],
         },
         {
-          path: 'account',
-          name: 'Account',
+          path: 'user',
+          name: 'User',
           children: [
             {
-              path: 'user',
-              meta: { title: 'Nhân viên' },
-              name: 'User',
-              component: () => import('../views/user/UserList.vue'),
+              path: 'account',
+              meta: { title: 'Tài khoản' },
+              name: 'Account',
+              component: () => import('../views/user/account/AccountList.vue'),
             },
             {
               path: 'role',
@@ -62,13 +62,13 @@ const Router = createRouter({
                 {
                   path: 'list',
                   name: 'RoleList',
-                  component: () => import('../views/role/RoleList.vue'),
+                  component: () => import('../views/user/role/RoleList.vue'),
                   meta: { title: 'Vai trò' },
                 },
                 {
                   path: 'upsert/:id?',
                   name: 'RoleUpsert',
-                  component: () => import('../views/role/RoleUpsert.vue'),
+                  component: () => import('../views/user/role/RoleUpsert.vue'),
                   meta: {
                     title: (route: RouteLocationNormalizedLoaded) => {
                       if (route.query?.mode === 'UPDATE') return 'Cập nhật vai trò'
@@ -77,6 +77,12 @@ const Router = createRouter({
                   },
                 },
               ],
+            },
+            {
+              path: 'commission',
+              meta: { title: 'Hoa hồng' },
+              name: 'Commission',
+              component: () => import('../views/user/commission/list/CommissionList.vue'),
             },
           ],
         },

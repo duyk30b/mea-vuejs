@@ -3,7 +3,7 @@ import { nextTick, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputOptions } from '../../../common/vue-form'
+import { InputCheckbox, InputOptions } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -119,19 +119,20 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsSelect.warehouse">
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.receiptItemsSelect.warehouse">
                           Hiển thị chọn kho
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox
+                        <InputCheckbox
                           v-model:checked="
                             settingDisplay.receiptItemsSelect.lotNumberAndExpiryDate
                           ">
                           Hiển thị số lô và HSD
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>
@@ -143,58 +144,41 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
-                        <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
-                        <div class="pl-7">
-                          <a-radio-group
-                            v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem">
-                            <a-radio style="display: flex; line-height: 36px" :value="false">
-                              Cộng gộp số lượng
-                            </a-radio>
-                            <a-radio style="display: flex; line-height: 36px" :value="true">
-                              Không cộng gộp (VD: nhập 4 tặng 1 thì bản ghi số lượng 1 có thể điền
-                              đơn giá = 0)
-                            </a-radio>
-                          </a-radio-group>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
+                        <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.detail">
                           Hiển thị chi tiết sản phẩm (
                           <IconFileSearch />
                           )
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
+                        <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.substance">
                           Hiển thị hoạt chất
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
 
                     <tr>
                       <td>
-                        <a-checkbox
+                        <InputCheckbox
                           v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate">
                           Hiển thị số lô và HSD
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
+                        <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.unit">
                           Hiển thị đơn vị
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.warehouse">
+                        <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.warehouse">
                           Hiển thị kho được nhập
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>
@@ -244,23 +228,24 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
                           Hiển thị tiền hàng
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                        <InputCheckbox v-model:checked="settingDisplay.paymentInfo.discount">
                           Hiển thị chiết khấu
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                        <InputCheckbox v-model:checked="settingDisplay.paymentInfo.surcharge">
                           Hiển thị phụ phí
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>
@@ -272,9 +257,9 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.save.createDraft">
+                        <InputCheckbox v-model:checked="settingDisplay.save.createDraft">
                           Lưu nháp
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>

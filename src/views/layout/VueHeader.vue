@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { AxiosLoading } from '../../core/axios.instance'
 import { useMeStore } from '../../modules/_me/me.store'
 import { AuthService } from '../../modules/auth/auth.service'
+import { DImage } from '../../utils'
 
 const emit = defineEmits(['handleShowDrawer'])
 const emitShowDrawer = () => emit('handleShowDrawer', true)
@@ -33,11 +34,23 @@ const handleUserAction = async (e: any) => {
   <a-layout-header>
     <router-link :to="{ name: 'AppHome' }" class="header-logo hidden md:flex">
       <div class="logo-icon">
-        <font-awesome-icon :icon="['fas', 'hospital-user']" />
+        <img
+          v-if="meStore?.organization?.logoImage"
+          :src="DImage.getImageLink(meStore?.organization?.logoImage, { size: 500 })"
+          style="background-color: white;"
+          height="50px"/>
+        <font-awesome-icon v-else :icon="['fas', 'hospital-user']" />
       </div>
       <div class="logo-text">
-        <div class="logo-title">Medihome</div>
-        <div class="logo-description">looking for new solutions</div>
+        <template v-if="meStore?.organization?.name">
+          <div class="logo-title">
+            {{ meStore?.organization?.name }}
+          </div>
+        </template>
+        <template v-else>
+          <div class="logo-title">MEDIHOME</div>
+          <div class="logo-description">looking for new solutions</div>
+        </template>
       </div>
     </router-link>
     <div class="dashboard-menu flex md:hidden">
@@ -52,7 +65,10 @@ const handleUserAction = async (e: any) => {
         </a-button>
         <template #overlay>
           <a-menu @click="handleUserAction">
-            <a-menu-item key="logout"> <LogoutOutlined /> &nbsp; Đăng xuất </a-menu-item>
+            <a-menu-item key="logout">
+              <LogoutOutlined />
+              &nbsp; Đăng xuất
+            </a-menu-item>
           </a-menu>
         </template>
       </a-dropdown>
@@ -62,8 +78,7 @@ const handleUserAction = async (e: any) => {
         :percent="AxiosLoading.percent"
         :show-info="false"
         status="active"
-        :strokeWidth="3"
-      />
+        :strokeWidth="3" />
     </div>
   </a-layout-header>
 </template>
@@ -92,8 +107,7 @@ const handleUserAction = async (e: any) => {
     .logo-text {
       .logo-title {
         margin-top: -1px;
-        font-size: 16px;
-        text-transform: uppercase;
+        font-size: 18px;
         font-weight: bold;
       }
 
@@ -128,4 +142,3 @@ const handleUserAction = async (e: any) => {
   }
 }
 </style>
-

@@ -13,7 +13,7 @@ export class WarehouseService {
   static warehouseAll: Warehouse[] = []
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
-  static getAll = (() => {
+  static fetchAll = (() => {
     const start = async () => {
       try {
         const { data } = await WarehouseApi.list({})
@@ -22,13 +22,13 @@ export class WarehouseService {
         console.log('🚀 ~ file: warehouse.service.ts:20 ~ WarehouseService ~ start ~ error:', error)
       }
     }
-    let fetching: any = null
+    let fetchPromise: Promise<void> | null = null
     return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !WarehouseService.loadedAll || options.refresh) {
+      if (!fetchPromise || !WarehouseService.loadedAll || options.refresh) {
         WarehouseService.loadedAll = true
-        fetching = start()
+        fetchPromise = start()
       }
-      await fetching
+      await fetchPromise
     }
   })()
 
@@ -53,14 +53,14 @@ export class WarehouseService {
   }
 
   static async getMap() {
-    await WarehouseService.getAll()
+    await WarehouseService.fetchAll()
     return arrayToKeyValue(WarehouseService.warehouseAll, 'id')
   }
 
   static async pagination(options: WarehousePaginationQuery) {
     const page = options.page || 1
     const limit = options.limit || 10
-    await WarehouseService.getAll({ refresh: true })
+    await WarehouseService.fetchAll({ refresh: true })
 
     let data = WarehouseService.executeQuery(WarehouseService.warehouseAll, options)
     data = data.slice((page - 1) * limit, page * limit)
@@ -71,7 +71,7 @@ export class WarehouseService {
   }
 
   static async list(options: WarehouseListQuery) {
-    await WarehouseService.getAll()
+    await WarehouseService.fetchAll()
     const data = WarehouseService.executeQuery(WarehouseService.warehouseAll, options)
     return Warehouse.fromList(data)
   }

@@ -4,11 +4,16 @@ import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
 import { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
+import { LaboratoryValueType, type Laboratory } from '../laboratory'
+import { LaboratoryGroup } from '../laboratory-group'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
+import type { Radiology } from '../radiology'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import { TicketLaboratory } from '../ticket-laboratory'
+import { TicketLaboratoryGroup } from '../ticket-laboratory-group'
+import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
@@ -38,9 +43,10 @@ export class Ticket {
   customerId: number
   customerSourceId: number
   ticketType: TicketType
+  customType: number
   ticketStatus: TicketStatus
 
-  totalCostAmount: number
+  itemsCostAmount: number
   procedureMoney: number
   productMoney: number
   radiologyMoney: number
@@ -57,6 +63,7 @@ export class Ticket {
   surcharge: number // Phụ phí
   totalMoney: number // Doanh thu = procedureMoney + productMoney + phụ phí - tiền giảm giá
   expense: number
+  commissionMoney: number
   profit: number
   paid: number
   debt: number
@@ -82,6 +89,8 @@ export class Ticket {
   ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
   ticketLaboratoryList?: TicketLaboratory[]
+  ticketLaboratoryGroupList?: TicketLaboratoryGroup[]
+  ticketLaboratoryResultList?: TicketLaboratoryResult[]
   ticketRadiologyList?: TicketRadiology[]
   ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
@@ -91,12 +100,14 @@ export class Ticket {
   imageList: Image[]
 
   ticketAttributeMap: TicketAttributeMap // chỉ convert tại front-end
+  ticketUserGroup: Record<string, Record<string, TicketUser[]>> // chỉ convert tại front-end
 
   static init(): Ticket {
     const ins = new Ticket()
     ins.id = 0
+    ins.customType = 0
     ins.ticketStatus = TicketStatus.Draft
-    ins.totalCostAmount = 0
+    ins.itemsCostAmount = 0
     ins.procedureMoney = 0
     ins.productMoney = 0
     ins.radiologyMoney = 0
@@ -115,18 +126,22 @@ export class Ticket {
 
   static blank(): Ticket {
     const ins = Ticket.init()
-    // ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
+    ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
     ins.customerPaymentList = []
     ins.ticketAttributeList = []
-    ins.ticketAttributeMap = {}
     ins.ticketProcedureList = []
     ins.ticketProductList = []
+    ins.ticketLaboratoryList = []
+    ins.ticketLaboratoryGroupList = []
+    ins.ticketLaboratoryResultList = []
     ins.ticketRadiologyList = []
     ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
     ins.ticketExpenseList = [TicketExpense.init()]
     ins.imageList = []
 
+    ins.ticketAttributeMap = {}
+    ins.ticketUserGroup = {}
     return ins
   }
 
@@ -142,6 +157,98 @@ export class Ticket {
 
   static basicList(sources: Ticket[]): Ticket[] {
     return sources.map((i) => Ticket.basic(i))
+  }
+
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    ;(this.ticketUserList || []).forEach((i) => {
+      if (!this.ticketUserGroup[i.interactType]) {
+        this.ticketUserGroup[i.interactType] = {}
+      }
+      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
+        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
+  static refreshTreeData(
+    ticket: Ticket,
+    masterData: {
+      procedureMap?: Record<string, Procedure>
+      radiologyMap?: Record<string, Radiology>
+      laboratoryMap?: Record<string, Laboratory>
+      laboratoryGroupMap?: Record<string, LaboratoryGroup>
+    }
+  ) {
+    ;(ticket.ticketProcedureList || []).forEach((i) => {
+      if (masterData.procedureMap) {
+        i.procedure = masterData.procedureMap[i.procedureId]
+      }
+    })
+    ;(ticket.ticketLaboratoryList || []).forEach((tl) => {
+      if (masterData.laboratoryMap) {
+        tl.laboratory = masterData.laboratoryMap[tl.laboratoryId]
+      }
+      tl.ticketLaboratoryResult = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+        return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
+      })
+
+      if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
+        tl.children =
+          tl.laboratory?.children?.map((laboratoryChild) => {
+            let currentTlr = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+              return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
+            })
+            if (!currentTlr) {
+              currentTlr = TicketLaboratoryResult.blank()
+              currentTlr.laboratoryId = tl.laboratoryId
+              currentTlr.ticketLaboratoryId = tl.id
+              currentTlr.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
+            }
+            return {
+              laboratory: laboratoryChild,
+              ticketLaboratoryResult: currentTlr,
+            }
+          }) || []
+      }
+    })
+
+    if (!ticket.ticketLaboratoryGroupList) {
+      ticket.ticketLaboratoryGroupList = []
+    }
+    ticket.ticketLaboratoryGroupList.forEach((tlg) => {
+      if (masterData.laboratoryGroupMap) {
+        tlg.laboratoryGroup =
+          masterData.laboratoryGroupMap[tlg.laboratoryGroupId] || LaboratoryGroup.blank()
+      }
+      tlg.ticketLaboratoryList = (ticket.ticketLaboratoryList || []).filter((tl) => {
+        return tl.ticketLaboratoryGroupId === tlg.id
+      })
+    })
+
+    // === fix cho những xét nghiệm cũ chưa phân nhóm
+    const tlNoGroup = (ticket.ticketLaboratoryList || []).filter((tl) => {
+      return tl.ticketLaboratoryGroupId === 0
+    })
+    if (tlNoGroup.length) {
+      let tlgZero = ticket.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
+      if (!tlgZero) {
+        tlgZero = TicketLaboratoryGroup.blank()
+        tlgZero.laboratoryGroup = LaboratoryGroup.blank()
+        ticket.ticketLaboratoryGroupList.unshift(tlgZero)
+      }
+      tlgZero.ticketLaboratoryList = tlNoGroup
+    } else {
+      ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => !!i.id)
+    }
+    // === fix cho những xét nghiệm cũ chưa phân nhóm
+
+    ;(ticket.ticketRadiologyList || []).forEach((i) => {
+      if (masterData.radiologyMap) {
+        i.radiology = masterData.radiologyMap[i.radiologyId]
+      }
+    })
   }
 
   static from(source: Ticket) {
@@ -161,60 +268,72 @@ export class Ticket {
         : target.toAppointment
     }
 
-    if (target.ticketAttributeList) {
-      target.ticketAttributeList = TicketAttribute.basicList(target.ticketAttributeList)
-      target.ticketAttributeMap = TicketAttribute.basicMap(target.ticketAttributeList)
+    if (source.ticketAttributeList) {
+      target.ticketAttributeList = TicketAttribute.basicList(source.ticketAttributeList)
+      target.ticketAttributeMap = TicketAttribute.basicMap(source.ticketAttributeList)
+    }
+    if (source.ticketUserList) {
+      target.ticketUserList = TicketUser.basicList(source.ticketUserList)
+      target.refreshTicketUserGroup()
     }
 
-    if (target.customerPaymentList) {
-      target.customerPaymentList = CustomerPayment.basicList(target.customerPaymentList)
+    if (source.customerPaymentList) {
+      target.customerPaymentList = CustomerPayment.basicList(source.customerPaymentList)
     }
-    if (target.ticketProductList) {
-      target.ticketProductList = TicketProduct.basicList(target.ticketProductList)
+    if (source.ticketProductList) {
+      target.ticketProductList = TicketProduct.basicList(source.ticketProductList)
       target.ticketProductList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProductPrescriptionList) {
+    if (source.ticketProductPrescriptionList) {
       target.ticketProductPrescriptionList = TicketProduct.basicList(
-        target.ticketProductPrescriptionList
+        source.ticketProductPrescriptionList
       )
       target.ticketProductPrescriptionList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProductConsumableList) {
+    if (source.ticketProductConsumableList) {
       target.ticketProductConsumableList = TicketProduct.basicList(
-        target.ticketProductConsumableList
+        source.ticketProductConsumableList
       )
       target.ticketProductConsumableList.forEach((i) => {
         i.product = Product.basic(i.product!)
       })
     }
-    if (target.ticketProcedureList) {
-      target.ticketProcedureList = TicketProcedure.basicList(target.ticketProcedureList)
+    if (source.ticketProcedureList) {
+      target.ticketProcedureList = TicketProcedure.basicList(source.ticketProcedureList)
       target.ticketProcedureList.forEach((i) => {
         i.procedure = Procedure.basic(i.procedure!)
       })
     }
-    if (target.ticketLaboratoryList) {
-      target.ticketLaboratoryList = TicketLaboratory.basicList(target.ticketLaboratoryList)
+    if (source.ticketLaboratoryList) {
+      target.ticketLaboratoryList = TicketLaboratory.basicList(source.ticketLaboratoryList)
     }
-    if (target.ticketRadiologyList) {
-      target.ticketRadiologyList = TicketRadiology.basicList(target.ticketRadiologyList)
+    if (source.ticketLaboratoryGroupList) {
+      target.ticketLaboratoryGroupList = TicketLaboratoryGroup.basicList(
+        source.ticketLaboratoryGroupList
+      )
     }
-    if (target.ticketUserList) {
-      target.ticketUserList = TicketUser.basicList(target.ticketUserList)
+    if (source.ticketLaboratoryResultList) {
+      target.ticketLaboratoryResultList = TicketLaboratoryResult.basicList(
+        source.ticketLaboratoryResultList
+      )
     }
-    if (target.ticketSurchargeList) {
-      target.ticketSurchargeList = TicketSurcharge.basicList(target.ticketSurchargeList)
-    }
-    if (target.ticketExpenseList) {
-      target.ticketExpenseList = TicketExpense.basicList(target.ticketExpenseList)
+    if (source.ticketRadiologyList) {
+      target.ticketRadiologyList = TicketRadiology.basicList(source.ticketRadiologyList)
     }
 
-    if (target.imageList) {
-      target.imageList = Image.basicList(target.imageList)
+    if (source.ticketSurchargeList) {
+      target.ticketSurchargeList = TicketSurcharge.basicList(source.ticketSurchargeList)
+    }
+    if (source.ticketExpenseList) {
+      target.ticketExpenseList = TicketExpense.basicList(source.ticketExpenseList)
+    }
+
+    if (source.imageList) {
+      target.imageList = Image.basicList(source.imageList)
     }
     return target
   }
@@ -226,11 +345,12 @@ export class Ticket {
   static equal(a: Ticket, b: Ticket) {
     if (a.id != b.id) return false
     if (a.customerId != b.customerId) return false
+    if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
     if (a.ticketType != b.ticketType) return false
     if (a.ticketStatus != b.ticketStatus) return false
 
-    if (a.totalCostAmount != b.totalCostAmount) return false
+    if (a.itemsCostAmount != b.itemsCostAmount) return false
     if (a.procedureMoney != b.procedureMoney) return false
     if (a.productMoney != b.productMoney) return false
     if (a.radiologyMoney != b.radiologyMoney) return false
@@ -244,6 +364,7 @@ export class Ticket {
     if (a.surcharge != b.surcharge) return false
     if (a.totalMoney != b.totalMoney) return false
     if (a.expense != b.expense) return false
+    if (a.commissionMoney != b.commissionMoney) return false
     if (a.profit != b.profit) return false
     if (a.paid != b.paid) return false
     if (a.debt != b.debt) return false

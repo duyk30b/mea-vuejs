@@ -12,6 +12,7 @@ import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { ticket } from './ticket-order-upsert.ref'
+import VueTag from '../../../common/VueTag.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -231,18 +232,12 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                         </div>
                       </div>
                     </template>
-                    <a-tag
-                      v-if="ticketProcedure.discountType === 'VNĐ'"
-                      color="success"
-                      style="cursor: pointer; margin-top: -10px">
+                    <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
                       {{ formatMoney(ticketProcedure.discountMoney) }}
-                    </a-tag>
-                    <a-tag
-                      v-if="ticketProcedure.discountType === '%'"
-                      color="success"
-                      style="cursor: pointer; margin-top: -10px">
+                    </VueTag>
+                    <VueTag v-if="ticketProcedure.discountType === '%'" color="green">
                       {{ ticketProcedure.discountPercent || 0 }}%
-                    </a-tag>
+                    </VueTag>
                   </a-popconfirm>
                 </div>
                 <div>
@@ -428,18 +423,12 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                         </div>
                       </div>
                     </template>
-                    <a-tag
-                      v-if="ticketProduct.discountType === 'VNĐ'"
-                      color="success"
-                      style="cursor: pointer; margin-top: -10px">
-                      {{ formatMoney(ticketProduct.unitDiscountMoney) }}
-                    </a-tag>
-                    <a-tag
-                      v-if="ticketProduct.discountType === '%'"
-                      color="success"
-                      style="cursor: pointer; margin-top: -10px">
+                    <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
+                      {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
+                    </VueTag>
+                    <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                       {{ ticketProduct.discountPercent || 0 }}%
-                    </a-tag>
+                    </VueTag>
                   </a-popconfirm>
                 </div>
                 <div>
@@ -656,18 +645,12 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                     </div>
                   </div>
                 </template>
-                <a-tag
-                  v-if="ticketProcedure.discountType === 'VNĐ'"
-                  color="success"
-                  style="cursor: pointer">
+                <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
                   {{ formatMoney(ticketProcedure.discountMoney) }}
-                </a-tag>
-                <a-tag
-                  v-if="ticketProcedure.discountType === '%'"
-                  color="success"
-                  style="cursor: pointer">
+                </VueTag>
+                <VueTag v-if="ticketProcedure.discountType === '%'" color="green">
                   {{ ticketProcedure.discountPercent || 0 }}%
-                </a-tag>
+                </VueTag>
               </a-popconfirm>
             </td>
             <td class="text-center">
@@ -838,18 +821,12 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                     </div>
                   </div>
                 </template>
-                <a-tag
-                  v-if="ticketProduct.discountType === 'VNĐ'"
-                  color="success"
-                  style="cursor: pointer">
-                  {{ formatMoney(ticketProduct.unitDiscountMoney) }}
-                </a-tag>
-                <a-tag
-                  v-if="ticketProduct.discountType === '%'"
-                  color="success"
-                  style="cursor: pointer">
+                <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
+                  {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
+                </VueTag>
+                <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                   {{ ticketProduct.discountPercent || 0 }}%
-                </a-tag>
+                </VueTag>
               </a-popconfirm>
             </td>
 

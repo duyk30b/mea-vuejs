@@ -1,50 +1,49 @@
-import { DiscountType } from '../enum'
+import { CommissionCalculatorType, InteractType } from '../commission'
+import type { Role } from '../role'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
-
-export enum TicketUserReferenceType {
-  Ticket = 1,
-  TicketProcedure = 2,
-  TicketProduct = 3,
-  TicketRadiology = 4,
-}
-
-export enum TicketUserType {
-  Welcomer = 1, // Nhân viên tiếp đón
-  Doctor = 2, // Bác sĩ hoặc người phụ trách
-  ProcedureSales = 3, // Sale chốt dịch vụ
-  ProcedureTechnicianPrimary = 4, // Kỹ thuật viên chính
-  ProcedureTechnicianSecondary = 5, // Kỹ thuật viên chính
-  RadiologyDoctor = 6, // Bác sĩ thực hiện cận lâm sàng
-}
 
 export class TicketUser {
   id: number
   ticketId: number
+  roleId: number
   userId: number
-  referenceId: number
-  referenceType: TicketUserReferenceType
-  ticketUserType: TicketUserType
 
-  bolusMoney: number
-  bolusPercent: number
-  bolusType: DiscountType
+  interactType: InteractType
+  interactId: number // procedureId hoặc productId hoặc radiologyId
 
-  createdAt: number
+  ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
+  ticketItemExpectedPrice: number
+  ticketItemActualPrice: number
+
+  quantity: number
+
+  commissionCalculatorType: CommissionCalculatorType
+  commissionPercentActual: number
+  commissionPercentExpected: number
+  commissionMoney: number
+
+  createdAt!: number
 
   ticket?: Ticket
   user?: User
+  role?: Role
 
   static init(): TicketUser {
     const ins = new TicketUser()
     ins.id = 0
     ins.ticketId = 0
     ins.userId = 0
-    ins.referenceId = 0
+    ins.roleId = 0
 
-    ins.bolusMoney = 0
-    ins.bolusPercent = 0
-    ins.bolusType = DiscountType.Percent
+    ins.interactType = InteractType.Ticket
+    ins.interactId = 0
+    ins.ticketItemId = 0
+
+    ins.commissionCalculatorType = CommissionCalculatorType.VND
+    ins.commissionMoney = 0
+    ins.commissionPercentActual = 0
+    ins.commissionPercentExpected = 0
 
     return ins
   }
@@ -80,5 +79,34 @@ export class TicketUser {
 
   static fromList(sourceList: TicketUser[]): TicketUser[] {
     return sourceList.map((i) => TicketUser.from(i))
+  }
+
+  static equal(a: TicketUser, b: TicketUser) {
+    if (a.id != b.id) return false
+    if (a.ticketId != b.ticketId) return false
+    if (a.roleId != b.roleId) return false
+    if (a.userId != b.userId) return false
+
+    if (a.interactType != b.interactType) return false
+    if (a.interactId != b.interactId) return false
+    if (a.ticketItemId != b.ticketItemId) return false
+
+    if (a.quantity != b.quantity) return false
+
+    if (a.commissionCalculatorType != b.commissionCalculatorType) return false
+    if (a.commissionPercentActual != b.commissionPercentActual) return false
+    if (a.commissionPercentExpected != b.commissionPercentExpected) return false
+    if (a.commissionMoney != b.commissionMoney) return false
+    return true
+  }
+
+  static equalList(a: TicketUser[], b: TicketUser[]) {
+    if (a.length != b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      if (!TicketUser.equal(a[i], b[i])) {
+        return false
+      }
+    }
+    return true
   }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ShoppingCartOutlined } from '@ant-design/icons-vue'
+import { IconClock, IconShoppingCart } from '../../common/icon'
+import VueTag from '../../common/VueTag.vue'
 import { DeliveryStatus } from '../../modules/enum'
 
 const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
@@ -8,24 +9,20 @@ const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
 </script>
 
 <template>
-  <a-tag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
+  <VueTag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
+    <IconShoppingCart />
+    <span>Không có thuốc - vật tư</span>
+  </VueTag>
+  <VueTag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="orange" icon="clock">
     <template #icon>
-      <ShoppingCartOutlined />
-    </template>
-    Không có thuốc - vật tư
-  </a-tag>
-  <a-tag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="warning">
-    <template #icon>
-      <ShoppingCartOutlined />
+      <IconClock />
     </template>
     Chưa xuất thuốc - vật tư
-  </a-tag>
-  <a-tag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="success">
-    <template #icon>
-      <ShoppingCartOutlined />
-    </template>
-    Đã xuất thuốc - vật tư
-  </a-tag>
+  </VueTag>
+  <VueTag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="green">
+    <IconShoppingCart />
+    <span>Đã xuất thuốc - vật tư</span>
+  </VueTag>
 </template>
 
 <style lang="scss" scoped></style>

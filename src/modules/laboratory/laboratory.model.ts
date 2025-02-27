@@ -13,6 +13,7 @@ export class Laboratory {
 
   name: string
   laboratoryGroupId: number
+  costPrice: number
   price: number
 
   level: number
@@ -36,6 +37,7 @@ export class Laboratory {
     ins.name = ''
     ins.laboratoryGroupId = 0
     ins.price = 0
+    ins.costPrice = 0
     ins.level = 1
     ins.parentId = 0
     ins.lowValue = 0
@@ -91,6 +93,7 @@ export class Laboratory {
     if (a.name != b.name) return false
     if (a.laboratoryGroupId != b.laboratoryGroupId) return false
     if (a.price != b.price) return false
+    if (a.costPrice != b.costPrice) return false
 
     if (a.level != b.level) return false
     if (a.parentId != b.parentId) return false

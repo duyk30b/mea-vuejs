@@ -364,7 +364,7 @@ const handleFocusFirstSearchCustomer = async () => {
             <td>
               <div>
                 {{ appointment.customer?.fullName }}
-                <a class="ml-1" @click="modalCustomerDetail?.openModal(appointment.customer!)">
+                <a class="ml-1" @click="modalCustomerDetail?.openModal(appointment.customerId)">
                   <IconFileSearch />
                 </a>
               </div>

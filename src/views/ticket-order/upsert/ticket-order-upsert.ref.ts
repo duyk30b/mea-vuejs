@@ -5,13 +5,13 @@ import { Ticket } from '../../../modules/ticket'
 export const ticket = ref<Ticket>(Ticket.blank())
 
 watchEffect(() => {
-  let totalCostAmount = 0
+  let itemsCostAmount = 0
   let productMoney = 0
   let procedureMoney = 0
   let itemsDiscount = 0
 
   ticket.value.ticketProductList?.forEach((item) => {
-    totalCostAmount += item.batch!.costPrice * item.quantity
+    itemsCostAmount += item.batch!.costPrice * item.quantity
     productMoney += item.actualPrice * item.quantity
     itemsDiscount += item.discountMoney * item.quantity
   })
@@ -40,9 +40,9 @@ watchEffect(() => {
   const surcharge = ticket.value.surcharge || 0
   const expense = ticket.value.expense || 0
   const totalMoney = itemsActualMoney - discountMoney + surcharge
-  const profit = totalMoney - totalCostAmount - expense
+  const profit = totalMoney - itemsCostAmount - expense
 
-  ticket.value.totalCostAmount = totalCostAmount
+  ticket.value.itemsCostAmount = itemsCostAmount
   ticket.value.productMoney = productMoney
   ticket.value.procedureMoney = procedureMoney
   ticket.value.itemsActualMoney = itemsActualMoney

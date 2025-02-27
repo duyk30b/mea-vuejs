@@ -178,6 +178,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             <th>STT</th>
             <th>Tên</th>
             <th>Nhóm</th>
+            <th>Giá vốn</th>
             <th>Giá tiền</th>
             <th>Action</th>
           </tr>
@@ -214,6 +215,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
               </div>
             </td>
             <td class="text-center">{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
+            <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
               <a

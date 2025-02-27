@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { TicketType, type Ticket } from '../../../modules/ticket'
 import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
 import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
+import VueTag from '../../../common/VueTag.vue'
 
 const props = defineProps<{ ticket?: Ticket; ticketId?: number }>()
 
@@ -28,12 +29,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 
 <template>
   <div v-if="!ticket" style="font-size: 0.8rem">
-    <a-tag color="default">
-      <template #icon>
-        <ExclamationCircleOutlined />
-      </template>
-      T{{ ticketId }} - Bị xóa
-    </a-tag>
+    <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
   </div>
   <div v-else-if="ticket!.ticketType === TicketType.Order" style="font-size: 0.8rem">
     <a style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">

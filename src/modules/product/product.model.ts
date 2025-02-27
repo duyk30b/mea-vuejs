@@ -1,4 +1,5 @@
 import { Batch } from '../batch/batch.model'
+import { Commission } from '../commission'
 import type { UnitType } from '../enum'
 import { ProductGroup } from '../product-group'
 
@@ -28,6 +29,7 @@ export class Product {
 
   batchList?: Batch[]
   productGroup?: ProductGroup
+  commissionList?: Commission[]
 
   get unitObject(): UnitType[] {
     return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
@@ -115,6 +117,7 @@ export class Product {
   static blank(): Product {
     const ins = Product.init()
     ins.batchList = []
+    ins.commissionList = []
 
     return ins
   }
@@ -140,8 +143,11 @@ export class Product {
         ? ProductGroup.basic(target.productGroup)
         : target.productGroup
     }
-    if (source.batchList) {
-      target.batchList = Batch.basicList(source.batchList)
+    if (target.batchList) {
+      target.batchList = Batch.basicList(target.batchList)
+    }
+    if (target.commissionList) {
+      target.commissionList = Commission.basicList(target.commissionList)
     }
 
     try {
@@ -154,5 +160,29 @@ export class Product {
 
   static fromList(sourceList: Product[]): Product[] {
     return sourceList.map((i) => Product.from(i))
+  }
+
+  static equal(a: Product, b: Product) {
+    if (a.id != b.id) return false
+    if (a.brandName != b.brandName) return false
+    if (a.substance != b.substance) return false
+
+    if (a.productGroupId != b.productGroupId) return false
+    if (a.unit != b.unit) return false
+    if (a.route != b.route) return false
+    if (a.source != b.source) return false
+    if (a.image != b.image) return false
+    if (a.hintUsage != b.hintUsage) return false
+
+    if (a.quantity != b.quantity) return false
+    if (a.costPrice != b.costPrice) return false
+    if (a.wholesalePrice != b.wholesalePrice) return false
+    if (a.retailPrice != b.retailPrice) return false
+
+    if (a.warehouseIds != b.warehouseIds) return false
+    if (a.hasManageQuantity != b.hasManageQuantity) return false
+    if (a.isActive != b.isActive) return false
+    if (a.updatedAt != b.updatedAt) return false
+    return true
   }
 }

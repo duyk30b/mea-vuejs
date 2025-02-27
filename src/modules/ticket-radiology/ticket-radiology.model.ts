@@ -12,10 +12,12 @@ export enum TicketRadiologyStatus {
 }
 export class TicketRadiology {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   radiologyId: number
 
+  costPrice: number
   expectedPrice: number
   discountMoney: number
   discountPercent: number
@@ -100,10 +102,12 @@ export class TicketRadiology {
 
   static equal(a: TicketRadiology, b: TicketRadiology) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.radiologyId != b.radiologyId) return false
 
+    if (a.costPrice != b.costPrice) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

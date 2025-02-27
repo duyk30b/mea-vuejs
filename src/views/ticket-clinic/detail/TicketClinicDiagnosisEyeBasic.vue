@@ -5,6 +5,7 @@ import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
@@ -98,19 +99,20 @@ const saveTicketDiagnosis = async () => {
         .filter((i) => !!i.value)
     }
 
-    await TicketClinicApi.updateDiagnosis({
-      ticketId: ticketClinicRef.value.id,
-      files,
-      imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
-      ticketAttributeChangeList,
-      ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
-      customerChange: hasChangeCustomer.value
-        ? {
-            customerId: ticketClinicRef.value.customerId,
+    await Promise.all([
+      TicketClinicApi.updateDiagnosis({
+        ticketId: ticketClinicRef.value.id,
+        files,
+        imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+        ticketAttributeChangeList,
+        ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
+      }),
+      hasChangeCustomer.value
+        ? CustomerService.updateOne(ticketClinicRef.value.customerId, {
             healthHistory: ticketAttributeMap.value.healthHistory,
-          }
+          })
         : undefined,
-    })
+    ])
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:115 ~ saveTicketDiagnosis:', error)
   } finally {
@@ -223,9 +225,7 @@ defineExpose({ getDataTicketDiagnosis })
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_BASIC]
-        "
+        v-if="ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

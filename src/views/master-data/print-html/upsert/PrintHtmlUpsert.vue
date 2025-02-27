@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
-import VueButton from '../../../../common/VueButton.vue'
 import { IconPrint } from '../../../../common/icon'
+import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { InputText } from '../../../../common/vue-form'
+import VueButton from '../../../../common/VueButton.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
 import { printHtmlCompiledTemplate } from '../../../../modules/print-html/print-html.compiled'
+import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Ticket } from '../../../../modules/ticket'
 import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
+import { DDom } from '../../../../utils'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
-import { DDom } from '../../../../utils'
-import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -28,13 +31,17 @@ const router = useRouter()
 const meStore = useMeStore()
 const organization = meStore.organization
 
+let procedureMap: Record<string, Procedure> = {}
 let laboratoryMap: Record<string, Laboratory> = {}
+let laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
+let radiologyMap: Record<string, Radiology> = {}
 
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
 const saveLoading = ref(false)
 
 const ticketMap: Record<string, Ticket> = {}
+const dataStringExample = ref<string>('')
 
 onBeforeMount(async () => {
   const printHtmlId = Number(route.params.id)
@@ -43,7 +50,17 @@ onBeforeMount(async () => {
   } else {
     printHtml.value = PrintHtml.blank()
   }
-  laboratoryMap = await LaboratoryService.getMap()
+
+  const fetchData = await Promise.all([
+    ProcedureService.getMap(),
+    LaboratoryService.getMap(),
+    LaboratoryGroupService.getMap(),
+    RadiologyService.getMap(),
+  ])
+  procedureMap = fetchData[0]
+  laboratoryMap = fetchData[1]
+  laboratoryGroupMap = fetchData[2]
+  radiologyMap = fetchData[3]
 })
 
 const handleSave = async () => {
@@ -67,14 +84,22 @@ const handleSave = async () => {
 const updatePreview = () => {
   if (!ticketDemo.value.id) return
   if (!iframe.value) return
+  let data = {}
+  const ticket = ticketDemo.value
+  try {
+    eval(printHtml.value.dataExample)
+    dataStringExample.value = JSON.stringify(data, null, 2)
+  } catch (error) {
+    console.log('🚀 ~ PrintHtmlUpsert.vue:93 ~ updatePreview ~ error:', error)
+  }
+
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
   const textDom = printHtmlCompiledTemplate({
     organization,
-    ticket: ticketDemo.value,
-    data: JSON.parse(printHtml.value.dataExample || '{}'),
-    masterData: { laboratoryMap },
+    ticket,
+    data,
     printHtml: printHtml.value,
   })
 
@@ -96,14 +121,23 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
         // ticketProductList: true,
         ticketProductConsumableList: { product: true, batch: true },
         ticketProductPrescriptionList: { product: true, batch: true },
-        ticketProcedureList: { procedure: true },
-        ticketRadiologyList: { radiology: true },
+        ticketProcedureList: {},
         ticketLaboratoryList: {},
-
-        ticketUserList: { user: true },
+        ticketLaboratoryGroupList: {},
+        ticketLaboratoryResultList: true,
+        ticketRadiologyList: {},
+        ticketUserList: {},
         toAppointment: true,
       },
     })
+
+    Ticket.refreshTreeData(ticketResponse, {
+      procedureMap,
+      laboratoryMap,
+      laboratoryGroupMap,
+      radiologyMap,
+    })
+
     ticketMap[ticketDemoId] = ticketResponse
     ticketDemo.value = ticketResponse
   }
@@ -119,11 +153,18 @@ const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
 
 const startTestPrint = async () => {
   try {
+    let data = {}
+    const ticket = ticketDemo.value
+    try {
+      eval(printHtml.value.dataExample)
+    } catch (error) {
+      console.log('🚀 ~ PrintHtmlUpsert.vue:163 ~ startTestPrint ~ error:', error)
+    }
+
     const textDom = printHtmlCompiledTemplate({
       organization,
-      ticket: ticketDemo.value,
-      data: JSON.parse(printHtml.value.dataExample || '{}'),
-      masterData: { laboratoryMap },
+      ticket,
+      data,
       printHtml: printHtml.value,
     })
 
@@ -148,8 +189,8 @@ const startTestPrint = async () => {
     </div>
   </div>
 
-  <form class="md:mx-4 mt-4 p-4 bg-white flex flex-wrap gap-4" @submit.prevent="handleSave">
-    <div style="flex-basis: 90%; flex-grow: 1">
+  <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
+    <div>
       <div class="flex gap-4 justify-start">
         <span>Tên mẫu in</span>
       </div>
@@ -158,51 +199,68 @@ const startTestPrint = async () => {
       </div>
     </div>
 
-    <div style="flex-basis: 600px; flex-grow: 1; height: 600px" class="flex flex-col">
-      <div>
-        <span>Tùy chỉnh hiển thị</span>
-        <span>
-          <a @click="modalSelectPrintHtmlExample?.openModal()">
-            ( Click vào để lấy từ danh sách mẫu in )
-          </a>
-        </span>
+    <div
+      class="mt-4"
+      style="
+        display: grid;
+        grid-template-areas: 'content viewer' 'variable dataText' 'getData dataText';
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: 600px 200px 200px;
+        gap: 16px;
+      ">
+      <div style="grid-area: content" class="flex flex-col">
+        <div>
+          <span>Tùy chỉnh hiển thị</span>
+          <span>
+            <a @click="modalSelectPrintHtmlExample?.openModal()">
+              ( Click vào để lấy từ danh sách mẫu in )
+            </a>
+          </span>
+        </div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor v-model:value="printHtml!.content" @update:value="updatePreview" />
+        </div>
       </div>
-      <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-        <MonacoEditor v-model:value="printHtml!.content" @update:value="updatePreview" />
+
+      <div style="grid-area: viewer" class="flex flex-col">
+        <div class="flex justify-between">
+          <a @click="modalSelectTicketExample?.openModal()">Xem thử</a>
+          <a @click="startTestPrint">In thử</a>
+        </div>
+        <div style="flex-grow: 3">
+          <iframe ref="iframe" class="preview-iframe" style="width: 100%; height: 100%"></iframe>
+        </div>
+      </div>
+
+      <div style="grid-area: variable" class="flex flex-col">
+        <div>Tùy chỉnh biến</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor
+            v-model:value="printHtml!.initVariable"
+            language="javascript"
+            @update:value="updatePreview" />
+        </div>
+      </div>
+
+      <div style="grid-area: getData" class="flex flex-col">
+        <div>Cách lấy "data"</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor
+            v-model:value="printHtml!.dataExample"
+            language="json"
+            @update:value="updatePreview" />
+        </div>
+      </div>
+
+      <div style="grid-area: dataText; overflow: scroll" class="flex flex-col">
+        <div>"data"</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor :value="dataStringExample" language="json" />
+        </div>
       </div>
     </div>
 
-    <div style="flex-basis: 600px; flex-grow: 1; height: 600px" class="flex flex-col">
-      <div class="flex justify-between">
-        <a @click="modalSelectTicketExample?.openModal()">Xem thử</a>
-        <a @click="startTestPrint">In thử</a>
-      </div>
-      <div style="flex-grow: 3">
-        <iframe ref="iframe" class="preview-iframe" style="width: 100%; height: 100%"></iframe>
-      </div>
-    </div>
-
-    <div style="flex-basis: 600px; flex-grow: 1; height: 300px" class="flex flex-col">
-      <div>Tùy chỉnh biến</div>
-      <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-        <MonacoEditor
-          v-model:value="printHtml!.initVariable"
-          language="javascript"
-          @update:value="updatePreview" />
-      </div>
-    </div>
-
-    <div style="flex-basis: 600px; flex-grow: 1; height: 300px" class="flex flex-col">
-      <div>Dữ liệu giả định</div>
-      <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-        <MonacoEditor
-          v-model:value="printHtml!.dataExample"
-          language="json"
-          @update:value="updatePreview" />
-      </div>
-    </div>
-
-    <div style="flex-basis: 90%; flex-grow: 1" class="mt-4 flex justify-between">
+    <div class="mt-4 flex justify-between">
       <div></div>
       <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
     </div>

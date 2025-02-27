@@ -70,6 +70,7 @@ export class User {
       target.userRoleList = UserRole.basicList(target.userRoleList)
       target.userRoleList.forEach((userRole) => {
         userRole.role = userRole.role ? Role.basic(userRole.role) : userRole.role
+        userRole.user = userRole.user ? User.basic(userRole.user) : userRole.user
       })
     }
     if (target.devices) {

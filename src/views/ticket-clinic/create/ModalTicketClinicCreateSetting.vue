@@ -3,12 +3,15 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputText } from '../../../common/vue-form'
+import { InputCheckbox, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
+import { CommissionService, InteractType } from '../../../modules/commission'
 import { OrganizationService } from '../../../modules/organization'
+import { RoleService } from '../../../modules/role'
+import { TicketStatus } from '../../../modules/ticket'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -21,6 +24,9 @@ const store = useSettingStore()
 const settingDisplay = ref<typeof store.TICKET_CLINIC_CREATE>(
   JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
 )
+
+const roleOptions = ref<{ value: number; label: string }[]>([])
+
 const activeTab = ref(TABS_KEY.BASIC)
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -28,6 +34,12 @@ const saveLoading = ref(false)
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
+  const fetchData = await Promise.all([
+    RoleService.getMap(),
+    CommissionService.list({ filter: { interactType: InteractType.Ticket } }),
+  ])
+  const roleMap = fetchData[0]
+  roleOptions.value = fetchData[1].map((i) => ({ value: i.roleId, label: roleMap[i.roleId]?.name }))
 }
 
 const closeModal = () => {
@@ -39,7 +51,7 @@ const handleSave = async () => {
   try {
     const settingData = JSON.stringify(settingDisplay.value)
     await OrganizationService.saveSettings(SettingKey.TICKET_CLINIC_CREATE, settingData)
-    AlertStore.addSuccess('Cập nhật cài đặt thành công', 1000)
+    AlertStore.addSuccess('Cập nhật cài đặt thành công', 500)
     store.TICKET_CLINIC_CREATE = JSON.parse(settingData)
 
     emit('success')
@@ -81,52 +93,78 @@ defineExpose({ openModal })
                   </thead>
                   <tbody>
                     <tr>
+                      <td style="width: 30%">Hiển thị vai trò</td>
+                      <td>
+                        <div>
+                          <a-select
+                            v-model:value="settingDisplay.roleIdList"
+                            mode="multiple"
+                            style="width: 100%"
+                            placeholder="Chọn vai trò hiển thị"
+                            :options="roleOptions"></a-select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Trạng thái sau khi tiếp đón</td>
+                      <td>
+                        <div>
+                          <VueSelect
+                            v-model:value="settingDisplay.ticketStatus"
+                            :options="[
+                              { value: TicketStatus.Draft, text: 'Chờ khám' },
+                              { value: TicketStatus.Executing, text: 'Vào khám' },
+                            ]" />
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.birthday">
+                        <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.gender">
+                        <InputCheckbox v-model:checked="settingDisplay.gender">
                           Hiển thị điền giới tính
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressFull">
+                        <InputCheckbox v-model:checked="settingDisplay.addressFull">
                           Hiển thị điền địa chỉ đầy đủ
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressBasic">
+                        <InputCheckbox v-model:checked="settingDisplay.addressBasic">
                           Hiển thị điền địa chỉ cơ bản
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.relative">
+                        <InputCheckbox v-model:checked="settingDisplay.relative">
                           Hiển thị điền liên hệ khác
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.note">
+                        <InputCheckbox v-model:checked="settingDisplay.note">
                           Hiển thị điền ghi chú
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.customerSource">
+                        <InputCheckbox v-model:checked="settingDisplay.customerSource">
                           Hiển thị điền nguồn khách hàng
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>

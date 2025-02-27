@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
+import VueTag from '../../../common/VueTag.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketStatus } from '../../../modules/ticket'
 import { timeToText } from '../../../utils'
@@ -208,18 +209,12 @@ const colspan = computed(() => {
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
               class="text-center">
-              <a-tag
-                v-if="ticketProcedure.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
+              <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
                 {{ formatMoney(ticketProcedure.discountMoney) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketProcedure.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
+              </VueTag>
+              <VueTag v-if="ticketProcedure.discountType === '%'" color="green">
                 {{ ticketProcedure.discountPercent || 0 }}%
-              </a-tag>
+              </VueTag>
             </td>
             <td class="text-right">
               <div
@@ -280,18 +275,12 @@ const colspan = computed(() => {
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
               class="text-center">
-              <a-tag
-                v-if="ticketProduct.discountType === 'VNĐ'"
-                color="success"
-                style="cursor: pointer">
+              <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
                 {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
-              </a-tag>
-              <a-tag
-                v-if="ticketProduct.discountType === '%'"
-                color="success"
-                style="cursor: pointer">
+              </VueTag>
+              <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                 {{ ticketProduct.discountPercent || 0 }}%
-              </a-tag>
+              </VueTag>
             </td>
             <td class="text-right">
               <div
@@ -315,7 +304,10 @@ const colspan = computed(() => {
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsActualMoney">
           <td class="text-right font-medium" :colspan="colspan">Tiền hàng</td>
           <td class="text-right" :colspan="2">
-            <span v-if="ticket.itemsDiscount" style="font-style: italic; font-size: 13px" class="mr-2">
+            <span
+              v-if="ticket.itemsDiscount"
+              style="font-style: italic; font-size: 13px"
+              class="mr-2">
               (CK: {{ formatMoney(ticket.itemsDiscount) }})
             </span>
             <span class="font-medium">
@@ -326,7 +318,7 @@ const colspan = computed(() => {
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || ticket.discountMoney">
           <td class="text-right" :colspan="colspan">Chiết khấu</td>
           <td class="text-right" :colspan="2">
-            <a-tag color="success">{{ ticket.discountPercent || 0 }}%</a-tag>
+            <VueTag color="green">{{ ticket.discountPercent || 0 }}%</VueTag>
             <span class="ml-2">
               {{ formatMoney(ticket.discountMoney) }}
             </span>
@@ -359,10 +351,10 @@ const colspan = computed(() => {
             {{ formatMoney(ticket.totalMoney) }}
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.totalCostAmount">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount">
           <td class="text-right" :colspan="colspan">Tiền vốn</td>
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.totalCostAmount) }}
+            {{ formatMoney(ticket.itemsCostAmount) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.expense">

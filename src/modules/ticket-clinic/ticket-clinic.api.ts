@@ -2,64 +2,94 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 import type { DiscountType } from '../enum'
-import type { TicketLaboratory } from '../ticket-laboratory'
-import type { TicketProcedure } from '../ticket-procedure'
-import type { TicketProduct } from '../ticket-product'
-import type { TicketRadiology } from '../ticket-radiology'
-import { Ticket, TicketStatus, type TicketType } from '../ticket/ticket.model'
+import type { TicketUser } from '../ticket-user'
+import type { TicketStatus, TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async create(body: {
-    customerId: number
-    fromAppointmentId: number
     customer?: Customer
-    ticket: {
+    ticketInformation: {
       ticketType: TicketType
       ticketStatus: TicketStatus
+      customType: number
       customerSourceId: number
       registeredAt: number
+      customerId: number
+      fromAppointmentId: number
     }
     ticketAttributeList: { key: string; value: any }[]
+    ticketUserList: TicketUser[]
   }) {
+    const { customer, ticketInformation, ticketAttributeList, ticketUserList } = body
     const response = await AxiosInstance.post('/ticket-clinic/create', {
-      customerId: body.customerId,
-      fromAppointmentId: body.fromAppointmentId,
       customer:
-        body.customerId === 0 && body.customer
+        !ticketInformation.customerId && customer
           ? {
-              fullName: body.customer.fullName,
-              phone: body.customer.phone,
-              birthday: body.customer.birthday,
-              yearOfBirth: body.customer.yearOfBirth,
-              gender: body.customer.gender,
-              addressProvince: body.customer.addressProvince,
-              addressDistrict: body.customer.addressDistrict,
-              addressWard: body.customer.addressWard,
-              addressStreet: body.customer.addressStreet,
-              relative: body.customer.relative,
-              healthHistory: body.customer.healthHistory,
-              customerSourceId: body.customer.customerSourceId || 0,
-              note: body.customer.note,
-              isActive: body.customer.isActive,
+              fullName: customer.fullName,
+              phone: customer.phone,
+              birthday: customer.birthday,
+              yearOfBirth: customer.yearOfBirth,
+              gender: customer.gender,
+              addressProvince: customer.addressProvince,
+              addressDistrict: customer.addressDistrict,
+              addressWard: customer.addressWard,
+              addressStreet: customer.addressStreet,
+              relative: customer.relative,
+              healthHistory: customer.healthHistory,
+              customerSourceId: customer.customerSourceId || 0,
+              note: customer.note,
+              isActive: customer.isActive,
             }
           : undefined,
-      ticket: {
-        customerSourceId: body.ticket.customerSourceId || 0,
-        ticketType: body.ticket.ticketType,
-        ticketStatus: body.ticket.ticketStatus,
-        registeredAt: body.ticket.registeredAt,
+      ticketInformation: {
+        customerId: ticketInformation.customerId || 0,
+        fromAppointmentId: ticketInformation.fromAppointmentId,
+        customType: ticketInformation.customType,
+        customerSourceId: ticketInformation.customerSourceId || 0,
+        ticketType: ticketInformation.ticketType,
+        ticketStatus: ticketInformation.ticketStatus,
+        registeredAt: ticketInformation.registeredAt,
       },
       ticketAttributeList: body.ticketAttributeList.map((i) => {
         return { key: i.key, value: i.value }
       }),
+      ticketUserList: body.ticketUserList.map((i) => {
+        return { userId: i.userId || 0, roleId: i.roleId }
+      }),
     })
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return Ticket.from(data.ticket)
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async update(body: {
+    ticketId: number
+    ticketInformation: {
+      customType: number
+      customerSourceId: number
+      registeredAt: number
+    }
+    ticketAttributeList: { key: string; value: any }[]
+    ticketUserList: TicketUser[]
+  }) {
+    const { ticketId, ticketInformation, ticketAttributeList, ticketUserList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update`, {
+      ticketInformation: {
+        customType: ticketInformation.customType,
+        customerSourceId: ticketInformation.customerSourceId || 0,
+        registeredAt: ticketInformation.registeredAt,
+      },
+      ticketAttributeList: ticketAttributeList.map((i) => {
+        return { key: i.key, value: i.value != null ? i.value : '' }
+      }),
+      ticketUserList: ticketUserList.map((i) => {
+        return { userId: i.userId || 0, roleId: i.roleId }
+      }),
+    })
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async startCheckup(params: { ticketId: number }) {
     const response = await AxiosInstance.post(`/ticket-clinic/${params.ticketId}/start-checkup`)
-    const { data } = response.data as BaseResponse<{ ticket: any }>
+    const { data } = response.data as BaseResponse<boolean>
   }
 
   static async updateDiagnosis(options: {
@@ -71,12 +101,8 @@ export class TicketClinicApi {
     }
     ticketAttributeChangeList?: { key: string; value: any }[]
     ticketAttributeKeyList: string[]
-    customerChange?: {
-      customerId: number
-      healthHistory: string
-    }
   }) {
-    const { ticketId, customerChange, imagesChange, ticketAttributeChangeList, files } = options
+    const { ticketId, imagesChange, ticketAttributeChangeList, files } = options
 
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
@@ -98,14 +124,6 @@ export class TicketClinicApi {
       formData.append('ticketAttributeChangeList', ticketAttributeChangeListStr)
     }
 
-    if (customerChange) {
-      const customerChangeStr = JSON.stringify({
-        customerId: customerChange.customerId,
-        healthHistory: customerChange.healthHistory,
-      })
-      formData.append('customerChange', customerChangeStr)
-    }
-
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/update-diagnosis`,
       formData,
@@ -116,220 +134,6 @@ export class TicketClinicApi {
       }
     )
     const { data } = response.data as BaseResponse<boolean>
-  }
-
-  static async updateTicketProcedureList(body: {
-    ticketId: number
-    customerId: number
-    ticketProcedureList: TicketProcedure[]
-  }) {
-    const { ticketId, customerId, ticketProcedureList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-procedure-list`,
-      {
-        customerId: customerId,
-        ticketProcedureList: ticketProcedureList.map((i) => ({
-          procedureId: i.procedureId,
-          quantity: i.quantity,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-        })),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async updateTicketLaboratoryList(body: {
-    ticketId: number
-    customerId: number
-    ticketLaboratoryList: TicketLaboratory[]
-  }) {
-    const { ticketId, customerId, ticketLaboratoryList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-laboratory-list`,
-      {
-        customerId: customerId,
-        ticketLaboratoryList: ticketLaboratoryList.map((i) => {
-          const plain: { [P in keyof TicketLaboratory]?: any } = {}
-          plain.laboratoryId = i.laboratoryId
-          plain.expectedPrice = i.expectedPrice
-          plain.discountMoney = i.discountMoney
-          plain.discountPercent = i.discountPercent
-          plain.discountType = i.discountType
-          plain.actualPrice = i.actualPrice
-          return plain
-        }),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async updateTicketRadiologyList(body: {
-    ticketId: number
-    customerId: number
-    ticketRadiologyList: TicketRadiology[]
-  }) {
-    const { ticketId, customerId, ticketRadiologyList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-radiology-list`,
-      {
-        customerId: customerId,
-        ticketRadiologyList: ticketRadiologyList.map((i) => {
-          const plain: { [P in keyof TicketRadiology]?: any } = {}
-          plain.radiologyId = i.radiologyId
-          plain.expectedPrice = i.expectedPrice
-          plain.discountMoney = i.discountMoney
-          plain.discountPercent = i.discountPercent
-          plain.discountType = i.discountType
-          plain.actualPrice = i.actualPrice
-          return plain
-        }),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async updateTicketProductConsumable(body: {
-    ticketId: number
-    ticketProductConsumableList: TicketProduct[]
-  }) {
-    const { ticketId, ticketProductConsumableList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-product-consumable`,
-      {
-        ticketProductConsumableList: ticketProductConsumableList.map((i) => ({
-          productId: i.productId,
-          batchId: i.batchId,
-          warehouseId: i.warehouseId,
-          unitRate: i.unitRate,
-          quantity: i.quantity,
-          costPrice: i.costPrice,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-        })),
-      }
-    )
-    const { data } = response.data as BaseResponse
-  }
-
-  static async updateTicketProductPrescription(body: {
-    ticketId: number
-    ticketProductPrescriptionList?: TicketProduct[]
-    ticketAttributeChangeList?: { key: string; value: any }[]
-    ticketAttributeKeyList: string[]
-  }) {
-    const {
-      ticketId,
-      ticketProductPrescriptionList,
-      ticketAttributeChangeList,
-      ticketAttributeKeyList,
-    } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-product-prescription`,
-      {
-        ticketProductPrescriptionList: ticketProductPrescriptionList
-          ? ticketProductPrescriptionList.map((i) => ({
-              productId: i.productId,
-              batchId: i.batchId,
-              warehouseId: i.warehouseId,
-              unitRate: i.unitRate,
-              quantityPrescription: i.quantityPrescription,
-              quantity: i.quantity,
-              costPrice: i.costPrice,
-              expectedPrice: i.expectedPrice,
-              discountMoney: i.discountMoney,
-              discountPercent: i.discountPercent,
-              discountType: i.discountType,
-              actualPrice: i.actualPrice,
-              hintUsage: i.hintUsage,
-            }))
-          : undefined,
-        ticketAttributeKeyList: ticketAttributeKeyList || undefined,
-        ticketAttributeChangeList:
-          ticketAttributeChangeList?.map((i) => {
-            return { key: i.key, value: i.value }
-          }) || undefined,
-      }
-    )
-    const { data } = response.data as BaseResponse<boolean>
-  }
-
-  static async updateItemsMoney(body: {
-    ticketId: number
-    itemsActualMoney: number
-    discountMoney: number
-    discountPercent: number
-    discountType: DiscountType
-    ticketProductList: TicketProduct[]
-    ticketProcedureList: TicketProcedure[]
-    ticketLaboratoryList: TicketLaboratory[]
-    ticketRadiologyList: TicketRadiology[]
-  }) {
-    const {
-      ticketId,
-      ticketProductList,
-      ticketProcedureList,
-      ticketRadiologyList,
-      ticketLaboratoryList,
-    } = body
-
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update-items-money`, {
-      itemsActualMoney: body.itemsActualMoney,
-      // itemsDiscount: body.itemsDiscount, // itemDiscount bị thay đổi khi thêm dịch vụ mà ko tính toán được, nên đợi đóng phiếu mới tính
-      discountMoney: body.discountMoney,
-      discountPercent: body.discountPercent,
-      discountType: body.discountType,
-      ticketProductUpdateList: ticketProductList.map((item) => {
-        return {
-          ticketProductId: item.id,
-          quantity: item.quantity,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketProcedureUpdateList: ticketProcedureList.map((item) => {
-        return {
-          ticketProcedureId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketLaboratoryUpdateList: ticketLaboratoryList.map((item) => {
-        return {
-          ticketLaboratoryId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-      ticketRadiologyUpdateList: ticketRadiologyList.map((item) => {
-        return {
-          ticketRadiologyId: item.id,
-          discountMoney: item.discountMoney,
-          discountPercent: item.discountPercent,
-          discountType: item.discountType,
-          actualPrice: item.actualPrice,
-        }
-      }),
-    })
-    const { data } = response.data as BaseResponse
-  }
-
-  static async sendProduct(body: { ticketId: number }) {
-    const { ticketId } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/send-product`)
-    const { data } = response.data as BaseResponse
   }
 
   static async returnProduct(body: {
@@ -345,6 +149,22 @@ export class TicketClinicApi {
     })
     const { data } = response.data as BaseResponse
     return data
+  }
+
+  static async changeDiscount(
+    ticketId: number,
+    body: {
+      discountType: DiscountType
+      discountMoney: number
+      discountPercent: number
+    }
+  ) {
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-discount`, {
+      discountType: body.discountType,
+      discountMoney: body.discountMoney,
+      discountPercent: body.discountPercent,
+    })
+    const { data } = response.data as BaseResponse
   }
 
   static async prepayment(ticketId: number, money: number) {
@@ -378,6 +198,7 @@ export class TicketClinicApi {
 
   static async destroy(ticketId: number) {
     const response = await AxiosInstance.delete(`/ticket-clinic/${ticketId}/destroy`)
-    const { data } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<{ ticketId: any }>
+    return data
   }
 }

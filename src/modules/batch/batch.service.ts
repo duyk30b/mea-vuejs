@@ -1,8 +1,10 @@
+import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { arrayToKeyValue } from '../../utils'
 import { useMeStore } from '../_me/me.store'
+import { AuthService } from '../auth/auth.service'
 import { Product } from '../product'
 import { BatchApi } from './batch.api'
 import type { BatchListQuery, BatchPaginationQuery } from './batch.dto'
@@ -10,32 +12,39 @@ import { Batch } from './batch.model'
 
 export class BatchService {
   static async refreshDB() {
-    let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
-    if (!refreshTime) {
-      refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
+    try {
+      let refreshTime = await RefreshTimeDB.findOneByCode('BATCH')
+      if (!refreshTime) {
+        refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
+      }
+      const dataVersion = useMeStore().organization.dataVersionParse.batch
+
+      let apiResponse: { time: Date; data: Batch[] }
+
+      if (refreshTime.dataVersion !== dataVersion) {
+        await BatchDB.truncate()
+        apiResponse = await BatchApi.list({})
+      } else {
+        const lastTime = new Date(refreshTime.time)
+        apiResponse = await BatchApi.list({
+          filter: { updatedAt: { GTE: lastTime } },
+        })
+      }
+
+      if (apiResponse.data.length) {
+        await BatchDB.upsertMany(apiResponse.data)
+        refreshTime.time = apiResponse.time.toISOString()
+        refreshTime.dataVersion = dataVersion
+        await RefreshTimeDB.upsertOne(refreshTime)
+      }
+
+      return { numberChange: apiResponse.data.length }
+    } catch (error: any) {
+      console.log('🚀 ~ file: batch.service.ts:43 ~ BatchService ~ refreshDB ~ error:', error)
+      AlertStore.add({ type: 'error', message: error.message })
+      AuthService.logout()
+      return
     }
-    const dataVersion = useMeStore().organization.dataVersionParse.batch
-
-    let apiResponse: { time: Date; data: Batch[] }
-
-    if (refreshTime.dataVersion !== dataVersion) {
-      await BatchDB.truncate()
-      apiResponse = await BatchApi.list({})
-    } else {
-      const lastTime = new Date(refreshTime.time)
-      apiResponse = await BatchApi.list({
-        filter: { updatedAt: { GTE: lastTime } },
-      })
-    }
-
-    if (apiResponse.data.length) {
-      await BatchDB.upsertMany(apiResponse.data)
-      refreshTime.time = apiResponse.time.toISOString()
-      refreshTime.dataVersion = dataVersion
-      await RefreshTimeDB.upsertOne(refreshTime)
-    }
-
-    return { numberChange: apiResponse.data.length }
   }
 
   static async pagination(params: BatchPaginationQuery) {
@@ -61,6 +70,7 @@ export class BatchService {
         productId: productList ? { IN: productList.map((i) => i.id) } : undefined,
         expiryDate: filter?.expiryDate,
         warehouseId: filter?.warehouseId,
+        distributorId: filter?.distributorId,
         quantity: filter?.quantity,
         $OR: filter?.$OR,
       },
@@ -112,8 +122,8 @@ export class BatchService {
     return response
   }
 
-  static async updateInfoAndQuantity(id: number, instance: Batch) {
-    const response = await BatchApi.updateInfoAndQuantity(id, instance)
+  static async updateInfoAndQuantityAndCostPrice(id: number, instance: Batch) {
+    const response = await BatchApi.updateInfoAndQuantityAndCostPrice(id, instance)
     await BatchDB.replaceOne(id, response.batch)
     if (response.product) {
       await ProductDB.replaceOne(response.product.id, response.product)

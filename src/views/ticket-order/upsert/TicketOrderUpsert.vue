@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { IconFileSearch } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
@@ -171,7 +172,7 @@ const searchingCustomer = async (text: string) => {
   }
 }
 
-const createCustomer = (instance?: Customer) => {
+const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
     text: instance?.fullName,
     data: instance,
@@ -346,7 +347,7 @@ const handleChangeTabs = (activeKey: any) => {
 
 <template>
   <ModalTicketOrderUpsertSetting ref="modalTicketOrderUpsertSetting" />
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalDataTicketOrder ref="modalDataTicketOrder" />
   <div class="page-header">
@@ -411,25 +412,28 @@ const handleChangeTabs = (activeKey: any) => {
       </div>
       <form ref="ticketUpsertForm" style="flex-basis: 300px; flex-grow: 1">
         <div class="bg-white p-4">
-          <div class="flex justify-between">
-            <span>
-              Tên KH (nợ cũ:
+          <div class="flex gap-1 flex-wrap">
+            <span>Tên KH</span>
+            <a v-if="ticket.customerId" @click="modalCustomerDetail?.openModal(ticket.customerId)">
+              <IconFileSearch />
+            </a>
+            <span v-if="ticket.customerId">
+              (nợ cũ:
               <b>{{ formatMoney(customer.debt) }}</b>
               )
-              <a
-                v-if="ticket.customerId"
-                class="ml-1"
-                @click="modalCustomerDetail?.openModal(ticket.customer!)">
-                <IconFileSearch />
-              </a>
             </span>
-            <span>
+            <a
+              v-if="customer.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              @click="modalCustomerUpsert?.openModal(customer)">
+              Sửa thông tin KH
+            </a>
+            <div class="ml-auto">
               <a
-                v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+                v-if="!customer.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
                 @click="modalCustomerUpsert?.openModal()">
                 Thêm KH mới
               </a>
-            </span>
+            </div>
           </div>
           <div style="height: 40px">
             <InputOptions
@@ -517,7 +521,7 @@ const handleChangeTabs = (activeKey: any) => {
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success">{{ ticket.discountPercent || 0 }}%</a-tag>
+                          <VueTag color="green">{{ ticket.discountPercent || 0 }}%</VueTag>
                         </div>
                         <div
                           class="flex-1 text-right"
@@ -582,7 +586,7 @@ const handleChangeTabs = (activeKey: any) => {
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
                   <td class="font-bold whitespace-nowrap">Tổng vốn</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticket.totalCostAmount) }}
+                    {{ formatMoney(ticket.itemsCostAmount) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">

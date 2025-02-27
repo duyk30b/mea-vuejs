@@ -2,13 +2,20 @@
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconPrint } from '../../../../common/icon'
+import { IconPrint, IconTrash } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
+import {
+  InputFilter,
+  InputMoney,
+  InputNumber,
+  InputText,
+  VueSelect,
+} from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
 import {
   PrintHtml,
@@ -17,6 +24,7 @@ import {
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
+import { Role, RoleService } from '../../../../modules/role'
 import { Ticket } from '../../../../modules/ticket'
 import { DDom } from '../../../../utils'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
@@ -24,6 +32,7 @@ import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 const TABS_KEY = {
   BASIC: 'BASIC',
   PRINT_SETTING: 'PRINT_SETTING',
+  ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
 const modalSelectRadiologyExample = ref<InstanceType<typeof ModalSelectRadiologyExample>>()
@@ -37,11 +46,13 @@ const { organization } = meStore
 
 const radiologyRoot = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
-const saveLoading = ref(false)
+
 const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const printHtmlOptions = ref<{ text: string; value: number }[]>([])
+const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
 const activeTab = ref(TABS_KEY.BASIC)
+const saveLoading = ref(false)
 
 const ticketDemo = Ticket.blank()
 ticketDemo.ticketAttributeMap = { diagnosis: 'Viêm mũi dị ứng' }
@@ -53,6 +64,7 @@ onBeforeMount(async () => {
     RadiologyGroupService.list({}),
     PrintHtmlService.list({}),
     PrintHtmlService.getSystemList(),
+    RoleService.list({}),
   ])
   radiologyGroupAll.value = promiseInit[0]
   printHtmlOptions.value = [
@@ -64,13 +76,14 @@ onBeforeMount(async () => {
       return { value: i.id, text: i.name }
     }),
   ]
+  roleOptions.value = promiseInit[3].map((i) => ({ value: i.id, text: i.name, data: i }))
 })
 
 onMounted(async () => {
   const radiologyId = Number(route.params.id)
   if (radiologyId) {
     const radiologyResponse = await RadiologyApi.detail(radiologyId, {
-      relation: { printHtml: true },
+      relation: { printHtml: true, commissionList: true },
     })
     radiologyRoot.value = radiologyResponse
     radiology.value = Radiology.from(radiologyResponse)
@@ -79,16 +92,42 @@ onMounted(async () => {
     const radiologyAll = await RadiologyService.list({})
     radiology.value.priority = radiologyAll.length + 1
   }
+  if (!radiology.value.commissionList?.length) {
+    handleAddCommission()
+  }
   updatePreview()
 })
 
-const disabledButtonSave = computed(() => {
-  return Radiology.equal(radiology.value, radiologyRoot.value)
+const hasChangeData = computed(() => {
+  if (!Radiology.equal(radiology.value, radiologyRoot.value)) {
+    return true
+  }
+  if (
+    !Commission.equalList(
+      (radiology.value.commissionList || []).filter((i) => !!i.roleId),
+      radiologyRoot.value.commissionList || []
+    )
+  ) {
+    return true
+  }
+  return false
 })
 
 const handleSave = async () => {
-  saveLoading.value = true
+  for (let i = 0; i < (radiology.value.commissionList?.length || 0); i++) {
+    const element = radiology.value.commissionList![i]
+    if (
+      element.commissionCalculatorType === CommissionCalculatorType.PercentActual ||
+      element.commissionCalculatorType === CommissionCalculatorType.PercentExpected
+    ) {
+      if (element.commissionValue >= 1000) {
+        return AlertStore.addError('Công thức tính hoa hồng theo % : không thể gán giá trị >= 1000')
+      }
+    }
+  }
+
   try {
+    saveLoading.value = true
     if (radiology.value.id) {
       const radiologyResponse = await RadiologyService.updateOne(
         radiology.value.id,
@@ -98,9 +137,12 @@ const handleSave = async () => {
       Object.assign(radiologyRoot.value, Radiology.from(radiologyResponse))
       AlertStore.addSuccess('Cập nhật thành công', 1000)
     } else {
-      await RadiologyService.createOne(radiology.value)
+      const res = await RadiologyService.createOne(radiology.value)
       router.push({ name: 'RadiologyList' })
-      AlertStore.addSuccess('Tạo mới thành công', 1000)
+      AlertStore.addSuccess('Tạo mới thành công', 500)
+
+      radiology.value = Radiology.from(res)
+      radiologyRoot.value = Radiology.from(res)
     }
   } catch (error) {
     console.log('🚀 ~ file: RadiologyUpsert.vue:91 ~ handleSave ~ error:', error)
@@ -223,6 +265,17 @@ const startTestPrint = async () => {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
 }
+
+const handleAddCommission = () => {
+  const commissionBlank = Commission.blank()
+  commissionBlank.interactType = InteractType.Radiology
+  commissionBlank.interactId = radiology.value.id
+
+  if (!radiology.value.commissionList) {
+    radiology.value.commissionList = []
+  }
+  radiology.value.commissionList!.push(commissionBlank)
+}
 </script>
 
 <template>
@@ -244,6 +297,7 @@ const startTestPrint = async () => {
           <IconPrint />
           Dữ liệu và In
         </VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.BASIC">
@@ -276,7 +330,16 @@ const startTestPrint = async () => {
             </div>
 
             <div style="flex-basis: 90%; flex-grow: 1">
-              <div>Giá tiền</div>
+              <div>Giá vốn</div>
+              <div style="flex: 1">
+                <InputMoney
+                  v-model:value="radiology.costPrice"
+                  :validate="{ GTE: 0 }"
+                  style="width: 100%" />
+              </div>
+            </div>
+            <div style="flex-basis: 90%; flex-grow: 1">
+              <div>Giá bán</div>
               <div style="flex: 1">
                 <InputMoney
                   v-model:value="radiology.price"
@@ -337,6 +400,71 @@ const startTestPrint = async () => {
             </div>
           </div>
         </VueTabPanel>
+        <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_COMMISSION">
+          <div class="mt-4">
+            <div
+              v-for="(commission, index) in radiology.commissionList"
+              :key="index"
+              class="mt-4 flex flex-wrap gap-2">
+              <div style="flex-grow: 1; flex-basis: 250px">
+                <div>Vai trò</div>
+                <div>
+                  <InputFilter
+                    v-model:value="radiology.commissionList![index].roleId"
+                    :options="roleOptions"
+                    :maxHeight="120">
+                    <template #option="{ item: { data } }">{{ data.name }}</template>
+                  </InputFilter>
+                </div>
+              </div>
+              <div style="flex-grow: 1; flex-basis: 100px">
+                <div>Hoa hồng</div>
+                <div>
+                  <InputNumber
+                    :value="commission.commissionValue"
+                    @update:value="
+                      (v: number) => (radiology.commissionList![index].commissionValue = v)
+                    " />
+                </div>
+              </div>
+              <div style="flex-grow: 1; flex-basis: 150px">
+                <div>Công thức</div>
+                <div>
+                  <VueSelect
+                    :value="commission.commissionCalculatorType"
+                    :options="[
+                      { value: CommissionCalculatorType.VND, text: 'VNĐ' },
+                      {
+                        value: CommissionCalculatorType.PercentExpected,
+                        text: '% Giá niêm yết',
+                      },
+                      {
+                        value: CommissionCalculatorType.PercentActual,
+                        text: '% Giá sau chiết khấu',
+                      },
+                    ]"
+                    @update:value="
+                      (v: number) => (radiology.commissionList![index].commissionCalculatorType = v)
+                    " />
+                </div>
+              </div>
+              <div style="width: 30px">
+                <div>&nbsp;</div>
+                <div class="pt-2 flex justify-center">
+                  <a
+                    style="color: var(--text-red)"
+                    @click="radiology.commissionList!.splice(index, 1)">
+                    <IconTrash width="18" height="18" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <a @click="handleAddCommission">✚ Thêm vai trò</a>
+            </div>
+          </div>
+        </VueTabPanel>
       </template>
     </VueTabs>
 
@@ -347,7 +475,7 @@ const startTestPrint = async () => {
         type="submit"
         :loading="saveLoading"
         icon="save"
-        :disabled="disabledButtonSave">
+        :disabled="!hasChangeData">
         {{ radiology.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
       </VueButton>
     </div>

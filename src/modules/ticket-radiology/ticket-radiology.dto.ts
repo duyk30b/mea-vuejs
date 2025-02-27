@@ -1,4 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionDate } from '../_base/base-condition'
 
 export class TicketRadiologyGetQuery {
   page: number
@@ -14,9 +15,13 @@ export class TicketRadiologyGetQuery {
     radiologyId?: number
     customerId?: number
     ticketId?: number
+    startedAt?: ConditionDate
   }
 
-  sort?: { id?: 'ASC' | 'DESC' }
+  sort?: {
+    id?: 'ASC' | 'DESC'
+    startedAt?: 'ASC' | 'DESC'
+  }
 
   static toQuery(instance: Partial<TicketRadiologyGetQuery>) {
     return {

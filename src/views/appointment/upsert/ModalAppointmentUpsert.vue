@@ -212,22 +212,22 @@ defineExpose({ openModalForCreate, openModalForUpdate })
 
       <div class="px-4 mt-4 gap-4 flex flex-wrap">
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div class="flex justify-between">
-            <div>
-              <span>Tên KH</span>
-              <span v-if="appointment.customer!.id">
-                (nợ cũ:
-                <b>{{ formatMoney(appointment.customer!.debt) }}</b>
-                )
-                <a class="ml-1" @click="modalCustomerDetail?.openModal(appointment.customer!)">
-                  <IconFileSearch />
-                </a>
-              </span>
-            </div>
+          <div class="flex gap-1 flex-wrap">
+            <span>Tên KH</span>
+            <a
+              v-if="appointment.customer?.id"
+              @click="modalCustomerDetail?.openModal(appointment.customerId)">
+              <IconFileSearch />
+            </a>
+            <span v-if="appointment.customer?.id">
+              (nợ cũ:
+              <b>{{ formatMoney(appointment.customer!.debt) }}</b>
+              )
+            </span>
             <a
               v-if="appointment.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(appointment.customer!)">
-              Sửa thông tin khách hàng
+              Sửa thông tin KH
             </a>
           </div>
           <div style="height: 40px">

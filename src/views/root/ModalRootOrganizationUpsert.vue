@@ -3,15 +3,20 @@ import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputDate, InputHint, InputNumber, InputText } from '../../common/vue-form'
+import {
+  InputCheckboxList,
+  InputDate,
+  InputHint,
+  InputNumber,
+  InputText,
+  VueSelect,
+} from '../../common/vue-form'
+import type { CheckboxOptionType } from '../../common/vue-form/InputCheckboxList.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../core/address.instance'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Organization } from '../../modules/organization'
+import { Organization, OrganizationStatus } from '../../modules/organization'
 import { PermissionApi } from '../../modules/permission/permission.api'
-import type { PermissionId } from '../../modules/permission/permission.enum'
-import type { Permission } from '../../modules/permission/permission.model'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import { customFilter } from '../../utils'
 import ModalRootOrganizationClear from './ModalRootOrganizationClear.vue'
@@ -31,8 +36,8 @@ const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
 const saveLoading = ref(false)
 
-const permissionList = ref<Permission[]>([])
-const permissionIds = ref<PermissionId[]>([])
+const checkboxOptions = ref<CheckboxOptionType[]>([])
+const checkboxPermissionId = ref<Record<string, any>>({})
 
 let firstLoad = true
 
@@ -40,9 +45,10 @@ const openModal = async (instance?: Organization) => {
   showModal.value = true
   if (firstLoad === true) {
     try {
-      permissionList.value = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
+      const permissionList = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
+      checkboxOptions.value = permissionList.map((i) => ({ key: i.id, label: i.name }))
     } catch (error) {
-      console.log('🚀 ~ file: ModalRootOrganizationUpsert.vue:46 ~ openModal ~ error:', error)
+      console.log('🚀 ~ ModalRootOrganizationUpsert.vue:63 ~ openModal ~ error:', error)
     }
     provinceList.value = await AddressInstance.getAllProvinces()
     firstLoad = false
@@ -50,7 +56,9 @@ const openModal = async (instance?: Organization) => {
 
   if (instance) {
     organization.value = instance ? Organization.from(instance) : Organization.blank()
-    permissionIds.value = JSON.parse(instance?.permissionIds || '[]')
+    const permissionIds: number[] = JSON.parse(instance?.permissionIds || '[]')
+    permissionIds.forEach((id) => (checkboxPermissionId.value[id] = true))
+
     if (instance.addressProvince) {
       districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
       if (instance.addressDistrict) {
@@ -68,6 +76,7 @@ const closeModal = () => {
   districtList.value = []
   wardList.value = []
   showModal.value = false
+  checkboxPermissionId.value = {}
 }
 
 const handleSave = async () => {
@@ -77,7 +86,10 @@ const handleSave = async () => {
   }
 
   organization.value.permissionIds = JSON.stringify(
-    [...permissionIds.value].sort((a, b) => (a > b ? 1 : -1))
+    Object.keys(checkboxPermissionId.value)
+      .filter((id) => checkboxPermissionId.value[id])
+      .map((i) => Number(i))
+      .sort((a, b) => (a > b ? 1 : -1))
   )
   try {
     if (organization.value.id) {
@@ -243,21 +255,23 @@ defineExpose({ openModal })
         <div style="flex-basis: 90%; flex-grow: 1" class="flex gap-4">
           <div>Permission</div>
           <div>
-            <a-checkbox-group v-model:value="permissionIds">
-              <div v-for="permission in permissionList" :key="permission.id" class="mb-3">
-                <a-checkbox :value="permission.id">{{ permission.name }}</a-checkbox>
-              </div>
-            </a-checkbox-group>
+            <InputCheckboxList
+              v-model:value="checkboxPermissionId"
+              :options="checkboxOptions"
+              :item-style="{ width: '40%' }" />
           </div>
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex">
-          <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(organization.isActive)"
-            @change="(checked: Boolean) => (organization.isActive = checked ? 1 : 0)" />
-          <div v-if="!organization.isActive" class="ml-4">
-            Cơ sở này tạm thời không thể hoạt động
+          <div class="w-[100px] flex-none">Status</div>
+          <div>
+            <VueSelect
+              v-model:value="organization.status"
+              :options="[
+                { value: OrganizationStatus.Inactive, text: 'Inactive' },
+                { value: OrganizationStatus.Active, text: 'Active' },
+                { value: OrganizationStatus.Frequent, text: 'Frequent' },
+              ]" />
           </div>
         </div>
       </div>

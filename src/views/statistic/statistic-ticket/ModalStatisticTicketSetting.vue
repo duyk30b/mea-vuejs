@@ -3,12 +3,11 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
-import { TicketStatus, TicketType } from '../../../modules/ticket'
-import { VueSelect } from '../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -67,85 +66,87 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.countTicket">
+                <InputCheckbox v-model:checked="settingDisplay.countTicket">
                   Hiển thị tổng phiếu
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumTotalMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumTotalMoney">
                   Hiển thị tổng tiền
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumTotalCostAmount">
+                <InputCheckbox v-model:checked="settingDisplay.sumTotalCostAmount">
                   Hiển thị tổng vốn
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumProcedureMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumProcedureMoney">
                   Hiển thị tổng tiền dịch vụ
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumProductMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumProductMoney">
                   Hiển thị tổng tiền hàng hóa
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumRadiologyMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumRadiologyMoney">
                   Hiển thị tổng tiền CĐHA
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumLaboratoryMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumLaboratoryMoney">
                   Hiển thị tổng tiền xét nghiệm
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
 
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumSurcharge">
+                <InputCheckbox v-model:checked="settingDisplay.sumSurcharge">
                   Hiển thị tổng phụ phí
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumExpense">
+                <InputCheckbox v-model:checked="settingDisplay.sumExpense">
                   Hiển thị tổng chi phí
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumDiscountMoney">
+                <InputCheckbox v-model:checked="settingDisplay.sumDiscountMoney">
                   Hiển thị tổng khuyến mại
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumProfit">
+                <InputCheckbox v-model:checked="settingDisplay.sumProfit">
                   Hiển thị tổng lãi
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.sumDebt">Hiển thị tổng nợ</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.sumDebt">
+                  Hiển thị tổng nợ
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

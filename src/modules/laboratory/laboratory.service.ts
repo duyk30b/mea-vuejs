@@ -10,35 +10,42 @@ import { Laboratory } from './laboratory.model'
 export class LaboratoryService {
   static loadedAll: boolean = false
   static laboratoryAll: Laboratory[] = []
+  static laboratoryFlatMap: Record<string, Laboratory> = {}
 
-  private static async getAll() {
-    if (LaboratoryService.loadedAll) return
-
-    const { data } = await LaboratoryApi.list({ sort: { priority: 'ASC' } })
-    const laboratoryList = data.filter((i) => i.level === 1)
-    const laboratoryMap = arrayToKeyValue(laboratoryList, 'id')
-    data.forEach((i) => {
+  private static fetchAll = (() => {
+    const start = async () => {
       try {
-        i.optionsParse = JSON.parse(i.options)
-      } catch (error) {
-        i.optionsParse = []
+        const data = await LaboratoryApi.list({ sort: { priority: 'ASC' } })
+        const laboratoryList = data.filter((i) => i.level === 1)
+        const laboratoryMap = arrayToKeyValue(laboratoryList, 'id')
+        data.forEach((i) => {
+          try {
+            i.optionsParse = JSON.parse(i.options)
+          } catch (error) {
+            i.optionsParse = []
+          }
+          if (!laboratoryMap[i.parentId].children) {
+            laboratoryMap[i.parentId].children = []
+          }
+          if (i.level === 2) {
+            laboratoryMap[i.parentId].children?.push(i)
+          }
+        })
+        LaboratoryService.laboratoryAll = laboratoryList
+        LaboratoryService.laboratoryFlatMap = arrayToKeyValue(data, 'id')
+      } catch (error: any) {
+        console.log('🚀 ~ file: laboratory.service.ts:35 ~ LaboratoryService ~ error:', error)
       }
-      if (!laboratoryMap[i.parentId].children) {
-        laboratoryMap[i.parentId].children = []
+    }
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetchPromise || !LaboratoryService.loadedAll || options.refresh) {
+        LaboratoryService.loadedAll = true
+        fetchPromise = start()
       }
-      if (i.level === 2) {
-        laboratoryMap[i.parentId].children?.push(i)
-      }
-    })
-    LaboratoryService.laboratoryAll = laboratoryList
-    LaboratoryService.loadedAll = true
-  }
-
-  static async getMap() {
-    await LaboratoryService.getAll()
-    const laboratoryMap = arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
-    return laboratoryMap
-  }
+      await fetchPromise
+    }
+  })()
 
   private static executeQuery(all: Laboratory[], query: LaboratoryGetQuery) {
     let data = all
@@ -87,12 +94,23 @@ export class LaboratoryService {
     return data
   }
 
-  static async pagination(options: LaboratoryPaginationQuery) {
-    const page = options.page || 1
-    const limit = options.limit || 10
-    await LaboratoryService.getAll()
+  static async getMap() {
+    await LaboratoryService.fetchAll()
+    const laboratoryMap = arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
+    return laboratoryMap
+  }
 
-    let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, options)
+  static async getFlatMap() {
+    await LaboratoryService.fetchAll()
+    return LaboratoryService.laboratoryFlatMap
+  }
+
+  static async pagination(query: LaboratoryPaginationQuery, options?: { refresh: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
+
+    let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, query)
     data = data.slice((page - 1) * limit, page * limit)
 
     return {
@@ -101,10 +119,10 @@ export class LaboratoryService {
     }
   }
 
-  static async list(options: LaboratoryListQuery) {
-    const filter = options.filter || {}
-    await LaboratoryService.getAll()
-    const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, options)
+  static async list(query: LaboratoryListQuery, options?: { refresh: boolean }) {
+    await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
+    const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, query)
+
     return Laboratory.fromList(data)
   }
 

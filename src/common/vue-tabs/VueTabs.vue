@@ -44,7 +44,7 @@ provide('tabSelect', tabSelect)
   .tab-menu {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     padding: 0 4px;
     border-bottom: 1px solid #cdcdcd;
   }

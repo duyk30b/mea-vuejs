@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import VueTag from '../../../../common/VueTag.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Procedure } from '../../../../modules/procedure'
 import { TicketProcedure, TicketProcedureApi } from '../../../../modules/ticket-procedure'
@@ -79,9 +80,7 @@ watch(
           </td>
           <td class="">
             <div style="white-space: nowrap">
-              <span class="">
-                <a-tag color="blue">{{ ticketProcedure?.customer?.fullName }}</a-tag>
-              </span>
+              <VueTag color="blue">{{ ticketProcedure?.customer?.fullName }}</VueTag>
             </div>
           </td>
           <td class="text-center">

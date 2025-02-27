@@ -4,11 +4,8 @@ import { ref, type PropType, type StyleValue, onMounted, onUnmounted, type Ref }
 const root = ref(null) as Ref<HTMLElement | null>
 
 const docClick = (e: Event) => {
-  console.log('🚀 ~ file: VuePopover.vue:5 ~ docClick ~ e:', e.target)
-  console.log('🚀 ~ file: VuePopover.vue:5 ~ docClick root:', root.value)
 }
 onMounted(() => {
-  console.log('🚀 ~ file: VuePopover.vue:5 ~ docClick root:', root.value)
   document.body.addEventListener('click', docClick)
 })
 

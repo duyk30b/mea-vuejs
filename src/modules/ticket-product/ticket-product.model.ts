@@ -10,6 +10,7 @@ export enum TicketProductType {
 }
 export class TicketProduct {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   productId: number
@@ -51,6 +52,10 @@ export class TicketProduct {
 
   get unitDiscountMoney() {
     return this.discountMoney * this.unitRate
+  }
+
+  get unitCostPrice() {
+    return this.costPrice * this.unitRate
   }
 
   get unitActualPrice() {
@@ -130,6 +135,9 @@ export class TicketProduct {
     const target = TicketProduct.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      target.batch = source.batch ? Batch.basic(source.batch) : source.batch
     }
     return target
   }

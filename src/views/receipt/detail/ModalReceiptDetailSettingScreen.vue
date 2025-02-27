@@ -7,6 +7,7 @@ import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { InputCheckbox } from '../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -65,41 +66,41 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
+                <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.detail">
                   Hiển thị nút xem chi tiết sản phẩm (
                   <IconFileSearch />
                   )
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.substance">
+                <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.substance">
                   Hiển thị hoạt chất
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox
+                <InputCheckbox
                   v-model:checked="settingDisplay.receiptItemsTable.warehouse">
                   Hiển thị kho
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox
+                <InputCheckbox
                   v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate">
                   Hiển thị số lô và HSD
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.unit">
+                <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.unit">
                   Hiển thị đơn vị
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>
@@ -111,44 +112,44 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
                   Hiển thị tiền hàng
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.discount">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.discount">
                   Hiển thị chiết khấu
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.surcharge">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.surcharge">
                   Hiển thị phụ phí
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.paid">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.paid">
                   Hiển thị tiền đã thanh toán
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.debt">
                   Hiển thị nợ
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.paymentInfo.debt">
+                <InputCheckbox v-model:checked="settingDisplay.paymentInfo.debt">
                   Hiển thị nợ
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>
@@ -160,16 +161,16 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.process.sendProductAndPayment">
+                <InputCheckbox v-model:checked="settingDisplay.process.sendProductAndPayment">
                   Hiển thị nút: Nhập hàng và thanh toán
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.process.sendProductAndDebit">
+                <InputCheckbox v-model:checked="settingDisplay.process.sendProductAndDebit">
                   Hiển thị nút: Nhập hàng và ghi nợ
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

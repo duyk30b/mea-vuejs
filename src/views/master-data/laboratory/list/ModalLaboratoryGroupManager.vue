@@ -62,7 +62,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="margin-top: 100px">
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý nhóm xét nghiệm</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý phiếu xét nghiệm</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -74,7 +74,7 @@ defineExpose({ openModal })
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Tên</th>
+                <th>Tên Phiếu</th>
                 <th style="width: 300px">Mẫu In</th>
                 <th>#</th>
               </tr>
@@ -92,7 +92,7 @@ defineExpose({ openModal })
                   <InputText
                     v-model:value="laboratoryGroup.name"
                     required
-                    placeholder="Điền tên nhóm xét nghiệm ở đây" />
+                    placeholder="Điền tên phiếu xét nghiệm ở đây" />
                 </td>
                 <td>
                   <VueSelect

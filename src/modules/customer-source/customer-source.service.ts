@@ -1,35 +1,78 @@
+import { arrayToKeyValue } from '../../utils'
 import { CustomerSourceApi } from './customer-source.api'
-import type { CustomerSourceListQuery } from './customer-source.dto'
+import type {
+  CustomerSourceGetQuery,
+  CustomerSourceListQuery,
+  CustomerSourcePaginationQuery,
+} from './customer-source.dto'
 import { CustomerSource } from './customer-source.model'
 
 export class CustomerSourceService {
   static loadedAll: boolean = false
   static customerSourceAll: CustomerSource[]
 
-  private static async getAll() {
-    try {
-      if (!CustomerSourceService.loadedAll) {
-        const { data } = await CustomerSourceApi.list({})
-        const productGroupList = data
-        CustomerSourceService.customerSourceAll = productGroupList
-        CustomerSourceService.loadedAll = true
+  // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng refresh: true
+  static getAll = (() => {
+    const start = async () => {
+      try {
+        CustomerSourceService.customerSourceAll = await CustomerSourceApi.list({})
+      } catch (error: any) {
+        console.log('🚀 ~ file: customer-source.service.ts:15 ~ start ~ error:', error)
       }
-      return CustomerSourceService.customerSourceAll
-    } catch (error) {
-      console.log('🚀 ~ file: customer-source.service.ts:20 ~ getAll ~ error:', error)
-      return []
     }
+    let fetching: any = null
+    return async (options: { refresh?: boolean } = {}) => {
+      if (!fetching || !CustomerSourceService.loadedAll || options.refresh) {
+        CustomerSourceService.loadedAll = true
+        fetching = start()
+      }
+      await fetching
+    }
+  })()
+
+  static async getMap() {
+    await CustomerSourceService.getAll()
+    return arrayToKeyValue(CustomerSourceService.customerSourceAll, 'id')
   }
 
-  static async list(options: CustomerSourceListQuery) {
-    const filter = options.filter || {}
-    const all = await CustomerSourceService.getAll()
+  private static executeQuery(all: CustomerSource[], query: CustomerSourceGetQuery) {
     let data = all
-    if (options.filter) {
+    if (query.filter) {
+      const filter = query.filter
       data = data.filter((i) => {
         return true
       })
     }
+    if (query.sort) {
+      if (query.sort?.id) {
+        data.sort((a, b) => {
+          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          return a.id > b.id ? -1 : 1
+        })
+      }
+    }
+    return data
+  }
+
+  static async pagination(options: CustomerSourcePaginationQuery) {
+    const page = options.page || 1
+    const limit = options.limit || 10
+    await CustomerSourceService.getAll()
+    let data = CustomerSourceService.executeQuery(CustomerSourceService.customerSourceAll, options)
+    data = data.slice((page - 1) * limit, page * limit)
+    return {
+      data,
+      meta: { total: CustomerSourceService.customerSourceAll.length },
+    }
+  }
+
+  static async list(options: CustomerSourceListQuery) {
+    await CustomerSourceService.getAll()
+    const data = CustomerSourceService.executeQuery(
+      CustomerSourceService.customerSourceAll,
+      options
+    )
     return CustomerSource.fromList(data)
   }
 

@@ -2,12 +2,13 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../../common/icon-google'
+import VueTag from '../../../../common/VueTag.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Radiology } from '../../../../modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
 import { timeToText } from '../../../../utils'
 import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
-import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ radiology: Radiology }>(), {
@@ -86,9 +87,7 @@ watch(
           </td>
           <td class="">
             <div style="white-space: nowrap">
-              <span class="">
-                <a-tag color="blue">{{ ticketRadiology?.customer?.fullName }}</a-tag>
-              </span>
+              <VueTag color="blue">{{ ticketRadiology?.customer?.fullName }}</VueTag>
             </div>
           </td>
           <td class="text-right">
@@ -103,7 +102,10 @@ watch(
           <td class="text-center">
             <div class="flex items-center gap-2">
               <span>{{ ticketRadiology.result }}</span>
-              <a @click="modalTicketRadiologyResult?.openModalById(ticketRadiology.id)">
+              <a
+                @click="
+                  modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })
+                ">
                 <IconVisibility width="20" height="20" />
               </a>
             </div>

@@ -1,6 +1,7 @@
 import { Customer } from '../customer'
 import type { DiscountType } from '../enum'
 import { Laboratory } from '../laboratory'
+import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -11,37 +12,35 @@ export enum TicketLaboratoryStatus {
 }
 export class TicketLaboratory {
   id: number
+  priority: number
   ticketId: number
   customerId: number
   laboratoryId: number
+  laboratoryGroupId: number
+  ticketLaboratoryGroupId: number
 
+  costPrice: number
   expectedPrice: number
   discountMoney: number
   discountPercent: number
   discountType: DiscountType
   actualPrice: number
 
-  result: string
-  attention: string
-
   status: TicketLaboratoryStatus
   startedAt: number | null
-
-  resultParse: Record<string, any> // chỉ dùng ở front-end
-  attentionParse: Record<string, any> // chỉ dùng ở front-end
 
   customer?: Customer
   ticket?: Ticket
   ticketUserList: TicketUser[]
+  laboratory?: Laboratory
   laboratoryList?: Laboratory[]
+  ticketLaboratoryResult?: TicketLaboratoryResult
+
+  children: { laboratory?: Laboratory; ticketLaboratoryResult?: TicketLaboratoryResult }[]
 
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
     ins.id = 0
-    ins.result = JSON.stringify({})
-    ins.attention = JSON.stringify({})
-    ins.resultParse = {}
-    ins.attentionParse = {}
     return ins
   }
 
@@ -57,16 +56,6 @@ export class TicketLaboratory {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
-    try {
-      target.resultParse = JSON.parse(target.result)
-    } catch (error) {
-      target.resultParse = {}
-    }
-    try {
-      target.attentionParse = JSON.parse(target.attention)
-    } catch (error) {
-      target.attentionParse = {}
-    }
     return target
   }
 
@@ -81,6 +70,16 @@ export class TicketLaboratory {
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'laboratory')) {
+      target.laboratory = source.laboratory
+        ? Laboratory.basic(source.laboratory)
+        : source.laboratory
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'ticketLaboratoryResult')) {
+      target.ticketLaboratoryResult = source.ticketLaboratoryResult
+        ? TicketLaboratoryResult.basic(source.ticketLaboratoryResult)
+        : source.ticketLaboratoryResult
     }
     if (target.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(target.ticketUserList)
@@ -107,6 +106,7 @@ export class TicketLaboratory {
 
   static equal(a: TicketLaboratory, b: TicketLaboratory) {
     if (a.id != b.id) return false
+    if (a.priority != b.priority) return false
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.laboratoryId != b.laboratoryId) return false
@@ -117,8 +117,7 @@ export class TicketLaboratory {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
-    if (a.attention != b.attention) return false
-    if (a.result != b.result) return false
+    if (a.status != b.status) return false
 
     if (a.startedAt != b.startedAt) return false
     return true

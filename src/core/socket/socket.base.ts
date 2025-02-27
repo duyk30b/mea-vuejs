@@ -10,6 +10,7 @@ export const socketInit = () => {
   SocketBase = io(CONFIG.API_URL, {
     transports: ['websocket'],
     auth: { token: localStorage.getItem(REFRESH_TOKEN) },
+    timeout: 10000,
   })
   SocketBase.connect()
 
@@ -19,6 +20,16 @@ export const socketInit = () => {
   SocketBase.on('disconnect', () => {
     console.log('Socket Disconnect')
   })
+
+  SocketBase.on('connect_error', (err) => {
+    console.error('Socket connect_error:', err.message)
+  })
+
+  if (CONFIG.MODE === 'development') {
+    SocketBase.onAny((event, ...args) => {
+      console.log(`Socket listen event: ${event}`, args)
+    })
+  }
 
   SocketBase.on(SOCKET_EVENT.SERVER_EMIT_DEMO, (data) => {
     SocketService.listenServerEmitDemo(data)
@@ -56,52 +67,35 @@ export const socketInit = () => {
     SocketService.listenBatchListUpdate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CREATE, (data) => {
-    SocketService.listenTicketClinicCreate(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE, (data) => {
-    SocketService.listenTicketClinicUpdate(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_DESTROY, (data) => {
-    SocketService.listenTicketClinicDestroy(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE, (data) => {
+    SocketService.listenTicketClinicChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE_LIST, (data) => {
     SocketService.listenTicketClinicUpdateTicketAttributeList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketProcedureList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_USER_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketUserList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketProductConsumableList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PROCEDURE_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProcedureList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketProductPrescriptionList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketRadiologyList(data)
+  })
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_LABORATORY, (data) => {
+    SocketService.listenTicketClinicChangeLaboratory(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketLaboratoryList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductConsumableList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_RESULT, (data) => {
-    SocketService.listenTicketClinicUpdateTicketLaboratoryResult(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketRadiologyList(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_RESULT, (data) => {
-    SocketService.listenTicketClinicUpdateTicketRadiologyResult(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_UPDATE_TICKET_USER_LIST, (data) => {
-    SocketService.listenTicketClinicUpdateTicketUserList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
+    SocketService.listenTicketClinicChangeTicketProductPrescriptionList(data)
   })
 }
 
