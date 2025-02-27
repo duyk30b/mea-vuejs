@@ -38,6 +38,7 @@ export class Ticket {
   customerId: number
   customerSourceId: number
   ticketType: TicketType
+  customType: number
   ticketStatus: TicketStatus
 
   itemsCostAmount: number
@@ -97,6 +98,7 @@ export class Ticket {
   static init(): Ticket {
     const ins = new Ticket()
     ins.id = 0
+    ins.customType = 0
     ins.ticketStatus = TicketStatus.Draft
     ins.itemsCostAmount = 0
     ins.procedureMoney = 0
@@ -244,6 +246,7 @@ export class Ticket {
   static equal(a: Ticket, b: Ticket) {
     if (a.id != b.id) return false
     if (a.customerId != b.customerId) return false
+    if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
     if (a.ticketType != b.ticketType) return false
     if (a.ticketStatus != b.ticketStatus) return false

@@ -781,6 +781,9 @@ const startPrint = async () => {
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
+              <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
+                Vốn: {{ formatMoney(ticketLaboratory.costPrice) }}
+              </div>
               <div v-if="ticketLaboratory.discountMoney" class="text-xs italic text-red-500">
                 <del>{{ formatMoney(ticketLaboratory.expectedPrice) }}</del>
               </div>
@@ -880,6 +883,9 @@ const startPrint = async () => {
               </div>
             </td>
             <td class="text-right whitespace-nowrap">
+              <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
+                Vốn: {{ formatMoney(ticketRadiology.costPrice) }}
+              </div>
               <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
                 <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
               </div>

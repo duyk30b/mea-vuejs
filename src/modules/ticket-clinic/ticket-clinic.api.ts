@@ -11,6 +11,7 @@ export class TicketClinicApi {
     ticketInformation: {
       ticketType: TicketType
       ticketStatus: TicketStatus
+      customType: number
       customerSourceId: number
       registeredAt: number
       customerId: number
@@ -22,7 +23,7 @@ export class TicketClinicApi {
     const { customer, ticketInformation, ticketAttributeList, ticketUserList } = body
     const response = await AxiosInstance.post('/ticket-clinic/create', {
       customer:
-        ticketInformation.customerId === 0 && customer
+        !ticketInformation.customerId && customer
           ? {
               fullName: customer.fullName,
               phone: customer.phone,
@@ -41,8 +42,9 @@ export class TicketClinicApi {
             }
           : undefined,
       ticketInformation: {
-        customerId: ticketInformation.customerId,
+        customerId: ticketInformation.customerId || 0,
         fromAppointmentId: ticketInformation.fromAppointmentId,
+        customType: ticketInformation.customType,
         customerSourceId: ticketInformation.customerSourceId || 0,
         ticketType: ticketInformation.ticketType,
         ticketStatus: ticketInformation.ticketStatus,
@@ -61,6 +63,7 @@ export class TicketClinicApi {
   static async update(body: {
     ticketId: number
     ticketInformation: {
+      customType: number
       customerSourceId: number
       registeredAt: number
     }
@@ -70,6 +73,7 @@ export class TicketClinicApi {
     const { ticketId, ticketInformation, ticketAttributeList, ticketUserList } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/update`, {
       ticketInformation: {
+        customType: ticketInformation.customType,
         customerSourceId: ticketInformation.customerSourceId || 0,
         registeredAt: ticketInformation.registeredAt,
       },

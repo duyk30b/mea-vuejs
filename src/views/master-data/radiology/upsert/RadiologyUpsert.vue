@@ -15,6 +15,7 @@ import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
+import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
 import {
   PrintHtml,
@@ -23,11 +24,10 @@ import {
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
+import { Role, RoleService } from '../../../../modules/role'
 import { Ticket } from '../../../../modules/ticket'
 import { DDom } from '../../../../utils'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
-import { Role, RoleService } from '../../../../modules/role'
-import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -330,7 +330,16 @@ const handleAddCommission = () => {
             </div>
 
             <div style="flex-basis: 90%; flex-grow: 1">
-              <div>Giá tiền</div>
+              <div>Giá vốn</div>
+              <div style="flex: 1">
+                <InputMoney
+                  v-model:value="radiology.costPrice"
+                  :validate="{ GTE: 0 }"
+                  style="width: 100%" />
+              </div>
+            </div>
+            <div style="flex-basis: 90%; flex-grow: 1">
+              <div>Giá bán</div>
               <div style="flex: 1">
                 <InputMoney
                   v-model:value="radiology.price"

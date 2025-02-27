@@ -1,7 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconCheckSquare, IconClock, IconPrint, IconShoppingCart, IconSpin } from '../../../../common/icon'
+import {
+  IconCheckSquare,
+  IconClock,
+  IconPrint,
+  IconShoppingCart,
+  IconSpin,
+} from '../../../../common/icon'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
@@ -79,6 +85,7 @@ const selectRadiology = async (instance?: Radiology) => {
 
     temp.radiology = instance
 
+    temp.costPrice = instance.costPrice
     temp.expectedPrice = instance.price
     temp.discountMoney = 0
     temp.discountPercent = 0
@@ -113,7 +120,7 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    let printHtmlId = ticketRadiologyData.radiology?.printHtmlId || 0
+    let printHtmlId = radiologyMap.value[ticketRadiologyData.radiologyId]?.printHtmlId || 0
     let printHtml: PrintHtml | undefined
     if (printHtmlId !== 0) {
       printHtml = await PrintHtmlService.detail(printHtmlId)

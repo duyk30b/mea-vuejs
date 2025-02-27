@@ -10,6 +10,7 @@ export class TicketClinicRadiologyApi {
       priority: ticketRadiology.priority,
       customerId: ticketRadiology.customerId,
       radiologyId: ticketRadiology.radiologyId,
+      costPrice: ticketRadiology.costPrice,
       expectedPrice: ticketRadiology.expectedPrice,
       discountMoney: ticketRadiology.discountMoney,
       discountPercent: ticketRadiology.discountPercent,

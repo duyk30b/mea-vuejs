@@ -37,6 +37,7 @@ const dataLoading = ref(false)
 
 const customerId = ref<number>()
 const ticketStatus = ref<TicketStatus | null>(null)
+const customType = ref<number | null>(null)
 
 const roleMap = ref<Record<string, Role>>({})
 const userMap = ref<Record<string, User>>({})
@@ -71,6 +72,7 @@ const startFetchData = async () => {
             : undefined,
         ticketStatus: ticketStatus.value ?? undefined,
         ticketType: { NOT: TicketType.Order },
+        customType: customType.value == null ? undefined : customType.value,
       },
       sort: sortValue.value
         ? {
@@ -130,14 +132,6 @@ const selectCustomer = async (data?: Customer) => {
 const startFilter = async () => {
   page.value = 1
   await startFetchData()
-}
-
-const handleSelectTicketStatus = async () => {
-  await startFilter()
-}
-
-const handleChangeTime = async (value: any) => {
-  await startFilter()
 }
 
 const changeSort = async (column: 'id' | 'registeredAt') => {
@@ -273,7 +267,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             v-model:value="fromTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="startFilter" />
         </div>
       </div>
 
@@ -284,7 +278,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             v-model:value="toTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="startFilter" />
         </div>
       </div>
 
@@ -302,7 +296,22 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
-            @update:value="handleSelectTicketStatus" />
+            @update:value="startFilter" />
+        </div>
+      </div>
+
+      <div v-if="settingStore.TICKET_CLINIC_LIST.showCustomType" style="flex: 1; flex-basis: 150px">
+        <div>Phân loại</div>
+        <div>
+          <VueSelect
+            v-model:value="customType"
+            :options="[
+              { value: null, text: 'Tất cả' },
+              ...settingStore.TICKET_CLINIC_LIST.customTypeText.map((i, index) => {
+                return { value: index, text: i }
+              }),
+            ]"
+            @update:value="startFilter" />
         </div>
       </div>
 
@@ -331,6 +340,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                 v-if="sortColumn === 'id' && sortValue === 'DESC'"
                 :icon="['fas', 'sort-down']" />
             </th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th class="">Trạng thái</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               Thời gian &nbsp;
@@ -394,6 +404,9 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                   </div>
                 </router-link>
               </div>
+            </td>
+            <td v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">
+              {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
             <td class="text-center">
               <div>

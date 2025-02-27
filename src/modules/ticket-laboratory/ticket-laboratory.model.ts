@@ -16,6 +16,7 @@ export class TicketLaboratory {
   customerId: number
   laboratoryId: number
 
+  costPrice: number
   expectedPrice: number
   discountMoney: number
   discountPercent: number
@@ -34,6 +35,7 @@ export class TicketLaboratory {
   customer?: Customer
   ticket?: Ticket
   ticketUserList: TicketUser[]
+  laboratory?: Laboratory
   laboratoryList?: Laboratory[]
 
   static init(): TicketLaboratory {

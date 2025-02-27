@@ -10,6 +10,7 @@ export class Radiology {
   printHtmlId: number
   priority: number
 
+  costPrice: number
   price: number
   requestNoteDefault: string
   descriptionDefault: string
@@ -30,7 +31,8 @@ export class Radiology {
     ins.radiologyGroupId = 0
     ins.printHtmlId = 0
     ins.priority = 1
-    
+
+    ins.costPrice = 0
     ins.price = 0
     ins.requestNoteDefault = ''
     ins.descriptionDefault = ''
@@ -85,6 +87,7 @@ export class Radiology {
     if (a.radiologyGroupId != b.radiologyGroupId) return false
     if (a.printHtmlId != b.printHtmlId) return false
     if (a.priority != b.priority) return false
+    if (a.costPrice != b.costPrice) return false
     if (a.price != b.price) return false
     if (a.requestNoteDefault != b.requestNoteDefault) return false
     if (a.descriptionDefault != b.descriptionDefault) return false

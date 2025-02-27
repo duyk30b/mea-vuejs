@@ -26,7 +26,8 @@ export class TicketOrderApi {
         profit: ticket.profit,
         registeredAt: ticket.registeredAt,
       },
-      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
+      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
+        priority: index + 1,
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
@@ -40,7 +41,8 @@ export class TicketOrderApi {
         actualPrice: i.actualPrice,
         hintUsage: i.hintUsage,
       })),
-      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i) => ({
+      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
+        priority: index + 1,
         procedureId: i.procedureId,
         quantity: i.quantity,
         expectedPrice: i.expectedPrice,
@@ -87,7 +89,8 @@ export class TicketOrderApi {
         profit: ticket.profit,
         registeredAt: ticket.registeredAt,
       },
-      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
+      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
+        priority: index + 1,
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
@@ -101,7 +104,8 @@ export class TicketOrderApi {
         actualPrice: i.actualPrice,
         hintUsage: i.hintUsage,
       })),
-      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i) => ({
+      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
+        priority: index + 1,
         procedureId: i.procedureId,
         quantity: i.quantity,
         expectedPrice: i.expectedPrice,
@@ -150,7 +154,8 @@ export class TicketOrderApi {
         profit: ticket.profit,
         registeredAt: ticket.registeredAt,
       },
-      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
+      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
+        priority: index + 1,
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
@@ -164,7 +169,8 @@ export class TicketOrderApi {
         actualPrice: i.actualPrice,
         hintUsage: i.hintUsage,
       })),
-      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i) => ({
+      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
+        priority: index + 1,
         procedureId: i.procedureId,
         quantity: i.quantity,
         expectedPrice: i.expectedPrice,
@@ -213,7 +219,8 @@ export class TicketOrderApi {
         profit: ticket.profit,
         registeredAt: ticket.registeredAt,
       },
-      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i) => ({
+      ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
+        priority: index + 1,
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
@@ -227,7 +234,8 @@ export class TicketOrderApi {
         actualPrice: i.actualPrice,
         hintUsage: i.hintUsage,
       })),
-      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i) => ({
+      ticketOrderProcedureDraftList: (ticket.ticketProcedureList || []).map((i, index) => ({
+        priority: index + 1,
         procedureId: i.procedureId,
         quantity: i.quantity,
         expectedPrice: i.expectedPrice,

@@ -176,17 +176,25 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
     </a-sub-menu>
     <a-sub-menu
       v-if="
+        permissionIdMap[PermissionId.STATISTIC_TICKET] ||
+        permissionIdMap[PermissionId.STATISTIC_RECEIPT] ||
+        permissionIdMap[PermissionId.STATISTIC_CUSTOMER] ||
         permissionIdMap[PermissionId.STATISTIC_PRODUCT] ||
         permissionIdMap[PermissionId.STATISTIC_PROCEDURE] ||
-        permissionIdMap[PermissionId.STATISTIC_CUSTOMER] ||
-        (permissionIdMap[PermissionId.STATISTIC_RECEIPT] &&
-          permissionIdMap[PermissionId.STATISTIC_TICKET])
+        permissionIdMap[PermissionId.STATISTIC_LABORATORY] ||
+        permissionIdMap[PermissionId.STATISTIC_RADIOLOGY]
       "
       key="Statistic">
       <template #icon>
         <AreaChartOutlined />
       </template>
       <template #title>Thống kê</template>
+      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_TICKET]" key="StatisticTicket">
+        <router-link :to="{ name: 'StatisticTicket' }">Báo cáo phiếu thu</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_CUSTOMER]" key="StatisticCustomer">
+        <router-link :to="{ name: 'StatisticCustomer' }">Báo cáo khách hàng</router-link>
+      </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_PRODUCT]" key="StatisticProduct">
         <router-link :to="{ name: 'StatisticProduct' }">Báo cáo kho</router-link>
       </a-menu-item>
@@ -195,11 +203,11 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         key="StatisticProcedure">
         <router-link :to="{ name: 'StatisticProcedure' }">Báo cáo dịch vụ</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_CUSTOMER]" key="StatisticCustomer">
-        <router-link :to="{ name: 'StatisticCustomer' }">Báo cáo khách hàng</router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_LABORATORY]" key="StatisticLaboratory">
+        <router-link :to="{ name: 'StatisticLaboratory' }">Báo cáo xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_TICKET]" key="StatisticTicket">
-        <router-link :to="{ name: 'StatisticTicket' }">Báo cáo phiếu thu</router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.STATISTIC_RADIOLOGY]" key="StatisticRadiology">
+        <router-link :to="{ name: 'StatisticRadiology' }">Báo cáo phiếu CĐHA</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu

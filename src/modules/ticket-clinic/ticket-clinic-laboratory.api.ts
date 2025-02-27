@@ -15,6 +15,7 @@ export class TicketClinicLaboratoryApi {
         ticketLaboratoryList: ticketLaboratoryList.map((i) => ({
           priority: i.priority,
           laboratoryId: i.laboratoryId,
+          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,

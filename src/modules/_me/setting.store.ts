@@ -268,6 +268,8 @@ export const settingDefault = {
 
   TICKET_CLINIC_LIST: {
     ticketType: TicketType.Clinic,
+    customTypeText: <string[]>['Mặc định'],
+    showCustomType: false,
     buttonShowModalCreate: true,
     buttonShowTicketDetailBlank: false,
     roleIdList: [],

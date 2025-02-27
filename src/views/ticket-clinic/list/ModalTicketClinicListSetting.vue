@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../../common/vue-form'
+import { InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
@@ -94,6 +94,39 @@ defineExpose({ openModal })
               </td>
             </tr>
             <tr>
+              <td>
+                <a-checkbox v-model:checked="settingDisplay.showCustomType">
+                  Hiển thị phân loại tùy chỉnh
+                </a-checkbox>
+              </td>
+              <td>
+                <table class="w-full">
+                  <tr v-for="(text, i) in settingDisplay.customTypeText" :key="i">
+                    <td style="padding: 5px">
+                      <InputText
+                        v-model:value="settingDisplay.customTypeText[i]"
+                        :prepend="i.toString()"
+                        style="flex: 1" />
+                    </td>
+                    <td style="vertical-align: middle">
+                      <a
+                        v-if="i === settingDisplay.customTypeText.length - 1"
+                        style="color: var(--text-red)"
+                        @click="settingDisplay.customTypeText.splice(i, 1)">
+                        Xóa
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <div style="padding: 5px">
+                  <VueButton
+                    icon="plus"
+                    color="blue"
+                    @click="settingDisplay.customTypeText.push('')"></VueButton>
+                </div>
+              </td>
+            </tr>
+            <tr>
               <td style="width: 30%">Hiển thị vai trò</td>
               <td>
                 <div>
@@ -106,6 +139,7 @@ defineExpose({ openModal })
                 </div>
               </td>
             </tr>
+
             <tr>
               <td colspan="2">
                 <a-checkbox v-model:checked="settingDisplay.buttonShowModalCreate">

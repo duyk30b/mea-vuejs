@@ -179,7 +179,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <th>Nhóm</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
-            <th>Giá tiền</th>
+            <th>Giá vốn</th>
+            <th>Giá bán</th>
             <th v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]">Action</th>
           </tr>
         </thead>
@@ -227,6 +228,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td class="text-right">
               {{ laboratory.valueType === LaboratoryValueType.Number ? laboratory.unit : '' }}
             </td>
+            <td class="text-right">{{ formatMoney(laboratory.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
               <a

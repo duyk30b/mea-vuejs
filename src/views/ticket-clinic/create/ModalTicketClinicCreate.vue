@@ -388,6 +388,7 @@ const handleSubmitFormTicketClinic = async () => {
         ticketInformation: {
           ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
           ticketStatus: settingStore.TICKET_CLINIC_CREATE.ticketStatus,
+          customType: ticket.value.customType,
           registeredAt: ticket.value.registeredAt,
           customerSourceId: ticket.value.customerSourceId,
           customerId: customer.value.id,
@@ -403,6 +404,7 @@ const handleSubmitFormTicketClinic = async () => {
         ticketId: ticket.value.id,
         ticketInformation: {
           registeredAt: ticket.value.registeredAt,
+          customType: ticket.value.customType,
           customerSourceId: ticket.value.customerSourceId,
         },
         ticketAttributeList,
@@ -821,6 +823,20 @@ defineExpose({ openModal })
               type-parser="number"
               class="w-full"
               show-time />
+          </div>
+        </div>
+
+        <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+          <div>Tủy chỉnh phân loại</div>
+          <div>
+            <VueSelect
+              v-model:value="ticket.customType"
+              :options="
+                settingStore.TICKET_CLINIC_LIST.customTypeText.map((i, index) => ({
+                  text: i,
+                  value: index,
+                }))
+              "></VueSelect>
           </div>
         </div>
 

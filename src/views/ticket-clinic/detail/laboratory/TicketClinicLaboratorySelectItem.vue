@@ -94,6 +94,7 @@ const selectLaboratoryList = (laboratorySelectList: Laboratory[]) => {
     temp.customerId = ticketClinicRef.value.customerId
     temp.laboratoryId = i.id
 
+    temp.costPrice = i.costPrice
     temp.expectedPrice = i.price
     temp.discountMoney = 0
     temp.discountPercent = 0

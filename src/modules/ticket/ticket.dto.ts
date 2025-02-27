@@ -25,6 +25,7 @@ export class TicketGetQuery {
     customerId?: number
     ticketStatus?: TicketStatus | ConditionEnum<TicketStatus>
     ticketType?: TicketType | ConditionEnum<TicketType>
+    customType?: number
     registeredAt?: ConditionDate
     startedAt?: ConditionDate
     updatedAt?: ConditionDate
