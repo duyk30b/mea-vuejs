@@ -18,8 +18,9 @@ export class ProductMovement {
   quantity: number // Số lượng +/-
   closeQuantity: number // Số lượng sau thay đổi
   unitRate: number
-  actualPrice: number // Giá
-  expectedPrice: number // Giá
+  costPrice: number 
+  expectedPrice: number 
+  actualPrice: number 
   createdAt: number
 
   product?: Product
@@ -31,6 +32,10 @@ export class ProductMovement {
 
   get unitQuantity() {
     return this.quantity / this.unitRate
+  }
+
+  get unitCostPrice() {
+    return this.costPrice * this.unitRate
   }
 
   get unitActualPrice() {

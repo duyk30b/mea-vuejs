@@ -380,7 +380,7 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.totalCostAmount">
+                        <a-checkbox v-model:checked="settingDisplay.paymentInfo.itemsCostAmount">
                           Hiển thị tổng vốn
                         </a-checkbox>
                       </td>

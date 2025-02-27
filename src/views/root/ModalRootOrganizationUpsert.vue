@@ -3,12 +3,11 @@ import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputDate, InputHint, InputNumber, InputText } from '../../common/vue-form'
+import { InputDate, InputHint, InputNumber, InputText, VueSelect } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../core/address.instance'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Organization } from '../../modules/organization'
+import { Organization, OrganizationStatus } from '../../modules/organization'
 import { PermissionApi } from '../../modules/permission/permission.api'
 import type { PermissionId } from '../../modules/permission/permission.enum'
 import type { Permission } from '../../modules/permission/permission.model'
@@ -252,12 +251,15 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex">
-          <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(organization.isActive)"
-            @change="(checked: Boolean) => (organization.isActive = checked ? 1 : 0)" />
-          <div v-if="!organization.isActive" class="ml-4">
-            Cơ sở này tạm thời không thể hoạt động
+          <div class="w-[100px] flex-none">Status</div>
+          <div>
+            <VueSelect
+              v-model:value="organization.status"
+              :options="[
+                { value: OrganizationStatus.Inactive, text: 'Inactive' },
+                { value: OrganizationStatus.Active, text: 'Active' },
+                { value: OrganizationStatus.Frequent, text: 'Frequent' },
+              ]" />
           </div>
         </div>
       </div>

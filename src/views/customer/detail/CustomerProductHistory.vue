@@ -7,8 +7,8 @@ import { TicketProduct, TicketProductApi } from '../../../modules/ticket-product
 import { DTimer, formatPhone } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 
 const router = useRouter()
@@ -27,7 +27,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       filter: {
-        customerId: props.customer.id!,
+        customerId: props.customerId!,
         deliveryStatus: {},
       },
       relation: {
@@ -54,7 +54,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else ticketProductList.value = []
@@ -65,15 +65,6 @@ watch(
 
 <template>
   <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
-    </div>
     <div v-if="isMobile" class="mt-4 w-full table-wrapper">
       <table>
         <thead>

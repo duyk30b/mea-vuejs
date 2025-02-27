@@ -47,7 +47,7 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div style="display: flex; gap: 16px">
+  <div style="display: flex; gap: 16px; flex-wrap: wrap">
     <template v-for="(item, index) in options" :key="index">
       <div>
         <input

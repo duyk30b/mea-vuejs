@@ -1,3 +1,4 @@
+import { Commission } from '../commission'
 import { ProcedureGroup } from '../procedure-group'
 
 export enum ProcedureType {
@@ -19,9 +20,10 @@ export class Procedure {
 
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
-  deletedAt: number
 
   procedureGroup?: ProcedureGroup
+
+  commissionList?: Commission[]
 
   static init() {
     const ins = new Procedure()
@@ -40,6 +42,7 @@ export class Procedure {
 
   static blank() {
     const ins = Procedure.init()
+    ins.commissionList = []
     return ins
   }
 
@@ -64,10 +67,30 @@ export class Procedure {
         ? ProcedureGroup.basic(target.procedureGroup)
         : target.procedureGroup
     }
+
+    if (target.commissionList) {
+      target.commissionList = Commission.basicList(target.commissionList)
+    }
     return target
   }
 
   static fromList(sourceList: Procedure[]): Procedure[] {
     return sourceList.map((i) => Procedure.from(i))
+  }
+
+  static equal(a: Procedure, b: Procedure) {
+    if (a.id != b.id) return false
+    if (a.name != b.name) return false
+    if (a.procedureType != b.procedureType) return false
+    if (a.quantityDefault != b.quantityDefault) return false
+    if (a.gapHours != b.gapHours) return false
+    if (a.procedureGroupId != b.procedureGroupId) return false
+    if (a.price != b.price) return false
+
+    if (a.consumablesHint != b.consumablesHint) return false
+    if (a.isActive != b.isActive) return false
+    if (a.updatedAt != b.updatedAt) return false
+
+    return true
   }
 }

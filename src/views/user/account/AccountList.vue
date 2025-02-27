@@ -6,13 +6,13 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { UserApi, type User } from '../../modules/user'
-import ModalUserUpsert from './ModalUserUpsert.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { UserApi, type User } from '../../../modules/user'
+import ModalAccountUpsert from './ModalAccountUpsert.vue'
 
-const modalUserUpsert = ref<InstanceType<typeof ModalUserUpsert>>()
+const modalAccountUpsert = ref<InstanceType<typeof ModalAccountUpsert>>()
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -28,9 +28,9 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const { data, meta } = await UserApi.pagination({
+      relation: { userRoleList: { role: true } },
       page: page.value,
       limit: limit.value,
-      relation: { userRoleList: true },
       sort: { id: 'ASC' },
     })
     userList.value = data
@@ -60,7 +60,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleModalUserUpsertSuccess = async (data: User, type: 'CREATE' | 'UPDATE' | 'DELETE') => {
+const handleModalAccountUpsertSuccess = async (
+  data: User,
+  type: 'CREATE' | 'UPDATE' | 'DELETE'
+) => {
   await startFetchData()
 }
 
@@ -71,18 +74,14 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
 </script>
 
 <template>
-  <ModalUserUpsert ref="modalUserUpsert" @success="handleModalUserUpsertSuccess" />
+  <ModalAccountUpsert ref="modalAccountUpsert" @success="handleModalAccountUpsertSuccess" />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
         <ApartmentOutlined />
         Danh sách tài khoản
       </div>
-      <VueButton
-        v-if="permissionIdMap[PermissionId.USER_CREATE]"
-        color="blue"
-        icon="plus"
-        @click="modalUserUpsert?.openModal()">
+      <VueButton color="blue" icon="plus" @click="modalAccountUpsert?.openModal()">
         Thêm mới
       </VueButton>
     </div>
@@ -98,9 +97,9 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
             <th>Username</th>
             <th>Họ Tên</th>
             <th>Vai trò</th>
-            <th v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">Thiết bị đăng nhập</th>
+            <th>Thiết bị đăng nhập</th>
             <th>Trạng thái</th>
-            <th v-if="permissionIdMap[PermissionId.USER_UPDATE]">Sửa</th>
+            <th>Sửa</th>
           </tr>
         </thead>
         <tbody>
@@ -112,12 +111,14 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
             <td>{{ user.username }}</td>
             <td>{{ user.fullName }}</td>
             <td>
-              <a-tag v-if="user.isAdmin" color="cyan">Admin</a-tag>
-              <template v-else>
+              <div>
+                <a-tag v-if="user.isAdmin" color="cyan">Admin</a-tag>
+              </div>
+              <div>
                 {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
-              </template>
+              </div>
             </td>
-            <td v-if="permissionIdMap[PermissionId.USER_DEVICE_LOGOUT]">
+            <td>
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
                   <span v-if="device.mobile === 1">
@@ -158,11 +159,11 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
                 Inactive
               </a-tag>
             </td>
-            <td v-if="permissionIdMap[PermissionId.USER_UPDATE]" class="text-center">
+            <td class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalUserUpsert?.openModal(user.id)">
+                @click="modalAccountUpsert?.openModal(user.id)">
                 <FormOutlined />
               </a>
             </td>

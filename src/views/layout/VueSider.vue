@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons-vue'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconLabPanel } from '../../common/icon-google'
 import MedicalIcon from '../../common/icon/MedicalIcon.vue'
 import StoreIcon from '../../common/icon/StoreIcon.vue'
 import { useMeStore } from '../../modules/_me/me.store'
@@ -150,10 +149,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryList">
         <router-link :to="{ name: 'LaboratoryList' }">Xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryKitList">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        key="LaboratoryKitList">
         <router-link :to="{ name: 'LaboratoryKitList' }">Bộ xét nghiệm</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]" key="PrescriptionSampleList">
+      <a-menu-item
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+        key="PrescriptionSampleList">
         <router-link :to="{ name: 'PrescriptionSampleList' }">Đơn thuốc mẫu</router-link>
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
@@ -200,17 +203,24 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu
-      v-if="permissionIdMap[PermissionId.ROLE_READ] || permissionIdMap[PermissionId.USER_READ]"
-      key="Account">
+      v-if="
+        permissionIdMap[PermissionId.ROLE_CRUD] ||
+        permissionIdMap[PermissionId.ACCOUNT_CRUD] ||
+        permissionIdMap[PermissionId.COMMISSION_CRUD]
+      "
+      key="User">
       <template #icon>
         <TeamOutlined />
       </template>
       <template #title>Nhân viên</template>
-      <a-menu-item v-if="permissionIdMap[PermissionId.ROLE_READ]" key="Role">
+      <a-menu-item v-if="permissionIdMap[PermissionId.ROLE_CRUD]" key="Role">
         <router-link :to="{ name: 'Role' }">Vai trò</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.USER_READ]" key="User">
-        <router-link :to="{ name: 'User' }">Tài khoản</router-link>
+      <a-menu-item v-if="permissionIdMap[PermissionId.ACCOUNT_CRUD]" key="Account">
+        <router-link :to="{ name: 'Account' }">Tài khoản</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.COMMISSION_CRUD]" key="Commission">
+        <router-link :to="{ name: 'Commission' }">Hoa hồng</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-sub-menu key="Systems">

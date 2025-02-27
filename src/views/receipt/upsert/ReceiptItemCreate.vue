@@ -71,11 +71,7 @@ onUnmounted(() => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
-  } catch (error) {
-    console.log('🚀 ~ file: ReceiptItemCreate.vue:61 ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 watch(
@@ -180,7 +176,7 @@ const selectProduct = async (productData?: Product) => {
     })
     selectBatch(batchListData.at(-1)!)
 
-    productOptions.value = []
+    // productOptions.value = []
   } else {
     clear()
   }
@@ -236,13 +232,20 @@ const clear = () => {
           <span v-if="!product.hasManageQuantity" style="font-weight: 500; color: var(--text-red)">
             (Sản phẩm không quản lý tồn kho)
           </span>
-          <span
-            v-if="product.id && product.hasManageQuantity"
-            :class="product?.quantity <= 0 ? 'text-red-500 font-bold' : ''">
-            ( tồn:
-            <b>{{ product?.unitQuantity }} {{ product.unitDefaultName }}</b>
+          <div v-if="product.id">
+            (
+            <span
+              v-if="product.hasManageQuantity"
+              :class="product.quantity <= 0 ? 'text-red-500 font-bold' : ''">
+              Tồn:
+              <b>{{ product?.unitQuantity }} {{ product.unitDefaultName }}</b>
+            </span>
+            <span>
+              - Giá bán
+              <b>{{ formatMoney(product!.unitRetailPrice) }}</b>
+            </span>
             )
-          </span>
+          </div>
           <a
             v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && product.id"
             @click="modalProductUpsert?.openModal(product.id)">
@@ -284,18 +287,6 @@ const clear = () => {
       </div>
 
       <div style="flex-basis: 80%; flex-grow: 1" class="flex flex-wrap gap-4">
-        <div
-          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.warehouse"
-          style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div>Nhập vào kho hàng</div>
-          <div>
-            <VueSelect
-              v-model:value="receiptItem.warehouseId"
-              :options="warehouseOptions"
-              @update:value="receiptItem.batchId = 0"></VueSelect>
-          </div>
-        </div>
-
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Nhập vào lô hàng</div>
           <div>
@@ -316,8 +307,11 @@ const clear = () => {
                   <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
                     {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
                   </span>
-                  - Tồn
-                  <b>{{ data.unitQuantity }}</b>
+                  -
+                  <span :class="data.quantity <= 0 ? 'text-red-500 font-bold' : ''">
+                    Tồn
+                    <b>{{ data.unitQuantity }}</b>
+                  </span>
                   {{ product.unitDefaultName }} - G.Nhập
                   <b>{{ formatMoney(data.unitCostPrice) }}</b>
                   - {{ warehouseMap[data.warehouseId]?.name }} -
@@ -332,14 +326,30 @@ const clear = () => {
                   <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
                     {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
                   </span>
-                  - Tồn
-                  <b>{{ data.unitQuantity }}</b>
+                  -
+                  <span :class="data.quantity <= 0 ? 'text-red-500 font-bold' : ''">
+                    Tồn
+                    <b>{{ data.unitQuantity }}</b>
+                  </span>
                   {{ product.unitDefaultName }} - G.Nhập
                   <b>{{ formatMoney(data.unitCostPrice) }}</b>
                   - {{ warehouseMap[data.warehouseId]?.name }}
                 </div>
               </template>
             </VueSelect>
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.warehouse"
+          style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+          <div>Nhập vào kho hàng</div>
+          <div>
+            <VueSelect
+              v-model:value="receiptItem.warehouseId"
+              :options="warehouseOptions"
+              :disabled="!!receiptItem.batchId"
+              @update:value="receiptItem.batchId = 0"></VueSelect>
           </div>
         </div>
       </div>

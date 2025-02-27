@@ -8,7 +8,7 @@ import {
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import type { Organization } from '../../modules/organization'
+import { OrganizationStatus, type Organization } from '../../modules/organization'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
 import { timeToText } from '../../utils'
@@ -106,17 +106,23 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
             <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
             <td>{{ organization.note }}</td>
             <td class="text-center">
-              <a-tag v-if="organization.isActive" color="success">
+              <a-tag v-if="organization.status === OrganizationStatus.Inactive" color="default">
                 <template #icon>
                   <CheckCircleOutlined />
                 </template>
-                Active
+                Inactive
               </a-tag>
-              <a-tag v-else color="warning">
+              <a-tag v-if="organization.status === OrganizationStatus.Active" color="processing">
                 <template #icon>
                   <MinusCircleOutlined />
                 </template>
-                Inactive
+                Active
+              </a-tag>
+              <a-tag v-if="organization.status === OrganizationStatus.Frequent" color="success">
+                <template #icon>
+                  <CheckCircleOutlined />
+                </template>
+                Frequent
               </a-tag>
             </td>
             <td class="text-center">

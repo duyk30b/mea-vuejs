@@ -26,7 +26,7 @@ const handleClick = (e: Event) => {
 
 <style lang="scss" scoped>
 .tab-menu-item {
-  padding: 6px 20px;
+  padding: 6px 12px;
   cursor: pointer;
   border: 1px solid #cdcdcd;
   border-top: 5px solid #d6d6d6;
@@ -36,7 +36,7 @@ const handleClick = (e: Event) => {
   opacity: 1;
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: 5px;
 
   &.active {
     border-top-color: #1890ff;

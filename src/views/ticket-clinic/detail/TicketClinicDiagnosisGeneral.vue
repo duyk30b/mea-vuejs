@@ -13,6 +13,7 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
+import { CustomerService } from '../../../modules/customer'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -97,19 +98,20 @@ const saveTicketDiagnosis = async () => {
         .filter((i) => !!i.value)
     }
 
-    await TicketClinicApi.updateDiagnosis({
-      ticketId: ticketClinicRef.value.id,
-      files,
-      imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
-      ticketAttributeChangeList,
-      ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
-      customerChange: hasChangeCustomer.value
-        ? {
-            customerId: ticketClinicRef.value.customerId,
+    await Promise.all([
+      TicketClinicApi.updateDiagnosis({
+        ticketId: ticketClinicRef.value.id,
+        files,
+        imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+        ticketAttributeChangeList,
+        ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
+      }),
+      hasChangeCustomer.value
+        ? CustomerService.updateOne(ticketClinicRef.value.customerId, {
             healthHistory: ticketAttributeMap.value.healthHistory,
-          }
+          })
         : undefined,
-    })
+    ])
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:137 ~:', error)
   } finally {
@@ -235,9 +237,7 @@ defineExpose({ getDataTicketDiagnosis })
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_DIAGNOSIS_BASIC]
-        "
+        v-if="ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

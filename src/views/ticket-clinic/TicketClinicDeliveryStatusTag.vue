@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShoppingCartOutlined } from '@ant-design/icons-vue'
+import { IconClock, IconShoppingCart } from '../../common/icon'
 import { DeliveryStatus } from '../../modules/enum'
 
 const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
@@ -8,21 +8,30 @@ const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
 </script>
 
 <template>
-  <a-tag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
+  <a-tag
+    v-if="deliveryStatus === DeliveryStatus.NoStock"
+    color="default"
+    style="display: flex; align-items: center; gap: 0.5em">
     <template #icon>
-      <ShoppingCartOutlined />
+      <IconShoppingCart />
     </template>
     Không có thuốc - vật tư
   </a-tag>
-  <a-tag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="warning">
+  <a-tag
+    v-else-if="deliveryStatus === DeliveryStatus.Pending"
+    color="warning"
+    style="display: flex; align-items: center; gap: 0.5em">
     <template #icon>
-      <ShoppingCartOutlined />
+      <IconClock />
     </template>
     Chưa xuất thuốc - vật tư
   </a-tag>
-  <a-tag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="success">
+  <a-tag
+    v-else-if="deliveryStatus === DeliveryStatus.Delivered"
+    color="success"
+    style="display: flex; align-items: center; gap: 0.5em">
     <template #icon>
-      <ShoppingCartOutlined />
+      <IconShoppingCart />
     </template>
     Đã xuất thuốc - vật tư
   </a-tag>

@@ -6,10 +6,11 @@ if (!CLIENT_ID) {
 
 export const CONFIG = {
   CLIENT_ID: CLIENT_ID,
+  MODE: import.meta.env.MODE,
   API_URL:
     import.meta.env.MODE === 'production'
-      ? 'https://api.mea.vn'
+      ? 'https://api.medihome.vn'
       : `http://${location.hostname}:20000`,
 }
 
-// CONFIG.API_URL = 'https://api.mea.vn'
+// CONFIG.API_URL = 'https://api.medihome.vn'

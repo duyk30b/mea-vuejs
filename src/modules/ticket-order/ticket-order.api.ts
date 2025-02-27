@@ -10,7 +10,7 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post('/ticket-order/create-draft', {
       ticketOrderDraftInsert: {
         customerId: ticket.customerId,
-        totalCostAmount: ticket.totalCostAmount,
+        itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
         itemsActualMoney: ticket.itemsActualMoney,
@@ -71,7 +71,7 @@ export class TicketOrderApi {
     const { ticketId, ticket } = options
     const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-draft-approved`, {
       ticketOrderDraftApprovedUpdate: {
-        totalCostAmount: ticket.totalCostAmount,
+        itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
         itemsActualMoney: ticket.itemsActualMoney,
@@ -133,7 +133,7 @@ export class TicketOrderApi {
     const response = await AxiosInstance.post('/ticket-order/create-debt-success', {
       ticketOrderDebtSuccessInsert: {
         customerId: ticket.customerId,
-        totalCostAmount: ticket.totalCostAmount,
+        itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
@@ -196,7 +196,7 @@ export class TicketOrderApi {
     const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-debt-success`, {
       ticketOrderDebtSuccessUpdate: {
         // customerId: ticket.customerId, // không cho thay đổi customerID
-        totalCostAmount: ticket.totalCostAmount,
+        itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
         productMoney: ticket.productMoney,
         // radiologyMoney: ticket.radiologyMoney,
@@ -336,7 +336,7 @@ export class TicketOrderApi {
       ticketProcedureId: number
       quantityReturn: number
     }[]
-    totalCostAmountUpdate: number
+    itemsCostAmountUpdate: number
     productMoneyUpdate: number
     procedureMoneyUpdate: number
     itemsActualMoneyUpdate: number
@@ -362,7 +362,7 @@ export class TicketOrderApi {
         ticketProcedureId: i.ticketProcedureId,
         quantityReturn: i.quantityReturn,
       })),
-      totalCostAmountUpdate: options.totalCostAmountUpdate,
+      itemsCostAmountUpdate: options.itemsCostAmountUpdate,
       productMoneyUpdate: options.productMoneyUpdate,
       procedureMoneyUpdate: options.procedureMoneyUpdate,
       itemsActualMoneyUpdate: options.itemsActualMoneyUpdate,

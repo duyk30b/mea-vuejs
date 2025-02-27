@@ -7,7 +7,7 @@ import { Radiology } from '../../../../modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
 import { timeToText } from '../../../../utils'
 import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
-import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ radiology: Radiology }>(), {
@@ -103,7 +103,10 @@ watch(
           <td class="text-center">
             <div class="flex items-center gap-2">
               <span>{{ ticketRadiology.result }}</span>
-              <a @click="modalTicketRadiologyResult?.openModalById(ticketRadiology.id)">
+              <a
+                @click="
+                  modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })
+                ">
                 <IconVisibility width="20" height="20" />
               </a>
             </div>

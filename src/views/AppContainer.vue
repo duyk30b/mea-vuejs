@@ -6,6 +6,8 @@ import { LocalStorageService } from '../core/local-storage.service'
 import { MeService } from '../modules/_me/me.service'
 import { AuthService } from '../modules/auth/auth.service'
 import VueLayout from './layout/VueLayout.vue'
+import { ProductService } from '../modules/product'
+import { BatchService } from '../modules/batch'
 
 const loaded = ref(false)
 
@@ -18,11 +20,13 @@ onBeforeMount(async () => {
     ) {
       await AuthService.logout()
     } else {
-      await MeService.initData()
       await MeaDatabase.runMigration()
+      await MeService.initData()
+      await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
     }
   } catch (error) {
     console.log('🚀 ~ file: AppContainer.vue:26 ~ onBeforeMount ~ error:', error)
+    await AuthService.logout()
   } finally {
     loaded.value = true
   }

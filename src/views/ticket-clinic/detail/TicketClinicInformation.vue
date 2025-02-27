@@ -19,6 +19,7 @@ import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
+import { CONFIG } from '../../../config'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -68,7 +69,7 @@ const selectCustomer = (data?: Customer) => {
   ticketClinicRef.value.ticketAttributeMap!.healthHistory = data?.healthHistory || ''
 }
 
-const createCustomer = (instance?: Customer) => {
+const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
     text: instance?.fullName,
     data: instance,
@@ -96,31 +97,29 @@ const handleClickModalRegisterAppointment = () => {
 }
 </script>
 <template>
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
+  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
   <ModalTicketClinicRegisterAppointment ref="modalTicketClinicRegisterAppointment" />
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <div class="bg-white p-4">
     <div class="">
       <div class="flex justify-between">
-        <span>
-          Tên KH (nợ cũ:
-          <b>{{ formatMoney(ticketClinicRef.customer?.debt || 0) }}</b>
-          )
-          <a
-            v-if="ticketClinicRef.customerId"
-            class="ml-1"
-            @click="modalCustomerDetail?.openModal(ticketClinicRef.customer!)">
-            <IconFileSearch />
-          </a>
-        </span>
-        <span>
-          <a
-            v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-            @click="modalCustomerUpsert?.openModal()">
-            Thêm KH mới
-          </a>
-        </span>
+        <div>
+          <span>Tên KH</span>
+          <span v-if="ticketClinicRef.customer!.id" class="ml-1">
+            <a @click="modalCustomerDetail?.openModal(ticketClinicRef.customerId)">
+              <IconFileSearch />
+            </a>
+            (nợ cũ:
+            <b>{{ formatMoney(ticketClinicRef.customer?.debt || 0) }}</b>
+            )
+          </span>
+        </div>
+        <a
+          v-if="ticketClinicRef.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+          @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)">
+          Sửa thông tin khách hàng
+        </a>
       </div>
       <div style="height: 40px">
         <InputOptions
@@ -250,5 +249,65 @@ const handleClickModalRegisterAppointment = () => {
         {{ DTimer.timeToText(ticketClinicRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
       </div>
     </div>
+    <template v-if="CONFIG.MODE === 'development'">
+      <div class="table-wrapper mt-4">
+        <table>
+          <tbody>
+            <tr>
+              <td style="width: 150px">productMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.productMoney) }}</td>
+            </tr>
+            <tr>
+              <td>procedureMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.procedureMoney) }}</td>
+            </tr>
+            <tr>
+              <td>laboratoryMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.laboratoryMoney) }}</td>
+            </tr>
+            <tr>
+              <td>radiologyMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.radiologyMoney) }}</td>
+            </tr>
+            <tr>
+              <td>itemsCostAmount</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsCostAmount) }}</td>
+            </tr>
+            <tr>
+              <td>itemsActualMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsActualMoney) }}</td>
+            </tr>
+            <tr>
+              <td>itemsDiscount</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsDiscount) }}</td>
+            </tr>
+            <tr>
+              <td>discountMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.discountMoney) }}</td>
+            </tr>
+            <tr>
+              <td>totalMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.totalMoney) }}</td>
+            </tr>
+            <tr>
+              <td>commissionMoney</td>
+              <td>{{ formatMoney(ticketClinicRef.commissionMoney) }}</td>
+            </tr>
+            <tr>
+              <td>profit</td>
+              <td>{{ formatMoney(ticketClinicRef.profit) }}</td>
+            </tr>
+            <tr>
+              <td>paid</td>
+              <td>{{ formatMoney(ticketClinicRef.paid) }}</td>
+            </tr>
+            <tr>
+              <td>debt</td>
+              <td>{{ formatMoney(ticketClinicRef.debt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
   </div>
 </template>

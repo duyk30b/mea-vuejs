@@ -4,17 +4,13 @@ import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer } from '../../../modules/customer'
-import { MovementType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
-import { DTimer, formatPhone } from '../../../utils'
-import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
+import { DTimer } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 const router = useRouter()
 
@@ -33,7 +29,7 @@ const startFetchData = async () => {
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
       limit: limit.value,
-      filter: { customerId: props.customer.id! },
+      filter: { customerId: props.customerId },
       relation: { customer: false },
       sort: { id: 'DESC' },
     })
@@ -54,7 +50,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else ticketList.value = []
@@ -74,23 +70,12 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
 <template>
   <div class="mt-4">
     <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
-      <span>
-        - Công nợ hiện tại:
-        <b>{{ formatMoney(customer.debt) }}</b>
-      </span>
-      <div class="ml-auto">
+      <div>
         <VueButton
           v-if="permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]"
           color="blue"
           icon="plus"
-          @click="openBlankTicketOrderUpsert(customer.id!)">
+          @click="openBlankTicketOrderUpsert(customerId!)">
           Bán hàng mới
         </VueButton>
       </div>

@@ -113,38 +113,45 @@ export const ticketRouter: RouteRecordRaw[] = [
               {
                 path: 'procedure',
                 name: 'TicketClinicProcedure',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicProcedure.vue'),
+                component: () => import('../views/ticket-clinic/detail/procedure/TicketClinicProcedure.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định dịch vụ' },
               },
               {
                 path: 'laboratory',
                 name: 'TicketClinicLaboratory',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicLaboratory.vue'),
+                component: () => import('../views/ticket-clinic/detail/laboratory/TicketClinicLaboratory.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định Xét nghiệm' },
               },
               {
                 path: 'radiology',
                 name: 'TicketClinicRadiology',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicRadiology.vue'),
+                component: () => import('../views/ticket-clinic/detail/radiology/TicketClinicRadiology.vue'),
                 meta: { keepAlive: true, title: 'Chỉ định CĐHA' },
               },
               {
                 path: 'consumable',
                 name: 'TicketClinicConsumable',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicConsumable.vue'),
+                component: () => import('../views/ticket-clinic/detail/consumable/TicketClinicConsumable.vue'),
                 meta: { keepAlive: true, title: 'Vật tư' },
               },
               {
                 path: 'prescription',
                 name: 'TicketClinicPrescription',
                 component: () =>
-                  import('../views/ticket-clinic/detail/TicketClinicPrescription.vue'),
+                  import('../views/ticket-clinic/detail/prescription/TicketClinicPrescription.vue'),
                 meta: { keepAlive: true, title: 'Kê đơn thuốc' },
+              },
+              {
+                path: 'user',
+                name: 'TicketClinicUser',
+                component: () =>
+                  import('../views/ticket-clinic/detail/user/TicketClinicUser.vue'),
+                meta: { title: 'Nhân viên và hoa hồng' },
               },
               {
                 path: 'summary',
                 name: 'TicketClinicSummary',
-                component: () => import('../views/ticket-clinic/detail/TicketClinicSummary.vue'),
+                component: () => import('../views/ticket-clinic/detail/summary/TicketClinicSummary.vue'),
                 meta: { title: 'Tổng kết' },
               },
             ],

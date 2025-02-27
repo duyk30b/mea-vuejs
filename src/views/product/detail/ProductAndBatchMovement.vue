@@ -14,6 +14,7 @@ import type { ProductMovement } from '../../../modules/product-movement/product-
 import { timeToText } from '../../../utils'
 import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
+import { CONFIG } from '../../../config'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -173,7 +174,9 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               { value: 0, text: 'Tất cả' },
               ...batchList.map((i) => ({
                 value: i.id,
-                text: `Lô ${timeToText(i.expiryDate)} - (${i.quantity} ${product.unitBasicName})`,
+                text: `Lô ${i.id} - ${timeToText(i.expiryDate)} - (${i.quantity} ${
+                  product.unitBasicName
+                })`,
               })),
             ]"
             :maxHeight="260"
@@ -386,6 +389,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
           <th>Thời gian</th>
           <th>Nhập/Xuất</th>
           <th>Tồn kho ({{ product.unitBasicName }})</th>
+          <th v-if="CONFIG.MODE === 'development'">costPrice</th>
           <th>Giá</th>
         </tr>
       </thead>
@@ -453,6 +457,10 @@ const openBlankReceiptDetail = async (receiptId: number) => {
           </td>
           <td class="text-center">
             {{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}
+          </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right">
+            {{ formatMoney(productMovement.unitCostPrice) }}
+            <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
           </td>
           <td class="text-right">
             <div

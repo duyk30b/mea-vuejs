@@ -63,7 +63,7 @@ watch(
 )
 
 watchEffect(() => {
-  let totalCostAmount = 0
+  let itemsCostAmount = 0
   let productMoney = 0
   let procedureMoney = 0
   let itemsActualMoney = 0
@@ -72,7 +72,7 @@ watchEffect(() => {
   let itemsDiscount = 0
 
   ticketUpdate.value.ticketProductList?.forEach((item) => {
-    totalCostAmount += item.quantity * item.costPrice
+    itemsCostAmount += item.quantity * item.costPrice
     productMoney += item.actualPrice * item.quantity
     itemsDiscountProduct += item.discountMoney * item.quantity
   })
@@ -92,9 +92,9 @@ watchEffect(() => {
   const surcharge = ticketUpdate.value.surcharge || 0
   const expense = ticketUpdate.value.expense || 0
   const totalMoney = itemsActualMoney - discountMoney + surcharge
-  const profit = totalMoney - totalCostAmount - expense
+  const profit = totalMoney - itemsCostAmount - expense
 
-  ticketUpdate.value.totalCostAmount = totalCostAmount
+  ticketUpdate.value.itemsCostAmount = itemsCostAmount
   ticketUpdate.value.productMoney = productMoney
   ticketUpdate.value.procedureMoney = procedureMoney
   ticketUpdate.value.itemsActualMoney = itemsActualMoney
@@ -204,7 +204,7 @@ const startReturnProduct = async () => {
       ticketProcedureReturnList: Object.values(ticketProcedureMapReturn.value).filter((i) => {
         return i.quantityReturn > 0
       }),
-      totalCostAmountUpdate: ticketUpdate.value.totalCostAmount,
+      itemsCostAmountUpdate: ticketUpdate.value.itemsCostAmount,
       productMoneyUpdate: ticketUpdate.value.productMoney,
       procedureMoneyUpdate: ticketUpdate.value.procedureMoney,
       itemsActualMoneyUpdate: ticketUpdate.value.itemsActualMoney,

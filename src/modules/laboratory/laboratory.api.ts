@@ -27,10 +27,7 @@ export class LaboratoryApi {
 
     const response = await AxiosInstance.get('/laboratory/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: Laboratory.fromList(data),
-    }
+    return Laboratory.fromList(data)
   }
 
   static search: (params: LaboratoryListQuery) => Promise<Laboratory[]> = debounceAsync(

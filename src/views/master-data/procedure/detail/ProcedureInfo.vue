@@ -1,28 +1,52 @@
 <script setup lang="ts">
+import {
+  AreaChartOutlined,
+  ForkOutlined,
+  DoubleRightOutlined,
+  ShoppingCartOutlined,
+} from '@ant-design/icons-vue'
 import { onMounted, ref, watch } from 'vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Procedure, ProcedureApi } from '../../../../modules/procedure'
+import {
+  Commission,
+  CommissionCalculatorType,
+  CommissionService,
+  InteractType,
+} from '../../../../modules/commission'
+import { Role, RoleService } from '../../../../modules/role'
 
 const props = withDefaults(defineProps<{ procedureId: number }>(), {
   procedureId: 0,
 })
 
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
+
 const procedure = ref<Procedure>(Procedure.blank())
+const commissionList = ref<Commission[]>([])
+const roleMap = ref<Record<string, Role>>({})
 
 const startFetchData = async () => {
   if (!props.procedureId) return
 
   try {
-    procedure.value = await ProcedureApi.detail(props.procedureId, {
-      relation: { procedureGroup: true },
-    })
+    const fetchPromise = await Promise.all([
+      ProcedureApi.detail(props.procedureId, {
+        relation: { procedureGroup: true },
+      }),
+      CommissionService.list({
+        filter: { interactType: InteractType.Procedure, interactId: props.procedureId },
+      }),
+      RoleService.getMap(),
+    ])
+    procedure.value = fetchPromise[0]
+    commissionList.value = fetchPromise[1]
+    roleMap.value = fetchPromise[2]
   } catch (error) {
     console.log('🚀 ~ file: ProcedureInfo.vue:23 ~ startFetchData ~ error:', error)
   }
 }
-
-const settingStore = useSettingStore()
-const { formatMoney } = settingStore
 
 watch(
   () => props.procedureId,
@@ -56,5 +80,47 @@ onMounted(() => {
       <span class="inline-block w-40">Giá dịch vụ</span>
       <span>{{ formatMoney(procedure.price) }}</span>
     </p>
+  </div>
+
+  <div class="mt-10">
+    <div class="font-bold">
+      <DoubleRightOutlined />
+      Vai trò và hoa hồng
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Vai trò</th>
+            <th>Công thức tính</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="commission in commissionList" :key="commission.id">
+            <td>
+              {{
+                roleMap[commission.roleId]?.displayName || roleMap[commission.roleId]?.name || ''
+              }}
+            </td>
+            <template
+              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected">
+              <td class="text-right">{{ commission.commissionValue }}%</td>
+              <td>Giá niêm yết</td>
+            </template>
+            <template
+              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentActual">
+              <td class="text-right">{{ commission.commissionValue }}%</td>
+              <td>Giá sau chiết khấu</td>
+            </template>
+            <template
+              v-if="commission.commissionCalculatorType === CommissionCalculatorType.VND">
+              <td class="text-right">{{ formatMoney(commission.commissionValue) }}</td>
+              <td>VNĐ</td>
+            </template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>

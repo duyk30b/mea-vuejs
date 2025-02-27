@@ -259,9 +259,7 @@ const openModalTicketOrderPreview = () => {
 
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalTicketOrderReturn
-    ref="modalTicketOrderReturn"
-    @success="() => startFetchData(ticket.id)" />
+  <ModalTicketOrderReturn ref="modalTicketOrderReturn" @success="() => startFetchData(ticket.id)" />
   <ModalTicketOrderPreview ref="modalTicketOrderPreview" />
   <ModalTicketOrderPayment ref="modalTicketOrderPayment" />
   <ModalTicketOrderDetailSetting ref="modalTicketOrderDetailSetting" />
@@ -307,7 +305,7 @@ const openModalTicketOrderPreview = () => {
         <td class="px-2 py-1 whitespace-nowrap">Khách hàng</td>
         <td class="font-medium px-2 py-1">
           {{ ticket.customer?.fullName }}
-          <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customer!)">
+          <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
             <FileSearchOutlined />
           </a>
         </td>

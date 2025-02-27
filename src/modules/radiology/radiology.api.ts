@@ -27,10 +27,7 @@ export class RadiologyApi {
 
     const response = await AxiosInstance.get('/radiology/list', { params })
     const { data, time } = response.data as BaseResponse
-    return {
-      time: new Date(time),
-      data: Radiology.fromList(data),
-    }
+    return Radiology.fromList(data)
   }
 
   static search: (params: RadiologyListQuery) => Promise<Radiology[]> = debounceAsync(
@@ -60,6 +57,16 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+
+      commissionList: (radiology.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
@@ -75,6 +82,16 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+
+      commissionList: (radiology.commissionList || [])
+        .filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)

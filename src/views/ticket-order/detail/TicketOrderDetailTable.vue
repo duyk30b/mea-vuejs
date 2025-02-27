@@ -359,10 +359,10 @@ const colspan = computed(() => {
             {{ formatMoney(ticket.totalMoney) }}
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.totalCostAmount">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount">
           <td class="text-right" :colspan="colspan">Tiền vốn</td>
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.totalCostAmount) }}
+            {{ formatMoney(ticket.itemsCostAmount) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.expense">

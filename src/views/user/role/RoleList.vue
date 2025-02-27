@@ -6,10 +6,10 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { useMeStore } from '../../modules/_me/me.store'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { RoleApi, type Role } from '../../modules/role'
+import VueButton from '../../../common/VueButton.vue'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { RoleApi, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -24,6 +24,7 @@ const { permissionIdMap } = meStore
 const startFetchData = async () => {
   try {
     const { data, meta } = await RoleApi.pagination({
+      relation: { userRoleList: { user: true } },
       page: page.value,
       limit: limit.value,
       filter: {},
@@ -64,11 +65,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <ApartmentOutlined class="mr-1" />
         Danh sách vai trò
       </div>
-      <VueButton
-        v-if="permissionIdMap[PermissionId.ROLE_CREATE]"
-        color="blue"
-        icon="plus"
-        @click="$router.push({ name: 'RoleUpsert' })">
+      <VueButton color="blue" icon="plus" @click="$router.push({ name: 'RoleUpsert' })">
         Thêm mới
       </VueButton>
     </div>
@@ -81,9 +78,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Tên</th>
+            <th>Tên vai trò</th>
+            <th>Tên hiển thị</th>
+            <th>Tài khoản</th>
             <th>Trạng thái</th>
-            <th v-if="permissionIdMap[PermissionId.ROLE_UPDATE]">Sửa</th>
+            <th>Sửa</th>
           </tr>
         </thead>
         <tbody>
@@ -93,6 +92,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           <tr v-for="(role, index) in roleList" :key="index">
             <td class="text-center">R{{ role.id }}</td>
             <td>{{ role.name }}</td>
+            <td>{{ role.displayName }}</td>
+            <td>
+              {{ role.userRoleList?.map((i) => i.user?.fullName).join(', ') }}
+            </td>
             <td class="text-center">
               <a-tag v-if="role.isActive" color="success">
                 <template #icon>
@@ -107,7 +110,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
                 Inactive
               </a-tag>
             </td>
-            <td v-if="permissionIdMap[PermissionId.ROLE_UPDATE]" class="text-center">
+            <td class="text-center">
               <a
                 style="color: #eca52b"
                 class="text-xl"

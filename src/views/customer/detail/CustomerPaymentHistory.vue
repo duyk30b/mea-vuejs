@@ -4,11 +4,11 @@ import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer } from '../../../modules/customer'
+import type { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DTimer, formatPhone } from '../../../utils'
+import { DTimer } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
@@ -17,8 +17,8 @@ const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
 const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 
 const router = useRouter()
@@ -39,7 +39,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       relation: { ticket: true },
-      filter: { customerId: props.customer.id! },
+      filter: { customerId: props.customerId },
       sort: { id: 'DESC' },
     })
     customerPaymentList.value = data
@@ -50,7 +50,7 @@ const startFetchData = async () => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else customerPaymentList.value = []
@@ -78,23 +78,12 @@ defineExpose({ startFetchData })
 <template>
   <div class="mt-4">
     <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
-      <span>
-        - Công nợ hiện tại:
-        <b>{{ formatMoney(customer.debt) }}</b>
-      </span>
       <div class="ml-auto">
         <VueButton
           v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
           color="blue"
           icon="dollar"
-          @click="modalCustomerPayDebt?.openModal(customer)">
+          @click="modalCustomerPayDebt?.openModal(customerId)">
           Trả nợ
         </VueButton>
       </div>

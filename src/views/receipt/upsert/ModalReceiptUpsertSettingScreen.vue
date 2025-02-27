@@ -143,23 +143,6 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td>
-                        <div>Khi thêm sản phẩm có sẵn trong phiếu</div>
-                        <div class="pl-7">
-                          <a-radio-group
-                            v-model:value="settingDisplay.receiptItemsTable.allowDuplicateItem">
-                            <a-radio style="display: flex; line-height: 36px" :value="false">
-                              Cộng gộp số lượng
-                            </a-radio>
-                            <a-radio style="display: flex; line-height: 36px" :value="true">
-                              Không cộng gộp (VD: nhập 4 tặng 1 thì bản ghi số lượng 1 có thể điền
-                              đơn giá = 0)
-                            </a-radio>
-                          </a-radio-group>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
                         <a-checkbox v-model:checked="settingDisplay.receiptItemsTable.detail">
                           Hiển thị chi tiết sản phẩm (
                           <IconFileSearch />

@@ -18,6 +18,7 @@ export class ProductGetQuery {
   relation?: {
     batchList?: boolean
     productGroup?: boolean
+    commissionList?: boolean
   }
 
   filter?: ProductFilterQuery & {

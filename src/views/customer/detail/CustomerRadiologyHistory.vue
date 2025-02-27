@@ -3,16 +3,15 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer } from '../../../modules/customer'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { DTimer, formatPhone } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/modal/ModalTicketRadiologyResult.vue'
+import { DTimer } from '../../../utils'
+import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
-const props = withDefaults(defineProps<{ customer: Customer }>(), {
-  customer: () => Customer.blank(),
+const props = withDefaults(defineProps<{ customerId: number }>(), {
+  customerId: 0,
 })
 
 const router = useRouter()
@@ -22,9 +21,7 @@ const { formatMoney, isMobile } = settingStore
 
 const ticketRadiologyList = ref<TicketRadiology[]>([])
 const page = ref(1)
-const limit = ref(
-  Number(localStorage.getItem('CUSTOMER_RADIOLOGY_HISTORY_PAGINATION_LIMIT')) || 10
-)
+const limit = ref(Number(localStorage.getItem('CUSTOMER_RADIOLOGY_HISTORY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const startFetchData = async () => {
@@ -33,7 +30,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       filter: {
-        customerId: props.customer.id!,
+        customerId: props.customerId!,
       },
       relation: {
         radiology: {},
@@ -58,7 +55,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 watch(
-  () => props.customer.id,
+  () => props.customerId,
   async (newValue) => {
     if (newValue) await startFetchData()
     else ticketRadiologyList.value = []
@@ -70,15 +67,6 @@ watch(
 <template>
   <ModalTicketRadiologyResult ref="modalTicketRadiologyResult" />
   <div class="mt-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <span>
-        KH:
-        <b>{{ customer.fullName }}</b>
-      </span>
-      <span>
-        <a :href="'tel:' + customer.phone">{{ formatPhone(customer.phone || '') }}</a>
-      </span>
-    </div>
     <div v-if="isMobile" class="mt-4 w-full table-wrapper">
       <table>
         <thead>
@@ -158,7 +146,10 @@ watch(
             <td>
               <div class="flex items-center gap-2" style="font-weight: 500">
                 <span>{{ ticketRadiology.radiology?.name }}</span>
-                <a @click="modalTicketRadiologyResult?.openModalById(ticketRadiology.id)">
+                <a
+                  @click="
+                    modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })
+                  ">
                   <IconVisibility width="20" height="20" />
                 </a>
               </div>
