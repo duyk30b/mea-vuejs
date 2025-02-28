@@ -1,6 +1,7 @@
-import { DTimer, DString, DImage } from '../../utils'
+import { DImage, DString, DTimer } from '../../utils'
 import type { Laboratory } from '../laboratory'
 import type { Organization } from '../organization'
+import type { Radiology } from '../radiology'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
 import type { PrintHtml } from './print-html.model'
@@ -9,7 +10,10 @@ export const printHtmlCompiledTemplate = (options: {
   organization: Organization
   ticket: Ticket
   me?: User
-  masterData: { laboratoryMap?: Record<string, Laboratory> }
+  masterData: {
+    laboratoryMap?: Record<string, Laboratory>
+    radiology?: Radiology
+  }
   data?: Record<string, any>
   printHtml: PrintHtml
 }) => {

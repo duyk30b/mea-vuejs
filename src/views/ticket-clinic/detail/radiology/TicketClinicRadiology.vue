@@ -120,7 +120,8 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    let printHtmlId = radiologyMap.value[ticketRadiologyData.radiologyId]?.printHtmlId || 0
+    const radiologyData = radiologyMap.value[ticketRadiologyData.radiologyId] || Radiology.blank()
+    let printHtmlId = radiologyData.printHtmlId
     let printHtml: PrintHtml | undefined
     if (printHtmlId !== 0) {
       printHtml = await PrintHtmlService.detail(printHtmlId)
@@ -141,7 +142,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
-      masterData: {},
+      masterData: {
+        radiology: radiologyData,
+      },
       printHtml: printHtml!,
     })
 
