@@ -4,8 +4,10 @@ import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
 import { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
+import type { Laboratory } from '../laboratory'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
+import type { Radiology } from '../radiology'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import { TicketLaboratory } from '../ticket-laboratory'
@@ -159,6 +161,31 @@ export class Ticket {
         this.ticketUserGroup[i.interactType][i.ticketItemId] = []
       }
       this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
+  static refreshMasterData(
+    ticket: Ticket,
+    masterData: {
+      procedureMap?: Record<string, Procedure>
+      radiologyMap?: Record<string, Radiology>
+      laboratoryMap?: Record<string, Laboratory>
+    }
+  ) {
+    ;(ticket.ticketProcedureList || []).forEach((i) => {
+      if (masterData.procedureMap) {
+        i.procedure = masterData.procedureMap[i.procedureId]
+      }
+    })
+    ;(ticket.ticketLaboratoryList || []).forEach((i) => {
+      if (masterData.laboratoryMap) {
+        i.laboratory = masterData.laboratoryMap[i.laboratoryId]
+      }
+    })
+    ;(ticket.ticketRadiologyList || []).forEach((i) => {
+      if (masterData.radiologyMap) {
+        i.radiology = masterData.radiologyMap[i.radiologyId]
+      }
     })
   }
 

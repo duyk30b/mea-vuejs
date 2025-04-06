@@ -88,6 +88,9 @@ export class TicketLaboratory {
     if (target.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(target.ticketUserList)
     }
+    if (target.laboratory) {
+      target.laboratory = Laboratory.basic(target.laboratory)
+    }
     if (target.laboratoryList) {
       target.laboratoryList = Laboratory.basicList(target.laboratoryList)
     }

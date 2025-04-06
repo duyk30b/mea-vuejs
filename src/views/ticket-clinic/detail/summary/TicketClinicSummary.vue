@@ -25,7 +25,7 @@ import {
 } from '../../../../modules/print-html'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { TicketStatus } from '../../../../modules/ticket'
+import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import {
   TicketClinicApi,
   TicketClinicProductApi,
@@ -309,10 +309,17 @@ const startPrint = async () => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
+    Ticket.refreshMasterData(ticketClinicRef.value, {
+      procedureMap: procedureMap.value,
+      laboratoryMap: laboratoryMap.value,
+      radiologyMap: radiologyMap.value,
+    })
+
+    ticketClinicRef.value
+
     const textDom = printHtmlCompiledTemplate({
       organization,
       ticket: ticketClinicRef.value,
-      masterData: { laboratoryMap: laboratoryMap.value },
       printHtml: printHtml!,
     })
 

@@ -28,8 +28,6 @@ const router = useRouter()
 const meStore = useMeStore()
 const organization = meStore.organization
 
-let laboratoryMap: Record<string, Laboratory> = {}
-
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
 const saveLoading = ref(false)
@@ -43,7 +41,6 @@ onBeforeMount(async () => {
   } else {
     printHtml.value = PrintHtml.blank()
   }
-  laboratoryMap = await LaboratoryService.getMap()
 })
 
 const handleSave = async () => {
@@ -74,7 +71,7 @@ const updatePreview = () => {
     organization,
     ticket: ticketDemo.value,
     data: JSON.parse(printHtml.value.dataExample || '{}'),
-    masterData: { laboratoryMap },
+    masterData: {},
     printHtml: printHtml.value,
   })
 
@@ -98,7 +95,10 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: { procedure: true },
         ticketRadiologyList: { radiology: true },
-        ticketLaboratoryList: {},
+        ticketLaboratoryList: {
+          // laboratoryList: true,
+          laboratory: true,
+        },
 
         ticketUserList: { user: true },
         toAppointment: true,
@@ -123,7 +123,7 @@ const startTestPrint = async () => {
       organization,
       ticket: ticketDemo.value,
       data: JSON.parse(printHtml.value.dataExample || '{}'),
-      masterData: { laboratoryMap },
+      masterData: {},
       printHtml: printHtml.value,
     })
 

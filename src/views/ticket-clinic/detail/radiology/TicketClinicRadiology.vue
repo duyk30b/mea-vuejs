@@ -1,13 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import {
-  IconCheckSquare,
-  IconClock,
-  IconPrint,
-  IconShoppingCart,
-  IconSpin,
-} from '../../../../common/icon'
+import { IconCheckSquare, IconClock, IconPrint, IconEye, IconSpin } from '../../../../common/icon'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
@@ -120,7 +114,8 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    let printHtmlId = radiologyMap.value[ticketRadiologyData.radiologyId]?.printHtmlId || 0
+    const radiologyData = radiologyMap.value[ticketRadiologyData.radiologyId] || Radiology.blank()
+    let printHtmlId = radiologyData.printHtmlId
     let printHtml: PrintHtml | undefined
     if (printHtmlId !== 0) {
       printHtml = await PrintHtmlService.detail(printHtmlId)
@@ -141,7 +136,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
-      masterData: {},
+      masterData: {
+        radiology: radiologyData,
+      },
       printHtml: printHtml!,
     })
 
@@ -275,6 +272,15 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)">
                 <IconEditSquare width="22" height="22" />
+              </a>
+              <a
+                v-else-if="
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(
+                    ticketClinicRef.ticketStatus
+                  ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                "
+                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
+                <IconEye width="22" height="22" />
               </a>
             </td>
           </tr>

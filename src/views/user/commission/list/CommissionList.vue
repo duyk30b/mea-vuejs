@@ -217,6 +217,7 @@ const handleSelectItemFilterRole = (item: any) => {
               <IconSort :sort="sortColumn === 'interactType' ? sortValue : ''" />
             </th>
             <th>Tên DV/SP/...</th>
+            <th>Giá</th>
             <th>Hoa hồng</th>
             <th>Thao tác</th>
           </tr>
@@ -247,6 +248,20 @@ const handleSelectItemFilterRole = (item: any) => {
               </template>
               <template v-if="commission.interactType === InteractType.Laboratory">
                 {{ laboratoryMap[commission.interactId]?.name }}
+              </template>
+            </td>
+            <td class="text-center">
+              <template v-if="commission.interactType === InteractType.Product">
+                {{ formatMoney(commission.product?.retailPrice) }}
+              </template>
+              <template v-if="commission.interactType === InteractType.Procedure">
+                {{ formatMoney(procedureMap[commission.interactId]?.price) }}
+              </template>
+              <template v-if="commission.interactType === InteractType.Radiology">
+                {{ formatMoney(radiologyMap[commission.interactId]?.price) }}
+              </template>
+              <template v-if="commission.interactType === InteractType.Laboratory">
+                {{ formatMoney(laboratoryMap[commission.interactId]?.price) }}
               </template>
             </td>
             <td class="text-center">
