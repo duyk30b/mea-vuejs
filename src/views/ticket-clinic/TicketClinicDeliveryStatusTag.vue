@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconClock, IconShoppingCart } from '../../common/icon'
+import VueTag from '../../common/VueTag.vue'
 import { DeliveryStatus } from '../../modules/enum'
 
 const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
@@ -8,33 +9,20 @@ const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
 </script>
 
 <template>
-  <a-tag
-    v-if="deliveryStatus === DeliveryStatus.NoStock"
-    color="default"
-    style="display: flex; align-items: center; gap: 0.5em">
-    <template #icon>
-      <IconShoppingCart />
-    </template>
-    Không có thuốc - vật tư
-  </a-tag>
-  <a-tag
-    v-else-if="deliveryStatus === DeliveryStatus.Pending"
-    color="warning"
-    style="display: flex; align-items: center; gap: 0.5em">
+  <VueTag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
+    <IconShoppingCart />
+    <span>Không có thuốc - vật tư</span>
+  </VueTag>
+  <VueTag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="orange" icon="clock">
     <template #icon>
       <IconClock />
     </template>
     Chưa xuất thuốc - vật tư
-  </a-tag>
-  <a-tag
-    v-else-if="deliveryStatus === DeliveryStatus.Delivered"
-    color="success"
-    style="display: flex; align-items: center; gap: 0.5em">
-    <template #icon>
-      <IconShoppingCart />
-    </template>
-    Đã xuất thuốc - vật tư
-  </a-tag>
+  </VueTag>
+  <VueTag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="green">
+    <IconShoppingCart />
+    <span>Đã xuất thuốc - vật tư</span>
+  </VueTag>
 </template>
 
 <style lang="scss" scoped></style>

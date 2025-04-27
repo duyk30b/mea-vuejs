@@ -1,46 +1,116 @@
 <script setup lang="ts">
 import { CloseOutlined } from '@ant-design/icons-vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { InputDate, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
+import {
+  InputCheckbox,
+  InputDate,
+  InputNumber,
+  InputText,
+  VueSelect,
+} from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import { TicketClinicLaboratoryApi } from '../../../../modules/ticket-clinic'
-import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
+import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import type { TicketLaboratory } from '../../../../modules/ticket-laboratory'
+import {
+  TicketLaboratoryGroup,
+  TicketLaboratoryGroupStatus,
+} from '../../../../modules/ticket-laboratory-group'
+import { TicketLaboratoryResult } from '../../../../modules/ticket-laboratory-result'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const showModal = ref(false)
 
-const ticketLaboratoryResultList = ref<TicketLaboratory[]>([])
-const laboratoryGroup = ref<LaboratoryGroup | null>(LaboratoryGroup.blank())
-
 const laboratoryMap = ref<Record<string, Laboratory>>({})
+const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
+const laboratoryGroup = ref<LaboratoryGroup | null>(null)
+
+const ticketLaboratoryList = ref<TicketLaboratory[]>([])
+const ticketLaboratoryResultTree = ref<Record<string, TicketLaboratoryResult>>({})
+const ticketLaboratoryResultOriginTree = ref<Record<string, TicketLaboratoryResult>>({})
+
+const ticketLaboratoryGroupId = ref<number>(0)
+const ticketLaboratoryGroup = ref<TicketLaboratoryGroup>(TicketLaboratoryGroup.blank())
 const startedAt = ref<number>(Date.now())
 
 const saveLoading = ref(false)
 
-const openModal = async (
-  laboratoryGroupId: number,
-  ticketLaboratoryPropList: TicketLaboratory[]
-) => {
+const openModal = async (tlgIdProp: number) => {
   showModal.value = true
-  
-  laboratoryMap.value = await LaboratoryService.getMap()
-  const laboratoryGroupMap = await LaboratoryGroupService.getMap()
-  laboratoryGroup.value = laboratoryGroupMap[laboratoryGroupId]
+  ticketLaboratoryGroup.value =
+    (ticketClinicRef.value.ticketLaboratoryGroupList || []).find((i) => {
+      return i.id === tlgIdProp
+    }) || TicketLaboratoryGroup.blank()
+  ticketLaboratoryGroupId.value = tlgIdProp
 
-  ticketLaboratoryResultList.value = TicketLaboratory.fromList(ticketLaboratoryPropList)
+  laboratoryMap.value = await LaboratoryService.getFlatMap()
+  laboratoryGroupMap.value = await LaboratoryGroupService.getMap()
+  laboratoryGroup.value = laboratoryGroupMap.value[tlgIdProp]
+
+  ticketLaboratoryList.value = (ticketClinicRef.value.ticketLaboratoryList || []).filter((i) => {
+    return i.ticketLaboratoryGroupId === tlgIdProp
+  })
+
+  ticketLaboratoryList.value.forEach((tl) => {
+    const key = `${tl.id}-${tl.laboratoryId}`
+
+    const blank = TicketLaboratoryResult.blank()
+    blank.ticketLaboratoryId = tl.id
+    blank.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
+    blank.laboratoryId = tl.laboratoryId
+
+    ticketLaboratoryResultOriginTree.value[key] = blank
+    ticketLaboratoryResultTree.value[key] = TicketLaboratoryResult.from(blank)
+
+    const laboratoryParent = laboratoryMap.value[tl.laboratoryId]
+    if (laboratoryParent.children) {
+      laboratoryParent.children.forEach((laboratoryChild) => {
+        const key = `${tl.id}-${laboratoryChild.id}`
+        const blank = TicketLaboratoryResult.blank()
+        blank.laboratoryId = laboratoryChild.id
+        blank.ticketLaboratoryId = tl.id
+        blank.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
+
+        ticketLaboratoryResultOriginTree.value[key] = blank
+        ticketLaboratoryResultTree.value[key] = TicketLaboratoryResult.from(blank)
+      })
+    }
+  })
+  ;(ticketClinicRef.value.ticketLaboratoryResultList || [])
+    .filter((i) => {
+      return i.ticketLaboratoryGroupId === tlgIdProp
+    })
+    .forEach((tlr) => {
+      const key = `${tlr.ticketLaboratoryId}-${tlr.laboratoryId}`
+      ticketLaboratoryResultOriginTree.value[key] = tlr
+      ticketLaboratoryResultTree.value[key] = TicketLaboratoryResult.from(tlr)
+    })
 }
+
+const disabledButtonSave = computed(() => {
+  let hasChangeData = false
+  Object.keys(ticketLaboratoryResultTree.value).forEach((key) => {
+    const lr = ticketLaboratoryResultTree.value[key]
+    const lrOrigin = ticketLaboratoryResultOriginTree.value[key]
+    if (lr.attention != lrOrigin.attention || lr.result !== lrOrigin.result) {
+      hasChangeData = true
+    }
+  })
+  return !hasChangeData
+})
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
     await TicketClinicLaboratoryApi.updateResult({
-      ticketId: ticketLaboratoryResultList.value[0].ticketId,
+      ticketId: ticketClinicRef.value.id,
+      ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
       startedAt: startedAt.value,
-      ticketLaboratoryUpdateList: ticketLaboratoryResultList.value,
+      ticketLaboratoryResultUpdateList: Object.values(ticketLaboratoryResultTree.value),
     })
     emit('success')
     showModal.value = false
@@ -52,27 +122,49 @@ const handleSave = async () => {
 }
 
 const handleChangeResultNumber = (options: {
-  index: number
-  laboratoryParentId: number
-  laboratoryId: number
+  ticketLaboratoryResult: TicketLaboratoryResult
   value: number
 }) => {
-  const { index, laboratoryId, laboratoryParentId, value } = options
-  let laboratory: Laboratory | undefined = laboratoryMap.value[laboratoryParentId]
-  if (laboratoryId !== laboratoryParentId) {
-    laboratory = laboratory.children?.find((i) => i.id === laboratoryId)
-  }
-  if (!laboratory) return
+  const { ticketLaboratoryResult, value } = options
+  const laboratory = laboratoryMap.value[ticketLaboratoryResult.laboratoryId]
+  const key = `${ticketLaboratoryResult.ticketLaboratoryId}-${ticketLaboratoryResult.laboratoryId}`
 
   if (value < laboratory.lowValue || value > laboratory.highValue) {
-    ticketLaboratoryResultList.value[index].attentionParse[laboratoryId] = true
+    ticketLaboratoryResultTree.value[key].attention = 1
   } else {
-    ticketLaboratoryResultList.value[index].attentionParse[laboratoryId] = false
+    ticketLaboratoryResultTree.value[key].attention = 0
   }
+  ticketLaboratoryResultTree.value[key].result = String(value)
 }
 
 const closeModal = () => {
   showModal.value = false
+  ticketLaboratoryResultTree.value = {}
+  ticketLaboratoryResultOriginTree.value = {}
+  ticketLaboratoryList.value = []
+  ticketLaboratoryGroupId.value = 0
+}
+
+const clickDestroy = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận xóa phiếu xét nghiệm?',
+    content: [
+      '- Hệ thống sẽ xóa tất cả xét nghiệm trên phiếu này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketClinicLaboratoryApi.destroyTicketLaboratoryGroup({
+          ticketId: ticketClinicRef.value.id,
+          ticketLaboratoryGroupId: ticketLaboratoryGroup.value.id,
+        })
+        emit('success')
+        closeModal()
+      } catch (error) {
+        console.log('🚀 ~ file: TicketClinicLaboratory.vue:118 ~ onOk: ~ error:', error)
+      }
+    },
+  })
 }
 
 defineExpose({ openModal })
@@ -104,31 +196,32 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <template
-                v-for="(ticketLaboratory, index) in ticketLaboratoryResultList"
-                :key="ticketLaboratory.id">
+              <template v-for="(tlItem, index) in ticketLaboratoryList" :key="tlItem.id">
                 <tr
-                  v-for="(laboratoryParent, i) in [laboratoryMap[ticketLaboratory.laboratoryId]]"
+                  v-for="(laboratoryParent, i) in laboratoryMap[tlItem.laboratoryId]
+                    ? [laboratoryMap[tlItem.laboratoryId]]
+                    : []"
                   :key="i"
-                  :style="ticketLaboratory.attentionParse[laboratoryParent.id] ? 'color: red' : ''">
-                  <td class="text-center">
-                    {{ index + 1 }}
-                  </td>
-                  <td>
-                    {{ laboratoryParent?.name }}
-                  </td>
+                  :style="
+                    ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].attention
+                      ? 'color: red'
+                      : ''
+                  ">
+                  <td class="text-center">{{ index + 1 }}</td>
+                  <td>{{ laboratoryParent?.name }}</td>
                   <td>
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.Number">
                       <InputNumber
-                        v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryParent.id]
+                        :value="
+                          Number(
+                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
+                          )
                         "
                         @update:value="
                           (v) =>
                             handleChangeResultNumber({
-                              index,
-                              laboratoryId: laboratoryParent.id,
-                              laboratoryParentId: laboratoryParent.parentId,
+                              ticketLaboratoryResult:
+                                ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`],
                               value: v,
                             })
                         " />
@@ -136,13 +229,13 @@ defineExpose({ openModal })
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.String">
                       <InputText
                         v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryParent.id]
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
                         " />
                     </div>
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.Options">
                       <VueSelect
                         v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryParent.id]
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
                         "
                         :options="
                           laboratoryParent.optionsParse.map((i) => ({ text: i, value: i }))
@@ -161,72 +254,77 @@ defineExpose({ openModal })
                     </span>
                   </td>
                   <td class="text-center">
-                    <input
-                      v-model="
-                        ticketLaboratoryResultList[index].attentionParse[laboratoryParent.id]
-                      "
-                      tabindex="-1"
-                      style="cursor: pointer"
-                      type="checkbox"
-                      name="isRegimen" />
+                    <div class="flex justify-center">
+                      <InputCheckbox
+                        v-model:value="
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`]
+                            .attention
+                        "
+                        type-parser="number" />
+                    </div>
                   </td>
                 </tr>
                 <tr
-                  v-for="(laboratoryItem, i) in laboratoryMap[ticketLaboratory.laboratoryId]
-                    ?.children || []"
+                  v-for="(laboratoryChild, i) in laboratoryMap[tlItem.laboratoryId]?.children || []"
                   :key="i"
-                  :style="ticketLaboratory.attentionParse[laboratoryItem.id] ? 'color: red' : ''">
+                  :style="
+                    ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].attention
+                      ? 'color: red'
+                      : ''
+                  ">
                   <td></td>
-                  <td>{{ laboratoryItem?.name }}</td>
+                  <td>{{ laboratoryChild?.name }}</td>
                   <td>
-                    <div v-if="laboratoryItem.valueType === LaboratoryValueType.Number">
+                    <div v-if="laboratoryChild.valueType === LaboratoryValueType.Number">
                       <InputNumber
-                        v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryItem.id]
+                        :value="
+                          Number(
+                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
+                          )
                         "
                         @update:value="
                           (v) =>
                             handleChangeResultNumber({
-                              index,
-                              laboratoryId: laboratoryItem.id,
-                              laboratoryParentId: laboratoryItem.parentId,
+                              ticketLaboratoryResult:
+                                ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`],
                               value: v,
                             })
                         " />
                     </div>
-                    <div v-if="laboratoryItem.valueType === LaboratoryValueType.String">
+                    <div v-if="laboratoryChild.valueType === LaboratoryValueType.String">
                       <InputText
                         v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryItem.id]
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
                         " />
                     </div>
-                    <div v-if="laboratoryItem.valueType === LaboratoryValueType.Options">
+                    <div v-if="laboratoryChild.valueType === LaboratoryValueType.Options">
                       <VueSelect
                         v-model:value="
-                          ticketLaboratoryResultList[index].resultParse[laboratoryItem.id]
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
                         "
                         :options="
-                          laboratoryItem.optionsParse.map((i) => ({ text: i, value: i }))
+                          laboratoryChild.optionsParse.map((i) => ({ text: i, value: i }))
                         " />
                     </div>
                   </td>
                   <td class="text-center">
-                    <span v-if="laboratoryItem.valueType === LaboratoryValueType.Number">
-                      {{ laboratoryItem?.lowValue }} - {{ laboratoryItem?.highValue }}
+                    <span v-if="laboratoryChild.valueType === LaboratoryValueType.Number">
+                      {{ laboratoryChild?.lowValue }} - {{ laboratoryChild?.highValue }}
                     </span>
                   </td>
                   <td class="text-center">
-                    <span v-if="laboratoryItem.valueType === LaboratoryValueType.Number">
-                      {{ laboratoryItem?.unit }}
+                    <span v-if="laboratoryChild.valueType === LaboratoryValueType.Number">
+                      {{ laboratoryChild?.unit }}
                     </span>
                   </td>
                   <td class="text-center">
-                    <input
-                      v-model="ticketLaboratoryResultList[index].attentionParse[laboratoryItem.id]"
-                      tabindex="-1"
-                      style="cursor: pointer"
-                      type="checkbox"
-                      name="isRegimen" />
+                    <div class="flex justify-center">
+                      <InputCheckbox
+                        v-model:value="
+                          ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].attention
+                        "
+                        type-parser="number" />
+                    </div>
                   </td>
                 </tr>
               </template>
@@ -240,6 +338,7 @@ defineExpose({ openModal })
         </div>
 
         <div class="pb-4 pt-8 flex gap-4">
+          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa phiếu</VueButton>
           <VueButton type="reset" icon="close" class="ml-auto" @click="closeModal">
             Đóng lại
           </VueButton>
@@ -248,8 +347,11 @@ defineExpose({ openModal })
             icon="save"
             type="submit"
             :loading="saveLoading"
-            :disabled="ticketLaboratoryResultList.length === 0">
-            <span>Trả kết quả</span>
+            :disabled="disabledButtonSave">
+            <span v-if="ticketLaboratoryGroup.status === TicketLaboratoryGroupStatus.Completed">
+              Cập nhật kết quả
+            </span>
+            <span v-else>Trả kết quả</span>
           </VueButton>
         </div>
       </form>

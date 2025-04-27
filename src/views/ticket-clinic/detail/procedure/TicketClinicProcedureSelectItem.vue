@@ -1,24 +1,24 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconFileSearch } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DiscountType } from '../../../../modules/enum'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
 import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
-import { IconFileSearch } from '../../../../common/icon'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{
   (e: 'success', value: { ticketProcedure: TicketProcedure; ticketUserList: TicketUser[] }): void
@@ -150,7 +150,7 @@ const selectProcedure = async (instance?: Procedure) => {
 const addTicketProcedure = async () => {
   emit('success', {
     ticketProcedure: ticketProcedure.value,
-    ticketUserList: ticketUserList.value
+    ticketUserList: ticketUserList.value,
   })
   reset()
 }
@@ -231,7 +231,7 @@ const addTicketProcedure = async () => {
         "
         color="blue"
         type="submit">
-        Thêm vào đơn
+        Thêm mới
       </VueButton>
     </div>
   </form>

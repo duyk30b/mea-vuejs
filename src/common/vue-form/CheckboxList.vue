@@ -18,7 +18,6 @@ const randomId = computed(() => Math.random().toString(36).substring(2))
 // watch(
 //   () => props.value,
 //   (newValue, oldValue) => {
-//     console.log('🚀 ~ file: CheckboxList.vue:23 ~ newValue:', newValue)
 //     // valueString.value = JSON.stringify(newValue || '[]')
 //   },
 //   { immediate: true }
@@ -27,7 +26,6 @@ const randomId = computed(() => Math.random().toString(36).substring(2))
 // watch(
 //   () => props.options,
 //   (newValue, oldValue) => {
-//     console.log('🚀 ~ file: CheckboxList.vue:32 ~ newValue:', newValue)
 //   },
 //   { immediate: true }
 // )

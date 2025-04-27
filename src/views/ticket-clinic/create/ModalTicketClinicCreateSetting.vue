@@ -3,15 +3,15 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import { InputCheckbox, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
-import { Role, RoleService } from '../../../modules/role'
-import { TicketStatus } from '../../../modules/ticket'
 import { CommissionService, InteractType } from '../../../modules/commission'
+import { OrganizationService } from '../../../modules/organization'
+import { RoleService } from '../../../modules/role'
+import { TicketStatus } from '../../../modules/ticket'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -120,51 +120,51 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.birthday">
+                        <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.gender">
+                        <InputCheckbox v-model:checked="settingDisplay.gender">
                           Hiển thị điền giới tính
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressFull">
+                        <InputCheckbox v-model:checked="settingDisplay.addressFull">
                           Hiển thị điền địa chỉ đầy đủ
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressBasic">
+                        <InputCheckbox v-model:checked="settingDisplay.addressBasic">
                           Hiển thị điền địa chỉ cơ bản
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.relative">
+                        <InputCheckbox v-model:checked="settingDisplay.relative">
                           Hiển thị điền liên hệ khác
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.note">
+                        <InputCheckbox v-model:checked="settingDisplay.note">
                           Hiển thị điền ghi chú
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.customerSource">
+                        <InputCheckbox v-model:checked="settingDisplay.customerSource">
                           Hiển thị điền nguồn khách hàng
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>

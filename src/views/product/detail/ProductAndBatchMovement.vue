@@ -3,6 +3,8 @@ import { MinusCircleOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { InputText, VueSelect } from '../../../common/vue-form'
+import VueTag from '../../../common/VueTag.vue'
+import { CONFIG } from '../../../config'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { BatchMovementApi } from '../../../modules/batch-movement/batch-movement.api'
@@ -14,7 +16,6 @@ import type { ProductMovement } from '../../../modules/product-movement/product-
 import { timeToText } from '../../../utils'
 import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
-import { CONFIG } from '../../../config'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -243,7 +244,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
             </div>
             <div v-if="productMovement.movementType === MovementType.UserChange">
               <div>
-                <a-tag color="violet">{{ productMovement.user!.fullName }}</a-tag>
+                <VueTag bg-color="violet">{{ productMovement.user!.fullName }}</VueTag>
               </div>
               <div style="font-size: 0.8rem; font-style: italic">Sửa số lượng</div>
               <div style="font-size: 0.8rem; white-space: nowrap">
@@ -251,14 +252,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               </div>
             </div>
             <div>
-              <span v-if="productMovement.isRefund">
-                <a-tag color="error">
-                  <template #icon>
-                    <MinusCircleOutlined />
-                  </template>
-                  Hoàn trả
-                </a-tag>
-              </span>
+              <VueTag v-if="productMovement.isRefund" icon="minus" color="red">Hoàn trả</VueTag>
             </div>
           </td>
           <td>
@@ -326,7 +320,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
             </div>
             <div v-if="batchMovement.movementType === MovementType.UserChange">
               <div>
-                <a-tag color="violet">{{ batchMovement.user!.fullName }}</a-tag>
+                <VueTag bg-color="violet">{{ batchMovement.user!.fullName }}</VueTag>
               </div>
               <div style="font-size: 0.8rem; font-style: italic">Sửa số lượng</div>
               <div style="font-size: 0.8rem; white-space: nowrap">
@@ -334,14 +328,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               </div>
             </div>
             <div>
-              <span v-if="batchMovement.isRefund">
-                <a-tag color="error">
-                  <template #icon>
-                    <MinusCircleOutlined />
-                  </template>
-                  Hoàn trả
-                </a-tag>
-              </span>
+              <VueTag v-if="batchMovement.isRefund" icon="minus" color="red">Hoàn trả</VueTag>
             </div>
           </td>
           <td>
@@ -424,7 +411,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
           <template v-if="productMovement.movementType === MovementType.UserChange">
             <td>Sửa</td>
             <td>
-              <a-tag color="violet">{{ productMovement.user!.fullName }}</a-tag>
+              <VueTag bg-color="violet">{{ productMovement.user!.fullName }}</VueTag>
             </td>
             <td></td>
           </template>
@@ -434,14 +421,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
             <div>
-              <span v-if="productMovement.isRefund">
-                <a-tag color="error">
-                  <template #icon>
-                    <MinusCircleOutlined />
-                  </template>
-                  Hoàn trả
-                </a-tag>
-              </span>
+              <VueTag v-if="productMovement.isRefund" icon="minus" color="red">Hoàn trả</VueTag>
             </div>
           </td>
           <td class="text-center">
@@ -527,7 +507,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
           <template v-if="batchMovement.movementType === MovementType.UserChange">
             <td>Sửa</td>
             <td>
-              <a-tag color="violet">{{ batchMovement.user!.fullName }}</a-tag>
+              <VueTag bg-color="violet">{{ batchMovement.user!.fullName }}</VueTag>
             </td>
             <td></td>
           </template>
@@ -536,14 +516,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               {{ timeToText(batchMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
             <div>
-              <span v-if="batchMovement.isRefund">
-                <a-tag color="error">
-                  <template #icon>
-                    <MinusCircleOutlined />
-                  </template>
-                  Hoàn trả
-                </a-tag>
-              </span>
+              <VueTag v-if="batchMovement.isRefund" icon="minus" color="red">Hoàn trả</VueTag>
             </div>
           </td>
           <td class="text-center">

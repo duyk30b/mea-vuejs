@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
@@ -65,52 +66,50 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.detail">
+                <InputCheckbox v-model:value="settingDisplay.detail">
                   Hiển thị nút xem chi tiết khách hàng (
                   <IconFileSearch />
                   )
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.phone">
-                  Hiển thị số điện thoại
-                </a-checkbox>
+                <InputCheckbox
+                  v-model:value="settingDisplay.phone"
+                  label="Hiển thị số điện thoại" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.gender">Hiển thị giới tính</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.gender" label="Hiển thị giới tính" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.birthday">
-                  Hiển thị ngày sinh
-                </a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.birthday" label="Hiển thị ngày sinh" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.address">Hiển thị địa chỉ</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.address" label="Hiển thị địa chỉ" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.note">Hiển thị ghi chú</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.note" label="Hiển thị ghi chú" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.isActive">
-                  Hiển thị trạng thái
-                </a-checkbox>
+                <InputCheckbox
+                  v-model:value="settingDisplay.isActive"
+                  label="Hiển thị trạng thái" />
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.action" label="Hiển thị nút sửa" />
               </td>
             </tr>
           </tbody>

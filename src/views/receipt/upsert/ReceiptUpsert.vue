@@ -19,6 +19,7 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
+import VueTag from '../../../common/VueTag.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -349,7 +350,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success">{{ receipt.discountPercent || 0 }}%</a-tag>
+                          <VueTag color="green">{{ receipt.discountPercent || 0 }}%</VueTag>
                         </div>
                         <div
                           class="flex-1 text-right"

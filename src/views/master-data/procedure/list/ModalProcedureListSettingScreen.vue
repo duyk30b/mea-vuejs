@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
@@ -65,30 +66,32 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.table.detail">
+                <InputCheckbox v-model:value="settingDisplay.table.detail">
                   Hiển thị nút xem chi tiết (
                   <IconFileSearch />
                   )
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.table.group">Hiển thị nhóm</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.table.group">
+                  Hiển thị nhóm
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.table.status">
+                <InputCheckbox v-model:value="settingDisplay.table.status">
                   Hiển thị trạng thái
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.table.action">
+                <InputCheckbox v-model:value="settingDisplay.table.action">
                   Hiển thị nút sửa
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

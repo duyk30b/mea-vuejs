@@ -2,6 +2,7 @@
 import { FileDoneOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../common/icon-google'
+import { InputCheckbox } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Batch } from '../../../modules/batch'
@@ -70,10 +71,6 @@ const unitString = (data: Product) => {
     result += `, ${currentUnit.name} (${currentUnit.rate} ${data.unitBasicName})`
   }
   return result
-}
-
-const handleZeroQuantity = async (value: 'true' | 'false') => {
-  await startFetchData()
 }
 
 const closeExpiryDate = computed(() => {
@@ -175,9 +172,9 @@ const closeExpiryDate = computed(() => {
       </div>
 
       <div class="cursor-pointer">
-        <a-checkbox v-model:checked="hasZeroQuantity" @change="handleZeroQuantity">
+        <InputCheckbox v-model:value="hasZeroQuantity" @change="startFetchData">
           Hiển thị lô hàng có số lượng = 0
-        </a-checkbox>
+        </InputCheckbox>
       </div>
     </div>
     <div v-if="isMobile" class="table-wrapper mt-2">

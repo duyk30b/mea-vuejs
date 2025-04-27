@@ -1,29 +1,62 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { TicketLaboratory } from '../ticket-laboratory'
+import type { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import type { TicketUser } from '../ticket-user'
 
 export class TicketClinicLaboratoryApi {
-  static async addTicketLaboratoryList(body: {
+  static async upsertLaboratory(body: {
     ticketId: number
-    ticketLaboratoryList: TicketLaboratory[]
+    ticketLaboratoryGroupAddList?: {
+      laboratoryGroupId: number
+      registeredAt: number | null
+      ticketLaboratoryList: TicketLaboratory[]
+    }[]
+    ticketLaboratoryGroupUpdate?: {
+      id: number
+      laboratoryGroupId: number
+      registeredAt: number | null
+      ticketLaboratoryList: TicketLaboratory[]
+    }
   }) {
-    const { ticketId, ticketLaboratoryList } = body
-    const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/add-ticket-laboratory-list`,
-      {
-        ticketLaboratoryList: ticketLaboratoryList.map((i) => ({
-          priority: i.priority,
-          laboratoryId: i.laboratoryId,
-          costPrice: i.costPrice,
-          expectedPrice: i.expectedPrice,
-          discountMoney: i.discountMoney,
-          discountPercent: i.discountPercent,
-          discountType: i.discountType,
-          actualPrice: i.actualPrice,
-        })),
-      }
-    )
+    const { ticketId, ticketLaboratoryGroupAddList, ticketLaboratoryGroupUpdate } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/upsert-laboratory`, {
+      ticketLaboratoryGroupAddList: ticketLaboratoryGroupAddList
+        ? ticketLaboratoryGroupAddList.map((tlg) => ({
+            laboratoryGroupId: tlg.laboratoryGroupId,
+            registeredAt: tlg.registeredAt,
+            ticketLaboratoryList: tlg.ticketLaboratoryList.map((tl) => ({
+              priority: tl.priority,
+              laboratoryId: tl.laboratoryId,
+              laboratoryGroupId: tl.laboratoryGroupId,
+              costPrice: tl.costPrice,
+              expectedPrice: tl.expectedPrice,
+              discountMoney: tl.discountMoney,
+              discountPercent: tl.discountPercent,
+              discountType: tl.discountType,
+              actualPrice: tl.actualPrice,
+            })),
+          }))
+        : undefined,
+      ticketLaboratoryGroupUpdate: ticketLaboratoryGroupUpdate
+        ? {
+            id: ticketLaboratoryGroupUpdate.id,
+            laboratoryGroupId: ticketLaboratoryGroupUpdate.laboratoryGroupId,
+            registeredAt: ticketLaboratoryGroupUpdate.registeredAt,
+            ticketLaboratoryList: ticketLaboratoryGroupUpdate.ticketLaboratoryList.map((tl) => ({
+              priority: tl.priority,
+              laboratoryId: tl.laboratoryId,
+              laboratoryGroupId: tl.laboratoryGroupId,
+              costPrice: tl.costPrice,
+              expectedPrice: tl.expectedPrice,
+              discountMoney: tl.discountMoney,
+              discountPercent: tl.discountPercent,
+              discountType: tl.discountType,
+              actualPrice: tl.actualPrice,
+            })),
+          }
+        : undefined,
+    })
     const { data } = response.data as BaseResponse<boolean>
   }
 
@@ -31,6 +64,17 @@ export class TicketClinicLaboratoryApi {
     const { ticketId, ticketLaboratoryId } = body
     const response = await AxiosInstance.delete(
       `/ticket-clinic/${ticketId}/destroy-ticket-laboratory/${ticketLaboratoryId}`
+    )
+    const { data } = response.data as BaseResponse<boolean>
+  }
+
+  static async destroyTicketLaboratoryGroup(body: {
+    ticketId: number
+    ticketLaboratoryGroupId: number
+  }) {
+    const { ticketId, ticketLaboratoryGroupId } = body
+    const response = await AxiosInstance.delete(
+      `/ticket-clinic/${ticketId}/destroy-ticket-laboratory-group/${ticketLaboratoryGroupId}`
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -47,8 +91,6 @@ export class TicketClinicLaboratoryApi {
       {
         ticketLaboratory: ticketLaboratory
           ? {
-              // attention: ticketLaboratory.attention,
-              // result: ticketLaboratory.result,
               expectedPrice: ticketLaboratory.expectedPrice,
               discountType: ticketLaboratory.discountType,
               discountMoney: ticketLaboratory.discountMoney,
@@ -69,19 +111,23 @@ export class TicketClinicLaboratoryApi {
 
   static async updateResult(body: {
     ticketId: number
+    ticketLaboratoryGroupId: number
     startedAt: number
-    ticketLaboratoryUpdateList: TicketLaboratory[]
+    ticketLaboratoryResultUpdateList: TicketLaboratoryResult[]
   }) {
     const { ticketId } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-result-ticket-laboratory`,
+      `/ticket-clinic/${ticketId}/update-ticket-laboratory-result`,
       {
         startedAt: body.startedAt,
-        ticketLaboratoryUpdateList: body.ticketLaboratoryUpdateList.map((i) => {
+        ticketLaboratoryGroupId: body.ticketLaboratoryGroupId,
+        ticketLaboratoryResultUpdateList: body.ticketLaboratoryResultUpdateList.map((i) => {
           return {
             id: i.id,
-            attention: JSON.stringify(i.attentionParse),
-            result: JSON.stringify(i.resultParse),
+            laboratoryId: i.laboratoryId,
+            ticketLaboratoryId: i.ticketLaboratoryId,
+            attention: i.attention,
+            result: i.result,
           }
         }),
       }

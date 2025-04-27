@@ -780,7 +780,7 @@ const closeExpiryDate = computed(() => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse">
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
-                <td v-if="settingStore.SCREEN_PRODUCT_LIST.warehouse" class="text-center">
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.distributor" class="text-center">
                   {{ distributorMap[batch.distributorId]?.fullName }}
                 </td>
 

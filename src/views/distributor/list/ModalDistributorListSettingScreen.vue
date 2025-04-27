@@ -7,6 +7,7 @@ import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { InputCheckbox } from '../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -65,40 +66,40 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.detail">
+                <InputCheckbox v-model:value="settingDisplay.detail">
                   Hiển thị nút xem chi tiết nhà cung cấp (
                   <IconFileSearch />
                   )
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.phone">
+                <InputCheckbox v-model:value="settingDisplay.phone">
                   Hiển thị số điện thoại
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.address">Hiển thị địa chỉ</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.address">Hiển thị địa chỉ</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.note">Hiển thị ghi chú</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.note">Hiển thị ghi chú</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.isActive">
+                <InputCheckbox v-model:value="settingDisplay.isActive">
                   Hiển thị trạng thái
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</a-checkbox>
+                <InputCheckbox v-model:value="settingDisplay.action">Hiển thị nút sửa</InputCheckbox>
               </td>
             </tr>
           </tbody>

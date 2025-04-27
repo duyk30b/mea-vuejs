@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { IconFileSearch } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
@@ -520,7 +521,7 @@ const handleChangeTabs = (activeKey: any) => {
                       </template>
                       <div class="flex">
                         <div>
-                          <a-tag color="success">{{ ticket.discountPercent || 0 }}%</a-tag>
+                          <VueTag color="green">{{ ticket.discountPercent || 0 }}%</VueTag>
                         </div>
                         <div
                           class="flex-1 text-right"

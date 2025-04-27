@@ -12,6 +12,7 @@ import { OrganizationStatus, type Organization } from '../../modules/organizatio
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
 import ModalRootOrganizationUpsert from './ModalRootOrganizationUpsert.vue'
 import { timeToText } from '../../utils'
+import VueTag from '../../common/VueTag.vue'
 
 const modalRootOrganizationUpsert = ref<InstanceType<typeof ModalRootOrganizationUpsert>>()
 
@@ -106,24 +107,9 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
             <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
             <td>{{ organization.note }}</td>
             <td class="text-center">
-              <a-tag v-if="organization.status === OrganizationStatus.Inactive" color="default">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
-              <a-tag v-if="organization.status === OrganizationStatus.Active" color="processing">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-if="organization.status === OrganizationStatus.Frequent" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Frequent
-              </a-tag>
+              <VueTag v-if="organization.status === OrganizationStatus.Inactive" icon="minus" color="orange">Inactive</VueTag>
+              <VueTag v-if="organization.status === OrganizationStatus.Active" icon="check" color="green">Active</VueTag>
+              <VueTag v-if="organization.status === OrganizationStatus.Frequent" icon="clock" color="purple">Frequent</VueTag>
             </td>
             <td class="text-center">
               <a

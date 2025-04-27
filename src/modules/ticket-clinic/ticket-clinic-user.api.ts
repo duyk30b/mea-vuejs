@@ -6,7 +6,7 @@ export class TicketClinicUserApi {
   static async destroyTicketUser(body: { ticketId: number; ticketUserId: number }) {
     const { ticketId, ticketUserId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-user/${ticketUserId}`
+      `/ticket-clinic/${ticketId}/ticket-uer/destroy/${ticketUserId}`
     )
     const { data } = response.data as BaseResponse<boolean>
     return data
@@ -19,7 +19,7 @@ export class TicketClinicUserApi {
   }) {
     const { ticketId, ticketUser, ticketUserId } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-user/${ticketUserId}`,
+      `/ticket-clinic/${ticketId}/ticket-user/update/${ticketUserId}`,
       {
         commissionCalculatorType: ticketUser.commissionCalculatorType,
         commissionMoney: ticketUser.commissionMoney,
@@ -39,7 +39,7 @@ export class TicketClinicUserApi {
   }) {
     const { ticketId } = body
     const response = await AxiosInstance.post(
-      `/ticket-clinic/${ticketId}/update-ticket-user-item`,
+      `/ticket-clinic/${ticketId}/ticket-user/choose-user-id-for-ticket`,
       {
         interactType: body.interactType,
         interactId: body.interactId,

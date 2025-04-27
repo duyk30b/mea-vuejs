@@ -3,6 +3,7 @@ import { onUnmounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconSetting } from '../../common/icon'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../common/vue-form'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { SettingKey } from '../../modules/_me/store.variable'
 import { OrganizationService } from '../../modules/organization'
@@ -113,19 +114,19 @@ const logoutGoogleDriver = async () => {
               <td>
                 <div>Sản phẩm</div>
                 <div style="line-height: 32px">
-                  <a-checkbox v-model:checked="settingDisplay.retailPrice">
+                  <InputCheckbox v-model:checked="settingDisplay.retailPrice">
                     Sử dụng giá bán lẻ
-                  </a-checkbox>
+                  </InputCheckbox>
                 </div>
                 <div style="line-height: 32px">
-                  <a-checkbox v-model:checked="settingDisplay.wholesalePrice">
+                  <InputCheckbox v-model:checked="settingDisplay.wholesalePrice">
                     Sử dụng giá bán sỉ
-                  </a-checkbox>
+                  </InputCheckbox>
                 </div>
                 <div style="line-height: 32px">
-                  <a-checkbox v-model:checked="settingDisplay.allowNegativeQuantity">
+                  <InputCheckbox v-model:checked="settingDisplay.allowNegativeQuantity">
                     Cho phép tồn kho có số lượng âm (xuất kho được phép nhiều hơn số lượng tồn)
-                  </a-checkbox>
+                  </InputCheckbox>
                 </div>
               </td>
             </tr>

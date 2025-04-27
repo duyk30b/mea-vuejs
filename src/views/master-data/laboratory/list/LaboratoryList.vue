@@ -4,6 +4,7 @@ import VueButton from '../../../../common/VueButton.vue'
 import { IconFileSearch, IconSetting } from '../../../../common/icon'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
+import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
@@ -141,7 +142,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="LABORATORY_GROUP_MANAGER">Quản lý nhóm xét nghiệm</a-menu-item>
+            <a-menu-item key="LABORATORY_GROUP_MANAGER">Quản lý phiếu xét nghiệm</a-menu-item>
             <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
           </a-menu>
         </template>
@@ -158,7 +159,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
       </div>
 
       <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn nhóm</div>
+        <div>Chọn phiếu</div>
         <div>
           <VueSelect
             v-model:value="laboratoryGroupId"
@@ -175,8 +176,9 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         <thead>
           <tr>
             <th>STT</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Tên</th>
-            <th>Nhóm</th>
+            <th>Phiếu</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá vốn</th>
@@ -203,7 +205,12 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
-            <td class="text-center">{{ laboratory.priority }}</td>
+            <td class="text-center">
+              <span>{{ laboratory.priority }}</span>
+            </td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-center">
+              {{ laboratory.id }}
+            </td>
             <td>
               <div class="flex items-center">
                 {{ laboratory.name }}

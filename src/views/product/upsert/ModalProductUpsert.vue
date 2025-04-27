@@ -4,12 +4,13 @@ import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting, IconTrash } from '../../../common/icon'
 import {
+  InputCheckbox,
   InputFilter,
   InputHint,
   InputMoney,
   InputNumber,
   InputText,
-  VueSelect
+  VueSelect,
 } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -138,8 +139,8 @@ const handleAddUnit = () => {
   unit.value.push({ name: '', rate: Math.pow(10, unit.value.length) })
 }
 
-const handleChangeUnitDefault = (e: any, index: number) => {
-  const value = e.target?.checked as boolean
+const handleChangeUnitDefault = (e: Event, index: number) => {
+  const value = (e.target as HTMLInputElement).checked
   unit.value.forEach((u, i) => {
     if (i === index && value) u.default = true
     else delete u.default
@@ -332,9 +333,9 @@ defineExpose({ openModal })
                               " />
                           </td>
                           <td style="padding-left: 12px">
-                            <a-checkbox
+                            <InputCheckbox
                               :checked="!!unit[0].default"
-                              @change="(e: any) => handleChangeUnitDefault(e, 0)"></a-checkbox>
+                              @change="(e: Event) => handleChangeUnitDefault(e, 0)"></InputCheckbox>
                           </td>
                         </tr>
                         <tr>
@@ -361,11 +362,11 @@ defineExpose({ openModal })
                             </td>
                             <td style="padding: 0 12px 8px 12px">
                               <div class="flex flex-nowrap justify-between items-center">
-                                <a-checkbox
+                                <InputCheckbox
                                   :checked="!!unit[index].default"
                                   @change="
-                                    (e: any) => handleChangeUnitDefault(e, index)
-                                  "></a-checkbox>
+                                    (e: Event) => handleChangeUnitDefault(e, index)
+                                  "></InputCheckbox>
                                 <a style="color: var(--text-red)" @click="unit.splice(index, 1)">
                                   Xóa
                                 </a>

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import { InputCheckbox, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
@@ -95,9 +95,9 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.showCustomType">
+                <InputCheckbox v-model:checked="settingDisplay.showCustomType">
                   Hiển thị phân loại tùy chỉnh
-                </a-checkbox>
+                </InputCheckbox>
               </td>
               <td>
                 <table class="w-full">
@@ -142,35 +142,37 @@ defineExpose({ openModal })
 
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.buttonShowModalCreate">
+                <InputCheckbox v-model:checked="settingDisplay.buttonShowModalCreate">
                   Hiển thị nút Tiếp đón
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.buttonShowTicketDetailBlank">
+                <InputCheckbox v-model:checked="settingDisplay.buttonShowTicketDetailBlank">
                   Hiển thị nút khám mới
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.birthday">
+                <InputCheckbox v-model:checked="settingDisplay.birthday">
                   Hiển thị ngày sinh
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.phone">
+                <InputCheckbox v-model:checked="settingDisplay.phone">
                   Hiển thị số điện thoại
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <a-checkbox v-model:checked="settingDisplay.address">Hiển thị địa chỉ</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.address">
+                  Hiển thị địa chỉ
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

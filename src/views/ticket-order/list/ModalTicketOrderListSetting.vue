@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
-import { IconClose } from '../../../common/icon'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -67,21 +68,23 @@ defineExpose({ openModal })
             <tbody>
               <tr>
                 <td>
-                  <a-checkbox v-model:checked="settingDisplay.profit">Hiển thị tiền lãi</a-checkbox>
+                  <InputCheckbox v-model:checked="settingDisplay.profit">
+                    Hiển thị tiền lãi
+                  </InputCheckbox>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <a-checkbox v-model:checked="settingDisplay.ticketProductList">
+                  <InputCheckbox v-model:checked="settingDisplay.ticketProductList">
                     Hiển thị sản phẩm
-                  </a-checkbox>
+                  </InputCheckbox>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <a-checkbox v-model:checked="settingDisplay.ticketAttributeList">
+                  <InputCheckbox v-model:checked="settingDisplay.ticketAttributeList">
                     Hiển thị ghi chú
-                  </a-checkbox>
+                  </InputCheckbox>
                 </td>
               </tr>
             </tbody>

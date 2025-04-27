@@ -10,6 +10,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { RoleApi, type Role } from '../../../modules/role'
+import VueTag from '../../../common/VueTag.vue'
 
 const roleList = ref<Role[]>([])
 
@@ -97,18 +98,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               {{ role.userRoleList?.map((i) => i.user?.fullName).join(', ') }}
             </td>
             <td class="text-center">
-              <a-tag v-if="role.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="role.isActive" icon="check" color="green">Active</VueTag>
+              <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
             <td class="text-center">
               <a

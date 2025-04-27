@@ -8,6 +8,7 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { InputCheckbox } from '../../../common/vue-form'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -81,51 +82,51 @@ defineExpose({ openModal })
                   <tbody>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.birthday">
+                        <InputCheckbox v-model:value="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.gender">
+                        <InputCheckbox v-model:value="settingDisplay.gender">
                           Hiển thị điền giới tính
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressFull">
+                        <InputCheckbox v-model:value="settingDisplay.addressFull">
                           Hiển thị điền địa chỉ đầy đủ
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.addressBasic">
+                        <InputCheckbox v-model:value="settingDisplay.addressBasic">
                           Hiển thị điền địa chỉ cơ bản
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.relative">
+                        <InputCheckbox v-model:value="settingDisplay.relative">
                           Hiển thị điền liên hệ khác
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.note">
+                        <InputCheckbox v-model:value="settingDisplay.note">
                           Hiển thị điền ghi chú
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <a-checkbox v-model:checked="settingDisplay.customerSource">
+                        <InputCheckbox v-model:value="settingDisplay.customerSource">
                           Hiển thị điền nguồn khách hàng
-                        </a-checkbox>
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>

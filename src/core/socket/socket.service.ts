@@ -10,6 +10,8 @@ import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
 import { ticketClinicPagination, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketLaboratory } from '../../modules/ticket-laboratory'
+import { TicketLaboratoryGroup } from '../../modules/ticket-laboratory-group'
+import { TicketLaboratoryResult } from '../../modules/ticket-laboratory-result'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
@@ -285,58 +287,27 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeTicketLaboratoryList(data: {
+  static async listenTicketClinicChangeLaboratory(data: {
     ticketId: number
-    ticketLaboratoryDestroy?: TicketLaboratory
-    ticketLaboratoryUpdate?: TicketLaboratory
-    ticketLaboratoryUpdateList?: TicketLaboratory[]
-    ticketLaboratoryInsert?: TicketLaboratory
     ticketLaboratoryInsertList?: TicketLaboratory[]
-    ticketLaboratoryList?: TicketLaboratory[]
+    ticketLaboratoryUpdateList?: TicketLaboratory[]
+    ticketLaboratoryDestroyList?: TicketLaboratory[]
+    ticketLaboratoryGroupInsertList?: TicketLaboratoryGroup[]
+    ticketLaboratoryGroupUpdate?: TicketLaboratoryGroup
+    ticketLaboratoryGroupDestroy?: TicketLaboratoryGroup
+    ticketLaboratoryResultInsertList?: TicketLaboratoryResult[]
+    ticketLaboratoryResultUpdateList?: TicketLaboratoryResult[]
+    ticketLaboratoryResultDestroyList?: TicketLaboratoryResult[]
   }) {
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach((ticket) => {
-      if (!ticket.ticketLaboratoryList) return
-      if (data.ticketLaboratoryDestroy) {
-        const indexDestroy = ticket.ticketLaboratoryList.findIndex((i) => {
-          return i.id === data.ticketLaboratoryDestroy!.id
-        })
-        if (indexDestroy !== -1) {
-          ticket.ticketLaboratoryList?.splice(indexDestroy, 1)
-        }
-      }
-      if (data.ticketLaboratoryUpdate) {
-        const indexUpdate = ticket.ticketLaboratoryList.findIndex((i) => {
-          return data.ticketLaboratoryUpdate?.id === i.id
-        })
-        if (indexUpdate !== -1) {
-          const temp = TicketLaboratory.from(data.ticketLaboratoryUpdate)
-          Object.assign(ticket.ticketLaboratoryList[indexUpdate], temp)
-        }
-      }
-      if (data.ticketLaboratoryUpdateList) {
-        data.ticketLaboratoryUpdateList.forEach((i) => {
-          const indexUpdate = (ticket.ticketLaboratoryList || []).findIndex((j) => {
-            return i.id === j.id
-          })
-          if (indexUpdate !== -1) {
-            const temp = TicketLaboratory.from(i)
-            Object.assign(ticket.ticketLaboratoryList![indexUpdate], temp)
-          }
-        })
-      }
-      if (data.ticketLaboratoryInsert) {
-        const indexInsert = ticket.ticketLaboratoryList.findIndex((i) => {
-          return data.ticketLaboratoryInsert?.id === i.id
-        })
-        if (indexInsert === -1) {
-          const temp = TicketLaboratory.from(data.ticketLaboratoryInsert)
-          ticket.ticketLaboratoryList.push(temp)
-        }
-      }
+      if (!ticket.ticketLaboratoryList) ticket.ticketLaboratoryList = []
+      if (!ticket.ticketLaboratoryGroupList) ticket.ticketLaboratoryGroupList = []
+      if (!ticket.ticketLaboratoryResultList) ticket.ticketLaboratoryResultList = []
+
       if (data.ticketLaboratoryInsertList) {
         data.ticketLaboratoryInsertList.forEach((i) => {
-          const indexInsert = (ticket.ticketLaboratoryList || []).findIndex((j) => {
+          const indexInsert = ticket.ticketLaboratoryList!.findIndex((j) => {
             return i.id === j.id
           })
           if (indexInsert === -1) {
@@ -346,8 +317,85 @@ export class SocketService {
         })
       }
 
-      if (data.ticketLaboratoryList) {
-        ticket.ticketLaboratoryList = TicketLaboratory.fromList(data.ticketLaboratoryList)
+      if (data.ticketLaboratoryUpdateList) {
+        data.ticketLaboratoryUpdateList.forEach((i) => {
+          const indexUpdate = ticket.ticketLaboratoryList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexUpdate !== -1) {
+            const temp = TicketLaboratory.from(i)
+            Object.assign(ticket.ticketLaboratoryList![indexUpdate], temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryDestroyList) {
+        const tlDestroyIdList = data.ticketLaboratoryDestroyList.map((i) => i.id)
+        ticket.ticketLaboratoryList = ticket.ticketLaboratoryList.filter((i) => {
+          return !tlDestroyIdList.includes(i.id)
+        })
+      }
+
+      if (data.ticketLaboratoryGroupInsertList) {
+        data.ticketLaboratoryGroupInsertList.forEach((i) => {
+          const indexInsert = ticket.ticketLaboratoryGroupList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexInsert === -1) {
+            const temp = TicketLaboratoryGroup.from(i)
+            ticket.ticketLaboratoryGroupList?.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryGroupUpdate) {
+        const indexUpdate = ticket.ticketLaboratoryGroupList.findIndex((i) => {
+          return data.ticketLaboratoryGroupUpdate?.id === i.id
+        })
+        if (indexUpdate !== -1) {
+          const temp = TicketLaboratoryGroup.from(data.ticketLaboratoryGroupUpdate)
+          Object.assign(ticket.ticketLaboratoryGroupList[indexUpdate], temp)
+        }
+      }
+
+      if (data.ticketLaboratoryGroupDestroy) {
+        const indexDestroy = ticket.ticketLaboratoryGroupList.findIndex((i) => {
+          return i.id === data.ticketLaboratoryGroupDestroy!.id
+        })
+        if (indexDestroy !== -1) {
+          ticket.ticketLaboratoryGroupList?.splice(indexDestroy, 1)
+        }
+      }
+
+      if (data.ticketLaboratoryResultInsertList) {
+        data.ticketLaboratoryResultInsertList.forEach((i) => {
+          const indexInsert = ticket.ticketLaboratoryResultList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexInsert === -1) {
+            const temp = TicketLaboratoryResult.from(i)
+            ticket.ticketLaboratoryResultList?.push(temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryResultUpdateList) {
+        data.ticketLaboratoryResultUpdateList.forEach((i) => {
+          const indexUpdate = ticket.ticketLaboratoryResultList!.findIndex((j) => {
+            return i.id === j.id
+          })
+          if (indexUpdate !== -1) {
+            const temp = TicketLaboratoryResult.from(i)
+            Object.assign(ticket.ticketLaboratoryResultList![indexUpdate], temp)
+          }
+        })
+      }
+
+      if (data.ticketLaboratoryResultUpdateList) {
+        const tlrDestroyIdList = data.ticketLaboratoryResultUpdateList.map((i) => i.id)
+        ticket.ticketLaboratoryResultList = ticket.ticketLaboratoryResultList.filter((i) => {
+          return !tlrDestroyIdList.includes(i.id)
+        })
       }
     })
   }

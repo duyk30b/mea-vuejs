@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../../common/icon-google'
+import VueTag from '../../../../common/VueTag.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Radiology } from '../../../../modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
@@ -86,9 +87,7 @@ watch(
           </td>
           <td class="">
             <div style="white-space: nowrap">
-              <span class="">
-                <a-tag color="blue">{{ ticketRadiology?.customer?.fullName }}</a-tag>
-              </span>
+              <VueTag color="blue">{{ ticketRadiology?.customer?.fullName }}</VueTag>
             </div>
           </td>
           <td class="text-right">

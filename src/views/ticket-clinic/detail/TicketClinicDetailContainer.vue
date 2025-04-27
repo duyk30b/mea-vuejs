@@ -7,7 +7,7 @@ import {
   LoginOutlined,
   OneToOneOutlined,
 } from '@ant-design/icons-vue'
-import { onBeforeMount, onUnmounted, ref } from 'vue'
+import { onBeforeMount, onUnmounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting, IconUser } from '../../../common/icon'
@@ -25,7 +25,11 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
+import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../../../modules/laboratory-group'
 import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Procedure, ProcedureService } from '../../../modules/procedure'
+import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import {
   TicketClinicApi,
@@ -60,6 +64,11 @@ const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 const childComponent = ref<any>(null)
 
+const procedureMap = ref<Record<string, Procedure>>({})
+const laboratoryMap = ref<Record<string, Laboratory>>({})
+const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
+const radiologyMap = ref<Record<string, Radiology>>({})
+
 onBeforeMount(async () => {
   const ticketId = Number(route.params.id)
   if (ticketId) {
@@ -69,10 +78,30 @@ onBeforeMount(async () => {
     ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
     ticketClinicRef.value.customer = Customer.init()
   }
+
+  const fetchData = await Promise.all([
+    ProcedureService.getMap(),
+    LaboratoryService.getMap(),
+    LaboratoryGroupService.getMap(),
+    RadiologyService.getMap(),
+  ])
+  procedureMap.value = fetchData[0]
+  laboratoryMap.value = fetchData[1]
+  laboratoryGroupMap.value = fetchData[2]
+  radiologyMap.value = fetchData[3]
 })
 
 onUnmounted(async () => {
   ticketClinicRef.value = Ticket.blank()
+})
+
+watchEffect(() => {
+  Ticket.refreshTreeData(ticketClinicRef.value, {
+    procedureMap: procedureMap.value,
+    laboratoryMap: laboratoryMap.value,
+    laboratoryGroupMap: laboratoryGroupMap.value,
+    radiologyMap: radiologyMap.value,
+  })
 })
 
 const startFetchData = async (ticketId: number) => {
@@ -88,6 +117,8 @@ const startFetchData = async (ticketId: number) => {
         ticketProductPrescriptionList: { product: true, batch: true },
         ticketProcedureList: {},
         ticketLaboratoryList: {},
+        ticketLaboratoryGroupList: {},
+        ticketLaboratoryResultList: true,
         ticketRadiologyList: {},
         ticketUserList: {},
         toAppointment: true,
@@ -215,9 +246,10 @@ const clickCloseVisit = () => {
   <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="md:block">
+      <div class="md:block flex items-center">
         <ContactsOutlined />
         <span class="ml-2">{{ ticketClinicRef.customer?.fullName }}</span>
+        <VueButton size="small">Lịch sử khám</VueButton>
       </div>
     </div>
     <div class="page-header-setting">

@@ -1,4 +1,6 @@
 export { default as CheckboxList } from './CheckboxList.vue'
+export { default as InputCheckbox } from './InputCheckbox.vue'
+export { default as InputCheckboxList } from './InputCheckboxList.vue'
 export { default as InputDate } from './InputDate.vue'
 export { default as InputFilter } from './InputFilter.vue'
 export { default as InputHint } from './InputHint.vue'

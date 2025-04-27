@@ -1,45 +1,25 @@
 <script setup lang="ts">
 import { CheckCircleOutlined, ExclamationCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { TicketStatus } from '../../modules/ticket'
+import VueTag from '../../common/VueTag.vue'
 
 const props = defineProps<{ ticketStatus: TicketStatus }>()
 </script>
 
 <template>
-  <a-tag v-if="ticketStatus === TicketStatus.Draft" color="warning">
-    <template #icon>
-      <ExclamationCircleOutlined />
-    </template>
-    Nháp
-  </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Approved" color="processing">
-    <template #icon>
-      <ExclamationCircleOutlined />
-    </template>
+  <VueTag v-if="ticketStatus === TicketStatus.Draft" color="orange" icon="exclamation">Nháp</VueTag>
+  <VueTag v-else-if="ticketStatus === TicketStatus.Approved" color="blue" icon="exclamation">
     Tạm ứng
-  </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Executing" color="cyan">
-    <template #icon>
-      <ExclamationCircleOutlined />
-    </template>
+  </VueTag>
+  <VueTag v-else-if="ticketStatus === TicketStatus.Executing" color="cyan" icon="send">
     Đã gửi hàng
-  </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Debt" color="error">
-    <template #icon>
-      <ExclamationCircleOutlined />
-    </template>
-    Nợ
-  </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Completed" color="success">
-    <template #icon>
-      <CheckCircleOutlined />
-    </template>
+  </VueTag>
+  <VueTag v-else-if="ticketStatus === TicketStatus.Debt" color="orange" icon="minus">Nợ</VueTag>
+
+  <VueTag v-else-if="ticketStatus === TicketStatus.Completed" color="green" icon="check">
     Hoàn thành
-  </a-tag>
-  <a-tag v-if="ticketStatus === TicketStatus.Cancelled" color="default">
-    <template #icon>
-      <StopOutlined />
-    </template>
+  </VueTag>
+  <VueTag v-else-if="ticketStatus === TicketStatus.Cancelled" color="default" icon="stop">
     Hủy
-  </a-tag>
+  </VueTag>
 </template>

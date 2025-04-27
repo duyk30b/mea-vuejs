@@ -4,6 +4,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
+  InputCheckbox,
   InputDate,
   InputFilter,
   InputHint,
@@ -208,8 +209,8 @@ const handleModalCustomerUpsertSuccess = (
   selectCustomer(customerSelect)
 }
 
-const handleChangeCheckboxAppointment = (e: any, appointment: Appointment) => {
-  if (e.target.checked) {
+const handleChangeCheckboxAppointment = (e: Event, appointment: Appointment) => {
+  if ((e.target as HTMLInputElement).checked) {
     fromAppointmentId.value = appointment.id
     ticketAttributeMap.value.reason = appointment.reason || ''
     ticket.value.customerSourceId = appointment.customerSourceId
@@ -619,12 +620,12 @@ defineExpose({ openModal })
           <div>Khách hàng đến theo hẹn ?</div>
           <div class="ml-4">
             <div v-for="(appointment, index) in appointmentOptions" :key="index">
-              <a-checkbox
+              <InputCheckbox
                 :checked="fromAppointmentId === appointment.id"
-                @change="(e: any) => handleChangeCheckboxAppointment(e, appointment)">
+                @change="(e: Event) => handleChangeCheckboxAppointment(e, appointment)">
                 <span>{{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm ') }}</span>
                 <span>- Lý do: {{ appointment.reason }}</span>
-              </a-checkbox>
+              </InputCheckbox>
             </div>
           </div>
         </div>

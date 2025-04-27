@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
@@ -66,36 +67,40 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.substance">
+                <InputCheckbox v-model:checked="settingDisplay.substance">
                   Hiển thị hoạt chất
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.group">Hiển thị nhóm</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.group">Hiển thị nhóm</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.route">Hiển thị đường dùng</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.route">
+                  Hiển thị đường dùng
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.source">Hiển thị nguồn gốc</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.source">
+                  Hiển thị nguồn gốc
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.hintUsage">
+                <InputCheckbox v-model:checked="settingDisplay.hintUsage">
                   Hiển thị cách sử dụng
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>

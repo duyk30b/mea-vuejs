@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import {
-  ApartmentOutlined,
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-} from '@ant-design/icons-vue'
+import { ApartmentOutlined, FormOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 import { UserApi, type User } from '../../../modules/user'
 import ModalAccountUpsert from './ModalAccountUpsert.vue'
 
@@ -97,7 +92,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
             <th>Username</th>
             <th>Họ Tên</th>
             <th>Vai trò</th>
-            <th>Thiết bị đăng nhập</th>
+            <!-- <th>Thiết bị đăng nhập</th> -->
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -112,13 +107,13 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
             <td>{{ user.fullName }}</td>
             <td>
               <div>
-                <a-tag v-if="user.isAdmin" color="cyan">Admin</a-tag>
+                <VueTag v-if="user.isAdmin" color="cyan">Admin</VueTag>
               </div>
               <div>
                 {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
               </div>
             </td>
-            <td>
+            <!-- <td>
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
                   <span v-if="device.mobile === 1">
@@ -140,24 +135,14 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
                     @click="deviceLogout(user.id!, device.refreshExp)">
                     Đăng xuất
                   </VueButton>
-                  <a-tag v-if="device.online" color="success">Online</a-tag>
-                  <a-tag v-if="!device.online" color="default">Offline</a-tag>
+                  <VueTag v-if="device.online" color="success">Online</VueTag>
+                  <VueTag v-if="!device.online" color="default">Offline</VueTag>
                 </div>
               </div>
-            </td>
+            </td> -->
             <td class="text-center">
-              <a-tag v-if="user.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="user.isActive" icon="check" color="green">Active</VueTag>
+              <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
             <td class="text-center">
               <a

@@ -10,6 +10,7 @@ import { Laboratory } from './laboratory.model'
 export class LaboratoryService {
   static loadedAll: boolean = false
   static laboratoryAll: Laboratory[] = []
+  static laboratoryFlatMap: Record<string, Laboratory> = {}
 
   private static fetchAll = (() => {
     const start = async () => {
@@ -31,6 +32,7 @@ export class LaboratoryService {
           }
         })
         LaboratoryService.laboratoryAll = laboratoryList
+        LaboratoryService.laboratoryFlatMap = arrayToKeyValue(data, 'id')
       } catch (error: any) {
         console.log('🚀 ~ file: laboratory.service.ts:35 ~ LaboratoryService ~ error:', error)
       }
@@ -96,6 +98,11 @@ export class LaboratoryService {
     await LaboratoryService.fetchAll()
     const laboratoryMap = arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
     return laboratoryMap
+  }
+
+  static async getFlatMap() {
+    await LaboratoryService.fetchAll()
+    return LaboratoryService.laboratoryFlatMap
   }
 
   static async pagination(query: LaboratoryPaginationQuery, options?: { refresh: boolean }) {

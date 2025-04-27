@@ -12,6 +12,7 @@ import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
 import { DTimer } from '../../utils'
+import VueTag from '../../common/VueTag.vue'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -148,8 +149,8 @@ const logoutAll = async () => {
                     ">
                     Đăng xuất
                   </VueButton>
-                  <a-tag v-if="device.online === true" color="success">Online</a-tag>
-                  <a-tag v-else color="default">Offline</a-tag>
+                  <VueTag v-if="device.online === true" color="green">Online</VueTag>
+                  <VueTag v-else color="default">Offline</VueTag>
                 </div>
               </div>
             </td>
@@ -157,18 +158,8 @@ const logoutAll = async () => {
               {{ user.organization?.note }}
             </td>
             <td class="text-center">
-              <a-tag v-if="user.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="user.isActive" icon="check" color="green">Active</VueTag>
+              <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
             <td class="text-center">
               <a

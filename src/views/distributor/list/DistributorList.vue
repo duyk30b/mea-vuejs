@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ApartmentOutlined, CheckCircleOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
+import { ApartmentOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { IconFileSearch, IconSetting } from '../../../common/icon'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputText, VueSelect } from '../../../common/vue-form'
@@ -387,18 +388,10 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive" class="text-center">
-              <a-tag v-if="distributor.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <div>
+                <VueTag v-if="distributor.isActive" icon="check" color="green">Active</VueTag>
+                <VueTag v-else icon="minus" color="orange">Inactive</VueTag>
+              </div>
             </td>
             <td
               v-if="

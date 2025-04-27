@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import {
-  CheckCircleOutlined,
   ContactsOutlined,
   FileSearchOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
+  FormOutlined
 } from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
 import { IconDownload, IconSetting } from '../../../common/icon'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -442,18 +441,8 @@ const downloadExcelCustomerList = async () => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive" class="text-center">
-              <a-tag v-if="customer.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="customer.isActive" color="green" icon="check">Active</VueTag>
+              <VueTag v-else color="orange" icon="minus">Inactive</VueTag>
             </td>
             <td
               v-if="

@@ -7,6 +7,7 @@ import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { InputCheckbox } from '../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -65,61 +66,61 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.detail">
+                <InputCheckbox v-model:checked="settingDisplay.detail">
                   Hiển thị nút xem chi tiết (
                   <IconFileSearch />
                   )
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.substance">
+                <InputCheckbox v-model:checked="settingDisplay.substance">
                   Hiển thị hoạt chất
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.group">Hiển thị nhóm</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.group">Hiển thị nhóm</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.warehouse">Hiển thị nhà cung cấp</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.distributor">Hiển thị nhà cung cấp</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.expiryDate">Hiển thị HSD</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.expiryDate">Hiển thị HSD</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.costPrice">
+                <InputCheckbox v-model:checked="settingDisplay.costPrice">
                   Hiển thị giá nhập
-                </a-checkbox>
+                </InputCheckbox>
               </td>
             </tr>
 
             <tr>
               <td>
-                <a-checkbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</a-checkbox>
+                <InputCheckbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</InputCheckbox>
               </td>
             </tr>
           </tbody>

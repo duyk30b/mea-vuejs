@@ -9,6 +9,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-detail.ref'
+import VueTag from '../../../common/VueTag.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
@@ -109,9 +110,9 @@ const colspan = computed(() => {
         <tr v-if="settingStore.SCREEN_RECEIPT_DETAIL.paymentInfo.discount || receipt.discountMoney">
           <td class="text-right" style="padding-right: 1rem" :colspan="colspan">Chiết khấu</td>
           <td colspan="2" class="text-right whitespace-nowrap">
-            <a-tag v-if="receipt.discountType === '%'" color="success">
+            <VueTag v-if="receipt.discountType === '%'" color="green">
               {{ receipt.discountPercent || 0 }}%
-            </a-tag>
+            </VueTag>
             {{ formatMoney(receipt.discountMoney) }}
           </td>
         </tr>

@@ -28,15 +28,16 @@ const setEditorHeight = () => {
     if (!menuElement) return
 
     let cssNode = document.createElement('style')
-    const height = wrapperElement.offsetHeight - menuElement.offsetHeight
+    const mainHeight = wrapperElement.offsetHeight - menuElement.offsetHeight
+    const editHeight = mainHeight
     cssNode.innerHTML = ` 
                           .${randomId.value} .ck.ck-editor__main {
-                              height: ${height}px;
-                              overflow: scroll;
+                              height: ${mainHeight}px;
+                              overflow-y: scroll;
                           }
                           .${randomId.value} .ck.ck-content.ck-editor__editable,
                           .${randomId.value} .ck-source-editing-area {
-                              min-height: ${height}px !important
+                              min-height: ${editHeight}px !important
                           }
                         `
     wrapperElement.append(cssNode)

@@ -83,7 +83,7 @@ watch(
             </div>
           </td>
           <td class="text-center">
-            {{ ticketLaboratory.resultParse[laboratory.id] }}
+            <!-- {{ ticketLaboratory.resultParse[laboratory.id] }} -->
           </td>
           <td class="text-right">
             <div

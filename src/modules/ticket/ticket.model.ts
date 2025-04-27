@@ -4,11 +4,16 @@ import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
 import { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
+import { LaboratoryValueType, type Laboratory } from '../laboratory'
+import { LaboratoryGroup } from '../laboratory-group'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
+import type { Radiology } from '../radiology'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import { TicketLaboratory } from '../ticket-laboratory'
+import { TicketLaboratoryGroup } from '../ticket-laboratory-group'
+import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import { TicketProcedure } from '../ticket-procedure/ticket-procedure.model'
 import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
@@ -84,6 +89,8 @@ export class Ticket {
   ticketProductPrescriptionList?: TicketProduct[]
   ticketProcedureList?: TicketProcedure[]
   ticketLaboratoryList?: TicketLaboratory[]
+  ticketLaboratoryGroupList?: TicketLaboratoryGroup[]
+  ticketLaboratoryResultList?: TicketLaboratoryResult[]
   ticketRadiologyList?: TicketRadiology[]
   ticketUserList?: TicketUser[]
   ticketSurchargeList?: TicketSurcharge[]
@@ -124,6 +131,9 @@ export class Ticket {
     ins.ticketAttributeList = []
     ins.ticketProcedureList = []
     ins.ticketProductList = []
+    ins.ticketLaboratoryList = []
+    ins.ticketLaboratoryGroupList = []
+    ins.ticketLaboratoryResultList = []
     ins.ticketRadiologyList = []
     ins.ticketUserList = []
     ins.ticketSurchargeList = [TicketSurcharge.init()]
@@ -159,6 +169,85 @@ export class Ticket {
         this.ticketUserGroup[i.interactType][i.ticketItemId] = []
       }
       this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
+  static refreshTreeData(
+    ticket: Ticket,
+    masterData: {
+      procedureMap?: Record<string, Procedure>
+      radiologyMap?: Record<string, Radiology>
+      laboratoryMap?: Record<string, Laboratory>
+      laboratoryGroupMap?: Record<string, LaboratoryGroup>
+    }
+  ) {
+    ;(ticket.ticketProcedureList || []).forEach((i) => {
+      if (masterData.procedureMap) {
+        i.procedure = masterData.procedureMap[i.procedureId]
+      }
+    })
+    ;(ticket.ticketLaboratoryList || []).forEach((tl) => {
+      if (masterData.laboratoryMap) {
+        tl.laboratory = masterData.laboratoryMap[tl.laboratoryId]
+      }
+      tl.ticketLaboratoryResult = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+        return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
+      })
+
+      if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
+        tl.children =
+          tl.laboratory?.children?.map((laboratoryChild) => {
+            let currentTlr = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+              return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
+            })
+            if (!currentTlr) {
+              currentTlr = TicketLaboratoryResult.blank()
+              currentTlr.laboratoryId = tl.laboratoryId
+              currentTlr.ticketLaboratoryId = tl.id
+              currentTlr.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
+            }
+            return {
+              laboratory: laboratoryChild,
+              ticketLaboratoryResult: currentTlr,
+            }
+          }) || []
+      }
+    })
+
+    if (!ticket.ticketLaboratoryGroupList) {
+      ticket.ticketLaboratoryGroupList = []
+    }
+    ticket.ticketLaboratoryGroupList.forEach((tlg) => {
+      if (masterData.laboratoryGroupMap) {
+        tlg.laboratoryGroup =
+          masterData.laboratoryGroupMap[tlg.laboratoryGroupId] || LaboratoryGroup.blank()
+      }
+      tlg.ticketLaboratoryList = (ticket.ticketLaboratoryList || []).filter((tl) => {
+        return tl.ticketLaboratoryGroupId === tlg.id
+      })
+    })
+
+    // === fix cho những xét nghiệm cũ chưa phân nhóm
+    const tlNoGroup = (ticket.ticketLaboratoryList || []).filter((tl) => {
+      return tl.ticketLaboratoryGroupId === 0
+    })
+    if (tlNoGroup.length) {
+      let tlgZero = ticket.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
+      if (!tlgZero) {
+        tlgZero = TicketLaboratoryGroup.blank()
+        tlgZero.laboratoryGroup = LaboratoryGroup.blank()
+        ticket.ticketLaboratoryGroupList.unshift(tlgZero)
+      }
+      tlgZero.ticketLaboratoryList = tlNoGroup
+    } else {
+      ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => !!i.id)
+    }
+    // === fix cho những xét nghiệm cũ chưa phân nhóm
+
+    ;(ticket.ticketRadiologyList || []).forEach((i) => {
+      if (masterData.radiologyMap) {
+        i.radiology = masterData.radiologyMap[i.radiologyId]
+      }
     })
   }
 
@@ -221,6 +310,16 @@ export class Ticket {
     }
     if (source.ticketLaboratoryList) {
       target.ticketLaboratoryList = TicketLaboratory.basicList(source.ticketLaboratoryList)
+    }
+    if (source.ticketLaboratoryGroupList) {
+      target.ticketLaboratoryGroupList = TicketLaboratoryGroup.basicList(
+        source.ticketLaboratoryGroupList
+      )
+    }
+    if (source.ticketLaboratoryResultList) {
+      target.ticketLaboratoryResultList = TicketLaboratoryResult.basicList(
+        source.ticketLaboratoryResultList
+      )
     }
     if (source.ticketRadiologyList) {
       target.ticketRadiologyList = TicketRadiology.basicList(source.ticketRadiologyList)

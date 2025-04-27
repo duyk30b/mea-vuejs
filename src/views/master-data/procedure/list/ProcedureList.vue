@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { CheckCircleOutlined, MinusCircleOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
+import { NodeIndexOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import VueTag from '../../../../common/VueTag.vue'
 import { IconFileSearch, IconSetting } from '../../../../common/icon'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
@@ -353,18 +354,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
               {{ formatMoney(procedure.price) }}
             </td>
             <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
-              <a-tag v-if="procedure.isActive" color="success">
-                <template #icon>
-                  <CheckCircleOutlined />
-                </template>
-                Active
-              </a-tag>
-              <a-tag v-else color="warning">
-                <template #icon>
-                  <MinusCircleOutlined />
-                </template>
-                Inactive
-              </a-tag>
+              <VueTag v-if="procedure.isActive" icon="check" color="green">Active</VueTag>
+              <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
             <td
               v-if="

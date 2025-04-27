@@ -247,7 +247,7 @@ watch(
             </table>
           </div>
 
-          <div class="mt-4 table-wrapper p-4" style="background-color: white">
+          <!-- <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">7. Xét nghiệm:</div>
             <table v-if="ticket.ticketLaboratoryList?.length">
               <thead>
@@ -329,7 +329,7 @@ watch(
                 </template>
               </tbody>
             </table>
-          </div>
+          </div> -->
 
           <div class="mt-4 table-wrapper p-4" style="background-color: white">
             <div class="mb-2" style="font-weight: 500">8. CĐHA:</div>
