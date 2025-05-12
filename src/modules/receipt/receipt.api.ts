@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { DistributorPayment } from '../distributor-payment/distributor-payment.model'
+import { Payment } from '../payment/payment.model'
 import {
   ReceiptDetailQuery,
   ReceiptGetQuery,
@@ -32,7 +32,7 @@ export class ReceiptApi {
   static async detail(id: number, options: ReceiptDetailQuery): Promise<Receipt> {
     const params = ReceiptGetQuery.toQuery(options)
 
-    const response = await AxiosInstance.get(`/receipt/detail/${id}`, { params })
+    const response = await AxiosInstance.get(`/receipt/${id}/detail`, { params })
     const { data } = response.data as BaseResponse<{ receipt: any }>
     return Receipt.from(data.receipt)
   }
@@ -54,7 +54,7 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        lotNumber: i.lotNumber || '',
+        batchCode: i.batchCode || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
@@ -65,8 +65,8 @@ export class ReceiptApi {
     return data
   }
 
-  static async updateDraftPrepayment(receiptId: number, receipt: Receipt) {
-    const response = await AxiosInstance.patch(`/receipt/update-draft-prepayment/${receiptId}`, {
+  static async updateDraft(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/${receiptId}/update-draft`, {
       distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
       receipt: {
         startedAt: receipt.startedAt,
@@ -82,7 +82,7 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        lotNumber: i.lotNumber || '',
+        batchCode: i.batchCode || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
@@ -93,71 +93,145 @@ export class ReceiptApi {
     return data
   }
 
-  static async destroy(receiptId: number) {
-    const response = await AxiosInstance.delete(`/receipt/destroy/${receiptId}`)
+  static async depositedUpdate(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/${receiptId}/deposited-update`, {
+      distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
+      receipt: {
+        startedAt: receipt.startedAt,
+        itemsActualMoney: receipt.itemsActualMoney,
+        discountMoney: receipt.discountMoney,
+        discountPercent: receipt.discountPercent,
+        discountType: receipt.discountType,
+        surcharge: receipt.surcharge,
+        totalMoney: receipt.totalMoney,
+        note: receipt.note,
+      },
+      receiptItemList: (receipt.receiptItemList || []).map((i) => ({
+        productId: i.productId,
+        batchId: i.batchId,
+        warehouseId: i.warehouseId,
+        batchCode: i.batchCode || '',
+        expiryDate: i.expiryDate,
+        unitRate: i.unitRate,
+        costPrice: i.costPrice,
+        quantity: i.quantity,
+      })),
+    })
     const { data } = response.data as BaseResponse<{ receiptId: number }>
     return data
   }
 
-  static async prepayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/prepayment/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{
-      receiptBasic: any
-      distributorPaymentList: any[]
-    }>
-    return {
-      receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
-    }
+  // ================ ACTION ================ //
+
+  static async draftDestroy(receiptId: number) {
+    const response = await AxiosInstance.delete(`/receipt/${receiptId}/draft-destroy`)
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
   }
 
-  static async refundPrepayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/refund-prepayment/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{
-      receiptBasic: any
-      distributorPaymentList: any[]
-    }>
-    return {
-      receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
-    }
+  static async depositedDestroy(receiptId: number) {
+    const response = await AxiosInstance.delete(`/receipt/${receiptId}/deposited-destroy`)
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
   }
 
-  static async sendProductAndPayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/send-product-and-payment/${receiptId}`, {
-      money,
-    })
-    const { data } = response.data as BaseResponse<{
-      receipt: any
-      distributorPaymentList: any[]
-    }>
+  static async cancelledDestroy(receiptId: number) {
+    const response = await AxiosInstance.delete(`/receipt/${receiptId}/cancelled-destroy`)
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
+  }
+
+  static async sendProductAndPaymentAndClose(options: {
+    receiptId: number
+    money: number
+    paymentMethodId: number
+  }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(
+      `/receipt/${receiptId}/send-product-and-payment-and-close`,
+      {
+        money,
+        paymentMethodId,
+      },
+    )
+    const { data } = response.data as BaseResponse<{ receipt: any; payment: any }>
     return {
       receipt: Receipt.from(data.receipt || {}),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
+      payment: data.payment ? Payment.from(data.payment) : undefined,
     }
   }
 
-  static async payDebt(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/pay-debt/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{
-      receiptBasic: any
-      distributorPaymentList: any[]
-    }>
+  static async prepayment(options: { receiptId: number; money: number; paymentMethodId: number }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/prepayment`, {
+      money,
+      paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{ receipt: any; payment?: any }>
     return {
-      receiptBasic: Receipt.from(data.receiptBasic || {}),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
+      receipt: Receipt.from(data.receipt || {}),
+      payment: data.payment ? Payment.from(data.payment) : undefined,
     }
   }
 
-  static async cancel(receiptId: number) {
-    const response = await AxiosInstance.post(`/receipt/cancel/${receiptId}`)
+  static async sendProduct(options: { receiptId: number }) {
+    const { receiptId } = options
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/send-product`)
+    const { data } = response.data as BaseResponse<{ receipt: any }>
+    return {
+      receipt: Receipt.from(data.receipt || {}),
+    }
+  }
+
+  static async close(options: { receiptId: number }) {
+    const { receiptId } = options
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/close`)
+    const { data } = response.data as BaseResponse<{ receipt: any; payment: any }>
+    return {
+      receipt: Receipt.from(data.receipt || {}),
+      payment: data.payment ? Payment.from(data.payment) : undefined,
+    }
+  }
+
+  static async refundOverpaid(options: {
+    receiptId: number
+    money: number
+    paymentMethodId: number
+  }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/refund-overpaid`, {
+      money,
+      paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{ receipt: any; payment: any }>
+    return {
+      receipt: Receipt.from(data.receipt || {}),
+      payment: data.payment ? Payment.from(data.payment) : undefined,
+    }
+  }
+
+  static async payDebt(options: { receiptId: number; money: number; paymentMethodId: number }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/pay-debt`, {
+      money,
+      paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{ receipt: any; payment: any }>
+    return {
+      receipt: Receipt.from(data.receipt || {}),
+      payment: data.payment ? Payment.from(data.payment) : undefined,
+    }
+  }
+
+  static async terminate(receiptId: number) {
+    const response = await AxiosInstance.post(`/receipt/${receiptId}/terminate`)
     const { data } = response.data as BaseResponse<{
       receipt: any
-      distributorPaymentList: any[]
+      paymentList: any[]
     }>
     return {
       receipt: Receipt.from(data.receipt),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
+      paymentList: Payment.fromList(data.paymentList || []),
     }
   }
 }

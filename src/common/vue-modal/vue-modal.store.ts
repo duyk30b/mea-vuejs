@@ -7,8 +7,8 @@ export interface IModalData {
   content: string | string[]
   contentType: 'text' | 'html'
   show: boolean
-  onOk: Function
-  onCancel: Function
+  onOk: () => Promise<void>
+  onCancel: () => Promise<void>
   okText: string
   cancelText: string
 }
@@ -21,14 +21,14 @@ const add = (
     title: string
     content: string | string[]
     contentType?: 'text' | 'html'
-    onOk?: Function
-    onCancel?: Function
+    onOk?: () => Promise<void>
+    onCancel?: () => Promise<void>
     okText?: string
     cancelText?: string
-  }
+  },
 ) => {
   const key = randomId()
-  const funcEmpty = () => {}
+  const funcEmpty = async () => {}
 
   data[key] = {
     type,
@@ -50,8 +50,8 @@ const confirm = (options: {
   title: string
   content: string | string[]
   contentType?: 'text' | 'html'
-  onOk?: Function
-  onCancel?: Function
+  onOk?: () => Promise<void>
+  onCancel?: () => Promise<void>
   okText?: string
   cancelText?: string
 }) => {
@@ -62,7 +62,7 @@ const alert = (options: {
   title: string
   content: string | string[]
   contentType?: 'text' | 'html'
-  onOk?: Function
+  onOk?: () => Promise<void>
   okText?: string
 }) => {
   add('alert', options)

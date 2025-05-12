@@ -5,9 +5,8 @@ import { MeaDatabase } from '../core/indexed-db/database'
 import { LocalStorageService } from '../core/local-storage.service'
 import { MeService } from '../modules/_me/me.service'
 import { AuthService } from '../modules/auth/auth.service'
-import VueLayout from './layout/VueLayout.vue'
 import { ProductService } from '../modules/product'
-import { BatchService } from '../modules/batch'
+import VueLayout from './layout/VueLayout.vue'
 
 const loaded = ref(false)
 
@@ -22,7 +21,7 @@ onBeforeMount(async () => {
     } else {
       await MeaDatabase.runMigration()
       await MeService.initData()
-      await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+      await Promise.all([ProductService.refreshDB()])
     }
   } catch (error) {
     console.log('🚀 ~ file: AppContainer.vue:26 ~ onBeforeMount ~ error:', error)

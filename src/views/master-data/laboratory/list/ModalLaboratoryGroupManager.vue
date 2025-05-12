@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose, IconTrash } from '../../../../common/icon'
+import { IconClose, IconDelete } from '../../../../common/icon-antd'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
@@ -101,7 +101,7 @@ defineExpose({ openModal })
                 </td>
                 <td class="text-center">
                   <a style="color: var(--text-red)" @click="laboratoryGroupList.splice(index, 1)">
-                    <IconTrash />
+                    <IconDelete />
                   </a>
                 </td>
               </tr>
@@ -115,7 +115,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" type="submit" color="blue" :loading="saveLoading">
             Lưu lại
           </VueButton>

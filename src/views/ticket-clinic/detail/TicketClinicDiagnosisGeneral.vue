@@ -3,8 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
@@ -13,11 +13,12 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
-import { CustomerService } from '../../../modules/customer'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
+const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyGeneralType]?: any } = {}
@@ -31,8 +32,15 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisGeneral.vue:28 ~ onMounted')
 })
+
+watch(
+  () => ticketClinicRef.value.note,
+  (newValue, oldValue) => {
+    note.value = newValue
+  },
+  { immediate: true, deep: true },
+)
 
 watch(
   () => ticketClinicRef.value.ticketAttributeList,
@@ -48,13 +56,13 @@ watch(
       ticketAttributeMap.value[k] = i.value
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watch(
   () => ticketClinicRef.value!.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
-  { immediate: true }
+  { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
@@ -75,6 +83,7 @@ const hasChangeAttribute = computed(() => {
 })
 
 const hasChangeData = computed(() => {
+  if (note.value != ticketClinicRef.value.note) return true
   if (hasChangeImage.value) return true
   if (hasChangeAttribute.value) return true
   if (hasChangeCustomer.value) return true
@@ -101,6 +110,7 @@ const saveTicketDiagnosis = async () => {
     await Promise.all([
       TicketClinicApi.updateDiagnosis({
         ticketId: ticketClinicRef.value.id,
+        note: note.value,
         files,
         imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
         ticketAttributeChangeList,
@@ -137,11 +147,11 @@ defineExpose({ getDataTicketDiagnosis })
       <div class="flex-1">
         <div>Tiền sử</div>
         <div class="healthHistory" style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
         <div class="mt-4">Tóm tắt</div>
         <div class="summary" style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.summary" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.summary" />
         </div>
       </div>
       <div class="md:w-[220px] w-full flex flex-col">
@@ -226,23 +236,27 @@ defineExpose({ getDataTicketDiagnosis })
               id: i.id,
             }))
         "
-        @changeImage="hasChangeImage = true" />
+        @changeImage="hasChangeImage = true"
+      />
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
       <div>
-        <InputText v-model:value="ticketAttributeMap.diagnosis" />
+        <InputText v-model:value="note" />
       </div>
     </div>
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]"
+        v-if="
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+        "
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketDiagnosis">
+        @click="saveTicketDiagnosis"
+      >
         Lưu lại
       </VueButton>
     </div>

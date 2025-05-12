@@ -8,27 +8,30 @@ export type CheckboxOptionType = {
   children?: CheckboxOptionType[]
 }
 
-const props = withDefaults(
-  defineProps<{
-    value?: Record<string, any>
-    options: CheckboxOptionType[]
-    labelAll?: string
-    itemStyle?: StyleValue
-  }>(),
-  {
-    value: () => ({}),
-    options: () => [],
-    labelAll: 'Tất cả',
-    itemStyle: '',
+export type CheckboxAllPropType = {
+  label?: string
+  style?: StyleValue
+}
+
+const props = defineProps<{
+  value: Record<string, boolean | any>
+  options: CheckboxOptionType[]
+  noCheckboxAll?: boolean
+  customStyle?: {
+    checkboxAllLabel?: string
+    checkboxAllWrap?: StyleValue
+    checkboxItemWrap?: StyleValue
+    checkboxItem?: StyleValue
   }
-)
+}>()
 const emit = defineEmits<{
-  (e: 'update:value', value: Record<string, any>): void
+  (e: 'update:value', value: Record<string, boolean | any>): void
 }>()
 
 const randomId = computed(() => Math.random().toString(36).substring(2))
 let valueStringify = ''
-const checkMap = ref<Record<string, any>>({})
+let optionsStringify = ''
+const checkMap = ref<Record<string, boolean | any>>({})
 const checkedAll = ref<boolean>(false)
 const indeterminate = ref<boolean>(false)
 
@@ -39,6 +42,7 @@ const reloadIndeterminateCheckbox = () => {
   const noCheckedAll = props.options.every((i) => {
     return !checkMap.value[i.key]
   })
+
   if (hasCheckedAll) {
     checkedAll.value = true
     indeterminate.value = false
@@ -53,7 +57,13 @@ const reloadIndeterminateCheckbox = () => {
 
 watchEffect(() => {
   const newValueStringify = JSON.stringify(props.value)
-  if (valueStringify === newValueStringify) return
+  const newOptionsStringify = JSON.stringify(props.options)
+
+  if (valueStringify === newValueStringify && optionsStringify === newOptionsStringify) {
+    return
+  }
+  valueStringify = newValueStringify
+  optionsStringify = newOptionsStringify
 
   props.options.forEach((option) => {
     checkMap.value[option.key] = props.value[option.key]
@@ -69,7 +79,7 @@ const handleChangeCheckboxItem = (e: Event, key: string | number) => {
 const handleChangeCheckboxParent = (e: Event) => {
   checkedAll.value = (e.target as HTMLInputElement).checked
   indeterminate.value = false
-  const v: Record<string, any> = {}
+  const v: Record<string, boolean | any> = {}
   props.options.forEach((i) => (v[i.key] = checkedAll.value))
   emit('update:value', v)
 }
@@ -78,37 +88,51 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div>
-    <div style="display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center">
+  <div
+    v-if="!noCheckboxAll"
+    :style="
+      customStyle?.checkboxAllWrap ||
+      'display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center'
+    "
+  >
+    <input
+      :id="randomId + 'PARENT'"
+      style="cursor: pointer"
+      :checked="checkedAll"
+      :indeterminate="indeterminate"
+      type="checkbox"
+      :name="randomId + 'PARENT'"
+      @change="(e) => handleChangeCheckboxParent(e)"
+    />
+    <label style="cursor: pointer; user-select: none" :for="randomId + 'PARENT'">
+      {{ customStyle?.checkboxAllLabel || 'Tất cả' }}
+    </label>
+  </div>
+  <div
+    :style="
+      customStyle?.checkboxItemWrap ||
+      'margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center'
+    "
+  >
+    <div
+      v-for="(option, index) in options"
+      :key="index"
+      :style="
+        customStyle?.checkboxItem ||
+        'display: flex; gap: 0.5em; align-items: center; flex-basis: 300px; flex-grow: 1'
+      "
+    >
       <input
-        :id="randomId + 'PARENT'"
+        :id="randomId + '_' + index"
         style="cursor: pointer"
-        :checked="checkedAll"
-        :indeterminate="indeterminate"
+        :checked="checkMap[option.key]"
         type="checkbox"
-        :name="randomId + 'PARENT'"
-        @change="(e) => handleChangeCheckboxParent(e)" />
-      <label style="cursor: pointer; user-select: none" :for="randomId + 'PARENT'">
-        {{ labelAll }}
+        :name="randomId + '_' + index"
+        @change="(e) => handleChangeCheckboxItem(e, option.key)"
+      />
+      <label style="cursor: pointer; user-select: none" :for="randomId + '_' + index">
+        {{ option.label }}
       </label>
-    </div>
-    <div style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center">
-      <div
-        v-for="(option, index) in options"
-        :key="index"
-        :style="itemStyle"
-        style="display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center">
-        <input
-          :id="randomId + '_' + index"
-          style="cursor: pointer"
-          :checked="checkMap[option.key]"
-          type="checkbox"
-          :name="randomId + '_' + index"
-          @change="(e) => handleChangeCheckboxItem(e, option.key)" />
-        <label style="cursor: pointer; user-select: none" :for="randomId + '_' + index">
-          {{ option.label }}
-        </label>
-      </div>
     </div>
   </div>
 </template>

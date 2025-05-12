@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconVisibility } from '../../../../common/icon-google'
+import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
+import { IconVisibility } from '../../../../common/icon-google'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Radiology } from '../../../../modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
 import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -58,7 +59,7 @@ watch(
     if (newValue) await startFetchData()
     else ticketRadiologyList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -94,7 +95,8 @@ watch(
             <div
               v-if="ticketRadiology.discountMoney"
               class="text-xs italic line-through"
-              style="color: var(--text-red)">
+              style="color: var(--text-red)"
+            >
               {{ formatMoney(ticketRadiology.expectedPrice) }}
             </div>
             {{ formatMoney(ticketRadiology.actualPrice) }}
@@ -103,9 +105,8 @@ watch(
             <div class="flex items-center gap-2">
               <span>{{ ticketRadiology.result }}</span>
               <a
-                @click="
-                  modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })
-                ">
+                @click="modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })"
+              >
                 <IconVisibility width="20" height="20" />
               </a>
             </div>
@@ -113,13 +114,13 @@ watch(
         </tr>
       </tbody>
     </table>
-    <div class="mt-4 float-right mb-2">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
         :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

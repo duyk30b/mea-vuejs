@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconClock, IconShoppingCart } from '../../common/icon'
+import { IconClockCircle, IconCloseCircle, IconShoppingCart } from '../../common/icon-antd'
 import VueTag from '../../common/VueTag.vue'
 import { DeliveryStatus } from '../../modules/enum'
 
@@ -10,14 +10,14 @@ const props = withDefaults(defineProps<{ deliveryStatus: DeliveryStatus }>(), {
 
 <template>
   <VueTag v-if="deliveryStatus === DeliveryStatus.NoStock" color="default">
-    <IconShoppingCart />
+    <IconCloseCircle />
     <span>Không có thuốc - vật tư</span>
   </VueTag>
   <VueTag v-else-if="deliveryStatus === DeliveryStatus.Pending" color="orange" icon="clock">
     <template #icon>
-      <IconClock />
+      <IconClockCircle />
     </template>
-    Chưa xuất thuốc - vật tư
+    <span>Chưa xuất thuốc - vật tư</span>
   </VueTag>
   <VueTag v-else-if="deliveryStatus === DeliveryStatus.Delivered" color="green">
     <IconShoppingCart />

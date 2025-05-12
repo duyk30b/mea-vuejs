@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting } from '../../../common/icon'
+import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputHint, InputText } from '../../../common/vue-form'
+import { VueSwitch, InputHint, InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -39,18 +38,18 @@ const openModal = async (distributorId?: number) => {
   if (!distributorId) {
     distributor.value = Distributor.blank()
   } else {
-    distributor.value = await DistributorApi.detail(distributorId)
+    distributor.value = await DistributorService.detail(distributorId)
   }
 
   provinceList.value = await AddressInstance.getAllProvinces()
   if (distributor.value?.addressProvince) {
     districtList.value = await AddressInstance.getDistrictsByProvince(
-      distributor.value.addressProvince
+      distributor.value.addressProvince,
     )
     if (distributor.value.addressDistrict) {
       wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
         distributor.value.addressProvince,
-        distributor.value.addressDistrict
+        distributor.value.addressDistrict,
       )
     }
   }
@@ -131,7 +130,7 @@ const handleChangeDistrict = async (district: string) => {
   }
   wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
     distributor.value.addressProvince || '',
-    district
+    district,
   )
 }
 
@@ -149,7 +148,8 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDistributorUpsertSetting?.openModal()">
+          @click="modalDistributorUpsertSetting?.openModal()"
+        >
           <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -171,7 +171,8 @@ defineExpose({ openModal })
               v-model:value="distributor.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))" />
+              @update:value="(e) => (distributor.phone = e.replace(/ /g, ''))"
+            />
           </div>
         </div>
 
@@ -185,7 +186,8 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 placeholder="Thành Phố / Tỉnh"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                @update:value="handleChangeProvince" />
+                @update:value="handleChangeProvince"
+              />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -194,7 +196,8 @@ defineExpose({ openModal })
                 :options="districtList"
                 :logic-filter="(item: string, text: string) => customFilter(item, text)"
                 placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict" />
+                @update:value="handleChangeDistrict"
+              />
             </div>
             <div style="flex: 1; flex-basis: 200px">
               <InputHint
@@ -202,13 +205,15 @@ defineExpose({ openModal })
                 :maxHeight="180"
                 :options="wardList"
                 placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                :logic-filter="(item: string, text: string) => customFilter(item, text)"
+              />
             </div>
 
             <div class="grow basis-[80%]">
               <InputText
                 v-model:value="distributor.addressStreet"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+              />
             </div>
           </div>
         </div>
@@ -222,9 +227,9 @@ defineExpose({ openModal })
 
         <div class="flex items-center mt-4">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(distributor.isActive)"
-            @change="(checked: Boolean) => (distributor.isActive = checked ? 1 : 0)" />
+          <div>
+            <VueSwitch v-model="distributor.isActive" type-parser="number" />
+          </div>
           <div v-if="!distributor.isActive" class="ml-4">
             Tạm thời không thể nhập hàng từ nhà cung cấp này
           </div>
@@ -237,13 +242,11 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
             color="red"
             type="button"
-            @click="clickDelete">
+            @click="clickDelete"
+          >
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" @click="closeModal">
-            <template #icon>
-              <CloseOutlined />
-            </template>
+          <VueButton style="margin-left: auto" type="reset" @click="closeModal" icon="close">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
@@ -255,5 +258,6 @@ defineExpose({ openModal })
   </VueModal>
   <ModalDistributorUpsertSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalDistributorUpsertSetting" />
+    ref="modalDistributorUpsertSetting"
+  />
 </template>

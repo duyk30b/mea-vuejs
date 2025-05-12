@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -18,10 +19,10 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const SURCHARGE_DETAIL = ref<typeof store.INVOICE_SURCHARGE_DETAIL>(
-  JSON.parse(JSON.stringify(store.INVOICE_SURCHARGE_DETAIL))
+  JSON.parse(JSON.stringify(store.INVOICE_SURCHARGE_DETAIL)),
 )
 const EXPENSE_DETAIL = ref<typeof store.INVOICE_EXPENSE_DETAIL>(
-  JSON.parse(JSON.stringify(store.INVOICE_EXPENSE_DETAIL))
+  JSON.parse(JSON.stringify(store.INVOICE_EXPENSE_DETAIL)),
 )
 
 const showModal = ref(false)
@@ -106,12 +107,12 @@ defineExpose({ openModal })
                   <p class="mt-2 italic">
                     - Tiền
                     <b>phụ phí</b>
-                    là tiền người mua cần phải trả thêm vào đơn hàng
+                    là tiền thu thêm người mua khi mua hàng
                   </p>
                   <p>
                     - Các phụ phí thường gặp như:
                     <b>tiền vận chuyển</b>
-                    , tiền đóng gói, tiền tư vấn, ...
+                    , tiền tư vấn, ...
                   </p>
                   <p class="italic">- Công thức tính tổng tiền đơn hàng:</p>
                   <div class="text-center">
@@ -130,17 +131,12 @@ defineExpose({ openModal })
                 </div>
                 <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
                   <div class="py-2 flex items-stretch">
-                    <div
-                      class="flex justify-center items-center px-1"
-                      style="
-                        border: 1px solid #d9d9d9;
-                        border-right: none;
-                        width: 40px;
-                        background-color: #f7f7f7;
-                      ">
-                      <span>{{ index }}</span>
+                    <div style="flex: 1">
+                      <InputText
+                        v-model:value="SURCHARGE_DETAIL[key]"
+                        :prepend="index.toString()"
+                      />
                     </div>
-                    <a-input v-model:value="SURCHARGE_DETAIL[key]" style="flex: 1" />
                     <div v-if="key !== '_unknown'" class="flex items-center mx-2">
                       <a style="color: var(--text-red)" @click="delete SURCHARGE_DETAIL[key]">
                         Xóa
@@ -156,7 +152,8 @@ defineExpose({ openModal })
                 <VueButton
                   color="blue"
                   icon="plus"
-                  @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
+                  @click="SURCHARGE_DETAIL[Date.now().toString(36)] = ''"
+                ></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.EXPENSE">
@@ -166,22 +163,28 @@ defineExpose({ openModal })
                   <p class="mt-2 italic">
                     - Tiền
                     <b>chi phí</b>
-                    là tiền người bán phải chịu khi tạo đơn hàng
+                    là tiền
+                    <b>người bán phải chịu</b>
+                    khi tạo đơn hàng
                   </p>
                   <p>
                     - Các chi phí thường gặp như:
-                    <b>tiền hoa hồng</b>
-                    , ...
+                    <b>tiền đóng gói</b>
+                    , tiền hao hụt, thất thoát ...
                   </p>
                   <div class="italic">- Công thức tính lãi của đơn hàng:</div>
                   <div class="text-center">
-                    <span class="mx-2 font-bold">Tổng tiền</span>
-                    =
-                    <span class="mx-2">Tiền cost</span>
-                    +
-                    <span class="mx-2">Chi phí</span>
-                    +
                     <span class="mx-2 font-bold">Tiền lãi</span>
+                    =
+                    <span class="mx-2">Tổng tiền</span>
+                    <span class="font-bold">-</span>
+                    (
+                    <span class="mx-2">Tiền vốn</span>
+                    +
+                    <span class="mx-2">Hoa hồng nhân viên</span>
+                    +
+                    <span class="mx-2 font-bold">Chi phí</span>
+                    )
                   </div>
                 </details>
                 <div class="flex mt-4">
@@ -190,17 +193,9 @@ defineExpose({ openModal })
                 </div>
                 <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">
                   <div class="py-2 flex">
-                    <div
-                      class="flex justify-center items-center px-1"
-                      style="
-                        border: 1px solid #d9d9d9;
-                        border-right: none;
-                        width: 40px;
-                        background-color: #f7f7f7;
-                      ">
-                      <span>{{ index }}</span>
+                    <div style="flex: 1">
+                      <InputText v-model:value="EXPENSE_DETAIL[key]" :prepend="index.toString()" />
                     </div>
-                    <a-input v-model:value="EXPENSE_DETAIL[key]" style="flex: 1" />
                     <div v-if="key !== '_unknown'" class="flex items-center mx-2">
                       <a style="color: var(--text-red)" @click="delete EXPENSE_DETAIL[key]">Xóa</a>
                     </div>
@@ -214,7 +209,8 @@ defineExpose({ openModal })
                 <VueButton
                   color="blue"
                   icon="plus"
-                  @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''"></VueButton>
+                  @click="EXPENSE_DETAIL[Date.now().toString(36)] = ''"
+                ></VueButton>
               </div>
             </VueTabPanel>
           </template>
@@ -223,13 +219,14 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton
             :disabled="disabledButtonSave"
             :loading="saveLoading"
             icon="save"
             color="blue"
-            @click="handleSave">
+            @click="handleSave"
+          >
             Lưu lại
           </VueButton>
         </div>

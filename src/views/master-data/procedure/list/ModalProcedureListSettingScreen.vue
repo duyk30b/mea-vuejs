@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../../common/icon'
+import { IconClose, IconFileSearch } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
@@ -99,7 +99,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

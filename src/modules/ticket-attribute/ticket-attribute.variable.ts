@@ -1,7 +1,6 @@
 export const TicketAttributeKeyGeneralList = [
   'reason',
   'healthHistory',
-  'diagnosis',
   'summary',
 
   'pulse',
@@ -17,7 +16,6 @@ export const TicketAttributeKeyEyeList = [
   'reason',
   'healthHistory',
   'body',
-  'diagnosis',
 
   'ThiLuc_MP',
   'NhanAp_MP',
@@ -135,7 +133,6 @@ export const TicketAttributeKeyOptometryList = [
 export const TicketAttributeKeyObstetricList = [
   'reason',
   'healthHistory',
-  'diagnosis',
   'body',
 
   'pulse',

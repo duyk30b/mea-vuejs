@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconClose } from '../../../../common/icon-antd'
 import {
   InputCheckbox,
   InputDate,
@@ -178,7 +178,7 @@ defineExpose({ openModal })
           Trả kết quả xét nghiệm: {{ laboratoryGroup?.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -206,7 +206,8 @@ defineExpose({ openModal })
                     ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].attention
                       ? 'color: red'
                       : ''
-                  ">
+                  "
+                >
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>{{ laboratoryParent?.name }}</td>
                   <td>
@@ -214,7 +215,8 @@ defineExpose({ openModal })
                       <InputNumber
                         :value="
                           Number(
-                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
+                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`]
+                              .result,
                           )
                         "
                         @update:value="
@@ -224,22 +226,23 @@ defineExpose({ openModal })
                                 ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`],
                               value: v,
                             })
-                        " />
+                        "
+                      />
                     </div>
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.String">
                       <InputText
                         v-model:value="
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
-                        " />
+                        "
+                      />
                     </div>
                     <div v-if="laboratoryParent.valueType === LaboratoryValueType.Options">
                       <VueSelect
                         v-model:value="
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`].result
                         "
-                        :options="
-                          laboratoryParent.optionsParse.map((i) => ({ text: i, value: i }))
-                        " />
+                        :options="laboratoryParent.optionsParse.map((i) => ({ text: i, value: i }))"
+                      />
                     </div>
                   </td>
                   <td class="text-center">
@@ -260,7 +263,8 @@ defineExpose({ openModal })
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryParent.id}`]
                             .attention
                         "
-                        type-parser="number" />
+                        type-parser="number"
+                      />
                     </div>
                   </td>
                 </tr>
@@ -271,7 +275,8 @@ defineExpose({ openModal })
                     ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].attention
                       ? 'color: red'
                       : ''
-                  ">
+                  "
+                >
                   <td></td>
                   <td>{{ laboratoryChild?.name }}</td>
                   <td>
@@ -279,7 +284,7 @@ defineExpose({ openModal })
                       <InputNumber
                         :value="
                           Number(
-                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
+                            ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result,
                           )
                         "
                         @update:value="
@@ -289,22 +294,23 @@ defineExpose({ openModal })
                                 ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`],
                               value: v,
                             })
-                        " />
+                        "
+                      />
                     </div>
                     <div v-if="laboratoryChild.valueType === LaboratoryValueType.String">
                       <InputText
                         v-model:value="
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
-                        " />
+                        "
+                      />
                     </div>
                     <div v-if="laboratoryChild.valueType === LaboratoryValueType.Options">
                       <VueSelect
                         v-model:value="
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].result
                         "
-                        :options="
-                          laboratoryChild.optionsParse.map((i) => ({ text: i, value: i }))
-                        " />
+                        :options="laboratoryChild.optionsParse.map((i) => ({ text: i, value: i }))"
+                      />
                     </div>
                   </td>
                   <td class="text-center">
@@ -323,7 +329,8 @@ defineExpose({ openModal })
                         v-model:value="
                           ticketLaboratoryResultTree[`${tlItem.id}-${laboratoryChild.id}`].attention
                         "
-                        type-parser="number" />
+                        type-parser="number"
+                      />
                     </div>
                   </td>
                 </tr>
@@ -339,7 +346,7 @@ defineExpose({ openModal })
 
         <div class="pb-4 pt-8 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa phiếu</VueButton>
-          <VueButton type="reset" icon="close" class="ml-auto" @click="closeModal">
+          <VueButton type="reset" icon="close" style="margin-left: auto" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -347,7 +354,8 @@ defineExpose({ openModal })
             icon="save"
             type="submit"
             :loading="saveLoading"
-            :disabled="disabledButtonSave">
+            :disabled="disabledButtonSave"
+          >
             <span v-if="ticketLaboratoryGroup.status === TicketLaboratoryGroupStatus.Completed">
               Cập nhật kết quả
             </span>

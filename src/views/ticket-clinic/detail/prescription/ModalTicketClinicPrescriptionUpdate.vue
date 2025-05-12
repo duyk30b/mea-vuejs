@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
   InputFilter,
@@ -30,7 +30,7 @@ const { formatMoney, isMobile } = settingStore
 
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 
 let ticketProductOrigin = TicketProduct.blank()
@@ -132,7 +132,9 @@ const hasChangeData = computed(() => {
 
 const handleChangeUnitQuantityPrescription = (data: number) => {
   if (ticketProduct.value.deliveryStatus === DeliveryStatus.Pending) {
+    const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
+    ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
   }
 }
 
@@ -182,7 +184,7 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -207,7 +209,7 @@ const clickDestroy = async () => {
       } catch (error) {
         console.log(
           '🚀 ~ file: ModalTicketClinicPrescriptionUpdate.vue:155 ~ onOk: ~ error:',
-          error
+          error,
         )
       }
     },
@@ -270,15 +272,17 @@ defineExpose({ openModal })
                     value: i.rate,
                     text: i.name,
                     data: i,
-                  }))
+                  })) || []
                 "
-                required />
+                required
+              />
             </div>
             <div class="flex-1">
               <InputNumber
-                v-model:value="ticketProduct.unitQuantityPrescription"
+                :value="ticketProduct.unitQuantityPrescription"
                 :validate="{ gt: 0 }"
-                @update:value="handleChangeUnitQuantityPrescription" />
+                @update:value="handleChangeUnitQuantityPrescription"
+              />
             </div>
           </div>
         </div>
@@ -307,15 +311,17 @@ defineExpose({ openModal })
                     value: i.rate,
                     text: i.name,
                     data: i,
-                  }))
+                  })) || []
                 "
-                required />
+                required
+              />
             </div>
             <div class="flex-1">
               <InputNumber
                 v-model:value="ticketProduct.unitQuantity"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                :validate="{ gt: 0 }" />
+                :validate="{ gte: 0 }"
+              />
             </div>
           </div>
         </div>
@@ -343,7 +349,8 @@ defineExpose({ openModal })
                 (ticketProduct.discountType === DiscountType.Percent &&
                   ticketProduct.discountPercent !== 0) ||
                 ticketProduct.unitRate > 1
-              ">
+              "
+            >
               (
               <b>{{ formatMoney(ticketProduct.discountMoney) }}</b>
               <span v-if="ticketProduct?.product?.unitBasicName">
@@ -359,18 +366,23 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="ticketProduct.discountType === DiscountType.VND"
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeUnitDiscountMoney" />
+                @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
+              />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
+              />
             </div>
           </div>
         </div>
@@ -389,7 +401,9 @@ defineExpose({ openModal })
               :value="ticketProduct.unitActualPrice"
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-              @update:value="handleChangeUnitActualPrice" />
+              @update:value="handleChangeUnitActualPrice"
+              :validate="{ gte: 0 }"
+            />
           </div>
         </div>
 
@@ -403,9 +417,8 @@ defineExpose({ openModal })
                 ...settingStore.PRODUCT_HINT_USAGE,
               ]"
               :maxHeight="320"
-              :logic-filter="
-                (item: any, text: string) => DString.customFilter(item, text)
-              "></InputHint>
+              :logic-filter="(item: any, text: string) => DString.customFilter(item, text)"
+            ></InputHint>
           </div>
         </div>
 
@@ -413,18 +426,18 @@ defineExpose({ openModal })
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+            style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+          >
             <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
+              {{ roleMap[ticketUser.roleId]?.name || '' }}
             </div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -438,7 +451,7 @@ defineExpose({ openModal })
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -446,7 +459,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

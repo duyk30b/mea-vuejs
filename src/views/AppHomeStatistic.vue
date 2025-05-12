@@ -28,7 +28,7 @@ ChartJS.register(
   Colors,
   Title,
   Tooltip,
-  Legend
+  Legend,
 )
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -38,12 +38,14 @@ const { permissionIdMap } = meStore
   <div class="flex flex-wrap bg-white p-4 gap-8">
     <div
       v-if="permissionIdMap[PermissionId.STATISTIC_PRODUCT]"
-      style="flex-grow: 1; flex-basis: 400px">
+      style="flex-grow: 1; flex-basis: 400px; max-width: 100%; overflow: auto"
+    >
       <TopBatchExpiryDate />
     </div>
     <div
       v-if="permissionIdMap[PermissionId.STATISTIC_CUSTOMER]"
-      style="flex-grow: 1; flex-basis: 400px">
+      style="flex-grow: 1; flex-basis: 400px; max-width: 100%; overflow: auto"
+    >
       <TopCustomerDebt />
     </div>
   </div>

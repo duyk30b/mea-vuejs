@@ -21,4 +21,4 @@ const router = useRouter()
   <VueModalStore />
   <iframe id="iframe-print" style="display: none" />
 </template>
-<style scoped></style>
+<style></style>

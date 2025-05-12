@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Ticket, TicketApi, TicketType } from '../../../../modules/ticket'
-import { DTimer } from '../../../../utils'
+import { ESTimer } from '../../../../utils'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { InputSelect } from '../../../../common/vue-form'
 
 const emit = defineEmits<{
   (e: 'select', value: number): void
@@ -25,7 +27,6 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
-        ticketAttributeList: true,
       },
       filter: { ticketType: { NOT: TicketType.Order } },
       sort: { registeredAt: 'DESC' },
@@ -94,29 +95,33 @@ defineExpose({ openModal })
                 <td class="text-center">KB{{ ticket.id }}</td>
                 <td>{{ ticket.customer?.fullName }}</td>
                 <td class="text-center">
-                  {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
-                <td>
-                  {{
-                    ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || ''
-                  }}
-                </td>
+                <td>{{ ticket.note }}</td>
                 <td class="text-center">
                   <a @click="selectTicketDemo(ticket.id)">Chọn</a>
                 </td>
               </tr>
             </tbody>
           </table>
-          <div class="mt-4 float-right mb-2">
-            <a-pagination
-              v-model:current="page"
-              v-model:pageSize="limit"
-              :total="total"
-              show-size-changer
-              @change="
-                (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-              " />
-          </div>
+        </div>
+        <div class="p-4 flex flex-wrap justify-end gap-4">
+          <VuePagination
+            v-model:page="page"
+            :total="total"
+            :limit="limit"
+            @update:page="(p: any) => changePagination({ page: p, limit })"
+          />
+          <InputSelect
+            v-model:value="limit"
+            @update:value="(l: any) => changePagination({ page, limit: l })"
+            :options="[
+              { value: 10, label: '10 / page' },
+              { value: 20, label: '20 / page' },
+              { value: 50, label: '50 / page' },
+              { value: 100, label: '100 / page' },
+            ]"
+          />
         </div>
       </div>
     </div>

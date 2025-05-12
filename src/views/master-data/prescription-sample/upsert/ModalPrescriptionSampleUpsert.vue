@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
+import { IconMinus, IconPlus } from '../../../../common/icon-font-awesome'
 import { IconDelete } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputHint, InputOptions, InputText } from '../../../../common/vue-form'
@@ -149,15 +150,11 @@ const addPrescriptionSampleItem = () => {
 }
 
 const removePrescriptionSampleItem = (index: number) => {
-  prescriptionSample.value.medicineList
-  prescriptionSample.value.medicineList
   prescriptionSample.value.medicineList.splice(index, 1)
   reCalculatorMedicines()
 }
 
 const changeQuantityTable = (index: number, quantity: number) => {
-  prescriptionSample.value.medicineList
-  prescriptionSample.value.medicineList
   prescriptionSample.value.medicineList[index].quantity = quantity
   reCalculatorMedicines()
 }
@@ -339,7 +336,7 @@ defineExpose({ openModal })
                         :disabled="item.quantity <= 0"
                         type="button"
                         @click="changeQuantityTable(index, item.quantity - 1)">
-                        <font-awesome-icon :icon="['fas', 'minus']" />
+                        <IconMinus />
                       </button>
                       <div style="width: calc(100% - 60px); min-width: 50px">
                         <InputNumber
@@ -356,7 +353,7 @@ defineExpose({ openModal })
                         type="button"
                         class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                         @click="changeQuantityTable(index, item.quantity + 1)">
-                        <font-awesome-icon :icon="['fas', 'plus']" />
+                        <IconPlus />
                       </button>
                     </div>
                   </td>
@@ -393,7 +390,7 @@ defineExpose({ openModal })
           <VueButton v-if="prescriptionSample.id" color="red" icon="trash" @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton

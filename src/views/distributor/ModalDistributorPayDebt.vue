@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
+import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputText } from '../../common/vue-form'
+import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../modules/distributor'
+import { PaymentMethodService } from '../../modules/payment-method'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { timeToText } from '../../utils'
+import { ESTimer } from '../../utils'
+import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -20,37 +23,50 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap, user } = meStore
 
-const openDebt = ref(0)
 const money = ref<number>(0)
 const note = ref('')
-const distributorId = ref(0)
-const receiptPayments = ref<{ receipt: Receipt; money: number }[]>([])
+const distributor = ref<Distributor>(Distributor.blank())
+const paymentMethodId = ref<number>(0)
+const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+
+const receiptPaymentList = ref<{ receipt: Receipt; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
 
-const openModal = async (distributorIdProp: number, openDebtProp: number) => {
+onMounted(async () => {
+  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+})
+
+const openModal = async (distributorId: number) => {
+  showModal.value = true
   money.value = 0
   note.value = ''
-  openDebt.value = openDebtProp
-  distributorId.value = distributorIdProp
-  showModal.value = true
   if (!isMobile) {
     nextTick(() => inputMoneyPay.value?.focus())
   }
   try {
     dataLoading.value = true
-    const receiptDebtList = await ReceiptApi.list({
-      filter: {
-        distributorId: distributorIdProp,
-        status: ReceiptStatus.Debt,
-      },
-    })
-    receiptPayments.value = receiptDebtList.map((i) => ({ receipt: i, money: 0 }))
+    const fetchPromise = await Promise.all([
+      DistributorService.detail(distributorId),
+      ReceiptApi.list({
+        filter: {
+          distributorId,
+          status: ReceiptStatus.Debt,
+        },
+        sort: { id: 'ASC' },
+      }),
+    ])
+    distributor.value = fetchPromise[0] || Distributor.blank()
+    receiptPaymentList.value = fetchPromise[1].map((i) => ({ receipt: i, money: 0 }))
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:56 ~ openModal ~ error:', error)
+    console.log('🚀 ~ ModalDistributorPayDebt.vue:62 ~ openModal ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -58,10 +74,11 @@ const openModal = async (distributorIdProp: number, openDebtProp: number) => {
 
 const closeModal = () => {
   showModal.value = false
-  receiptPayments.value = []
+  receiptPaymentList.value = []
   money.value = 0
   note.value = ''
-  distributorId.value = 0
+  distributor.value = Distributor.blank()
+  paymentMethodId.value = 0
 }
 
 const handleSave = async () => {
@@ -70,42 +87,35 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await DistributorService.payDebt({
-      distributorId: distributorId.value,
+    const data = await DistributorService.distributorPayment({
+      distributorId: distributor.value.id,
+      paymentMethodId: paymentMethodId.value,
       note: note.value,
-      receiptPayments: receiptPayments.value
-        .map((i) => ({
-          receiptId: i.receipt.id,
-          money: i.money,
-        }))
+      cashierId: user?.id || 0,
+      money: money.value,
+      receiptPaymentList: receiptPaymentList.value
+        .map((i) => ({ receiptId: i.receipt.id, money: i.money }))
         .filter((i) => i.money > 0),
     })
+    AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
     emit('success', data)
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:87 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalDistributorPayDebt.vue:104 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
 }
 
-const openBlankReceiptDetail = (receiptId: number) => {
-  let route = router.resolve({
-    name: 'ReceiptDetail',
-    params: { id: receiptId },
-  })
-  window.open(route.href, '_blank')
-}
-
 const handleClickPayAllDebt = () => {
-  money.value = openDebt.value
+  money.value = distributor.value.debt
   calculatorEachReceiptPayment()
 }
 
 const calculatorEachReceiptPayment = () => {
   let totalMoney = money.value
-  receiptPayments.value.forEach((item) => {
-    let number = Math.min(totalMoney, item.receipt.debt)
+  receiptPaymentList.value.forEach((item) => {
+    const number = Math.min(totalMoney, item.receipt.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -115,11 +125,11 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 600px;">
+  <VueModal v-model:show="showModal" style="width: 800px">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
-          {{ 'Trả nợ' }}
+          {{ distributor.fullName + ': Trả nợ' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -127,7 +137,13 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <div class="">Tính tiền vào đơn (tự động)</div>
+        <div class="flex flex-wrap justify-between">
+          <span>Chọn phiếu trả nợ (tự động)</span>
+          <span>
+            Tổng nợ
+            <strong>{{ formatMoney(distributor.debt) }}</strong>
+          </span>
+        </div>
         <div class="mt-2 table-wrapper">
           <table>
             <thead>
@@ -152,14 +168,12 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody>
-              <tr v-for="(receiptPayment, index) in receiptPayments" :key="index">
+              <tr v-for="(receiptPayment, index) in receiptPaymentList" :key="index">
                 <td>
+                  <LinkAndStatusReceipt :receipt="receiptPayment.receipt" />
                   <div>
-                    <a @click="openBlankReceiptDetail(receiptPayment.receipt.id)">
-                      IV{{ receiptPayment.receipt.id }}
-                    </a>
+                    {{ ESTimer.timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}
                   </div>
-                  <div>{{ timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(receiptPayment.receipt.debt) }}
@@ -171,30 +185,53 @@ defineExpose({ openModal })
             </tbody>
           </table>
         </div>
-        <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none">Công nợ:</div>
-          <div style="font-size: 16px; padding-left: 12px">{{ formatMoney(openDebt) }}</div>
-        </div>
-        <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none">Số tiền trả:</div>
-          <div class="flex-1">
-            <InputMoney
-              ref="inputMoneyPay"
-              v-model:value="money"
-              :validate="{ lte: openDebt, gt: 0 }"
-              required
-              @update:value="calculatorEachReceiptPayment" />
+
+        <div class="flex flex-wrap gap-4 mt-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức thanh toán</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
           </div>
-          <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
-        </div>
-        <div class="flex items-center mt-3">
-          <div style="width: 100px; flex: none">Ghi chú:</div>
-          <InputText v-model:value="note" />
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền thanh toán</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
+                  <InputMoney
+                    ref="inputMoneyPay"
+                    v-model:value="money"
+                    textAlign="right"
+                    :validate="{ lte: distributor.debt, gt: 0 }"
+                    required
+                    @update:value="calculatorEachReceiptPayment"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Số nợ còn lại</div>
+              <div>
+                <InputMoney :value="distributor.debt - money" disabled textAlign="right" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="p-4">
-        <div class="flex justify-end gap-4">
+        <div class="flex justify-center gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton type="submit" icon="save" color="blue" :loading="saveLoading">
             Xác nhận trả nợ

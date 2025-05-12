@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -123,16 +123,21 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="money.discountType === DiscountType.VND"
                 v-model:value="money.discountMoney"
-                @update:value="handleChangeDiscountMoney" />
+                @update:value="handleChangeDiscountMoney"
+                :validate="{ gte: 0 }"
+              />
               <InputNumber
                 v-else
                 v-model:value="money.discountPercent"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
+              />
             </div>
           </div>
         </div>
@@ -145,7 +150,7 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -153,7 +158,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

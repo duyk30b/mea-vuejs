@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
@@ -11,7 +11,7 @@ import { Procedure, ProcedureService } from '../../../modules/procedure'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
 import { DString } from '../../../utils'
 import ModalProcedureUpsert from '../../master-data/procedure/upsert/ModalProcedureUpsert.vue'
-import { ticket } from './ticket-order-upsert.ref'
+import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 
 const inputOptionsProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
@@ -100,15 +100,15 @@ const addTicketProcedure = () => {
   }
 
   if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
-    ticket.value.ticketProcedureList?.push(ticketProcedure.value)
+    ticketOrderUpsertRef.value.ticketProcedureList?.push(ticketProcedure.value)
   } else {
-    let exist = ticket.value.ticketProcedureList?.find((i) => {
+    const exist = ticketOrderUpsertRef.value.ticketProcedureList?.find((i) => {
       return i.procedureId === ticketProcedure.value.procedureId
     })
     if (exist) {
       exist.quantity += ticketProcedure.value.quantity
     } else {
-      ticket.value.ticketProcedureList?.push(ticketProcedure.value)
+      ticketOrderUpsertRef.value.ticketProcedureList?.push(ticketProcedure.value)
     }
   }
 
@@ -120,7 +120,7 @@ const addTicketProcedure = () => {
 
 const createProcedure = (instance?: Procedure) => {
   inputOptionsProcedure.value?.setItem({
-    text: instance?.name,
+    text: instance?.name || '',
     data: instance,
     value: instance?.id,
   })
@@ -142,7 +142,8 @@ defineExpose({ focus })
         <span>
           <a
             v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
-            @click="modalProcedureUpsert?.openModal()">
+            @click="modalProcedureUpsert?.openModal()"
+          >
             Thêm dịch vụ mới
           </a>
         </span>
@@ -155,7 +156,8 @@ defineExpose({ focus })
           placeholder="(F3) Tìm kiếm tên dịch vụ"
           @selectItem="({ data }) => selectProcedure(data)"
           @onFocusinFirst="handleFocusFirstSearchProcedure"
-          @update:text="searchingProcedure">
+          @update:text="searchingProcedure"
+        >
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.name }}</b>
@@ -167,7 +169,8 @@ defineExpose({ focus })
     </div>
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>Giá niêm yết</div>
       <div class="flex">
         <InputMoney :value="ticketProcedure.expectedPrice" disabled />
@@ -176,7 +179,8 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>Số lượng</div>
       <div>
         <InputNumber v-model:value="ticketProcedure.quantity" :validate="{ gt: 0 }" />
@@ -185,14 +189,16 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>
         Chiết khấu
         <span
           v-if="
             ticketProcedure.discountType === DiscountType.Percent &&
             ticketProcedure.discountPercent !== 0
-          ">
+          "
+        >
           (
           <b>{{ formatMoney(ticketProcedure.discountMoney) }}</b>
           )
@@ -205,28 +211,35 @@ defineExpose({ focus })
           :options="[
             { value: DiscountType.Percent, text: '%' },
             { value: DiscountType.VND, text: 'VNĐ' },
-          ]" />
+          ]"
+        />
         <div style="width: calc(100% - 120px)">
           <InputMoney
             v-if="ticketProcedure.discountType === DiscountType.VND"
             :value="ticketProcedure.discountMoney"
-            @update:value="handleChangeUnitDiscountMoney" />
+            @update:value="handleChangeUnitDiscountMoney"
+            :validate="{ gte: 0 }"
+          />
           <InputNumber
             v-else
             :value="ticketProcedure.discountPercent"
-            @update:value="handleChangeDiscountPercent" />
+            @update:value="handleChangeDiscountPercent"
+            :validate="{ gte: 0, lte: 100 }"
+          />
         </div>
       </div>
     </div>
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>Đơn giá</div>
       <div style="width: 100%">
         <InputMoney
           :value="ticketProcedure.actualPrice"
-          @update:value="handleChangeUnitActualPrice" />
+          @update:value="handleChangeUnitActualPrice"
+        />
       </div>
     </div>
 

@@ -21,6 +21,7 @@ export class RootOrganizationApi {
   static async createOne(organization: Organization) {
     const response = await AxiosInstance.post('/root/organization/create', {
       phone: organization.phone,
+      facebook: organization.facebook,
       email: organization.email,
       emailVerify: organization.emailVerify,
       level: organization.level,
@@ -43,6 +44,7 @@ export class RootOrganizationApi {
   static async updateOne(id: number, organization: Organization) {
     const response = await AxiosInstance.patch(`/root/organization/update/${id}`, {
       phone: organization.phone,
+      facebook: organization.facebook,
       email: organization.email,
       emailVerify: organization.emailVerify,
       level: organization.level,
@@ -62,7 +64,10 @@ export class RootOrganizationApi {
     return Organization.from(data.organization)
   }
 
-  static async clearOne(oid: number, body: { tableNameList: string[] }) {
+  static async clearOne(
+    oid: number,
+    body: { tableNameDeleteList: string[]; tableNameClearList: string[] },
+  ) {
     const response = await AxiosInstance.put(`/root/organization/clear/${oid}`, body)
     const { data } = response.data as BaseResponse
 

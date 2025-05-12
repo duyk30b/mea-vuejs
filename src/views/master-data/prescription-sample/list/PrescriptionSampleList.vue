@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
+import { InputSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
@@ -70,7 +72,8 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
 <template>
   <ModalPrescriptionSampleUpsert
     ref="modalPrescriptionSampleUpsert"
-    @success="handleModalPrescriptionSampleUpsertSuccess" />
+    @success="handleModalPrescriptionSampleUpsertSuccess"
+  />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
@@ -81,7 +84,8 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
         color="blue"
         icon="plus"
-        @click="modalPrescriptionSampleUpsert?.openModal()">
+        @click="modalPrescriptionSampleUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
@@ -95,7 +99,8 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
             <th>Tên</th>
             <th
               v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
-              style="width: 100px">
+              style="width: 100px"
+            >
               Action
             </th>
           </tr>
@@ -128,26 +133,36 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
             </td>
             <td
               v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
-              class="text-center">
+              class="text-center"
+            >
               <a
                 style="color: var(--text-orange)"
-                @click="modalPrescriptionSampleUpsert?.openModal(prescriptionSample.id)">
+                @click="modalPrescriptionSampleUpsert?.openModal(prescriptionSample.id)"
+              >
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

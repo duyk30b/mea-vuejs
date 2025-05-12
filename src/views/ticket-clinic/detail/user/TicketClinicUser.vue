@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../../common/icon-google'
+import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionCalculatorType, InteractType } from '../../../../modules/commission'
@@ -9,9 +10,7 @@ import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Product, ProductService } from '../../../../modules/product'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Role, RoleService } from '../../../../modules/role'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { User, UserService } from '../../../../modules/user'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalTicketUserUpdate from './ModalTicketUserUpdate.vue'
 
@@ -22,29 +21,20 @@ const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const userMap = ref<Record<string, User>>({})
-const roleMap = ref<Record<string, Role>>({})
-
 const productMap = ref<Record<string, Product>>({})
 const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
-
   const fetchData = await Promise.all([
-    UserService.getMap(),
-    RoleService.getMap(),
     ProcedureService.getMap(),
     LaboratoryService.getMap(),
     RadiologyService.getMap(),
   ])
-  userMap.value = fetchData[0]
-  roleMap.value = fetchData[1]
-  procedureMap.value = fetchData[2]
-  laboratoryMap.value = fetchData[3]
-  radiologyMap.value = fetchData[4]
+  procedureMap.value = fetchData[0]
+  laboratoryMap.value = fetchData[1]
+  radiologyMap.value = fetchData[2]
 })
 
 watch(
@@ -64,7 +54,7 @@ watch(
     }
     productMap.value = productMapLocal
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 </script>
 <template>
@@ -75,6 +65,7 @@ watch(
         <thead>
           <tr>
             <th>#</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Vai trò</th>
             <th>Nhân viên</th>
             <th>Phiếu</th>
@@ -90,20 +81,25 @@ watch(
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               {{ index + 1 }}
             </td>
-            <td>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
+            <td class="text-center whitespace-nowrap" v-if="CONFIG.MODE === 'development'">
+              {{ ticketUser.id }}
             </td>
+            <td style="">{{ ticketUser.role?.name || '' }}</td>
             <td>
               <div class="flex gap-1">
-                <span>{{ userMap[ticketUser.userId]?.fullName }}</span>
+                <span>{{ ticketUser.user?.fullName }}</span>
               </div>
             </td>
             <td>
               <div style="min-width: 100px">
                 <template v-if="ticketUser.interactType === InteractType.Ticket">
                   Phiếu khám
+                </template>
+                <template v-if="ticketUser.interactType === InteractType.PrescriptionList">
+                  Đơn thuốc
+                </template>
+                <template v-if="ticketUser.interactType === InteractType.ConsumableList">
+                  Vật tư
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Product">
                   {{ productMap[ticketUser.interactId]?.brandName }}
@@ -123,7 +119,8 @@ watch(
               <template v-if="ticketUser.interactType !== InteractType.Ticket">
                 <div
                   v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
-                  class="text-xs italic text-red-500">
+                  class="text-xs italic text-red-500"
+                >
                   <del>
                     {{ formatMoney(ticketUser.ticketItemExpectedPrice) }}
                   </del>
@@ -145,13 +142,15 @@ watch(
               <div
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected
-                ">
+                "
+              >
                 {{ ticketUser.commissionPercentExpected }} % Giá niêm yết
               </div>
               <div
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentActual
-                ">
+                "
+              >
                 {{ ticketUser.commissionPercentActual }} % Giá sau chiết khấu
               </div>
             </td>
@@ -160,9 +159,10 @@ watch(
             </td>
             <td class="text-center">
               <a
-                v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_USER_COMMISSION]"
+                v-if="permissionIdMap[PermissionId.TICKET_CLINIC_USER_UPDATE_COMMISSION]"
                 class="text-orange-500"
-                @click="modalTicketUserUpdate?.openModal(ticketUser)">
+                @click="modalTicketUserUpdate?.openModal(ticketUser)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>

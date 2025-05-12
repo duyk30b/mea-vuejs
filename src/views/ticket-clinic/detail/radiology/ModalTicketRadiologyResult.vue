@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import ImageUploadMultiple from '../../../../common/image-upload/ImageUploadMultiple.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputFilter } from '../../../../common/vue-form'
@@ -8,7 +8,7 @@ import InputText from '../../../../common/vue-form/InputText.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
 import { CommissionService, InteractType } from '../../../../modules/commission'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -34,7 +34,7 @@ const ticketUserList = ref<TicketUser[]>([])
 const ticketUserListOrigin = ref<TicketUser[]>([])
 
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 const saveLoading = ref(false)
 const editable = ref(true)
@@ -209,7 +209,8 @@ defineExpose({ openModal })
                 :disabled="!editable"
                 defaultType="date"
                 showTime
-                typeParser="number" />
+                typeParser="number"
+              />
             </div>
           </div>
           <!-- <div class="flex-1">
@@ -222,7 +223,7 @@ defineExpose({ openModal })
         <div class="mt-3">
           <div>Mô tả</div>
           <div style="height: 400px">
-            <WysiwygEditor v-model:value="ticketRadiology.description" />
+            <VueTinyMCE v-model="ticketRadiology.description" menu-bar />
           </div>
         </div>
         <div class="mt-3">
@@ -239,7 +240,8 @@ defineExpose({ openModal })
                   enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
                   id: i.id,
                 }))
-            " />
+            "
+          />
         </div>
         <div class="mt-3">
           <div>Kết luận</div>
@@ -252,18 +254,16 @@ defineExpose({ openModal })
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
-            <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
-            </div>
+            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+          >
+            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -281,10 +281,11 @@ defineExpose({ openModal })
             color="red"
             type="button"
             icon="close"
-            @click="clickDestroy">
+            @click="clickDestroy"
+          >
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton v-if="editable" :loading="saveLoading" color="blue" type="submit" icon="save">

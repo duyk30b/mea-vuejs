@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconApartment } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { CheckboxList, InputText } from '../../../common/vue-form'
+import { InputCheckboxList, InputText, VueSwitch } from '../../../common/vue-form'
+import type { CheckboxOptionType } from '../../../common/vue-form/InputCheckboxList.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -21,8 +22,8 @@ const route = useRoute()
 const router = useRouter()
 
 const role = ref<Role>(Role.blank())
-const userIdList = ref<number[]>([])
-const userListCheckboxOptions = ref<{ text: string; value: number | string }[]>([])
+const checkboxUserId = ref<Record<string, boolean>>({})
+const checkboxUserIdOptions = ref<CheckboxOptionType[]>([])
 
 const saveLoading = ref(false)
 const loadedPermission = ref(false)
@@ -38,7 +39,7 @@ const treeSelectRole = computed(() => {
 const startFetchData = async (roleId?: number) => {
   UserService.list({ sort: { id: 'ASC' } })
     .then((result) => {
-      userListCheckboxOptions.value = result.map((i) => ({ value: i.id, text: i.fullName }))
+      checkboxUserIdOptions.value = result.map((i) => ({ key: i.id, label: i.fullName }))
     })
     .catch((e) => {
       console.log('🚀 ~ file: RoleUpsert.vue:42 ~ startFetchData ~ e:', e)
@@ -50,7 +51,10 @@ const startFetchData = async (roleId?: number) => {
     })
       .then((result) => {
         role.value = result
-        userIdList.value = result.userRoleList?.map((i) => i.userId) || []
+
+        result.userRoleList?.forEach((i) => {
+          checkboxUserId.value[i.userId] = true
+        })
         permissionIds.value = JSON.parse(result.permissionIds || '[]')
       })
       .catch((e: any) => {
@@ -79,11 +83,16 @@ const handleSave = async () => {
   try {
     permissionIds.value.sort()
     role.value.permissionIds = JSON.stringify(permissionIds.value)
-    userIdList.value.sort((a, b) => (a > b ? 1 : -1))
+
+    const userIdList = Object.keys(checkboxUserId.value)
+      .filter((id) => checkboxUserId.value[id])
+      .map((i) => Number(i))
+      .sort((a, b) => (a > b ? 1 : -1))
+
     if (!role.value.id) {
-      await RoleService.createOne(role.value, userIdList.value)
+      await RoleService.createOne(role.value, userIdList)
     } else {
-      await RoleService.updateOne(role.value.id, role.value, userIdList.value)
+      await RoleService.updateOne(role.value.id, role.value, userIdList)
       AlertStore.addSuccess('Cập nhật vai trò thành công')
     }
     router.push({ name: 'RoleList' })
@@ -114,7 +123,7 @@ const clickDelete = () => {
 <template>
   <div class="page-header">
     <div class="page-header-content">
-      <ScheduleOutlined />
+      <IconApartment />
       Thông tin vai trò
     </div>
   </div>
@@ -122,24 +131,24 @@ const clickDelete = () => {
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
+        <div style="width: 100px; flex: none">Mã vai trò</div>
+        <InputText v-model:value="role.roleCode" />
+      </div>
+      <div class="flex mt-4" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 100px; flex: none">Tên vai trò</div>
         <InputText v-model:value="role.name" required />
       </div>
-      <div class="flex mt-4" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none">Tên hiển thị</div>
-        <InputText v-model:value="role.displayName" />
-      </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>
-        <a-switch
-          :checked="Boolean(role.isActive)"
-          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)" />
+        <div>
+          <VueSwitch v-model="role.isActive" type-parser="number" />
+        </div>
         <div v-if="!role.isActive" class="ml-4">Tất cả user thuộc vai trò này tạm thời bị khóa</div>
       </div>
       <div class="flex mt-4">
         <div class="w-[100px] flex-none">Tài khoản</div>
         <div>
-          <CheckboxList v-model:value="userIdList" :options="userListCheckboxOptions" />
+          <InputCheckboxList v-model:value="checkboxUserId" :options="checkboxUserIdOptions" />
         </div>
       </div>
     </div>
@@ -157,11 +166,18 @@ const clickDelete = () => {
         :selectable="false"
         virtual
         :height="500"
-        :tree-data="treeSelectRole"></a-tree>
+        :tree-data="treeSelectRole"
+      ></a-tree>
     </div>
     <div class="mt-8 flex gap-4">
       <VueButton color="red" type="button" @click="clickDelete">Xóa</VueButton>
-      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save" class="ml-auto">
+      <VueButton
+        color="blue"
+        type="submit"
+        :loading="saveLoading"
+        icon="save"
+        style="margin-left: auto"
+      >
         Lưu lại
       </VueButton>
     </div>

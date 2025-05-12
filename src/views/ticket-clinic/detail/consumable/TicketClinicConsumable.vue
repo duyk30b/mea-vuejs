@@ -1,16 +1,30 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClock, IconFileSearch, IconShoppingCart, IconSpin } from '../../../../common/icon'
+import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import { InputFilter } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
-import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { RoleService } from '../../../../modules/role'
+import { TicketStatus } from '../../../../modules/ticket'
+import {
+  TicketClinicProductApi,
+  TicketClinicUserApi,
+  ticketClinicRef,
+} from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { UserService } from '../../../../modules/user'
+import { UserRoleService } from '../../../../modules/user-role'
+import { DString } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
+import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
 
@@ -24,6 +38,70 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProductConsumableList = ref<TicketProduct[]>([])
+const roleMap = RoleService.roleMap
+const userMap = UserService.userMap
+const userRoleMapList = UserRoleService.userRoleMapList
+
+let ticketUserListOrigin: TicketUser[] = []
+const ticketUserList = ref<TicketUser[]>([])
+
+const refreshTicketUserList = async () => {
+  const tuListOrigin: TicketUser[] = []
+  const ticketUserListRef =
+    ticketClinicRef.value.ticketUserGroup?.[InteractType.ConsumableList]?.[0] || []
+
+  const commissionList = await CommissionService.list({
+    filter: {
+      interactType: InteractType.ConsumableList,
+      interactId: 0,
+    },
+  })
+
+  // lấy tất cả role có trong commission trước
+  commissionList.forEach((i, index) => {
+    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      tuListOrigin.push(TicketUser.from(findExist))
+    } else {
+      const ticketUserBlank = TicketUser.blank()
+      ticketUserBlank.roleId = i.roleId
+      tuListOrigin.push(ticketUserBlank)
+    }
+  })
+
+  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
+  ticketUserListRef.forEach((i) => {
+    const findExist = tuListOrigin.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      return // nếu đã có rồi thì bỏ qua
+    } else {
+      tuListOrigin.push(TicketUser.from(i))
+    }
+  })
+  ticketUserListOrigin = tuListOrigin
+  ticketUserList.value = TicketUser.fromList(tuListOrigin)
+}
+
+watch(
+  () => ticketClinicRef.value.ticketProductConsumableList,
+  (newValue, oldValue) => {
+    ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
+  },
+  { immediate: true, deep: true },
+)
+
+watch(
+  () => ticketClinicRef.value.ticketUserList,
+  (newValue, oldValue) => {
+    refreshTicketUserList()
+  },
+  { immediate: true, deep: true },
+)
+
+onMounted(async () => {
+  refreshTicketUserList()
+  await ticketClinicRef.value.refreshProduct()
+})
 
 const hasChangePriority = computed(() => {
   for (
@@ -39,16 +117,29 @@ const hasChangePriority = computed(() => {
   return false
 })
 
-watch(
-  () => ticketClinicRef.value.ticketProductConsumableList,
-  (newValue, oldValue) => {
-    ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
-  },
-  { immediate: true, deep: true }
-)
+const hasChangeTicketUserList = computed(() => {
+  const result = !TicketUser.equalList(
+    ticketUserListOrigin.filter((i) => !!i.userId),
+    ticketUserList.value.filter((i) => !!i.userId),
+  )
+  return result
+})
 
-onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicConsumable.vue:52  ~ onMounted')
+const hasChangeData = computed(() => {
+  if (hasChangePriority.value) {
+    return true
+  }
+  if (hasChangeTicketUserList.value) {
+    return true
+  }
+  return false
+})
+
+const disabledButton = computed(() => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
+    return true
+  }
+  return !hasChangeData.value
 })
 
 const changeItemPosition = (index: number, count: number) => {
@@ -64,7 +155,31 @@ const savePriorityTicketProductConsumable = async () => {
       ticketProductList: ticketProductConsumableList.value,
     })
   } catch (e: any) {
-    console.log('🚀 ~ TicketClinicConsumable.vue:70 ~ savePriorityTicketProductConsumable ~ e:', e)
+    console.log('🚀 ~ TicketClinicConsumable.vue:70 ~ saveConsumable ~ e:', e)
+  }
+}
+
+const saveTicketUserList = async () => {
+  try {
+    await TicketClinicUserApi.chooseUserId({
+      ticketId: ticketClinicRef.value.id,
+      interactType: InteractType.ConsumableList,
+      interactId: 0,
+      ticketItemId: 0,
+      quantity: 1,
+      ticketUserList: Object.values(ticketUserList.value),
+    })
+  } catch (e: any) {
+    console.log('🚀 ~ TicketClinicPrescription.vue:184 ~ e:', e)
+  }
+}
+
+const saveConsumable = async () => {
+  if (hasChangePriority.value) {
+    savePriorityTicketProductConsumable()
+  }
+  if (hasChangeTicketUserList.value) {
+    saveTicketUserList()
   }
 }
 
@@ -73,16 +188,15 @@ const openModalProductDetail = (product?: Product) => {
 }
 
 const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProduct[]) => {
+  const tpListOrigin = [...ticketProductConsumableList.value]
   try {
-    ticketProductConsumableList.value = [
-      ...ticketProductConsumableList.value,
-      ...ticketProductAddList,
-    ]
+    ticketProductConsumableList.value = [...tpListOrigin, ...ticketProductAddList]
     await TicketClinicProductApi.addTicketProductConsumableList({
       ticketId: ticketClinicRef.value.id,
       ticketProductList: ticketProductAddList,
     })
   } catch (error) {
+    ticketProductConsumableList.value = tpListOrigin
     console.log('🚀 TicketClinicConsumable.vue:90 ~ error:', error)
   }
 }
@@ -126,8 +240,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0 || tpItem.deliveryStatus === DeliveryStatus.Delivered"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -144,26 +259,14 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                     index === ticketProductConsumableList.length - 1 ||
                     tpItem.deliveryStatus === DeliveryStatus.Delivered
                   "
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
             <td class="text-center">
-              <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
-                <template #title>Chưa xuất vật tư</template>
-                <IconClock
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important" />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã xuất vật tư</template>
-                <IconShoppingCart
-                  width="18"
-                  height="18"
-                  style="color: #52c41a; cursor: not-allowed !important" />
-              </a-tooltip>
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
             <td>
               <div style="font-weight: 500">
@@ -198,7 +301,8 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
-                @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)">
+                @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
@@ -213,7 +317,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   formatMoney(
                     ticketProductConsumableList.reduce((acc: number, item: TicketProduct) => {
                       return (acc += item.actualPrice * item.quantity)
-                    }, 0)
+                    }, 0),
                   )
                 }}
               </b>
@@ -224,16 +328,52 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
       </table>
     </div>
   </div>
+  <div class="mt-4 flex flex-wrap items-center gap-4">
+    <template v-if="ticketUserList.length">
+      <div
+        v-for="(ticketUser, index) in ticketUserList"
+        :key="index"
+        style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+      >
+        <div>
+          {{ roleMap[ticketUser.roleId]?.name || '' }}
+        </div>
+        <div>
+          <InputFilter
+            v-model:value="ticketUserList[index].userId"
+            :options="
+              (userRoleMapList[ticketUser.roleId] || []).map((i) => {
+                return {
+                  value: userMap[i.userId]?.id || 0,
+                  text: userMap[i.userId]?.fullName || '',
+                  data: userMap[i.userId],
+                }
+              })
+            "
+            :maxHeight="200"
+            placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+          >
+            <template #option="{ item: { data } }">
+              <div>
+                <b>{{ data.fullName }}</b>
+                - {{ DString.formatPhone(data.phone) }} -
+              </div>
+            </template>
+          </InputFilter>
+        </div>
+      </div>
+    </template>
+  </div>
+
   <div class="mt-4 flex gap-4">
     <VueButton
-      v-if="
-        permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE] &&
-        hasChangePriority
-      "
+      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]"
+      :disabled="disabledButton"
       color="blue"
-      class="ml-auto"
+      style="margin-left: auto"
       icon="save"
-      @click="savePriorityTicketProductConsumable">
+      @click="saveConsumable"
+    >
       Lưu lại
     </VueButton>
   </div>

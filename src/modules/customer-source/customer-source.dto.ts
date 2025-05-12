@@ -3,8 +3,8 @@ import { OmitClass, PickClass } from '../../utils'
 export class CustomerSourceGetQuery {
   page?: number
   limit?: number
-  relation?: {}
-  filter?: {}
+  relation?: object
+  filter?: object
 
   sort?: {
     id?: 'ASC' | 'DESC'

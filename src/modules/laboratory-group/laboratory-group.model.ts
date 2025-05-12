@@ -13,12 +13,12 @@ export class LaboratoryGroup {
     const ins = new LaboratoryGroup()
     ins.id = 0
     ins.printHtmlId = 0
+    ins.name = ''
     return ins
   }
 
   static blank(): LaboratoryGroup {
     const ins = LaboratoryGroup.init()
-    ins.name = "Chưa phân nhóm phiếu"
     return ins
   }
 

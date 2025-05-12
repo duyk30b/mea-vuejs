@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
@@ -15,8 +16,6 @@ import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
-import { DiscountType } from '../../../../modules/enum'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -25,10 +24,9 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const procedureMap = ref<Record<string, Procedure>>({})
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 
 const ticketProcedureOrigin = ref<TicketProcedure>(TicketProcedure.blank())
@@ -79,16 +77,14 @@ const refreshTicketUserList = async () => {
 onMounted(async () => {
   try {
     const fetchPromise = await Promise.all([
-      ProcedureService.getMap(),
       RoleService.getMap(),
       UserService.getMap(),
       UserRoleService.list(),
     ])
 
-    procedureMap.value = fetchPromise[0]
-    roleMap.value = fetchPromise[1]
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
+    roleMap.value = fetchPromise[0]
+    const userMap = fetchPromise[1]
+    const userRoleList = fetchPromise[2]
 
     userRoleList.forEach((i) => {
       const key = i.roleId
@@ -215,7 +211,7 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ procedureMap[ticketProcedure.procedureId]?.name }}
+          {{ ticketProcedure.procedure?.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -243,7 +239,8 @@ defineExpose({ openModal })
               v-if="
                 ticketProcedure.discountType === DiscountType.Percent &&
                 ticketProcedure.discountPercent !== 0
-              ">
+              "
+            >
               (
               <b>{{ formatMoney(ticketProcedure.discountMoney) }}</b>
               )
@@ -256,16 +253,21 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="ticketProcedure.discountType === DiscountType.VND"
                 :value="ticketProcedure.discountMoney"
-                @update:value="handleChangeUnitDiscountMoney" />
+                @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
+              />
               <InputNumber
                 v-else
                 :value="ticketProcedure.discountPercent"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
+              />
             </div>
           </div>
         </div>
@@ -275,7 +277,8 @@ defineExpose({ openModal })
           <div style="width: 100%">
             <InputMoney
               :value="ticketProcedure.actualPrice"
-              @update:value="handleChangeActualPrice" />
+              @update:value="handleChangeActualPrice"
+            />
           </div>
         </div>
 
@@ -283,18 +286,16 @@ defineExpose({ openModal })
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
-            <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
-            </div>
+            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+          >
+            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -308,7 +309,7 @@ defineExpose({ openModal })
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -316,7 +317,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

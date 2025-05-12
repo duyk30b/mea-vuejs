@@ -1,27 +1,22 @@
 <script lang="ts" setup>
-import { FileSyncOutlined, MoreOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import {
-  IconCheckSquare,
-  IconClock,
-  IconDollar,
-  IconFileSearch,
-  IconShoppingCart,
-} from '../../../../common/icon'
+import VueTag from '../../../../common/VueTag.vue'
+import { IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, PaymentViewType } from '../../../../modules/enum'
+import { DeliveryStatus, PickupStrategy, PaymentViewType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -30,36 +25,23 @@ import {
   TicketClinicApi,
   TicketClinicProductApi,
   ticketClinicRef,
-  ticketRefDeliveryStatus,
 } from '../../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
-import { DDom, timeToText } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
-import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
-import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
+import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicPayment from '../modal/ModalTicketClinicPayment.vue'
-import ModalTicketClinicReturnProduct from '../modal/ModalTicketClinicReturnProduct.vue'
-import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
 import ModalTicketProcedureUpdate from '../procedure/ModalTicketProcedureUpdate.vue'
-import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
 import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
 import TicketClinicSummaryLaboratory from './TicketClinicSummaryLaboratory.vue'
-import VueTag from '../../../../common/VueTag.vue'
+import TicketClinicSummaryProduct from './TicketClinicSummaryProduct.vue'
+import TicketClinicSummaryRadiology from './TicketClinicSummaryRadiology.vue'
 
-const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
-
-const modalTicketClinicConsumableUpdate =
-  ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
-const modalTicketClinicPrescriptionUpdate =
-  ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
-const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
-const modalTicketClinicReturnProduct = ref<InstanceType<typeof ModalTicketClinicReturnProduct>>()
+const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
 const modalTicketClinicChangeDiscount = ref<InstanceType<typeof ModalTicketClinicChangeDiscount>>()
 
 const route = useRoute()
@@ -76,34 +58,9 @@ const radiologyMap = ref<Record<string, Radiology>>({})
 const sendProductLoading = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicSummary.vue:46 ~ onMounted')
   const fetchData = await Promise.all([ProcedureService.getMap(), RadiologyService.getMap()])
   procedureMap.value = fetchData[0]
   radiologyMap.value = fetchData[1]
-})
-
-const consumableDiscount = computed(() => {
-  return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
-    return acc + item.discountMoney * item.quantity
-  }, 0)
-})
-
-const consumableMoney = computed(() => {
-  return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
-})
-
-const prescriptionDiscount = computed(() => {
-  return ticketClinicRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
-    return acc + item.discountMoney * item.quantity
-  }, 0)
-})
-
-const prescriptionMoney = computed(() => {
-  return ticketClinicRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
-    return acc + item.actualPrice * item.quantity
-  }, 0)
 })
 
 const procedureDiscount = computed(() => {
@@ -112,19 +69,13 @@ const procedureDiscount = computed(() => {
   }, 0)
 })
 
-const radiologyDiscount = computed(() => {
-  return ticketClinicRef.value.ticketRadiologyList?.reduce((acc, item) => {
-    return acc + item.discountMoney
-  }, 0)
-})
-
 const disableSendProduct = computed(() => {
   // chỉ được phép khi ở trạng thái đang khám (Executing)
-  if (ticketClinicRef.value.ticketStatus !== TicketStatus.Executing) {
+  if (ticketClinicRef.value.status !== TicketStatus.Executing) {
     return true
   }
   // chỉ được phép khi có hàng chưa gửi (Pending)
-  if (ticketRefDeliveryStatus.value !== DeliveryStatus.Pending) {
+  if (ticketClinicRef.value.deliveryStatus !== DeliveryStatus.Pending) {
     return true
   }
 
@@ -132,7 +83,7 @@ const disableSendProduct = computed(() => {
 })
 
 const validateQuantity = () => {
-  if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+  if (settingStore.PRODUCT_SETTING.allowNegativeQuantity) {
     return true
   }
 
@@ -147,22 +98,22 @@ const validateQuantity = () => {
     const ticketProductUnsent = ticketProductUnsentList[i]
     const { product, batch } = ticketProductUnsent
 
-    if (!product?.hasManageQuantity) continue
+    if (product?.pickupStrategyFix === PickupStrategy.NoImpact) continue
 
     if (ticketProductUnsent.quantity > (product?.quantity || 0)) {
       AlertStore.addError(
         `Sản phẩm ${product?.brandName} không đủ ` +
-          `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.quantity})`
+          `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.quantity})`,
       )
       return false
-    }
-
-    if (ticketProductUnsent.quantity > (batch?.quantity || 0)) {
-      AlertStore.addError(
-        `Lô hàng ${timeToText(batch!.expiryDate)} của Sản phẩm ${product?.brandName} ` +
-          `không đủ (tồn ${batch!.quantity} - lấy ${ticketProductUnsent.quantity})`
-      )
-      return false
+    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
+      if (batch && ticketProductUnsent.quantity > batch!.quantity) {
+        AlertStore.addError(
+          `Lô hàng: ${product!.brandName} không đủ, còn ${batch!.quantity} lấy ${
+            ticketProductUnsent.quantity
+          }`,
+        )
+      }
     }
   }
   return true
@@ -202,14 +153,14 @@ const clickReopenTicket = () => {
 }
 
 const clickDestroyTicket = () => {
-  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Phiếu khám đã đóng',
       content: ['- Bắt buộc MỞ LẠI hồ sơ trước khi HỦY phiếu khám'],
     })
   }
 
-  if (ticketRefDeliveryStatus.value === DeliveryStatus.Delivered) {
+  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Delivered) {
     return ModalStore.alert({
       title: 'Đã xuất thuốc - vật tư',
       content: ['- Bắt buộc HOÀN TRẢ thuốc và vật tư trước khi HỦY phiếu khám'],
@@ -217,7 +168,7 @@ const clickDestroyTicket = () => {
   }
   if (
     (ticketClinicRef.value.ticketRadiologyList || []).find(
-      (i) => i.status == TicketRadiologyStatus.Completed
+      (i) => i.status == TicketRadiologyStatus.Completed,
     )
   ) {
     return ModalStore.alert({
@@ -244,15 +195,37 @@ const clickDestroyTicket = () => {
   })
 }
 
+const clickRefundOverpaid = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
+    })
+  } else {
+    modalTicketClinicPayment.value?.openModal(PaymentViewType.RefundOverpaid)
+  }
+}
+
+const clickReturnProduct = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hoàn trả thuốc - vật tư',
+    })
+  } else {
+    modalTicketReturnProduct.value?.openModal(ticketClinicRef.value)
+  }
+}
+
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'RETURN_PRODUCT_LIST') {
-    if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
       return ModalStore.alert({
         title: 'Trạng thái hồ sơ không hợp lệ ?',
         content: 'Cần mở lại hồ sơ trước khi hoàn trả',
       })
     } else {
-      modalTicketClinicReturnProduct.value?.openModal()
+      modalTicketReturnProduct.value?.openModal(ticketClinicRef.value)
     }
   }
   if (menu.key === 'REFUND_OVERPAID') {
@@ -268,355 +241,102 @@ const handleMenuActionClick = (menu: { key: string }) => {
 
 const startPrint = async () => {
   try {
-    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.invoice
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.invoice
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    if (!printHtml || !printHtml.content) {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlInvoice = await PrintHtmlService.getPrintHtmlInvoice()
+    if (!printHtmlHeader || !printHtmlInvoice || !printHtmlInvoice.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    ticketClinicRef.value
-
-    const textDom = printHtmlCompiledTemplate({
+    const compiledHeader = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
-      printHtml: printHtml!,
+      printHtml: printHtmlHeader,
     })
-
-    await DDom.startPrint('iframe-print', textDom)
+    const compiledContent = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      masterData: {},
+      printHtml: printHtmlInvoice,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:297 ~ startPrint ~ error:', error)
   }
 }
 </script>
 <template>
-  <ModalProductDetail ref="modalProductDetail" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalRadiologyDetail ref="modalRadiologyDetail" />
-  <ModalTicketClinicConsumableUpdate ref="modalTicketClinicConsumableUpdate" />
-  <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
-  <ModalTicketRadiologyUpdateMoney ref="modalTicketRadiologyUpdateMoney" />
   <ModalTicketClinicChangeDiscount ref="modalTicketClinicChangeDiscount" />
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
-  <ModalTicketClinicReturnProduct ref="modalTicketClinicReturnProduct" />
+  <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
 
-  <div class="mt-4 flex gap-4">
+  <div class="mt-4 flex items-center gap-4">
     <VueButton
-      class="ml-auto"
+      style="margin-left: auto"
       color="green"
       :disabled="disableSendProduct"
       :loading="sendProductLoading"
       icon="send"
-      @click="startSendProduct">
+      @click="startSendProduct"
+    >
       <span class="font-bold">XUẤT THUỐC - VẬT TƯ</span>
     </VueButton>
     <VueButton
       v-if="
-        [TicketStatus.Approved, TicketStatus.Executing].includes(ticketClinicRef.ticketStatus) &&
+        [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClinicRef.status) &&
         ticketClinicRef.paid > ticketClinicRef.totalMoney
       "
       icon="dollar"
-      size="small"
       color="green"
-      @click="modalTicketClinicPayment?.openModal(PaymentViewType.RefundOverpaid)">
-      <span class="font-bold">HOÀN TIỀN</span>
+      @click="clickRefundOverpaid"
+    >
+      <span>HOÀN TIỀN</span>
     </VueButton>
-    <div class="flex items-center">
-      <a-dropdown>
-        <template #overlay>
-          <a-menu @click="handleMenuActionClick">
-            <a-menu-item key="REFUND_OVERPAID">
-              <span class="text-red-500">
-                <IconDollar class="mr-2" />
-                Hoàn trả tiền
-              </span>
-            </a-menu-item>
-            <a-menu-item key="RETURN_PRODUCT_LIST">
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
-                Hoàn trả thuốc - vật tư
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
-              "
-              key="REOPEN_TICKET">
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
-                Mở lại phiếu khám
-              </span>
-            </a-menu-item>
-            <a-menu-item key="DESTROY_TICKET">
-              <span class="text-red-500">
-                <IconDelete class="mr-2" />
-                Xóa phiếu
-              </span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-        <a-button shape="circle">
-          <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
-          </template>
-        </a-button>
-      </a-dropdown>
-    </div>
+    <VueDropdown>
+      <template #trigger>
+        <div class="vue-circle">
+          <IconMore style="font-size: 1.5rem; font-weight: bold" />
+        </div>
+      </template>
+      <div class="vue-menu">
+        <a @click="clickReturnProduct">
+          <span class="text-red-500">
+            <IconFileSync />
+            Hoàn trả thuốc - vật tư
+          </span>
+        </a>
+        <a
+          v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)"
+          @click="clickReopenTicket"
+        >
+          <span class="text-red-500">
+            <IconFileSync />
+            Mở lại phiếu khám
+          </span>
+        </a>
+        <a @click="clickDestroyTicket">
+          <span class="text-red-500">
+            <IconDelete />
+            Xóa phiếu
+          </span>
+        </a>
+      </div>
+    </VueDropdown>
   </div>
   <div class="mt-4 table-wrapper">
     <table>
-      <template v-if="ticketClinicRef.ticketProductPrescriptionList?.length">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th style="width: 32px"></th>
-            <th>THUỐC</th>
-            <th>Đ.Vị</th>
-            <th>SL kê</th>
-            <th>SL mua</th>
-            <th>Giá</th>
-            <th>Chiết khấu</th>
-            <th>Tổng tiền</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(
-              tpPrescription, tpPrescriptionIndex
-            ) in ticketClinicRef.ticketProductPrescriptionList"
-            :key="tpPrescription.id + '_' + tpPrescriptionIndex">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ tpPrescriptionIndex + 1 }}
-            </td>
-            <td class="text-center">
-              <a-tooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
-                <template #title>Chưa xuất thuốc</template>
-                <IconClock
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important" />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã xuất thuốc</template>
-                <IconShoppingCart
-                  width="18"
-                  height="18"
-                  style="color: #52c41a; cursor: not-allowed !important" />
-              </a-tooltip>
-            </td>
-            <td>
-              <div class="flex items-center gap-1" style="font-weight: 500">
-                <span>{{ tpPrescription.product?.brandName }}</span>
-                <a
-                  style="line-height: 0"
-                  @click="modalProductDetail?.openModal(tpPrescription.product!)">
-                  <IconFileSearch />
-                </a>
-              </div>
-              <div v-if="tpPrescription.product?.substance" class="text-xs italic">
-                {{ tpPrescription.product.substance }}
-              </div>
-              <div
-                v-if="
-                  tpPrescription.batchId &&
-                  tpPrescription.batch?.lotNumber &&
-                  tpPrescription.batch?.expiryDate
-                "
-                class="text-xs italic">
-                Lô {{ tpPrescription.batch?.lotNumber }} - HSD
-                {{ timeToText(tpPrescription.batch?.expiryDate) }}
-              </div>
-            </td>
-
-            <td class="text-center">{{ tpPrescription.unitName }}</td>
-            <td class="text-center">{{ tpPrescription.unitQuantityPrescription }}</td>
-            <td class="text-center">{{ tpPrescription.unitQuantity }}</td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
-                Nhập: {{ formatMoney(tpPrescription.unitCostPrice) }}
-              </div>
-              <div v-if="tpPrescription.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(tpPrescription.unitExpectedPrice) }}</del>
-              </div>
-              <div>{{ formatMoney(tpPrescription.unitActualPrice) }}</div>
-            </td>
-            <td class="text-center" style="width: 40px">
-              <div v-if="tpPrescription.discountMoney">
-                <VueTag v-if="tpPrescription.discountType === 'VNĐ'" color="green">
-                  {{ formatMoney(tpPrescription.discountMoney * tpPrescription.unitRate) }}
-                </VueTag>
-                <VueTag v-if="tpPrescription.discountType === '%'" color="green">
-                  {{ tpPrescription.discountPercent || 0 }}%
-                </VueTag>
-              </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="tpPrescription.discountMoney" class="text-xs italic text-red-500">
-                <del>
-                  {{ formatMoney(tpPrescription.unitExpectedPrice * tpPrescription.quantity) }}
-                </del>
-              </div>
-              {{ formatMoney(tpPrescription.actualPrice * tpPrescription.quantity) }}
-            </td>
-            <td class="text-center">
-              <a
-                v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
-                "
-                class="text-orange-500"
-                @click="modalTicketClinicPrescriptionUpdate?.openModal(tpPrescription)">
-                <IconEditSquare width="20" height="20" />
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-right" colspan="8">
-              <div class="flex items-center justify-end gap-2">
-                <span class="uppercase">Tiền thuốc</span>
-                <span v-if="prescriptionDiscount" class="italic" style="font-size: 13px">
-                  (CK: {{ formatMoney(prescriptionDiscount) }})
-                </span>
-              </div>
-            </td>
-            <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(prescriptionMoney) }}
-            </td>
-            <td></td>
-          </tr>
-        </tbody>
-      </template>
-      <template v-if="ticketClinicRef.ticketProductConsumableList?.length">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th style="width: 32px"></th>
-            <th colspan="2">VẬT TƯ</th>
-            <th>Đ.Vị</th>
-            <th>SL</th>
-            <th>Giá</th>
-            <th>Chiết khấu</th>
-            <th>Tổng tiền</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="(tpConsumable, tpConsumableIndex) in ticketClinicRef.ticketProductConsumableList"
-            :key="tpConsumable.id + '_' + tpConsumableIndex">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ tpConsumableIndex + 1 }}
-            </td>
-            <td class="text-center">
-              <a-tooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
-                <template #title>Chưa xuất vật tư</template>
-                <IconClock
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important" />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã xuất vật tư</template>
-                <IconShoppingCart
-                  width="18"
-                  height="18"
-                  style="color: #52c41a; cursor: not-allowed !important" />
-              </a-tooltip>
-            </td>
-            <td colspan="2">
-              <div class="flex items-center gap-1" style="font-weight: 500">
-                <span>{{ tpConsumable.product?.brandName }}</span>
-                <a
-                  style="line-height: 0"
-                  @click="modalProductDetail?.openModal(tpConsumable.product!)">
-                  <IconFileSearch />
-                </a>
-              </div>
-              <div v-if="tpConsumable.product?.substance" class="text-xs italic">
-                {{ tpConsumable.product.substance }}
-              </div>
-              <div
-                v-if="
-                  tpConsumable.batchId &&
-                  tpConsumable.batch?.lotNumber &&
-                  tpConsumable.batch?.expiryDate
-                "
-                class="text-xs italic">
-                Lô {{ tpConsumable.batch?.lotNumber }} - HSD
-                {{ timeToText(tpConsumable.batch?.expiryDate) }}
-              </div>
-            </td>
-            <td class="text-center">{{ tpConsumable.unitName }}</td>
-            <td class="text-center">{{ tpConsumable.unitQuantity }}</td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
-                Nhập: {{ formatMoney(tpConsumable.unitCostPrice) }}
-              </div>
-              <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(tpConsumable.unitExpectedPrice) }}</del>
-              </div>
-              <div>{{ formatMoney(tpConsumable.unitActualPrice) }}</div>
-            </td>
-            <td class="text-center" style="width: 40px">
-              <div v-if="tpConsumable.discountMoney">
-                <VueTag v-if="tpConsumable.discountType === 'VNĐ'" color="green">
-                  {{ formatMoney(tpConsumable.discountMoney * tpConsumable.unitRate) }}
-                </VueTag>
-                <VueTag v-if="tpConsumable.discountType === '%'" color="green">
-                  {{ tpConsumable.discountPercent || 0 }}%
-                </VueTag>
-              </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="tpConsumable.discountMoney" class="text-xs italic text-red-500">
-                <del>
-                  {{ formatMoney(tpConsumable.unitExpectedPrice * tpConsumable.quantity) }}
-                </del>
-              </div>
-              {{ formatMoney(tpConsumable.actualPrice * tpConsumable.quantity) }}
-            </td>
-            <td class="text-center">
-              <a
-                v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
-                "
-                class="text-orange-500"
-                @click="modalTicketClinicConsumableUpdate?.openModal(tpConsumable)">
-                <IconEditSquare width="20" height="20" />
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-right" colspan="8">
-              <div class="flex items-center justify-end gap-2">
-                <span class="uppercase">Tiền vật tư</span>
-                <span v-if="consumableDiscount" class="italic" style="font-size: 13px">
-                  (CK: {{ formatMoney(consumableDiscount) }})
-                </span>
-              </div>
-            </td>
-            <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(consumableMoney) }}
-            </td>
-            <td></td>
-          </tr>
-        </tbody>
-      </template>
+      <TicketClinicSummaryProduct />
       <template v-if="ticketClinicRef.ticketProcedureList?.length">
         <thead>
           <tr>
@@ -628,6 +348,7 @@ const startPrint = async () => {
             <th>Chiết khấu</th>
             <th>Tổng tiền</th>
             <th></th>
+            <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
           </tr>
         </thead>
         <tbody>
@@ -643,7 +364,8 @@ const startPrint = async () => {
                   style="line-height: 0"
                   @click="
                     modalProcedureDetail?.openModal(procedureMap[ticketProcedure.procedureId])
-                  ">
+                  "
+                >
                   <IconFileSearch />
                 </a>
               </div>
@@ -672,15 +394,16 @@ const startPrint = async () => {
             <td class="text-center">
               <a
                 v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
-                @click="modalTicketProcedureUpdate?.openModal(ticketProcedure)">
+                @click="modalTicketProcedureUpdate?.openModal(ticketProcedure)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
           </tr>
           <tr>
             <td class="text-right" colspan="8">
@@ -695,106 +418,12 @@ const startPrint = async () => {
               {{ formatMoney(ticketClinicRef.procedureMoney) }}
             </td>
             <td></td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
           </tr>
         </tbody>
       </template>
       <TicketClinicSummaryLaboratory />
-      <template v-if="ticketClinicRef.ticketRadiologyList?.length">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th style="width: 32px"></th>
-            <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
-            <th>Giá</th>
-            <th>Chiết khấu</th>
-            <th>Tổng tiền</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(ticketRadiology, index) in ticketClinicRef.ticketRadiologyList" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
-            <td class="text-center">
-              <a-tooltip v-if="ticketRadiology.status === TicketRadiologyStatus.Pending">
-                <template #title>Chưa có kết quả</template>
-                <IconClock
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important" />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã hoàn thành</template>
-                <IconCheckSquare
-                  width="16"
-                  height="16"
-                  style="color: #52c41a; cursor: not-allowed !important" />
-              </a-tooltip>
-            </td>
-            <td colspan="4">
-              <div class="flex items-center gap-1">
-                <span>{{ radiologyMap[ticketRadiology.radiologyId]?.name }}</span>
-                <a
-                  style="line-height: 0"
-                  @click="
-                    modalRadiologyDetail?.openModal(radiologyMap[ticketRadiology.radiologyId])
-                  ">
-                  <IconFileSearch />
-                </a>
-              </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
-                Vốn: {{ formatMoney(ticketRadiology.costPrice) }}
-              </div>
-              <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(ticketRadiology.expectedPrice) }}</del>
-              </div>
-              <div>{{ formatMoney(ticketRadiology.actualPrice) }}</div>
-            </td>
-            <td class="text-center">
-              <div v-if="ticketRadiology.discountMoney">
-                <VueTag v-if="ticketRadiology.discountType === 'VNĐ'" color="green">
-                  {{ formatMoney(ticketRadiology.discountMoney) }}
-                </VueTag>
-                <VueTag v-if="ticketRadiology.discountType === '%'" color="green">
-                  {{ ticketRadiology.discountPercent || 0 }}%
-                </VueTag>
-              </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              {{ formatMoney(ticketRadiology.actualPrice) }}
-            </td>
-            <td class="text-center">
-              <a
-                v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
-                "
-                class="text-orange-500"
-                @click="modalTicketRadiologyUpdateMoney?.openModal(ticketRadiology)">
-                <IconEditSquare width="20" height="20" />
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-right" colspan="8">
-              <div class="flex items-center justify-end gap-2">
-                <span class="uppercase">Tiền CĐHA</span>
-                <span v-if="radiologyDiscount" class="italic" style="font-size: 13px">
-                  (CK: {{ formatMoney(radiologyDiscount) }})
-                </span>
-              </div>
-            </td>
-            <td class="font-bold text-right whitespace-nowrap">
-              {{ formatMoney(ticketClinicRef.radiologyMoney) }}
-            </td>
-            <td></td>
-          </tr>
-        </tbody>
-      </template>
+      <TicketClinicSummaryRadiology />
       <tbody>
         <tr>
           <td class="text-right" colspan="8">
@@ -809,6 +438,9 @@ const startPrint = async () => {
             {{ formatMoney(ticketClinicRef.itemsActualMoney) }}
           </td>
           <td></td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
+            {{ formatMoney(ticketClinicRef.itemsCostAmount) }}
+          </td>
         </tr>
         <tr>
           <td class="text-right" colspan="8">Chiết khấu</td>
@@ -823,15 +455,16 @@ const startPrint = async () => {
           <td class="text-center">
             <a
               v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketClinicRef.ticketStatus
-                ) && permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
               "
               class="text-orange-500"
-              @click="modalTicketClinicChangeDiscount?.openModal()">
+              @click="modalTicketClinicChangeDiscount?.openModal()"
+            >
               <IconEditSquare width="20" height="20" />
             </a>
           </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
         </tr>
         <tr>
           <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>

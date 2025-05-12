@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -81,7 +81,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton type="reset" icon="close" class="ml-auto" @click="closeModal">
+          <VueButton type="reset" icon="close" style="margin-left:auto" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton icon="save" type="submit" color="blue" :loading="saveLoading">

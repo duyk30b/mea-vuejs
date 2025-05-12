@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputCheckbox,
@@ -9,6 +9,7 @@ import {
   InputFilter,
   InputHint,
   InputNumber,
+  InputRadio,
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
@@ -33,7 +34,7 @@ import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketUser } from '../../../modules/ticket-user'
 import { User, UserService } from '../../../modules/user'
 import { UserRoleService } from '../../../modules/user-role'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
@@ -68,7 +69,7 @@ const fromAppointmentId = ref(0)
 const roleMap = ref<Record<string, Role>>({})
 
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 
 const showModal = ref(false)
@@ -172,7 +173,7 @@ const selectCustomer = async (customerSelect: Customer) => {
       return a.registeredAt > b.registeredAt ? 1 : -1
     })
     appointmentOptions.value.forEach((i) => {
-      if (DTimer.timeToText(i.registeredAt) === DTimer.timeToText(new Date())) {
+      if (ESTimer.timeToText(i.registeredAt) === ESTimer.timeToText(new Date())) {
         fromAppointmentId.value = i.id
       }
     })
@@ -204,7 +205,7 @@ const searchingCustomer = async (text: string) => {
 
 const handleModalCustomerUpsertSuccess = (
   customerSelect: Customer,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   selectCustomer(customerSelect)
 }
@@ -236,7 +237,7 @@ const handleChangeDistrict = async (district: string) => {
   }
   wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
     customer.value.addressProvince,
-    district
+    district,
   )
 }
 
@@ -325,7 +326,7 @@ const updateNgayChuyenPhoi = (NgayChuyenPhoiString: any) => {
 const refreshTicketUserList = () => {
   const screenRoleIdList = settingStore.TICKET_CLINIC_CREATE.roleIdList
   ticketUserList.value = screenRoleIdList.map((roleId) => {
-    let findExist = (ticket.value.ticketUserList || []).find((i) => {
+    const findExist = (ticket.value.ticketUserList || []).find((i) => {
       if (i.roleId !== roleId) return false
       if (i.interactType !== InteractType.Ticket) return false
       if (i.interactId !== 0) return false
@@ -372,9 +373,9 @@ const handleSubmitFormTicketClinic = async () => {
     }))
 
     if (!ticket.value.id) {
-      if (DTimer.timeToText(ticket.value.registeredAt) !== DTimer.timeToText(new Date())) {
+      if (ESTimer.timeToText(ticket.value.registeredAt) !== ESTimer.timeToText(new Date())) {
         return AlertStore.addError(
-          'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày'
+          'Thời gian đăng ký khám không hợp lệ. Chỉ được đăng ký khám trong ngày',
         )
       }
       if (customer.value.healthHistory) {
@@ -388,7 +389,7 @@ const handleSubmitFormTicketClinic = async () => {
         customer: customer.value,
         ticketInformation: {
           ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
-          ticketStatus: settingStore.TICKET_CLINIC_CREATE.ticketStatus,
+          status: settingStore.TICKET_CLINIC_CREATE.status,
           customType: ticket.value.customType,
           registeredAt: ticket.value.registeredAt,
           customerSourceId: ticket.value.customerSourceId,
@@ -430,7 +431,8 @@ defineExpose({ openModal })
     <form
       ref="ticketClinicCreateForm"
       class="bg-white"
-      @submit.prevent="handleSubmitFormTicketClinic">
+      @submit.prevent="handleSubmitFormTicketClinic"
+    >
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
           <span v-if="!ticket.customerId">Tiếp đón khách hàng mới</span>
@@ -440,7 +442,8 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalTicketClinicCreateSetting?.openModal()">
+          @click="modalTicketClinicCreateSetting?.openModal()"
+        >
           <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -464,7 +467,8 @@ defineExpose({ openModal })
             </div>
             <a
               v-if="customer?.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
-              @click="modalCustomerUpsert?.openModal(customer)">
+              @click="modalCustomerUpsert?.openModal(customer)"
+            >
               Sửa thông tin khách hàng
             </a>
           </div>
@@ -481,12 +485,13 @@ defineExpose({ openModal })
               noClearTextWhenNotSelected
               message-no-result="Khách hàng này chưa từng đến khám"
               @selectItem="({ data }: any) => selectCustomer(data)"
-              @searching="searchingCustomer">
+              @searching="searchingCustomer"
+            >
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
                   - {{ DString.formatPhone(data.phone) }} -
-                  {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div>{{ DString.formatAddress(data) }}</div>
               </template>
@@ -502,14 +507,36 @@ defineExpose({ openModal })
               :disabled="!!customer.id"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e: string) => (customer.phone = e.replace(/ /g, ''))" />
+              @update:value="(e: string) => (customer.phone = e.replace(/ /g, ''))"
+            />
           </div>
         </div>
 
         <template v-if="!ticket.customerId">
           <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.facebook"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <div>Link Facebook</div>
+            <div>
+              <InputText v-model:value="customer.facebook" :disabled="!!customer.id" type="url" />
+            </div>
+          </div>
+
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.zalo"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <div>Link Zalo</div>
+            <div>
+              <InputText v-model:value="customer.zalo" :disabled="!!customer.id" type="url" />
+            </div>
+          </div>
+
+          <div
             v-if="settingStore.TICKET_CLINIC_CREATE.birthday"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
             <div>Ngày sinh</div>
             <div>
               <InputDate
@@ -518,25 +545,32 @@ defineExpose({ openModal })
                 :disabled="!!customer.id"
                 format="DD/MM/YYYY"
                 type-parser="number"
-                class="w-full" />
+                class="w-full"
+              />
             </div>
           </div>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.gender"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
             <div>Giới tính</div>
             <div>
-              <a-radio-group v-model:value="customer.gender" :disabled="!!customer.id">
-                <a-radio :value="1">Nam</a-radio>
-                <a-radio :value="0">Nữ</a-radio>
-              </a-radio-group>
+              <InputRadio
+                v-model:value="customer!.gender"
+                :disabled="!!customer!.id"
+                :options="[
+                  { key: 1, label: 'Nam' },
+                  { key: 0, label: 'Nữ' },
+                ]"
+              />
             </div>
           </div>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.addressFull"
-            style="flex-basis: 80%; flex-grow: 1">
+            style="flex-basis: 80%; flex-grow: 1"
+          >
             <div>Địa chỉ</div>
             <div class="flex flex-wrap gap-x-2 gap-y-2">
               <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
@@ -547,7 +581,8 @@ defineExpose({ openModal })
                   :maxHeight="180"
                   placeholder="Thành Phố / Tỉnh"
                   :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                  @update:value="handleChangeProvince" />
+                  @update:value="handleChangeProvince"
+                />
               </div>
               <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
                 <InputHint
@@ -557,7 +592,8 @@ defineExpose({ openModal })
                   :options="districtList"
                   :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
                   placeholder="Quận / Huyện"
-                  @update:value="handleChangeDistrict" />
+                  @update:value="handleChangeDistrict"
+                />
               </div>
               <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
                 <InputHint
@@ -566,49 +602,55 @@ defineExpose({ openModal })
                   :disabled="!!customer.id"
                   :options="wardList"
                   placeholder="Phường / Xã"
-                  :logic-filter="
-                    (item: string, text: string) => DString.customFilter(item, text)
-                  " />
+                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
+                />
               </div>
               <div
                 :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-                :disabled="!!customer.id">
+                :disabled="!!customer.id"
+              >
                 <InputText
                   v-model:value="customer.addressStreet"
                   :disabled="!!customer.id"
-                  placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+                  placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+                />
               </div>
             </div>
           </div>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.addressBasic"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
             <div>Địa chỉ</div>
             <div style="flex: 1">
               <InputText
                 v-model:value="customer.addressStreet"
                 :disabled="!!customer.id"
-                placeholder="" />
+                placeholder=""
+              />
             </div>
           </div>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.relative"
             :disabled="!!customer.id"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
             <div>Liên hệ khác</div>
             <div>
               <InputText
                 v-model:value="customer.relative"
                 :disabled="!!customer.id"
-                placeholder="Tên người thân, số điện thoại" />
+                placeholder="Tên người thân, số điện thoại"
+              />
             </div>
           </div>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.note"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
             <div>Ghi chú</div>
             <div style="flex: 1">
               <InputText v-model:value="customer.note" :disabled="!!customer.id" />
@@ -622,8 +664,9 @@ defineExpose({ openModal })
             <div v-for="(appointment, index) in appointmentOptions" :key="index">
               <InputCheckbox
                 :checked="fromAppointmentId === appointment.id"
-                @change="(e: Event) => handleChangeCheckboxAppointment(e, appointment)">
-                <span>{{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm ') }}</span>
+                @change="(e: Event) => handleChangeCheckboxAppointment(e, appointment)"
+              >
+                <span>{{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm ') }}</span>
                 <span>- Lý do: {{ appointment.reason }}</span>
               </InputCheckbox>
             </div>
@@ -632,21 +675,24 @@ defineExpose({ openModal })
 
         <div
           v-if="settingStore.TICKET_CLINIC_CREATE.customerSource"
-          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+        >
           <div>Nguồn khách hàng</div>
           <div>
             <VueSelect
               v-model:value="ticket.customerSourceId"
               :options="
                 customerSourceAll.map((i: CustomerSource) => ({ text: i.name, value: i.id }))
-              "></VueSelect>
+              "
+            ></VueSelect>
           </div>
         </div>
 
         <div
           v-if="settingStore.TICKET_CLINIC_LIST.ticketType === TicketType.Obstetric"
           style="flex-basis: 80%; flex-grow: 1"
-          class="flex gap-2">
+          class="flex gap-2"
+        >
           <div style="flex-basis: 400px; flex-grow: 4">
             <div class="flex flex-wrap items-center gap-2 justify-end">
               <div style="flex-basis: 60px">Cơ bản:</div>
@@ -659,7 +705,8 @@ defineExpose({ openModal })
                         ? ticketAttributeMap.PARA
                         : ticket.ticketAttributeMap.PARA || ''
                     "
-                    @update:value="(v: string) => (ticketAttributeMap.PARA = v)" />
+                    @update:value="(v: string) => (ticketAttributeMap.PARA = v)"
+                  />
                 </div>
               </div>
               <div style="flex-basis: 200px; flex-grow: 1">
@@ -672,7 +719,8 @@ defineExpose({ openModal })
                         : ticket.ticketAttributeMap.NgayDauKyKinhCuoi || ''
                     "
                     typeParser="string"
-                    @update:value="(v: any) => (ticketAttributeMap.NgayDauKyKinhCuoi = v)" />
+                    @update:value="(v: any) => (ticketAttributeMap.NgayDauKyKinhCuoi = v)"
+                  />
                 </div>
               </div>
             </div>
@@ -687,7 +735,8 @@ defineExpose({ openModal })
                         ? ticketAttributeMap.TuoiPhoi
                         : ticket.ticketAttributeMap.TuoiPhoi || ''
                     "
-                    @update:value="updateTuoiPhoi" />
+                    @update:value="updateTuoiPhoi"
+                  />
                 </div>
               </div>
               <div style="flex-basis: 200px; flex-grow: 1">
@@ -700,7 +749,8 @@ defineExpose({ openModal })
                         : ticket.ticketAttributeMap.NgayChuyenPhoi || ''
                     "
                     typeParser="string"
-                    @update:value="updateNgayChuyenPhoi" />
+                    @update:value="updateNgayChuyenPhoi"
+                  />
                 </div>
               </div>
             </div>
@@ -716,7 +766,8 @@ defineExpose({ openModal })
                         ? ticketAttributeMap.TuoiThai_Tuan
                         : ticket.ticketAttributeMap.TuoiThai_Tuan || ''
                     "
-                    @update:value="updateTuoiThaiTuan" />
+                    @update:value="updateTuoiThaiTuan"
+                  />
                 </div>
               </div>
               <div style="flex-basis: 100px; flex-grow: 1">
@@ -728,7 +779,8 @@ defineExpose({ openModal })
                         ? ticketAttributeMap.TuoiThai_Ngay
                         : ticket.ticketAttributeMap.TuoiThai_Ngay || ''
                     "
-                    @update:value="updateTuoiThaiNgay" />
+                    @update:value="updateTuoiThaiNgay"
+                  />
                 </div>
               </div>
               <div style="flex-basis: 200px; flex-grow: 1">
@@ -741,7 +793,8 @@ defineExpose({ openModal })
                         : ticket.ticketAttributeMap.NgayDuKienSinh || ''
                     "
                     typeParser="string"
-                    @update:value="updateDuKienSinh" />
+                    @update:value="updateDuKienSinh"
+                  />
                 </div>
               </div>
             </div>
@@ -762,7 +815,8 @@ defineExpose({ openModal })
                             : ticket.ticketAttributeMap.pulse || ''
                         "
                         type="number"
-                        @input="(e: any) => (ticketAttributeMap.pulse = e.target.value)" />
+                        @input="(e: any) => (ticketAttributeMap.pulse = e.target.value)"
+                      />
                     </td>
                     <td class="unit-vital-signs">l/p</td>
                   </tr>
@@ -776,7 +830,8 @@ defineExpose({ openModal })
                             ? ticketAttributeMap.bloodPressure
                             : ticket.ticketAttributeMap.bloodPressure || ''
                         "
-                        @input="(e: any) => (ticketAttributeMap.bloodPressure = e.target.value)" />
+                        @input="(e: any) => (ticketAttributeMap.bloodPressure = e.target.value)"
+                      />
                     </td>
                     <td class="unit-vital-signs">mmHg</td>
                   </tr>
@@ -791,7 +846,8 @@ defineExpose({ openModal })
                             ? ticketAttributeMap.height
                             : ticket.ticketAttributeMap.height || ''
                         "
-                        @input="(e: any) => (ticketAttributeMap.height = e.target.value)" />
+                        @input="(e: any) => (ticketAttributeMap.height = e.target.value)"
+                      />
                     </td>
                     <td class="unit-vital-signs">cm</td>
                   </tr>
@@ -806,7 +862,8 @@ defineExpose({ openModal })
                             ? ticketAttributeMap.weight
                             : ticket.ticketAttributeMap.weight || ''
                         "
-                        @input="(e: any) => (ticketAttributeMap.weight = e.target.value)" />
+                        @input="(e: any) => (ticketAttributeMap.weight = e.target.value)"
+                      />
                     </td>
                     <td class="unit-vital-signs">kg</td>
                   </tr>
@@ -823,12 +880,16 @@ defineExpose({ openModal })
               v-model:value="ticket.registeredAt"
               type-parser="number"
               class="w-full"
-              show-time />
+              show-time
+            />
           </div>
         </div>
 
-        <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Tủy chỉnh phân loại</div>
+        <div
+          v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
+          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+        >
+          <div>Tùy chỉnh phân loại</div>
           <div>
             <VueSelect
               v-model:value="ticket.customType"
@@ -837,7 +898,8 @@ defineExpose({ openModal })
                   text: i,
                   value: index,
                 }))
-              "></VueSelect>
+              "
+            ></VueSelect>
           </div>
         </div>
 
@@ -850,29 +912,31 @@ defineExpose({ openModal })
                   ? ticketAttributeMap.reason
                   : ticket.ticketAttributeMap.reason || ''
               "
-              @update:value="(v: string) => (ticketAttributeMap.reason = v)" />
+              @update:value="(v: string) => (ticketAttributeMap.reason = v)"
+            />
           </div>
         </div>
 
         <div
           v-if="ticketUserList?.length"
           class="flex flex-wrap gap-2 mb-10"
-          style="flex-basis: 90%; flex: 1; min-width: 700px">
+          style="flex-basis: 90%; flex: 1; min-width: 700px"
+        >
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 45%; flex: 1; min-width: 300px">
+            style="flex-basis: 45%; flex: 1; min-width: 300px"
+          >
             <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
+              {{ roleMap[ticketUser.roleId]?.name || '' }}
             </div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tên của nhân viên">
+                placeholder="Tên của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -889,16 +953,17 @@ defineExpose({ openModal })
         <div class="flex flex-wrap gap-4">
           <VueButton
             v-if="
-              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.ticketStatus)
+              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status)
             "
             color="red"
             icon="trash"
-            @click="handleClickDestroy">
+            @click="handleClickDestroy"
+          >
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" icon="close" type="reset" @click="closeModal">
-            Hủy bỏ
-          </VueButton>
+          <div style="margin-left: auto">
+            <VueButton icon="close" type="reset" @click="closeModal">Hủy bỏ</VueButton>
+          </div>
           <VueButton class="btn btn-blue" icon="save" type="submit" :loading="saveLoading">
             <span v-if="!ticket.id">ĐĂNG KÝ KHÁM</span>
             <span v-else>CẬP NHẬT THÔNG TIN</span>
@@ -912,7 +977,8 @@ defineExpose({ openModal })
   <ModalTicketClinicCreateSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketClinicCreateSetting"
-    @success="handleModalTicketClinicCreateSettingSuccess" />
+    @success="handleModalTicketClinicCreateSettingSuccess"
+  />
 </template>
 
 <style lang="scss" scoped>

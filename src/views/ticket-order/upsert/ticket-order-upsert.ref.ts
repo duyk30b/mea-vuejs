@@ -2,7 +2,7 @@ import { ref, watchEffect } from 'vue'
 import { DiscountType } from '../../../modules/enum'
 import { Ticket } from '../../../modules/ticket'
 
-export const ticket = ref<Ticket>(Ticket.blank())
+export const ticketOrderUpsertRef = ref<Ticket>(Ticket.blank())
 
 watchEffect(() => {
   let itemsCostAmount = 0
@@ -10,12 +10,13 @@ watchEffect(() => {
   let procedureMoney = 0
   let itemsDiscount = 0
 
-  ticket.value.ticketProductList?.forEach((item) => {
-    itemsCostAmount += item.batch!.costPrice * item.quantity
+  ticketOrderUpsertRef.value.ticketProductList?.forEach((item) => {
+    item.costAmount = item.quantity * (item.product?.costPrice || 0)
+    itemsCostAmount += item.costAmount
     productMoney += item.actualPrice * item.quantity
     itemsDiscount += item.discountMoney * item.quantity
   })
-  ticket.value.ticketProcedureList?.forEach((item) => {
+  ticketOrderUpsertRef.value.ticketProcedureList?.forEach((item) => {
     procedureMoney += item.actualPrice * item.quantity
     itemsDiscount += item.discountMoney * item.quantity
   })
@@ -25,37 +26,37 @@ watchEffect(() => {
   let discountMoney = 0
   let discountPercent = 0
   let discountType: DiscountType = DiscountType.VND
-  if (ticket.value.discountType === DiscountType.VND) {
-    discountMoney = ticket.value.discountMoney || 0
+  if (ticketOrderUpsertRef.value.discountType === DiscountType.VND) {
+    discountMoney = ticketOrderUpsertRef.value.discountMoney || 0
     discountPercent =
       itemsActualMoney == 0 ? 0 : Math.floor((discountMoney * 100) / itemsActualMoney)
     discountType = DiscountType.VND
   }
-  if (ticket.value.discountType === DiscountType.Percent) {
-    discountPercent = ticket.value.discountPercent || 0
+  if (ticketOrderUpsertRef.value.discountType === DiscountType.Percent) {
+    discountPercent = ticketOrderUpsertRef.value.discountPercent || 0
     discountMoney = Math.floor((itemsActualMoney * discountPercent) / 100)
     discountType = DiscountType.Percent
   }
 
-  const surcharge = ticket.value.surcharge || 0
-  const expense = ticket.value.expense || 0
+  const surcharge = ticketOrderUpsertRef.value.surcharge || 0
+  const expense = ticketOrderUpsertRef.value.expense || 0
   const totalMoney = itemsActualMoney - discountMoney + surcharge
   const profit = totalMoney - itemsCostAmount - expense
 
-  ticket.value.itemsCostAmount = itemsCostAmount
-  ticket.value.productMoney = productMoney
-  ticket.value.procedureMoney = procedureMoney
-  ticket.value.itemsActualMoney = itemsActualMoney
-  ticket.value.itemsDiscount = itemsDiscount
+  ticketOrderUpsertRef.value.itemsCostAmount = itemsCostAmount
+  ticketOrderUpsertRef.value.productMoney = productMoney
+  ticketOrderUpsertRef.value.procedureMoney = procedureMoney
+  ticketOrderUpsertRef.value.itemsActualMoney = itemsActualMoney
+  ticketOrderUpsertRef.value.itemsDiscount = itemsDiscount
 
-  ticket.value.discountMoney = discountMoney
-  ticket.value.discountPercent = discountPercent
-  ticket.value.discountType = discountType
+  ticketOrderUpsertRef.value.discountMoney = discountMoney
+  ticketOrderUpsertRef.value.discountPercent = discountPercent
+  ticketOrderUpsertRef.value.discountType = discountType
 
-  ticket.value.totalMoney = totalMoney
-  ticket.value.profit = profit
-  // ticket.value.paid = ...
-  ticket.value.debt = totalMoney - ticket.value.paid
+  ticketOrderUpsertRef.value.totalMoney = totalMoney
+  ticketOrderUpsertRef.value.profit = profit
+  // ticketOrderUpsertRef.value.paid = ...
+  ticketOrderUpsertRef.value.debt = totalMoney - ticketOrderUpsertRef.value.paid
 })
 
 export enum ETicketOrderUpsertMode {
@@ -66,7 +67,8 @@ export enum ETicketOrderUpsertMode {
 
 export enum ETicketOrderSave {
   CREATE_DRAFT = 'CREATE_DRAFT',
-  UPDATE_DRAFT_APPROVED = 'UPDATE_DRAFT_APPROVED',
+  UPDATE_DRAFT = 'UPDATE_DRAFT',
+  UPDATE_DEPOSITED = 'UPDATE_DEPOSITED',
   CREATE_DEBT_SUCCESS = 'CREATE_DEBT_SUCCESS',
   UPDATE_DEBT_SUCCESS = 'UPDATE_DEBT_SUCCESS',
 }

@@ -23,7 +23,7 @@ export class TicketClinicRadiologyApi {
   static async destroyTicketRadiology(body: { ticketId: number; ticketRadiologyId: number }) {
     const { ticketId, ticketRadiologyId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-radiology/${ticketRadiologyId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-radiology/${ticketRadiologyId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -49,11 +49,12 @@ export class TicketClinicRadiologyApi {
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -80,17 +81,18 @@ export class TicketClinicRadiologyApi {
         description: ticketRadiology.description,
         result: ticketRadiology.result,
         startedAt: ticketRadiology.startedAt,
-      })
+      }),
     )
     if (options.ticketUserList) {
       formData.append(
         'ticketUserList',
         JSON.stringify(
           options.ticketUserList.map((i) => ({
+            id: i.id || 0,
             roleId: i.roleId || 0,
             userId: i.userId || 0,
-          }))
-        )
+          })),
+        ),
       )
     }
 
@@ -101,7 +103,7 @@ export class TicketClinicRadiologyApi {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -118,7 +120,7 @@ export class TicketClinicRadiologyApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }

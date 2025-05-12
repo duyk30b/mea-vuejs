@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
@@ -18,8 +18,8 @@ import { DImage } from '../../../utils'
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
+const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
-
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyEyeType]?: any } = {}
 const ticketAttributeMap = ref<
   { [P in TicketAttributeKeyEyeType]?: any } & { healthHistory: string; body: string }
@@ -32,8 +32,15 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:30 ~ onMounted')
 })
+
+watch(
+  () => ticketClinicRef.value.note,
+  (newValue, oldValue) => {
+    note.value = newValue
+  },
+  { immediate: true, deep: true },
+)
 
 watch(
   () => ticketClinicRef.value.ticketAttributeList,
@@ -49,13 +56,13 @@ watch(
       ticketAttributeMap.value[k] = i.value
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watch(
   () => ticketClinicRef.value.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
-  { immediate: true }
+  { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
@@ -76,6 +83,7 @@ const hasChangeAttribute = computed(() => {
 })
 
 const hasChangeData = computed(() => {
+  if (note.value != ticketClinicRef.value.note) return true
   if (hasChangeImage.value) return true
   if (hasChangeAttribute.value) return true
   if (hasChangeCustomer.value) return true
@@ -102,6 +110,7 @@ const saveTicketDiagnosis = async () => {
     await Promise.all([
       TicketClinicApi.updateDiagnosis({
         ticketId: ticketClinicRef.value.id,
+        note: note.value,
         files,
         imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
         ticketAttributeChangeList,
@@ -138,13 +147,13 @@ defineExpose({ getDataTicketDiagnosis })
       <div style="flex-basis: 300px; flex-grow: 1">
         <div>Tiền sử</div>
         <div style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
       </div>
       <div style="flex-basis: 300px; flex-grow: 1">
         <div>Toàn thân</div>
         <div style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.body" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.body" />
         </div>
       </div>
     </div>
@@ -214,23 +223,27 @@ defineExpose({ getDataTicketDiagnosis })
               id: i.id,
             }))
         "
-        @changeImage="hasChangeImage = true" />
+        @changeImage="hasChangeImage = true"
+      />
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
       <div>
-        <InputText v-model:value="ticketAttributeMap.diagnosis" />
+        <InputText v-model:value="note" />
       </div>
     </div>
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]"
+        v-if="
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+        "
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketDiagnosis">
+        @click="saveTicketDiagnosis"
+      >
         Lưu lại
       </VueButton>
     </div>

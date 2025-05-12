@@ -1,24 +1,33 @@
 <script setup lang="ts">
-import { SisternodeOutlined } from '@ant-design/icons-vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting, IconTrash } from '../../../common/icon'
+import { IconClose, IconDelete, IconSetting, IconSisternode } from '../../../common/icon-antd'
 import {
   InputCheckbox,
   InputFilter,
   InputHint,
   InputMoney,
   InputNumber,
+  InputSelect,
   InputText,
   VueSelect,
+  VueSwitch,
 } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
-import type { UnitType } from '../../../modules/enum'
+import {
+  PickupStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+  type UnitType,
+} from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
@@ -26,12 +35,13 @@ import { Product } from '../../../modules/product/product.model'
 import { Role, RoleService } from '../../../modules/role'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { customFilter, DTimer } from '../../../utils'
+import { customFilter, ESTimer } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
+  WAREHOUSE_AND_BATCH: 'WAREHOUSE_AND_BATCH',
   ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
@@ -46,6 +56,7 @@ const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const productSettingCommon = MeService.getProductSettingCommon()
 
 const productOrigin = ref(Product.blank())
 const product = ref(Product.blank())
@@ -80,6 +91,85 @@ const hasChangeData = computed(() => {
   return false
 })
 
+onMounted(async () => {
+  try {
+    warehouseAll.value = await WarehouseService.list({})
+    warehouseMap.value = await WarehouseService.getMap()
+
+    const productGroupAll = await ProductGroupService.list({})
+    productGroupOptions.value = productGroupAll.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: i,
+    }))
+
+    const roleAll = await RoleService.list({})
+    roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
+  } catch (error) {
+    console.log('🚀 ~ ModalProductUpsert.vue:104 ~ onMounted ~ error:', error)
+  }
+})
+
+const pickupStrategyOptions = [
+  { value: PickupStrategy.Inherit, label: '-' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+]
+pickupStrategyOptions.forEach((i) => {
+  if (i.value === productSettingCommon.pickupStrategy) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByWarehouseOptions = [
+  { value: SplitBatchByWarehouse.Inherit, label: '-' },
+  { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByWarehouse.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByWarehouseOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByWarehouse) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByDistributorOptions = [
+  { value: SplitBatchByDistributor.Inherit, label: '-' },
+  { value: SplitBatchByDistributor.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByDistributor.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByDistributorOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByDistributor) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByExpiryDateOptions = [
+  { value: SplitBatchByExpiryDate.Inherit, label: '-' },
+  { value: SplitBatchByExpiryDate.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByExpiryDate.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByExpiryDateOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByExpiryDate) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByCostPriceOptions = [
+  { value: SplitBatchByCostPrice.Inherit, label: '-' },
+  {
+    value: SplitBatchByCostPrice.OverrideAndMAC,
+    label: 'Ghi đè giá nhập cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
+  },
+  { value: SplitBatchByCostPrice.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByCostPriceOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByCostPrice) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
 const handleAddCommission = () => {
   const commissionBlank = Commission.blank()
   commissionBlank.interactType = InteractType.Product
@@ -94,14 +184,24 @@ const openModal = async (productId?: number) => {
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
   } else {
-    const productFetch = await ProductService.detail(productId, {
-      relation: { commissionList: true },
-    })
+    const productFetch = await ProductService.detail(
+      productId,
+      { relation: { commissionList: true } },
+      { refetch: true },
+    )
     productOrigin.value = Product.from(productFetch)
     product.value = productFetch
-    unit.value = JSON.parse(
-      productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }])
-    )
+    try {
+      let unitParse: UnitType[] = JSON.parse(
+        productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }]),
+      )
+      if (!Array.isArray(unitParse) || !unitParse.length) {
+        unitParse = [{ name: '', rate: 1, default: true }]
+      }
+      unit.value = unitParse
+    } catch (error) {
+      unit.value = [{ name: '', rate: 1, default: true }]
+    }
   }
   if (product.value.commissionList?.length == 0) {
     handleAddCommission()
@@ -115,24 +215,6 @@ const openModal = async (productId?: number) => {
   } catch (error) {
     warehouseIdSelect.value = { '0': true }
   }
-
-  const productGroupAll = await ProductGroupService.list({})
-  productGroupOptions.value = productGroupAll.map((i) => ({
-    value: i.id,
-    text: i.name,
-    data: i,
-  }))
-
-  warehouseAll.value = await WarehouseService.list({})
-  warehouseMap.value = await WarehouseService.getMap()
-
-  RoleService.list({})
-    .then((result) => {
-      roleOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
-    })
-    .catch((e) => {
-      console.log('🚀 ~ file: ModalProductUpsert.vue:111 ~ openModal ~ e:', e)
-    })
 }
 
 const handleAddUnit = () => {
@@ -198,8 +280,8 @@ const handleSave = async () => {
           title: 'Không thể cập nhật kho hàng quản lý',
           content: response.data.batchError.map((batch) => {
             const warehouseName = warehouseMap.value[batch.warehouseId]?.name || ''
-            return `- Lô hàng ${batch.lotNumber} - HSD ${DTimer.timeToText(
-              batch.expiryDate
+            return `- Lô hàng ${batch.batchCode} - HSD ${ESTimer.timeToText(
+              batch.expiryDate,
             )} - đang được quản lý bởi "${warehouseName}"". Bắt buộc phải chọn "${warehouseName}" hoặc chọn "Tất cả kho"`
           }),
         })
@@ -266,14 +348,16 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDataProduct?.openModal()">
-          <SisternodeOutlined />
+          @click="modalDataProduct?.openModal()"
+        >
+          <IconSisternode />
         </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalProductUpsertSettingScreen?.openModal()">
+          @click="modalProductUpsertSettingScreen?.openModal()"
+        >
           <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -285,15 +369,23 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.WAREHOUSE_AND_BATCH">Kho và lô</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.BASIC">
               <div class="mt-4 flex flex-wrap gap-4">
-                <div class="grow basis-[600px]">
-                  <div class="">Tên hàng hóa</div>
+                <div style="flex-grow: 1; flex-basis: 400px">
+                  <div class="">Tên sản phẩm</div>
                   <div class="">
                     <InputText v-model:value="product.brandName" required />
+                  </div>
+                </div>
+
+                <div style="flex-grow: 1; flex-basis: 150px">
+                  <div class="">Mã sản phẩm</div>
+                  <div class="">
+                    <InputText v-model:value="product.productCode" />
                   </div>
                 </div>
 
@@ -307,73 +399,80 @@ defineExpose({ openModal })
                 <div
                   v-if="settingStore.SCREEN_PRODUCT_UPSERT.unit"
                   :class="unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
-                  class="grow">
+                  class="grow"
+                >
                   <div class="">Đơn vị</div>
                   <div class="">
                     <div v-if="unit.length === 1">
                       <InputHint
                         v-model:value="unit[0].name"
                         :options="settingStore.PRODUCT_UNIT"
-                        :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                        :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                      />
                     </div>
                     <div v-else class="mt-2">
                       <table style="width: 100%">
-                        <tr>
-                          <td colspan="2"><small>Đơn vị cơ bản</small></td>
-                          <td style="padding-left: 12px"><small>Mặc định</small></td>
-                        </tr>
-                        <tr>
-                          <td colspan="2">
-                            <InputHint
-                              v-model:value="unit[0].name"
-                              required
-                              :options="settingStore.PRODUCT_UNIT"
-                              :logic-filter="
-                                (item: string, text: string) => customFilter(item, text)
-                              " />
-                          </td>
-                          <td style="padding-left: 12px">
-                            <InputCheckbox
-                              :checked="!!unit[0].default"
-                              @change="(e: Event) => handleChangeUnitDefault(e, 0)"></InputCheckbox>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td><small>Đơn vị phụ</small></td>
-                          <td><small>Quy đổi ra đơn vị cơ bản</small></td>
-                          <td></td>
-                        </tr>
-                        <tr v-for="(item, index) in unit" :key="index" class="py-2">
-                          <template v-if="index > 0">
-                            <td style="width: 30%; padding: 0 10px 8px 0">
+                        <tbody>
+                          <tr>
+                            <td colspan="2"><small>Đơn vị cơ bản</small></td>
+                            <td style="padding-left: 12px"><small>Mặc định</small></td>
+                          </tr>
+                          <tr>
+                            <td colspan="2">
                               <InputHint
-                                v-model:value="unit[index].name"
+                                v-model:value="unit[0].name"
                                 required
                                 :options="settingStore.PRODUCT_UNIT"
                                 :logic-filter="
                                   (item: string, text: string) => customFilter(item, text)
-                                " />
+                                "
+                              />
                             </td>
-                            <td style="padding: 0 0 8px 0">
-                              <InputNumber
-                                v-model:value="unit[index].rate"
-                                :append="unit[0].name"
-                                :disabled="index == 0" />
+                            <td style="padding-left: 12px">
+                              <InputCheckbox
+                                :checked="!!unit[0].default"
+                                @change="(e: Event) => handleChangeUnitDefault(e, 0)"
+                              ></InputCheckbox>
                             </td>
-                            <td style="padding: 0 12px 8px 12px">
-                              <div class="flex flex-nowrap justify-between items-center">
-                                <InputCheckbox
-                                  :checked="!!unit[index].default"
-                                  @change="
-                                    (e: Event) => handleChangeUnitDefault(e, index)
-                                  "></InputCheckbox>
-                                <a style="color: var(--text-red)" @click="unit.splice(index, 1)">
-                                  Xóa
-                                </a>
-                              </div>
-                            </td>
-                          </template>
-                        </tr>
+                          </tr>
+                          <tr>
+                            <td><small>Đơn vị phụ</small></td>
+                            <td><small>Quy đổi ra đơn vị cơ bản</small></td>
+                            <td></td>
+                          </tr>
+                          <tr v-for="(item, index) in unit" :key="index" class="py-2">
+                            <template v-if="index > 0">
+                              <td style="width: 30%; padding: 0 10px 8px 0">
+                                <InputHint
+                                  v-model:value="unit[index].name"
+                                  required
+                                  :options="settingStore.PRODUCT_UNIT"
+                                  :logic-filter="
+                                    (item: string, text: string) => customFilter(item, text)
+                                  "
+                                />
+                              </td>
+                              <td style="padding: 0 0 8px 0">
+                                <InputNumber
+                                  v-model:value="unit[index].rate"
+                                  :append="unit[0].name"
+                                  :disabled="index == 0"
+                                />
+                              </td>
+                              <td style="padding: 0 12px 8px 12px">
+                                <div class="flex flex-nowrap justify-between items-center">
+                                  <InputCheckbox
+                                    :checked="!!unit[index].default"
+                                    @change="(e: Event) => handleChangeUnitDefault(e, index)"
+                                  ></InputCheckbox>
+                                  <a style="color: var(--text-red)" @click="unit.splice(index, 1)">
+                                    Xóa
+                                  </a>
+                                </div>
+                              </td>
+                            </template>
+                          </tr>
+                        </tbody>
                       </table>
                     </div>
                     <div><a @click="handleAddUnit">Thêm đơn vị</a></div>
@@ -386,7 +485,8 @@ defineExpose({ openModal })
                     <InputFilter
                       v-model:value="product.productGroupId"
                       :options="productGroupOptions"
-                      :maxHeight="200" />
+                      :maxHeight="200"
+                    />
                   </div>
                 </div>
 
@@ -396,7 +496,8 @@ defineExpose({ openModal })
                     <InputHint
                       v-model:value="product.route"
                       :options="settingStore.PRODUCT_ROUTE"
-                      :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                      :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                    />
                   </div>
                 </div>
 
@@ -410,20 +511,39 @@ defineExpose({ openModal })
                 <div
                   v-if="settingStore.SCREEN_PRODUCT_UPSERT.hintUsage"
                   style="flex-basis: 600px; flex-grow: 1"
-                  class="">
+                  class=""
+                >
                   <div class="">Cách sử dụng</div>
                   <div>
                     <InputHint
                       v-model:value="product.hintUsage"
                       :options="settingStore.PRODUCT_HINT_USAGE"
-                      :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                      :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                    />
                   </div>
                 </div>
 
-                <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="grow basis-[40%]">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+                  <div class="">Số lượng</div>
+                  <div class="">
+                    <InputMoney
+                      :disabled="!!product.id"
+                      v-model:value="product.quantity"
+                      :prepend="product.unitDefaultName"
+                    />
+                  </div>
+                </div>
+
+                <div
+                  v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
+                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+                >
                   <div class="">
                     <span>Giá nhập</span>
-                    <span v-if="product.hasManageQuantity" style="margin-left: 0.5rem">
+                    <span
+                      v-if="product.pickupStrategy != PickupStrategy.NoImpact"
+                      style="margin-left: 0.5rem"
+                    >
                       (tự động cập nhật mỗi khi nhập hàng)
                     </span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -432,17 +552,21 @@ defineExpose({ openModal })
                   </div>
                   <div class="">
                     <InputMoney
-                      :disabled="!!product.hasManageQuantity"
                       :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
                       :prepend="product.unitDefaultName"
+                      :disabled="!!product.id"
                       @update:value="
                         (value) =>
                           (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
 
-                <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
+                <div
+                  v-if="settingStore.SYSTEM_SETTING.wholesalePrice"
+                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+                >
                   <div class="">
                     <span>Giá bán sỉ</span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -459,11 +583,12 @@ defineExpose({ openModal })
                         (value) =>
                           (product.wholesalePrice =
                             value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
 
-                <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="grow basis-[40%]">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div class="">
                     <span>Giá bán lẻ</span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -479,68 +604,107 @@ defineExpose({ openModal })
                       @update:value="
                         (value) =>
                           (product.retailPrice = value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
-
+                <div class="mt-2 grow basis-[600px] flex items-stretch">
+                  <div class="w-[60px] flex-none">
+                    <VueSwitch v-model="product.isActive" type-parser="number" />
+                  </div>
+                  <div>
+                    <span v-if="product.isActive">Active</span>
+                    <span v-else>Inactive (Ngừng kinh doanh)</span>
+                  </div>
+                </div>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.WAREHOUSE_AND_BATCH">
+              <div class="mt-4 flex flex-wrap gap-4">
                 <div style="flex-basis: 90%; flex-grow: 1">
                   <div class="italic font-bold">* Kho quản lý</div>
-                  <div class="flex gap-4">
-                    <div class="mt-2">
+                  <div class="flex flex-wrap gap-4">
+                    <div class="mt-2" style="flex-grow: 1; flex-basis: 90%">
                       <input
                         :id="'MEA_' + randomId + '_' + 0"
                         style="cursor: pointer"
                         :checked="warehouseIdSelect['0']"
                         type="checkbox"
-                        @change="(e) => handleChangeSelectWarehousePrime(e)" />
+                        @change="(e) => handleChangeSelectWarehousePrime(e)"
+                      />
                       <label class="mx-2 cursor-pointer" :for="'MEA_' + randomId + '_' + 0">
                         Tất cả kho
                       </label>
                     </div>
-                    <div v-for="warehouse in warehouseAll" :key="warehouse.id" class="mt-2">
+                    <div
+                      v-for="warehouse in warehouseAll"
+                      :key="warehouse.id"
+                      style="flex-grow: 1; flex-basis: 30%; min-width: 200px"
+                    >
                       <input
                         :id="'MEA_' + randomId + '_' + warehouse.id"
                         style="cursor: pointer"
                         :checked="warehouseIdSelect[warehouse.id]"
                         type="checkbox"
-                        @change="(e) => handleChangeSelectWarehouse(e, warehouse.id)" />
+                        @change="(e) => handleChangeSelectWarehouse(e, warehouse.id)"
+                      />
                       <label
                         class="mx-2 cursor-pointer"
-                        :for="'MEA_' + randomId + '_' + warehouse.id">
+                        :for="'MEA_' + randomId + '_' + warehouse.id"
+                      >
                         {{ warehouse.name }}
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div class="mt-2 grow basis-[600px] flex items-stretch">
-                  <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.hasManageQuantity)"
-                      :disabled="!!product.quantity"
-                      @change="
-                        (checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)
-                      " />
-                  </div>
+                <div class="mt-4" style="flex-basis: 90%; flex-grow: 1">
+                  <div class="italic font-bold">* Chiến lược lấy hàng</div>
                   <div>
-                    <span v-if="product.hasManageQuantity">
-                      Quản lý số lượng (Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất)
-                    </span>
-                    <span v-if="!product.hasManageQuantity">
-                      Không quản lý số lượng (Sản phẩm này không cần nhập hàng, chỉ bán hàng)
-                    </span>
+                    <InputSelect
+                      v-model:value="product.pickupStrategy"
+                      :options="pickupStrategyOptions"
+                    />
                   </div>
                 </div>
 
-                <div class="mt-2 grow basis-[600px] flex items-stretch">
-                  <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.isActive)"
-                      @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)" />
+                <div style="flex-basis: 90%; flex-grow: 1">
+                  <div class="italic font-bold">* Quản lý logic tách lô hàng</div>
+                  <div class="mt-4">
+                    <div>Kho hàng</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByWarehouse"
+                        :options="splitBatchByWarehouseOptions"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <span v-if="product.isActive">Active</span>
-                    <span v-else>Inactive (Ngừng kinh doanh)</span>
+                  <div class="mt-2">
+                    <div>Nhà cung cấp</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByDistributor"
+                        :options="splitBatchByDistributorOptions"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <div>Hạn sử dụng</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByExpiryDate"
+                        :options="splitBatchByExpiryDateOptions"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <div>Giá nhập</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByCostPrice"
+                        :options="splitBatchByCostPriceOptions"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -550,14 +714,16 @@ defineExpose({ openModal })
                 <div
                   v-for="(commission, index) in product.commissionList"
                   :key="index"
-                  class="mt-4 flex flex-wrap gap-2">
+                  class="mt-4 flex flex-wrap gap-2"
+                >
                   <div style="flex-grow: 1; flex-basis: 250px">
                     <div>Vai trò</div>
                     <div>
                       <InputFilter
                         v-model:value="product.commissionList![index].roleId"
                         :options="roleOptions"
-                        :maxHeight="120">
+                        :maxHeight="120"
+                      >
                         <template #option="{ item: { data } }">{{ data.name }}</template>
                       </InputFilter>
                     </div>
@@ -569,7 +735,8 @@ defineExpose({ openModal })
                         :value="commission.commissionValue"
                         @update:value="
                           (v: number) => (product.commissionList![index].commissionValue = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="flex-grow: 1; flex-basis: 150px">
@@ -591,7 +758,8 @@ defineExpose({ openModal })
                         @update:value="
                           (v: number) =>
                             (product.commissionList![index].commissionCalculatorType = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="width: 30px">
@@ -599,8 +767,9 @@ defineExpose({ openModal })
                     <div class="pt-2 flex justify-center">
                       <a
                         style="color: var(--text-red)"
-                        @click="product.commissionList!.splice(index, 1)">
-                        <IconTrash width="18" height="18" />
+                        @click="product.commissionList!.splice(index, 1)"
+                      >
+                        <IconDelete width="18" height="18" />
                       </a>
                     </div>
                   </div>
@@ -615,15 +784,16 @@ defineExpose({ openModal })
         </VueTabs>
       </div>
 
-      <div class="pb-6 pt-8" :class="isMobile ? 'px-4' : 'px-6'">
+      <div class="px-4 pb-6 pt-8">
         <div class="flex gap-4">
           <VueButton
             v-if="permissionIdMap[PermissionId.PRODUCT_DELETE] && product.id"
             color="red"
-            @click="clickDelete">
+            @click="clickDelete"
+          >
             Xóa
           </VueButton>
-          <VueButton class="btn ml-auto" icon="close" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
@@ -635,8 +805,10 @@ defineExpose({ openModal })
   </VueModal>
   <ModalProductUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalProductUpsertSettingScreen" />
+    ref="modalProductUpsertSettingScreen"
+  />
   <ModalDataProduct
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalDataProduct" />
+    ref="modalDataProduct"
+  />
 </template>

@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon-antd'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { CustomerSource, CustomerSourceApi, CustomerSourceService } from '../../../modules/customer-source'
+import {
+  CustomerSource,
+  CustomerSourceApi,
+  CustomerSourceService,
+} from '../../../modules/customer-source'
 
 const emit = defineEmits<{
   (e: 'success', value: CustomerSource, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
@@ -37,7 +41,7 @@ const handleSave = async () => {
     } else {
       const response = await CustomerSourceService.updateOne(
         customerSource.value.id,
-        customerSource.value
+        customerSource.value,
       )
       emit('success', response, 'UPDATE')
     }
@@ -60,7 +64,7 @@ defineExpose({ openModal })
           {{ customerSource.id ? 'Cập nhật nguồn khách hàng' : 'Tạo nguồn khách hàng mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -75,7 +79,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left: auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

@@ -2,7 +2,9 @@
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconPrint, IconTrash } from '../../../../common/icon'
+import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
+import { IconDelete, IconPrint, IconRight } from '../../../../common/icon-antd'
+import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
   InputFilter,
@@ -13,25 +15,27 @@ import {
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
+import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { Role, RoleService } from '../../../../modules/role'
 import { Ticket } from '../../../../modules/ticket'
-import { DDom } from '../../../../utils'
+import { TicketRadiology } from '../../../../modules/ticket-radiology'
+import { ESDom } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
-  PRINT_SETTING: 'PRINT_SETTING',
+  DATA_AND_PRINT: 'DATA_AND_PRINT',
   ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
@@ -51,32 +55,36 @@ const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const printHtmlOptions = ref<{ text: string; value: number }[]>([])
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
+const ticketDemo = Ticket.blank()
+ticketDemo.note = 'Viêm mũi dị ứng'
+ticketDemo.startedAt = Date.now()
+ticketDemo.customer = Customer.example()
+
+let systemVarLog = {}
+
 const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
-const ticketDemo = Ticket.blank()
-ticketDemo.ticketAttributeMap = { diagnosis: 'Viêm mũi dị ứng' }
-ticketDemo.startedAt = Date.now()
-ticketDemo.customer = Customer.example()
+const printHtmlHeader = ref(PrintHtml.blank())
 
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
     RadiologyGroupService.list({}),
     PrintHtmlService.list({}),
-    PrintHtmlService.getSystemList(),
     RoleService.list({}),
   ])
   radiologyGroupAll.value = promiseInit[0]
+  const printHtmlAll = promiseInit[1]
+  const roleAll = promiseInit[2]
   printHtmlOptions.value = [
     { text: 'Mặc định', value: 0 },
-    ...promiseInit[1].map((i) => {
-      return { value: i.id, text: i.name }
-    }),
-    ...promiseInit[2].map((i) => {
+    ...printHtmlAll.map((i) => {
       return { value: i.id, text: i.name }
     }),
   ]
-  roleOptions.value = promiseInit[3].map((i) => ({ value: i.id, text: i.name, data: i }))
+  roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
+
+  printHtmlHeader.value = await PrintHtmlService.getPrintHtmlHeader()
 })
 
 onMounted(async () => {
@@ -95,7 +103,7 @@ onMounted(async () => {
   if (!radiology.value.commissionList?.length) {
     handleAddCommission()
   }
-  updatePreview()
+  await handleSelectPrintHtml()
 })
 
 const hasChangeData = computed(() => {
@@ -105,7 +113,7 @@ const hasChangeData = computed(() => {
   if (
     !Commission.equalList(
       (radiology.value.commissionList || []).filter((i) => !!i.roleId),
-      radiologyRoot.value.commissionList || []
+      radiologyRoot.value.commissionList || [],
     )
   ) {
     return true
@@ -131,7 +139,7 @@ const handleSave = async () => {
     if (radiology.value.id) {
       const radiologyResponse = await RadiologyService.updateOne(
         radiology.value.id,
-        radiology.value
+        radiology.value,
       )
       Object.assign(radiology.value, Radiology.from(radiologyResponse))
       Object.assign(radiologyRoot.value, Radiology.from(radiologyResponse))
@@ -151,44 +159,70 @@ const handleSave = async () => {
   }
 }
 
+const handleSelectPrintHtml = async () => {
+  radiology.value.printHtml = await PrintHtmlService.getPrintHtmlRadiology(
+    radiology.value.printHtmlId,
+  )
+  updatePreview()
+}
+
+const hostGoogleDriverIdExampleList = [
+  '1d6VOuyrjyG9_HDG6TyB8-b3dslmJPo29',
+  '1f4H08hSUzRSfS4oM5AX4tPbxG_bTqm7L',
+  '1LsOS-RAWtL-_hR-dviAb59e6KKCenkPb',
+  '1N9UKIJHbfbq8dGo93T3hWiHK7_e2vPPQ',
+]
+
 const updatePreview = async () => {
   if (!iframe.value) return
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  let printHtmlId = radiology.value.printHtmlId
-  let printHtml: PrintHtml | undefined
-  if (printHtmlId !== 0) {
-    printHtml = await PrintHtmlService.detail(printHtmlId)
-    if (!printHtml || !printHtml.content) {
-      printHtmlId = 0
-    }
-  }
-  if (printHtmlId === 0) {
-    printHtmlId = meStore.rootSetting.printDefault.radiology
-    printHtml = await PrintHtmlService.detail(printHtmlId)
-  }
-
-  if (!printHtml || !printHtml.content) {
+  const printHtml = radiology.value.printHtml
+  if (!printHtml?.html) {
     return
   }
-
-  const data = JSON.parse(printHtml.dataExample || '{}')
+  const data = TicketRadiology.blank()
   data.radiology = Radiology.from(radiology.value)
   data.result = radiology.value.resultDefault
   data.description = radiology.value.descriptionDefault
+  data.imageList = Array.from({ length: 4 }, (_, i) => {
+    const image = Image.blank()
+    image.hostType = ImageHost.GoogleDriver
+    image.hostId = hostGoogleDriverIdExampleList[i]
+    return image
+  })
 
-  const textDom = printHtmlCompiledTemplate({
+  const compiledHeader = compiledTemplatePrintHtml({
+    organization,
+    ticket: ticketDemo,
+    data,
+    printHtml: printHtmlHeader.value,
+    customVariables: radiology.value.customVariables,
+  })
+  const _LAYOUT_HEADER = compiledHeader.html
+
+  const compiledResult = compiledTemplatePrintHtml({
     organization,
     ticket: ticketDemo,
     data,
     masterData: {},
     printHtml,
+    customVariables: radiology.value.customVariables,
+    _LAYOUT: {
+      HEADER: _LAYOUT_HEADER,
+    },
   })
+  systemVarLog = compiledResult.systemVar || {}
 
-  doc.open()
-  doc.write(textDom)
-  doc.close()
+  if (!compiledResult || !compiledResult.html) {
+    return
+  }
+
+  ESDom.writeWindow(doc, {
+    html: compiledResult.html,
+    cssList: [compiledHeader.css, compiledResult.css, radiology.value.customStyles],
+  })
 }
 
 const handleUpdateTabShow = () => {
@@ -230,37 +264,51 @@ const handleClickDelete = async () => {
 
 const startTestPrint = async () => {
   try {
-    let printHtmlId = radiology.value.printHtmlId
-    let printHtml: PrintHtml | undefined
-
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.radiology
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-    if (!printHtml || !printHtml.content) {
+    const printHtml = radiology.value.printHtml
+    if (!printHtml?.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const data = JSON.parse(printHtml.dataExample || '{}')
+    const data = TicketRadiology.blank()
     data.radiology = Radiology.from(radiology.value)
     data.result = radiology.value.resultDefault
     data.description = radiology.value.descriptionDefault
+    data.imageList = Array.from({ length: 4 }, (_, i) => {
+      const image = Image.blank()
+      image.hostType = ImageHost.GoogleDriver
+      image.hostId = hostGoogleDriverIdExampleList[i]
+      return image
+    })
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketDemo,
+      data,
+      printHtml: printHtmlHeader.value,
+      customVariables: radiology.value.customVariables,
+    })
+    const _LAYOUT_HEADER = compiledHeader.html
+
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketDemo,
       data,
       masterData: {},
       printHtml,
+      _LAYOUT: {
+        HEADER: _LAYOUT_HEADER,
+      },
+      customVariables: radiology.value.customVariables,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledResult.html,
+      cssList: [compiledHeader.css, compiledResult.css, radiology.value.customStyles],
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -276,16 +324,23 @@ const handleAddCommission = () => {
   }
   radiology.value.commissionList!.push(commissionBlank)
 }
+
+const showDataSystemPrint = () => {
+  console.log(systemVarLog)
+}
 </script>
 
 <template>
   <ModalSelectRadiologyExample
     ref="modalSelectRadiologyExample"
-    @select="handleModalSelectRadiologyExampleSuccess" />
-  <div class="page-header">
-    <div class="page-header-content">
-      <IconPrint />
-      Thông tin phiếu {{ radiology.name }}
+    @select="handleModalSelectRadiologyExampleSuccess"
+  />
+
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:flex items-center gap-2 text-lg font-medium">
+      <Breadcrumb />
+      <IconRight style="font-size: 0.7em; opacity: 0.5" />
+      {{ radiology.name }}
     </div>
   </div>
 
@@ -293,7 +348,7 @@ const handleAddCommission = () => {
     <VueTabs v-model:tabShow="activeTab" @update:tab-show="handleUpdateTabShow">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.PRINT_SETTING">
+        <VueTabMenu :tabKey="TABS_KEY.DATA_AND_PRINT">
           <IconPrint />
           Dữ liệu và In
         </VueTabMenu>
@@ -318,7 +373,8 @@ const handleAddCommission = () => {
                   v-model:value="radiology.radiologyGroupId"
                   :options="
                     radiologyGroupAll.map((group) => ({ value: group.id, text: group.name }))
-                  " />
+                  "
+                />
               </div>
             </div>
 
@@ -335,7 +391,8 @@ const handleAddCommission = () => {
                 <InputMoney
                   v-model:value="radiology.costPrice"
                   :validate="{ GTE: 0 }"
-                  style="width: 100%" />
+                  style="width: 100%"
+                />
               </div>
             </div>
             <div style="flex-basis: 90%; flex-grow: 1">
@@ -344,28 +401,23 @@ const handleAddCommission = () => {
                 <InputMoney
                   v-model:value="radiology.price"
                   :validate="{ GTE: 0 }"
-                  style="width: 100%" />
+                  style="width: 100%"
+                />
               </div>
             </div>
           </div>
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.PRINT_SETTING">
+        <VueTabPanel :tabKey="TABS_KEY.DATA_AND_PRINT">
           <div class="mt-4 flex flex-wrap gap-4">
-            <div style="flex-basis: 90%; flex-grow: 1">
-              <div class="">Chọn mẫu in</div>
+            <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div>
-                <VueSelect
-                  v-model:value="radiology.printHtmlId"
-                  :options="printHtmlOptions"
-                  @select-item="updatePreview" />
-              </div>
-            </div>
-
-            <div style="flex-basis: 600px; flex-grow: 1; min-height: 800px" class="flex flex-col">
-              <div>
-                <div>Nội dung yêu cầu thêm mặc định</div>
+                <div class="">Chọn mẫu in</div>
                 <div>
-                  <InputText v-model:value="radiology.requestNoteDefault" />
+                  <VueSelect
+                    v-model:value="radiology.printHtmlId"
+                    :options="printHtmlOptions"
+                    @select-item="handleSelectPrintHtml"
+                  />
                 </div>
               </div>
               <div class="mt-4">
@@ -374,20 +426,65 @@ const handleAddCommission = () => {
                   <a @click="modalSelectRadiologyExample?.openModal()">( Lấy từ dữ liệu mẫu )</a>
                 </span>
               </div>
-              <div style="flex-grow: 1">
-                <WysiwygEditor
-                  v-model:value="radiology.descriptionDefault"
-                  @update:value="updatePreview" />
+              <div style="flex-grow: 1; min-height: 400px">
+                <VueTinyMCE
+                  v-model:modelValue="radiology.descriptionDefault"
+                  @update:modelValue="updatePreview"
+                  menu-bar
+                  status-bar
+                />
               </div>
               <div class="mt-4">
                 <div>Kết luận mặc định</div>
                 <div>
-                  <InputText v-model:value="radiology.resultDefault" />
+                  <InputText
+                    v-model:value="radiology.resultDefault"
+                    @update:value="updatePreview"
+                  />
                 </div>
+              </div>
+
+              <div class="mt-10">
+                <details>
+                  <summary><a>Cài đặt nâng cao</a></summary>
+                  <div class="mt-4">
+                    <div class="flex justify-between">
+                      <span>Khởi tạo biến mặc định</span>
+                      <a @click="showDataSystemPrint">Xem biến hệ thống (console.log)</a>
+                    </div>
+                    <div style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        :value="radiology.printHtml?.initVariable || ''"
+                        language="javascript"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="">Tùy chỉnh biến</div>
+                    <div class="" style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        v-model:value="radiology!.customVariables"
+                        @update:value="updatePreview"
+                        language="javascript"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="">Tùy chỉnh style</div>
+                    <div class="" style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        v-model:value="radiology!.customStyles"
+                        @update:value="updatePreview"
+                        language="css"
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
 
-            <div style="flex-basis: 600px; flex-grow: 1; min-height: 800px" class="flex flex-col">
+            <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div class="flex justify-end">
                 <a @click="startTestPrint">In thử</a>
               </div>
@@ -395,7 +492,8 @@ const handleAddCommission = () => {
                 <iframe
                   ref="iframe"
                   class="preview-iframe"
-                  style="width: 100%; height: 100%; text-align: center"></iframe>
+                  style="width: 100%; height: 100%; text-align: center"
+                ></iframe>
               </div>
             </div>
           </div>
@@ -405,14 +503,16 @@ const handleAddCommission = () => {
             <div
               v-for="(commission, index) in radiology.commissionList"
               :key="index"
-              class="mt-4 flex flex-wrap gap-2">
+              class="mt-4 flex flex-wrap gap-2"
+            >
               <div style="flex-grow: 1; flex-basis: 250px">
                 <div>Vai trò</div>
                 <div>
                   <InputFilter
                     v-model:value="radiology.commissionList![index].roleId"
                     :options="roleOptions"
-                    :maxHeight="120">
+                    :maxHeight="120"
+                  >
                     <template #option="{ item: { data } }">{{ data.name }}</template>
                   </InputFilter>
                 </div>
@@ -424,7 +524,8 @@ const handleAddCommission = () => {
                     :value="commission.commissionValue"
                     @update:value="
                       (v: number) => (radiology.commissionList![index].commissionValue = v)
-                    " />
+                    "
+                  />
                 </div>
               </div>
               <div style="flex-grow: 1; flex-basis: 150px">
@@ -445,7 +546,8 @@ const handleAddCommission = () => {
                     ]"
                     @update:value="
                       (v: number) => (radiology.commissionList![index].commissionCalculatorType = v)
-                    " />
+                    "
+                  />
                 </div>
               </div>
               <div style="width: 30px">
@@ -453,8 +555,9 @@ const handleAddCommission = () => {
                 <div class="pt-2 flex justify-center">
                   <a
                     style="color: var(--text-red)"
-                    @click="radiology.commissionList!.splice(index, 1)">
-                    <IconTrash width="18" height="18" />
+                    @click="radiology.commissionList!.splice(index, 1)"
+                  >
+                    <IconDelete width="18" height="18" />
                   </a>
                 </div>
               </div>
@@ -475,7 +578,8 @@ const handleAddCommission = () => {
         type="submit"
         :loading="saveLoading"
         icon="save"
-        :disabled="!hasChangeData">
+        :disabled="!hasChangeData"
+      >
         {{ radiology.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
       </VueButton>
     </div>

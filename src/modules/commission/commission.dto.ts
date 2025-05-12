@@ -1,4 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionEnum } from '../_base/base-condition'
 import type { InteractType } from './commission.model'
 
 export class CommissionGetQuery {
@@ -14,7 +15,7 @@ export class CommissionGetQuery {
 
   filter?: {
     roleId?: number
-    interactType?: InteractType
+    interactType?: InteractType | ConditionEnum<InteractType>
     interactId?: number
   }
 

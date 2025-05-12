@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose, IconDiff, IconInfoCircle } from '../../../common/icon-antd'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
-import ProductAndBatchMovement from './ProductAndBatchMovement.vue'
+import ProductAndBatchMovement from './ProductMovementList.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
@@ -37,7 +36,6 @@ const closeModal = () => {
 }
 
 const handleChangeProduct = (p: Product) => {
-  console.log('🚀 ~ file: ModalProductDetail.vue:38 ~ handleChangeProduct ~ p:', p)
   product.value = Product.from(p)
 }
 
@@ -47,7 +45,8 @@ defineExpose({ openModal })
 <template>
   <VueModal
     v-model:show="showModal"
-    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)">
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
@@ -62,13 +61,14 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="tabShow">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.INFO">
-              <DeploymentUnitOutlined />
+              <IconInfoCircle />
               Thông tin
             </VueTabMenu>
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.READ_MOVEMENT]"
-              :tabKey="TABS_KEY.MOVEMENT">
-              <DiffOutlined />
+              :tabKey="TABS_KEY.MOVEMENT"
+            >
+              <IconDiff />
               Nhập/Xuất
             </VueTabMenu>
           </template>
@@ -76,7 +76,8 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.INFO">
               <ProductInfoAndBatchList
                 :productId="product.id"
-                @change-product="handleChangeProduct" />
+                @change-product="handleChangeProduct"
+              />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.MOVEMENT">
               <ProductAndBatchMovement :product="product" />

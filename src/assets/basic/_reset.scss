@@ -1,79 +1,78 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer local_reset {
+  * {
+    box-sizing: border-box;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
 
-body {
-  font-family: 'Arial', sans-serif;
-}
+  a {
+    text-decoration: none;
+    cursor: pointer;
+  }
 
-a {
-  text-decoration: none;
-  cursor: pointer;
-}
+  a,
+  button,
+  input {
+    touch-action: manipulation;
+  }
 
-img {
-  max-width: 100%;
-}
+  svg {
+    display: inline;
+  }
 
-ol,
-ul {
-  list-style-type: none;
-  list-style-position: inside;
-}
+  img {
+    max-width: 100%;
+  }
 
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
+  ol,
+  ul {
+    list-style-type: none;
+    list-style-position: inside;
+  }
 
-  thead {
-    tr {
-      th {
-        white-space: nowrap;
-        text-align: center;
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    thead {
+      tr {
+        th {
+          white-space: nowrap;
+          text-align: center;
+        }
       }
     }
   }
-}
 
-pre,
-code {
-  font-family: monospace, monospace;
-}
-
-summary {
-  cursor: pointer;
-  user-select: none;
-}
-
-select {
-  cursor: pointer;
-  user-select: none;
-}
-
-input {
-  font-size: 16px !important;
-  outline: none;
-
-  // &[type='number'] {
-  //   text-align: right;
-  // }
-
-  &[type='checkbox'] {
-    touch-action: manipulation;
+  pre,
+  code {
+    font-family: monospace, monospace;
   }
-}
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  margin-left: 1rem;
-}
+  summary {
+    cursor: pointer;
+    user-select: none;
+  }
 
-[contenteditable='true']:empty:not(:focus):before {
-  content: attr(placeholder);
-  opacity: 0.7;
-  pointer-events: none;
-  display: block;
-  /* For Firefox */
+  select {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  input {
+    font-size: 16px !important;
+    outline: none;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    margin-left: 1rem;
+  }
+
+  [contenteditable='true']:empty:not(:focus):before {
+    content: attr(placeholder);
+    opacity: 0.3;
+    pointer-events: none;
+    display: block;
+    /* For Firefox */
+  }
 }

@@ -3,8 +3,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import WysiwygEditor from '../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
@@ -13,11 +14,11 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
-import { CustomerService } from '../../../modules/customer'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
+const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyObstetricType]?: any } = {}
@@ -32,8 +33,15 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisObstetric.vue:31 ~ onMounted')
 })
+
+watch(
+  () => ticketClinicRef.value.note,
+  (newValue, oldValue) => {
+    note.value = newValue
+  },
+  { immediate: true, deep: true },
+)
 
 watch(
   () => ticketClinicRef.value.ticketAttributeList,
@@ -49,13 +57,13 @@ watch(
       ticketAttributeMap.value[k] = i.value
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watch(
   () => ticketClinicRef.value!.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
-  { immediate: true }
+  { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
@@ -76,6 +84,7 @@ const hasChangeAttribute = computed(() => {
 })
 
 const hasChangeData = computed(() => {
+  if (note.value != ticketClinicRef.value.note) return true
   if (hasChangeImage.value) return true
   if (hasChangeAttribute.value) return true
   if (hasChangeCustomer.value) return true
@@ -102,6 +111,7 @@ const saveTicketDiagnosis = async () => {
     await Promise.all([
       TicketClinicApi.updateDiagnosis({
         ticketId: ticketClinicRef.value.id,
+        note: note.value,
         files,
         imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
         ticketAttributeChangeList,
@@ -215,16 +225,16 @@ defineExpose({ getDataTicketDiagnosis })
       </div>
     </div>
     <div class="mt-4 flex flex-wrap gap-4">
-      <div style="flex-basis: 300px; flex-grow: 1">
+      <div style="flex: 1 1 300px; min-width: 300px">
         <div>Tiền sử</div>
         <div style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
       </div>
-      <div style="flex-basis: 300px; flex-grow: 1">
+      <div class="" style="flex: 1 1 300px; min-width: 300px">
         <div>Toàn thân</div>
         <div style="height: 150px">
-          <WysiwygEditor v-model:value="ticketAttributeMap.body" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.body" />
         </div>
       </div>
     </div>
@@ -251,7 +261,8 @@ defineExpose({ getDataTicketDiagnosis })
             <div>
               <InputNumber
                 v-model:value="ticketAttributeMap.TuoiPhoi"
-                @update:value="updateTuoiPhoi" />
+                @update:value="updateTuoiPhoi"
+              />
             </div>
           </div>
           <div style="flex-basis: 200px; flex-grow: 1">
@@ -260,7 +271,8 @@ defineExpose({ getDataTicketDiagnosis })
               <InputDate
                 v-model:value="ticketAttributeMap.NgayChuyenPhoi"
                 typeParser="string"
-                @update:value="updateNgayChuyenPhoi" />
+                @update:value="updateNgayChuyenPhoi"
+              />
             </div>
           </div>
         </div>
@@ -272,7 +284,8 @@ defineExpose({ getDataTicketDiagnosis })
             <div>
               <InputNumber
                 v-model:value="ticketAttributeMap.TuoiThai_Tuan"
-                @update:value="updateTuoiThaiTuan" />
+                @update:value="updateTuoiThaiTuan"
+              />
             </div>
           </div>
           <div style="flex-basis: 100px; flex-grow: 1">
@@ -280,7 +293,8 @@ defineExpose({ getDataTicketDiagnosis })
             <div>
               <InputNumber
                 v-model:value="ticketAttributeMap.TuoiThai_Ngay"
-                @update:value="updateTuoiThaiNgay" />
+                @update:value="updateTuoiThaiNgay"
+              />
             </div>
           </div>
           <div style="flex-basis: 200px; flex-grow: 1">
@@ -289,7 +303,8 @@ defineExpose({ getDataTicketDiagnosis })
               <InputDate
                 v-model:value="ticketAttributeMap.NgayDuKienSinh"
                 typeParser="string"
-                @update:value="updateDuKienSinh" />
+                @update:value="updateDuKienSinh"
+              />
             </div>
           </div>
         </div>
@@ -374,23 +389,27 @@ defineExpose({ getDataTicketDiagnosis })
               id: i.id,
             }))
         "
-        @changeImage="hasChangeImage = true" />
+        @changeImage="hasChangeImage = true"
+      />
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
       <div>
-        <InputText v-model:value="ticketAttributeMap.diagnosis" />
+        <InputText v-model:value="note" />
       </div>
     </div>
     <div class="mt-4 flex justify-between gap-4">
       <div></div>
       <VueButton
-        v-if="ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]"
+        v-if="
+          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+        "
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketDiagnosis">
+        @click="saveTicketDiagnosis"
+      >
         Lưu lại
       </VueButton>
     </div>

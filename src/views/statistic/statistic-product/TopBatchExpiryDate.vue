@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
-import { IconFileSearch } from '../../../common/icon'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconFileSearch } from '../../../common/icon-antd'
+import { InputSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
-import { DTimer, timeToText } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -107,14 +109,15 @@ const closeExpiryDate = computed(() => {
                   : batch.expiryDate && batch.expiryDate < closeExpiryDate
                     ? 'color:orange; font-weight:500'
                     : ''
-              ">
-              {{ DTimer.timeToText(batch.expiryDate) }}
+              "
+            >
+              {{ ESTimer.timeToText(batch.expiryDate) }}
             </td>
             <td class="text-center" style="white-space: nowrap">
               {{ batch.unitQuantity }}
             </td>
             <td class="text-center" style="white-space: nowrap">
-              {{  batch.product?.unitDefaultName }}
+              {{ batch.product?.unitDefaultName }}
             </td>
             <td class="text-right" style="white-space: nowrap">
               {{ formatMoney(batch.product?.unitRetailPrice || 0) }}
@@ -122,18 +125,25 @@ const closeExpiryDate = computed(() => {
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div class="mt-4 float-right">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          :size="isMobile ? 'small' : 'default'"
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    <div class="py-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

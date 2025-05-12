@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
-import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconFileSearch, IconGroup, IconPlus, IconSetting } from '../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
-import { VueSelect } from '../../../common/vue-form'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -15,6 +16,7 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -31,8 +33,9 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('RECEIPT_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const timeRanger = ref<[Dayjs, Dayjs]>()
 const receiptStatus = ref<ReceiptStatus | null>(null)
+const fromTime = ref<number>()
+const toTime = ref<number>()
 
 const sortColumn = ref<'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -40,9 +43,6 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const startFetchData = async () => {
   try {
     dataLoading.value = true
-
-    const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
-    const toTime = timeRanger.value?.[1].endOf('day').toISOString()
 
     const { data, meta } = await ReceiptApi.pagination({
       relation: {
@@ -52,8 +52,14 @@ const startFetchData = async () => {
           : false,
       },
       filter: {
-        startedAt: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
-        status: receiptStatus.value ? receiptStatus.value : { NOT: ReceiptStatus.Cancelled },
+        startedAt:
+          fromTime.value || toTime.value
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
+        status: receiptStatus.value !== null ? receiptStatus.value : undefined,
       },
       page: page.value,
       limit: limit.value,
@@ -105,66 +111,74 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   }
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalReceiptListSetting.value?.openModal()
-  }
-}
 </script>
 
 <template>
   <ModalReceiptListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalReceiptListSetting" />
+    ref="modalReceiptListSetting"
+  />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <div class="page-header">
-    <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
-        <AuditOutlined class="mr-1" />
-        Danh sách phiếu nhập hàng
-      </div>
-      <div>
-        <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
-          class="btn btn-blue"
-          @click="
-            $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
-          ">
-          <PlusOutlined />
-          Tạo phiếu nhập hàng mới
-        </VueButton>
-      </div>
+
+  <div class="mx-4 mt-4 gap-2 flex items-center">
+    <div class="hidden md:flex gap-2 items-center text-lg font-medium">
+      <Breadcrumb />
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+    <div>
+      <VueButton
+        v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD]"
+        color="blue"
+        icon="plus"
+        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+      >
+        Tạo phiếu nhập hàng mới
+      </VueButton>
+    </div>
+    <div class="ml-auto flex items-center gap-4 flex-wrap">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalReceiptListSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
   <div class="page-main">
     <div class="page-main-options">
-      <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn thời gian</div>
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Từ ngày</div>
         <div>
-          <a-range-picker
-            v-model:value="timeRanger"
-            :onChange="handleChangeTime"
-            format="DD-MM-YYYY"
-            style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+          <InputDate
+            v-model:value="fromTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
+
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Đến ngày</div>
+        <div>
+          <InputDate
+            v-model:value="toTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
+          />
+        </div>
+      </div>
+
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
         <div>
@@ -173,12 +187,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: ReceiptStatus.Draft },
-              { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Prepayment },
+              { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Deposited },
               { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
-              { text: 'Hoàn thành', value: ReceiptStatus.Success },
+              { text: 'Hoàn thành', value: ReceiptStatus.Completed },
               { text: 'Hủy', value: ReceiptStatus.Cancelled },
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
     </div>
@@ -214,14 +229,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <tr
               v-for="(receipt, index) in receipts"
               :key="index"
-              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })">
+              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
+            >
               <td>
                 <div class="font-medium text-justify">
                   {{ receipt.distributor?.fullName }}
                   <a
                     class="text-base"
-                    @click="modalDistributorDetail?.openModal(receipt.distributorId)">
-                    <FileSearchOutlined class="ml-1" />
+                    @click="modalDistributorDetail?.openModal(receipt.distributorId)"
+                  >
+                    <IconFileSearch class="ml-1" />
                   </a>
                 </div>
                 <div class="text-xs">
@@ -245,41 +262,31 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tbody>
         </table>
       </div>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
-              Mã &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('id')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Mã</span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th>Thời gian</th>
+            <th>Trạng thái</th>
             <th>Nhà cung cấp</th>
             <th v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">Sản phẩm</th>
             <th>Tổng Tiền</th>
-            <th>Trạng thái</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -301,7 +308,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(receipt, index) in receipts" :key="index">
-            <td class="text-center">
+            <td class="text-center" style="white-space: nowrap">
               <router-link :to="{ name: 'ReceiptDetail', params: { id: receipt.id } }">
                 NH{{ receipt.id }}
                 <span class="text-lg ml-1">
@@ -309,14 +316,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </span>
               </router-link>
             </td>
-            <td class="text-center">
+            <td style="white-space: nowrap" class="text-center">
               {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YYYY') }}
+            </td>
+            <td class="text-center">
+              <ReceiptStatusTag :receipt="receipt" />
             </td>
             <td>
               <div>
                 {{ receipt.distributor?.fullName }}
                 <a class="ml-1" @click="modalDistributorDetail?.openModal(receipt.distributorId)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="receipt.distributor?.note" class="text-xs italic">
@@ -324,7 +334,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">
-              {{ (receipt.receiptItemList || []).map((i) => i.product?.brandName).join(', ') }}
+              <div>
+                {{ (receipt.receiptItemList || []).map((i) => i.product?.brandName).join(', ') }}
+              </div>
             </td>
             <td class="text-right">
               <div>{{ formatMoney(receipt.totalMoney) }}</div>
@@ -332,23 +344,29 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 Nợ: {{ formatMoney(receipt.debt) }}
               </div>
             </td>
-            <td class="text-center">
-              <ReceiptStatusTag :receipt="receipt" />
-            </td>
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10' },
+          { value: 20, label: '20' },
+          { value: 50, label: '50' },
+          { value: 100, label: '100' },
+        ]"
+      />
     </div>
   </div>
 </template>

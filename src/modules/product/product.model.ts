@@ -1,10 +1,19 @@
+import { MeService } from '../_me/me.service'
 import { Batch } from '../batch/batch.model'
 import { Commission } from '../commission'
-import type { UnitType } from '../enum'
+import {
+    PickupStrategy,
+    SplitBatchByCostPrice,
+    SplitBatchByDistributor,
+    SplitBatchByExpiryDate,
+    SplitBatchByWarehouse,
+    type UnitType,
+} from '../enum'
 import { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
+  productCode: string
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
 
@@ -23,9 +32,14 @@ export class Product {
   warehouseIds: string
   warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
-  hasManageQuantity: 0 | 1
+  pickupStrategy: PickupStrategy
+  splitBatchByWarehouse: SplitBatchByWarehouse
+  splitBatchByDistributor: SplitBatchByDistributor
+  splitBatchByExpiryDate: SplitBatchByExpiryDate
+  splitBatchByCostPrice: SplitBatchByCostPrice
+
   isActive: 1 | 0 // Trạng thái
-  updatedAt: number
+  updatedAt: number | string | Date
 
   batchList?: Batch[]
   productGroup?: ProductGroup
@@ -92,6 +106,13 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
+  get pickupStrategyFix() {
+    if (this.pickupStrategy === PickupStrategy.Inherit) {
+      return MeService.getProductSetting(this).pickupStrategy
+    }
+    return this.pickupStrategy
+  }
+
   public getUnitNameByRate(rate: number) {
     return this.unitObject?.find((u) => u.rate === rate)?.name || ''
   }
@@ -109,7 +130,11 @@ export class Product {
     ins.warehouseIds = JSON.stringify([0])
     ins.warehouseIdList = [0]
 
-    ins.hasManageQuantity = 1
+    ins.pickupStrategy = PickupStrategy.Inherit
+    ins.splitBatchByWarehouse = SplitBatchByWarehouse.Inherit
+    ins.splitBatchByDistributor = SplitBatchByDistributor.Inherit
+    ins.splitBatchByExpiryDate = SplitBatchByExpiryDate.Inherit
+    ins.splitBatchByCostPrice = SplitBatchByCostPrice.Inherit
     ins.isActive = 1
     return ins
   }
@@ -180,7 +205,7 @@ export class Product {
     if (a.retailPrice != b.retailPrice) return false
 
     if (a.warehouseIds != b.warehouseIds) return false
-    if (a.hasManageQuantity != b.hasManageQuantity) return false
+    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.isActive != b.isActive) return false
     if (a.updatedAt != b.updatedAt) return false
     return true

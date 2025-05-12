@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import {
-  AccountBookOutlined,
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  HistoryOutlined,
-} from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import VueTag from '../../common/VueTag.vue'
+import { IconApartment } from '../../common/icon-antd'
+import { IconComputer, IconEditSquare, IconHistory, IconSmartphone } from '../../common/icon-google'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
+import { ESTimer } from '../../utils'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
-import { DTimer } from '../../utils'
-import VueTag from '../../common/VueTag.vue'
+import VuePagination from '../../common/VuePagination.vue'
+import { InputSelect } from '../../common/vue-form'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -58,7 +55,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalRootUserUpsertSuccess = async (
   data: User,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   await startFetchData()
 }
@@ -78,9 +75,9 @@ const logoutAll = async () => {
 <template>
   <ModalRootUserUpsert ref="modalRootUserUpsert" @success="handleModalRootUserUpsertSuccess" />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <AccountBookOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconApartment />
         Danh sách User
       </div>
       <VueButton color="blue" icon="plus" @click="modalRootUserUpsert?.openModal()">
@@ -121,21 +118,21 @@ const logoutAll = async () => {
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
                   <span v-if="device.mobile === 1">
-                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                    <IconSmartphone />
                   </span>
                   <span v-else>
-                    <font-awesome-icon :icon="['fas', 'desktop']" />
+                    <IconComputer />
                   </span>
                   <span class="ml-2">{{ device.os }}</span>
                   /
                   <span>{{ device.browser }}</span>
                   -
-                  <span>Exp {{ DTimer.timeToText(device.refreshExp) }}</span>
+                  <span>Exp {{ ESTimer.timeToText(device.refreshExp) }}</span>
                 </div>
                 <div style="white-space: nowrap">IP: {{ device.ip }}</div>
                 <div v-if="device.online !== true">
-                  <HistoryOutlined class="mr-1" />
-                  {{ DTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
+                  <IconHistory class="mr-1" />
+                  {{ ESTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
                 </div>
                 <div class="flex gap-2">
                   <VueButton
@@ -146,7 +143,8 @@ const logoutAll = async () => {
                         refreshExp: device.refreshExp,
                         oid: user.oid,
                       })
-                    ">
+                    "
+                  >
                     Đăng xuất
                   </VueButton>
                   <VueTag v-if="device.online === true" color="green">Online</VueTag>
@@ -165,24 +163,32 @@ const logoutAll = async () => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalRootUserUpsert?.openModal(user)">
-                <FormOutlined />
+                @click="modalRootUserUpsert?.openModal(user)"
+              >
+                <IconEditSquare />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

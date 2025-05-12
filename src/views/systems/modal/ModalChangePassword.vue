@@ -2,8 +2,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputPassword, InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { MeApi } from '../../../modules/_me/me.api'
 import { AuthService } from '../../../modules/auth/auth.service'
@@ -59,29 +60,31 @@ defineExpose({ openModal })
         </div>
       </div>
       <div class="mt-4 px-4">
-        <div class="flex items-center mb-3">
-          <div style="width: 100px; flex: none">Tên đăng nhập</div>
-          <a-input disabled :value="user.username" class="flex-auto" />
+        <div>
+          <div>Tên đăng nhập</div>
+          <div>
+            <InputText disabled :value="user.username" />
+          </div>
         </div>
 
-        <div class="flex items-center mb-3">
-          <div style="width: 100px; flex: none">Mật khẩu cũ</div>
-          <a-input-password v-model:value="oldPassword" class="flex-auto" />
+        <div class="mt-3">
+          <div>Mật khẩu cũ</div>
+          <InputPassword v-model:value="oldPassword" />
         </div>
 
-        <div class="flex items-center mb-3">
-          <div style="width: 100px; flex: none">Mật khẩu mới</div>
-          <a-input-password v-model:value="newPassword" class="flex-auto" />
+        <div class="mt-3">
+          <div>Mật khẩu mới</div>
+          <InputPassword v-model:value="newPassword" />
         </div>
 
-        <div class="flex items-center mb-3">
-          <div style="width: 100px; flex: none">Mật khẩu mới</div>
-          <a-input-password v-model:value="newPasswordRepeat" class="flex-auto" />
+        <div class="mt-3">
+          <div>Mật khẩu mới</div>
+          <InputPassword v-model:value="newPasswordRepeat" />
         </div>
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

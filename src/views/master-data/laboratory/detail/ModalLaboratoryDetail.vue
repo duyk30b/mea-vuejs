@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { DeploymentUnitOutlined, DiffOutlined } from '@ant-design/icons-vue'
 import { onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconAudit, IconClose, IconInfoCircle } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueTabMenu from '../../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabPanel from '../../../../common/vue-tabs/VueTabPanel.vue'
@@ -34,7 +33,6 @@ const closeModal = () => {
 }
 
 onMounted(() => {
-  console.log('🚀 ~ file: ModalLaboratoryDetail.vue:37 ~ onMounted ~ onMounted:')
 })
 
 defineExpose({ openModal })
@@ -43,7 +41,8 @@ defineExpose({ openModal })
 <template>
   <VueModal
     v-model:show="showModal"
-    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)">
+    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">Dịch vụ: {{ laboratory.name }}</div>
@@ -56,16 +55,12 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="tabShow">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.INFO">
-              <span>
-                <DeploymentUnitOutlined />
-                Thông tin
-              </span>
+              <IconInfoCircle />
+              Thông tin
             </VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.LABORATORY_HISTORY">
-              <span>
-                <DiffOutlined />
-                Lịch sử hóa đơn
-              </span>
+              <IconAudit />
+              Lịch sử hóa đơn
             </VueTabMenu>
           </template>
           <template #panel>

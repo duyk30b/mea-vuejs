@@ -1,0 +1,26 @@
+@layer local_components {
+  .vue-menu {
+    overflow-x: auto;
+
+    & > a {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 10px 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      // color: rgba(0, 0, 0, 0.85);
+
+      &:hover {
+        color: #1890ff;
+        opacity: 0.8;
+      }
+
+      &:active {
+        color: #1890ff;
+        background-color: #e6f7ff;
+      }
+    }
+  }
+}

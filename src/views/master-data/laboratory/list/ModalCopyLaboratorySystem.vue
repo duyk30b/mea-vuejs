@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, watchEffect } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Laboratory, LaboratoryApi, LaboratoryService } from '../../../../modules/laboratory'
@@ -8,6 +8,7 @@ import { LaboratoryGroup, LaboratoryGroupApi } from '../../../../modules/laborat
 import { arrayToKeyValue, customFilter } from '../../../../utils'
 import VueButton from '../../../../common/VueButton.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import VuePagination from '../../../../common/VuePagination.vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -174,7 +175,8 @@ defineExpose({ openModal })
               <VueSelect
                 v-model:value="laboratoryGroupId"
                 :options="laboratoryGroupOptions"
-                @update:value="startSearch" />
+                @update:value="startSearch"
+              />
             </div>
           </div>
         </div>
@@ -188,7 +190,8 @@ defineExpose({ openModal })
                     style="cursor: pointer"
                     :checked="checkedAll"
                     type="checkbox"
-                    @change="(e) => handleChangeCheckedAll(e)" />
+                    @change="(e) => handleChangeCheckedAll(e)"
+                  />
                 </th>
                 <th>Tên</th>
                 <th>Nhóm</th>
@@ -204,7 +207,8 @@ defineExpose({ openModal })
                     style="cursor: pointer"
                     :checked="laboratoryIdSelect[laboratory.id]"
                     type="checkbox"
-                    @change="(e) => handleChangeInput(e, laboratory.id)" />
+                    @change="(e) => handleChangeInput(e, laboratory.id)"
+                  />
                 </td>
                 <td>
                   <div>{{ laboratory.name }}</div>
@@ -222,14 +226,12 @@ defineExpose({ openModal })
               <span class="font-bold">{{ selectedLength }}</span>
               phiếu
             </div>
-            <a-pagination
-              v-model:current="page"
-              v-model:pageSize="limit"
+            <VuePagination
+              v-model:page="page"
               :total="total"
-              show-size-changer
-              @change="
-                (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-              " />
+              :limit="limit"
+              @update:page="(p: any) => changePagination({ page: p, limit })"
+            />
           </div>
         </div>
       </div>

@@ -65,7 +65,7 @@
     display: flex;
     align-items: center;
 
-    input {
+    input, textarea {
       width: 100%;
       padding: 4px 12px 4px 12px;
       outline: none;
@@ -85,6 +85,14 @@
     input::placeholder {
       font-size: 14px;
     }
+  }
+
+  .icon-prepend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f7f7f7;
+    border-right: 1px solid #d9d9d9;
   }
 
   .icon-append {
@@ -108,6 +116,7 @@
 
     &:hover {
       cursor: pointer;
+
       .icon-clear-hover {
         display: block;
       }
@@ -124,9 +133,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-    background-color: #eee;
-    color: #777;
-    font-size: 0.8em;
+    background-color: #f7f7f7;
+    color: #333;
+    font-size: 0.9em;
   }
 
   .prepend {
@@ -135,9 +144,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-    background-color: #eee;
-    color: #777;
-    font-size: 0.8em;
+    background-color: #f7f7f7;
+    color: #333;
+    font-size: 0.9em;
   }
 
   .options {

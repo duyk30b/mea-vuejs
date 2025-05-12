@@ -3,8 +3,10 @@ import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { InputPassword } from '../../common/vue-form'
 import InputText from '../../common/vue-form/InputText.vue'
 import { AuthApi } from '../../modules/auth/auth.api'
+import { VueDivider } from '../../common/vue-layout'
 
 const router = useRouter()
 const route = useRoute()
@@ -45,7 +47,9 @@ const startResetPassword = async () => {
 <template>
   <div class="wrapper">
     <div class="form-card pt-4 pb-10 px-4">
-      <a-divider style="font-size: 1.5rem">Đổi mật khẩu</a-divider>
+      <VueDivider class="mt-4" border-width="1px">
+        <div class="mx-4 text-2xl font-medium">ĐỔI MẬT KHẨU</div>
+      </VueDivider>
       <form @submit.prevent="startResetPassword">
         <div class="mt-4">
           <div>ID cơ cở</div>
@@ -55,7 +59,8 @@ const startResetPassword = async () => {
               name="organization_phone"
               autocomplete="on"
               required
-              pattern="[0][356789][0-9]{8}" />
+              pattern="[0][356789][0-9]{8}"
+            />
           </div>
         </div>
         <div class="mt-4">
@@ -65,21 +70,13 @@ const startResetPassword = async () => {
         <div class="mt-4">
           <div>Mật khẩu</div>
           <div>
-            <InputText
-              v-model:value="formState.password"
-              name="password"
-              type="password"
-              required />
+            <InputPassword v-model:value="formState.password" name="password" required />
           </div>
         </div>
         <div class="mt-4">
           <div>Điền lại mật khẩu</div>
           <div>
-            <InputText
-              v-model:value="formState.passwordRepeat"
-              name="password"
-              type="password"
-              required />
+            <InputPassword v-model:value="formState.passwordRepeat" name="password" required />
           </div>
         </div>
 

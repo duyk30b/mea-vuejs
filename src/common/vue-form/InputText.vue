@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { IconEye } from '../icon'
-
 const props = withDefaults(
   defineProps<{
-    value: string | null
-    type?: 'text' | 'password' | 'email'
+    value: string | null | undefined
+    type?: 'text' | 'email' | 'url'
     name?: string
     prepend?: string
     append?: string
@@ -31,7 +29,7 @@ const props = withDefaults(
     pattern: undefined,
     title: undefined,
     autocomplete: undefined,
-  }
+  },
 )
 const emit = defineEmits<{ (e: 'update:value', value: string): void }>()
 
@@ -57,10 +55,8 @@ const handleInput = (e: Event) => {
         :pattern="pattern"
         :title="title"
         :type="type"
-        @input="handleInput" />
-      <!-- <div v-if="type === 'password'" class="password-toggle">
-        <IconEye />
-      </div> -->
+        @input="handleInput"
+      />
     </div>
     <div v-if="append" class="append">{{ append }}</div>
   </div>

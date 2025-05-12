@@ -6,24 +6,34 @@ import { Role } from '../role/role.model'
 
 export enum InteractType {
   Ticket = 1,
-  Product = 2,
-  Procedure = 3,
-  Radiology = 4,
-  Laboratory = 5,
+  Product = 2, // chỉ tương tác với sản phẩm
+  Procedure = 3, // chỉ tương tác với thủ thuật
+  Radiology = 4, // chỉ tương tác với phiếu CĐHA
+  Laboratory = 5, // chỉ tương tác với phiếu xét nghiệm
+  ConsumableList = 6, // tương tác với tất cả sản phẩm trong cả tiêu hao
+  PrescriptionList = 7, // tương tác với tất cả sản phẩm trong cả toa thuốc
 }
 
-export enum InteractTypeText {
-  Ticket = 'Phòng khám',
-  Procedure = 'Dịch vụ',
-  Product = 'Sản phẩm',
-  Radiology = 'Phiếu CĐHA',
-  Laboratory = 'Xét nghiệm',
+export const InteractTypeText = {
+  [InteractType.Ticket]: 'Lượt tiếp đón',
+  [InteractType.Procedure]: 'Dịch vụ',
+  [InteractType.Product]: 'Sản phẩm',
+  [InteractType.Radiology]: 'Phiếu CĐHA',
+  [InteractType.Laboratory]: 'Xét nghiệm',
+  [InteractType.ConsumableList]: 'Phiếu Vật tư',
+  [InteractType.PrescriptionList]: 'Đơn thuốc',
 }
 
 export enum CommissionCalculatorType {
   VND = 1,
   PercentExpected = 2,
   PercentActual = 3,
+}
+
+export const CommissionCalculatorTypeText = {
+  [CommissionCalculatorType.VND]: 'VNĐ',
+  [CommissionCalculatorType.PercentExpected]: '% Niêm yết',
+  [CommissionCalculatorType.PercentActual]: '% Thực tế',
 }
 
 export class Commission {
@@ -85,7 +95,9 @@ export class Commission {
       target.radiology = target.radiology ? Radiology.basic(target.radiology) : target.radiology
     }
     if (Object.prototype.hasOwnProperty.call(source, 'laboratory')) {
-      target.laboratory = target.laboratory ? Laboratory.basic(target.laboratory) : target.laboratory
+      target.laboratory = target.laboratory
+        ? Laboratory.basic(target.laboratory)
+        : target.laboratory
     }
     return target
   }

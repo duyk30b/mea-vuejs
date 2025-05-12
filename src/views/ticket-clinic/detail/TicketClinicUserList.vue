@@ -21,11 +21,12 @@ const { permissionIdMap } = meStore
 
 const ticketUserTicketMap = ref<Record<string, TicketUser>>({})
 
-const roleMap = ref<Record<string, Role>>({})
-const userMap = ref<Record<string, User>>({})
 const userRoleList = ref<UserRole[]>([])
 const roleIdListShow = ref<number[]>([])
 const commissionList = ref<Commission[]>([])
+
+const roleMap = RoleService.roleMap
+const userMap = UserService.userMap
 
 const saveLoading = ref(false)
 
@@ -59,21 +60,13 @@ watch(
   (newValue, oldValue) => {
     refreshRoleIdList()
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicUserList.vue:59 ~ onMounted')
-
-  Promise.all([
-    RoleService.getMap(),
-    UserService.getMap(),
-    CommissionService.list({ filter: { interactType: InteractType.Ticket } }),
-  ])
+  CommissionService.list({ filter: { interactType: InteractType.Ticket } })
     .then((result) => {
-      roleMap.value = result[0]
-      userMap.value = result[1]
-      commissionList.value = result[2]
+      commissionList.value = result
       refreshRoleIdList()
     })
     .catch((e) => {
@@ -90,11 +83,12 @@ onMounted(async () => {
 const saveTicketUserList = async () => {
   try {
     saveLoading.value = true
-    await TicketClinicUserApi.updateTicketUserItem({
+    await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      interactId: 0,
       interactType: InteractType.Ticket,
+      interactId: 0,
       ticketItemId: 0,
+      quantity: 1,
       ticketUserList: Object.values(ticketUserTicketMap.value),
     })
   } catch (error) {
@@ -125,16 +119,17 @@ const hasChangeData = computed(() => {
       v-for="(roleId, index) in roleIdListShow"
       :key="index"
       class="mb-4"
-      style="flex-basis: 45%; flex: 1; min-width: 300px">
+      style="flex-basis: 45%; flex: 1; min-width: 300px"
+    >
       <div>
-        {{ roleMap[roleId]?.displayName || roleMap[roleId]?.name || '' }}
+        {{ roleMap[roleId]?.name || '' }}
       </div>
       <div>
         <InputFilter
           v-model:value="ticketUserTicketMap[roleId]!.userId"
           :disabled="
-            !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_USER_LIST] ||
-            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+            !permissionIdMap[PermissionId.TICKET_CLINIC_USER_CHOOSE_USERID] ||
+            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)
           "
           :options="
             userRoleList
@@ -148,7 +143,8 @@ const hasChangeData = computed(() => {
               })
           "
           :maxHeight="200"
-          placeholder="Tên nhân viên">
+          placeholder="Tên nhân viên"
+        >
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.fullName }}</b>
@@ -161,15 +157,16 @@ const hasChangeData = computed(() => {
     <div class="flex gap-4">
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_USER_LIST] &&
-          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+          permissionIdMap[PermissionId.TICKET_CLINIC_USER_CHOOSE_USERID] &&
+          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)
         "
-        class="ml-auto"
+        style="margin-left: auto"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketUserList">
+        @click="saveTicketUserList"
+      >
         Lưu lại
       </VueButton>
     </div>

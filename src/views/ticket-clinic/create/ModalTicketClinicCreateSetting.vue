@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -110,7 +110,7 @@ defineExpose({ openModal })
                       <td>
                         <div>
                           <VueSelect
-                            v-model:value="settingDisplay.ticketStatus"
+                            v-model:value="settingDisplay.status"
                             :options="[
                               { value: TicketStatus.Draft, text: 'Chờ khám' },
                               { value: TicketStatus.Executing, text: 'Vào khám' },
@@ -119,6 +119,20 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
+                      <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.facebook">
+                          Hiển thị điền link facebook
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                                       <tr>
+                      <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.zalo">
+                          Hiển thị điền link zalo
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                                       <tr>
                       <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
@@ -206,7 +220,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CloseOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconClose, IconSetting } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -43,11 +43,12 @@ defineExpose({ openModal })
         <div
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="ticketOrderModalPreviewSetting?.openModal()">
-          <SettingOutlined />
+          @click="ticketOrderModalPreviewSetting?.openModal()"
+        >
+          <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="handleClose">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -92,7 +93,8 @@ defineExpose({ openModal })
                 <td class="auto-index text-center"></td>
                 <td
                   :colspan="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit ? '2' : '1'"
-                  class="text-justify">
+                  class="text-justify"
+                >
                   {{ ticketProcedure.procedure!.name }}
                 </td>
                 <td class="text-center">{{ ticketProcedure.quantity }}</td>
@@ -102,7 +104,8 @@ defineExpose({ openModal })
                       settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
                       ticketProcedure.discountMoney != 0
                     "
-                    style="color: rgb(255, 102, 0)">
+                    style="color: rgb(255, 102, 0)"
+                  >
                     <del>
                       <i>
                         <small>
@@ -126,29 +129,22 @@ defineExpose({ openModal })
                   <div v-if="ticketProduct.productId">
                     <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance"
-                      style="font-size: 0.8rem">
+                      style="font-size: 0.8rem"
+                    >
                       {{ ticketProduct.product!.substance }}
                     </div>
                     <div
-                      v-if="
-                        settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
-                        ticketProduct.batchId
-                      "
-                      style="font-size: 0.8rem"
-                      class="flex gap-2">
-                      Lô {{ ticketProduct.batch!.lotNumber }} - HSD
-                      {{ timeToText(ticketProduct.batch!.expiryDate) }}
-                    </div>
-                    <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
-                      style="font-size: 0.8rem; font-style: italic">
+                      style="font-size: 0.8rem; font-style: italic"
+                    >
                       {{ ticketProduct.hintUsage }}
                     </div>
                   </div>
                 </td>
                 <td
                   v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit"
-                  class="text-center">
+                  class="text-center"
+                >
                   {{ ticketProduct.unitName || 'Lần' }}
                 </td>
                 <td class="text-center">
@@ -160,7 +156,8 @@ defineExpose({ openModal })
                       settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice &&
                       ticketProduct.discountMoney != 0
                     "
-                    style="color: rgb(255, 102, 0)">
+                    style="color: rgb(255, 102, 0)"
+                  >
                     <del>
                       <i>
                         <small>
@@ -183,7 +180,8 @@ defineExpose({ openModal })
                   <span
                     v-if="ticket.itemsDiscount"
                     style="font-style: italic; font-size: 13px"
-                    class="mr-2">
+                    class="mr-2"
+                  >
                     (CK: {{ formatMoney(ticket.itemsDiscount) }})
                   </span>
                   <b>
@@ -235,10 +233,7 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4 flex justify-center">
-        <VueButton @click="handleClose">
-          <CloseOutlined />
-          Đóng lại
-        </VueButton>
+        <VueButton @click="handleClose" icon="close">Đóng lại</VueButton>
       </div>
     </div>
   </VueModal>

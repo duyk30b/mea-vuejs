@@ -6,6 +6,7 @@ import { InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { AuthApi } from '../../modules/auth/auth.api'
+import { VueDivider } from '../../common/vue-layout'
 
 const btnDisable = ref<boolean>(false)
 
@@ -38,7 +39,9 @@ const startSendEmail = async () => {
 <template>
   <div class="wrapper">
     <div class="form-card pt-4 pb-10 px-4">
-      <a-divider style="font-size: 1.5rem">QUÊN MẬT KHẨU</a-divider>
+      <VueDivider class="mt-4" border-width="1px">
+        <div class="mx-4 text-2xl font-medium">QUÊN MẬT KHẨU</div>
+      </VueDivider>
       <form @submit.prevent="startSendEmail">
         <div class="mt-4">
           <div>ID cơ cở</div>
@@ -48,7 +51,8 @@ const startSendEmail = async () => {
               name="organization_phone"
               autocomplete="on"
               required
-              pattern="[0][356789][0-9]{8}" />
+              pattern="[0][356789][0-9]{8}"
+            />
           </div>
         </div>
         <div class="mt-4">
@@ -59,7 +63,8 @@ const startSendEmail = async () => {
               name="email"
               type="email"
               autocomplete="on"
-              required />
+              required
+            />
           </div>
         </div>
         <div class="mt-4">

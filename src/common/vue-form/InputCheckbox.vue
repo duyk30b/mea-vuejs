@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type StyleValue } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -9,6 +9,10 @@ const props = withDefaults(
     indeterminate?: boolean
     label?: string
     disabled?: boolean
+    customStyle?: {
+      wrap?: StyleValue
+      item?: StyleValue
+    }
   }>(),
   {
     value: false,
@@ -17,7 +21,7 @@ const props = withDefaults(
     indeterminate: false,
     label: '',
     disabled: false,
-  }
+  },
 )
 const emit = defineEmits<{
   (e: 'update:value', value: boolean | number): void
@@ -25,39 +29,101 @@ const emit = defineEmits<{
   (e: 'change', event: Event): void
 }>()
 
-const randomId = computed(() => Math.random().toString(36).substring(2))
-
 const handleChangeCheckbox = (e: Event) => {
   const target = e.target as HTMLInputElement
   emit('update:checked', target.checked)
-  emit('change', e)
   if (props.typeParser === 'number') {
     emit('update:value', Number(target.checked))
   }
   if (props.typeParser === 'boolean') {
     emit('update:value', target.checked)
   }
+  emit('change', e)
 }
 
 defineExpose({ focus })
 </script>
 
 <template>
-  <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
-    <div>
+  <div class="vue-input-checkbox">
+    <label class="vue-input-checkbox-item">
       <input
-        :id="randomId"
-        style="cursor: pointer"
+        type="checkbox"
         :checked="Boolean(value) || checked"
         :indeterminate="indeterminate"
-        type="checkbox"
-        :name="randomId"
         :disabled="disabled"
-        @change="(e) => handleChangeCheckbox(e)" />
-    </div>
-    <label style="cursor: pointer; user-select: none" :for="randomId">
+        @change="(e) => handleChangeCheckbox(e)"
+      />
+      <span
+        class="input-checkbox-fake"
+        :class="Boolean(value) || checked ? 'input-checkbox-fake-checked' : ''"
+      ></span>
       <span v-if="label">{{ label }}</span>
       <slot></slot>
     </label>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.vue-input-checkbox {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1em;
+  .vue-input-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    cursor: pointer;
+    user-select: none;
+    &:hover {
+      opacity: 1;
+    }
+
+    input {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .input-checkbox-fake {
+      position: relative;
+      display: block;
+      width: 16px;
+      min-width: 16px;
+      height: 16px;
+      direction: ltr;
+      background-color: #fff;
+      border: 1px solid #d9d9d9;
+      border-radius: 2px;
+      border-collapse: separate;
+      transition: all 0.2s;
+      &::after {
+        position: absolute;
+        top: 50%;
+        left: 21.5%;
+        display: block;
+        width: 5px;
+        height: 9px;
+        border: 2px solid #fff;
+        border-top: 0;
+        border-left: 0;
+        transform: rotate(45deg) scale(0) translate(-50%, -50%);
+        opacity: 0;
+        transition:
+          all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
+          opacity 0.1s;
+        content: ' ';
+      }
+      &.input-checkbox-fake-checked {
+        background-color: #1890ff;
+        border-color: #1890ff;
+        &::after {
+          transform: rotate(45deg) scale(1) translate(-50%, -50%);
+          opacity: 1;
+          transition: all 0.2s cubic-bezier(0.12, 0.4, 0.29, 1.46) 0.1s;
+        }
+      }
+    }
+  }
+}
+</style>

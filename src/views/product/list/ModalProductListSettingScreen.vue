@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../common/icon'
+import { IconClose, IconFileSearch } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -13,7 +13,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_PRODUCT_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_PRODUCT_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_PRODUCT_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -87,11 +87,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <InputCheckbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</InputCheckbox>
               </td>
             </tr>
@@ -102,12 +97,14 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.unit">Hiển thị đơn vị</InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.expiryDate">Hiển thị HSD</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.expiryDate">
+                  Hiển thị HSD
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
@@ -120,7 +117,9 @@ defineExpose({ openModal })
 
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.action">Hiển thị nút sửa</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.action">
+                  Hiển thị nút sửa
+                </InputCheckbox>
               </td>
             </tr>
           </tbody>
@@ -128,7 +127,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

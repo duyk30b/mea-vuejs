@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { Radiology, RadiologyApi } from '../../../../modules/radiology'
 import { customFilter } from '../../../../utils'
 
 const emit = defineEmits<{
@@ -100,16 +101,15 @@ defineExpose({ openModal })
               </tr>
             </tbody>
           </table>
-          <div class="mt-4 float-right mb-2">
-            <a-pagination
-              v-model:current="page"
-              v-model:pageSize="limit"
-              :total="total"
-              show-size-changer
-              @change="
-                (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-              " />
-          </div>
+        </div>
+
+        <div class="p-4 flex flex-wrap justify-end gap-4">
+          <VuePagination
+            v-model:page="page"
+            :total="total"
+            :limit="limit"
+            @update:page="(p: any) => changePagination({ page: p, limit })"
+          />
         </div>
       </div>
     </div>

@@ -47,4 +47,8 @@ const addSuccess = (message: string, time?: number) => {
   add({ type: 'success', message, time })
 }
 
-export const AlertStore = { data, add, addError, addSuccess, remove }
+const addWarning = (message: string, time?: number) => {
+  add({ type: 'warning', message, time })
+}
+
+export const AlertStore = { data, add, addError, addSuccess, addWarning, remove }

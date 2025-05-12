@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { IconClose, IconDollar, IconPlus, IconPrint, IconSave, IconTrash, IconSend } from './icon'
+import {
+  IconClose,
+  IconDelete,
+  IconDollar,
+  IconDownload,
+  IconPlus,
+  IconPrint,
+  IconSave,
+  IconSend,
+  IconUpload,
+} from './icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -8,7 +18,18 @@ const props = withDefaults(
     color?: 'default' | 'green' | 'blue' | 'red'
     size?: 'small' | 'default' | 'large' | 'text'
     type?: 'reset' | 'submit' | 'button'
-    icon?: Object | '' | 'save' | 'print' | 'plus' | 'close' | 'trash' | 'dollar' | 'send'
+    icon?:
+      | Object
+      | ''
+      | 'save'
+      | 'print'
+      | 'plus'
+      | 'close'
+      | 'trash'
+      | 'dollar'
+      | 'send'
+      | 'upload'
+      | 'download'
   }>(),
   {
     loading: false,
@@ -17,7 +38,7 @@ const props = withDefaults(
     size: 'default',
     type: 'button',
     icon: '',
-  }
+  },
 )
 </script>
 
@@ -25,7 +46,8 @@ const props = withDefaults(
   <button
     :disabled="disabled || loading"
     :type="type"
-    :class="`btn btn-${color} btn-size-${size} ${loading ? 'btn-loading' : ''}`">
+    :class="`btn btn-${color} btn-size-${size} ${loading ? 'btn-loading' : ''}`"
+  >
     <span v-if="loading">
       <svg
         class="icon-spin"
@@ -33,9 +55,11 @@ const props = withDefaults(
         height="1em"
         fill="currentColor"
         aria-hidden="true"
-        viewBox="0 0 1024 1024">
+        viewBox="0 0 1024 1024"
+      >
         <path
-          d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z"></path>
+          d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z"
+        ></path>
       </svg>
     </span>
     <span v-else-if="typeof icon === 'object'">
@@ -45,15 +69,17 @@ const props = withDefaults(
     <span v-else-if="icon === 'save'" class="icon-save"><IconSave /></span>
     <span v-else-if="icon === 'print'" class="icon-print"><IconPrint /></span>
     <span v-else-if="icon === 'plus'" class="icon-plus"><IconPlus /></span>
-    <span v-else-if="icon === 'trash'" class="icon-trash"><IconTrash /></span>
+    <span v-else-if="icon === 'trash'" class="icon-trash"><IconDelete /></span>
     <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
     <span v-else-if="icon === 'send'" class="icon-send"><IconSend /></span>
+    <span v-else-if="icon === 'upload'" class="icon-upload"><IconUpload /></span>
+    <span v-else-if="icon === 'download'" class="icon-download"><IconDownload /></span>
     <slot v-else name="icon"></slot>
     <slot></slot>
   </button>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .btn {
   position: relative;
   padding: 4px 16px;
@@ -73,8 +99,13 @@ const props = withDefaults(
   background-color: white;
   line-height: 24px;
 
-  span {
+  svg {
     line-height: 0;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
     &.icon-plus {
       svg {
         shape-rendering: optimizespeed; // bật thì đậm hơn

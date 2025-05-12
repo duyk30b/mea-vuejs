@@ -1,19 +1,31 @@
+import { ref } from 'vue'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
+import {
+    PickupStrategy,
+    SplitBatchByCostPrice,
+    SplitBatchByDistributor,
+    SplitBatchByExpiryDate,
+    SplitBatchByWarehouse,
+} from '../enum'
 import type { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
+import type { Product } from '../product'
 import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'
 import { useMeStore } from './me.store'
-import { settingDefault, useSettingStore } from './setting.store'
+import { SETTING_DEFAULT } from './setting.default'
+import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 
 export class MeService {
-  static reCalculatorSetting(settingMap: Record<string, any>) {
-    const settingStore = useSettingStore()
-    Object.keys(settingDefault).forEach((key) => {
+  static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
+  static settingMap = ref<typeof SETTING_DEFAULT>({} as any)
+
+  static reCalculatorSetting(settingStore: any, settingMap: Record<string, any>) {
+    Object.keys(SETTING_DEFAULT).forEach((key) => {
       settingStore[key as keyof typeof SettingKey] = JSON.parse(
-        JSON.stringify(settingDefault[key as keyof typeof SettingKey])
+        JSON.stringify(SETTING_DEFAULT[key as keyof typeof SettingKey]),
       )
       if (settingMap[key] == null) return
       if (
@@ -30,7 +42,7 @@ export class MeService {
       } else {
         settingStore[key as keyof typeof SettingKey] = objectUpdatePropertyByObject(
           settingStore[key as keyof typeof SettingKey] as any,
-          settingMap[key]
+          settingMap[key],
         )
       }
     })
@@ -82,14 +94,14 @@ export class MeService {
 
   static async initData() {
     try {
-      const { organization, permissionAll, permissionIds, settingMap, user, rootSetting } =
+      const { organization, permissionAll, permissionIds, settingMap, settingMapRoot, user } =
         await MeApi.info()
 
-      MeService.reCalculatorSetting(settingMap)
+      const settingStore = useSettingStore()
+      MeService.reCalculatorSetting(settingStore, settingMap)
+      MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
+      MeService.reCalculatorSetting(MeService.settingMapRoot.value, settingMapRoot)
       MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
-
-      const meStore = useMeStore()
-      meStore.rootSetting = objectUpdatePropertyByObject(meStore.rootSetting, rootSetting)
     } catch (error) {
       console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }
@@ -97,6 +109,99 @@ export class MeService {
 
   static async reloadSetting() {
     const { settingMap } = await SettingApi.getMap()
-    this.reCalculatorSetting(settingMap)
+    const settingStore = useSettingStore()
+    this.reCalculatorSetting(settingStore, settingMap)
+    MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
   }
+
+  static getProductSetting(product: Product) {
+    const splitRule: typeof MeService.settingMap.value.PRODUCT_SETTING = {
+      allowNegativeQuantity: false,
+      pickupStrategy: product.pickupStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
+    }
+
+    const productSettingCommon = MeService.getProductSettingCommon()
+
+    splitRule.allowNegativeQuantity = productSettingCommon.allowNegativeQuantity
+
+    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
+      splitRule.pickupStrategy = productSettingCommon.pickupStrategy
+    }
+
+    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
+      splitRule.splitBatchByWarehouse = productSettingCommon.splitBatchByWarehouse
+    }
+
+    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
+      splitRule.splitBatchByDistributor = productSettingCommon.splitBatchByDistributor
+    }
+
+    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
+      splitRule.splitBatchByExpiryDate = productSettingCommon.splitBatchByExpiryDate
+    }
+
+    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
+      splitRule.splitBatchByCostPrice = productSettingCommon.splitBatchByCostPrice
+    }
+    return splitRule
+  }
+
+  static getProductSettingCommon() {
+    const splitRule = { ...MeService.settingMap.value.PRODUCT_SETTING }
+
+    const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
+
+    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
+      splitRule.pickupStrategy = productSettingRoot.pickupStrategy
+    }
+
+    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
+      splitRule.splitBatchByWarehouse = productSettingRoot.splitBatchByWarehouse
+    }
+
+    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
+      splitRule.splitBatchByDistributor = productSettingRoot.splitBatchByDistributor
+    }
+
+    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
+      splitRule.splitBatchByExpiryDate = productSettingRoot.splitBatchByExpiryDate
+    }
+
+    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
+      splitRule.splitBatchByCostPrice = productSettingRoot.splitBatchByCostPrice
+    }
+    return splitRule
+  }
+
+  static getPrintSetting() {
+    const printSettingCommon = {
+      ...MeService.settingMap.value.PRINT_SETTING,
+    }
+    const printSettingRoot = MeService.settingMapRoot.value.PRINT_SETTING
+    if (printSettingCommon._LAYOUT_HEADER.printHtmlId === 0) {
+      printSettingCommon._LAYOUT_HEADER.printHtmlId = printSettingRoot._LAYOUT_HEADER.printHtmlId
+    }
+    if (printSettingCommon.invoice.printHtmlId === 0) {
+      printSettingCommon.invoice.printHtmlId = printSettingRoot.invoice.printHtmlId
+    }
+    if (printSettingCommon.prescription.printHtmlId === 0) {
+      printSettingCommon.prescription.printHtmlId = printSettingRoot.prescription.printHtmlId
+    }
+    if (printSettingCommon.optometry.printHtmlId === 0) {
+      printSettingCommon.optometry.printHtmlId = printSettingRoot.optometry.printHtmlId
+    }
+    if (printSettingCommon.laboratory.printHtmlId === 0) {
+      printSettingCommon.laboratory.printHtmlId = printSettingRoot.laboratory.printHtmlId
+    }
+    if (printSettingCommon.radiology.printHtmlId === 0) {
+      printSettingCommon.radiology.printHtmlId = printSettingRoot.radiology.printHtmlId
+    }
+    return printSettingCommon
+  }
+
+
 }

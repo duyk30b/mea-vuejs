@@ -1,15 +1,13 @@
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Ticket } from '../../../../modules/ticket'
-import { DString, DTimer } from '../../../../utils'
+import { DString, ESTimer } from '../../../../utils'
 
 export const ticketOrderHtmlContent = (ticket: Ticket) => {
   const settingStore = useSettingStore()
   const meStore = useMeStore()
   const { formatMoney } = settingStore
   const showSubstance = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance
-  const showBatch = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch
-  const showExpiryDate = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expiryDate
   const showUnit = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit
   const showExpectedPrice = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.expectedPrice
   const showHintUsage = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage
@@ -222,7 +220,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
         </tbody>
       </table>
       <div style="text-align:right; font-style:italic; margin-top: 1rem">
-        ${DTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
+        ${ESTimer.timeToText(ticket.registeredAt, 'hh:mm:ss DD/MM/YYYY')}
       </div>
       <table style="margin-top: 0.5rem">
         <tr>

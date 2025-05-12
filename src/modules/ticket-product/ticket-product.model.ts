@@ -1,7 +1,9 @@
+import { MeService } from '../_me/me.service'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType } from '../enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '../enum'
 import { Product } from '../product'
+import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
 
 export enum TicketProductType {
@@ -11,17 +13,18 @@ export enum TicketProductType {
 export class TicketProduct {
   id: number
   priority: number
-  ticketId: number
+  pickupStrategy: PickupStrategy
   customerId: number
+  ticketId: number
+  warehouseIds: string
   productId: number
   batchId: number
-  warehouseId: number
   type: TicketProductType
   deliveryStatus: DeliveryStatus
   unitRate: number
   quantityPrescription: number
   quantity: number
-  costPrice: number
+  costAmount: number // không thể có costPrice, vì có thể bao gồm nhiều lô với vốn khác nhau
   expectedPrice: number
   discountMoney: number
   discountPercent: number
@@ -33,6 +36,8 @@ export class TicketProduct {
   customer?: Customer
   product?: Product | null
   batch?: Batch | null
+
+  ticketBatchList?: TicketBatch[]
 
   get unitName() {
     return this.product?.getUnitNameByRate(this.unitRate) || ''
@@ -54,20 +59,8 @@ export class TicketProduct {
     return this.discountMoney * this.unitRate
   }
 
-  get unitCostPrice() {
-    return this.costPrice * this.unitRate
-  }
-
   get unitActualPrice() {
     return this.actualPrice * this.unitRate
-  }
-
-  get lotNumber() {
-    return this.batch?.lotNumber
-  }
-
-  get expiryDate() {
-    return this.batch?.expiryDate
   }
 
   set unitQuantity(data: number) {
@@ -93,6 +86,7 @@ export class TicketProduct {
   static init(): TicketProduct {
     const ins = new TicketProduct()
     ins.id = 0
+    ins.pickupStrategy = MeService.getProductSettingCommon().pickupStrategy
     ins.ticketId = 0
     ins.customerId = 0
     ins.productId = 0
@@ -107,6 +101,7 @@ export class TicketProduct {
     ins.discountType = DiscountType.Percent
     ins.actualPrice = 0
     ins.hintUsage = ''
+    ins.warehouseIds = JSON.stringify([0])
     return ins
   }
 
@@ -114,6 +109,7 @@ export class TicketProduct {
     const ins = TicketProduct.init()
     ins.product = Product.init()
     ins.batch = Batch.init()
+    ins.ticketBatchList = []
     return ins
   }
 
@@ -139,6 +135,12 @@ export class TicketProduct {
     if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
       target.batch = source.batch ? Batch.basic(source.batch) : source.batch
     }
+    if (source.ticketBatchList) {
+      target.ticketBatchList = TicketBatch.basicList(source.ticketBatchList)
+      target.ticketBatchList.forEach((i) => {
+        i.batch = Batch.basic(i.batch!)
+      })
+    }
     return target
   }
 
@@ -148,15 +150,19 @@ export class TicketProduct {
 
   static equal(a: TicketProduct, b: TicketProduct) {
     if (a.id != b.id) return false
-    if (a.ticketId != b.ticketId) return false
+    if (a.priority != b.priority) return false
+    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.customerId != b.customerId) return false
+    if (a.ticketId != b.ticketId) return false
+    if (a.warehouseIds != b.warehouseIds) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
-    if (a.warehouseId != b.warehouseId) return false
+    if (a.type != b.type) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.unitRate != b.unitRate) return false
     if (a.quantityPrescription != b.quantityPrescription) return false
     if (a.quantity != b.quantity) return false
+    if (a.costAmount != b.costAmount) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
     if (a.discountPercent != b.discountPercent) return false

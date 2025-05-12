@@ -1,19 +1,24 @@
 <script setup lang="ts">
-import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import VueTag from '../../../common/VueTag.vue'
+import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
+import { CONFIG } from '../../../config'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PaymentViewType } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
-import { timeToText } from '../../../utils'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
-import { PaymentViewType, ticket } from './ticket-order-detail.ref'
+import TicketDeliveryStatusTooltip from '../../ticket-base/TicketDeliveryStatusTooltip.vue'
+import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const emit = defineEmits<{ (e: 'showInvoicePayment', value: PaymentViewType): void }>()
 
@@ -23,9 +28,10 @@ const showModalInvoicePayment = (paymentView: PaymentViewType) => {
 const colspan = computed(() => {
   if (isMobile) return 2
   return (
-    3 +
+    4 +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
-    Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount)
+    Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount) +
+    Number(settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount)
   )
 })
 </script>
@@ -45,23 +51,33 @@ const colspan = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ticketProcedure, index) in ticket.ticketProcedureList || []" :key="index">
+          <tr
+            v-for="(ticketProcedure, index) in ticketOrderDetailRef.ticketProcedureList || []"
+            :key="index"
+          >
             <td
               class="auto-index text-center whitespace-nowrap"
-              style="padding: 0.5rem 0.2rem"></td>
+              style="padding: 0.5rem 0.2rem"
+            ></td>
             <td>
               <div class="font-medium text-justify">
                 {{ ticketProcedure.procedure!.name }}
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)">
-                  <FileSearchOutlined />
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
-              <div class="flex gap-2" style="font-size: 0.8rem">
-                <div v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">
-                  NY:
+              <div class="" style="font-size: 0.8rem">
+                <div
+                  v-if="
+                    ticketProcedure.discountMoney &&
+                    settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice
+                  "
+                >
+                  - NY:
                   <span class="font-medium">
                     {{ formatMoney(ticketProcedure.expectedPrice) }}
                   </span>
@@ -70,14 +86,15 @@ const colspan = computed(() => {
                   v-if="
                     ticketProcedure.discountMoney &&
                     settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount
-                  ">
+                  "
+                >
                   - CK:
-                  <span v-if="ticketProcedure.discountType === 'VNĐ'" class="font-medium">
+                  <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
                     {{ formatMoney(ticketProcedure.discountMoney) }}
-                  </span>
-                  <span v-if="ticketProcedure.discountType === '%'" class="font-medium">
+                  </VueTag>
+                  <VueTag v-if="ticketProcedure.discountType === '%'" color="green">
                     {{ ticketProcedure.discountPercent || 0 }}%
-                  </span>
+                  </VueTag>
                 </div>
                 <div>
                   - ĐG:
@@ -94,43 +111,46 @@ const colspan = computed(() => {
               {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
             </td>
           </tr>
-          <tr v-for="(ticketProduct, index) in ticket.ticketProductList || []" :key="index">
+          <tr
+            v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList || []"
+            :key="index"
+          >
             <td
               class="auto-index text-center whitespace-nowrap"
-              style="padding: 0.5rem 0.2rem"></td>
+              style="padding: 0.5rem 0.2rem"
+            ></td>
             <td>
               <div class="font-medium text-justify">
                 {{ ticketProduct.product!.brandName }}
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(ticketProduct.product!)">
-                  <FileSearchOutlined />
+                  @click="modalProductDetail?.openModal(ticketProduct.product!)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
                 style="font-size: 0.8rem"
-                class="text-justify">
+                class="text-justify"
+              >
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.lotNumberAndExpiryDate"
-                class="flex gap-2 flex-wrap"
-                style="font-size: 0.8rem">
-                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
-                <div v-if="ticketProduct.expiryDate">
-                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
-                </div>
-              </div>
-              <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
-                style="font-size: 0.8rem">
+                style="font-size: 0.8rem"
+              >
                 {{ ticketProduct.hintUsage }}
               </div>
-              <div class="flex gap-2" style="font-size: 0.8rem">
-                <div v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice">
-                  NY:
+              <div class="" style="font-size: 0.8rem">
+                <div
+                  v-if="
+                    ticketProduct.discountMoney &&
+                    settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.expectedPrice
+                  "
+                >
+                  - NY:
                   <span class="font-medium">
                     {{ formatMoney(ticketProduct.expectedPrice * ticketProduct.unitRate) }}
                   </span>
@@ -138,7 +158,8 @@ const colspan = computed(() => {
                     v-if="
                       settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
                       ticketProduct.unitName
-                    ">
+                    "
+                  >
                     /{{ ticketProduct.unitName }}
                   </span>
                 </div>
@@ -146,14 +167,15 @@ const colspan = computed(() => {
                   v-if="
                     ticketProduct.discountMoney &&
                     settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount
-                  ">
+                  "
+                >
                   - CK:
-                  <span v-if="ticketProduct.discountType === 'VNĐ'" class="font-medium">
-                    {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
-                  </span>
-                  <span v-if="ticketProduct.discountType === '%'" class="font-medium">
+                  <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
+                    {{ formatMoney(ticketProduct.discountMoney) }}
+                  </VueTag>
+                  <VueTag v-if="ticketProduct.discountType === '%'" color="green">
                     {{ ticketProduct.discountPercent || 0 }}%
-                  </span>
+                  </VueTag>
                 </div>
                 <div>
                   - ĐG:
@@ -164,7 +186,8 @@ const colspan = computed(() => {
                     v-if="
                       settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit &&
                       ticketProduct.unitName
-                    ">
+                    "
+                  >
                     /{{ ticketProduct.unitName }}
                   </span>
                 </div>
@@ -182,33 +205,43 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
-            <th>#</th>
+            <th style="width: 40px">#</th>
+            <th style="width: 40px"></th>
             <th>Tên</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
             <th>S.Lượng</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>
             <th>Đ.Giá</th>
+            <th v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount">T.Vốn</th>
             <th>T.Tiền</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(ticketProcedure, index) in ticket.ticketProcedureList" :key="index">
-            <td class="auto-index text-center"></td>
+          <tr
+            v-for="(ticketProcedure, index) in ticketOrderDetailRef.ticketProcedureList"
+            :key="index"
+          >
+            <td class="auto-index text-center">
+              <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProcedure.id }})</span>
+            </td>
+            <td class="text-center"></td>
             <td :colspan="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit ? '2' : '1'">
               <div class="text-justify font-medium whitespace-nowrap" style="word-break: break-all">
                 {{ ticketProcedure.procedure!.name }}
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)">
-                  <FileSearchOutlined />
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
             </td>
             <td class="text-center">{{ ticketProcedure.quantity }}</td>
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
-              class="text-center">
+              class="text-center"
+            >
               <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
                 {{ formatMoney(ticketProcedure.discountMoney) }}
               </VueTag>
@@ -223,50 +256,55 @@ const colspan = computed(() => {
                   ticketProcedure.discountMoney
                 "
                 class="text-xs italic line-through"
-                style="color: var(--text-red)">
+                style="color: var(--text-red)"
+              >
                 {{ formatMoney(ticketProcedure.expectedPrice) }}
               </div>
               <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
             </td>
+            <td v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount"></td>
             <td class="text-right">
               {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
             </td>
           </tr>
-          <tr v-for="(ticketProduct, index) in ticket.ticketProductList" :key="index">
-            <td class="auto-index text-center"></td>
+          <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
+            <td class="auto-index text-center">
+              <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
+            </td>
+            <td class="text-center">
+              <TicketDeliveryStatusTooltip :deliveryStatus="ticketProduct.deliveryStatus" />
+            </td>
             <td>
               <div class="text-justify font-medium">
                 {{ ticketProduct.product!.brandName }}
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(ticketProduct.product!)">
-                  <FileSearchOutlined />
+                  @click="modalProductDetail?.openModal(ticketProduct.product!)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.substance"
-                style="font-size: 0.8rem">
+                style="font-size: 0.8rem"
+              >
                 {{ ticketProduct.product!.substance }}
               </div>
               <div
-                v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.lotNumberAndExpiryDate"
-                style="font-size: 0.8rem"
-                class="flex gap-2">
-                <div v-if="ticketProduct.lotNumber">S.Lô {{ ticketProduct.lotNumber }}</div>
-                <div v-if="ticketProduct.expiryDate">
-                  - HSD {{ timeToText(ticketProduct.expiryDate) }}
-                </div>
-              </div>
-              <div
                 v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.hintUsage"
-                style="font-size: 0.8rem">
+                style="font-size: 0.8rem"
+              >
                 {{ ticketProduct.hintUsage }}
+              </div>
+              <div v-if="CONFIG.MODE === 'development'">
+                PickupStrategy - {{ ticketProduct.pickupStrategy }}
               </div>
             </td>
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit"
-              class="text-center">
+              class="text-center"
+            >
               {{ ticketProduct.unitName }}
             </td>
             <td class="text-center">
@@ -274,7 +312,8 @@ const colspan = computed(() => {
             </td>
             <td
               v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount"
-              class="text-center">
+              class="text-center"
+            >
               <VueTag v-if="ticketProduct.discountType === 'VNĐ'" color="green">
                 {{ formatMoney(ticketProduct.discountMoney * ticketProduct.unitRate) }}
               </VueTag>
@@ -289,10 +328,17 @@ const colspan = computed(() => {
                   ticketProduct.discountMoney
                 "
                 class="text-xs italic line-through"
-                style="color: var(--text-red)">
+                style="color: var(--text-red)"
+              >
                 {{ formatMoney(ticketProduct.expectedPrice * ticketProduct.unitRate) }}
               </div>
               <div>{{ formatMoney(ticketProduct.actualPrice * ticketProduct.unitRate) }}</div>
+            </td>
+            <td
+              v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount"
+              class="text-right"
+            >
+              {{ formatMoney(ticketProduct.costAmount) }}
             </td>
             <td class="text-right">
               {{ formatMoney(ticketProduct.actualPrice * ticketProduct.quantity) }}
@@ -305,56 +351,68 @@ const colspan = computed(() => {
           <td class="text-right font-medium" :colspan="colspan">Tiền hàng</td>
           <td class="text-right" :colspan="2">
             <span
-              v-if="ticket.itemsDiscount"
+              v-if="ticketOrderDetailRef.itemsDiscount"
               style="font-style: italic; font-size: 13px"
-              class="mr-2">
-              (CK: {{ formatMoney(ticket.itemsDiscount) }})
+              class="mr-2"
+            >
+              (CK: {{ formatMoney(ticketOrderDetailRef.itemsDiscount) }})
             </span>
             <span class="font-medium">
-              {{ formatMoney(ticket.itemsActualMoney) }}
+              {{ formatMoney(ticketOrderDetailRef.itemsActualMoney) }}
             </span>
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount || ticket.discountMoney">
+        <tr
+          v-if="
+            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.discount ||
+            ticketOrderDetailRef.discountMoney
+          "
+        >
           <td class="text-right" :colspan="colspan">Chiết khấu</td>
           <td class="text-right" :colspan="2">
-            <VueTag color="green">{{ ticket.discountPercent || 0 }}%</VueTag>
+            <VueTag color="green">{{ ticketOrderDetailRef.discountPercent || 0 }}%</VueTag>
             <span class="ml-2">
-              {{ formatMoney(ticket.discountMoney) }}
+              {{ formatMoney(ticketOrderDetailRef.discountMoney) }}
             </span>
           </td>
         </tr>
-        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge || ticket.surcharge">
+        <tr
+          v-if="
+            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.surcharge ||
+            ticketOrderDetailRef.surcharge
+          "
+        >
           <td class="text-right" :colspan="colspan">
             Phụ phí
             <span
               v-if="
-                (ticket.ticketSurchargeList || []).length > 1 ||
-                ((ticket.ticketSurchargeList || []).length == 1 &&
-                  ticket.ticketSurchargeList![0].key !== '_unknown')
+                (ticketOrderDetailRef.ticketSurchargeList || []).length > 1 ||
+                ((ticketOrderDetailRef.ticketSurchargeList || []).length == 1 &&
+                  ticketOrderDetailRef.ticketSurchargeList![0].key !== '_unknown')
               "
-              class="ml-1">
+              class="ml-1"
+            >
               ({{
-                ticket
+                ticketOrderDetailRef
                   .ticketSurchargeList!.map((i) => `${i.name}: ${formatMoney(i.money)}`)
                   .join(' - ')
               }})
             </span>
           </td>
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.surcharge) }}
+            {{ formatMoney(ticketOrderDetailRef.surcharge) }}
           </td>
         </tr>
         <tr>
           <td class="text-right font-medium" :colspan="colspan">Tổng tiền</td>
           <td class="text-right font-medium" :colspan="2">
-            {{ formatMoney(ticket.totalMoney) }}
+            {{ formatMoney(ticketOrderDetailRef.totalMoney) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount">
           <td class="text-right" :colspan="colspan">Tiền vốn</td>
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.itemsCostAmount) }}
+            {{ formatMoney(ticketOrderDetailRef.itemsCostAmount) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.expense">
@@ -362,88 +420,64 @@ const colspan = computed(() => {
             Chi phí
             <span
               v-if="
-                (ticket.ticketExpenseList || []).length > 1 ||
-                ((ticket.ticketExpenseList || []).length == 1 &&
-                  ticket.ticketExpenseList![0].key !== '_unknown')
+                (ticketOrderDetailRef.ticketExpenseList || []).length > 1 ||
+                ((ticketOrderDetailRef.ticketExpenseList || []).length == 1 &&
+                  ticketOrderDetailRef.ticketExpenseList![0].key !== '_unknown')
               "
-              class="ml-1">
+              class="ml-1"
+            >
               ({{
-                ticket
+                ticketOrderDetailRef
                   .ticketExpenseList!.map((i) => `${i.name}: ${formatMoney(i.money)}`)
                   .join(' - ')
               }})
             </span>
           </td>
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.expense) }}
+            {{ formatMoney(ticketOrderDetailRef.expense) }}
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
-          <td class="text-right" :colspan="colspan">Tiền lãi</td>
+          <td class="text-right" :colspan="colspan">
+            <span v-if="ticketOrderDetailRef.status === TicketStatus.Draft">Dự kiến lãi</span>
+            <span v-else>Tiền lãi</span>
+          </td>
           <td class="text-right font-medium" :colspan="2">
-            {{ formatMoney(ticket.profit) }}
+            {{ formatMoney(ticketOrderDetailRef.profit) }}
           </td>
         </tr>
         <tr
           v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid || ticket.paid !== ticket.totalMoney
-          ">
+            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
+            ticketOrderDetailRef.paid !== ticketOrderDetailRef.totalMoney
+          "
+        >
           <td
-            v-if="
-              [TicketStatus.Draft, TicketStatus.Approved, TicketStatus.Executing].includes(
-                ticket.ticketStatus
-              )
-            "
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.Prepayment)">
+            @click="showModalInvoicePayment(PaymentViewType.Success)"
+          >
             <a>
               <span class="mr-1">Đã tạm ứng</span>
-              <ExclamationCircleOutlined />
+              <IconExclamationCircle />
             </a>
           </td>
-          <td
-            v-else-if="[TicketStatus.Debt].includes(ticket.ticketStatus)"
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.PayDebt)">
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <ExclamationCircleOutlined />
-            </a>
-          </td>
-          <td
-            v-else
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.Success)">
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <ExclamationCircleOutlined />
-            </a>
-          </td>
+
           <td class="text-right" :colspan="2">
-            {{ formatMoney(ticket.paid) }}
+            {{ formatMoney(ticketOrderDetailRef.paid) }}
           </td>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || ticket.totalMoney - ticket.paid
-          ">
-          <template
-            v-if="[TicketStatus.Draft, TicketStatus.Approved].includes(ticket.ticketStatus)">
-            <td v-if="ticket.paid <= ticket.totalMoney" class="text-right" :colspan="colspan">
-              Còn thiếu
-            </td>
-            <td v-else class="text-right" :colspan="colspan">Thừa</td>
-            <td class="text-right font-medium" :colspan="2">
-              {{ formatMoney(Math.abs(ticket.totalMoney - ticket.paid)) }}
-            </td>
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || ticketOrderDetailRef.debt">
+          <template v-if="ticketOrderDetailRef.debt >= 0">
+            <td class="text-right" :colspan="colspan">Còn thiếu</td>
+            <td colspan="2" class="text-right">{{ formatMoney(ticketOrderDetailRef.debt) }}</td>
           </template>
-          <template v-else>
-            <td class="text-right" :colspan="colspan">Ghi nợ</td>
-            <td class="text-right font-medium" :colspan="2">
-              {{ formatMoney(ticket.debt) }}
+          <template v-if="ticketOrderDetailRef.debt < 0">
+            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
+              <span>Thanh toán dư</span>
+            </td>
+            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+              {{ formatMoney(-ticketOrderDetailRef.debt) }}
             </td>
           </template>
         </tr>

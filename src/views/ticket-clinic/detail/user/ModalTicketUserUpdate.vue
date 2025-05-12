@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
@@ -186,9 +186,7 @@ defineExpose({ openModal })
       </div>
       <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => updateTicketUser()">
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div>
-            {{ roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || '' }}
-          </div>
+          <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
           <div>
             <InputText :value="userMap[ticketUser.userId]?.fullName" disabled />
           </div>
@@ -241,7 +239,8 @@ defineExpose({ openModal })
             <span
               v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
               class="ml-1"
-              style="font-size: 0.9em">
+              style="font-size: 0.9em"
+            >
               <del>
                 <i>({{ formatMoney(ticketUser.ticketItemExpectedPrice) }})</i>
               </del>
@@ -259,7 +258,8 @@ defineExpose({ openModal })
               v-if="
                 ticketUser.commissionCalculatorType !== CommissionCalculatorType.VND &&
                 ticketUser.commissionMoney !== 0
-              ">
+              "
+            >
               (
               <b>{{ formatMoney(ticketUser.commissionMoney) }}</b>
               )
@@ -273,24 +273,28 @@ defineExpose({ openModal })
                 { value: CommissionCalculatorType.PercentExpected, text: '% Giá niêm yết' },
                 { value: CommissionCalculatorType.PercentActual, text: '% Giá sau chiết khấu' },
                 { value: CommissionCalculatorType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected
                 "
                 :value="ticketUser.commissionPercentExpected"
-                @update:value="handleChangeCommissionPercentExpected" />
+                @update:value="handleChangeCommissionPercentExpected"
+              />
               <InputMoney
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentActual
                 "
                 :value="ticketUser.commissionPercentActual"
-                @update:value="handleChangeCommissionPercentActual" />
+                @update:value="handleChangeCommissionPercentActual"
+              />
               <InputMoney
                 v-if="ticketUser.commissionCalculatorType === CommissionCalculatorType.VND"
                 :value="ticketUser.commissionMoney"
-                @update:value="handleChangeCommissionMoney" />
+                @update:value="handleChangeCommissionMoney"
+              />
             </div>
           </div>
         </div>
@@ -300,13 +304,14 @@ defineExpose({ openModal })
           <div style="width: 100%">
             <InputMoney
               :value="ticketUser.commissionMoney * ticketUser.quantity"
-              @update:value="handleChangeTotalCommissionMoney" />
+              @update:value="handleChangeTotalCommissionMoney"
+            />
           </div>
         </div>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -314,7 +319,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

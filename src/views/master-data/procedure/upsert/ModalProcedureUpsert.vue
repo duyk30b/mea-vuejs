@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconTrash } from '../../../../common/icon'
+import { IconClose, IconDelete } from '../../../../common/icon-antd'
 import {
   InputFilter,
   InputMoney,
@@ -13,11 +13,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import {
-  Commission,
-  CommissionCalculatorType,
-  InteractType,
-} from '../../../../modules/commission'
+import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService, ProcedureType } from '../../../../modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
@@ -55,7 +51,7 @@ const hasChangeData = computed(() => {
   if (
     !Commission.equalList(
       (procedure.value.commissionList || []).filter((i) => !!i.roleId),
-      procedureOrigin.value.commissionList || []
+      procedureOrigin.value.commissionList || [],
     )
   ) {
     return true
@@ -253,7 +249,8 @@ defineExpose({ openModal })
                   <div>
                     <VueSelect
                       v-model:value="procedure.procedureGroupId"
-                      :options="procedureGroupOptions" />
+                      :options="procedureGroupOptions"
+                    />
                   </div>
                 </div>
                 <div style="flex-grow: 1; flex-basis: 90%">
@@ -263,7 +260,8 @@ defineExpose({ openModal })
                       v-model:value="procedure.price"
                       :min="0"
                       style="width: 100%"
-                      append="VNĐ" />
+                      append="VNĐ"
+                    />
                   </div>
                 </div>
 
@@ -286,7 +284,7 @@ defineExpose({ openModal })
                           <template #option="{ item: { data } }">
                             <div>
                               <b>{{ data.brandName }}</b>
-                              <span v-if="data.hasManageQuantity">
+                              <span v-if="data.pickupStrategy">
                                 - Tồn
                                 <span
                                   style="font-weight: 700"
@@ -332,7 +330,7 @@ defineExpose({ openModal })
                             </td>
                             <td class="text-center">
                               <a class="text-red-500" @click="consumableList.splice(i, 1)">
-                                <IconTrash />
+                                <IconDelete />
                               </a>
                             </td>
                           </tr>
@@ -380,18 +378,6 @@ defineExpose({ openModal })
                             @update:value="(v) => (procedure.gapHours = v * gapHoursType)" />
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-8 flex items-center">
-                    <div class="">Active</div>
-                    <div class="ml-4">
-                      <a-switch
-                        :checked="Boolean(procedure.isActive)"
-                        @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)" />
-                    </div>
-                    <div v-if="!procedure.isActive" class="ml-4">
-                      Dịch vụ này tạm thời ngừng kinh doanh
                     </div>
                   </div>
                 </div> -->
@@ -469,14 +455,16 @@ defineExpose({ openModal })
                 <div
                   v-for="(commission, index) in procedure.commissionList"
                   :key="index"
-                  class="mt-4 flex flex-wrap gap-2">
+                  class="mt-4 flex flex-wrap gap-2"
+                >
                   <div style="flex-grow: 1; flex-basis: 250px">
                     <div>Vai trò</div>
                     <div>
                       <InputFilter
                         v-model:value="procedure.commissionList![index].roleId"
                         :options="roleOptions"
-                        :maxHeight="120">
+                        :maxHeight="120"
+                      >
                         <template #option="{ item: { data } }">{{ data.name }}</template>
                       </InputFilter>
                     </div>
@@ -488,7 +476,8 @@ defineExpose({ openModal })
                         :value="commission.commissionValue"
                         @update:value="
                           (v: number) => (procedure.commissionList![index].commissionValue = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="flex-grow: 1; flex-basis: 150px">
@@ -510,7 +499,8 @@ defineExpose({ openModal })
                         @update:value="
                           (v: number) =>
                             (procedure.commissionList![index].commissionCalculatorType = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="width: 30px">
@@ -518,8 +508,9 @@ defineExpose({ openModal })
                     <div class="pt-2 flex justify-center">
                       <a
                         style="color: var(--text-red)"
-                        @click="procedure.commissionList!.splice(index, 1)">
-                        <IconTrash width="18" height="18" />
+                        @click="procedure.commissionList!.splice(index, 1)"
+                      >
+                        <IconDelete width="18" height="18" />
                       </a>
                     </div>
                   </div>
@@ -539,10 +530,11 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] && procedure.id"
             color="red"
             icon="trash"
-            @click="clickDestroy">
+            @click="clickDestroy"
+          >
             Xóa
           </VueButton>
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left: auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton
@@ -550,7 +542,8 @@ defineExpose({ openModal })
             type="submit"
             :loading="saveLoading"
             :disabled="!hasChangeData"
-            icon="save">
+            icon="save"
+          >
             Lưu lại
           </VueButton>
         </div>

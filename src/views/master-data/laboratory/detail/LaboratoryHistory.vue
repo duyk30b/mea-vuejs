@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory } from '../../../../modules/laboratory'
 import { TicketLaboratory, TicketLaboratoryApi } from '../../../../modules/ticket-laboratory'
 import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ laboratory: Laboratory }>(), {
   laboratory: () => Laboratory.blank(),
@@ -51,7 +52,7 @@ watch(
     if (newValue) await startFetchData()
     else ticketLaboratoryList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -89,7 +90,8 @@ watch(
             <div
               v-if="ticketLaboratory.discountMoney"
               class="text-xs italic line-through"
-              style="color: var(--text-red)">
+              style="color: var(--text-red)"
+            >
               {{ formatMoney(ticketLaboratory.expectedPrice) }}
             </div>
             {{ formatMoney(ticketLaboratory.actualPrice) }}
@@ -97,13 +99,13 @@ watch(
         </tr>
       </tbody>
     </table>
-    <div class="mt-4 float-right mb-2">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
         :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

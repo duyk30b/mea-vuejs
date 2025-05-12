@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ApartmentOutlined, FormOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import { IconApartment, IconForm } from '../../../common/icon-antd'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { UserApi, type User } from '../../../modules/user'
 import ModalAccountUpsert from './ModalAccountUpsert.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const modalAccountUpsert = ref<InstanceType<typeof ModalAccountUpsert>>()
 
@@ -57,7 +59,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalAccountUpsertSuccess = async (
   data: User,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   await startFetchData()
 }
@@ -73,7 +75,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ApartmentOutlined />
+        <IconApartment />
         Danh sách tài khoản
       </div>
       <VueButton color="blue" icon="plus" @click="modalAccountUpsert?.openModal()">
@@ -113,33 +115,6 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
                 {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
               </div>
             </td>
-            <!-- <td>
-              <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
-                <div>
-                  <span v-if="device.mobile === 1">
-                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
-                  </span>
-                  <span v-else>
-                    <font-awesome-icon :icon="['fas', 'desktop']" />
-                  </span>
-                  <span class="ml-2">{{ device.os }}</span>
-                  /
-                  <span>{{ device.browser }}</span>
-                  -
-                  <span>{{ device.ip }}</span>
-                </div>
-                <div class="flex gap-2">
-                  <VueButton
-                    class="ml-2"
-                    size="small"
-                    @click="deviceLogout(user.id!, device.refreshExp)">
-                    Đăng xuất
-                  </VueButton>
-                  <VueTag v-if="device.online" color="success">Online</VueTag>
-                  <VueTag v-if="!device.online" color="default">Offline</VueTag>
-                </div>
-              </div>
-            </td> -->
             <td class="text-center">
               <VueTag v-if="user.isActive" icon="check" color="green">Active</VueTag>
               <VueTag v-else icon="minus" color="orange">Active</VueTag>
@@ -148,24 +123,32 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalAccountUpsert?.openModal(user.id)">
-                <FormOutlined />
+                @click="modalAccountUpsert?.openModal(user.id)"
+              >
+                <IconForm />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

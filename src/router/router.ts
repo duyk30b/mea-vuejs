@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
+import { inventoryRouter } from './inventory.router'
 import { masterDataRouter } from './master-data.router'
 import { statisticRouter } from './statistic.router'
 import { ticketRouter } from './ticket.router'
-import { warehouseRouter } from './warehouse.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -28,7 +28,7 @@ const Router = createRouter({
           meta: { title: 'Trang chủ' },
         },
         ...ticketRouter,
-        warehouseRouter,
+        inventoryRouter,
         masterDataRouter,
         statisticRouter,
         {
@@ -57,13 +57,13 @@ const Router = createRouter({
             {
               path: 'role',
               name: 'Role',
+              meta: { title: 'Vai trò' },
               redirect: () => ({ name: 'RoleList' }),
               children: [
                 {
                   path: 'list',
                   name: 'RoleList',
                   component: () => import('../views/user/role/RoleList.vue'),
-                  meta: { title: 'Vai trò' },
                 },
                 {
                   path: 'upsert/:id?',
@@ -80,9 +80,21 @@ const Router = createRouter({
             },
             {
               path: 'commission',
-              meta: { title: 'Hoa hồng' },
+              meta: { title: 'Vị trí' },
               name: 'Commission',
               component: () => import('../views/user/commission/list/CommissionList.vue'),
+            },
+          ],
+        },
+        {
+          path: 'finance',
+          name: 'Finance',
+          children: [
+            {
+              path: 'payment',
+              name: 'PaymentList',
+              component: () => import('../views/payment/PaymentList.vue'),
+              meta: { title: 'Thu chi' },
             },
           ],
         },
@@ -105,7 +117,7 @@ const Router = createRouter({
             {
               path: 'setting',
               name: 'SystemSetting',
-              component: () => import('../views/systems/SystemSetting.vue'),
+              component: () => import('../views/systems/setting/SettingSystemContainer.vue'),
               meta: { title: 'Hệ thống' },
             },
           ],

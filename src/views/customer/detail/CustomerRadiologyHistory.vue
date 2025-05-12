@@ -4,9 +4,10 @@ import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
-import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -60,7 +61,7 @@ watch(
     if (newValue) await startFetchData()
     else ticketRadiologyList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -89,7 +90,7 @@ watch(
               </div>
               <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-right">
@@ -101,7 +102,8 @@ watch(
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                ">
+                "
+              >
                 {{ formatMoney(ticketRadiology.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
@@ -111,17 +113,6 @@ watch(
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
     </div>
     <div v-if="!isMobile" class="table-wrapper mt-4 w-full">
       <table>
@@ -140,7 +131,7 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>
@@ -149,7 +140,8 @@ watch(
                 <a
                   @click="
                     modalTicketRadiologyResult?.openModal(ticketRadiology.id, { noEdit: true })
-                  ">
+                  "
+                >
                   <IconVisibility width="20" height="20" />
                 </a>
               </div>
@@ -164,7 +156,8 @@ watch(
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                ">
+                "
+              >
                 {{ formatMoney(ticketRadiology.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
@@ -174,16 +167,15 @@ watch(
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

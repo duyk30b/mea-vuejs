@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconSpin } from '../../../../common/icon'
+import { IconSpin } from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
@@ -25,14 +25,12 @@ const { formatMoney, isMobile } = settingStore
 
 const ticketProcedureList = ref<TicketProcedure[]>([])
 
-const procedureMap = ref<Record<string, Procedure>>({})
-
 watch(
   () => ticketClinicRef.value.ticketProcedureList!,
   (newValue: TicketProcedure[]) => {
     ticketProcedureList.value = TicketProcedure.fromList(newValue || [])
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 const hasChangePriority = computed(() => {
@@ -46,9 +44,8 @@ const hasChangePriority = computed(() => {
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
-    procedureMap.value = await ProcedureService.getMap()
+    await ticketClinicRef.value.refreshProcedure()
   } catch (error: any) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:52 ~ ProcedureService.list ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
@@ -123,8 +120,9 @@ const savePriorityTicketProcedure = async () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -138,12 +136,13 @@ const savePriorityTicketProcedure = async () => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === ticketProcedureList.length - 1"
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
-            <td>{{ procedureMap[tpItem.procedureId]?.name }}</td>
+            <td>{{ tpItem.procedure?.name }}</td>
             <td class="text-center">{{ tpItem.quantity }}</td>
             <td class="text-right">
               <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
@@ -161,11 +160,12 @@ const savePriorityTicketProcedure = async () => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
+                    ticketClinicRef.status,
                   ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
-                @click="modalTicketProcedureUpdate?.openModal(tpItem)">
+                @click="modalTicketProcedureUpdate?.openModal(tpItem)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
@@ -180,7 +180,7 @@ const savePriorityTicketProcedure = async () => {
                   formatMoney(
                     ticketProcedureList.reduce((acc: number, item: TicketProcedure) => {
                       return (acc += item.expectedPrice * item.quantity)
-                    }, 0)
+                    }, 0),
                   )
                 }}
               </b>
@@ -200,7 +200,8 @@ const savePriorityTicketProcedure = async () => {
       "
       color="blue"
       icon="save"
-      @click="savePriorityTicketProcedure">
+      @click="savePriorityTicketProcedure"
+    >
       Lưu lại
     </VueButton>
   </div>

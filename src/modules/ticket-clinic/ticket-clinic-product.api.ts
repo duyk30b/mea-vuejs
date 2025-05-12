@@ -14,20 +14,21 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
+          pickupStrategy: i.pickupStrategy,
+          warehouseIds: i.warehouseIds,
           productId: i.productId,
           batchId: i.batchId,
-          warehouseId: i.warehouseId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,
-          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
+          costAmount: i.costAmount,
           actualPrice: i.actualPrice,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -42,21 +43,22 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
+          pickupStrategy: i.pickupStrategy,
+          warehouseIds: i.warehouseIds,
           productId: i.productId,
           batchId: i.batchId,
-          warehouseId: i.warehouseId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,
-          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
           actualPrice: i.actualPrice,
+          costAmount: i.costAmount,
           hintUsage: i.hintUsage,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -64,7 +66,7 @@ export class TicketClinicProductApi {
   static async destroyTicketProductConsumable(body: { ticketId: number; ticketProductId: number }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-product-consumable/${ticketProductId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-product-consumable/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -75,7 +77,7 @@ export class TicketClinicProductApi {
   }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-product-prescription/${ticketProductId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-product-prescription/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -92,7 +94,7 @@ export class TicketClinicProductApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -109,7 +111,7 @@ export class TicketClinicProductApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -132,17 +134,19 @@ export class TicketClinicProductApi {
               discountType: ticketProduct.discountType,
               discountMoney: ticketProduct.discountMoney,
               discountPercent: ticketProduct.discountPercent,
+              costAmount: ticketProduct.costAmount,
               actualPrice: ticketProduct.actualPrice,
               hintUsage: ticketProduct.hintUsage,
             }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -165,17 +169,19 @@ export class TicketClinicProductApi {
               discountType: ticketProduct.discountType,
               discountMoney: ticketProduct.discountMoney,
               discountPercent: ticketProduct.discountPercent,
+              costAmount: ticketProduct.costAmount,
               actualPrice: ticketProduct.actualPrice,
               hintUsage: ticketProduct.hintUsage,
             }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }

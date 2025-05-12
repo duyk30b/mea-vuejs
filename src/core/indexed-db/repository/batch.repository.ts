@@ -3,10 +3,10 @@ import type { BaseIndexedDB } from '../_base/_base.indexed-db'
 import { BaseRepository } from '../_base/_base.repository'
 import { MeaDatabase } from '../database'
 
-export class ProductRepository extends BaseRepository<Batch> {
+export class BatchRepository extends BaseRepository<Batch> {
   constructor(baseDB: BaseIndexedDB) {
     super({ baseDB, storeName: 'Batch' })
   }
 }
 
-export const BatchDB = new ProductRepository(MeaDatabase)
+export const BatchDB = new BatchRepository(MeaDatabase)

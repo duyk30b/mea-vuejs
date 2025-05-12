@@ -1,17 +1,46 @@
 @use './variables';
 @use './basic/reset.scss';
+@use './components/menu';
 @use './components/table';
 @use './components/skeleton';
+@use './components/circle';
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+html {
+  height: 100%;
+}
 
 body {
-  font-family: 'Roboto', sans-serif !important;
+  height: 100%;
   font-size: 14px;
+  font-family: 'Roboto', Arial, 'Noto Sans', sans-serif !important;
+}
+
+.max-line-1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-clamp: 1;
+}
+
+.max-line-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-clamp: 2;
+}
+
+.input-basic {
+  width: 100%;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #ccc;
 }
 
 .ck-editor__editable {

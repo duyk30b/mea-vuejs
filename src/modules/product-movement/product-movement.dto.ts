@@ -9,6 +9,7 @@ export class ProductMovementGetQuery {
     product?: boolean
     receipt?: boolean
     ticket?: boolean
+    stockCheck?: boolean
     distributor?: boolean
     customer?: boolean
     user?: boolean

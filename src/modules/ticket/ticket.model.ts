@@ -1,15 +1,19 @@
+import { ESArray } from '../../utils'
 import { Appointment } from '../appointment'
+import { Batch } from '../batch'
 import { Customer } from '../customer'
-import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
-import { DiscountType } from '../enum'
+import { DeliveryStatus, DiscountType } from '../enum'
 import { Image } from '../image/image.model'
-import { LaboratoryValueType, type Laboratory } from '../laboratory'
-import { LaboratoryGroup } from '../laboratory-group'
-import { Procedure } from '../procedure'
-import { Product } from '../product'
-import type { Radiology } from '../radiology'
+import { LaboratoryService, LaboratoryValueType } from '../laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
+import { Payment } from '../payment/payment.model'
+import { Procedure, ProcedureService } from '../procedure'
+import { Product, ProductService } from '../product'
+import { RadiologyService } from '../radiology'
+import { RoleService } from '../role'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
+import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
 import { TicketLaboratory } from '../ticket-laboratory'
 import { TicketLaboratoryGroup } from '../ticket-laboratory-group'
@@ -19,11 +23,12 @@ import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
+import { UserService } from '../user'
 
 export enum TicketStatus {
   Schedule = 1,
   Draft = 2,
-  Approved = 3,
+  Deposited = 3,
   Executing = 4,
   Debt = 5,
   Completed = 6,
@@ -44,7 +49,8 @@ export class Ticket {
   customerSourceId: number
   ticketType: TicketType
   customType: number
-  ticketStatus: TicketStatus
+  status: TicketStatus
+  deliveryStatus: DeliveryStatus
 
   itemsCostAmount: number
   procedureMoney: number
@@ -75,15 +81,18 @@ export class Ticket {
   date: number
   dailyIndex: number
 
+  note: string
+
   registeredAt: number // Giờ đăng ký khám
   startedAt: number | null // Giờ vào khám
   endedAt: number
   updatedAt: number | null // Giờ kết thúc khám
 
   customer?: Customer
-  customerPaymentList?: CustomerPayment[]
+  paymentList?: Payment[]
   customerSource?: CustomerSource
   ticketAttributeList?: TicketAttribute[]
+  ticketBatchList?: TicketBatch[]
   ticketProductList?: TicketProduct[]
   ticketProductConsumableList?: TicketProduct[]
   ticketProductPrescriptionList?: TicketProduct[]
@@ -106,7 +115,7 @@ export class Ticket {
     const ins = new Ticket()
     ins.id = 0
     ins.customType = 0
-    ins.ticketStatus = TicketStatus.Draft
+    ins.status = TicketStatus.Draft
     ins.itemsCostAmount = 0
     ins.procedureMoney = 0
     ins.productMoney = 0
@@ -127,10 +136,11 @@ export class Ticket {
   static blank(): Ticket {
     const ins = Ticket.init()
     ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
-    ins.customerPaymentList = []
+    ins.paymentList = []
     ins.ticketAttributeList = []
-    ins.ticketProcedureList = []
+    ins.ticketBatchList = []
     ins.ticketProductList = []
+    ins.ticketProcedureList = []
     ins.ticketLaboratoryList = []
     ins.ticketLaboratoryGroupList = []
     ins.ticketLaboratoryResultList = []
@@ -159,45 +169,79 @@ export class Ticket {
     return sources.map((i) => Ticket.basic(i))
   }
 
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
-    ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.interactType]) {
-        this.ticketUserGroup[i.interactType] = {}
-      }
-      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
-        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+  async refreshProduct() {
+    const ticketProductList = [
+      ...(this.ticketProductList || []),
+      ...(this.ticketProductPrescriptionList || []),
+      ...(this.ticketProductConsumableList || []),
+    ].filter((i) => !!i)
+
+    if (!ticketProductList.length) return
+
+    const productIdList = ticketProductList.map((i) => i.productId)
+    let productMap: Record<string, Product> = {}
+    if (productIdList.length) {
+      const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
+      productMap = ESArray.arrayToKeyValue(productList, 'id')
+    }
+
+    ticketProductList.forEach((i) => (i.product = productMap[i.productId]))
+  }
+
+  async refreshProcedure() {
+    if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
+      return
+    }
+    const procedureMap = await ProcedureService.getMap()
+    this.ticketProcedureList?.forEach((i) => {
+      i.procedure = procedureMap![i.procedureId]
     })
   }
 
-  static refreshTreeData(
-    ticket: Ticket,
-    masterData: {
-      procedureMap?: Record<string, Procedure>
-      radiologyMap?: Record<string, Radiology>
-      laboratoryMap?: Record<string, Laboratory>
-      laboratoryGroupMap?: Record<string, LaboratoryGroup>
+  async refreshRadiology() {
+    if (!this.ticketRadiologyList || !this.ticketRadiologyList.length) {
+      return
     }
-  ) {
-    ;(ticket.ticketProcedureList || []).forEach((i) => {
-      if (masterData.procedureMap) {
-        i.procedure = masterData.procedureMap[i.procedureId]
-      }
+    const radiologyMap = await RadiologyService.getMap()
+    this.ticketRadiologyList.forEach((i) => {
+      i.radiology = radiologyMap![i.radiologyId]
     })
-    ;(ticket.ticketLaboratoryList || []).forEach((tl) => {
-      if (masterData.laboratoryMap) {
-        tl.laboratory = masterData.laboratoryMap[tl.laboratoryId]
-      }
-      tl.ticketLaboratoryResult = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+  }
+
+  async refreshUserAndRole() {
+    if (!this.ticketUserList || !this.ticketUserList.length) {
+      return
+    }
+    const [userMap, roleMap] = await Promise.all([UserService.getMap(), RoleService.getMap()])
+    this.ticketUserList.forEach((i) => {
+      i.user = userMap![i.userId]
+      i.role = roleMap![i.roleId]
+    })
+  }
+
+  async refreshLaboratory() {
+    if (!this.ticketLaboratoryList || !this.ticketLaboratoryList.length) {
+      return
+    }
+    if (!this.ticketLaboratoryGroupList) this.ticketLaboratoryGroupList = []
+    if (!this.ticketLaboratoryResultList) this.ticketLaboratoryResultList = []
+
+    const [laboratoryMap, laboratoryGroupMap] = await Promise.all([
+      LaboratoryService.getMap(),
+      LaboratoryGroupService.getMap(),
+    ])
+
+    this.ticketLaboratoryList.forEach((tl) => {
+      tl.laboratory = laboratoryMap[tl.laboratoryId]
+
+      tl.ticketLaboratoryResult = this.ticketLaboratoryResultList!.find((tlr) => {
         return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
       })
 
       if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
         tl.children =
           tl.laboratory?.children?.map((laboratoryChild) => {
-            let currentTlr = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+            let currentTlr = this.ticketLaboratoryResultList!.find((tlr) => {
               return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
             })
             if (!currentTlr) {
@@ -214,41 +258,77 @@ export class Ticket {
       }
     })
 
-    if (!ticket.ticketLaboratoryGroupList) {
-      ticket.ticketLaboratoryGroupList = []
-    }
-    ticket.ticketLaboratoryGroupList.forEach((tlg) => {
-      if (masterData.laboratoryGroupMap) {
-        tlg.laboratoryGroup =
-          masterData.laboratoryGroupMap[tlg.laboratoryGroupId] || LaboratoryGroup.blank()
+    this.ticketLaboratoryGroupList.forEach((tlg) => {
+      let laboratoryGroup
+      if (laboratoryGroupMap[tlg.laboratoryGroupId]) {
+        laboratoryGroup = laboratoryGroupMap[tlg.laboratoryGroupId]
+      } else if (tlg.laboratoryGroupId === 0) {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.name = 'Chưa phân nhóm phiếu'
+      } else {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.name = `(ID${tlg.laboratoryGroupId}) Nhóm bị xóa`
       }
-      tlg.ticketLaboratoryList = (ticket.ticketLaboratoryList || []).filter((tl) => {
+      tlg.laboratoryGroup = laboratoryGroup
+      tlg.ticketLaboratoryList = this.ticketLaboratoryList!.filter((tl) => {
         return tl.ticketLaboratoryGroupId === tlg.id
       })
     })
 
     // === fix cho những xét nghiệm cũ chưa phân nhóm
-    const tlNoGroup = (ticket.ticketLaboratoryList || []).filter((tl) => {
+    const tlNoGroup = this.ticketLaboratoryList.filter((tl) => {
       return tl.ticketLaboratoryGroupId === 0
     })
     if (tlNoGroup.length) {
-      let tlgZero = ticket.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
+      let tlgZero = this.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
       if (!tlgZero) {
         tlgZero = TicketLaboratoryGroup.blank()
         tlgZero.laboratoryGroup = LaboratoryGroup.blank()
-        ticket.ticketLaboratoryGroupList.unshift(tlgZero)
+        this.ticketLaboratoryGroupList.unshift(tlgZero)
       }
       tlgZero.ticketLaboratoryList = tlNoGroup
     } else {
-      ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => !!i.id)
+      this.ticketLaboratoryGroupList = this.ticketLaboratoryGroupList.filter((i) => !!i.id)
     }
-    // === fix cho những xét nghiệm cũ chưa phân nhóm
+  }
 
-    ;(ticket.ticketRadiologyList || []).forEach((i) => {
-      if (masterData.radiologyMap) {
-        i.radiology = masterData.radiologyMap[i.radiologyId]
-      }
+  refreshTicketProductHasTicketBatchList() {
+    this.ticketBatchList ||= []
+    const ticketProductList = [
+      ...(this.ticketProductList || []),
+      ...(this.ticketProductConsumableList || []),
+      ...(this.ticketProductPrescriptionList || []),
+    ]
+    ticketProductList.forEach((tp) => {
+      tp.ticketBatchList = this.ticketBatchList!.filter((tb) => {
+        return tp.id === tb.ticketProductId
+      })
     })
+  }
+
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    ;(this.ticketUserList || []).forEach((i) => {
+      if (!this.ticketUserGroup[i.interactType]) {
+        this.ticketUserGroup[i.interactType] = {}
+      }
+      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
+        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
+  async refreshAllData() {
+    await Promise.all([
+      this.refreshProduct(),
+      this.refreshProcedure(),
+      this.refreshRadiology(),
+      this.refreshLaboratory(),
+      this.refreshUserAndRole(),
+    ])
+    this.refreshTicketProductHasTicketBatchList()
+    this.refreshTicketUserGroup()
   }
 
   static from(source: Ticket) {
@@ -277,8 +357,8 @@ export class Ticket {
       target.refreshTicketUserGroup()
     }
 
-    if (source.customerPaymentList) {
-      target.customerPaymentList = CustomerPayment.basicList(source.customerPaymentList)
+    if (source.paymentList) {
+      target.paymentList = Payment.basicList(source.paymentList)
     }
     if (source.ticketProductList) {
       target.ticketProductList = TicketProduct.basicList(source.ticketProductList)
@@ -286,9 +366,15 @@ export class Ticket {
         i.product = Product.basic(i.product!)
       })
     }
+    if (source.ticketBatchList) {
+      target.ticketBatchList = TicketBatch.basicList(source.ticketBatchList)
+      target.ticketBatchList.forEach((i) => {
+        i.batch = Batch.basic(i.batch!)
+      })
+    }
     if (source.ticketProductPrescriptionList) {
       target.ticketProductPrescriptionList = TicketProduct.basicList(
-        source.ticketProductPrescriptionList
+        source.ticketProductPrescriptionList,
       )
       target.ticketProductPrescriptionList.forEach((i) => {
         i.product = Product.basic(i.product!)
@@ -296,7 +382,7 @@ export class Ticket {
     }
     if (source.ticketProductConsumableList) {
       target.ticketProductConsumableList = TicketProduct.basicList(
-        source.ticketProductConsumableList
+        source.ticketProductConsumableList,
       )
       target.ticketProductConsumableList.forEach((i) => {
         i.product = Product.basic(i.product!)
@@ -313,12 +399,12 @@ export class Ticket {
     }
     if (source.ticketLaboratoryGroupList) {
       target.ticketLaboratoryGroupList = TicketLaboratoryGroup.basicList(
-        source.ticketLaboratoryGroupList
+        source.ticketLaboratoryGroupList,
       )
     }
     if (source.ticketLaboratoryResultList) {
       target.ticketLaboratoryResultList = TicketLaboratoryResult.basicList(
-        source.ticketLaboratoryResultList
+        source.ticketLaboratoryResultList,
       )
     }
     if (source.ticketRadiologyList) {
@@ -348,7 +434,8 @@ export class Ticket {
     if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
     if (a.ticketType != b.ticketType) return false
-    if (a.ticketStatus != b.ticketStatus) return false
+    if (a.status != b.status) return false
+    if (a.deliveryStatus != b.deliveryStatus) return false
 
     if (a.itemsCostAmount != b.itemsCostAmount) return false
     if (a.procedureMoney != b.procedureMoney) return false

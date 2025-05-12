@@ -2,15 +2,16 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
 import type { DiscountType } from '../enum'
+import { Payment } from '../payment/payment.model'
 import type { TicketUser } from '../ticket-user'
-import type { TicketStatus, TicketType } from '../ticket/ticket.model'
+import { Ticket, type TicketStatus, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async create(body: {
     customer?: Customer
     ticketInformation: {
       ticketType: TicketType
-      ticketStatus: TicketStatus
+      status: TicketStatus
       customType: number
       customerSourceId: number
       registeredAt: number
@@ -27,6 +28,8 @@ export class TicketClinicApi {
           ? {
               fullName: customer.fullName,
               phone: customer.phone,
+              facebook: customer.facebook || '',
+              zalo: customer.zalo || '',
               birthday: customer.birthday,
               yearOfBirth: customer.yearOfBirth,
               gender: customer.gender,
@@ -47,14 +50,14 @@ export class TicketClinicApi {
         customType: ticketInformation.customType,
         customerSourceId: ticketInformation.customerSourceId || 0,
         ticketType: ticketInformation.ticketType,
-        ticketStatus: ticketInformation.ticketStatus,
+        status: ticketInformation.status,
         registeredAt: ticketInformation.registeredAt,
       },
       ticketAttributeList: body.ticketAttributeList.map((i) => {
         return { key: i.key, value: i.value }
       }),
       ticketUserList: body.ticketUserList.map((i) => {
-        return { userId: i.userId || 0, roleId: i.roleId }
+        return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
     const { data } = response.data as BaseResponse<boolean>
@@ -81,7 +84,7 @@ export class TicketClinicApi {
         return { key: i.key, value: i.value != null ? i.value : '' }
       }),
       ticketUserList: ticketUserList.map((i) => {
-        return { userId: i.userId || 0, roleId: i.roleId }
+        return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
     const { data } = response.data as BaseResponse<boolean>
@@ -94,6 +97,7 @@ export class TicketClinicApi {
 
   static async updateDiagnosis(options: {
     ticketId: number
+    note: string
     files: File[]
     imagesChange?: {
       imageIdsKeep: number[]
@@ -107,6 +111,7 @@ export class TicketClinicApi {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
     formData.append('ticketAttributeKeyList', JSON.stringify(options.ticketAttributeKeyList))
+    formData.append('note', options.note)
 
     if (imagesChange) {
       const imagesChangeStr = JSON.stringify({
@@ -119,7 +124,7 @@ export class TicketClinicApi {
       const ticketAttributeChangeListStr = JSON.stringify(
         ticketAttributeChangeList.map((i) => {
           return { key: i.key, value: i.value }
-        })
+        }),
       )
       formData.append('ticketAttributeChangeList', ticketAttributeChangeListStr)
     }
@@ -131,7 +136,7 @@ export class TicketClinicApi {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -139,7 +144,7 @@ export class TicketClinicApi {
   static async returnProduct(body: {
     ticketId: number
     returnList: {
-      ticketProductId: number
+      ticketBatchId: number
       quantityReturn: number
     }[]
   }) {
@@ -157,7 +162,7 @@ export class TicketClinicApi {
       discountType: DiscountType
       discountMoney: number
       discountPercent: number
-    }
+    },
   ) {
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-discount`, {
       discountType: body.discountType,
@@ -167,21 +172,51 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse
   }
 
-  static async prepayment(ticketId: number, money: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/prepayment`, { money })
-    const { data } = response.data as BaseResponse
+  static async prepayment(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/prepayment`, {
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{ ticket: any; payment: any }>
+    return {
+      ticket: Ticket.from(data.ticket),
+      payment: Payment.from(data.payment),
+    }
   }
 
-  static async refundOverpaid(ticketId: number, money: number) {
+  static async refundOverpaid(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/refund-overpaid`, {
-      money,
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
     })
     const { data } = response.data as BaseResponse
   }
 
-  static async payDebt(ticketId: number, money: number) {
+  static async payDebt(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/pay-debt`, {
-      money,
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
     })
     const { data } = response.data as BaseResponse
   }

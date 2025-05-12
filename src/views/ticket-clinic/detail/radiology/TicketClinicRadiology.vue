@@ -1,8 +1,16 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconCheckSquare, IconClock, IconPrint, IconEye, IconSpin } from '../../../../common/icon'
+import {
+  IconCheckSquare,
+  IconClockCircle,
+  IconEye,
+  IconPrint,
+  IconSpin,
+} from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -10,8 +18,8 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -19,7 +27,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology, TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
-import { DDom, sleep } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -29,7 +37,6 @@ const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
 
 const radiologyOptions = ref<{ value: number; text: string; data: Radiology }[]>([])
-const radiologyMap = ref<Record<string, Radiology>>({})
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -41,7 +48,7 @@ watch(
   (newValue: TicketRadiology[]) => {
     ticketRadiologyList.value = TicketRadiology.fromList(newValue || [])
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 const hasChangePriority = computed(() => {
@@ -55,11 +62,10 @@ const hasChangePriority = computed(() => {
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicRadiology.vue:54 ~ onMounted ~ onMounted:')
   try {
     const radiologyAll = await RadiologyService.list({})
+    ticketClinicRef.value.refreshRadiology()
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))
-    radiologyMap.value = await RadiologyService.getMap()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -114,35 +120,45 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    const radiologyData = radiologyMap.value[ticketRadiologyData.radiologyId] || Radiology.blank()
+    const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
     let printHtmlId = radiologyData.printHtmlId
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.radiology
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiology(printHtmlId)
 
-    if (!printHtml || !printHtml.content) {
+    if (!printHtmlHeader || !printHtmlRadiology || !printHtmlRadiology.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      data: ticketRadiologyData,
+      printHtml: printHtmlHeader,
+      customVariables: radiologyData.customVariables || '',
+    })
+    const compiledContent = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       masterData: {
         radiology: radiologyData,
       },
-      printHtml: printHtml!,
+      printHtml: printHtmlRadiology,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+      customVariables: radiologyData.customVariables || '',
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css, radiologyData.customStyles],
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -160,8 +176,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       :options="radiologyOptions"
       :maxHeight="320"
       placeholder="Tìm kiếm tên phiếu CĐHA"
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
-      @selectItem="({ data }) => selectRadiology(data)">
+      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
+      @selectItem="({ data }) => selectRadiology(data)"
+    >
       <template #option="{ item: { data } }">
         <div>
           <b>{{ data.name }}</b>
@@ -203,8 +220,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -218,28 +236,28 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === ticketRadiologyList.length - 1"
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
             <td class="text-center">
-              <a-tooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
-                <template #title>Chưa có kết quả</template>
-                <IconClock
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important" />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã hoàn thành</template>
-                <IconCheckSquare
-                  width="16"
-                  height="16"
-                  style="color: #52c41a; cursor: not-allowed !important" />
-              </a-tooltip>
+              <VueTooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa có kết quả</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã hoàn thành</div>
+              </VueTooltip>
             </td>
-            <td>{{ radiologyMap[tpItem.radiologyId]?.name }}</td>
+            <td>{{ tpItem.radiology?.name }}</td>
             <td style="max-width: 300px">
               <div class="flex items-center justify-between gap-2">
                 <div
@@ -250,7 +268,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                     overflow: hidden;
                     text-overflow: ellipsis;
                     line-clamp: 2;
-                  ">
+                  "
+                >
                   {{ tpItem.result }}
                 </div>
                 <a v-if="tpItem.startedAt != null" @click="startPrint(tpItem)">
@@ -265,21 +284,21 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               </a>
               <a
                 v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 class="text-orange-500"
-                @click="modalTicketRadiologyResult?.openModal(tpItem.id)">
+                @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
+              >
                 <IconEditSquare width="22" height="22" />
               </a>
               <a
                 v-else-if="
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
-                  ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
-                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
+                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
+              >
                 <IconEye width="22" height="22" />
               </a>
             </td>
@@ -292,7 +311,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <b>
                 {{
                   formatMoney(
-                    ticketRadiologyList.reduce((acc, item) => acc + item.expectedPrice, 0)
+                    ticketRadiologyList.reduce((acc, item) => acc + item.expectedPrice, 0),
                   )
                 }}
               </b>
@@ -308,12 +327,13 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     <VueButton
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
         hasChangePriority
       "
       color="blue"
       icon="save"
-      @click="savePriorityTicketRadiology">
+      @click="savePriorityTicketRadiology"
+    >
       Lưu lại
     </VueButton>
   </div>

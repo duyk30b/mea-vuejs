@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { LogoutOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { IconHospitalUser } from '@/common/icon-font-awesome'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
+import { IconLogout, IconMenuUnfold, IconUser } from '../../common/icon-antd'
+import VueButton from '../../common/VueButton.vue'
+import VueDropdown from '../../common/popover/VueDropdown.vue'
 import { AxiosLoading } from '../../core/axios.instance'
 import { useMeStore } from '../../modules/_me/me.store'
 import { AuthService } from '../../modules/auth/auth.service'
@@ -15,19 +18,14 @@ const route = useRoute()
 
 const routeTitle = ref<string>('')
 watchEffect(() => {
-  const title = route.matched.slice(-1)[0]?.meta?.title
+  const titleList = route.matched.map((i) => i?.meta?.title).filter((i) => !!i)
+  const title = titleList[titleList.length - 1]
   if (typeof title === 'function') {
     routeTitle.value = title(route)
   } else if (typeof title === 'string') {
     routeTitle.value = title
   }
 })
-
-const handleUserAction = async (e: any) => {
-  if (e.key === 'logout') {
-    await AuthService.logout()
-  }
-}
 </script>
 
 <template>
@@ -37,9 +35,9 @@ const handleUserAction = async (e: any) => {
         <img
           v-if="meStore?.organization?.logoImage"
           :src="DImage.getImageLink(meStore?.organization?.logoImage, { size: 500 })"
-          style="background-color: white;"
-          height="50px"/>
-        <font-awesome-icon v-else :icon="['fas', 'hospital-user']" />
+          style="background-color: white; height: 50px"
+        />
+        <IconHospitalUser v-else />
       </div>
       <div class="logo-text">
         <template v-if="meStore?.organization?.name">
@@ -54,31 +52,32 @@ const handleUserAction = async (e: any) => {
       </div>
     </router-link>
     <div class="dashboard-menu flex md:hidden">
-      <MenuUnfoldOutlined class="icon-menu-fold" @click="emitShowDrawer" />
+      <IconMenuUnfold class="icon-menu-fold" @click="emitShowDrawer" />
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
     <div>
-      <a-dropdown trigger="click">
-        <a-button>
-          <UserOutlined />
-          {{ meStore?.user?.fullName }}
-        </a-button>
-        <template #overlay>
-          <a-menu @click="handleUserAction">
-            <a-menu-item key="logout">
-              <LogoutOutlined />
-              &nbsp; Đăng xuất
-            </a-menu-item>
-          </a-menu>
+      <VueDropdown>
+        <template #trigger>
+          <VueButton>
+            <IconUser />
+            {{ meStore?.user?.fullName }}
+          </VueButton>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="AuthService.logout()">
+            <IconLogout />
+            <span>Đăng xuất</span>
+          </a>
+        </div>
+      </VueDropdown>
     </div>
     <div v-if="AxiosLoading.loading" class="progress-loader">
       <a-progress
         :percent="AxiosLoading.percent"
         :show-info="false"
         status="active"
-        :strokeWidth="3" />
+        :strokeWidth="3"
+      />
     </div>
   </a-layout-header>
 </template>

@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon'
-import { IconEditSquare, IconPulmonology } from '../../../../common/icon-google'
-import { InputText, VueSelect } from '../../../../common/vue-form'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
+import { IconEditSquare } from '../../../../common/icon-google'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { arrayToKeyValue } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
-import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologySystem = ref<InstanceType<typeof ModalCopyRadiologySystem>>()
-const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -45,7 +46,10 @@ const startFetchData = async () => {
     const { data, meta } = await RadiologyService.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { radiologyGroup: false },
+      relation: {
+        radiologyGroup: false,
+        printHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml,
+      },
       filter: {
         radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
         name: searchText.value ? { LIKE: searchText.value } : undefined,
@@ -85,23 +89,6 @@ onBeforeMount(async () => {
   }
 })
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'RADIOLOGY_GROUP_MANAGER') {
-    modalRadiologyGroupManager.value?.openModal()
-  }
-  if (menu.key === 'SCREEN_SETTING') {
-    modalRadiologyListSettingScreen.value?.openModal()
-  }
-  if (menu.key === 'COPY_FROM_SYSTEM') {
-    modalCopyRadiologySystem.value?.openModal()
-  }
-}
-
-const handleModalRadiologyGroupManagerSuccess = async () => {
-  radiologyGroupAll.value = await RadiologyGroupService.list({})
-  await startFetchData()
-}
-
 const handleModalCopyRadiologySystemSuccess = async () => {
   await startFetchData()
 }
@@ -110,45 +97,52 @@ const handleModalCopyRadiologySystemSuccess = async () => {
 <template>
   <ModalRadiologyListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalRadiologyListSettingScreen" />
+    ref="modalRadiologyListSettingScreen"
+  />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
   <ModalCopyRadiologySystem
     ref="modalCopyRadiologySystem"
-    @success="handleModalCopyRadiologySystemSuccess" />
-  <ModalRadiologyGroupManager
-    ref="modalRadiologyGroupManager"
-    @success="handleModalRadiologyGroupManagerSuccess" />
-  <div class="mx-4 mt-4 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconPulmonology style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">
-          Danh sách phiếu chẩn đoán hình ảnh
-        </span>
-      </div>
+    @success="handleModalCopyRadiologySystemSuccess"
+  />
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div class="">
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'RadiologyUpsert' })">
+        @click="$router.push({ name: 'RadiologyUpsert' })"
+      >
         Thêm mới
       </VueButton>
     </div>
-    <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="RADIOLOGY_GROUP_MANAGER">Quản lý nhóm CĐHA</a-menu-item>
-            <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
-          </a-menu>
+    <div class="ml-auto mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalRadiologyListSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalCopyRadiologySystem?.openModal()"
+          >
+            Copy dữ liệu từ hệ thống
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
+
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="flex flex-wrap gap-4">
       <div style="flex: 2; flex-basis: 500px">
@@ -167,7 +161,8 @@ const handleModalCopyRadiologySystemSuccess = async () => {
               { value: 0, text: 'Tất cả' },
               ...radiologyGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
     </div>
@@ -178,6 +173,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             <th>STT</th>
             <th>Tên</th>
             <th>Nhóm</th>
+            <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
             <th>Giá vốn</th>
             <th>Giá tiền</th>
             <th>Action</th>
@@ -209,34 +205,44 @@ const handleModalCopyRadiologySystemSuccess = async () => {
                 <a
                   style="line-height: 0"
                   class="text-base"
-                  @click="modalRadiologyDetail?.openModal(radiology)">
+                  @click="modalRadiologyDetail?.openModal(radiology)"
+                >
                   <IconFileSearch />
                 </a>
               </div>
             </td>
             <td class="text-center">{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
+            <td v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">
+              {{ radiology.printHtml?.name }}
+            </td>
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
-              <a
-                style="color: var(--text-orange)"
-                @click="$router.push({ name: 'RadiologyUpsert', params: { id: radiology.id } })">
-                <IconEditSquare width="24px" height="24px" />
-              </a>
+              <router-link :to="{ name: 'RadiologyUpsert', params: { id: radiology.id } }">
+                <IconEditSquare width="20px" height="20px" />
+              </router-link>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

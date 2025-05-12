@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting, IconTrash } from '../../../common/icon'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DTimer, formatPhone } from '../../../utils'
+import { ESTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import AppointmentStatusTag from '../AppointmentStatusTag.vue'
 import ModalAppointmentUpsert from '../upsert/ModalAppointmentUpsert.vue'
@@ -39,7 +40,7 @@ const customerId = ref<number>()
 
 const appointmentStatusList = ref<AppointmentStatus[]>([])
 
-const startTime = DTimer.startOfDate(new Date()).getTime()
+const startTime = ESTimer.startOfDate(new Date()).getTime()
 let toTime: number | null = 0
 if (settingStore.APPOINTMENT_LIST.fromDateToDateDistance !== -1) {
   toTime =
@@ -148,17 +149,11 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
 }
 
 const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'TicketClinicDetailContainer',
     params: { id: ticketId },
   })
   window.open(route.href, '_blank')
-}
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SETTING_SCREEN') {
-    modalAppointmentListSetting.value?.openModal()
-  }
 }
 
 const handleFocusFirstSearchCustomer = async () => {
@@ -170,17 +165,17 @@ const handleFocusFirstSearchCustomer = async () => {
   <ModalAppointmentUpsert ref="modalAppointmentUpsert" @success="startFetchData" />
   <ModalAppointmentRegisterTicketClinic
     ref="modalAppointmentRegisterTicketClinic"
-    @success="startFetchData" />
+    @success="startFetchData"
+  />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalAppointmentListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalAppointmentListSetting" />
+    ref="modalAppointmentListSetting"
+  />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconSchedule />
         Danh sách hẹn khám
       </div>
       <div>
@@ -188,26 +183,23 @@ const handleFocusFirstSearchCustomer = async () => {
           v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]"
           icon="plus"
           color="blue"
-          @click="modalAppointmentUpsert?.openModalForCreate()">
+          @click="modalAppointmentUpsert?.openModalForCreate()"
+        >
           Tạo lịch hẹn mới
         </VueButton>
       </div>
     </div>
-    <div class="flex mr-2 gap-8">
-      <span style="cursor: pointer">
-        <a-dropdown
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-          trigger="click">
-          <span>
-            <IconSetting width="20" height="20" />
+    <div class="mr-2 flex gap-8">
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="SETTING_SCREEN">Cài đặt hiển thị</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="modalAppointmentListSetting?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -223,12 +215,13 @@ const handleFocusFirstSearchCustomer = async () => {
             placeholder="Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
             @onFocusinFirst="handleFocusFirstSearchCustomer"
-            @update:text="searchingCustomer">
+            @update:text="searchingCustomer"
+          >
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
                 - {{ data.phone }} -
-                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
                 {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
@@ -245,7 +238,8 @@ const handleFocusFirstSearchCustomer = async () => {
             v-model:value="fromDate"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
 
@@ -256,7 +250,8 @@ const handleFocusFirstSearchCustomer = async () => {
             v-model:value="toDate"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
 
@@ -276,7 +271,8 @@ const handleFocusFirstSearchCustomer = async () => {
               { value: [AppointmentStatus.Completed], text: 'Đã đến khám' },
               { value: [AppointmentStatus.Cancelled], text: 'Hủy hẹn' },
             ]"
-            @update:value="handleSelectAppointmentStatus" />
+            @update:value="handleSelectAppointmentStatus"
+          />
         </div>
       </div>
 
@@ -329,7 +325,8 @@ const handleFocusFirstSearchCustomer = async () => {
                   <a
                     style="color: #eca52b"
                     class="text-xl"
-                    @click="modalAppointmentUpsert?.openModalForUpdate(appointment)">
+                    @click="modalAppointmentUpsert?.openModalForUpdate(appointment)"
+                  >
                     <IconEditSquare />
                   </a>
                 </div>
@@ -342,13 +339,15 @@ const handleFocusFirstSearchCustomer = async () => {
               <div
                 v-if="
                   [AppointmentStatus.Waiting, AppointmentStatus.Confirm].includes(
-                    appointment.appointmentStatus
+                    appointment.appointmentStatus,
                   )
                 "
-                class="flex items-center justify-center">
+                class="flex items-center justify-center"
+              >
                 <VueButton
                   size="small"
-                  @click="modalAppointmentRegisterTicketClinic?.openModal(appointment)">
+                  @click="modalAppointmentRegisterTicketClinic?.openModal(appointment)"
+                >
                   Đăng ký khám
                 </VueButton>
               </div>
@@ -359,7 +358,7 @@ const handleFocusFirstSearchCustomer = async () => {
               </div>
             </td>
             <td class="text-center">
-              {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
+              {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
             </td>
             <td>
               <div>
@@ -375,13 +374,14 @@ const handleFocusFirstSearchCustomer = async () => {
             <td class="text-center" style="width: 200px; white-space: nowrap">
               <a
                 v-if="appointment.customer?.phone"
-                :href="'tel:' + appointment.customer?.phone || ''">
+                :href="'tel:' + appointment.customer?.phone || ''"
+              >
                 {{ formatPhone(appointment.customer?.phone || '') }}
               </a>
             </td>
             <td class="text-center">
               {{
-                DTimer.timeToText(appointment.customer?.birthday) ||
+                ESTimer.timeToText(appointment.customer?.birthday) ||
                 appointment.customer?.yearOfBirth ||
                 ''
               }}
@@ -391,23 +391,32 @@ const handleFocusFirstSearchCustomer = async () => {
               <a
                 v-if="[AppointmentStatus.Cancelled].includes(appointment.appointmentStatus)"
                 class="text-red-500"
-                @click="handleClickDeleteAppointment(appointment.id)">
-                <IconTrash width="18" height="18" />
+                @click="handleClickDeleteAppointment(appointment.id)"
+              >
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-4">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

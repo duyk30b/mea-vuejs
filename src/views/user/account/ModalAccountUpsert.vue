@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { CheckboxList, InputDate, InputText } from '../../../common/vue-form'
+import { InputDate, InputRadio, InputText, VueSwitch } from '../../../common/vue-form'
+import InputCheckboxList from '../../../common/vue-form/InputCheckboxList.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { RoleService } from '../../../modules/role'
@@ -13,34 +14,35 @@ const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
 }>()
 
-const showModal = ref(false)
 const user = ref<User>(User.blank())
-const saveLoading = ref(false)
-const roleIdList = ref<number[]>([])
+
 const roleListCheckboxOptions = ref<{ text: string; value: number | string }[]>([])
+const roleIdMapCheckbox = ref<Record<string, any>>({})
+
+const showModal = ref(false)
+const saveLoading = ref(false)
 
 const openModal = async (userId?: number) => {
   showModal.value = true
-  RoleService.list({})
-    .then((result) => {
-      roleListCheckboxOptions.value = result.map((i) => ({ value: i.id, text: i.name }))
-    })
-    .catch((e) => {
-      AlertStore.addError(e.message)
-      console.log('🚀 ~ file: ModalAccountUpsert.vue:27 ~ RoleService.list ~ e:', e)
-    })
-  if (userId) {
-    UserService.detail(userId, { relation: { userRoleList: { role: true } } })
-      .then((result) => {
-        roleIdList.value = result.userRoleList?.map((i) => i.roleId) || []
+  try {
+    const roleList = await RoleService.list({})
+    roleListCheckboxOptions.value = roleList.map((i) => ({ value: i.id, text: i.name }))
+    if (userId) {
+      user.value = await UserService.detail(
+        userId,
+        { relation: { userRoleList: { role: false } } },
+        { refetch: true },
+      )
+      user.value.userRoleList?.forEach((i) => {
+        roleIdMapCheckbox.value[i.roleId] = true
       })
-      .catch((e) => {
-        AlertStore.addError(e.message)
-        console.log('🚀 ~ file: ModalAccountUpsert.vue:35 ~ openModal ~ e:', e)
-      })
-  } else {
-    user.value = User.blank()
-    roleIdList.value = []
+    } else {
+      user.value = User.blank()
+      roleIdMapCheckbox.value = {}
+    }
+  } catch (e: any) {
+    console.log('🚀 ~ ModalAccountUpsert.vue:39 ~ openModal ~ e:', e)
+    AlertStore.addError(e.message)
   }
 }
 
@@ -51,13 +53,17 @@ const closeModal = () => {
 
 const handleSave = async () => {
   saveLoading.value = true
+  const roleIdList = Object.keys(roleIdMapCheckbox.value)
+    .filter((id) => roleIdMapCheckbox.value[id])
+    .map((i) => Number(i))
+    .sort((a, b) => (a > b ? 1 : -1))
+
   try {
-    roleIdList.value.sort((a, b) => (a > b ? 1 : -1))
     if (!user.value.id) {
-      const response = await UserService.createOne(user.value, roleIdList.value)
+      const response = await UserService.createOne(user.value, roleIdList)
       emit('success', response, 'CREATE')
     } else {
-      const response = await UserService.updateOne(user.value.id, user.value, roleIdList.value)
+      const response = await UserService.updateOne(user.value.id, user.value, roleIdList)
       emit('success', response, 'UPDATE')
     }
     showModal.value = false
@@ -70,7 +76,7 @@ const handleSave = async () => {
 
 const handleDelete = async () => {
   try {
-    // await userStore.deleteOne(user.value.id)
+    await UserService.deleteOne(user.value.id)
     emit('success', user.value, 'DELETE')
     closeModal()
   } catch (error) {
@@ -107,14 +113,14 @@ defineExpose({ openModal })
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Username</div>
           <div>
-            <InputText v-model:value="user.username" :disabled="!!user.id" required />
+            <InputText v-model:value="user.username" required />
           </div>
         </div>
 
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Password</div>
           <div>
-            <InputText v-model:value="user.password" required :disabled="!!user.id" />
+            <InputText v-model:value="user.password" placeholder="**********" />
           </div>
         </div>
 
@@ -132,7 +138,8 @@ defineExpose({ openModal })
               v-model:value="user.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (user.phone = e.replace(/ /g, ''))" />
+              @update:value="(e) => (user.phone = e.replace(/ /g, ''))"
+            />
           </div>
         </div>
 
@@ -143,39 +150,63 @@ defineExpose({ openModal })
               v-model:value="user.birthday"
               format="DD/MM/YYYY"
               type-parser="number"
-              class="w-full" />
+              class="w-full"
+            />
           </div>
         </div>
 
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Giới tính</div>
           <div>
-            <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+            <InputRadio
+              v-model:value="user!.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1">
           <div>Vai trò</div>
-          <div>
-            <CheckboxList v-model:value="roleIdList" :options="roleListCheckboxOptions" />
+          <div class="mt-1">
+            <InputCheckboxList
+              v-model:value="roleIdMapCheckbox"
+              :options="
+                roleListCheckboxOptions.map((i) => ({
+                  key: i.value,
+                  label: i.text,
+                }))
+              "
+              :custom-style="{
+                checkboxItemWrap: {
+                  display: 'flex',
+                  gap: '30px',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                },
+              }"
+              no-checkbox-all
+            />
           </div>
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)" />
+          <div>
+            <VueSwitch v-model="user.isActive" type-parser="number" />
+          </div>
           <div v-if="!user.isActive" class="ml-4">Tài khoản này tạm thời không thể sử dụng</div>
         </div>
       </div>
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" type="reset" class="ml-auto" @click="closeModal">
+          <VueButton color="red" icon="trash" :loading="saveLoading" @click="clickDelete">
+            Xóa
+          </VueButton>
+          <VueButton icon="close" type="reset" style="margin-left: auto" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import { ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
-import { InputDate } from '../../../common/vue-form'
+import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
+import { InputDate, InputSelect } from '../../../common/vue-form'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { LaboratoryStatisticService } from '../../../modules/statistics'
 import { TicketLaboratory, TicketLaboratoryApi } from '../../../modules/ticket-laboratory'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
-const fromTime = ref<number>(DTimer.startOfMonth(new Date()).getTime())
-const toTime = ref<number>(DTimer.endOfMonth(new Date()).getTime())
+const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
+const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const dataLoading = ref(false)
 
@@ -92,12 +95,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    console.log('🚀 ~ StatisticLaboratory.vue:153 ~ handleMenuSettingClick ~ menu.key:', menu.key)
-  }
-}
 </script>
 
 <template>
@@ -105,22 +102,24 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
-        <ScheduleOutlined class="mr-1" />
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
+      >
+        <IconBarChart class="mr-1" />
         Báo cáo xét nghiệm
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -133,7 +132,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="fromTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
 
@@ -144,7 +144,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="toTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
     </div>
@@ -207,10 +208,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   :to="{
                     name: 'TicketClinicDetailContainer',
                     params: { id: ticketLaboratory.ticketId },
-                  }">
+                  }"
+                >
                   <div class="flex justify-center items-center gap-2">
                     <span>T{{ ticketLaboratory.ticketId }}</span>
-                    <span class="text-lg"><ReadOutlined /></span>
+                    <span class="text-lg"><IconRead /></span>
                   </div>
                 </router-link>
               </div>
@@ -218,7 +220,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>{{ ticketLaboratory.customer?.fullName }}</td>
             <td>{{ laboratoryMap[ticketLaboratory.laboratoryId]?.name }}</td>
             <td class="text-center">
-              {{ DTimer.timeToText(ticketLaboratory.startedAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticketLaboratory.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td class="text-center">
               {{ formatMoney(ticketLaboratory.costPrice) }}
@@ -232,17 +234,25 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex gap-4 justify-between">
-        <div class=""></div>
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

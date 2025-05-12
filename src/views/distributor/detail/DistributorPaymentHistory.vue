@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import VuePagination from '../../../common/VuePagination.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor } from '../../../modules/distributor'
-import { DistributorPaymentApi } from '../../../modules/distributor-payment/distributor-payment.api'
-import type { DistributorPayment } from '../../../modules/distributor-payment/distributor-payment.model'
-import { PaymentType } from '../../../modules/enum'
-import { timeToText } from '../../../utils'
-import DistributorPaymentTypeTag from '../DistributorPaymentTypeTag.vue'
+import { PaymentApi } from '../../../modules/payment/payment.api'
+import { PersonType, type Payment } from '../../../modules/payment/payment.model'
+import { ESTimer } from '../../../utils'
+import PaymentTimingTag from '../../payment/PaymentTimingTag.vue'
+import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
 
-const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
-  distributor: () => Distributor.blank(),
+const props = withDefaults(defineProps<{ distributorId: number }>(), {
+  distributorId: 0,
 })
 
 const router = useRouter()
@@ -21,50 +21,46 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const distributorPaymentList = ref<DistributorPayment[]>([])
+const paymentList = ref<Payment[]>([])
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('CUSTOMER_PAYMENTS_PAGINATION_LIMIT')) || 10)
+const limit = ref(Number(localStorage.getItem('PAYMENT_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await DistributorPaymentApi.pagination({
+    const paginationResponse = await PaymentApi.pagination({
+      relation: { receipt: true, paymentMethod: true },
       page: page.value,
       limit: limit.value,
-      filter: { distributorId: props.distributor.id! },
+      filter: {
+        personId: props.distributorId,
+        personType: PersonType.Distributor,
+      },
       sort: { id: 'DESC' },
     })
-    distributorPaymentList.value = data
-    total.value = meta.total
+    paymentList.value = paginationResponse.paymentList
+    total.value = paginationResponse.total
   } catch (error) {
-    console.log('🚀 ~ file: DistributorPaymentsHistory.vue:33 ~ error:', error)
+    console.log('🚀 ~ file: PaymentsHistory.vue:33 ~ error:', error)
   }
 }
 
 watch(
-  () => props.distributor.id,
+  () => props.distributorId,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else distributorPaymentList.value = []
+    else paymentList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('CUSTOMER_PAYMENTS_PAGINATION_LIMIT', String(options.limit))
+    localStorage.setItem('PAYMENT_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
-}
-
-const openBlankReceiptDetail = async (receiptId: number) => {
-  let route = router.resolve({
-    name: 'ReceiptDetail',
-    params: { id: receiptId },
-  })
-  window.open(route.href, '_blank')
 }
 
 defineExpose({ startFetchData })
@@ -80,44 +76,40 @@ defineExpose({ startFetchData })
         </tr>
       </thead>
       <tbody style="font-size: 0.8rem">
-        <tr v-if="distributorPaymentList.length === 0">
+        <tr v-if="paymentList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(distributorPayment, index) in distributorPaymentList" :key="index">
+        <tr v-for="(payment, index) in paymentList" :key="index">
           <td>
-            <div v-if="distributorPayment.receiptId">
-              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)">
-                IV{{ distributorPayment.receiptId }}
-              </a>
-            </div>
+            <LinkAndStatusReceipt :receipt="payment.receipt!" />
             <div style="white-space: nowrap">
-              {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
             <div>
-              <DistributorPaymentTypeTag :paymentType="distributorPayment.paymentType" />
+              <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
             </div>
-            <div v-if="distributorPayment.note">
-              {{ distributorPayment.note }}
+            <div v-if="payment.note">
+              {{ payment.note }}
             </div>
-            <div v-if="distributorPayment.description">
-              {{ distributorPayment.description }}
+            <div v-if="payment.description">
+              {{ payment.description }}
             </div>
           </td>
           <td class="text-right">
             <div class="flex justify-between item-center">
-              <span> T.Toán: </span>
-              <span>{{ formatMoney(distributorPayment.paid) }}</span>
+              <span>T.Toán:</span>
+              <span>{{ formatMoney(-payment.paidAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Ghi nợ: </span>
-              <span>{{ formatMoney(distributorPayment.debit) }}</span>
+              <span>Ghi nợ:</span>
+              <span>{{ formatMoney(payment.debtAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Nợ: </span>
+              <span>Nợ:</span>
               <span>
-                {{ formatMoney(distributorPayment.openDebt) }} ➞
-                {{ formatMoney(distributorPayment.closeDebt) }}</span
-              >
+                {{ formatMoney(payment.openDebt) }} ➞
+                {{ formatMoney(payment.closeDebt) }}
+              </span>
             </div>
           </td>
         </tr>
@@ -128,55 +120,53 @@ defineExpose({ startFetchData })
         <tr>
           <th>Phiếu nhập</th>
           <th>Loại</th>
-          <th>Thanh toán</th>
+          <th>PTTT</th>
+          <th>Số tiền</th>
           <th>Ghi nợ</th>
           <th>Công nợ</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="distributorPaymentList.length === 0">
+        <tr v-if="paymentList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(distributorPayment, index) in distributorPaymentList" :key="index">
+        <tr v-for="(payment, index) in paymentList" :key="index">
           <td>
-            <div v-if="distributorPayment.receiptId">
-              <a @click="openBlankReceiptDetail(distributorPayment.receiptId)">
-                IV{{ distributorPayment.receiptId }}
-              </a>
-            </div>
+            <LinkAndStatusReceipt :receipt="payment.receipt!" :receiptId="payment.voucherId" />
             <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ timeToText(distributorPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="px-4">
-            <DistributorPaymentTypeTag :paymentType="distributorPayment.paymentType" />
-            <div v-if="distributorPayment.description" style="font-size: 0.8rem">
-              {{ distributorPayment.description }}
+            <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
+            <div v-if="payment.description" style="font-size: 0.8rem">
+              {{ payment.description }}
             </div>
-            <div v-if="distributorPayment.note" style="font-size: 0.8rem">
-              {{ distributorPayment.note }}
+            <div v-if="payment.note" style="font-size: 0.8rem">
+              {{ payment.note }}
             </div>
           </td>
+          <td>{{ payment.paymentMethod?.name }}</td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(distributorPayment.paid) }}
+            {{ formatMoney(-payment.paidAmount) }}
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(distributorPayment.debit) }}
+            {{ formatMoney(payment.debtAmount) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(distributorPayment.openDebt) }} ➞
-            {{ formatMoney(distributorPayment.closeDebt) }}
+            {{ formatMoney(payment.openDebt) }} ➞
+            {{ formatMoney(payment.closeDebt) }}
           </td>
         </tr>
       </tbody>
     </table>
-    <div class="mt-4 mb-2 flex justify-end">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
         :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
       />
     </div>
   </div>

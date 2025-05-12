@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ContainerOutlined, DeploymentUnitOutlined, OneToOneOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconCalendar, IconClose, IconDollar, IconUser } from '../../../common/icon'
-import { IconRadiology, IconStethoscope } from '../../../common/icon-google'
+import {
+  IconAudit,
+  IconClose,
+  IconDollar,
+  IconOneToOne,
+  IconReconciliation,
+  IconSchedule,
+  IconUser,
+} from '../../../common/icon-antd'
+import { IconRadiology } from '../../../common/icon-google'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -17,14 +24,12 @@ import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
 import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
 import CustomerRadiologyHistory from './CustomerRadiologyHistory.vue'
-import CustomerTicketClinicHistory from './CustomerTicketClinicHistory.vue'
 import CustomerTicketHistory from './CustomerTicketHistory.vue'
 
 const TABS_KEY = {
   INFO: 'CUSTOMER_INFO',
   APPOINTMENT_HISTORY: 'APPOINTMENT_HISTORY',
   TICKET_HISTORY: 'TICKET_HISTORY',
-  TICKET_CLINIC_HISTORY: 'TICKET_CLINIC_HISTORY',
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
   PRODUCT_HISTORY: 'PRODUCT_HISTORY',
   PROCEDURE_HISTORY: 'PROCEDURE_HISTORY',
@@ -65,16 +70,23 @@ defineExpose({ openModal })
 <template>
   <VueModal
     v-model:show="showModal"
-    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)">
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium flex flex-wrap gap-1" style="font-size: 16px">
-          <span>{{ customer.fullName }} -</span>
+          <div>{{ customer.fullName }} -</div>
           <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
-          <span>
-            - Nợ:
-            <b>{{ formatMoney(customer.debt) }}</b>
-          </span>
+          <div>
+            <span v-if="customer.debt > 0">
+              - Nợ:
+              <b style="color: var(--text-red)">{{ formatMoney(customer.debt) }}</b>
+            </span>
+            <span v-if="customer.debt < 0">
+              - Quỹ:
+              <b style="color: var(--text-green)">{{ formatMoney(-customer.debt) }}</b>
+            </span>
+          </div>
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -91,8 +103,9 @@ defineExpose({ openModal })
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.APPOINTMENT_READ]"
               style="padding: 6px 6px"
-              :tabKey="TABS_KEY.APPOINTMENT_HISTORY">
-              <IconCalendar />
+              :tabKey="TABS_KEY.APPOINTMENT_HISTORY"
+            >
+              <IconSchedule />
               Lịch hẹn
             </VueTabMenu>
             <VueTabMenu
@@ -101,36 +114,32 @@ defineExpose({ openModal })
                 permissionIdMap[PermissionId.TICKET_CLINIC_READ]
               "
               style="padding: 6px 6px"
-              :tabKey="TABS_KEY.TICKET_HISTORY">
-              <ContainerOutlined />
-              Tất cả Phiếu
+              :tabKey="TABS_KEY.TICKET_HISTORY"
+            >
+              <IconAudit />
+              Phiếu thu
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]"
+              v-if="permissionIdMap[PermissionId.PAYMENT_READ]"
               style="padding: 6px 6px"
-              :tabKey="TABS_KEY.TICKET_CLINIC_HISTORY">
-              <IconStethoscope />
-              Phiếu khám
-            </VueTabMenu>
-            <VueTabMenu
-              v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_READ]"
-              style="padding: 6px 6px"
-              :tabKey="TABS_KEY.PAYMENT_HISTORY">
+              :tabKey="TABS_KEY.PAYMENT_HISTORY"
+            >
               <IconDollar />
               Thanh toán
             </VueTabMenu>
             <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PRODUCT_HISTORY">
-              <OneToOneOutlined />
+              <IconOneToOne />
               Sản phẩm
             </VueTabMenu>
             <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PROCEDURE_HISTORY">
-              <DeploymentUnitOutlined />
+              <IconReconciliation />
               Dịch vụ
             </VueTabMenu>
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]"
               style="padding: 6px 6px"
-              :tabKey="TABS_KEY.RADIOLOGY_HISTORY">
+              :tabKey="TABS_KEY.RADIOLOGY_HISTORY"
+            >
               <IconRadiology />
               CĐHA
             </VueTabMenu>
@@ -145,14 +154,12 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.TICKET_HISTORY">
               <CustomerTicketHistory :customerId="customer.id" />
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.TICKET_CLINIC_HISTORY">
-              <CustomerTicketClinicHistory :customerId="customer.id" />
-            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PAYMENT_HISTORY">
               <CustomerPaymentHistory
                 ref="customerPaymentHistory"
                 :customerId="customer.id"
-                @update_customer="(v) => emit('update_customer', v)" />
+                @update_customer="(v) => emit('update_customer', v)"
+              />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.PRODUCT_HISTORY">
               <CustomerProductHistory :customerId="customer.id" />

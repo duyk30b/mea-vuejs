@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ExclamationCircleOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
+import VueTag from '../../../common/VueTag.vue'
+import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { ReceiptStatus } from '../../../modules/receipt'
@@ -9,7 +10,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-detail.ref'
-import VueTag from '../../../common/VueTag.vue'
+import { CONFIG } from '../../../config'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
@@ -53,7 +54,10 @@ const colspan = computed(() => {
       </thead>
       <tbody>
         <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
-          <td class="text-center">{{ index + 1 }}</td>
+          <td class="text-center">
+            <span>{{ index + 1 }}</span>
+            <span v-if="CONFIG.MODE === 'development'">({{ receiptItem.id }})</span>
+          </td>
           <td>
             <div class="text-justify">
               <div style="font-weight: 500">
@@ -61,20 +65,23 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(receiptItem.product!)">
-                  <FileSearchOutlined />
+                  @click="modalProductDetail?.openModal(receiptItem.product!)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.substance"
-                style="font-size: 0.8rem">
+                style="font-size: 0.8rem"
+              >
                 {{ receiptItem!.product!.substance }}
               </div>
               <div
-                v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.lotNumberAndExpiryDate"
+                v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.batchCodeAndExpiryDate"
                 class="flex flex-wrap gap-2"
-                style="font-size: 0.8rem">
-                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+                style="font-size: 0.8rem"
+              >
+                <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
                 <div v-if="receiptItem.expiryDate">
                   - HSD {{ timeToText(receiptItem.expiryDate) }}
                 </div>
@@ -83,7 +90,8 @@ const colspan = computed(() => {
           </td>
           <td
             v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse"
-            class="text-center">
+            class="text-center"
+          >
             {{ warehouseMap[receiptItem.warehouseId]?.name }}
           </td>
           <td class="text-center">
@@ -134,55 +142,33 @@ const colspan = computed(() => {
           v-if="
             settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.paid ||
             receipt.paid !== receipt.totalMoney
-          ">
+          "
+        >
           <td
-            v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)"
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.Prepayment)">
-            <a>
-              <span class="mr-1">Đã tạm ứng</span>
-              <ExclamationCircleOutlined />
-            </a>
-          </td>
-          <td
-            v-else-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.PayDebt)">
+            @click="showModalReceiptPayment(PaymentViewType.Success)"
+          >
             <a>
               <span class="mr-1">Đã thanh toán</span>
-              <ExclamationCircleOutlined />
-            </a>
-          </td>
-          <td
-            v-else
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.Success)">
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <ExclamationCircleOutlined />
+              <IconExclamationCircle />
             </a>
           </td>
           <td colspan="2" class="text-right">
             {{ formatMoney(receipt.paid) }}
           </td>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.totalMoney - receipt.paid
-          ">
-          <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.debt">
+          <template v-if="receipt.debt >= 0">
             <td class="text-right" :colspan="colspan">Còn thiếu</td>
-            <td colspan="2" class="text-right font-medium">
-              {{ formatMoney(receipt.totalMoney - receipt.paid) }}
-            </td>
+            <td colspan="2" class="text-right">{{ formatMoney(receipt.debt) }}</td>
           </template>
-          <template v-else>
-            <td class="text-right" :colspan="colspan">Ghi nợ</td>
-            <td colspan="2" class="text-right font-medium">
-              {{ formatMoney(receipt.debt) }}
+          <template v-if="receipt.debt < 0">
+            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
+              <span>Thanh toán dư</span>
+            </td>
+            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+              {{ formatMoney(-receipt.debt) }}
             </td>
           </template>
         </tr>

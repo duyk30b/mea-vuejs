@@ -2,7 +2,6 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Organization } from '../organization'
 import { Permission } from '../permission/permission.model'
-import { Role } from '../role'
 import { User } from '../user/user.model'
 
 export class MeApi {
@@ -14,8 +13,8 @@ export class MeApi {
       permissionAll: Permission.fromList(data.permissionAll),
       permissionIds: data.permissionIds,
       settingMap: data.settingMap as Record<string, any>,
+      settingMapRoot: data.settingMapRoot as Record<string, any>,
       user: User.from(data.user),
-      rootSetting: data.rootSetting,
     }
   }
 

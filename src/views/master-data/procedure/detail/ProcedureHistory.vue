@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Procedure } from '../../../../modules/procedure'
 import { TicketProcedure, TicketProcedureApi } from '../../../../modules/ticket-procedure'
 import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),
@@ -52,7 +53,7 @@ watch(
     if (newValue) await startFetchData()
     else ticketProcedureList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -90,7 +91,8 @@ watch(
             <div
               v-if="ticketProcedure.discountMoney"
               class="text-xs italic line-through"
-              style="color: var(--text-red)">
+              style="color: var(--text-red)"
+            >
               {{ formatMoney(ticketProcedure.expectedPrice) }}
             </div>
             {{ formatMoney(ticketProcedure.actualPrice) }}
@@ -98,13 +100,13 @@ watch(
         </tr>
       </tbody>
     </table>
-    <div class="mt-4 float-right mb-2">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
         :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })" />
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

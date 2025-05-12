@@ -1,22 +1,25 @@
 import { Batch } from '../batch'
 import { Distributor } from '../distributor'
-import { DistributorPayment } from '../distributor-payment/distributor-payment.model'
-import { DiscountType } from '../enum'
+import { DeliveryStatus, DiscountType } from '../enum'
+import { Payment } from '../payment/payment.model'
 import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
 
 export enum ReceiptStatus {
-  Cancelled = -1,
-  Draft = 0,
-  Prepayment = 1, // Chờ gửi hàng
-  Debt = 2,
-  Success = 3,
+  Schedule = 1,
+  Draft = 2,
+  Deposited = 3,
+  Executing = 4,
+  Debt = 5,
+  Completed = 6,
+  Cancelled = 7,
 }
 
 export class Receipt {
   id: number
   distributorId: number
   status: ReceiptStatus
+  deliveryStatus: DeliveryStatus
   itemsActualMoney: number // tiền sản phẩm
   discountMoney: number // tiền giảm giá
   discountPercent: number // % giảm giá
@@ -31,7 +34,7 @@ export class Receipt {
 
   receiptItemList?: ReceiptItem[]
   distributor?: Distributor
-  distributorPaymentList?: DistributorPayment[]
+  paymentList?: Payment[]
 
   static init(): Receipt {
     const ins = new Receipt()
@@ -53,7 +56,7 @@ export class Receipt {
     const ins = Receipt.init()
     ins.receiptItemList = []
     ins.distributor = Distributor.init()
-    ins.distributorPaymentList = []
+    ins.paymentList = []
     return ins
   }
 
@@ -108,11 +111,11 @@ export class Receipt {
         return receiptItem
       })
     }
-    if (source.distributorPaymentList) {
-      target.distributorPaymentList = source.distributorPaymentList.map((i) => {
-        const distributorPayment = new DistributorPayment()
-        Object.assign(distributorPayment, i)
-        return distributorPayment
+    if (source.paymentList) {
+      target.paymentList = source.paymentList.map((i) => {
+        const payment = new Payment()
+        Object.assign(payment, i)
+        return payment
       })
     }
     return target

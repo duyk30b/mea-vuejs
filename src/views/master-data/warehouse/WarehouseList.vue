@@ -8,6 +8,9 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalWarehouseUpsert = ref<InstanceType<typeof ModalWarehouseUpsert>>()
 
@@ -64,7 +67,7 @@ onBeforeMount(async () => {
 
 const handleModalWarehouseUpsertSuccess = async (
   data: Warehouse,
-  type: 'CREATE' | 'UPDATE' | 'DESTROY'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY',
 ) => {
   await startFetchData()
 }
@@ -72,23 +75,23 @@ const handleModalWarehouseUpsertSuccess = async (
 
 <template>
   <ModalWarehouseUpsert ref="modalWarehouseUpsert" @success="handleModalWarehouseUpsertSuccess" />
-
-  <div class="mx-4 mt-4 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconWarehouse style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách kho</span>
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div>
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
-        @click="modalWarehouseUpsert?.openModal()">
+        @click="modalWarehouseUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
-    <div></div>
+    <div class="ml-auto flex items-center gap-8"></div>
   </div>
+
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="mt-4 table-wrapper">
       <table>
@@ -118,28 +121,41 @@ const handleModalWarehouseUpsertSuccess = async (
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="warehouse in warehouseList" :key="warehouse.id">
-            <td class="text-center">W{{ warehouse.id }}</td>
+            <td class="text-center" style="width: 100px">W{{ warehouse.id }}</td>
             <td>{{ warehouse.name }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" class="text-center">
+            <td
+              v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+              class="text-center"
+              style="width: 100px"
+            >
               <a
                 style="color: var(--text-orange)"
-                @click="modalWarehouseUpsert?.openModal(warehouse.id)">
+                @click="modalWarehouseUpsert?.openModal(warehouse.id)"
+              >
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

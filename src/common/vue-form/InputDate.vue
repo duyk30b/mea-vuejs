@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import IconCalendar from '../icon/IconCalendar.vue'
+import { IconCalendar } from '../icon-antd'
 import DatePicker from './DatePicker.vue'
-import IconClearOutline from '../icon/IconClearOutline.vue'
-import IconClearCircle from '../icon/IconClearCircle.vue'
+import { IconClose, IconCloseCircle } from '../icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +20,7 @@ const props = withDefaults(
     disabled: false,
     defaultType: 'date',
     showTime: false,
-  }
+  },
 )
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | Date | null | undefined): void
@@ -71,7 +70,7 @@ onMounted(() => {
         inputSecond.value!.innerHTML = newDate.getSeconds().toString().padStart(2, '0')
       }
     },
-    { immediate: true }
+    { immediate: true },
   )
 })
 
@@ -89,7 +88,7 @@ const handleInput = (e: Event, type: 'YEAR' | 'MONTH' | 'DATE' | 'HOUR' | 'MINUT
   const beforeValue = target.textContent || ''
   const range = document.createRange()
   const selection = window.getSelection()
-  let selectionStart = selection?.getRangeAt(0)?.startOffset || selection?.anchorOffset || 0
+  const selectionStart = selection?.getRangeAt(0)?.startOffset || selection?.anchorOffset || 0
 
   let convert = beforeValue.replace(/[^\d/]/g, '').slice(0, CONFIG.LENGTH)
   if (Number(convert) > CONFIG.MAX) {
@@ -135,7 +134,7 @@ const handleBlur = (e: Event, LENGTH = 2) => {
   if (!beforeValue) {
     return emit('update:value', undefined)
   }
-  let newValue = beforeValue.padStart(LENGTH, '0')
+  const newValue = beforeValue.padStart(LENGTH, '0')
   target.innerHTML = newValue
 
   const time = getCurrentTime({ requireLength: true })
@@ -185,6 +184,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleValueDatePicker = (value: number) => {
   emit('update:value', value)
+  emit('selectTime', value)
   showDatePicker.value = false
 }
 
@@ -252,34 +252,44 @@ const handleClickClear = () => {
 
 <template>
   <div v-click-outside="handleClickOutside" :class="{ 'vue-input': true, 'disabled': disabled }">
+    <div
+      class="icon-prepend"
+      style="padding: 0 8px; cursor: pointer"
+      @click="showDatePicker = !showDatePicker"
+    >
+      <IconCalendar />
+    </div>
     <div class="input-area">
       <div class="wrapper-date-time" @keydown="handleKeydown">
         <div
           ref="inputDate"
           class="input-item input-date"
           :contenteditable="!disabled"
-          placeholder="D"
+          placeholder="DD"
           @input="(e) => handleInput(e, 'DATE')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
-        <div>/</div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
+        <div style="opacity: 0.5">⧸</div>
         <div
           ref="inputMonth"
           class="input-item input-month"
           :contenteditable="!disabled"
-          placeholder="M"
+          placeholder="MM"
           @input="(e) => handleInput(e, 'MONTH')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
-        <div>/</div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
+        <div style="opacity: 0.5">⧸</div>
         <div
           ref="inputYear"
           class="input-item input-year"
-          placeholder="Y"
+          placeholder="YYYY"
           :contenteditable="!disabled"
           @input="(e) => handleInput(e, 'YEAR')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 4)"></div>
+          @blur="(e) => handleBlur(e, 4)"
+        ></div>
         <div></div>
         <div
           v-if="showTime"
@@ -289,7 +299,8 @@ const handleClickClear = () => {
           placeholder="h"
           @input="(e) => handleInput(e, 'HOUR')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div v-if="showTime">:</div>
         <div
           v-if="showTime"
@@ -299,7 +310,8 @@ const handleClickClear = () => {
           placeholder="m"
           @input="(e) => handleInput(e, 'MINUTE')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div v-if="showTime">:</div>
         <div
           v-if="showTime"
@@ -309,30 +321,39 @@ const handleClickClear = () => {
           placeholder="s"
           @input="(e) => handleInput(e, 'SECOND')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
       </div>
     </div>
-    <div class="icon-append">
-      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
-      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
-      <IconCalendar style="margin-left: 12px" @click="showDatePicker = !showDatePicker" />
+    <div class="icon-append" @click="handleClickClear">
+      <div v-if="!disabled" class="icon-clear-blur">
+        <IconClose />
+      </div>
+      <div v-if="!disabled" class="icon-clear-hover">
+        <IconCloseCircle />
+      </div>
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">
       <DatePicker
-        :value="new Date(value || '2024-01-02').getTime()"
+        :value=" value ? new Date(value).getTime() : Date.now()"
         :defaultType="defaultType"
-        @update:value="handleValueDatePicker" />
+        @update:value="handleValueDatePicker"
+      />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .wrapper-date-time {
-  padding: 6px 6px;
+  padding: 4px 6px;
   display: flex;
   .input-item {
     outline: none;
     padding: 0 6px;
+    white-space: nowrap;
+    font-size: 16px;
+    font-family: monospace;
+    color: #333;
   }
   .input-date {
     width: 2em;
@@ -363,7 +384,7 @@ const handleClickClear = () => {
 .date-picker {
   position: absolute;
   top: 100%;
-  max-width: 400px;
+  min-width: 280px;
   left: 0;
   width: 100%;
   z-index: 1000;

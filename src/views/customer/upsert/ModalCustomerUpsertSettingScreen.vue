@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputCheckbox } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
-import { InputCheckbox } from '../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_CUSTOMER_UPSERT>(
-  JSON.parse(JSON.stringify(store.SCREEN_CUSTOMER_UPSERT))
+  JSON.parse(JSON.stringify(store.SCREEN_CUSTOMER_UPSERT)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -67,14 +67,30 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:value="settingDisplay.birthday">
-                  Hiển thị ngày sinh
+                <InputCheckbox v-model:value="settingDisplay.facebook">
+                  Hiển thị điền link facebook
                 </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:value="settingDisplay.gender">Hiển thị giới tính</InputCheckbox>
+                <InputCheckbox v-model:value="settingDisplay.zalo">
+                  Hiển thị điền link zalo
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:value="settingDisplay.birthday">
+                  Hiển thị điền ngày sinh
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <InputCheckbox v-model:value="settingDisplay.gender">
+                  Hiển thị điền giới tính
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
@@ -100,13 +116,15 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:value="settingDisplay.note">Hiển thị điền ghi chú</InputCheckbox>
+                <InputCheckbox v-model:value="settingDisplay.customerSource">
+                  Hiển thị điền nguồn khách hàng
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
-                <InputCheckbox v-model:value="settingDisplay.customerSource">
-                  Hiển thị nguồn khách hàng
+                <InputCheckbox v-model:value="settingDisplay.note">
+                  Hiển thị điền ghi chú
                 </InputCheckbox>
               </td>
             </tr>

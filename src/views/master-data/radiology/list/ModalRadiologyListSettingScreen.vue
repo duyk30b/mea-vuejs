@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
+import { InputCheckbox } from '../../../../common/vue-form'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_RADIOLOGY_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_RADIOLOGY_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_RADIOLOGY_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -64,14 +65,16 @@ defineExpose({ openModal })
           </thead>
           <tbody>
             <tr>
-              <td></td>
+              <td>
+                <InputCheckbox v-model:value="settingDisplay.table.printHtml" label="Hiển thị mẫu in" />
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

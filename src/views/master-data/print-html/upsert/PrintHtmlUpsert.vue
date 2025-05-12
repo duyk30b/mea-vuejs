@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { IconPrint } from '../../../../common/icon'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
-import { printHtmlCompiledTemplate } from '../../../../modules/print-html/print-html.compiled'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Ticket } from '../../../../modules/ticket'
-import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
-import { DDom } from '../../../../utils'
+import { compiledTemplatePrintHtml } from '../../../../modules/print-html/print-html.compiled'
+import { Ticket, TicketService } from '../../../../modules/ticket'
+import { ESDom } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -29,57 +26,30 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
-const organization = meStore.organization
-
-let procedureMap: Record<string, Procedure> = {}
-let laboratoryMap: Record<string, Laboratory> = {}
-let laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
-let radiologyMap: Record<string, Radiology> = {}
+const { organization, user } = meStore
 
 const printHtml = ref(PrintHtml.blank())
+const printHtmlHeader = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
+
 const saveLoading = ref(false)
 
 const ticketMap: Record<string, Ticket> = {}
 const dataStringExample = ref<string>('')
 
+let systemVarLog = {}
+
 onBeforeMount(async () => {
   const printHtmlId = Number(route.params.id)
   if (printHtmlId) {
-    printHtml.value = await PrintHtmlApi.detail(printHtmlId)
+    const result = await PrintHtmlService.detail(printHtmlId)
+    printHtml.value = result || PrintHtml.blank()
   } else {
     printHtml.value = PrintHtml.blank()
   }
 
-  const fetchData = await Promise.all([
-    ProcedureService.getMap(),
-    LaboratoryService.getMap(),
-    LaboratoryGroupService.getMap(),
-    RadiologyService.getMap(),
-  ])
-  procedureMap = fetchData[0]
-  laboratoryMap = fetchData[1]
-  laboratoryGroupMap = fetchData[2]
-  radiologyMap = fetchData[3]
+  printHtmlHeader.value = await PrintHtmlService.getPrintHtmlHeader()
 })
-
-const handleSave = async () => {
-  saveLoading.value = true
-  try {
-    if (!printHtml.value.id) {
-      const response = await PrintHtmlService.createOne(printHtml.value)
-      emit('success', response, 'CREATE')
-    } else {
-      const response = await PrintHtmlService.updateOne(printHtml.value.id, printHtml.value)
-      emit('success', response, 'UPDATE')
-    }
-    router.push({ name: 'PrintHtmlList' })
-  } catch (error) {
-    console.log('🚀 ~ file: PrintHtmlUpsert.vue:46 ~ handleSave ~ error:', error)
-  } finally {
-    saveLoading.value = false
-  }
-}
 
 const updatePreview = () => {
   if (!ticketDemo.value.id) return
@@ -88,64 +58,81 @@ const updatePreview = () => {
   const ticket = ticketDemo.value
   try {
     eval(printHtml.value.dataExample)
+    if (!data || typeof data !== 'object') {
+      data = {}
+    }
     dataStringExample.value = JSON.stringify(data, null, 2)
   } catch (error) {
-    console.log('🚀 ~ PrintHtmlUpsert.vue:93 ~ updatePreview ~ error:', error)
+    data = {}
   }
 
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  const textDom = printHtmlCompiledTemplate({
+  const compiledHeader = compiledTemplatePrintHtml({
+    organization,
+    ticket,
+    data,
+    printHtml: printHtmlHeader.value,
+  })
+  const compiledResult = compiledTemplatePrintHtml({
     organization,
     ticket,
     data,
     printHtml: printHtml.value,
+    _LAYOUT: {
+      HEADER: compiledHeader.html,
+    },
   })
+  systemVarLog = compiledResult.systemVar || {}
 
-  doc.open()
-  doc.write(textDom)
-  doc.close()
+  if (!compiledResult.html) {
+    return
+  }
+
+  ESDom.writeWindow(doc, {
+    html: compiledResult.html,
+    cssList: [compiledHeader.css, compiledResult.css],
+  })
 }
 
 const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
   if (ticketMap[ticketDemoId]) {
     ticketDemo.value = ticketMap[ticketDemoId]
   } else {
-    const ticketResponse = await useTicketClinicStore().detail(ticketDemoId, {
-      relation: {
-        customer: true,
-        customerPaymentList: false, // query khi bật modal thanh toán
+    try {
+      const ticketResponse = await TicketService.detail(ticketDemoId, {
+        relation: {
+          customer: true,
+          paymentList: false, // query khi bật modal thanh toán
 
-        ticketAttributeList: true,
-        // ticketProductList: true,
-        ticketProductConsumableList: { product: true, batch: true },
-        ticketProductPrescriptionList: { product: true, batch: true },
-        ticketProcedureList: {},
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
-        ticketLaboratoryResultList: true,
-        ticketRadiologyList: {},
-        ticketUserList: {},
-        toAppointment: true,
-      },
-    })
+          ticketAttributeList: true,
+          // ticketProductList: true,
+          ticketProductConsumableList: { product: true },
+          ticketProductPrescriptionList: { product: true },
+          ticketProcedureList: {},
+          ticketLaboratoryList: {},
+          ticketLaboratoryGroupList: {},
+          ticketLaboratoryResultList: true,
+          ticketRadiologyList: {},
+          ticketUserList: {},
+          toAppointment: true,
+        },
+      })
 
-    Ticket.refreshTreeData(ticketResponse, {
-      procedureMap,
-      laboratoryMap,
-      laboratoryGroupMap,
-      radiologyMap,
-    })
-
-    ticketMap[ticketDemoId] = ticketResponse
-    ticketDemo.value = ticketResponse
+      await ticketResponse.refreshAllData()
+      ticketMap[ticketDemoId] = ticketResponse
+      ticketDemo.value = ticketResponse
+    } catch (error) {
+      console.log('🚀 ~ PrintHtmlUpsert.vue:145  ~ error:', error)
+    }
   }
   updatePreview()
 }
 
 const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
-  printHtml.value.content = printHtmlProp.content
+  printHtml.value.html = printHtmlProp.html
+  printHtml.value.css = printHtmlProp.css
   printHtml.value.dataExample = printHtmlProp.dataExample
   printHtml.value.initVariable = printHtmlProp.initVariable
   updatePreview()
@@ -157,20 +144,64 @@ const startTestPrint = async () => {
     const ticket = ticketDemo.value
     try {
       eval(printHtml.value.dataExample)
+      if (!data || typeof data !== 'object') {
+        data = {}
+      }
     } catch (error) {
+      data = {}
       console.log('🚀 ~ PrintHtmlUpsert.vue:163 ~ startTestPrint ~ error:', error)
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket,
+      data,
+      printHtml: printHtmlHeader.value,
+    })
+    const _LAYOUT_HEADER = compiledHeader.html
+
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket,
       data,
       printHtml: printHtml.value,
+      _LAYOUT: {
+        HEADER: _LAYOUT_HEADER,
+      },
     })
+    systemVarLog = compiledResult.systemVar || {}
 
-    await DDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+    await ESDom.startPrint('iframe-print', {
+      html: compiledResult.html,
+      cssList: [compiledHeader.css, compiledResult.css],
+    })
   } catch (error) {
-    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+    console.log('🚀 ~ PrintHtmlUpsert.vue:182 ~ startTestPrint ~ error:', error)
+  }
+}
+
+const showDataSystemPrint = () => {
+  console.log(systemVarLog)
+}
+
+const handleSave = async () => {
+  saveLoading.value = true
+  try {
+    if (!printHtml.value.id) {
+      const response = await PrintHtmlService.createOne(printHtml.value)
+      emit('success', response, 'CREATE')
+    } else {
+      const response = await PrintHtmlService.updateOne(printHtml.value.id, printHtml.value)
+      emit('success', response, 'UPDATE')
+    }
+    router.push({ name: 'PrintHtml' })
+  } catch (error) {
+    console.log('🚀 ~ file: PrintHtmlUpsert.vue:46 ~ handleSave ~ error:', error)
+  } finally {
+    saveLoading.value = false
   }
 }
 </script>
@@ -178,14 +209,16 @@ const startTestPrint = async () => {
 <template>
   <ModalSelectTicketExample
     ref="modalSelectTicketExample"
-    @select="handleModalSelectTicketDemoSuccess" />
+    @select="handleModalSelectTicketDemoSuccess"
+  />
   <ModalSelectPrintHtmlExample
     ref="modalSelectPrintHtmlExample"
-    @select="handleModalSelectPrintHtmlExampleSuccess" />
-  <div class="page-header">
-    <div class="page-header-content">
-      <IconPrint />
-      Thông tin mẫu in
+    @select="handleModalSelectPrintHtmlExampleSuccess"
+  />
+
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
     </div>
   </div>
 
@@ -203,12 +236,13 @@ const startTestPrint = async () => {
       class="mt-4"
       style="
         display: grid;
-        grid-template-areas: 'content viewer' 'variable dataText' 'getData dataText';
+        grid-template-areas: 'html viewer' 'css viewer' 'getDataExample dataText' 'initVariable  dataText';
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: 600px 200px 200px;
+        grid-template-rows: 500px 300px 100px 200px;
         gap: 16px;
-      ">
-      <div style="grid-area: content" class="flex flex-col">
+      "
+    >
+      <div style="grid-area: html" class="flex flex-col">
         <div>
           <span>Tùy chỉnh hiển thị</span>
           <span>
@@ -217,8 +251,19 @@ const startTestPrint = async () => {
             </a>
           </span>
         </div>
-        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-          <MonacoEditor v-model:value="printHtml!.content" @update:value="updatePreview" />
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd">
+          <MonacoEditor v-model:value="printHtml!.html" @update:value="updatePreview" />
+        </div>
+      </div>
+
+      <div style="grid-area: css" class="flex flex-col">
+        <div>CSS</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd">
+          <MonacoEditor
+            v-model:value="printHtml!.css"
+            @update:value="updatePreview"
+            language="css"
+          />
         </div>
       </div>
 
@@ -232,37 +277,50 @@ const startTestPrint = async () => {
         </div>
       </div>
 
-      <div style="grid-area: variable" class="flex flex-col">
-        <div>Tùy chỉnh biến</div>
+      <div style="grid-area: getDataExample" class="flex flex-col">
+        <div>Giả định cách lấy "data" mẫu từ "ticket"</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor
+            v-model:value="printHtml!.dataExample"
+            language="javascript"
+            @update:value="updatePreview"
+          />
+        </div>
+      </div>
+
+      <div style="grid-area: initVariable" class="flex flex-col">
+        <div class="flex justify-between">
+          <span>Khởi tạo biến mặc định</span>
+          <a @click="showDataSystemPrint">Xem biến hệ thống (console.log)</a>
+        </div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor
             v-model:value="printHtml!.initVariable"
             language="javascript"
-            @update:value="updatePreview" />
-        </div>
-      </div>
-
-      <div style="grid-area: getData" class="flex flex-col">
-        <div>Cách lấy "data"</div>
-        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-          <MonacoEditor
-            v-model:value="printHtml!.dataExample"
-            language="json"
-            @update:value="updatePreview" />
+            @update:value="updatePreview"
+          />
         </div>
       </div>
 
       <div style="grid-area: dataText; overflow: scroll" class="flex flex-col">
-        <div>"data"</div>
+        <div>Kết quả "data" mẫu</div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-          <MonacoEditor :value="dataStringExample" language="json" />
+          <MonacoEditor read-only :value="dataStringExample" language="json" />
         </div>
       </div>
     </div>
 
     <div class="mt-4 flex justify-between">
       <div></div>
-      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
+      <VueButton
+        v-if="printHtml.oid != 1 || user?.id == 1"
+        color="blue"
+        type="submit"
+        :loading="saveLoading"
+        icon="save"
+      >
+        Lưu lại
+      </VueButton>
     </div>
   </form>
 </template>

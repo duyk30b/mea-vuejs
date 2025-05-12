@@ -47,6 +47,8 @@ export class AppointmentApi {
           ? {
               fullName: appointment.customer.fullName,
               phone: appointment.customer.phone,
+              facebook: appointment.customer.facebook || '',
+              zalo: appointment.customer.zalo || '',
               customerSourceId: appointment.customer.customerSourceId || 0,
               birthday: appointment.customer.birthday,
               yearOfBirth: appointment.customer.yearOfBirth,
@@ -90,11 +92,11 @@ export class AppointmentApi {
 
   static async registerTicketClinic(
     appointmentId: number,
-    body: { registeredAt: number; ticketType: TicketType }
+    body: { registeredAt: number; ticketType: TicketType },
   ) {
     const response = await AxiosInstance.post(
       `/appointment/${appointmentId}/register-ticket-clinic`,
-      body
+      body,
     )
     const { data } = response.data as BaseResponse<{ appointmentId: any }>
     return data

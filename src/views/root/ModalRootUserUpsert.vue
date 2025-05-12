@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
+import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputDate, InputNumber, InputText } from '../../common/vue-form'
+import { InputDate, InputNumber, InputRadio, InputText, VueSwitch } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
@@ -130,7 +130,8 @@ defineExpose({ openModal })
               v-model:value="user.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e: string) => (user.phone = e.replace(/ /g, ''))" />
+              @update:value="(e: string) => (user.phone = e.replace(/ /g, ''))"
+            />
           </div>
         </div>
 
@@ -141,32 +142,36 @@ defineExpose({ openModal })
               v-model:value="user.birthday"
               format="DD/MM/YYYY"
               type-parser="number"
-              class="w-full" />
+              class="w-full"
+            />
           </div>
         </div>
 
         <div class="mt-5 flex items-center">
           <div style="width: 100px; flex: none">Giới tính</div>
           <div style="flex: 1">
-            <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+            <InputRadio
+              v-model:value="user.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 
         <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Admin</div>
-          <a-switch
-            :checked="Boolean(user.isAdmin)"
-            @change="(checked: Boolean) => (user.isAdmin = checked ? 1 : 0)" />
+          <div>
+            <VueSwitch v-model="user.isAdmin" type-parser="number" />
+          </div>
         </div>
 
         <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)" />
+          <div>
+            <VueSwitch v-model="user.isActive" type-parser="number" />
+          </div>
           <div v-if="!user.isActive" class="ml-4">User này tạm thời không thể hoạt động</div>
         </div>
       </div>
@@ -174,7 +179,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <!-- <VueButton danger @click="clickDelete">Xóa</VueButton> -->
-          <VueButton class="ml-auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton style="margin-left: auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>

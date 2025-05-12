@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { arrayToKeyValue } from '../../utils'
 import { UserRoleService } from '../user-role'
 import { UserApi } from './user.api'
@@ -7,6 +8,7 @@ import { User } from './user.model'
 export class UserService {
   static loadedAll: boolean = false
   static userAll: User[] = []
+  static userMap = ref<Record<string, User>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static getAll = (() => {
@@ -18,8 +20,8 @@ export class UserService {
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !UserService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !UserService.loadedAll || options.refetch) {
         UserService.loadedAll = true
         fetching = start()
       }
@@ -47,16 +49,21 @@ export class UserService {
     return data
   }
 
+  static async reloadMap() {
+    await UserService.getAll()
+    UserService.userMap.value = arrayToKeyValue(UserService.userAll, 'id')
+  }
+
   static async getMap() {
     await UserService.getAll()
     const userMap = arrayToKeyValue(UserService.userAll, 'id')
     return userMap
   }
 
-  static async pagination(query: UserPaginationQuery, options?: { refresh: boolean }) {
+  static async pagination(query: UserPaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await UserService.getAll({ refresh: !!options?.refresh })
+    await UserService.getAll({ refetch: !!options?.refetch })
     let data = UserService.executeQuery(UserService.userAll, query)
     data = data.slice((page - 1) * limit, page * limit)
     return {
@@ -71,15 +78,20 @@ export class UserService {
     return User.fromList(data)
   }
 
-  static async detail(distributorId: number, options: UserDetailQuery = {}) {
-    const result = await UserApi.detail(distributorId, options)
-    const findIndex = UserService.userAll.findIndex((i) => {
-      return i.id === distributorId
-    })
-    if (findIndex !== -1) {
-      UserService.userAll[findIndex] = result
+  static async detail(userId: number, query: UserDetailQuery = {}, options?: { refetch: boolean }) {
+    let user: User | undefined
+    const index = UserService.userAll.findIndex((i) => i.id === userId)
+    if (options?.refetch) {
+      user = await UserApi.detail(userId, query)
+      if (index !== -1) {
+        UserService.userAll[index] = user
+      } else {
+        UserService.userAll.push(user)
+      }
+    } else {
+      user = UserService.userAll[index]
     }
-    return result
+    return user
   }
 
   static async createOne(user: User, roleIdList: number[]) {

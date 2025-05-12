@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ShopOutlined } from '@ant-design/icons-vue'
 import type { ChartData } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { IconBarChart, IconSetting } from '../../../common/icon-antd'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { StatisticService } from '../../../modules/statistics'
 import { TicketStatus, TicketType } from '../../../modules/ticket'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
 
 type DataResponseType = {
@@ -45,8 +45,8 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const now = new Date()
-const endMonth = DTimer.endOfMonth(now)
-const startMonth = DTimer.startOfMonth(now)
+const endMonth = ESTimer.endOfMonth(now)
+const startMonth = ESTimer.startOfMonth(now)
 const ticketTypeFilter = ref<TicketType | null>(null)
 const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])
 const timeType = ref<'date' | 'month'>('date')
@@ -67,11 +67,11 @@ const startFetchData = async () => {
     loaded.value = false
     let fromTime: Date, toTime: Date
     if (timeType.value === 'date') {
-      fromTime = DTimer.startOfDate(timeRanger.value?.[0].toISOString())
-      toTime = DTimer.endOfDate(timeRanger.value?.[1].toISOString())
+      fromTime = ESTimer.startOfDate(timeRanger.value?.[0].toISOString())
+      toTime = ESTimer.endOfDate(timeRanger.value?.[1].toISOString())
     } else {
-      fromTime = DTimer.startOfMonth(timeRanger.value?.[0].toISOString())
-      toTime = DTimer.endOfMonth(timeRanger.value?.[1].toISOString())
+      fromTime = ESTimer.startOfMonth(timeRanger.value?.[0].toISOString())
+      toTime = ESTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
     data.value = await StatisticService.statisticTicket({
       fromTime: fromTime.toISOString(),
@@ -79,12 +79,12 @@ const startFetchData = async () => {
       groupTimeType: timeType.value,
       filter: {
         ticketType: ticketTypeFilter.value ?? undefined,
-        ticketStatus: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
+        status: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
       },
     })
 
     visitBarData.labels = data.value.map((i) =>
-      timeType.value === 'date' ? i.timeLabel.slice(0, 5) : i.timeLabel
+      timeType.value === 'date' ? i.timeLabel.slice(0, 5) : i.timeLabel,
     )
     visitBarData.datasets = [
       {
@@ -113,8 +113,8 @@ const handleChangeTimeType = async (data: 'date' | 'month') => {
     timeRanger.value = [dayjs(startMonth), dayjs(endMonth)]
   }
   if (data === 'month') {
-    const startYear = DTimer.startOfYear(new Date())
-    const endYear = DTimer.endOfYear(new Date())
+    const startYear = ESTimer.startOfYear(new Date())
+    const endYear = ESTimer.endOfYear(new Date())
     timeRanger.value = [dayjs(startYear), dayjs(endYear)]
   }
   await startFetchData()
@@ -134,36 +134,37 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
   await nextTick()
   loaded.value = true
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    modalStatisticTicketSetting.value?.openModal()
-  }
-}
 </script>
 
 <template>
   <ModalStatisticTicketSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalStatisticTicketSetting" />
+    ref="modalStatisticTicketSetting"
+  />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
-        <ShopOutlined />
+        <IconBarChart />
         <span class="ml-2">Báo cáo lượt tiếp đón</span>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt thống kê</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalStatisticTicketSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -183,7 +184,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 ? [{ value: { NOT: TicketType.Order }, text: 'Phiếu khám' }]
                 : []),
             ]"
-            @update:value="startFetchData" />
+            @update:value="startFetchData"
+          />
         </div>
       </div>
       <div>
@@ -191,12 +193,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div class="flex justify-end items-center gap-2">
           <VueButton
             :color="timeType === 'date' ? 'blue' : 'default'"
-            @click="handleChangeTimeType('date')">
+            @click="handleChangeTimeType('date')"
+          >
             Ngày
           </VueButton>
           <VueButton
             :color="timeType === 'month' ? 'blue' : 'default'"
-            @click="handleChangeTimeType('month')">
+            @click="handleChangeTimeType('month')"
+          >
             Tháng
           </VueButton>
           <a-range-picker
@@ -205,14 +209,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-            picker="date" />
+            picker="date"
+          />
           <a-range-picker
             v-if="timeType === 'month'"
             v-model:value="timeRanger"
             :onChange="handleChangeTime"
             format="MM-YYYY"
             :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-            picker="month" />
+            picker="month"
+          />
         </div>
       </div>
     </div>
@@ -307,7 +313,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             { text: 'Tổng nợ', value: 'sumDebt' },
             { text: 'Số đơn', value: 'countTicket' },
           ]"
-          @selectItem="handleChangeOptionBar" />
+          @selectItem="handleChangeOptionBar"
+        />
       </div>
     </div>
     <div style="height: 500px">

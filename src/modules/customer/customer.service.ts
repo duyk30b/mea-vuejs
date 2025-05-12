@@ -5,8 +5,8 @@ import { throttleAsync } from '../../utils'
 import { useMeStore } from '../_me/me.store'
 import { useSettingStore } from '../_me/setting.store'
 import { AuthService } from '../auth/auth.service'
-import { CustomerPaymentApi } from '../customer-payment/customer-payment.api'
-import type { CustomerPaymentPayDebtBody } from '../customer-payment/customer-payment.dto'
+import { PaymentApi } from '../payment/payment.api'
+import type { CustomerPaymentBody } from '../payment/payment.dto'
 import { CustomerApi } from './customer.api'
 import type { CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
@@ -50,7 +50,7 @@ export class CustomerService {
         return
       }
     },
-    60 * 1000 // 1p sau mới refreshDB 1 lần
+    60 * 1000, // 1p sau mới refreshDB 1 lần
   )
 
   static async pagination(params: CustomerPaginationQuery, options?: { refresh: boolean }) {
@@ -133,8 +133,8 @@ export class CustomerService {
     return response
   }
 
-  static async payDebt(body: CustomerPaymentPayDebtBody) {
-    const data = await CustomerPaymentApi.payDebt(body)
+  static async customerPayment(body: CustomerPaymentBody) {
+    const data = await PaymentApi.customerPayment(body)
     await CustomerDB.replaceOne(data.customer.id, data.customer)
     return data
   }

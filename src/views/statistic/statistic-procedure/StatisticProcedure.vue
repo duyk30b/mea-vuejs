@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ShopOutlined } from '@ant-design/icons-vue'
+import { IconBarChart } from '../../../common/icon-antd'
 import TopProcedureBestSelling from './TopProcedureBestSelling.vue'
 </script>
 
@@ -7,7 +7,7 @@ import TopProcedureBestSelling from './TopProcedureBestSelling.vue'
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
-        <ShopOutlined />
+        <IconBarChart />
         <span class="ml-2">Báo cáo dịch vụ</span>
       </div>
     </div>

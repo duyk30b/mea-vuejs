@@ -51,19 +51,26 @@ export class ProductApi {
   static async createOne(product: Product) {
     const response = await AxiosInstance.post('/product/create', {
       brandName: product.brandName,
+      productCode: product.productCode || '',
+      quantity: product.quantity,
       substance: product.substance,
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId,
+      productGroupId: product.productGroupId || 0,
       unit: product.unit,
       route: product.route,
       source: product.source,
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      hasManageQuantity: product.hasManageQuantity,
       isActive: product.isActive,
+
+      pickupStrategy: product.pickupStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
 
       commissionList: (product.commissionList || [])
         .filter((i) => !!i.roleId)
@@ -82,19 +89,25 @@ export class ProductApi {
   static async updateOne(id: number, product: Product) {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       brandName: product.brandName,
+      productCode: product.productCode,
       substance: product.substance,
-      costPrice: product.hasManageQuantity ? undefined : product.costPrice,
+      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId,
+      productGroupId: product.productGroupId || 0,
       unit: product.unit,
       route: product.route,
       source: product.source,
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      hasManageQuantity: product.hasManageQuantity,
       isActive: product.isActive,
+
+      pickupStrategy: product.pickupStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
 
       commissionList: (product.commissionList || [])
         .filter((i) => !!i.roleId)
@@ -127,25 +140,12 @@ export class ProductApi {
     return result
   }
 
-  static async downloadExcelProductList() {
-    const response = await AxiosInstance.get(`/product/download-excel`)
-    const { data } = response.data as BaseResponse<{
-      buffer: { type: 'Buffer'; data: any[] }
-      mimeType: string
-      filename: string
-    }>
-    const uint8Array = new Uint8Array(data.buffer.data)
-    const blob = new Blob([uint8Array], {
-      type: data.mimeType,
+  static async mergeProduct(options: { productIdSourceList: number[]; productIdTarget: number }) {
+    const response = await AxiosInstance.patch(`/product/merge-product`, {
+      productIdSourceList: options.productIdSourceList,
+      productIdTarget: options.productIdTarget,
     })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = data.filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
+    const { data } = response.data as BaseResponse<boolean>
+    return data
   }
 }

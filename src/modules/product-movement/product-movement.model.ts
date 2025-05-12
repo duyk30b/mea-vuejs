@@ -3,52 +3,41 @@ import { Distributor } from '../distributor'
 import type { MovementType } from '../enum'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
+import { StockCheck } from '../stock-check'
 import { Ticket } from '../ticket'
 import { User } from '../user'
 
 export class ProductMovement {
   id: number
+  movementType: MovementType
+  contactId: number
+  voucherId: number // ticketId hoặc receiptId
+  voucherProductId: number // ticketProductId hoặc receiptItemId
   warehouseId: number
   productId: number
-  voucherId: number
-  contactId: number
-  movementType: MovementType
+  batchId: number
   isRefund: 0 | 1
-  openQuantity: number // Số lượng ban đầu
+
   quantity: number // Số lượng +/-
-  closeQuantity: number // Số lượng sau thay đổi
-  unitRate: number
-  costPrice: number 
-  expectedPrice: number 
-  actualPrice: number 
+  costAmount: number
+  openQuantityProduct: number // Số lượng ban đầu
+  closeQuantityProduct: number // Số lượng sau thay đổi
+  openQuantityBatch: number // Số lượng ban đầu
+  closeQuantityBatch: number // Số lượng sau thay đổi
+  openCostAmountBatch: number
+  closeCostAmountBatch: number
+
+  expectedPrice: number
+  actualPrice: number
   createdAt: number
 
   product?: Product
   receipt?: Receipt
-  distributor?: Distributor
   ticket?: Ticket
+  stockCheck?: StockCheck
+  distributor?: Distributor
   customer?: Customer
   user?: User
-
-  get unitQuantity() {
-    return this.quantity / this.unitRate
-  }
-
-  get unitCostPrice() {
-    return this.costPrice * this.unitRate
-  }
-
-  get unitActualPrice() {
-    return this.actualPrice * this.unitRate
-  }
-
-  get unitExpectedPrice() {
-    return this.expectedPrice * this.unitRate
-  }
-
-  get unitName() {
-    return this.product!.getUnitNameByRate(this.unitRate) || ''
-  }
 
   static basic(source: ProductMovement) {
     const target = new ProductMovement()
@@ -73,18 +62,23 @@ export class ProductMovement {
     if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
       target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
+      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'stockCheck')) {
+      target.stockCheck = source.stockCheck
+        ? StockCheck.basic(source.stockCheck)
+        : source.stockCheck
+    }
+
     if (Object.prototype.hasOwnProperty.call(source, 'distributor')) {
       target.distributor = source.distributor
         ? Distributor.basic(source.distributor)
         : source.distributor
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
-      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
-    }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
     }
-
     if (Object.prototype.hasOwnProperty.call(source, 'user')) {
       target.user = source.user ? User.basic(source.user) : source.user
     }

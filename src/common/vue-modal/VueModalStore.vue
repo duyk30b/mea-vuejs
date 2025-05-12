@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../VueButton.vue'
-import { IconClose, IconExclamationCircle, IconQuestionCircle } from '../icon'
+import { IconClose, IconExclamationCircle, IconQuestionCircle } from '../icon-antd'
 import VueModal from './VueModal.vue'
 import { ModalStore } from './vue-modal.store'
 
@@ -13,7 +13,7 @@ const handleUpdateShowModal = (show: boolean, key: string) => {
   }
 }
 
-const handleOk = async (func: Function, key: string) => {
+const handleOk = async (func: () => Promise<void>, key: string) => {
   saveLoading.value = true
   try {
     await func()
@@ -25,7 +25,7 @@ const handleOk = async (func: Function, key: string) => {
   }
 }
 
-const handleCancel = async (func: Function, key: string) => {
+const handleCancel = async (func: () => Promise<void>, key: string) => {
   await func()
   ModalStore.remove(key)
 }
@@ -36,13 +36,15 @@ const handleCancel = async (func: Function, key: string) => {
     <VueModal
       v-model:show="modal.show"
       style="width: 520px; margin-top: 100px"
-      @update:show="(v) => handleUpdateShowModal(v, key)">
+      @update:show="(v) => handleUpdateShowModal(v, key)"
+    >
       <div class="bg-white">
         <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
           <div class="flex-1 flex items-center gap-2">
             <span
               v-if="modal.type === 'confirm'"
-              style="line-height: 0; font-size: 18px; color: red">
+              style="line-height: 0; font-size: 18px; color: red"
+            >
               <IconQuestionCircle />
             </span>
             <span v-if="modal.type === 'alert'" style="line-height: 0; font-size: 18px; color: red">
@@ -53,7 +55,8 @@ const handleCancel = async (func: Function, key: string) => {
           <div
             style="font-size: 1.2rem"
             class="px-4 cursor-pointer"
-            @click="ModalStore.remove(key)">
+            @click="ModalStore.remove(key)"
+          >
             <IconClose />
           </div>
         </div>
@@ -68,17 +71,23 @@ const handleCancel = async (func: Function, key: string) => {
         <div
           v-if="modal.contentType === 'html' && typeof modal.content === 'string'"
           class="p-4"
-          v-html="modal.content"></div>
+          v-html="modal.content"
+        ></div>
         <div class="p-4">
           <div class="flex gap-4">
-            <VueButton class="ml-auto" type="reset" @click="handleCancel(modal.onCancel, key)">
+            <VueButton
+              style="margin-left: auto"
+              type="reset"
+              @click="handleCancel(modal.onCancel, key)"
+            >
               {{ modal.cancelText }}
             </VueButton>
             <VueButton
               v-if="modal.type === 'confirm'"
               color="blue"
               :loading="saveLoading"
-              @click="handleOk(modal.onOk, key)">
+              @click="handleOk(modal.onOk, key)"
+            >
               {{ modal.okText }}
             </VueButton>
           </div>

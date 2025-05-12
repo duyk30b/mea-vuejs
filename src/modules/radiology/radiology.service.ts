@@ -1,4 +1,6 @@
 import { arrayToKeyValue, customFilter } from '../../utils'
+import { CommissionService } from '../commission'
+import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyApi } from './radiology.api'
 import type {
   RadiologyGetQuery,
@@ -29,7 +31,7 @@ export class RadiologyService {
     }
   })()
 
-  private static executeQuery(all: Radiology[], query: RadiologyGetQuery) {
+  private static async executeQuery(all: Radiology[], query: RadiologyGetQuery) {
     let data = all
     if (query.filter) {
       const filter = query.filter
@@ -46,6 +48,14 @@ export class RadiologyService {
         }
         return true
       })
+    }
+    if (query.relation) {
+      if (query.relation.printHtml) {
+        const printHtmlMap = await PrintHtmlService.getMap()
+        data.forEach((i) => {
+          i.printHtml = PrintHtml.from(printHtmlMap[i.printHtmlId])
+        })
+      }
     }
     if (query.sort) {
       if (query.sort.id) {
@@ -77,7 +87,7 @@ export class RadiologyService {
     const limit = query.limit || 10
     await RadiologyService.fetchAll({ refresh: !!options?.refresh })
 
-    let data = RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
+    let data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     data = data.slice((page - 1) * limit, page * limit)
     return {
       data: Radiology.fromList(data),
@@ -87,19 +97,21 @@ export class RadiologyService {
 
   static async list(query: RadiologyListQuery, options?: { refresh: boolean }) {
     await RadiologyService.fetchAll({ refresh: !!options?.refresh })
-    const data = RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
+    const data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     return Radiology.fromList(data)
   }
 
   static async createOne(radiology: Radiology) {
     const result = await RadiologyApi.createOne(radiology)
     RadiologyService.loadedAll = false
+    CommissionService.loadedAll = false
     return result
   }
 
   static async updateOne(id: number, radiology: Radiology) {
     const result = await RadiologyApi.updateOne(id, radiology)
     RadiologyService.loadedAll = false
+    CommissionService.loadedAll = false
     return result
   }
 
@@ -107,6 +119,7 @@ export class RadiologyService {
     const result = await RadiologyApi.destroyOne(id)
     if (result.success) {
       RadiologyService.loadedAll = false
+      CommissionService.loadedAll = false
     }
     return result
   }

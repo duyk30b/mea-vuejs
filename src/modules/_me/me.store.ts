@@ -13,15 +13,6 @@ export const useMeStore = defineStore('me-store', {
       organization: Organization.blank(),
       permissionMap: <Record<string, Permission>>{},
       permissionIdMap: <Record<string, boolean>>{},
-      rootSetting: {
-        printDefault: {
-          invoice: 0,
-          laboratory: 0,
-          optometry: 0,
-          prescription: 0,
-          radiology: 0,
-        },
-      },
     }
   },
 })

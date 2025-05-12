@@ -1,14 +1,22 @@
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { DArray } from '../../utils'
+import { ESArray } from '../../utils'
 import { useMeStore } from '../_me/me.store'
 import { AuthService } from '../auth/auth.service'
-import { Batch } from '../batch'
+import { CommissionService } from '../commission'
 import { ProductApi } from './product.api'
-import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
+import type {
+  ProductDetailQuery,
+  ProductGetQuery,
+  ProductListQuery,
+  ProductPaginationQuery,
+} from './product.dto'
 import { Product } from './product.model'
+
+const ProductDBQuery = new IndexedDBQuery<Product>()
 
 export class ProductService {
   static async refreshDB() {
@@ -47,44 +55,49 @@ export class ProductService {
     }
   }
 
-  static async pagination(params: ProductPaginationQuery) {
-    const { page, limit, relation, filter, sort } = params
-    const productPagination = await ProductDB.pagination({
-      page: page || 1,
-      limit: limit || 10,
-      condition: {
-        isActive: filter?.isActive,
-        productGroupId: filter?.productGroupId,
-        quantity: filter?.quantity,
-        warehouseIds: filter?.warehouseIds,
-        $OR: filter?.$OR,
-      },
-      sort: sort || { id: 'DESC' },
-    })
-    const productList = Product.fromList(productPagination.data)
+  private static async executeQuery(all: Product[], query: ProductGetQuery) {
+    let data = all
 
-    if (relation?.batchList) {
-      const productIdList = productList.map((i) => i.id)
-      if (productIdList.length) {
-        const batchList = await BatchDB.findMany({
-          condition: { productId: { IN: productIdList }, quantity: { NOT: 0 } },
-        })
-        const batchListMapProductId = DArray.arrayToKeyArray(batchList, 'productId')
-        productList.forEach((i) => {
-          batchListMapProductId[i.id] ||= []
-          i.batchList = Batch.fromList(batchListMapProductId[i.id])
-          i.batchList.forEach((j) => (j.product = i))
-        })
+    if (query.relation) {
+      if (query.relation.batchList) {
+        const batchAll = await BatchDB.findManyBy({ quantity: { NOT: 0 } })
+        const batchMap = ESArray.arrayToKeyArray(batchAll, 'productId')
+        data.forEach((i) => (i.batchList = batchMap[i.id]))
       }
     }
+    if (query.filter) {
+      const filter = query.filter
+      data = data.filter((i) => {
+        return ProductDBQuery.executeFilter(i, filter)
+      })
+    }
+
+    if (query.sort) {
+      data = ProductDBQuery.executeSort(data, query.sort)
+    }
+    return data
+  }
+
+  static async pagination(query: ProductPaginationQuery) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    const productAll = await ProductDB.findAll()
+
+    const dataTotal = await ProductService.executeQuery(productAll, query)
+    const data = dataTotal.slice((page - 1) * limit, page * limit)
+
+    const productList = Product.fromList(data)
+    productList.forEach((product) => {
+      product.batchList?.forEach((batch) => {
+        batch.product = Product.basic(product)
+      })
+    })
 
     return {
-      data: productList,
-      meta: {
-        page,
-        limit,
-        total: productPagination.total,
-      },
+      page,
+      limit,
+      total: dataTotal.length,
+      productList,
     }
   }
 
@@ -99,33 +112,23 @@ export class ProductService {
         quantity: filter?.quantity,
         warehouseIds: filter?.warehouseIds,
         $OR: filter?.$OR,
+        $AND: filter?.$AND,
       },
       sort,
     })
     const productList = Product.fromList(objects)
-    if (relation?.batchList && productList.length) {
-      const productIdList = productList.map((i) => i.id)
-      const batchList = await BatchDB.findMany({
-        condition: {
-          productId: { IN: productIdList },
-          quantity: filter?.batchList?.quantity,
-          warehouseId: filter?.batchList?.warehouseId,
-        },
-      })
-      const batchListMapProductId = DArray.arrayToKeyArray(batchList, 'productId')
-      productList.forEach((i) => {
-        batchListMapProductId[i.id] ||= []
-        i.batchList = Batch.fromList(batchListMapProductId[i.id])
-        i.batchList.forEach((j) => (j.product = i))
-      })
-    }
+
     return productList
   }
 
   static async search(text: string) {
     if (!text) text = ''
     const objects = await ProductDB.findManyBy({
-      $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+      $OR: [
+        { productCode: { LIKE: text } },
+        { brandName: { LIKE: text } },
+        { substance: { LIKE: text } },
+      ],
       isActive: 1,
     })
     return Product.fromList(objects)
@@ -136,14 +139,16 @@ export class ProductService {
     return product
   }
 
-  static async detail(id: number, options: ProductDetailQuery) {
-    const product = await ProductApi.detail(id, options)
-    // const product = await ProductDB.findOneByKey(id)
-    if (product) {
+  static async detail(id: number, query: ProductDetailQuery, options?: { refetch?: boolean }) {
+    let product: Product | undefined
+    if (options?.refetch) {
+      product = await ProductApi.detail(id, query)
       await ProductDB.upsertOne(product)
-    }
-    if (product.batchList?.length) {
-      await BatchDB.upsertMany(product.batchList)
+    } else {
+      product = await ProductDB.findOneByKey(id)
+      if (!product) {
+        product = Product.blank()
+      }
     }
     return product
   }
@@ -151,6 +156,7 @@ export class ProductService {
   static async createOne(instance: Product) {
     const response = await ProductApi.createOne(instance)
     await ProductDB.upsertOne(response)
+    CommissionService.loadedAll = false
     return response
   }
 
@@ -158,6 +164,7 @@ export class ProductService {
     const response = await ProductApi.updateOne(id, instance)
     if (response.success) {
       await ProductDB.replaceOne(id, response.data.product)
+      CommissionService.loadedAll = false
     }
     return response
   }
@@ -166,6 +173,7 @@ export class ProductService {
     const response = await ProductApi.destroyOne(id)
     if (response.success) {
       await ProductDB.deleteOneByKey(id)
+      CommissionService.loadedAll = false
     }
     return response
   }

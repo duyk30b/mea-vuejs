@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconTrash } from '../../../../common/icon'
+import { IconClose, IconDelete } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText, VueSelect } from '../../../../common/vue-form'
 import InputNumber from '../../../../common/vue-form/InputNumber.vue'
@@ -413,7 +413,7 @@ defineExpose({ openModal })
                       <a
                         style="color: var(--text-red)"
                         @click="laboratory.children!.splice(index, 1)">
-                        <IconTrash />
+                        <IconDelete />
                       </a>
                     </td>
                   </tr>
@@ -432,7 +432,7 @@ defineExpose({ openModal })
           <VueButton v-if="laboratory.id" color="red" icon="trash" @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton

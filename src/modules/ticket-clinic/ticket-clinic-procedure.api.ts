@@ -22,6 +22,7 @@ export class TicketClinicProcedureApi {
         actualPrice: ticketProcedure.actualPrice,
       },
       ticketUserList: ticketUserList.map((i) => ({
+        id: i.id || 0,
         roleId: i.roleId || 0,
         userId: i.userId || 0,
       })),
@@ -32,7 +33,7 @@ export class TicketClinicProcedureApi {
   static async destroyTicketProcedure(body: { ticketId: number; ticketProcedureId: number }) {
     const { ticketId, ticketProcedureId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-procedure/${ticketProcedureId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-procedure/${ticketProcedureId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -59,11 +60,12 @@ export class TicketClinicProcedureApi {
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -80,7 +82,7 @@ export class TicketClinicProcedureApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
