@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { LogoutOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { IconHospitalUser } from '@/common/icon-font-awesome'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
+import { IconLogout, IconMenuUnfold, IconUser } from '../../common/icon-antd'
 import { AxiosLoading } from '../../core/axios.instance'
 import { useMeStore } from '../../modules/_me/me.store'
 import { AuthService } from '../../modules/auth/auth.service'
@@ -37,9 +38,9 @@ const handleUserAction = async (e: any) => {
         <img
           v-if="meStore?.organization?.logoImage"
           :src="DImage.getImageLink(meStore?.organization?.logoImage, { size: 500 })"
-          style="background-color: white;"
-          height="50px"/>
-        <font-awesome-icon v-else :icon="['fas', 'hospital-user']" />
+          style="background-color: white; height: 50px"
+        />
+        <IconHospitalUser v-else />
       </div>
       <div class="logo-text">
         <template v-if="meStore?.organization?.name">
@@ -54,20 +55,24 @@ const handleUserAction = async (e: any) => {
       </div>
     </router-link>
     <div class="dashboard-menu flex md:hidden">
-      <MenuUnfoldOutlined class="icon-menu-fold" @click="emitShowDrawer" />
+      <IconMenuUnfold class="icon-menu-fold" @click="emitShowDrawer" />
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
     <div>
       <a-dropdown trigger="click">
         <a-button>
-          <UserOutlined />
-          {{ meStore?.user?.fullName }}
+          <div class="flex items-center gap-2">
+            <IconUser />
+            <span> {{ meStore?.user?.fullName }} </span>
+          </div>
         </a-button>
         <template #overlay>
           <a-menu @click="handleUserAction">
             <a-menu-item key="logout">
-              <LogoutOutlined />
-              &nbsp; Đăng xuất
+              <div class="flex items-center gap-2">
+                <IconLogout />
+                <span> Đăng xuất </span>
+              </div>
             </a-menu-item>
           </a-menu>
         </template>
@@ -78,7 +83,8 @@ const handleUserAction = async (e: any) => {
         :percent="AxiosLoading.percent"
         :show-info="false"
         status="active"
-        :strokeWidth="3" />
+        :strokeWidth="3"
+      />
     </div>
   </a-layout-header>
 </template>

@@ -13,14 +13,14 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
-import { DiscountType } from '../../../modules/enum'
+import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketOrderExpenseList from './TicketOrderExpenseList.vue'
@@ -30,7 +30,11 @@ import TicketOrderSelectProduct from './TicketOrderSelectProduct.vue'
 import TicketOrderSurchargeList from './TicketOrderSurchargeList.vue'
 import ModalDataTicketOrder from './modal-setting/ModalDataTicketOrder.vue'
 import ModalTicketOrderUpsertSetting from './modal-setting/ModalTicketOrderUpsertSetting.vue'
-import { ETicketOrderSave, ETicketOrderUpsertMode, ticket } from './ticket-order-upsert.ref'
+import {
+  ETicketOrderSave,
+  ETicketOrderUpsertMode,
+  ticketOrderUpsertRef,
+} from './ticket-order-upsert.ref'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -82,23 +86,32 @@ onBeforeMount(async () => {
       const ticketResponse = await TicketApi.detail(ticketId, {
         relation: {
           customer: true,
-          ticketAttributeList: true,
-          ticketProductList: { product: true, batch: true },
+          // ticketAttributeList: true,
+          ticketProductList: { product: true },
           ticketProcedureList: { procedure: true },
           ticketSurchargeList: true,
           ticketExpenseList: true,
         },
       })
 
-      ticket.value = ticketResponse
+      ticketOrderUpsertRef.value = ticketResponse
       oldTicket.value = Ticket.from(ticketResponse)
       customerDefault = ticketResponse.customer!
 
-      if (ticket.value.ticketExpenseList!.length === 0) {
-        ticket.value.ticketExpenseList!.push(TicketExpense.blank())
+      // ticketOrderUpsertRef.value.id = 0 // để đó để lấy id mà update
+      ticketOrderUpsertRef.value.ticketProductList?.forEach((i) => {
+        i.id = 0
+        i.deliveryStatus = DeliveryStatus.Pending
+      })
+      ticketOrderUpsertRef.value.ticketProcedureList?.forEach((i) => {
+        i.id = 0
+      })
+
+      if (ticketOrderUpsertRef.value.ticketExpenseList!.length === 0) {
+        ticketOrderUpsertRef.value.ticketExpenseList!.push(TicketExpense.blank())
       }
-      if (ticket.value.ticketSurchargeList!.length === 0) {
-        ticket.value.ticketSurchargeList!.push(TicketSurcharge.blank())
+      if (ticketOrderUpsertRef.value.ticketSurchargeList!.length === 0) {
+        ticketOrderUpsertRef.value.ticketSurchargeList!.push(TicketSurcharge.blank())
       }
       if (
         mode.value === ETicketOrderUpsertMode.CREATE ||
@@ -106,7 +119,7 @@ onBeforeMount(async () => {
       ) {
         time.value = dayjs(new Date())
       } else if (mode.value === ETicketOrderUpsertMode.UPDATE) {
-        time.value = dayjs(new Date(ticket.value.startedAt || Date.now()))
+        time.value = dayjs(new Date(ticketOrderUpsertRef.value.startedAt || Date.now()))
       }
     } else if (customerId) {
       customerDefault = await CustomerApi.detail(customerId)
@@ -115,8 +128,8 @@ onBeforeMount(async () => {
     }
 
     customer.value = customerDefault
-    ticket.value.customer = customerDefault
-    ticket.value.customerId = customerDefault.id
+    ticketOrderUpsertRef.value.customer = customerDefault
+    ticketOrderUpsertRef.value.customerId = customerDefault.id
 
     nextTick(() => {
       inputOptionsCustomer.value?.setItem({
@@ -155,7 +168,7 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleDocumentKeyup)
-  ticket.value = Ticket.blank()
+  ticketOrderUpsertRef.value = Ticket.blank()
 })
 
 const handleFocusFirstSearchCustomer = async () => {
@@ -164,7 +177,7 @@ const handleFocusFirstSearchCustomer = async () => {
 
 const searchingCustomer = async (text: string) => {
   customer.value = Customer.blank()
-  ticket.value.customerId = 0
+  ticketOrderUpsertRef.value.customerId = 0
   if (text) {
     customerList.value = await CustomerService.search(text)
   } else {
@@ -182,18 +195,18 @@ const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
 }
 
 const selectCustomer = (data?: Customer) => {
-  ticket.value.customerId = data?.id || 0
-  ticket.value.customer = data
+  ticketOrderUpsertRef.value.customerId = data?.id || 0
+  ticketOrderUpsertRef.value.customer = data
   customer.value = data || Customer.blank()
 }
 
 const handleChangeInvoiceDiscountMoney = (data: number) => {
-  ticket.value.discountMoney = data
-  ticket.value.discountType = DiscountType.VND
+  ticketOrderUpsertRef.value.discountMoney = data
+  ticketOrderUpsertRef.value.discountType = DiscountType.VND
 }
 const handleChangeInvoiceDiscountPercent = (data: number) => {
-  ticket.value.discountPercent = data
-  ticket.value.discountType = DiscountType.Percent
+  ticketOrderUpsertRef.value.discountPercent = data
+  ticketOrderUpsertRef.value.discountType = DiscountType.Percent
 }
 
 const saveInvoice = async (type: ETicketOrderSave) => {
@@ -202,36 +215,44 @@ const saveInvoice = async (type: ETicketOrderSave) => {
     return ticketUpsertForm.value?.reportValidity()
   }
   if (
-    ticket.value.ticketProductList!.length == 0 &&
-    ticket.value.ticketProcedureList!.length == 0
+    ticketOrderUpsertRef.value.ticketProductList!.length == 0 &&
+    ticketOrderUpsertRef.value.ticketProcedureList!.length == 0
   ) {
     return AlertStore.addError('Lỗi: cần có ít nhất 1 sản phẩm hoặc dịch vụ trong phiếu')
   }
-  const invalidTicketProduct = ticket.value.ticketProductList!.find((vp) => vp.quantity === 0)
+  const invalidTicketProduct = ticketOrderUpsertRef.value.ticketProductList!.find(
+    (vp) => vp.quantity === 0,
+  )
   if (invalidTicketProduct) {
     return AlertStore.addError(`Lỗi: ${invalidTicketProduct.product?.brandName} có số lượng 0`)
   }
-  const invalidTicketProcedure = ticket.value.ticketProcedureList!.find((vp) => vp.quantity === 0)
+  const invalidTicketProcedure = ticketOrderUpsertRef.value.ticketProcedureList!.find(
+    (vp) => vp.quantity === 0,
+  )
   if (invalidTicketProcedure) {
     return AlertStore.addError(`Lỗi: ${invalidTicketProcedure.procedure?.name} có số lượng 0`)
   }
 
   try {
     saveLoading.value = true
-    ticket.value.registeredAt = time.value.valueOf()
-    ticket.value.ticketSurchargeList = ticket.value.ticketSurchargeList!.filter((i) => {
-      i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
-      return i.money != 0
-    })
-    ticket.value.ticketExpenseList = ticket.value.ticketExpenseList!.filter((i) => {
-      i.name = settingStore.INVOICE_EXPENSE_DETAIL[i.key] || i.name
-      return i.money != 0
-    })
+    ticketOrderUpsertRef.value.registeredAt = time.value.valueOf()
+    ticketOrderUpsertRef.value.ticketSurchargeList =
+      ticketOrderUpsertRef.value.ticketSurchargeList!.filter((i) => {
+        i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
+        return i.money != 0
+      })
+    ticketOrderUpsertRef.value.ticketExpenseList =
+      ticketOrderUpsertRef.value.ticketExpenseList!.filter((i) => {
+        i.name = settingStore.INVOICE_EXPENSE_DETAIL[i.key] || i.name
+        return i.money != 0
+      })
 
-    ticket.value.ticketAttributeList = Object.entries(ticket.value.ticketAttributeMap)
+    ticketOrderUpsertRef.value.ticketAttributeList = Object.entries(
+      ticketOrderUpsertRef.value.ticketAttributeMap || {},
+    )
       .map(([key, value]) => ({
         id: 0,
-        ticketId: ticket.value.id,
+        ticketId: ticketOrderUpsertRef.value.id,
         key: key as any,
         value,
       }))
@@ -240,29 +261,29 @@ const saveInvoice = async (type: ETicketOrderSave) => {
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
         const ticketResponse = await TicketOrderApi.createDraft({
-          ticket: ticket.value,
+          ticket: ticketOrderUpsertRef.value,
         })
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
       case ETicketOrderSave.UPDATE_DRAFT_APPROVED: {
         const ticketResponse = await TicketOrderApi.updateDraftApproved({
-          ticket: ticket.value,
-          ticketId: ticket.value.id,
+          ticket: ticketOrderUpsertRef.value,
+          ticketId: ticketOrderUpsertRef.value.id,
         })
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
       case ETicketOrderSave.CREATE_DEBT_SUCCESS: {
         await TicketOrderApi.createDebtSuccess({
-          ticket: ticket.value,
+          ticket: ticketOrderUpsertRef.value,
         })
-        ticket.value = Ticket.blank()
+        ticketOrderUpsertRef.value = Ticket.blank()
 
         const customerRes = Customer.from(CustomerService.customerDefault)
         customer.value = customerRes
-        ticket.value.customer = customerRes
-        ticket.value.customerId = customerRes.id
+        ticketOrderUpsertRef.value.customer = customerRes
+        ticketOrderUpsertRef.value.customerId = customerRes.id
         inputOptionsCustomer.value?.setItem({
           text: customerRes.fullName,
           value: customerRes.id,
@@ -278,43 +299,49 @@ const saveInvoice = async (type: ETicketOrderSave) => {
           title: 'Bạn có chắc chắn cập nhật hóa đơn này',
           content: [
             '- Nếu có thay đổi hàng hóa, kho hàng sẽ nhập lại hàng cũ và xuất hàng mới',
-            ...(ticket.value.paid != oldTicket.value.paid
+            ...(ticketOrderUpsertRef.value.paid != oldTicket.value.paid
               ? [
                   `- Số tiền thanh toán thay đổi: ${formatMoney(
-                    oldTicket.value.paid
-                  )} --> ${formatMoney(ticket.value.paid)}`,
+                    oldTicket.value.paid,
+                  )} --> ${formatMoney(ticketOrderUpsertRef.value.paid)}`,
                 ]
               : []),
-            ...(ticket.value.paid > oldTicket.value.paid
+            ...(ticketOrderUpsertRef.value.paid > oldTicket.value.paid
               ? [
                   `- Khách hàng cần thanh toán thêm: ${formatMoney(
-                    ticket.value.paid - oldTicket.value.paid
+                    ticketOrderUpsertRef.value.paid - oldTicket.value.paid,
                   )}`,
                 ]
               : []),
-            ...(ticket.value.paid < oldTicket.value.paid
-              ? [`- Trả lại khách hàng: ${formatMoney(oldTicket.value.paid - ticket.value.paid)}`]
-              : []),
-            ...(ticket.value.debt != oldTicket.value.debt
+            ...(ticketOrderUpsertRef.value.paid < oldTicket.value.paid
               ? [
-                  `- Số tiền nợ đơn này thay đổi: ${formatMoney(
-                    oldTicket.value.debt
-                  )} --> ${formatMoney(ticket.value.debt)}`,
+                  `- Trả lại khách hàng: ${formatMoney(oldTicket.value.paid - ticketOrderUpsertRef.value.paid)}`,
                 ]
               : []),
-            ...(ticket.value.debt > oldTicket.value.debt
-              ? [`- Khách hàng nợ thêm: ${formatMoney(ticket.value.debt - oldTicket.value.debt)}`]
+            ...(ticketOrderUpsertRef.value.debt != oldTicket.value.debt
+              ? [
+                  `- Số tiền nợ đơn này thay đổi: ${formatMoney(
+                    oldTicket.value.debt,
+                  )} --> ${formatMoney(ticketOrderUpsertRef.value.debt)}`,
+                ]
               : []),
-            ...(ticket.value.debt < oldTicket.value.debt
-              ? [`- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debt - ticket.value.debt)}`]
+            ...(ticketOrderUpsertRef.value.debt > oldTicket.value.debt
+              ? [
+                  `- Khách hàng nợ thêm: ${formatMoney(ticketOrderUpsertRef.value.debt - oldTicket.value.debt)}`,
+                ]
+              : []),
+            ...(ticketOrderUpsertRef.value.debt < oldTicket.value.debt
+              ? [
+                  `- Trừ nợ khách hàng: ${formatMoney(oldTicket.value.debt - ticketOrderUpsertRef.value.debt)}`,
+                ]
               : []),
           ],
           async onOk() {
-            const ticketResponse = await TicketOrderApi.updateDebtSuccess({
-              ticketId: ticket.value.id,
-              ticket: ticket.value,
+            const res = await TicketOrderApi.updateDebtSuccess({
+              ticketId: ticketOrderUpsertRef.value.id,
+              ticket: ticketOrderUpsertRef.value,
             })
-            router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
+            router.push({ name: 'TicketOrderDetail', params: { id: res.ticketId } })
           },
           okText: 'Xác nhận CẬP NHẬT ĐƠN',
         })
@@ -383,13 +410,15 @@ const handleChangeTabs = (activeKey: any) => {
             <template #menu>
               <VueTabMenu
                 v-if="permissionIdMap[PermissionId.PRODUCT_READ]"
-                :tabKey="TABS_KEY.PRODUCT">
-                Hàng hóa ({{ ticket.ticketProductList!.length }})
+                :tabKey="TABS_KEY.PRODUCT"
+              >
+                Hàng hóa ({{ ticketOrderUpsertRef.ticketProductList!.length }})
               </VueTabMenu>
               <VueTabMenu
                 v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
-                :tabKey="TABS_KEY.PROCEDURE">
-                Dịch vụ ({{ ticket.ticketProcedureList!.length }})
+                :tabKey="TABS_KEY.PROCEDURE"
+              >
+                Dịch vụ ({{ ticketOrderUpsertRef.ticketProcedureList!.length }})
               </VueTabMenu>
             </template>
             <template #panel>
@@ -414,23 +443,28 @@ const handleChangeTabs = (activeKey: any) => {
         <div class="bg-white p-4">
           <div class="flex gap-1 flex-wrap">
             <span>Tên KH</span>
-            <a v-if="ticket.customerId" @click="modalCustomerDetail?.openModal(ticket.customerId)">
+            <a
+              v-if="ticketOrderUpsertRef.customerId"
+              @click="modalCustomerDetail?.openModal(ticketOrderUpsertRef.customerId)"
+            >
               <IconFileSearch />
             </a>
-            <span v-if="ticket.customerId">
+            <span v-if="ticketOrderUpsertRef.customerId">
               (nợ cũ:
               <b>{{ formatMoney(customer.debt) }}</b>
               )
             </span>
             <a
               v-if="customer.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
-              @click="modalCustomerUpsert?.openModal(customer)">
+              @click="modalCustomerUpsert?.openModal(customer)"
+            >
               Sửa thông tin KH
             </a>
-            <div class="ml-auto">
+            <div style="margin-left: auto">
               <a
                 v-if="!customer.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-                @click="modalCustomerUpsert?.openModal()">
+                @click="modalCustomerUpsert?.openModal()"
+              >
                 Thêm KH mới
               </a>
             </div>
@@ -445,12 +479,13 @@ const handleChangeTabs = (activeKey: any) => {
               required
               @selectItem="({ data }) => selectCustomer(data)"
               @onFocusinFirst="handleFocusFirstSearchCustomer"
-              @update:text="searchingCustomer">
+              @update:text="searchingCustomer"
+            >
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
                   - {{ DString.formatPhone(data.phone) }} -
-                  {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div>{{ DString.formatAddress(data) }}</div>
               </template>
@@ -470,7 +505,8 @@ const handleChangeTabs = (activeKey: any) => {
                       v-model:value="time"
                       show-time
                       placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'" />
+                      :format="'DD/MM/YYYY HH:mm:ss'"
+                    />
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
@@ -479,12 +515,13 @@ const handleChangeTabs = (activeKey: any) => {
                   </td>
                   <td class="text-right" style="padding-right: 11px; font-size: 16px">
                     <span
-                      v-if="ticket.itemsDiscount"
+                      v-if="ticketOrderUpsertRef.itemsDiscount"
                       style="font-style: italic; font-size: 13px"
-                      class="mr-2">
-                      (CK {{ formatMoney(ticket.itemsDiscount) }})
+                      class="mr-2"
+                    >
+                      (CK {{ formatMoney(ticketOrderUpsertRef.itemsDiscount) }})
                     </span>
-                    <span>{{ formatMoney(ticket.itemsActualMoney) }}</span>
+                    <span>{{ formatMoney(ticketOrderUpsertRef.itemsActualMoney) }}</span>
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
@@ -500,33 +537,45 @@ const handleChangeTabs = (activeKey: any) => {
                       <template #title>
                         <div>
                           Chiết khấu (Tiền hàng:
-                          <b>{{ formatMoney(ticket.productMoney + ticket.procedureMoney) }}</b>
+                          <b>
+                            {{
+                              formatMoney(
+                                ticketOrderUpsertRef.productMoney +
+                                  ticketOrderUpsertRef.procedureMoney,
+                              )
+                            }}
+                          </b>
                           )
                         </div>
                         <div class="mt-2">
                           <div>
                             <InputMoney
-                              :value="ticket.discountMoney"
+                              :value="ticketOrderUpsertRef.discountMoney"
                               append="VNĐ"
                               style="width: 100%"
-                              @update:value="handleChangeInvoiceDiscountMoney" />
+                              @update:value="handleChangeInvoiceDiscountMoney"
+                            />
                           </div>
                           <div class="mt-2">
                             <InputNumber
-                              :value="ticket.discountPercent"
+                              :value="ticketOrderUpsertRef.discountPercent"
                               append="%"
-                              @update:value="handleChangeInvoiceDiscountPercent" />
+                              @update:value="handleChangeInvoiceDiscountPercent"
+                            />
                           </div>
                         </div>
                       </template>
                       <div class="flex">
                         <div>
-                          <VueTag color="green">{{ ticket.discountPercent || 0 }}%</VueTag>
+                          <VueTag color="green">
+                            {{ ticketOrderUpsertRef.discountPercent || 0 }}%
+                          </VueTag>
                         </div>
                         <div
                           class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd">
-                          {{ formatMoney(ticket.discountMoney) }}
+                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
+                        >
+                          {{ formatMoney(ticketOrderUpsertRef.discountMoney) }}
                         </div>
                       </div>
                     </a-popconfirm>
@@ -544,26 +593,30 @@ const handleChangeTabs = (activeKey: any) => {
                     Tổng tiền
                   </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticket.totalMoney) }}
+                    {{ formatMoney(ticketOrderUpsertRef.totalMoney) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.paid">
                   <td style="white-space: nowrap; padding-right: 10px">Thanh toán</td>
                   <td>
                     <InputMoney
-                      v-model:value="ticket.paid"
+                      v-model:value="ticketOrderUpsertRef.paid"
                       class="input-payment"
-                      style="width: 100%" />
+                      style="width: 100%"
+                    />
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.debt">
                   <td style="white-space: nowrap; padding-right: 10px">Ghi nợ</td>
                   <td>
                     <InputMoney
-                      :value="ticket.totalMoney - ticket.paid"
+                      :value="ticketOrderUpsertRef.totalMoney - ticketOrderUpsertRef.paid"
                       class="input-payment"
                       style="width: 100%"
-                      @update:value="(v) => (ticket.paid = ticket.totalMoney - v)" />
+                      @update:value="
+                        (v) => (ticketOrderUpsertRef.paid = ticketOrderUpsertRef.totalMoney - v)
+                      "
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -586,19 +639,19 @@ const handleChangeTabs = (activeKey: any) => {
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
                   <td class="font-bold whitespace-nowrap">Tổng vốn</td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticket.itemsCostAmount) }}
+                    {{ formatMoney(ticketOrderUpsertRef.itemsCostAmount) }}
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.profit">
-                  <td class="font-bold whitespace-nowrap">Tiền lãi</td>
-                  <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
-                    {{ formatMoney(ticket.profit) }}
+                  <td class="whitespace-nowrap">Dự kiến lãi</td>
+                  <td class="text-right" style="padding-right: 11px; font-size: 16px">
+                    {{ formatMoney(ticketOrderUpsertRef.profit) }}
                   </td>
                 </tr>
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <a-input v-model:value="ticket.ticketAttributeMap.note" class="input-payment" />
+                    <a-input v-model:value="ticketOrderUpsertRef.note" class="input-payment" />
                   </td>
                 </tr>
               </tbody>
@@ -607,20 +660,23 @@ const handleChangeTabs = (activeKey: any) => {
         </div>
 
         <template
-          v-if="[ETicketOrderUpsertMode.CREATE, ETicketOrderUpsertMode.COPY].includes(mode)">
+          v-if="[ETicketOrderUpsertMode.CREATE, ETicketOrderUpsertMode.COPY].includes(mode)"
+        >
           <div
             v-if="
               settingStore.SCREEN_INVOICE_UPSERT.save.createDraft &&
               permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               :size="'large'"
               type="button"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.CREATE_DRAFT)">
+              @click="saveInvoice(ETicketOrderSave.CREATE_DRAFT)"
+            >
               Lưu nháp
             </VueButton>
           </div>
@@ -630,14 +686,16 @@ const handleChangeTabs = (activeKey: any) => {
               settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew &&
               permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DEBT_SUCCESS]
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               type="button"
               :loading="saveLoading"
               size="large"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.CREATE_DEBT_SUCCESS)">
+              @click="saveInvoice(ETicketOrderSave.CREATE_DEBT_SUCCESS)"
+            >
               Lưu và Tạo đơn mới
             </VueButton>
           </div>
@@ -646,49 +704,56 @@ const handleChangeTabs = (activeKey: any) => {
         <template v-if="[ETicketOrderUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              [TicketStatus.Draft].includes(ticket.ticketStatus) &&
+              [TicketStatus.Draft].includes(ticketOrderUpsertRef.ticketStatus) &&
               permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DRAFT_APPROVED]
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)">
+              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)"
+            >
               Cập nhật đơn nháp
             </VueButton>
           </div>
           <div
             v-if="
-              [TicketStatus.Approved].includes(ticket.ticketStatus) &&
+              [TicketStatus.Prepayment].includes(ticketOrderUpsertRef.ticketStatus) &&
               permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DRAFT_APPROVED]
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)">
+              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)"
+            >
               Cập nhật đơn tạm ứng
             </VueButton>
           </div>
           <div
             v-if="
-              [TicketStatus.Debt, TicketStatus.Completed].includes(ticket.ticketStatus) &&
-              permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DEBT_SUCCESS]
+              [TicketStatus.Debt, TicketStatus.Completed].includes(
+                ticketOrderUpsertRef.ticketStatus,
+              ) && permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DEBT_SUCCESS]
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.UPDATE_DEBT_SUCCESS)">
+              @click="saveInvoice(ETicketOrderSave.UPDATE_DEBT_SUCCESS)"
+            >
               Cập nhật đơn đã gửi
             </VueButton>
           </div>

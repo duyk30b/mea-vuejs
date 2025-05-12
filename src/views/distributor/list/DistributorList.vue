@@ -15,6 +15,7 @@ import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -124,11 +125,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalDistributorUpsert
     ref="modalDistributorUpsert"
-    @success="handleModalDistributorUpsertSuccess" />
+    @success="handleModalDistributorUpsertSuccess"
+  />
   <ModalDistributorDetail ref="modalDistributorDetail" @update_distributor="updateDistributor" />
   <ModalDistributorPayDebt
     ref="modalDistributorPayDebt"
-    @success="handleModalDistributorPayDebtSuccess" />
+    @success="handleModalDistributorPayDebtSuccess"
+  />
   <ModalDistributorListSettingScreen ref="modalDistributorListSettingScreen" />
 
   <div class="page-header">
@@ -141,7 +144,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
         color="blue"
         icon="plus"
-        @click="modalDistributorUpsert?.openModal()">
+        @click="modalDistributorUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
@@ -178,7 +182,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="(e) => startSearch()" />
+            @update:value="(e) => startSearch()"
+          />
         </div>
       </div>
     </div>
@@ -190,17 +195,18 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th>Tên NCC</th>
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Nợ </span>
+                <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'debt' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'debt' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
           </tr>
         </thead>
@@ -213,15 +219,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :key="index"
             @dblclick="
               permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] &&
-                modalDistributorUpsert?.openModal(distributor.id)
-            ">
+              modalDistributorUpsert?.openModal(distributor.id)
+            "
+          >
             <td style="border-right: none">
               <div class="font-medium text-justify">
                 {{ distributor.fullName }}
                 <a
                   v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="text-base"
-                  @click="modalDistributorDetail?.openModal(distributor.id)">
+                  @click="modalDistributorDetail?.openModal(distributor.id)"
+                >
                   <IconFileSearch />
                 </a>
               </div>
@@ -230,13 +238,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               </div>
               <div
                 v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
-                class="text-xs italic">
+                class="text-xs italic"
+              >
                 {{ distributor.note }}
               </div>
             </td>
             <td
               v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none">
+              style="white-space: nowrap; border-left: none; border-right: none"
+            >
               <a :href="'tel:' + distributor.phone">
                 {{ DString.formatPhone(distributor.phone || '') }}
               </a>
@@ -248,10 +258,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
                   distributor.debt != 0
                 "
-                class="flex justify-end">
+                class="flex justify-end"
+              >
                 <VueButton
                   size="small"
-                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
+                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
+                >
                   Trả nợ
                 </VueButton>
               </div>
@@ -266,9 +278,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
 
@@ -277,52 +288,56 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Mã NCC &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Mã NCC </span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
-              Họ Tên&nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'fullName'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Họ Tên </span>
+                <IconSort v-if="sortColumn !== 'fullName'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Nợ </span>
+                <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'debt' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'debt' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.isActive">Trạng thái</th>
             <th
               v-if="
                 settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
-              ">
+              "
+            >
               Sửa
             </th>
           </tr>
@@ -353,13 +368,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 <a
                   v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.detail"
                   class="ml-1"
-                  @click="modalDistributorDetail?.openModal(distributor.id)">
+                  @click="modalDistributorDetail?.openModal(distributor.id)"
+                >
                   <IconFileSearch />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
-                class="text-xs italic">
+                class="text-xs italic"
+              >
                 {{ distributor.note }}
               </div>
             </td>
@@ -378,7 +395,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                       distributor.debt != 0
                     "
                     size="small"
-                    @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)">
+                    @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)"
+                  >
                     Trả nợ
                   </VueButton>
                 </div>
@@ -398,11 +416,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
                 permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
               "
-              class="text-center">
+              class="text-center"
+            >
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalDistributorUpsert?.openModal(distributor.id)">
+                @click="modalDistributorUpsert?.openModal(distributor.id)"
+              >
                 <IconEditSquare />
               </a>
             </td>
@@ -416,9 +436,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

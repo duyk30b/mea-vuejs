@@ -8,16 +8,18 @@ import { User } from '../user'
 
 export class ProductMovement {
   id: number
+  movementType: MovementType
+  contactId: number
+  voucherId: number // ticketId hoặc receiptId
+  voucherProductId: number // ticketProductId hoặc receiptItemId
   warehouseId: number
   productId: number
-  voucherId: number
-  contactId: number
-  movementType: MovementType
+  batchId: number
   isRefund: 0 | 1
+  unitRate: number
   openQuantity: number // Số lượng ban đầu
   quantity: number // Số lượng +/-
   closeQuantity: number // Số lượng sau thay đổi
-  unitRate: number
   costPrice: number 
   expectedPrice: number 
   actualPrice: number 
@@ -32,10 +34,6 @@ export class ProductMovement {
 
   get unitQuantity() {
     return this.quantity / this.unitRate
-  }
-
-  get unitCostPrice() {
-    return this.costPrice * this.unitRate
   }
 
   get unitActualPrice() {

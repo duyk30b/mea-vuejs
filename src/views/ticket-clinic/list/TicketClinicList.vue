@@ -3,6 +3,7 @@ import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting } from '../../../common/icon'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -11,16 +12,18 @@ import { InteractType } from '../../../modules/commission'
 import { CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Role, RoleService } from '../../../modules/role'
-import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
+import { TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { ticketClinicPagination } from '../../../modules/ticket-clinic'
 import { User, UserService } from '../../../modules/user'
-import { DString, DTimer, formatPhone } from '../../../utils'
+import { DString, ESTimer, formatPhone } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
+import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicCommission from './ModalTicketClinicCommission.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
+import { IconFileSearch, IconRead } from '../../../common/icon-antd'
+import CKEditor5Vue from '../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -58,7 +61,7 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
-        ticketAttributeList: true,
+        // ticketAttributeList: true,
         ticketUserList: settingStore.TICKET_CLINIC_LIST.roleIdList.length ? {} : false,
       },
       filter: {
@@ -178,18 +181,21 @@ const handleModalTicketClinicListSettingSuccess = async () => {
 <template>
   <ModalTicketClinicCreate
     ref="modalTicketClinicCreate"
-    @success="handleModalTicketClinicCreateSuccess" />
+    @success="handleModalTicketClinicCreateSuccess"
+  />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketClinicListSetting"
-    @success="handleModalTicketClinicListSettingSuccess" />
+    @success="handleModalTicketClinicListSettingSuccess"
+  />
   <ModalTicketClinicCommission ref="modalTicketClinicCommission" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
+      >
         <ScheduleOutlined class="mr-1" />
         Danh sách khám
       </div>
@@ -201,7 +207,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           "
           color="blue"
           icon="plus"
-          @click="modalTicketClinicCreate?.openModal()">
+          @click="modalTicketClinicCreate?.openModal()"
+        >
           TIẾP ĐÓN
         </VueButton>
       </div>
@@ -213,7 +220,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           "
           color="blue"
           icon="plus"
-          @click="$router.push({ name: 'TicketClinicDetailContainer', params: { id: 0 } })">
+          @click="$router.push({ name: 'TicketClinicDetailContainer', params: { id: 0 } })"
+        >
           KHÁM MỚI
         </VueButton>
       </div>
@@ -245,12 +253,13 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             placeholder="Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
             @onFocusinFirst="handleFocusFirstSearchCustomer"
-            @update:text="searchingCustomer">
+            @update:text="searchingCustomer"
+          >
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
                 - {{ data.phone }} -
-                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
                 {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
@@ -267,7 +276,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             v-model:value="fromTime"
             type-parser="number"
             class="w-full"
-            @selectTime="startFilter" />
+            @selectTime="startFilter"
+          />
         </div>
       </div>
 
@@ -278,7 +288,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             v-model:value="toTime"
             type-parser="number"
             class="w-full"
-            @selectTime="startFilter" />
+            @selectTime="startFilter"
+          />
         </div>
       </div>
 
@@ -291,12 +302,13 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               { value: null, text: 'Tất cả' },
               { value: TicketStatus.Schedule, text: 'Hẹn khám' },
               { value: TicketStatus.Draft, text: 'Chờ khám' },
-              { value: TicketStatus.Approved, text: 'Tạm ứng' },
+              { value: TicketStatus.Prepayment, text: 'Tạm ứng' },
               { value: TicketStatus.Executing, text: 'Đang khám' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
             ]"
-            @update:value="startFilter" />
+            @update:value="startFilter"
+          />
         </div>
       </div>
 
@@ -311,7 +323,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                 return { value: index, text: i }
               }),
             ]"
-            @update:value="startFilter" />
+            @update:value="startFilter"
+          />
         </div>
       </div>
 
@@ -328,42 +341,44 @@ const handleModalTicketClinicListSettingSuccess = async () => {
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Hồ Sơ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span>Hồ Sơ</span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th class="">Trạng thái</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
-              Thời gian &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span>Thời gian</span>
+                <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'registeredAt' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th style="min-width: 150px">Khách hàng</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.birthday">Ngày sinh</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.address">Địa chỉ</th>
-            <th style="white-space: nowrap">Lý do / Chẩn đoán</th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.address" style="min-width: 120px">Địa chỉ</th>
+            <th style="white-space: nowrap">Chẩn đoán</th>
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.displayName || roleMap[roleId]?.name || '' }}
             </th>
-            <th>Thanh toán</th>
+            <th>Tổng tiền</th>
             <th></th>
           </tr>
         </thead>
@@ -389,7 +404,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             <td class="text-center">
               <div class="flex gap-4 justify-center">
                 <router-link
-                  :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }">
+                  :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }"
+                >
                   <div class="flex justify-center items-center gap-2">
                     <span>
                       {{
@@ -400,7 +416,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
                     </span>
-                    <span class="text-lg"><ReadOutlined /></span>
+                    <span class="text-lg"><IconRead /></span>
                   </div>
                 </router-link>
               </div>
@@ -408,19 +424,15 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             <td v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">
               {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
+            <td><TicketStatusTag :ticket="ticket" /></td>
             <td class="text-center">
-              <div>
-                <TicketClinicStatusTag :ticketStatus="ticket.ticketStatus" />
-              </div>
-            </td>
-            <td class="text-center">
-              {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>
                 {{ ticket.customer?.fullName }}
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
@@ -430,7 +442,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
 
             <td v-if="settingStore.TICKET_CLINIC_LIST.birthday" class="text-center">
               {{
-                DTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
+                ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
                 ticket.customer?.yearOfBirth ||
                 ''
               }}
@@ -439,15 +451,20 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               {{ formatPhone(ticket.customer?.phone) }}
             </td>
             <td v-if="settingStore.TICKET_CLINIC_LIST.address">
-              {{ DString.formatAddress(ticket.customer!) }}
+              <div class="max-line-2">
+                {{ DString.formatAddress(ticket.customer!) }}
+              </div>
             </td>
             <td>
-              {{ ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || '' }}
+              <div class="max-line-2">
+                {{ ticket.note || '' }}
+              </div>
             </td>
             <td
               v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList"
               :key="i"
-              class="text-center">
+              class="text-center"
+            >
               {{
                 userMap[
                   ticket.ticketUserList?.find((i) => {
@@ -456,8 +473,11 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                 ]?.fullName
               }}
             </td>
-            <td class="text-center">
-              {{ formatMoney(ticket.paid) }} / {{ formatMoney(ticket.totalMoney) }}
+            <td class="text-right">
+              <div>{{ formatMoney(ticket.totalMoney) }}</div>
+              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+                Nợ: {{ formatMoney(ticket.debt) }}
+              </div>
             </td>
             <td class="text-center">
               <a
@@ -465,13 +485,14 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                   [
                     TicketStatus.Schedule,
                     TicketStatus.Draft,
-                    TicketStatus.Approved,
+                    TicketStatus.Prepayment,
                     TicketStatus.Executing,
                   ].includes(ticket.ticketStatus)
                 "
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalTicketClinicCreate?.openModal(ticket.id)">
+                @click="modalTicketClinicCreate?.openModal(ticket.id)"
+              >
                 <IconEditSquare />
               </a>
             </td>
@@ -485,9 +506,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

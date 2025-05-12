@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
-const startDate = DTimer.startOfDate(new Date())
+const startDate = ESTimer.startOfDate(new Date())
 
 export const fromTime = ref<number>(startDate.getTime())
 export const toTime = ref<number>()

@@ -55,7 +55,7 @@ export class ProductApi {
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId,
+      productGroupId: product.productGroupId || 0,
       unit: product.unit,
       route: product.route,
       source: product.source,
@@ -86,7 +86,7 @@ export class ProductApi {
       costPrice: product.hasManageQuantity ? undefined : product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId,
+      productGroupId: product.productGroupId || 0,
       unit: product.unit,
       route: product.route,
       source: product.source,
@@ -128,7 +128,47 @@ export class ProductApi {
   }
 
   static async downloadExcelProductList() {
-    const response = await AxiosInstance.get(`/product/download-excel`)
+    const response = await AxiosInstance.get(`/file-product/download-excel`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    const uint8Array = new Uint8Array(data.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: data.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = data.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
+  static async uploadExcelProductList(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await AxiosInstance.post(`/file-product/upload-excel`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          console.log(`Đã upload: ${percentCompleted}%`)
+        }
+      },
+    })
+    const { data } = response.data as BaseResponse<boolean>
+    return data
+  }
+
+  static async downloadFileUploadExcelExample() {
+    const response = await AxiosInstance.get(`/file-product/upload-excel/file-example`)
     const { data } = response.data as BaseResponse<{
       buffer: { type: 'Buffer'; data: any[] }
       mimeType: string

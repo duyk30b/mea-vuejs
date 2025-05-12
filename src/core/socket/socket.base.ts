@@ -59,14 +59,6 @@ export const socketInit = () => {
     SocketService.listenProductListUpdate(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.BATCH_UPSERT, (data) => {
-    SocketService.listenBatchUpsert(data)
-  })
-
-  SocketBase.on(SOCKET_EVENT.BATCH_LIST_UPDATE, (data) => {
-    SocketService.listenBatchListUpdate(data)
-  })
-
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE, (data) => {
     SocketService.listenTicketClinicChange(data)
   })
@@ -90,12 +82,14 @@ export const socketInit = () => {
     SocketService.listenTicketClinicChangeLaboratory(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_CONSUMABLE_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketProductConsumableList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_PRESCRIPTION, (data) => {
+    SocketService.listenTicketClinicChangePrescription(data)
   })
-
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_PRODUCT_PRESCRIPTION_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketProductPrescriptionList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_CONSUMABLE, (data) => {
+    SocketService.listenTicketClinicChangeConsumable(data)
+  })
+  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_BATCH, (data) => {
+    SocketService.listenTicketClinicChangeBatch(data)
   })
 }
 

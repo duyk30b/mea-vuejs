@@ -16,9 +16,9 @@ import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { customFilter, DTimer } from '../../../utils'
+import { customFilter, ESTimer } from '../../../utils'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
-import { ticket } from './ticket-order-upsert.ref'
+import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import { IconFileSearch } from '../../../common/icon'
 import type { Warehouse } from '../../../modules/warehouse'
@@ -42,6 +42,7 @@ const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
 
 const warehouseMap = ref<Record<string, Warehouse>>({})
+const warehouseIdOptions = ref<number[]>([0])
 
 onMounted(async () => {
   console.log('🚀 ~ file: TicketOrderSelectProduct.vue:45  ~ onMounted')
@@ -49,7 +50,7 @@ onMounted(async () => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  await Promise.all([ProductService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {
@@ -92,108 +93,69 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
   selectProduct(instance)
 }
 
-const selectProduct = async (instance?: Product) => {
-  if (!instance) return clear()
+const selectProduct = async (productProp?: Product) => {
+  if (!productProp) return clear()
 
   const tp = TicketProduct.blank()
-  tp.productId = instance.id
-  tp.product = Product.from(instance)
+  tp.productId = productProp.id
+  tp.product = Product.from(productProp)
 
   tp.deliveryStatus = DeliveryStatus.Pending
-  tp.unitRate = instance.unitDefaultRate
+  tp.unitRate = productProp.unitDefaultRate
   tp.quantity = 0
 
-  tp.expectedPrice = instance.retailPrice
+  tp.expectedPrice = productProp.retailPrice
   tp.discountType = DiscountType.Percent
   tp.discountPercent = 0
   tp.discountMoney = 0
-  tp.actualPrice = instance.retailPrice
-  tp.hintUsage = instance?.hintUsage || ''
-
-  if (!instance.hasManageQuantity) {
-    tp.warehouseId = 0 // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
-    tp.costPrice = instance.costPrice // set tạm như này để cho trường hợp !hasManageQuantity, khi gắn batch set lại sau
+  tp.actualPrice = productProp.retailPrice
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
+    tp.hintUsage = productProp?.hintUsage || ''
   }
 
-  product.value = Product.from(instance)
+  tp.warehouseId = 0 // chưa có setup chọn warehouseId
+  tp.costAmount = tp.quantity * (tp.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
+
+  if (productProp.hasManageQuantity) {
+    tp.hasInventoryImpact = 1 // có thể thêm lựa chọn impact = 0 khi thêm config bán hàng ko số lượng
+  } else {
+    tp.hasInventoryImpact = 0 // không quản lý số lượng thì impact phải là 0
+  }
+
+  product.value = Product.from(productProp)
   productOutSellType.value = 'retailPrice'
   ticketProduct.value = tp
 
-  const warehouseIdAcceptList = settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
+  // tính toán cho warehouseID
+  const warehouseIdAcceptList: number[] =
+    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
+  const productWarehouseIdList: number[] = JSON.parse(productProp.warehouseIds)
+  if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) {
+    warehouseIdOptions.value = [0]
+  } else if (!productWarehouseIdList.length || productWarehouseIdList.includes(0)) {
+    warehouseIdOptions.value = [0]
+  } else {
+    // trường hợp này có thể có nhiều warehouseID, thôi kệ, code sau
+    warehouseIdOptions.value = []
+    warehouseIdAcceptList.forEach((i) => {
+      if (productWarehouseIdList.includes(i)) {
+        warehouseIdOptions.value.push(i)
+      }
+    })
+  }
+  ticketProduct.value.warehouseId = warehouseIdOptions.value[0]
+
   let canGetAllWarehouse = false
   if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
   else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
-
-  const batchListFetch = await BatchService.list({
-    filter: {
-      productId: instance.id,
-      ...(canGetAllWarehouse
-        ? {}
-        : {
-            $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
-          }),
-    },
-  })
-  let batchListResponse = batchListFetch
-    .filter((i) => !!i.quantity)
-    .sort((a, b) => {
-      if (b.expiryDate == null) return -1 // để NULL ở cuối
-      else if (a.expiryDate == null) return 1
-      else return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
-    })
-
-  if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
-    const batchZero = batchListFetch
-      .filter((i) => !i.quantity)
-      .sort((a, b) => {
-        if (b.expiryDate == null) return 1 // để NULL ở đầu
-        else if (a.expiryDate == null) return -1
-        else return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
-      })
-    batchListResponse = [...batchListResponse, ...batchZero]
-  }
-  batchListResponse = batchListResponse.slice(0, 5)
-
-  // const batchListResponse = await BatchService.list({
-  //   filter: {
-  //     productId: instance.id,
-  //     quantity: { NOT: 0 },
-  //     ...(canGetAllWarehouse
-  //       ? {}
-  //       : {
-  //           $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
-  //         }),
-  //   },
-  //   sort: { expiryDate: 'ASC' },
-  // })
-  batchListResponse.forEach((i) => (i.product = instance))
-  batchList.value = batchListResponse
-
-  if (batchListResponse.length) {
-    batch.value = batchListResponse[0]
-    ticketProductSelectBatch(batchListResponse[0])
-  }
-}
-
-const selectBatch = (instance: Batch) => {
-  batch.value = instance
-  ticketProductSelectBatch(instance)
-}
-
-const ticketProductSelectBatch = (batchSelected?: Batch) => {
-  if (!batchSelected) return
-  ticketProduct.value.batch = Batch.from(batchSelected)
-  ticketProduct.value.batchId = batchSelected.id
-  ticketProduct.value.warehouseId = batchSelected.warehouseId
-  ticketProduct.value.costPrice = batchSelected.costPrice
 }
 
 const handleChangeInvoiceProductSellType = (
-  type: 'costPrice' | 'wholesalePrice' | 'retailPrice'
+  type: 'costPrice' | 'wholesalePrice' | 'retailPrice',
 ) => {
   let expectedPrice = 0
   if (type === 'costPrice') {
-    expectedPrice = ticketProduct.value.batch?.costPrice || 0
+    expectedPrice = ticketProduct.value.product?.costPrice || 0
   }
   if (type === 'wholesalePrice') {
     expectedPrice = ticketProduct.value.product?.wholesalePrice || 0
@@ -258,41 +220,32 @@ const clear = () => {
 }
 
 const addTicketProduct = () => {
-  const { product, batch } = ticketProduct.value
+  const { product } = ticketProduct.value
   if (!ticketProduct.value.productId) {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
 
   if (product?.hasManageQuantity) {
-    if (!ticketProduct.value.batchId) {
-      return AlertStore.addError('Lỗi: Không có lô hàng phù hợp')
-    }
-    if (!settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
-      if (ticketProduct.value.quantity > batch!.quantity) {
-        return AlertStore.addError(
-          `Lỗi: Số lượng tồn kho không đủ, tồn ${batch!.quantity} lấy ${
-            ticketProduct.value.quantity
-          }`
-        )
-      }
+    if (ticketProduct.value.quantity > product!.quantity) {
+      AlertStore.addWarning(
+        `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
+          ticketProduct.value.quantity
+        }`,
+      )
     }
   }
 
   if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemsTable.allowDuplicateItem) {
-    ticket.value.ticketProductList?.push(ticketProduct.value)
+    ticketOrderUpsertRef.value.ticketProductList?.push(ticketProduct.value)
   } else {
-    const exist = ticket.value.ticketProductList?.find((i) => {
-      if (i.batchId) {
-        return i.productId === product!.id && i.batchId == batch!.id
-      } else {
-        return i.productId === product!.id
-      }
+    const exist = ticketOrderUpsertRef.value.ticketProductList?.find((i) => {
+      return i.productId === product!.id
     })
     if (exist) {
       exist.quantity += ticketProduct.value.quantity
     } else {
-      ticket.value.ticketProductList?.push(ticketProduct.value)
+      ticketOrderUpsertRef.value.ticketProductList?.push(ticketProduct.value)
     }
   }
 
@@ -301,10 +254,6 @@ const addTicketProduct = () => {
     inputOptionsProduct.value?.focus()
   }
 }
-
-const closeExpiryDate = computed(() => {
-  return Date.now()
-})
 
 const focus = () => {
   inputOptionsProduct.value?.focus()
@@ -326,7 +275,8 @@ defineExpose({ focus })
           v-if="ticketProduct.productId && ticketProduct.product?.hasManageQuantity"
           :class="
             ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
-          ">
+          "
+        >
           ( tồn:
           <b>
             {{ ticketProduct.product?.unitQuantity }} {{ ticketProduct.product?.unitDefaultName }}
@@ -335,7 +285,8 @@ defineExpose({ focus })
         </span>
         <a
           v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && product.id"
-          @click="modalProductUpsert?.openModal(product.id)">
+          @click="modalProductUpsert?.openModal(product.id)"
+        >
           Sửa thông tin sản phẩm
         </a>
       </div>
@@ -344,11 +295,12 @@ defineExpose({ focus })
           ref="inputOptionsProduct"
           :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
           :maxHeight="320"
-          placeholder="(F3) Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
+          placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
           required
           @selectItem="({ data }) => selectProduct(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
-          @update:text="searchingProduct">
+          @update:text="searchingProduct"
+        >
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.brandName }}</b>
@@ -356,7 +308,8 @@ defineExpose({ focus })
                 - Tồn
                 <span
                   style="font-weight: 700"
-                  :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
+                  :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
+                >
                   {{ data.unitQuantity }}
                 </span>
                 {{ data.unitDefaultName }}
@@ -369,59 +322,10 @@ defineExpose({ focus })
       </div>
     </div>
 
-    <div style="flex-grow: 1; flex-basis: 80%">
-      <div>
-        Lô hàng
-        <span v-if="batch?.expiryDate && batch?.expiryDate < closeExpiryDate" class="text-red-500">
-          (Hết hạn sử dụng)
-        </span>
-        <span
-          v-if="product.id && product.hasManageQuantity && !batchList.length"
-          class="text-red-500 font-bold">
-          (Không còn tồn kho)
-        </span>
-      </div>
-      <div>
-        <VueSelect
-          :value="batch.id"
-          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
-          :disabled="batchList.length == 0"
-          @selectItem="({ data }) => selectBatch(data)">
-          <template #option="{ item: { data } }">
-            <div v-if="!data">Chưa chọn lô</div>
-            <div v-if="data.id">
-              Lô {{ data.lotNumber }}
-              <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
-                {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
-              </span>
-              - Tồn
-              <b>{{ data.unitQuantity }}</b>
-              {{ product.unitDefaultName }}
-              - {{ warehouseMap[data.warehouseId]?.name }}
-            </div>
-          </template>
-          <template #text="{ content: { data } }">
-            <div v-if="product.hasManageQuantity && !data">Chưa chọn lô</div>
-            <div v-if="data?.id">
-              Lô {{ data.lotNumber }}
-              <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
-                {{ DTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
-              </span>
-              <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
-                - Tồn
-                <b>{{ data.unitQuantity }}</b>
-                {{ product!.unitDefaultName }}
-                - {{ warehouseMap[data.warehouseId]?.name }}
-              </span>
-            </div>
-          </template>
-        </VueSelect>
-      </div>
-    </div>
-
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage"
-      style="flex-grow: 1; flex-basis: 80%">
+      style="flex-grow: 1; flex-basis: 80%"
+    >
       <div>Hướng dẫn sử dụng</div>
       <div>
         <InputHint
@@ -430,13 +334,15 @@ defineExpose({ focus })
             ...(ticketProduct.product?.hintUsage ? [ticketProduct.product?.hintUsage] : []),
             ...settingStore.PRODUCT_HINT_USAGE,
           ]"
-          :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+          :logic-filter="(item: string, text: string) => customFilter(item, text)"
+        />
       </div>
     </div>
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.expectedPrice"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>
         Giá niêm yết
         <span v-if="ticketProduct.unitRate !== 1">
@@ -461,7 +367,8 @@ defineExpose({ focus })
                 ? [{ value: 'retailPrice', text: 'Giá bán lẻ' }]
                 : []),
             ]"
-            @selectItem="({ value }) => handleChangeInvoiceProductSellType(value)"></VueSelect>
+            @selectItem="({ value }) => handleChangeInvoiceProductSellType(value)"
+          ></VueSelect>
         </div>
         <div class="flex-1">
           <InputMoney :value="ticketProduct.unitExpectedPrice" disabled />
@@ -471,7 +378,8 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.quantity"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div class="flex flex-wrap gap-2">
         Số lượng
         <span v-if="ticketProduct.unitRate !== 1">
@@ -486,13 +394,14 @@ defineExpose({ focus })
             v-model:value="ticketProduct.unitRate"
             :disabled="(ticketProduct.product?.unitObject.length || 0) <= 1"
             :options="
-              ticketProduct.product?.unitObject.map((i) => ({
+              (ticketProduct.product?.unitObject || []).map((i) => ({
                 value: i.rate,
                 text: i.name,
                 data: i,
               }))
             "
-            required />
+            required
+          />
         </div>
         <div class="flex-1">
           <InputNumber v-model:value="ticketProduct.unitQuantity" :validate="{ gt: 0 }" />
@@ -502,7 +411,8 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.discount"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>
         Chiết khấu
         <span
@@ -510,7 +420,8 @@ defineExpose({ focus })
             (ticketProduct.discountType === DiscountType.Percent &&
               ticketProduct.discountPercent !== 0) ||
             ticketProduct.unitRate > 1
-          ">
+          "
+        >
           (
           <b>{{ formatMoney(ticketProduct.discountMoney) }}</b>
           <span v-if="ticketProduct?.product?.unitBasicName">
@@ -526,23 +437,27 @@ defineExpose({ focus })
           :options="[
             { value: DiscountType.Percent, text: '%' },
             { value: DiscountType.VND, text: 'VNĐ' },
-          ]" />
+          ]"
+        />
         <div style="width: calc(100% - 120px)">
           <InputMoney
             v-if="ticketProduct.discountType === DiscountType.VND"
             :value="ticketProduct.unitDiscountMoney"
-            @update:value="handleChangeUnitDiscountMoney" />
+            @update:value="handleChangeUnitDiscountMoney"
+          />
           <InputNumber
             v-else
             :value="ticketProduct.discountPercent"
-            @update:value="handleChangeDiscountPercent" />
+            @update:value="handleChangeDiscountPercent"
+          />
         </div>
       </div>
     </div>
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.actualPrice"
-      class="grow basis-[90%] lg:basis-[45%]">
+      class="grow basis-[90%] lg:basis-[45%]"
+    >
       <div>
         Đơn giá
         <span v-if="ticketProduct.unitRate !== 1">
@@ -555,7 +470,8 @@ defineExpose({ focus })
         <InputMoney
           :value="ticketProduct.unitActualPrice"
           :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
-          @update:value="handleChangeUnitActualPrice" />
+          @update:value="handleChangeUnitActualPrice"
+        />
       </div>
     </div>
 

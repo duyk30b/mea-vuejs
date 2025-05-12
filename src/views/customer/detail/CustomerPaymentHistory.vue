@@ -8,7 +8,7 @@ import type { Customer } from '../../../modules/customer'
 import { CustomerPaymentApi } from '../../../modules/customer-payment/customer-payment.api'
 import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
@@ -78,7 +78,7 @@ defineExpose({ startFetchData })
 <template>
   <div class="mt-4">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="ml-auto">
+      <div style="margin-left:auto">
         <VueButton
           v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
           color="blue"
@@ -105,7 +105,7 @@ defineExpose({ startFetchData })
             <td>
               <LinkAndStatusTicket :ticket="customerPayment.ticket!" />
               <div style="white-space: nowrap">
-                {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div>
                 <CustomerPaymentTypeTag :paymentType="customerPayment.paymentType" />
@@ -157,7 +157,7 @@ defineExpose({ startFetchData })
                 :ticketId="customerPayment.ticketId"
                 :ticket="customerPayment.ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ DTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td class="px-4">

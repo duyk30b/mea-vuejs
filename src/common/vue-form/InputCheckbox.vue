@@ -30,13 +30,13 @@ const randomId = computed(() => Math.random().toString(36).substring(2))
 const handleChangeCheckbox = (e: Event) => {
   const target = e.target as HTMLInputElement
   emit('update:checked', target.checked)
-  emit('change', e)
   if (props.typeParser === 'number') {
     emit('update:value', Number(target.checked))
   }
   if (props.typeParser === 'boolean') {
     emit('update:value', target.checked)
   }
+  emit('change', e)
 }
 
 defineExpose({ focus })
@@ -44,7 +44,7 @@ defineExpose({ focus })
 
 <template>
   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
-    <div>
+    <div style="line-height: 0;">
       <input
         :id="randomId"
         style="cursor: pointer"

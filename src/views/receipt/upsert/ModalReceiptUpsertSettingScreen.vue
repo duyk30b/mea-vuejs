@@ -11,7 +11,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { Distributor, DistributorService } from '../../../modules/distributor'
 import { OrganizationService } from '../../../modules/organization'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
 const TABS_KEY = {
   RECEIPT_ITEMS: 'RECEIPT_ITEMS',
@@ -215,7 +215,7 @@ defineExpose({ openModal })
                               <div>
                                 <b>{{ data.fullName }}</b>
                                 - {{ data.phone }} -
-                                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                                {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
                                 {{ data.addressWard }} - {{ data.addressDistrict }} -

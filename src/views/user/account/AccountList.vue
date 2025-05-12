@@ -57,7 +57,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalAccountUpsertSuccess = async (
   data: User,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   await startFetchData()
 }
@@ -113,33 +113,6 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
                 {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
               </div>
             </td>
-            <!-- <td>
-              <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
-                <div>
-                  <span v-if="device.mobile === 1">
-                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
-                  </span>
-                  <span v-else>
-                    <font-awesome-icon :icon="['fas', 'desktop']" />
-                  </span>
-                  <span class="ml-2">{{ device.os }}</span>
-                  /
-                  <span>{{ device.browser }}</span>
-                  -
-                  <span>{{ device.ip }}</span>
-                </div>
-                <div class="flex gap-2">
-                  <VueButton
-                    class="ml-2"
-                    size="small"
-                    @click="deviceLogout(user.id!, device.refreshExp)">
-                    Đăng xuất
-                  </VueButton>
-                  <VueTag v-if="device.online" color="success">Online</VueTag>
-                  <VueTag v-if="!device.online" color="default">Offline</VueTag>
-                </div>
-              </div>
-            </td> -->
             <td class="text-center">
               <VueTag v-if="user.isActive" icon="check" color="green">Active</VueTag>
               <VueTag v-else icon="minus" color="orange">Active</VueTag>
@@ -148,7 +121,8 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalAccountUpsert?.openModal(user.id)">
+                @click="modalAccountUpsert?.openModal(user.id)"
+              >
                 <FormOutlined />
               </a>
             </td>
@@ -162,9 +136,8 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

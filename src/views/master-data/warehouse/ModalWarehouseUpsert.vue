@@ -111,7 +111,7 @@ defineExpose({ openModal })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

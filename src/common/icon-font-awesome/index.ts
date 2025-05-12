@@ -1,0 +1,6 @@
+export { default as IconHospitalUser } from './IconHospitalUser.vue'
+export { default as IconMinus } from './IconMinus.vue'
+export { default as IconPlus } from './IconPlus.vue'
+export { default as IconSort } from './IconSort.vue'
+export { default as IconSortDown } from './IconSortDown.vue'
+export { default as IconSortUp } from './IconSortUp.vue'

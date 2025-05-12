@@ -5,7 +5,7 @@ import VueButton from '../../../../common/VueButton.vue'
 import { IconClock, IconShoppingCart, IconSpin } from '../../../../common/icon'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../../modules/enum'
@@ -27,17 +27,23 @@ import {
   ticketClinicRef,
 } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
-import { DDom } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import ModalSelectPrescriptionSample from './ModalSelectPrescriptionSample.vue'
+import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
+import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
+import { IconFileSearch } from '../../../../common/icon-antd'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
 
+const ticketClinicPrescriptionSelectItem =
+  ref<InstanceType<typeof TicketClinicPrescriptionSelectItem>>()
+
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
-const modalSelectPrescriptionSample = ref<InstanceType<typeof ModalSelectPrescriptionSample>>()
+const modalSavePrescriptionSample = ref<InstanceType<typeof ModalSavePrescriptionSample>>()
 
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
@@ -60,7 +66,7 @@ watch(
   (newValue, oldValue) => {
     ticketProductPrescriptionList.value = TicketProduct.fromList(newValue || [])
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watch(
@@ -77,7 +83,7 @@ watch(
       ticketAttributeMap.value[k] = i.value
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 const hasChangePriority = computed(() => {
@@ -150,7 +156,7 @@ const startPrint = async () => {
       printHtml: printHtml!,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -211,18 +217,41 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
 }
+
+const handleModalSavePrescriptionSampleChange = async (v: boolean) => {
+  if (v) {
+    await ticketClinicPrescriptionSelectItem.value?.fetchPrescriptionSample()
+  }
+}
+
+const clickOpenModalSavePrescriptionSample = () => {
+  const medicineList: MedicineType[] = ticketProductPrescriptionList.value.map((i) => ({
+    productId: i.productId,
+    quantity: i.quantityPrescription,
+    hintUsage: i.hintUsage || '',
+  }))
+
+  const psGenerate = PrescriptionSample.blank()
+  psGenerate.name = ticketClinicRef.value.note
+  psGenerate.medicineList = medicineList
+  psGenerate.medicines = JSON.stringify(medicineList)
+  modalSavePrescriptionSample.value?.openModal(psGenerate)
+}
 </script>
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <TicketClinicPrescriptionSelectItem @success="handleAddTicketProductPrescription" />
+  <TicketClinicPrescriptionSelectItem
+    ref="ticketClinicPrescriptionSelectItem"
+    @success="handleAddTicketProductPrescription"
+  />
   <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
-  <ModalSelectPrescriptionSample ref="modalSelectPrescriptionSample" />
-  <div class="mt-4">
+  <ModalSavePrescriptionSample
+    ref="modalSavePrescriptionSample"
+    @hasChangeData="handleModalSavePrescriptionSampleChange"
+  />
+  <div class="">
     <div class="flex justify-between items-center">
       <span>Đơn thuốc</span>
-      <div>
-        <!-- <a @click="modalSelectPrescriptionSample?.openModal()">Chọn đơn mẫu</a> -->
-      </div>
     </div>
     <div class="table-wrapper">
       <table>
@@ -245,7 +274,8 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
           </tr>
           <tr
             v-for="(tpItem, index) in ticketProductPrescriptionList || []"
-            :key="tpItem.productId">
+            :key="tpItem.productId"
+          >
             <td>
               <div class="flex flex-col items-center">
                 <button
@@ -259,8 +289,9 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0 || tpItem.deliveryStatus === DeliveryStatus.Delivered"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -277,8 +308,9 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                     index === ticketProductPrescriptionList.length - 1 ||
                     tpItem.deliveryStatus === DeliveryStatus.Delivered
                   "
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
@@ -288,21 +320,23 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                 <IconClock
                   width="16"
                   height="16"
-                  style="color: orange; cursor: not-allowed !important" />
+                  style="color: orange; cursor: not-allowed !important"
+                />
               </a-tooltip>
               <a-tooltip v-else>
                 <template #title>Đã xuất vật tư</template>
                 <IconShoppingCart
                   width="18"
                   height="18"
-                  style="color: #52c41a; cursor: not-allowed !important" />
+                  style="color: #52c41a; cursor: not-allowed !important"
+                />
               </a-tooltip>
             </td>
             <td>
               <div style="font-weight: 500">
                 {{ tpItem.product?.brandName }}
                 <a class="ml-1" @click="openModalProductDetail(tpItem.product!)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div class="text-xs">{{ tpItem.product?.substance }}</div>
@@ -329,7 +363,8 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                   permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]
                 "
                 class="text-orange-500"
-                @click="modalTicketClinicPrescriptionUpdate?.openModal(tpItem)">
+                @click="modalTicketClinicPrescriptionUpdate?.openModal(tpItem)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
@@ -344,7 +379,7 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
                   formatMoney(
                     ticketProductPrescriptionList.reduce((acc: number, item: TicketProduct) => {
                       return (acc += item.expectedPrice * item.quantityPrescription)
-                    }, 0)
+                    }, 0),
                   )
                 }}
               </b>
@@ -354,29 +389,25 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
         </tbody>
       </table>
     </div>
-    <div class="flex justify-end">
-      <!-- <a class="flex items-center gap-1" @click="addPrescriptionSample">
-        <IconAddCircle />
-        Lưu đơn mẫu
-      </a> -->
-    </div>
 
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
       <div style="height: 140px">
-        <WysiwygEditor v-model:value="ticketAttributeMap.advice" menuType="COLLAPSE" />
+        <CKEditor5Vue v-model:value="ticketAttributeMap.advice" menuType="COLLAPSE" />
       </div>
     </div>
   </div>
-  <div class="mt-4 flex gap-4">
+  <div class="mt-4 flex gap-2">
     <VueButton color="blue" icon="print" @click="startPrint">In đơn thuốc</VueButton>
+    <VueButton @click="clickOpenModalSavePrescriptionSample">Lưu vào đơn mẫu</VueButton>
     <VueButton
       v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]"
       color="blue"
-      class="ml-auto"
+      style="margin-left: auto"
       :disabled="disabledButton"
       icon="save"
-      @click="savePriorityTicketProductPrescriptionAndAdvice">
+      @click="savePriorityTicketProductPrescriptionAndAdvice"
+    >
       Lưu lại
     </VueButton>
   </div>

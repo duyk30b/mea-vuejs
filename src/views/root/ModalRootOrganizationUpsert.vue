@@ -36,8 +36,8 @@ const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
 const saveLoading = ref(false)
 
-const checkboxOptions = ref<CheckboxOptionType[]>([])
-const checkboxPermissionId = ref<Record<string, any>>({})
+const checkboxPermissionIdOptions = ref<CheckboxOptionType[]>([])
+const checkboxPermissionId = ref<Record<string, boolean>>({})
 
 let firstLoad = true
 
@@ -46,7 +46,7 @@ const openModal = async (instance?: Organization) => {
   if (firstLoad === true) {
     try {
       const permissionList = await PermissionApi.list({ filter: { level: { EQUAL: 1 } } })
-      checkboxOptions.value = permissionList.map((i) => ({ key: i.id, label: i.name }))
+      checkboxPermissionIdOptions.value = permissionList.map((i) => ({ key: i.id, label: i.name }))
     } catch (error) {
       console.log('🚀 ~ ModalRootOrganizationUpsert.vue:63 ~ openModal ~ error:', error)
     }
@@ -64,7 +64,7 @@ const openModal = async (instance?: Organization) => {
       if (instance.addressDistrict) {
         wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
           instance.addressProvince,
-          instance.addressDistrict
+          instance.addressDistrict,
         )
       }
     }
@@ -89,7 +89,7 @@ const handleSave = async () => {
     Object.keys(checkboxPermissionId.value)
       .filter((id) => checkboxPermissionId.value[id])
       .map((i) => Number(i))
-      .sort((a, b) => (a > b ? 1 : -1))
+      .sort((a, b) => (a > b ? 1 : -1)),
   )
   try {
     if (organization.value.id) {
@@ -122,7 +122,7 @@ const handleChangeDistrict = async (district: string) => {
   }
   wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
     organization.value.addressProvince,
-    district
+    district,
   )
 }
 
@@ -161,7 +161,8 @@ defineExpose({ openModal })
               v-model:value="organization.phone"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e: string) => (organization.phone = e.replace(/ /g, ''))" />
+              @update:value="(e: string) => (organization.phone = e.replace(/ /g, ''))"
+            />
           </div>
         </div>
 
@@ -176,7 +177,8 @@ defineExpose({ openModal })
           <div>Email Verify</div>
           <a-switch
             :checked="Boolean(organization.emailVerify)"
-            @change="(checked: Boolean) => (organization.emailVerify = checked ? 1 : 0)" />
+            @change="(checked: Boolean) => (organization.emailVerify = checked ? 1 : 0)"
+          />
         </div>
 
         <div style="flex-basis: 200px; flex-grow: 1">
@@ -188,7 +190,8 @@ defineExpose({ openModal })
               :maxHeight="180"
               placeholder="Thành Phố / Tỉnh"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              @update:value="handleChangeProvince" />
+              @update:value="handleChangeProvince"
+            />
           </div>
         </div>
 
@@ -201,7 +204,8 @@ defineExpose({ openModal })
               :options="districtList"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
               placeholder="Quận / Huyện"
-              @update:value="handleChangeDistrict" />
+              @update:value="handleChangeDistrict"
+            />
           </div>
         </div>
 
@@ -213,7 +217,8 @@ defineExpose({ openModal })
               :maxHeight="180"
               :options="wardList"
               placeholder="Phường / Xã"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+              :logic-filter="(item: string, text: string) => customFilter(item, text)"
+            />
           </div>
         </div>
 
@@ -221,7 +226,8 @@ defineExpose({ openModal })
           <a-input
             v-model:value="organization.addressStreet"
             style="flex: 1"
-            placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+          />
         </div>
 
         <div style="flex-basis: 200px; flex-grow: 1">
@@ -257,8 +263,8 @@ defineExpose({ openModal })
           <div>
             <InputCheckboxList
               v-model:value="checkboxPermissionId"
-              :options="checkboxOptions"
-              :item-style="{ width: '40%' }" />
+              :options="checkboxPermissionIdOptions"
+            />
           </div>
         </div>
 
@@ -271,7 +277,8 @@ defineExpose({ openModal })
                 { value: OrganizationStatus.Inactive, text: 'Inactive' },
                 { value: OrganizationStatus.Active, text: 'Active' },
                 { value: OrganizationStatus.Frequent, text: 'Frequent' },
-              ]" />
+              ]"
+            />
           </div>
         </div>
       </div>
@@ -282,11 +289,12 @@ defineExpose({ openModal })
             <VueButton
               color="red"
               :loading="saveLoading"
-              @click="modalRootOrganizationClear?.openModal(organization)">
+              @click="modalRootOrganizationClear?.openModal(organization)"
+            >
               Clear
             </VueButton>
           </template>
-          <VueButton class="ml-auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton style="margin-left: auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
             Lưu lại
           </VueButton>
@@ -296,5 +304,6 @@ defineExpose({ openModal })
   </VueModal>
   <ModalRootOrganizationClear
     ref="modalRootOrganizationClear"
-    @success="handleModalRootOrganizationClearSuccess" />
+    @success="handleModalRootOrganizationClearSuccess"
+  />
 </template>

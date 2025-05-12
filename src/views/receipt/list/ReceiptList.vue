@@ -15,6 +15,7 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -53,7 +54,7 @@ const startFetchData = async () => {
       },
       filter: {
         startedAt: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
-        status: receiptStatus.value ? receiptStatus.value : { NOT: ReceiptStatus.Cancelled },
+        status: receiptStatus.value !== null ? receiptStatus.value : undefined,
       },
       page: page.value,
       limit: limit.value,
@@ -116,13 +117,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalReceiptListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalReceiptListSetting" />
+    ref="modalReceiptListSetting"
+  />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
+      >
         <AuditOutlined class="mr-1" />
         Danh sách phiếu nhập hàng
       </div>
@@ -132,7 +135,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           class="btn btn-blue"
           @click="
             $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
-          ">
+          "
+        >
           <PlusOutlined />
           Tạo phiếu nhập hàng mới
         </VueButton>
@@ -162,7 +166,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+          />
         </div>
       </div>
       <div style="flex: 1; flex-basis: 250px">
@@ -178,7 +183,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Hoàn thành', value: ReceiptStatus.Success },
               { text: 'Hủy', value: ReceiptStatus.Cancelled },
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
     </div>
@@ -214,13 +220,15 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <tr
               v-for="(receipt, index) in receipts"
               :key="index"
-              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })">
+              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
+            >
               <td>
                 <div class="font-medium text-justify">
                   {{ receipt.distributor?.fullName }}
                   <a
                     class="text-base"
-                    @click="modalDistributorDetail?.openModal(receipt.distributorId)">
+                    @click="modalDistributorDetail?.openModal(receipt.distributorId)"
+                  >
                     <FileSearchOutlined class="ml-1" />
                   </a>
                 </div>
@@ -252,9 +260,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
 
@@ -262,18 +269,19 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
-              Mã &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('id')">
+              <div class="flex items-center gap-1 justify-center">
+                <span> Mã </span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th>Thời gian</th>
             <th>Nhà cung cấp</th>
@@ -345,9 +353,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

@@ -26,7 +26,7 @@ export type BaseCondition<T> = {
         BETWEEN?: [T[P], T[P]]
         RAW_QUERY?: string
       })
-} & { $OR?: BaseCondition<T>[] }
+} & { $OR?: BaseCondition<T>[] } & { $AND?: BaseCondition<T>[] }
 
 export class IndexedDBCondition<T> {
   checkCondition(record: any, condition: BaseCondition<T>): boolean {
@@ -34,6 +34,9 @@ export class IndexedDBCondition<T> {
       if (target === undefined) return true
       if (column === '$OR') {
         return target.some((t: any) => this.checkCondition(record, t))
+      }
+      if (column === '$AND') {
+        return target.every((t: any) => this.checkCondition(record, t))
       }
       if (['number', 'string', 'boolean', null].includes(typeof target)) {
         return record[column] === target

@@ -19,7 +19,6 @@ const tableNameMap: Record<string, any> = {
   User: 0,
   Appointment: 1,
   Batch: 1,
-  BatchMovement: 1,
   Commission: 1,
   Customer: 1,
   CustomerPayment: 1,
@@ -45,6 +44,7 @@ const tableNameMap: Record<string, any> = {
   Setting: 0,
   Ticket: 1,
   TicketAttribute: 1,
+  TicketBatch: 1,
   TicketExpense: 1,
   TicketLaboratory: 1,
   TicketLaboratoryGroup: 1,
@@ -111,7 +111,8 @@ defineExpose({ openModal })
                   ['Organization', 'User'].includes(key)
                     ? { fontWeight: 'bold', color: 'red', textTransform: 'uppercase' }
                     : {}
-                ">
+                "
+              >
                 {{ key }}
               </span>
             </InputCheckbox>
@@ -121,7 +122,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-4">
         <div class="flex gap-4">
-          <VueButton class="ml-auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton style="margin-left: auto" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton color="red" type="submit" :loading="saveLoading" icon="save">
             Bắt đầu xóa
           </VueButton>

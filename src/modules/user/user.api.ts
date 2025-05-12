@@ -50,8 +50,8 @@ export class UserApi {
   static async updateOne(id: number, user: User, roleIdList: number[]) {
     const response = await AxiosInstance.patch(`/user/update/${id}`, {
       phone: user.phone,
-      // username: user.username,
-      // password: user.password,
+      username: user.username,
+      password: user.password, // nếu cập nhật password thì gửi thêm pass
       fullName: user.fullName,
       birthday: user.birthday,
       gender: user.gender,

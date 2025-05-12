@@ -26,7 +26,7 @@ import { Product } from '../../../modules/product/product.model'
 import { Role, RoleService } from '../../../modules/role'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { customFilter, DTimer } from '../../../utils'
+import { customFilter, ESTimer } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
 
@@ -94,13 +94,15 @@ const openModal = async (productId?: number) => {
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
   } else {
-    const productFetch = await ProductService.detail(productId, {
-      relation: { commissionList: true },
-    })
+    const productFetch = await ProductService.detail(
+      productId,
+      { relation: { commissionList: true } },
+      { refetch: true },
+    )
     productOrigin.value = Product.from(productFetch)
     product.value = productFetch
     unit.value = JSON.parse(
-      productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }])
+      productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }]),
     )
   }
   if (product.value.commissionList?.length == 0) {
@@ -198,8 +200,8 @@ const handleSave = async () => {
           title: 'Không thể cập nhật kho hàng quản lý',
           content: response.data.batchError.map((batch) => {
             const warehouseName = warehouseMap.value[batch.warehouseId]?.name || ''
-            return `- Lô hàng ${batch.lotNumber} - HSD ${DTimer.timeToText(
-              batch.expiryDate
+            return `- Lô hàng ${batch.lotNumber} - HSD ${ESTimer.timeToText(
+              batch.expiryDate,
             )} - đang được quản lý bởi "${warehouseName}"". Bắt buộc phải chọn "${warehouseName}" hoặc chọn "Tất cả kho"`
           }),
         })
@@ -266,14 +268,16 @@ defineExpose({ openModal })
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalDataProduct?.openModal()">
+          @click="modalDataProduct?.openModal()"
+        >
           <SisternodeOutlined />
         </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
-          @click="modalProductUpsertSettingScreen?.openModal()">
+          @click="modalProductUpsertSettingScreen?.openModal()"
+        >
           <IconSetting />
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -307,73 +311,80 @@ defineExpose({ openModal })
                 <div
                   v-if="settingStore.SCREEN_PRODUCT_UPSERT.unit"
                   :class="unit.length === 1 ? 'basis-[300px]' : 'basis-[600px]'"
-                  class="grow">
+                  class="grow"
+                >
                   <div class="">Đơn vị</div>
                   <div class="">
                     <div v-if="unit.length === 1">
                       <InputHint
                         v-model:value="unit[0].name"
                         :options="settingStore.PRODUCT_UNIT"
-                        :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                        :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                      />
                     </div>
                     <div v-else class="mt-2">
                       <table style="width: 100%">
-                        <tr>
-                          <td colspan="2"><small>Đơn vị cơ bản</small></td>
-                          <td style="padding-left: 12px"><small>Mặc định</small></td>
-                        </tr>
-                        <tr>
-                          <td colspan="2">
-                            <InputHint
-                              v-model:value="unit[0].name"
-                              required
-                              :options="settingStore.PRODUCT_UNIT"
-                              :logic-filter="
-                                (item: string, text: string) => customFilter(item, text)
-                              " />
-                          </td>
-                          <td style="padding-left: 12px">
-                            <InputCheckbox
-                              :checked="!!unit[0].default"
-                              @change="(e: Event) => handleChangeUnitDefault(e, 0)"></InputCheckbox>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td><small>Đơn vị phụ</small></td>
-                          <td><small>Quy đổi ra đơn vị cơ bản</small></td>
-                          <td></td>
-                        </tr>
-                        <tr v-for="(item, index) in unit" :key="index" class="py-2">
-                          <template v-if="index > 0">
-                            <td style="width: 30%; padding: 0 10px 8px 0">
+                        <tbody>
+                          <tr>
+                            <td colspan="2"><small>Đơn vị cơ bản</small></td>
+                            <td style="padding-left: 12px"><small>Mặc định</small></td>
+                          </tr>
+                          <tr>
+                            <td colspan="2">
                               <InputHint
-                                v-model:value="unit[index].name"
+                                v-model:value="unit[0].name"
                                 required
                                 :options="settingStore.PRODUCT_UNIT"
                                 :logic-filter="
                                   (item: string, text: string) => customFilter(item, text)
-                                " />
+                                "
+                              />
                             </td>
-                            <td style="padding: 0 0 8px 0">
-                              <InputNumber
-                                v-model:value="unit[index].rate"
-                                :append="unit[0].name"
-                                :disabled="index == 0" />
+                            <td style="padding-left: 12px">
+                              <InputCheckbox
+                                :checked="!!unit[0].default"
+                                @change="(e: Event) => handleChangeUnitDefault(e, 0)"
+                              ></InputCheckbox>
                             </td>
-                            <td style="padding: 0 12px 8px 12px">
-                              <div class="flex flex-nowrap justify-between items-center">
-                                <InputCheckbox
-                                  :checked="!!unit[index].default"
-                                  @change="
-                                    (e: Event) => handleChangeUnitDefault(e, index)
-                                  "></InputCheckbox>
-                                <a style="color: var(--text-red)" @click="unit.splice(index, 1)">
-                                  Xóa
-                                </a>
-                              </div>
-                            </td>
-                          </template>
-                        </tr>
+                          </tr>
+                          <tr>
+                            <td><small>Đơn vị phụ</small></td>
+                            <td><small>Quy đổi ra đơn vị cơ bản</small></td>
+                            <td></td>
+                          </tr>
+                          <tr v-for="(item, index) in unit" :key="index" class="py-2">
+                            <template v-if="index > 0">
+                              <td style="width: 30%; padding: 0 10px 8px 0">
+                                <InputHint
+                                  v-model:value="unit[index].name"
+                                  required
+                                  :options="settingStore.PRODUCT_UNIT"
+                                  :logic-filter="
+                                    (item: string, text: string) => customFilter(item, text)
+                                  "
+                                />
+                              </td>
+                              <td style="padding: 0 0 8px 0">
+                                <InputNumber
+                                  v-model:value="unit[index].rate"
+                                  :append="unit[0].name"
+                                  :disabled="index == 0"
+                                />
+                              </td>
+                              <td style="padding: 0 12px 8px 12px">
+                                <div class="flex flex-nowrap justify-between items-center">
+                                  <InputCheckbox
+                                    :checked="!!unit[index].default"
+                                    @change="(e: Event) => handleChangeUnitDefault(e, index)"
+                                  ></InputCheckbox>
+                                  <a style="color: var(--text-red)" @click="unit.splice(index, 1)">
+                                    Xóa
+                                  </a>
+                                </div>
+                              </td>
+                            </template>
+                          </tr>
+                        </tbody>
                       </table>
                     </div>
                     <div><a @click="handleAddUnit">Thêm đơn vị</a></div>
@@ -386,7 +397,8 @@ defineExpose({ openModal })
                     <InputFilter
                       v-model:value="product.productGroupId"
                       :options="productGroupOptions"
-                      :maxHeight="200" />
+                      :maxHeight="200"
+                    />
                   </div>
                 </div>
 
@@ -396,7 +408,8 @@ defineExpose({ openModal })
                     <InputHint
                       v-model:value="product.route"
                       :options="settingStore.PRODUCT_ROUTE"
-                      :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                      :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                    />
                   </div>
                 </div>
 
@@ -410,13 +423,15 @@ defineExpose({ openModal })
                 <div
                   v-if="settingStore.SCREEN_PRODUCT_UPSERT.hintUsage"
                   style="flex-basis: 600px; flex-grow: 1"
-                  class="">
+                  class=""
+                >
                   <div class="">Cách sử dụng</div>
                   <div>
                     <InputHint
                       v-model:value="product.hintUsage"
                       :options="settingStore.PRODUCT_HINT_USAGE"
-                      :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+                      :logic-filter="(item: string, text: string) => customFilter(item, text)"
+                    />
                   </div>
                 </div>
 
@@ -438,7 +453,8 @@ defineExpose({ openModal })
                       @update:value="
                         (value) =>
                           (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
 
@@ -459,7 +475,8 @@ defineExpose({ openModal })
                         (value) =>
                           (product.wholesalePrice =
                             value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
 
@@ -479,7 +496,8 @@ defineExpose({ openModal })
                       @update:value="
                         (value) =>
                           (product.retailPrice = value / (unit.find((i) => i.default)?.rate || 1))
-                      " />
+                      "
+                    />
                   </div>
                 </div>
 
@@ -492,7 +510,8 @@ defineExpose({ openModal })
                         style="cursor: pointer"
                         :checked="warehouseIdSelect['0']"
                         type="checkbox"
-                        @change="(e) => handleChangeSelectWarehousePrime(e)" />
+                        @change="(e) => handleChangeSelectWarehousePrime(e)"
+                      />
                       <label class="mx-2 cursor-pointer" :for="'MEA_' + randomId + '_' + 0">
                         Tất cả kho
                       </label>
@@ -503,10 +522,12 @@ defineExpose({ openModal })
                         style="cursor: pointer"
                         :checked="warehouseIdSelect[warehouse.id]"
                         type="checkbox"
-                        @change="(e) => handleChangeSelectWarehouse(e, warehouse.id)" />
+                        @change="(e) => handleChangeSelectWarehouse(e, warehouse.id)"
+                      />
                       <label
                         class="mx-2 cursor-pointer"
-                        :for="'MEA_' + randomId + '_' + warehouse.id">
+                        :for="'MEA_' + randomId + '_' + warehouse.id"
+                      >
                         {{ warehouse.name }}
                       </label>
                     </div>
@@ -518,9 +539,8 @@ defineExpose({ openModal })
                     <a-switch
                       :checked="Boolean(product.hasManageQuantity)"
                       :disabled="!!product.quantity"
-                      @change="
-                        (checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)
-                      " />
+                      @change="(checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)"
+                    />
                   </div>
                   <div>
                     <span v-if="product.hasManageQuantity">
@@ -536,7 +556,8 @@ defineExpose({ openModal })
                   <div class="w-[60px] flex-none">
                     <a-switch
                       :checked="Boolean(product.isActive)"
-                      @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)" />
+                      @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
+                    />
                   </div>
                   <div>
                     <span v-if="product.isActive">Active</span>
@@ -550,14 +571,16 @@ defineExpose({ openModal })
                 <div
                   v-for="(commission, index) in product.commissionList"
                   :key="index"
-                  class="mt-4 flex flex-wrap gap-2">
+                  class="mt-4 flex flex-wrap gap-2"
+                >
                   <div style="flex-grow: 1; flex-basis: 250px">
                     <div>Vai trò</div>
                     <div>
                       <InputFilter
                         v-model:value="product.commissionList![index].roleId"
                         :options="roleOptions"
-                        :maxHeight="120">
+                        :maxHeight="120"
+                      >
                         <template #option="{ item: { data } }">{{ data.name }}</template>
                       </InputFilter>
                     </div>
@@ -569,7 +592,8 @@ defineExpose({ openModal })
                         :value="commission.commissionValue"
                         @update:value="
                           (v: number) => (product.commissionList![index].commissionValue = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="flex-grow: 1; flex-basis: 150px">
@@ -591,7 +615,8 @@ defineExpose({ openModal })
                         @update:value="
                           (v: number) =>
                             (product.commissionList![index].commissionCalculatorType = v)
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                   <div style="width: 30px">
@@ -599,7 +624,8 @@ defineExpose({ openModal })
                     <div class="pt-2 flex justify-center">
                       <a
                         style="color: var(--text-red)"
-                        @click="product.commissionList!.splice(index, 1)">
+                        @click="product.commissionList!.splice(index, 1)"
+                      >
                         <IconTrash width="18" height="18" />
                       </a>
                     </div>
@@ -615,15 +641,16 @@ defineExpose({ openModal })
         </VueTabs>
       </div>
 
-      <div class="pb-6 pt-8" :class="isMobile ? 'px-4' : 'px-6'">
+      <div class="px-4 pb-6 pt-8">
         <div class="flex gap-4">
           <VueButton
             v-if="permissionIdMap[PermissionId.PRODUCT_DELETE] && product.id"
             color="red"
-            @click="clickDelete">
+            @click="clickDelete"
+          >
             Xóa
           </VueButton>
-          <VueButton class="btn ml-auto" icon="close" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto;" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
@@ -635,8 +662,10 @@ defineExpose({ openModal })
   </VueModal>
   <ModalProductUpsertSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalProductUpsertSettingScreen" />
+    ref="modalProductUpsertSettingScreen"
+  />
   <ModalDataProduct
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalDataProduct" />
+    ref="modalDataProduct"
+  />
 </template>

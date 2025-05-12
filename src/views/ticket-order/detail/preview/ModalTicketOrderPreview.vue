@@ -130,16 +130,6 @@ defineExpose({ openModal })
                       {{ ticketProduct.product!.substance }}
                     </div>
                     <div
-                      v-if="
-                        settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.batch &&
-                        ticketProduct.batchId
-                      "
-                      style="font-size: 0.8rem"
-                      class="flex gap-2">
-                      Lô {{ ticketProduct.batch!.lotNumber }} - HSD
-                      {{ timeToText(ticketProduct.batch!.expiryDate) }}
-                    </div>
-                    <div
                       v-if="settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.hintUsage"
                       style="font-size: 0.8rem; font-style: italic">
                       {{ ticketProduct.hintUsage }}

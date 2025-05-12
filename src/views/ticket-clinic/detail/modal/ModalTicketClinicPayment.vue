@@ -12,7 +12,6 @@ import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { timeToText } from '../../../../utils'
 import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
-import { ticket } from '../../../ticket-order/upsert/ticket-order-upsert.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -163,7 +162,8 @@ defineExpose({ openModal })
                   <div class="flex items-stretch pl-6">
                     <VueButton
                       type="button"
-                      @click="money = ticketClone.debt > 0 ? ticketClone.debt : 0">
+                      @click="money = ticketClone.debt > 0 ? ticketClone.debt : 0"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -171,7 +171,8 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0 }"
-                        text-align="right" />
+                        text-align="right"
+                      />
                     </div>
                   </div>
                 </td>
@@ -216,7 +217,8 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0, lte: ticketClone.debt }"
-                        text-align="right" />
+                        text-align="right"
+                      />
                     </div>
                   </div>
                 </td>
@@ -242,7 +244,8 @@ defineExpose({ openModal })
         </form>
         <form
           v-else-if="paymentView === PaymentViewType.RefundOverpaid"
-          @submit.prevent="startRefundOverpaid">
+          @submit.prevent="startRefundOverpaid"
+        >
           <table class="w-full mt-4">
             <tbody>
               <tr>
@@ -257,7 +260,8 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         :validate="{ gt: 0, lte: ticketClone.paid }"
-                        text-align="right" />
+                        text-align="right"
+                      />
                     </div>
                   </div>
                 </td>

@@ -163,7 +163,7 @@ const saveReceipt = async (type: EReceiptSave) => {
   const invalidReceiptItem = receipt.value.receiptItemList!.find((ri) => ri.quantity === 0)
   if (invalidReceiptItem) {
     return AlertStore.addError(
-      `Lỗi: sản phẩm ${invalidReceiptItem!.product!.brandName} có số lượng 0`
+      `Lỗi: sản phẩm ${invalidReceiptItem!.product!.brandName} có số lượng 0`,
     )
   }
 
@@ -239,6 +239,14 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="flex flex-wrap gap-4">
       <div style="flex-basis: 600px; flex-grow: 2">
         <div class="bg-white p-4">
+          <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
+        </div>
+        <div class="mt-4 bg-white p-4">
+          <ReceiptItemTable />
+        </div>
+      </div>
+      <form ref="receiptUpsertForm" style="flex-basis: 300px; flex-grow: 1">
+        <div class="bg-white p-4">
           <div class="flex gap-1 flex-wrap">
             <span>Tên NCC</span>
             <a v-if="!!distributor.id" @click="openModalDistributorDetail(receipt.distributor)">
@@ -251,13 +259,15 @@ const openModalDistributorDetail = (data?: Distributor) => {
             </span>
             <a
               v-if="permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] && distributor.id"
-              @click="modalDistributorUpsert?.openModal(distributor.id)">
+              @click="modalDistributorUpsert?.openModal(distributor.id)"
+            >
               Sửa thông tin NCC
             </a>
-            <div class="ml-auto">
+            <div style="margin-left: auto">
               <a
                 v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE] && !distributor.id"
-                @click="modalDistributorUpsert?.openModal()">
+                @click="modalDistributorUpsert?.openModal()"
+              >
                 Thêm NCC mới
               </a>
             </div>
@@ -269,12 +279,13 @@ const openModalDistributorDetail = (data?: Distributor) => {
               :options="distributorOptions"
               :max-height="260"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-              :disabled="mode === EReceiptUpsertMode.UPDATE || !!receipt.receiptItemList?.length"
+              :disabled="mode === EReceiptUpsertMode.UPDATE"
               required
               @onFocusinFirst="handleFocusFirstSearchDistributor"
               @onFocusin="handleFocusSearchDistributor"
               @selectItem="({ data }) => selectDistributor(data)"
-              @update:text="searchingDistributor">
+              @update:text="searchingDistributor"
+            >
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
@@ -285,14 +296,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
             </InputOptions>
           </div>
         </div>
-        <div class="bg-white px-4 pb-4">
-          <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
-        </div>
-        <div class="mt-4 bg-white p-4">
-          <ReceiptItemTable />
-        </div>
-      </div>
-      <form ref="receiptUpsertForm" style="flex-basis: 300px; flex-grow: 1">
+
         <div class="p-4 bg-white">
           <div>Thông tin thanh toán</div>
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
@@ -305,7 +309,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
                       v-model:value="time"
                       show-time
                       placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'" />
+                      :format="'DD/MM/YYYY HH:mm:ss'"
+                    />
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
@@ -338,13 +343,15 @@ const openModalDistributorDetail = (data?: Distributor) => {
                               :value="receipt.discountMoney"
                               append="VNĐ"
                               style="width: 100%"
-                              @update:value="handleChangeReceiptDiscountMoney" />
+                              @update:value="handleChangeReceiptDiscountMoney"
+                            />
                           </div>
                           <div class="mt-2">
                             <InputNumber
                               :value="receipt.discountPercent"
                               append="%"
-                              @update:value="handleChangeReceiptDiscountPercent" />
+                              @update:value="handleChangeReceiptDiscountPercent"
+                            />
                           </div>
                         </div>
                       </template>
@@ -354,7 +361,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
                         </div>
                         <div
                           class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd">
+                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
+                        >
                           {{ formatMoney(receipt.discountMoney) }}
                         </div>
                       </div>
@@ -406,14 +414,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
               permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT] &&
               settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               icon="save"
               type="button"
-              @click="saveReceipt(EReceiptSave.CREATE_DRAFT)">
+              @click="saveReceipt(EReceiptSave.CREATE_DRAFT)"
+            >
               Lưu nháp
             </VueButton>
           </div>
@@ -425,14 +435,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
               permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               icon="save"
               type="button"
-              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)"
+            >
               Cập nhật phiếu nháp
             </VueButton>
           </div>
@@ -442,14 +454,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
               permissionIdMap[PermissionId.RECEIPT_UPDATE_DRAFT_PREPAYMENT] &&
               [ReceiptStatus.Prepayment].includes(receipt.status)
             "
-            class="mt-4 w-full flex flex-col px-1">
+            class="mt-4 w-full flex flex-col px-1"
+          >
             <VueButton
               color="blue"
               :loading="saveLoading"
               size="large"
               type="button"
               icon="save"
-              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)">
+              @click="saveReceipt(EReceiptSave.UPDATE_DRAFT_PREPAYMENT)"
+            >
               Cập nhật phiếu tạm ứng
             </VueButton>
           </div>

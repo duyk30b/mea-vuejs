@@ -90,7 +90,7 @@ const startRefundPrepayment = async () => {
     loadingProcess.value = true
     const { receiptBasic, distributorPaymentList } = await ReceiptApi.refundPrepayment(
       receipt.value.id,
-      receipt.value.paid
+      receipt.value.paid,
     )
     Object.assign(receipt.value, receiptBasic)
     receipt.value.distributorPaymentList = distributorPaymentList
@@ -198,7 +198,8 @@ const openModalDistributorDetail = (distributorId: number) => {
 <template>
   <ModalReceiptDetailSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalReceiptDetailSettingScreen" />
+    ref="modalReceiptDetailSettingScreen"
+  />
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptPayment ref="modalReceiptPayment" @success="startFetchData(receipt.id)" />
 
@@ -214,9 +215,8 @@ const openModalDistributorDetail = (distributorId: number) => {
         type="button"
         color="blue"
         icon="plus"
-        @click="
-          $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
-        ">
+        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+      >
         Tạo phiếu nhập mới
       </VueButton>
     </div>
@@ -236,37 +236,39 @@ const openModalDistributorDetail = (distributorId: number) => {
 
   <div class="md:mx-4 mt-4 p-4 bg-white">
     <table>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">Nhà cung cấp</td>
-        <td class="font-medium px-2 py-1">
-          {{ receipt.distributor?.fullName }}
-          <a class="ml-1" @click="openModalDistributorDetail(receipt.distributorId)">
-            <IconFileSearch />
-          </a>
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
-        <td class="px-2 py-1">NH{{ receipt.id }}</td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
-        <td class="px-2 py-1">
-          {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YY') }}
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
-        <td class="px-2 py-1">
-          <ReceiptStatusTag :receipt="receipt" />
-        </td>
-      </tr>
-      <tr>
-        <td class="px-2 py-1 whitespace-nowrap">Ghi chú</td>
-        <td class="px-2 py-1">
-          {{ receipt.note }}
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap" style="width: 120px">Nhà cung cấp</td>
+          <td class="font-medium px-2 py-1">
+            {{ receipt.distributor?.fullName }}
+            <a class="ml-1" @click="openModalDistributorDetail(receipt.distributorId)">
+              <IconFileSearch />
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Mã phiếu</td>
+          <td class="px-2 py-1">NH{{ receipt.id }}</td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">T.Gian tạo</td>
+          <td class="px-2 py-1">
+            {{ timeToText(receipt.startedAt, 'hh:mm DD/MM/YY') }}
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap align-top">Trạng thái</td>
+          <td class="px-2 py-1">
+            <ReceiptStatusTag :receipt="receipt" />
+          </td>
+        </tr>
+        <tr>
+          <td class="px-2 py-1 whitespace-nowrap">Ghi chú</td>
+          <td class="px-2 py-1">
+            {{ receipt.note }}
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 
@@ -274,8 +276,9 @@ const openModalDistributorDetail = (distributorId: number) => {
     <div class="px-4 pt-2 flex justify-end gap-2">
       <VueButton
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
-        class="ml-auto"
-        @click="startCopy">
+        style="margin-left: auto"
+        @click="startCopy"
+      >
         <CopyOutlined />
         Copy phiếu
       </VueButton>
@@ -285,7 +288,8 @@ const openModalDistributorDetail = (distributorId: number) => {
           [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
         "
         color="blue"
-        @click="startEdit">
+        @click="startEdit"
+      >
         <ExceptionOutlined />
         Sửa phiếu
       </VueButton>
@@ -297,7 +301,8 @@ const openModalDistributorDetail = (distributorId: number) => {
                 permissionIdMap[PermissionId.RECEIPT_REFUND_PAYMENT] &&
                 [ReceiptStatus.Prepayment].includes(receipt.status)
               "
-              key="REFUND_PREPAYMENT">
+              key="REFUND_PREPAYMENT"
+            >
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
                 Hoàn trả tiền tạm ứng
@@ -308,7 +313,8 @@ const openModalDistributorDetail = (distributorId: number) => {
                 permissionIdMap[PermissionId.RECEIPT_CANCEL] &&
                 [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
               "
-              key="CANCEL_RECEIPT">
+              key="CANCEL_RECEIPT"
+            >
               <span class="text-red-500">
                 <FileSyncOutlined class="mr-2" />
                 Hủy phiếu
@@ -320,7 +326,8 @@ const openModalDistributorDetail = (distributorId: number) => {
                   [ReceiptStatus.Draft].includes(receipt.status)) ||
                 receipt.status === ReceiptStatus.Cancelled
               "
-              key="DESTROY_RECEIPT">
+              key="DESTROY_RECEIPT"
+            >
               <span class="text-red-500">
                 <IconDelete class="mr-2" />
                 Xóa phiếu
@@ -345,12 +352,14 @@ const openModalDistributorDetail = (distributorId: number) => {
         v-if="
           permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
           [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
-        ">
+        "
+      >
         <VueButton
           v-if="receipt.paid == receipt.totalMoney"
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit">
+          @click="sendProductAndDebit"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -366,7 +375,8 @@ const openModalDistributorDetail = (distributorId: number) => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPaymentAndClose)">
+          @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPaymentAndClose)"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -382,7 +392,8 @@ const openModalDistributorDetail = (distributorId: number) => {
           "
           color="blue"
           :loading="loadingProcess"
-          @click="sendProductAndDebit">
+          @click="sendProductAndDebit"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>
@@ -393,11 +404,13 @@ const openModalDistributorDetail = (distributorId: number) => {
       <template
         v-if="
           permissionIdMap[PermissionId.RECEIPT_PAY_DEBT] && receipt.status === ReceiptStatus.Debt
-        ">
+        "
+      >
         <VueButton
           color="blue"
           :loading="loadingProcess"
-          @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)">
+          @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"
+        >
           <template #icon>
             <FileDoneOutlined />
           </template>

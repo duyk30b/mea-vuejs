@@ -8,7 +8,7 @@ import InputText from '../../../../common/vue-form/InputText.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 import { CommissionService, InteractType } from '../../../../modules/commission'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -222,7 +222,7 @@ defineExpose({ openModal })
         <div class="mt-3">
           <div>Mô tả</div>
           <div style="height: 400px">
-            <WysiwygEditor v-model:value="ticketRadiology.description" />
+            <CKEditor5Vue v-model:value="ticketRadiology.description" />
           </div>
         </div>
         <div class="mt-3">
@@ -284,7 +284,7 @@ defineExpose({ openModal })
             @click="clickDestroy">
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton v-if="editable" :loading="saveLoading" color="blue" type="submit" icon="save">

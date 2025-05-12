@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClock, IconDollar, IconFileSearch, IconSend } from '../../../common/icon'
 import { InputOptions } from '../../../common/vue-form'
+import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment } from '../../../modules/appointment'
@@ -12,14 +13,13 @@ import { PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../modules/ticket'
 import { ticketClinicRef, ticketRefDeliveryStatus } from '../../../modules/ticket-clinic'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
+import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
-import TicketClinicStatusTag from '../TicketClinicStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
-import { CONFIG } from '../../../config'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -46,7 +46,7 @@ watch(
         data: ticketClinicRef.value.customer!,
       })
     }
-  }
+  },
 )
 
 const handleFocusFirstSearchCustomer = async () => {
@@ -117,7 +117,8 @@ const handleClickModalRegisterAppointment = () => {
         </div>
         <a
           v-if="ticketClinicRef.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
-          @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)">
+          @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)"
+        >
           Sửa thông tin khách hàng
         </a>
       </div>
@@ -131,12 +132,13 @@ const handleClickModalRegisterAppointment = () => {
           required
           @onFocusinFirst="handleFocusFirstSearchCustomer"
           @selectItem="({ data }) => selectCustomer(data)"
-          @update:text="searchingCustomer">
+          @update:text="searchingCustomer"
+        >
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.fullName }}</b>
               - {{ DString.formatPhone(data.phone) }} -
-              {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
             </div>
             <div>{{ DString.formatAddress(data) }}</div>
           </template>
@@ -153,15 +155,15 @@ const handleClickModalRegisterAppointment = () => {
     </div>
     <div class="mt-2">
       <WarningOutlined />
-      <span class="ml-4">{{ ticketClinicRef.ticketAttributeMap?.diagnosis }}</span>
+      <span class="ml-4">{{ ticketClinicRef.note }}</span>
     </div>
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <IconClock />
-        <div>{{ DTimer.timeToText(ticketClinicRef.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
+        <div>{{ ESTimer.timeToText(ticketClinicRef.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
       </div>
       <div>
-        <TicketClinicStatusTag :ticketStatus="ticketClinicRef.ticketStatus" />
+        <TicketStatusTag :ticket="ticketClinicRef" />
       </div>
     </div>
     <a-divider />
@@ -177,14 +179,15 @@ const handleClickModalRegisterAppointment = () => {
               [
                 TicketStatus.Schedule,
                 TicketStatus.Draft,
-                TicketStatus.Approved,
+                TicketStatus.Prepayment,
                 TicketStatus.Executing,
               ].includes(ticketClinicRef.ticketStatus)
             "
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Prepayment)">
+            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Prepayment)"
+          >
             <span class="font-bold">TẠM ỨNG</span>
           </VueButton>
           <VueButton
@@ -192,19 +195,21 @@ const handleClickModalRegisterAppointment = () => {
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.PayDebt)">
+            @click="modalTicketClinicPayment?.openModal(PaymentViewType.PayDebt)"
+          >
             <span class="font-bold">TRẢ NỢ</span>
           </VueButton>
           <VueButton
             v-if="
               [TicketStatus.Completed, TicketStatus.Cancelled].includes(
-                ticketClinicRef.ticketStatus
+                ticketClinicRef.ticketStatus,
               )
             "
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Success)">
+            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Success)"
+          >
             <span class="font-bold">THANH TOÁN</span>
           </VueButton>
         </div>
@@ -221,7 +226,8 @@ const handleClickModalRegisterAppointment = () => {
       </div>
       <div
         class="text-lg"
-        :class="ticketClinicRef.paid < ticketClinicRef.totalMoney ? 'text-red-500 font-bold' : ''">
+        :class="ticketClinicRef.paid < ticketClinicRef.totalMoney ? 'text-red-500 font-bold' : ''"
+      >
         {{ formatMoney(Math.abs(ticketClinicRef.totalMoney - ticketClinicRef.paid)) }}
       </div>
     </div>
@@ -246,7 +252,7 @@ const handleClickModalRegisterAppointment = () => {
       </div>
       <div v-else class="flex gap-2 items-center flex-wrap">
         <VueButton size="small" @click="handleClickModalRegisterAppointment">Sửa</VueButton>
-        {{ DTimer.timeToText(ticketClinicRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
+        {{ ESTimer.timeToText(ticketClinicRef.toAppointment.registeredAt, 'hh:mm DD/MM/YYYY') }}
       </div>
     </div>
     <template v-if="CONFIG.MODE === 'development'">
@@ -270,16 +276,8 @@ const handleClickModalRegisterAppointment = () => {
               <td>{{ formatMoney(ticketClinicRef.radiologyMoney) }}</td>
             </tr>
             <tr>
-              <td>itemsCostAmount</td>
-              <td>{{ formatMoney(ticketClinicRef.itemsCostAmount) }}</td>
-            </tr>
-            <tr>
               <td>itemsActualMoney</td>
-              <td>{{ formatMoney(ticketClinicRef.itemsActualMoney) }}</td>
-            </tr>
-            <tr>
-              <td>itemsDiscount</td>
-              <td>{{ formatMoney(ticketClinicRef.itemsDiscount) }}</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsActualMoney) }} ***</td>
             </tr>
             <tr>
               <td>discountMoney</td>
@@ -288,6 +286,10 @@ const handleClickModalRegisterAppointment = () => {
             <tr>
               <td>totalMoney</td>
               <td>{{ formatMoney(ticketClinicRef.totalMoney) }}</td>
+            </tr>
+            <tr>
+              <td>itemsCostAmount</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsCostAmount) }}</td>
             </tr>
             <tr>
               <td>commissionMoney</td>
@@ -304,6 +306,10 @@ const handleClickModalRegisterAppointment = () => {
             <tr>
               <td>debt</td>
               <td>{{ formatMoney(ticketClinicRef.debt) }}</td>
+            </tr>
+            <tr>
+              <td>itemsDiscount</td>
+              <td>{{ formatMoney(ticketClinicRef.itemsDiscount) }}</td>
             </tr>
           </tbody>
         </table>

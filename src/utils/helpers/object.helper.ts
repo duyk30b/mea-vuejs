@@ -1,4 +1,32 @@
-export class DArray {
+export class ESObject {
+  static stringify(data: any) {
+    if (typeof data === 'number' || typeof data === 'boolean' || typeof data === 'undefined') {
+      return data
+    }
+    if (typeof data === 'string') {
+      return `"${data}"`
+    }
+    if (typeof data === 'function') {
+      return data.toString()
+    }
+    if (typeof data === 'object') {
+      if (data == null) {
+        return data
+      }
+      if (data.name === 'Error') {
+        return `Error: ${data.message}`
+      }
+      try {
+        return JSON.stringify(data, null, 2)
+      } catch {
+        return '[Circular]'
+      }
+    }
+    return data.toString()
+  }
+}
+
+export class ESArray {
   static checkDuplicate = <T>(array: T[], property: keyof T) => {
     const arrayProperty = array.map((item) => item[property])
     const arrayPropertyUnique = Array.from(new Set(arrayProperty))

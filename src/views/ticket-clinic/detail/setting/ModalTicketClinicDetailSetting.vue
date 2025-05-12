@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { VueSelect } from '../../../../common/vue-form'
+import { InputCheckbox, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -11,7 +11,6 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
 import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
-import { RoleService } from '../../../../modules/role'
 import { TicketType } from '../../../../modules/ticket'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
@@ -185,6 +184,14 @@ defineExpose({ openModal })
                         </div>
                       </td>
                     </tr>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.consumable.searchIncludeZeroQuantity"
+                          type-parser="number"
+                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0" />
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -221,6 +228,14 @@ defineExpose({ openModal })
                         </div>
                       </td>
                     </tr>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.prescriptions.searchIncludeZeroQuantity"
+                          type-parser="number"
+                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0" />
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -254,7 +269,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

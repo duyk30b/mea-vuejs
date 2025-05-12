@@ -1,14 +1,19 @@
 <script lang="ts" setup>
 import { nextTick, ref, watch } from 'vue'
-import IconClearCircle from '../icon/IconClearCircle.vue'
-import IconClearOutline from '../icon/IconClearOutline.vue'
-import IconTriangleUp from '../icon/IconTriangleUp.vue'
 import IconTriangleDown from '../icon/IconTriangleDown.vue'
+import IconTriangleUp from '../icon/IconTriangleUp.vue'
+
+export type VueSelectOption = {
+  value: any
+  text?: string
+  data?: any
+  disabled?: boolean
+}
 
 const props = withDefaults(
   defineProps<{
     value?: any
-    options: { value: any; text?: string; data?: any; disabled?: boolean }[]
+    options: VueSelectOption[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
@@ -25,7 +30,7 @@ const props = withDefaults(
     required: false,
     iconClear: false,
     addOther: false,
-  }
+  },
 )
 
 const emit = defineEmits<{
@@ -54,12 +59,12 @@ watch(
     indexFocus.value = index
     itemSelected.value = index !== -1 ? props.options[index] : {}
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
   () => props.options, // mục đích của watch value là để tìm và show ra text
-  (newOptions) => {
+  (newOptions: VueSelectOption[]) => {
     if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
     const optionsStringifyNew = JSON.stringify(newOptions)
     if (optionsStringify.value === optionsStringifyNew) return
@@ -75,7 +80,7 @@ watch(
     indexFocus.value = index
     itemSelected.value = index !== -1 ? newOptions[index] : {}
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleFocusin = () => {
@@ -165,13 +170,15 @@ defineExpose({ focus })
     :tabindex="disabled ? -1 : 0"
     @focusin="handleFocusin"
     @blur="showOptions = false"
-    @keydown="handleKeydown">
+    @keydown="handleKeydown"
+  >
     <div class="input-area">
       <input
         ref="inputRef"
         :required="required"
         :value="Object.keys(itemSelected).length || ''"
-        disabled />
+        disabled
+      />
       <div class="mask" @click="handleClickMask">
         <slot name="text" :content="itemSelected">
           <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
@@ -202,7 +209,8 @@ defineExpose({ focus })
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }">
+      :style="{ maxHeight: `${maxHeight}px` }"
+    >
       <div
         v-for="(item, index) in options"
         :key="index"
@@ -212,7 +220,8 @@ defineExpose({ focus })
             : 'cursor: not-allowed; background-color: #eeeeee; opacity: 0.6;'
         "
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click.stop="!item.disabled && handleSelectItem(index)">
+        @click.stop="!item.disabled && handleSelectItem(index)"
+      >
         <slot name="option" :item="item" :index="index">
           <div class="item-text">
             {{ item.text != null ? item.text || '&nbsp;' : JSON.stringify(item.data) }}

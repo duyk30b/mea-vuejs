@@ -167,7 +167,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-10">
         <div class="flex gap-4">
           <VueButton color="red" type="button" @click="clickDelete">Xóa</VueButton>
-          <VueButton class="ml-auto" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

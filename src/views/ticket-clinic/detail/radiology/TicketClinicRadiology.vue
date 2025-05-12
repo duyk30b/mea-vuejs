@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconCheckSquare, IconClock, IconPrint, IconEye, IconSpin } from '../../../../common/icon'
+import { IconCheckSquare, IconClockCircle, IconEye, IconPrint, IconSpin } from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
@@ -19,7 +20,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology, TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
-import { DDom, sleep } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -41,7 +42,7 @@ watch(
   (newValue: TicketRadiology[]) => {
     ticketRadiologyList.value = TicketRadiology.fromList(newValue || [])
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 const hasChangePriority = computed(() => {
@@ -142,7 +143,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       printHtml: printHtml!,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -161,7 +162,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       :maxHeight="320"
       placeholder="Tìm kiếm tên phiếu CĐHA"
       :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
-      @selectItem="({ data }) => selectRadiology(data)">
+      @selectItem="({ data }) => selectRadiology(data)"
+    >
       <template #option="{ item: { data } }">
         <div>
           <b>{{ data.name }}</b>
@@ -203,8 +205,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -218,25 +221,28 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === ticketRadiologyList.length - 1"
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
             <td class="text-center">
               <a-tooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
                 <template #title>Chưa có kết quả</template>
-                <IconClock
+                <IconClockCircle
                   width="16"
                   height="16"
-                  style="color: orange; cursor: not-allowed !important" />
+                  style="color: orange; cursor: not-allowed !important"
+                />
               </a-tooltip>
               <a-tooltip v-else>
                 <template #title>Đã hoàn thành</template>
                 <IconCheckSquare
                   width="16"
                   height="16"
-                  style="color: #52c41a; cursor: not-allowed !important" />
+                  style="color: #52c41a; cursor: not-allowed !important"
+                />
               </a-tooltip>
             </td>
             <td>{{ radiologyMap[tpItem.radiologyId]?.name }}</td>
@@ -250,7 +256,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                     overflow: hidden;
                     text-overflow: ellipsis;
                     line-clamp: 2;
-                  ">
+                  "
+                >
                   {{ tpItem.result }}
                 </div>
                 <a v-if="tpItem.startedAt != null" @click="startPrint(tpItem)">
@@ -266,20 +273,22 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
+                    ticketClinicRef.ticketStatus,
                   ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 class="text-orange-500"
-                @click="modalTicketRadiologyResult?.openModal(tpItem.id)">
+                @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
+              >
                 <IconEditSquare width="22" height="22" />
               </a>
               <a
                 v-else-if="
                   [TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus
+                    ticketClinicRef.ticketStatus,
                   ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
-                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
+                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
+              >
                 <IconEye width="22" height="22" />
               </a>
             </td>
@@ -292,7 +301,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <b>
                 {{
                   formatMoney(
-                    ticketRadiologyList.reduce((acc, item) => acc + item.expectedPrice, 0)
+                    ticketRadiologyList.reduce((acc, item) => acc + item.expectedPrice, 0),
                   )
                 }}
               </b>
@@ -313,7 +322,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       "
       color="blue"
       icon="save"
-      @click="savePriorityTicketRadiology">
+      @click="savePriorityTicketRadiology"
+    >
       Lưu lại
     </VueButton>
   </div>

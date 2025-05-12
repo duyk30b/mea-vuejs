@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
-import { IconCheckSquare, IconClock, IconPrint, IconSpin } from '../../../../common/icon'
+import { IconCheckSquare, IconClockCircle, IconPrint, IconSpin } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
+import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
@@ -20,18 +21,14 @@ import {
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratory, TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
-import {
-  TicketLaboratoryGroup,
-  TicketLaboratoryGroupStatus,
-} from '../../../../modules/ticket-laboratory-group'
-import { arrayToKeyValue, DArray, DDom, DString } from '../../../../utils'
+import { TicketLaboratoryGroup } from '../../../../modules/ticket-laboratory-group'
+import { DString, ESArray, ESDom } from '../../../../utils'
 import ModalTicketLaboratoryResult from './ModalTicketLaboratoryResult.vue'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
-import { CONFIG } from '../../../../config'
 
-const modalTicketLaboratoryResult = ref<InstanceType<typeof ModalTicketLaboratoryResult>>()
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
+const modalTicketLaboratoryResult = ref<InstanceType<typeof ModalTicketLaboratoryResult>>()
 
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
@@ -43,14 +40,14 @@ let laboratoryKitAll: LaboratoryKit[] = []
 const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
 
 const laboratoryOptions = ref<{ laboratoryGroup: LaboratoryGroup; laboratoryList: Laboratory[] }[]>(
-  []
+  [],
 )
 const laboratorySelects = ref<Record<string, Laboratory[]>>({})
 const laboratoryKitOptions = ref<LaboratoryKit[]>([])
 
 const laboratoryIdCheckbox = ref<Record<string, boolean>>({})
 const laboratoryKitIdCheckbox = ref<Record<string, { checked: boolean; indeterminate: boolean }>>(
-  {}
+  {},
 )
 const registeredAt = ref<number | null>(null)
 
@@ -66,11 +63,22 @@ const startFilterLaboratory = (text: string) => {
     if (!DString.customFilter(l.name, text, 2)) return false
     return true
   })
-  const laboratoryKeyArray = DArray.arrayToKeyArray(laboratoryFilter, 'laboratoryGroupId')
-  laboratoryOptions.value = Object.keys(laboratoryKeyArray).map((key) => {
+  const laboratoryKeyArray = ESArray.arrayToKeyArray(laboratoryFilter, 'laboratoryGroupId')
+  laboratoryOptions.value = Object.keys(laboratoryKeyArray).map((lgId) => {
+    let laboratoryGroup = laboratoryGroupMap.value[lgId]
+    if (!laboratoryGroup) {
+      if (Number(lgId) === 0) {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.name = 'Chưa phân nhóm phiếu'
+      } else {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.id = Number(lgId)
+        laboratoryGroup.name = `(ID${lgId}) Nhóm bị xóa`
+      }
+    }
     return {
-      laboratoryGroup: laboratoryGroupMap.value[key] || LaboratoryGroup.blank(),
-      laboratoryList: laboratoryKeyArray[key],
+      laboratoryGroup: laboratoryGroup,
+      laboratoryList: laboratoryKeyArray[lgId],
     }
   })
 
@@ -92,7 +100,6 @@ onMounted(async () => {
     laboratoryGroupMap.value = await LaboratoryGroupService.getMap()
 
     laboratoryGroupAll.value = promiseResult[1]
-    laboratoryGroupAll.value.unshift(LaboratoryGroup.blank())
     laboratoryGroupAll.value.forEach((g) => {
       laboratoryOptions.value = []
       laboratorySelects.value[g.id] = []
@@ -149,7 +156,7 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
       printHtml: printHtml!,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
   }
@@ -215,7 +222,7 @@ const handleChangeCheckboxLaboratory = async (checked: boolean, laboratory: Labo
 
 const handleChangeCheckboxLaboratoryKit = async (
   checked: boolean,
-  laboratoryKit: LaboratoryKit
+  laboratoryKit: LaboratoryKit,
 ) => {
   registeredAt.value = Date.now()
   laboratoryKit.laboratoryList?.forEach((laboratory) => {
@@ -238,8 +245,8 @@ const disabledButtonSaveLaboratorySelect = computed(() => {
   }
 
   let hasLaboratory = false
-  laboratoryGroupAll.value.forEach((g) => {
-    if (laboratorySelects.value[g.id]?.length) {
+  Object.values(laboratorySelects.value).forEach((i) => {
+    if (i.length) {
       hasLaboratory = true
     }
   })
@@ -304,7 +311,7 @@ const saveLaboratorySelected = async () => {
                 ins.discountType = DiscountType.VND
                 ins.actualPrice = i.price
                 return ins
-              }
+              },
             ),
           }
         : undefined,
@@ -348,13 +355,15 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
         border-right: 1px solid #eee;
         max-height: 500px;
       "
-      class="flex flex-col">
+      class="flex flex-col"
+    >
       <div class="flex-0">
         <InputText
           v-model:value="searchText"
           prepend="🔎"
           placeholder="Tìm kiếm theo tên xét nghiệm"
-          @update:value="startFilterLaboratory" />
+          @update:value="startFilterLaboratory"
+        />
       </div>
       <div class="table-wrapper flex-1" style="overflow-y: scroll">
         <table>
@@ -371,9 +380,10 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                       (e) =>
                         handleChangeCheckboxLaboratoryKit(
                           (e.target as HTMLInputElement).checked,
-                          laboratoryKit
+                          laboratoryKit,
                         )
-                    " />
+                    "
+                  />
                 </td>
                 <td
                   colspan="2"
@@ -382,16 +392,18 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   @click="
                     handleChangeCheckboxLaboratoryKit(
                       !laboratoryKitIdCheckbox[laboratoryKit.id]?.checked,
-                      laboratoryKit
+                      laboratoryKit,
                     )
-                  ">
+                  "
+                >
                   {{ laboratoryKit.name }}
                 </td>
               </tr>
               <tr
                 v-for="laboratory in laboratoryKit.laboratoryList || []"
                 :key="laboratory.id"
-                style="">
+                style=""
+              >
                 <td style="user-select: none">
                   <input
                     type="checkbox"
@@ -401,15 +413,17 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                       (e) =>
                         handleChangeCheckboxLaboratory(
                           (e.target as HTMLInputElement).checked,
-                          laboratory
+                          laboratory,
                         )
-                    " />
+                    "
+                  />
                 </td>
                 <td
                   style="user-select: none; cursor: pointer"
                   @click="
                     handleChangeCheckboxLaboratory(!laboratoryIdCheckbox[laboratory.id], laboratory)
-                  ">
+                  "
+                >
                   {{ laboratory.name }}
                 </td>
                 <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
@@ -431,15 +445,17 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                       (e) =>
                         handleChangeCheckboxLaboratory(
                           (e.target as HTMLInputElement).checked,
-                          laboratory
+                          laboratory,
                         )
-                    " />
+                    "
+                  />
                 </td>
                 <td
                   style="user-select: none; cursor: pointer"
                   @click="
                     handleChangeCheckboxLaboratory(!laboratoryIdCheckbox[laboratory.id], laboratory)
-                  ">
+                  "
+                >
                   {{ laboratory.name }}
                 </td>
                 <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
@@ -451,10 +467,12 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
     </div>
     <div
       style="flex-basis: 300px; flex-grow: 5; max-width: 100%; max-height: 500px"
-      class="flex flex-col">
+      class="flex flex-col"
+    >
       <div
         class="table-wrapper flex-1"
-        style="overflow-y: scroll; border-bottom: 1px solid #eee; border-left: 1px solid #eee">
+        style="overflow-y: scroll; border-bottom: 1px solid #eee; border-left: 1px solid #eee"
+      >
         <table>
           <thead>
             <tr>
@@ -465,14 +483,16 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
             </tr>
           </thead>
           <tbody>
-            <template v-for="laboratoryGroup in laboratoryGroupAll" :key="laboratoryGroup.id">
-              <template v-if="laboratorySelects[laboratoryGroup.id]?.length">
+            <template v-for="(laboratoryList, key) in laboratorySelects" :key="key">
+              <template v-if="laboratoryList.length">
                 <tr>
                   <td colspan="4" class="font-bold">
-                    {{ laboratoryGroup.name }}
+                    <span v-if="laboratoryGroupMap[key]">{{ laboratoryGroupMap[key]?.name }}</span>
+                    <span v-else-if="Number(key) === 0">Chưa phân nhóm phiếu</span>
+                    <span v-else>(ID{{ key }}) Nhóm bị xóa</span>
                   </td>
                 </tr>
-                <tr v-for="(laboratory, j) in laboratorySelects[laboratoryGroup.id]" :key="j">
+                <tr v-for="(laboratory, j) in laboratoryList" :key="j">
                   <td class="text-center">{{ j + 1 }}</td>
                   <td>{{ laboratory?.name }}</td>
                   <td class="text-right">
@@ -481,7 +501,8 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   <td class="text-center">
                     <a
                       class="text-red-500"
-                      @click="handleChangeCheckboxLaboratory(false, laboratory!)">
+                      @click="handleChangeCheckboxLaboratory(false, laboratory!)"
+                    >
                       <IconDelete width="20" height="20" />
                     </a>
                   </td>
@@ -500,7 +521,8 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
         <VueButton
           color="blue"
           :disabled="disabledButtonSaveLaboratorySelect"
-          @click="saveLaboratorySelected">
+          @click="saveLaboratorySelected"
+        >
           <span v-if="tlgEdit.id">Cập nhật chỉ định xét nghiệm</span>
           <span v-else>Tạo chỉ định xét nghiệm mới</span>
         </VueButton>
@@ -531,15 +553,14 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
             <tr>
               <td colspan="3" class="">
                 <div class="flex items-center gap-2">
-                  <span class="font-bold">
-                    {{ tlg.laboratoryGroup?.name }}
-                  </span>
+                  <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
                   <a @click="startPrint(tlg)">
                     <IconPrint width="18px" height="18px" />
                   </a>
                   <span
                     v-if="tlgEdit.id !== 0 && tlg.id === tlgEdit.id"
-                    style="color: var(--text-red); font-style: italic">
+                    style="color: var(--text-red); font-style: italic"
+                  >
                     (Đang sửa)
                   </span>
                 </div>
@@ -549,17 +570,19 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                        ticketClinicRef.ticketStatus
+                        ticketClinicRef.ticketStatus,
                       ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     size="small"
-                    @click="clickChangeLaboratoryGroup(tlg.id)">
+                    @click="clickChangeLaboratoryGroup(tlg.id)"
+                  >
                     Sửa chỉ định
                   </VueButton>
                   <VueButton
                     v-if="permissionIdMap[PermissionId.TICKET_LABORATORY_RESULT]"
                     size="small"
-                    @click="modalTicketLaboratoryResult?.openModal(tlg.id)">
+                    @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
+                  >
                     Trả kết quả
                   </VueButton>
                 </div>
@@ -574,17 +597,19 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                 <td class="text-center">
                   <a-tooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
                     <template #title>Chưa có kết quả</template>
-                    <IconClock
+                    <IconClockCircle
                       width="16"
                       height="16"
-                      style="color: orange; cursor: not-allowed !important" />
+                      style="color: orange; cursor: not-allowed !important"
+                    />
                   </a-tooltip>
                   <a-tooltip v-else>
                     <template #title>Đã hoàn thành</template>
                     <IconCheckSquare
                       width="16"
                       height="16"
-                      style="color: #52c41a; cursor: not-allowed !important" />
+                      style="color: #52c41a; cursor: not-allowed !important"
+                    />
                   </a-tooltip>
                 </td>
                 <td>{{ tlItem.laboratory?.name }}</td>
@@ -617,7 +642,8 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                       permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     class="text-orange-500"
-                    @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)">
+                    @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"
+                  >
                     <IconEditSquare width="20" height="20" />
                   </a>
                 </td>
@@ -625,7 +651,8 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
               <tr
                 v-for="(tlChild, i) in tlItem.children"
                 :key="i"
-                :style="tlChild.ticketLaboratoryResult?.attention ? 'color: red' : ''">
+                :style="tlChild.ticketLaboratoryResult?.attention ? 'color: red' : ''"
+              >
                 <td></td>
                 <td></td>
                 <td>{{ tlChild.laboratory?.name }}</td>

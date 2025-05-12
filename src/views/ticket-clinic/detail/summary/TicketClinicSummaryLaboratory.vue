@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { IconCheckSquare, IconClock } from '../../../../common/icon'
+import { IconCheckSquare, IconClockCircle } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueTag from '../../../../common/VueTag.vue'
 import { CONFIG } from '../../../../config'
@@ -25,6 +25,11 @@ const laboratoryDiscount = computed(() => {
     return acc + item.discountMoney
   }, 0)
 })
+const laboratoryCostAmount = computed(() => {
+  return ticketClinicRef.value.ticketLaboratoryList?.reduce((acc, item) => {
+    return acc + item.costPrice
+  }, 0)
+})
 </script>
 
 <template>
@@ -39,12 +44,13 @@ const laboratoryDiscount = computed(() => {
         <th>Chiết khấu</th>
         <th>Tổng tiền</th>
         <th></th>
+        <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
       </tr>
     </thead>
     <tbody>
       <template v-for="tlg in ticketClinicRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
-          <td colspan="10" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
+          <td colspan="11" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
         </tr>
         <tr v-for="(tl, index) in tlg.ticketLaboratoryList" :key="tl.id">
           <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
@@ -54,17 +60,19 @@ const laboratoryDiscount = computed(() => {
             <div class="flex items-center justify-center">
               <a-tooltip v-if="tl.status === TicketLaboratoryStatus.Pending">
                 <template #title>Chưa có kết quả</template>
-                <IconClock
+                <IconClockCircle
                   width="16"
                   height="16"
-                  style="color: orange; cursor: not-allowed !important" />
+                  style="color: orange; cursor: not-allowed !important"
+                />
               </a-tooltip>
               <a-tooltip v-else>
                 <template #title>Đã hoàn thành</template>
                 <IconCheckSquare
                   width="16"
                   height="16"
-                  style="color: #52c41a; cursor: not-allowed !important" />
+                  style="color: #52c41a; cursor: not-allowed !important"
+                />
               </a-tooltip>
             </div>
           </td>
@@ -74,9 +82,6 @@ const laboratoryDiscount = computed(() => {
             </div>
           </td>
           <td class="text-right whitespace-nowrap">
-            <div v-if="CONFIG.MODE === 'development'" class="text-xs italic">
-              Vốn: {{ formatMoney(tl.costPrice) }}
-            </div>
             <div v-if="tl.discountMoney" class="text-xs italic text-red-500">
               <del>{{ formatMoney(tl.expectedPrice) }}</del>
             </div>
@@ -99,13 +104,17 @@ const laboratoryDiscount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketClinicRef.ticketStatus
+                  ticketClinicRef.ticketStatus,
                 ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
-              @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)">
+              @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)"
+            >
               <IconEditSquare width="20" height="20" />
             </a>
+          </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
+            {{ formatMoney(tl.costPrice) }}
           </td>
         </tr>
       </template>
@@ -122,6 +131,9 @@ const laboratoryDiscount = computed(() => {
           {{ formatMoney(ticketClinicRef.laboratoryMoney) }}
         </td>
         <td></td>
+        <td v-if="CONFIG.MODE === 'development'" class="text-right italic">
+          {{ formatMoney(laboratoryCostAmount) }}
+        </td>
       </tr>
     </tbody>
   </template>

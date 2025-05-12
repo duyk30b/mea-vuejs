@@ -1,17 +1,27 @@
 <script setup lang="ts">
-import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
-import { TicketType, type Ticket } from '../../../modules/ticket'
-import TicketClinicStatusTag from '../../ticket-clinic/TicketClinicStatusTag.vue'
-import TicketOrderStatusTag from '../../ticket-order/TicketOrderStatusTag.vue'
 import VueTag from '../../../common/VueTag.vue'
+import { Ticket, TicketType } from '../../../modules/ticket'
+import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 
-const props = defineProps<{ ticket?: Ticket; ticketId?: number }>()
-
+const props = withDefaults(
+  defineProps<{
+    ticket?: Ticket
+    ticketId?: number
+    link?: boolean
+    status?: boolean
+  }>(),
+  {
+    ticket: () => Ticket.blank(),
+    ticketId: 0,
+    link: true,
+    status: true,
+  },
+)
 const router = useRouter()
 
 const openBlankTicketOrderDetail = async (ticketId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'TicketOrderDetail',
     params: { id: ticketId },
   })
@@ -19,7 +29,7 @@ const openBlankTicketOrderDetail = async (ticketId: number) => {
 }
 
 const openBlankTicketClinicDetail = async (ticketId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'TicketClinicSummary',
     params: { id: ticketId },
   })
@@ -32,15 +42,15 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
     <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
   </div>
   <div v-else-if="ticket!.ticketType === TicketType.Order" style="font-size: 0.8rem">
-    <a style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
+    <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
       BH{{ ticket.id }}
     </a>
-    <TicketOrderStatusTag :ticketStatus="ticket!.ticketStatus" />
+    <TicketStatusTag v-if="status" :ticket="ticket" />
   </div>
   <div v-else style="font-size: 0.8rem">
-    <a style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket.id)">
+    <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket.id)">
       KB{{ ticket.id }}
     </a>
-    <TicketClinicStatusTag :ticketStatus="ticket!.ticketStatus" />
+    <TicketStatusTag v-if="status" :ticket="ticket" />
   </div>
 </template>

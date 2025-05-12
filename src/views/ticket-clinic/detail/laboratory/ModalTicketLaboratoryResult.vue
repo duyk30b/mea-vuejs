@@ -339,7 +339,7 @@ defineExpose({ openModal })
 
         <div class="pb-4 pt-8 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa phiếu</VueButton>
-          <VueButton type="reset" icon="close" class="ml-auto" @click="closeModal">
+          <VueButton type="reset" icon="close" style="margin-left: auto;" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton

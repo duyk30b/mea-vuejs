@@ -82,14 +82,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox
-                  v-model:checked="settingDisplay.invoiceItemsTable.lotNumberAndExpiryDate">
-                  Hiển thị số lô và HSD
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <InputCheckbox v-model:checked="settingDisplay.invoiceItemsTable.hintUsage">
                   Hiển thị hướng dẫn sử dụng
                 </InputCheckbox>
@@ -198,7 +190,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

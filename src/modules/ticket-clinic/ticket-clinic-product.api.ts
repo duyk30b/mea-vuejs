@@ -14,17 +14,17 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          productId: i.productId,
-          batchId: i.batchId,
+          hasInventoryImpact: i.hasInventoryImpact,
           warehouseId: i.warehouseId,
+          productId: i.productId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,
-          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
+          costAmount: i.costAmount,
           actualPrice: i.actualPrice,
         })),
       }
@@ -42,18 +42,18 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          productId: i.productId,
-          batchId: i.batchId,
+          hasInventoryImpact: i.hasInventoryImpact,
           warehouseId: i.warehouseId,
+          productId: i.productId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,
-          costPrice: i.costPrice,
           expectedPrice: i.expectedPrice,
           discountMoney: i.discountMoney,
           discountPercent: i.discountPercent,
           discountType: i.discountType,
           actualPrice: i.actualPrice,
+          costAmount: i.costAmount,
           hintUsage: i.hintUsage,
         })),
       }
@@ -132,6 +132,7 @@ export class TicketClinicProductApi {
               discountType: ticketProduct.discountType,
               discountMoney: ticketProduct.discountMoney,
               discountPercent: ticketProduct.discountPercent,
+              costAmount: ticketProduct.costAmount,
               actualPrice: ticketProduct.actualPrice,
               hintUsage: ticketProduct.hintUsage,
             }
@@ -165,6 +166,7 @@ export class TicketClinicProductApi {
               discountType: ticketProduct.discountType,
               discountMoney: ticketProduct.discountMoney,
               discountPercent: ticketProduct.discountPercent,
+              costAmount: ticketProduct.costAmount,
               actualPrice: ticketProduct.actualPrice,
               hintUsage: ticketProduct.hintUsage,
             }

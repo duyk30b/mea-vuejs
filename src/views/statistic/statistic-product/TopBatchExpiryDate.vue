@@ -3,7 +3,7 @@ import { computed, onBeforeMount, ref } from 'vue'
 import { IconFileSearch } from '../../../common/icon'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
-import { DTimer, timeToText } from '../../../utils'
+import { ESTimer, timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -108,7 +108,7 @@ const closeExpiryDate = computed(() => {
                     ? 'color:orange; font-weight:500'
                     : ''
               ">
-              {{ DTimer.timeToText(batch.expiryDate) }}
+              {{ ESTimer.timeToText(batch.expiryDate) }}
             </td>
             <td class="text-center" style="white-space: nowrap">
               {{ batch.unitQuantity }}

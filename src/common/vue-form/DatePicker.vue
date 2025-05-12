@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { DTimer } from '../../utils'
+import { ESTimer } from '../../utils'
 
 const props = withDefaults(
   defineProps<{
@@ -23,7 +23,7 @@ const dateList = ref<Date[]>([])
 const type = ref<'date' | 'month' | 'year'>(props.defaultType)
 
 const startOfDateValue = computed(() => {
-  return DTimer.startOfDate(currentTime.value).getTime()
+  return ESTimer.startOfDate(currentTime.value).getTime()
 })
 const currentFullYear = computed(() => {
   return new Date(currentTime.value).getFullYear()
@@ -46,8 +46,8 @@ watch(
 watch(
   () => currentTime.value,
   (newCurrentDate) => {
-    startOfMonth.value = DTimer.startOfMonth(newCurrentDate).getTime()
-    endOfMonth.value = DTimer.endOfMonth(newCurrentDate).getTime()
+    startOfMonth.value = ESTimer.startOfMonth(newCurrentDate).getTime()
+    endOfMonth.value = ESTimer.endOfMonth(newCurrentDate).getTime()
 
     const temp = startOfMonth.value - 7 * 24 * 60 * 60 * 1000
     let firstDate = new Date()

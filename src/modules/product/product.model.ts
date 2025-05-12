@@ -5,6 +5,7 @@ import { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
+  code: number
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
 
@@ -25,7 +26,7 @@ export class Product {
 
   hasManageQuantity: 0 | 1
   isActive: 1 | 0 // Trạng thái
-  updatedAt: number
+  updatedAt: number | string | Date
 
   batchList?: Batch[]
   productGroup?: ProductGroup

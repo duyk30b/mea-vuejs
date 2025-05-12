@@ -14,11 +14,12 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { CustomerApi, CustomerService, type Customer } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -219,17 +220,18 @@ const downloadExcelCustomerList = async () => {
             <th>Tên KH</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Nợ </span>
+                <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'debt' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'debt' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
           </tr>
         </thead>
@@ -273,7 +275,7 @@ const downloadExcelCustomerList = async () => {
               </div>
               <div class="flex gap-4 text-xs">
                 <div v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-                  {{ DTimer.timeToText(customer.birthday, 'DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
@@ -324,47 +326,50 @@ const downloadExcelCustomerList = async () => {
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Mã KH &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Mã KH </span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
-              Họ Tên &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'fullName'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Họ Tên </span>
+                <IconSort v-if="sortColumn !== 'fullName'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'fullName' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
-              Nợ &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'debt'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'debt' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Nợ </span>
+                <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'debt' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'debt' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
             <th
@@ -419,7 +424,7 @@ const downloadExcelCustomerList = async () => {
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-              {{ DTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || '' }}
+              {{ ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || '' }}
             </td>
 
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.address">

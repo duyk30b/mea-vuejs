@@ -2,7 +2,7 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
-import { TicketProduct } from '../ticket-product'
+import { TicketBatch } from '../ticket-batch'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -22,10 +22,10 @@ export class BatchApi {
     const params = BatchGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/batch/list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as BaseResponse<{ batchList: any[] }>
     return {
       time: new Date(time),
-      data: Batch.fromList(data),
+      batchList: Batch.fromList(data.batchList),
     }
   }
 
@@ -55,13 +55,16 @@ export class BatchApi {
   }
 
   static async updateInfoAndQuantityAndCostPrice(id: number, batch: Batch) {
-    const response = await AxiosInstance.patch(`/batch/update-info-and-quantity-and-cost-price/${id}`, {
-      lotNumber: batch.lotNumber,
-      expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
-      warehouseId: batch.warehouseId,
-      quantity: batch.quantity,
-      costPrice: batch.costPrice,
-    })
+    const response = await AxiosInstance.patch(
+      `/batch/update-info-and-quantity-and-cost-price/${id}`,
+      {
+        lotNumber: batch.lotNumber,
+        expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
+        warehouseId: batch.warehouseId,
+        quantity: batch.quantity,
+        costPrice: batch.costPrice,
+      },
+    )
     const { data } = response.data as BaseResponse<{ batch: any; product?: any }>
     return {
       batch: Batch.from(data.batch),
@@ -69,15 +72,29 @@ export class BatchApi {
     }
   }
 
+  static async mergeBatch(options: {
+    productId: number
+    batchIdSource: number
+    batchIdTarget: number
+  }) {
+    const response = await AxiosInstance.patch(`/batch/merge-batch`, {
+      productId: options.productId,
+      batchIdSource: options.batchIdSource,
+      batchIdTarget: options.batchIdTarget,
+    })
+    const { data } = response.data as BaseResponse<boolean>
+    return data
+  }
+
   static async destroyOne(id: number) {
     const response = await AxiosInstance.delete(`/batch/destroy/${id}`)
     const result = response.data as BaseResponse<{
       batchId: number
       receiptItemList: ReceiptItem[]
-      ticketProductList: TicketProduct[]
+      ticketBatchList: TicketBatch[]
     }>
     result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
-    result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
+    result.data.ticketBatchList = TicketBatch.fromList(result.data.ticketBatchList)
     return result
   }
 }

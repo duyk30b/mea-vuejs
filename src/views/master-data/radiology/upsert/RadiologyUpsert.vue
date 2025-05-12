@@ -13,7 +13,7 @@ import {
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import WysiwygEditor from '../../../../common/wysiwyg-editor/WysiwygEditor.vue'
+import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
@@ -26,7 +26,7 @@ import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/r
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { Role, RoleService } from '../../../../modules/role'
 import { Ticket } from '../../../../modules/ticket'
-import { DDom } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
 const TABS_KEY = {
@@ -55,7 +55,7 @@ const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
 const ticketDemo = Ticket.blank()
-ticketDemo.ticketAttributeMap = { diagnosis: 'Viêm mũi dị ứng' }
+ticketDemo.note = 'Viêm mũi dị ứng'
 ticketDemo.startedAt = Date.now()
 ticketDemo.customer = Customer.example()
 
@@ -105,7 +105,7 @@ const hasChangeData = computed(() => {
   if (
     !Commission.equalList(
       (radiology.value.commissionList || []).filter((i) => !!i.roleId),
-      radiologyRoot.value.commissionList || []
+      radiologyRoot.value.commissionList || [],
     )
   ) {
     return true
@@ -131,7 +131,7 @@ const handleSave = async () => {
     if (radiology.value.id) {
       const radiologyResponse = await RadiologyService.updateOne(
         radiology.value.id,
-        radiology.value
+        radiology.value,
       )
       Object.assign(radiology.value, Radiology.from(radiologyResponse))
       Object.assign(radiologyRoot.value, Radiology.from(radiologyResponse))
@@ -260,7 +260,7 @@ const startTestPrint = async () => {
       printHtml,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -281,7 +281,8 @@ const handleAddCommission = () => {
 <template>
   <ModalSelectRadiologyExample
     ref="modalSelectRadiologyExample"
-    @select="handleModalSelectRadiologyExampleSuccess" />
+    @select="handleModalSelectRadiologyExampleSuccess"
+  />
   <div class="page-header">
     <div class="page-header-content">
       <IconPrint />
@@ -318,7 +319,8 @@ const handleAddCommission = () => {
                   v-model:value="radiology.radiologyGroupId"
                   :options="
                     radiologyGroupAll.map((group) => ({ value: group.id, text: group.name }))
-                  " />
+                  "
+                />
               </div>
             </div>
 
@@ -335,7 +337,8 @@ const handleAddCommission = () => {
                 <InputMoney
                   v-model:value="radiology.costPrice"
                   :validate="{ GTE: 0 }"
-                  style="width: 100%" />
+                  style="width: 100%"
+                />
               </div>
             </div>
             <div style="flex-basis: 90%; flex-grow: 1">
@@ -344,7 +347,8 @@ const handleAddCommission = () => {
                 <InputMoney
                   v-model:value="radiology.price"
                   :validate="{ GTE: 0 }"
-                  style="width: 100%" />
+                  style="width: 100%"
+                />
               </div>
             </div>
           </div>
@@ -357,7 +361,8 @@ const handleAddCommission = () => {
                 <VueSelect
                   v-model:value="radiology.printHtmlId"
                   :options="printHtmlOptions"
-                  @select-item="updatePreview" />
+                  @select-item="updatePreview"
+                />
               </div>
             </div>
 
@@ -375,9 +380,10 @@ const handleAddCommission = () => {
                 </span>
               </div>
               <div style="flex-grow: 1">
-                <WysiwygEditor
+                <CKEditor5Vue
                   v-model:value="radiology.descriptionDefault"
-                  @update:value="updatePreview" />
+                  @update:value="updatePreview"
+                />
               </div>
               <div class="mt-4">
                 <div>Kết luận mặc định</div>
@@ -395,7 +401,8 @@ const handleAddCommission = () => {
                 <iframe
                   ref="iframe"
                   class="preview-iframe"
-                  style="width: 100%; height: 100%; text-align: center"></iframe>
+                  style="width: 100%; height: 100%; text-align: center"
+                ></iframe>
               </div>
             </div>
           </div>
@@ -405,14 +412,16 @@ const handleAddCommission = () => {
             <div
               v-for="(commission, index) in radiology.commissionList"
               :key="index"
-              class="mt-4 flex flex-wrap gap-2">
+              class="mt-4 flex flex-wrap gap-2"
+            >
               <div style="flex-grow: 1; flex-basis: 250px">
                 <div>Vai trò</div>
                 <div>
                   <InputFilter
                     v-model:value="radiology.commissionList![index].roleId"
                     :options="roleOptions"
-                    :maxHeight="120">
+                    :maxHeight="120"
+                  >
                     <template #option="{ item: { data } }">{{ data.name }}</template>
                   </InputFilter>
                 </div>
@@ -424,7 +433,8 @@ const handleAddCommission = () => {
                     :value="commission.commissionValue"
                     @update:value="
                       (v: number) => (radiology.commissionList![index].commissionValue = v)
-                    " />
+                    "
+                  />
                 </div>
               </div>
               <div style="flex-grow: 1; flex-basis: 150px">
@@ -445,7 +455,8 @@ const handleAddCommission = () => {
                     ]"
                     @update:value="
                       (v: number) => (radiology.commissionList![index].commissionCalculatorType = v)
-                    " />
+                    "
+                  />
                 </div>
               </div>
               <div style="width: 30px">
@@ -453,7 +464,8 @@ const handleAddCommission = () => {
                 <div class="pt-2 flex justify-center">
                   <a
                     style="color: var(--text-red)"
-                    @click="radiology.commissionList!.splice(index, 1)">
+                    @click="radiology.commissionList!.splice(index, 1)"
+                  >
                     <IconTrash width="18" height="18" />
                   </a>
                 </div>
@@ -475,7 +487,8 @@ const handleAddCommission = () => {
         type="submit"
         :loading="saveLoading"
         icon="save"
-        :disabled="!hasChangeData">
+        :disabled="!hasChangeData"
+      >
         {{ radiology.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
       </VueButton>
     </div>

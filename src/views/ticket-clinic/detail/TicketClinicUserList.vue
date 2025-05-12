@@ -164,7 +164,7 @@ const hasChangeData = computed(() => {
           permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_USER_LIST] &&
           ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
         "
-        class="ml-auto"
+        style="margin-left:auto"
         color="blue"
         :disabled="!hasChangeData"
         :loading="saveLoading"

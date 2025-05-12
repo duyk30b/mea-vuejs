@@ -8,10 +8,10 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { RadiologyStatisticService } from '../../../modules/statistics'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
-const fromTime = ref<number>(DTimer.startOfMonth(new Date()).getTime())
-const toTime = ref<number>(DTimer.endOfMonth(new Date()).getTime())
+const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
+const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -218,7 +218,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>{{ ticketRadiology.customer?.fullName }}</td>
             <td>{{ radiologyMap[ticketRadiology.radiologyId]?.name }}</td>
             <td class="text-center">
-              {{ DTimer.timeToText(ticketRadiology.startedAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticketRadiology.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td class="text-center">
               {{ formatMoney(ticketRadiology.costPrice) }}

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
-import { DTimer } from '../../utils'
+import { ESTimer } from '../../utils'
 import IconCalendar from '../icon/IconCalendar.vue'
 import DatePicker from './DatePicker.vue'
 
@@ -33,7 +33,7 @@ watch(
   (newValue, oldValue) => {
     if (!inputDate.value) return
     if (newValue == null) return (inputDate.value.value = '')
-    inputDate.value.value = DTimer.timeToText(newValue, props.format)
+    inputDate.value.value = ESTimer.timeToText(newValue, props.format)
   },
   { immediate: true }
 )
@@ -41,7 +41,7 @@ watch(
 // onMounted(() => {
 //   if (!inputDate.value) return
 //   if (props.value == null) return (inputDate.value.value = '')
-//   inputDate.value.value = DTimer.timeToText(props.value, props.format)
+//   inputDate.value.value = ESTimer.timeToText(props.value, props.format)
 // })
 
 const startFormatMask = (text: string, format: string) => {
@@ -69,7 +69,7 @@ const handleChange = (e: Event) => {
     return
   }
 
-  const time = DTimer.textToTime(target.value, props.format)
+  const time = ESTimer.textToTime(target.value, props.format)
 
   if (props.typeParser === 'number') {
     emit('update:value', time.getTime())

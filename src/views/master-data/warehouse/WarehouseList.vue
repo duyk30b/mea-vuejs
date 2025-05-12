@@ -118,9 +118,9 @@ const handleModalWarehouseUpsertSuccess = async (
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="warehouse in warehouseList" :key="warehouse.id">
-            <td class="text-center">W{{ warehouse.id }}</td>
+            <td class="text-center" style="width: 100px;">W{{ warehouse.id }}</td>
             <td>{{ warehouse.name }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" class="text-center">
+            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" class="text-center" style="width: 100px;">
               <a
                 style="color: var(--text-orange)"
                 @click="modalWarehouseUpsert?.openModal(warehouse.id)">

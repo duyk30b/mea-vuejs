@@ -94,6 +94,7 @@ export class TicketClinicApi {
 
   static async updateDiagnosis(options: {
     ticketId: number
+    note: string
     files: File[]
     imagesChange?: {
       imageIdsKeep: number[]
@@ -107,6 +108,7 @@ export class TicketClinicApi {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
     formData.append('ticketAttributeKeyList', JSON.stringify(options.ticketAttributeKeyList))
+    formData.append('note', options.note)
 
     if (imagesChange) {
       const imagesChangeStr = JSON.stringify({
@@ -119,7 +121,7 @@ export class TicketClinicApi {
       const ticketAttributeChangeListStr = JSON.stringify(
         ticketAttributeChangeList.map((i) => {
           return { key: i.key, value: i.value }
-        })
+        }),
       )
       formData.append('ticketAttributeChangeList', ticketAttributeChangeListStr)
     }
@@ -131,7 +133,7 @@ export class TicketClinicApi {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -139,8 +141,8 @@ export class TicketClinicApi {
   static async returnProduct(body: {
     ticketId: number
     returnList: {
-      ticketProductId: number
-      quantityReturn: number
+      ticketBatchId: number
+      quantity: number
     }[]
   }) {
     const { ticketId, returnList } = body
@@ -157,7 +159,7 @@ export class TicketClinicApi {
       discountType: DiscountType
       discountMoney: number
       discountPercent: number
-    }
+    },
   ) {
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/change-discount`, {
       discountType: body.discountType,

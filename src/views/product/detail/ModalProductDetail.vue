@@ -9,7 +9,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
-import ProductAndBatchMovement from './ProductAndBatchMovement.vue'
+import ProductAndBatchMovement from './ProductMovementList.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',

@@ -4,6 +4,7 @@ import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconSetting } from '../../../common/icon'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -12,9 +13,9 @@ import { Customer, CustomerService } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import TicketOrderStatusTag from '../TicketOrderStatusTag.vue'
+import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
 
@@ -53,11 +54,8 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
-        ticketAttributeList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList
-          ? true
-          : false,
         ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
-          ? { product: true, batch: false }
+          ? { product: true }
           : false,
       },
       filter: {
@@ -152,7 +150,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalTicketOrderListSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalTicketOrderListSetting" />
+    ref="modalTicketOrderListSetting"
+  />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
@@ -169,7 +168,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               name: 'TicketOrderUpsert',
               query: { mode: ETicketOrderUpsertMode.CREATE },
             })
-          ">
+          "
+        >
           Tạo hóa đơn mới
         </VueButton>
       </div>
@@ -200,12 +200,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
             @selectItem="({ data }) => selectCustomer(data)"
             @onFocusinFirst="handleFocusFirstSearchCustomer"
-            @update:text="searchingCustomer">
+            @update:text="searchingCustomer"
+          >
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
                 - {{ DString.formatPhone(data.phone) }} -
-                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>{{ DString.formatAddress(data) }}</div>
             </template>
@@ -221,7 +222,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']" />
+            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+          />
         </div>
       </div>
 
@@ -233,13 +235,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: TicketStatus.Draft },
-              { text: 'Tạm ứng', value: TicketStatus.Approved },
+              { text: 'Tạm ứng', value: TicketStatus.Prepayment },
               { text: 'Đang thực hiện', value: TicketStatus.Executing },
               { text: 'Nợ', value: TicketStatus.Debt },
               { text: 'Hoàn thành', value: TicketStatus.Completed },
               { text: 'Hủy', value: TicketStatus.Cancelled },
             ]"
-            @update:value="() => startSearch()"></VueSelect>
+            @update:value="() => startSearch()"
+          ></VueSelect>
         </div>
       </div>
     </div>
@@ -274,7 +277,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr
             v-for="(ticket, index) in ticketList"
             :key="index"
-            @dblclick="$router.push({ name: 'TicketOrderDetail', params: { id: ticket.id } })">
+            @dblclick="$router.push({ name: 'TicketOrderDetail', params: { id: ticket.id } })"
+          >
             <td>
               <div class="font-medium text-justify">
                 {{ ticket.customer?.fullName }}
@@ -283,18 +287,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </a>
               </div>
               <div class="text-xs">
-                {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
               </div>
               <div
-                v-if="
-                  settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList &&
-                  ticket?.ticketAttributeMap?.note
-                "
-                class="text-xs italic">
-                {{ ticket?.ticketAttributeMap?.note }}
+                v-if="settingStore.SCREEN_TICKET_ORDER_LIST.note && ticket?.note"
+                class="max-line-1 text-xs italic"
+              >
+                {{ ticket.note }}
               </div>
             </td>
             <td class="text-right">
@@ -306,9 +308,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 Lãi: {{ formatMoney(ticket.profit) }}
               </div>
             </td>
-            <td>
-              <TicketOrderStatusTag :ticketStatus="ticket.ticketStatus" />
-            </td>
+            <td><TicketStatusTag :ticket="ticket" /></td>
           </tr>
         </tbody>
       </table>
@@ -319,9 +319,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           size="small"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
 
@@ -329,25 +328,27 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
-              Mã &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+            <th class="cursor-pointer whitespace-nowrap" @click="changeSort('id')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Mã</span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
+            <th>Trạng thái</th>
             <th>Thời gian</th>
             <th>Khách hàng</th>
             <th v-if="settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList">Sản phẩm</th>
+            <th v-if="settingStore.SCREEN_TICKET_ORDER_LIST.note">Ghi chú</th>
             <th>Tổng Tiền</th>
             <th v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit">Lãi</th>
-            <th>Thanh toán</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -377,8 +378,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 </span>
               </router-link>
             </td>
+            <td><TicketStatusTag :ticket="ticket" /></td>
             <td class="text-center">
-              {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>
@@ -390,17 +392,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
               </div>
-              <div
-                v-if="
-                  settingStore.SCREEN_TICKET_ORDER_LIST.ticketAttributeList &&
-                  ticket?.ticketAttributeMap?.note
-                "
-                class="text-xs italic">
-                {{ ticket?.ticketAttributeMap?.note }}
-              </div>
             </td>
             <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList">
               {{ (ticket.ticketProductList || []).map((i) => i.product?.brandName).join(', ') }}
+            </td>
+            <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.note">
+              <div class="max-line-2">{{ ticket.note }}</div>
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
@@ -411,9 +408,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-right">
               <div>{{ formatMoney(ticket.profit) }}</div>
             </td>
-            <td class="text-center">
-              <TicketOrderStatusTag :ticketStatus="ticket.ticketStatus" />
-            </td>
           </tr>
         </tbody>
       </table>
@@ -423,9 +417,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

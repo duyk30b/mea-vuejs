@@ -16,6 +16,7 @@ import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
 import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
+import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
@@ -134,7 +135,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
   <ModalProcedureDetail ref="modalProcedureDetail" />
   <ModalProcedureGroupManager
     ref="modalProcedureGroupManager"
-    @success="handleModalProcedureGroupManagerSuccess" />
+    @success="handleModalProcedureGroupManagerSuccess"
+  />
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
@@ -145,7 +147,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
         color="blue"
         icon="plus"
-        @click="modalProcedureUpsert?.openModal()">
+        @click="modalProcedureUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
@@ -182,7 +185,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
               { value: 0, text: 'Tất cả' },
               ...procedureGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
 
@@ -196,45 +200,43 @@ const handleModalProcedureGroupManagerSuccess = async () => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
     </div>
     <div v-if="isMobile" class="page-main-list table-wrapper">
       <div
         class="py-2 px-4 flex justify-between text-white font-bold"
-        style="background-color: var(--color-table-thead-bg)">
-        <div class="cursor-pointer" @click="changeSort('name')">
-          Tên dịch vụ &nbsp;
-          <font-awesome-icon
-            v-if="sortColumn !== 'name'"
-            :icon="['fas', 'sort']"
-            style="opacity: 0.4" />
-          <font-awesome-icon
-            v-if="sortColumn === 'name' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']" />
-          <font-awesome-icon
-            v-if="sortColumn === 'name' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']" />
+        style="background-color: var(--color-table-thead-bg)"
+      >
+        <div
+          class="cursor-pointer flex items-center gap-1 justify-center"
+          @click="changeSort('name')"
+        >
+          <span> Tên </span>
+          <IconSort v-if="sortColumn !== 'name'" style="opacity: 0.4" />
+          <IconSortUp v-if="sortColumn === 'name' && sortValue === 'ASC'" style="opacity: 0.4" />
+          <IconSortDown v-if="sortColumn === 'name' && sortValue === 'DESC'" style="opacity: 0.4" />
         </div>
-        <div class="cursor-pointer" @click="changeSort('price')">
-          Giá &nbsp;
-          <font-awesome-icon
-            v-if="sortColumn !== 'price'"
-            :icon="['fas', 'sort']"
-            style="opacity: 0.4" />
-          <font-awesome-icon
-            v-if="sortColumn === 'price' && sortValue === 'ASC'"
-            :icon="['fas', 'sort-up']" />
-          <font-awesome-icon
+        <div
+          class="cursor-pointer flex items-center gap-1 justify-center"
+          @click="changeSort('price')"
+        >
+          <span> Giá </span>
+          <IconSort v-if="sortColumn !== 'price'" style="opacity: 0.4" />
+          <IconSortUp v-if="sortColumn === 'price' && sortValue === 'ASC'" style="opacity: 0.4" />
+          <IconSortDown
             v-if="sortColumn === 'price' && sortValue === 'DESC'"
-            :icon="['fas', 'sort-down']" />
+            style="opacity: 0.4"
+          />
         </div>
       </div>
       <div
         v-if="procedureList.length === 0"
         class="p-2 text-center"
-        style="border: 1px solid #cdcdcd">
+        style="border: 1px solid #cdcdcd"
+      >
         Không có dữ liệu
       </div>
       <div
@@ -243,7 +245,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
         class="px-4 py-2 flex items-center justify-between gap-4"
         style="border-bottom: 1px solid #cdcdcd"
         :style="{ backgroundColor: index % 2 !== 0 ? 'var(--color-table-td-even-bg)' : '' }"
-        @dblclick="modalProcedureUpsert?.openModal(procedure.id)">
+        @dblclick="modalProcedureUpsert?.openModal(procedure.id)"
+      >
         <div>
           <div class="flex gap-2">
             <div class="font-medium text-justify">
@@ -253,7 +256,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
               <a
                 class="text-base"
                 style="line-height: 0"
-                @click="modalProcedureDetail?.openModal(procedure)">
+                @click="modalProcedureDetail?.openModal(procedure)"
+              >
                 <IconFileSearch />
               </a>
             </div>
@@ -273,9 +277,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           size="small"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
     <div v-else class="page-main-table table-wrapper">
@@ -283,51 +286,55 @@ const handleModalProcedureGroupManagerSuccess = async () => {
         <thead>
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
-              Mã DV &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'id'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'id' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Mã DV </span>
+                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('name')">
-              Tên thủ thuật &nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'name'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'name' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'name' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Tên </span>
+                <IconSort v-if="sortColumn !== 'name'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'name' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'name' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
-              Giá tiền&nbsp;
-              <font-awesome-icon
-                v-if="sortColumn !== 'price'"
-                :icon="['fas', 'sort']"
-                style="opacity: 0.4" />
-              <font-awesome-icon
-                v-if="sortColumn === 'price' && sortValue === 'ASC'"
-                :icon="['fas', 'sort-up']" />
-              <font-awesome-icon
-                v-if="sortColumn === 'price' && sortValue === 'DESC'"
-                :icon="['fas', 'sort-down']" />
+              <div class="flex items-center gap-1 justify-center">
+                <span> Giá </span>
+                <IconSort v-if="sortColumn !== 'price'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'price' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'price' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
             </th>
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
             <th
               v-if="
                 permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
-              ">
+              "
+            >
               Thao tác
             </th>
           </tr>
@@ -343,7 +350,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
               <a
                 v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure)">
+                @click="modalProcedureDetail?.openModal(procedure)"
+              >
                 <IconFileSearch />
               </a>
             </td>
@@ -362,11 +370,13 @@ const handleModalProcedureGroupManagerSuccess = async () => {
                 permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
               "
-              class="text-center">
+              class="text-center"
+            >
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalProcedureUpsert?.openModal(procedure.id)">
+                @click="modalProcedureUpsert?.openModal(procedure.id)"
+              >
                 <IconEditSquare />
               </a>
             </td>
@@ -380,9 +390,8 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

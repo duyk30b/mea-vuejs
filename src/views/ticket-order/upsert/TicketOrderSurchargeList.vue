@@ -5,27 +5,27 @@ import { InputMoney, VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
-import { ticket } from './ticket-order-upsert.ref'
+import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
-  ticket.value.ticketSurchargeList![index].money = money
-  ticket.value.surcharge = ticket.value.ticketSurchargeList!.reduce((acc, cur) => {
+  ticketOrderUpsertRef.value.ticketSurchargeList![index].money = money
+  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce((acc, cur) => {
     return acc + cur.money
   }, 0)
 }
 
 const handleDeleteSurchargeDetail = (index: number) => {
-  ticket.value.ticketSurchargeList!.splice(index, 1)
-  ticket.value.surcharge = ticket.value.ticketSurchargeList!.reduce((acc, cur) => {
+  ticketOrderUpsertRef.value.ticketSurchargeList!.splice(index, 1)
+  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce((acc, cur) => {
     return acc + cur.money
   }, 0)
 }
 
 const handleAddSurchargeDetail = () => {
-  const existKey = ticket.value.ticketSurchargeList!.map((i) => i.key)
+  const existKey = ticketOrderUpsertRef.value.ticketSurchargeList!.map((i) => i.key)
   existKey.push(UNKNOWN_KEY)
   const allKey = Object.keys(settingStore.INVOICE_SURCHARGE_DETAIL)
   const key = allKey.find((i) => !existKey.includes(i)) || UNKNOWN_KEY
@@ -34,30 +34,30 @@ const handleAddSurchargeDetail = () => {
   newSurcharge.key = key
   newSurcharge.name = name || ''
   newSurcharge.money = 0
-  ticket.value.ticketSurchargeList!.push(newSurcharge)
+  ticketOrderUpsertRef.value.ticketSurchargeList!.push(newSurcharge)
 }
 
 const handleChangeInvoiceSurcharge = (data: number) => {
-  ticket.value.surcharge = data
+  ticketOrderUpsertRef.value.surcharge = data
 
   let totalKnownMoney = 0
   let indexOther = -1
-  for (let i = 0; i < ticket.value.ticketSurchargeList!.length; i++) {
-    const item = ticket.value.ticketSurchargeList![i]
+  for (let i = 0; i < ticketOrderUpsertRef.value.ticketSurchargeList!.length; i++) {
+    const item = ticketOrderUpsertRef.value.ticketSurchargeList![i]
     if (item.key !== UNKNOWN_KEY) totalKnownMoney += item.money
     else indexOther = i
   }
 
   // nếu có other thì cập nhật money của other
   if (indexOther !== -1) {
-    ticket.value.ticketSurchargeList![indexOther].money = data - totalKnownMoney
+    ticketOrderUpsertRef.value.ticketSurchargeList![indexOther].money = data - totalKnownMoney
   } else {
     // nếu không có other thì thêm mới other
     const other = TicketSurcharge.blank()
     other.key = UNKNOWN_KEY
     other.name = settingStore.INVOICE_SURCHARGE_DETAIL[UNKNOWN_KEY]
     other.money = data - totalKnownMoney
-    ticket.value.ticketSurchargeList!.push(other)
+    ticketOrderUpsertRef.value.ticketSurchargeList!.push(other)
   }
 }
 </script>
@@ -79,11 +79,11 @@ const handleChangeInvoiceSurcharge = (data: number) => {
           </div>
           <div class="flex flex-col gap-2 mt-2">
             <div
-              v-for="(surcharge, index) in ticket.ticketSurchargeList"
+              v-for="(surcharge, index) in ticketOrderUpsertRef.ticketSurchargeList"
               :key="index"
               class="flex items-stretch">
               <VueSelect
-                v-model:value="ticket.ticketSurchargeList![index].key"
+                v-model:value="ticketOrderUpsertRef.ticketSurchargeList![index].key"
                 style="width: 160px"
                 :options="
                   [
@@ -115,7 +115,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
             <div style="width: 160px">Tổng phụ phí:</div>
             <div style="flex: 1">
               <b class="ml-3" style="font-size: 16px">
-                {{ formatMoney(ticket.surcharge) }}
+                {{ formatMoney(ticketOrderUpsertRef.surcharge) }}
               </b>
             </div>
           </div>
@@ -129,7 +129,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
   </td>
   <td>
     <InputMoney
-      :value="ticket.surcharge"
+      :value="ticketOrderUpsertRef.surcharge"
       class="input-payment"
       style="width: 100%"
       @update:value="handleChangeInvoiceSurcharge" />

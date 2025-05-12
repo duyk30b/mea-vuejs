@@ -47,15 +47,15 @@ export class PrescriptionSampleApi {
       name: prescriptionSample.name,
       medicines: prescriptionSample.medicines,
     })
-    const { data } = response.data as BaseResponse
-    return PrescriptionSample.from(data)
+    const { data } = response.data as BaseResponse<{ prescriptionSample: any }>
+    return PrescriptionSample.from(data.prescriptionSample)
   }
 
-  static async updateOne(id: number, prescriptionSample: PrescriptionSample) {
+  static async updateOne(id: number, ins: Partial<PrescriptionSample>) {
     const response = await AxiosInstance.patch(`/prescription-sample/update/${id}`, {
-      priority: prescriptionSample.priority,
-      name: prescriptionSample.name,
-      medicines: prescriptionSample.medicines,
+      priority: ins.priority,
+      name: ins.name,
+      medicines: ins.medicines,
     })
     const { data } = response.data as BaseResponse<{ prescriptionSample: any }>
     return PrescriptionSample.from(data.prescriptionSample)

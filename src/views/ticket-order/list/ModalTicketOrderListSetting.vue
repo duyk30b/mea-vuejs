@@ -13,7 +13,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_TICKET_ORDER_LIST>(
-  JSON.parse(JSON.stringify(store.SCREEN_TICKET_ORDER_LIST))
+  JSON.parse(JSON.stringify(store.SCREEN_TICKET_ORDER_LIST)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -82,7 +82,7 @@ defineExpose({ openModal })
               </tr>
               <tr>
                 <td>
-                  <InputCheckbox v-model:checked="settingDisplay.ticketAttributeList">
+                  <InputCheckbox v-model:checked="settingDisplay.note">
                     Hiển thị ghi chú
                   </InputCheckbox>
                 </td>

@@ -21,7 +21,7 @@ const props = withDefaults(
     disabled: false,
     defaultType: 'date',
     showTime: false,
-  }
+  },
 )
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | Date | null | undefined): void
@@ -71,7 +71,7 @@ onMounted(() => {
         inputSecond.value!.innerHTML = newDate.getSeconds().toString().padStart(2, '0')
       }
     },
-    { immediate: true }
+    { immediate: true },
   )
 })
 
@@ -89,7 +89,7 @@ const handleInput = (e: Event, type: 'YEAR' | 'MONTH' | 'DATE' | 'HOUR' | 'MINUT
   const beforeValue = target.textContent || ''
   const range = document.createRange()
   const selection = window.getSelection()
-  let selectionStart = selection?.getRangeAt(0)?.startOffset || selection?.anchorOffset || 0
+  const selectionStart = selection?.getRangeAt(0)?.startOffset || selection?.anchorOffset || 0
 
   let convert = beforeValue.replace(/[^\d/]/g, '').slice(0, CONFIG.LENGTH)
   if (Number(convert) > CONFIG.MAX) {
@@ -135,7 +135,7 @@ const handleBlur = (e: Event, LENGTH = 2) => {
   if (!beforeValue) {
     return emit('update:value', undefined)
   }
-  let newValue = beforeValue.padStart(LENGTH, '0')
+  const newValue = beforeValue.padStart(LENGTH, '0')
   target.innerHTML = newValue
 
   const time = getCurrentTime({ requireLength: true })
@@ -261,7 +261,8 @@ const handleClickClear = () => {
           placeholder="D"
           @input="(e) => handleInput(e, 'DATE')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div>/</div>
         <div
           ref="inputMonth"
@@ -270,7 +271,8 @@ const handleClickClear = () => {
           placeholder="M"
           @input="(e) => handleInput(e, 'MONTH')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div>/</div>
         <div
           ref="inputYear"
@@ -279,7 +281,8 @@ const handleClickClear = () => {
           :contenteditable="!disabled"
           @input="(e) => handleInput(e, 'YEAR')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 4)"></div>
+          @blur="(e) => handleBlur(e, 4)"
+        ></div>
         <div></div>
         <div
           v-if="showTime"
@@ -289,7 +292,8 @@ const handleClickClear = () => {
           placeholder="h"
           @input="(e) => handleInput(e, 'HOUR')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div v-if="showTime">:</div>
         <div
           v-if="showTime"
@@ -299,7 +303,8 @@ const handleClickClear = () => {
           placeholder="m"
           @input="(e) => handleInput(e, 'MINUTE')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
         <div v-if="showTime">:</div>
         <div
           v-if="showTime"
@@ -309,7 +314,8 @@ const handleClickClear = () => {
           placeholder="s"
           @input="(e) => handleInput(e, 'SECOND')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"></div>
+          @blur="(e) => handleBlur(e, 2)"
+        ></div>
       </div>
     </div>
     <div class="icon-append">
@@ -321,7 +327,8 @@ const handleClickClear = () => {
       <DatePicker
         :value="new Date(value || '2024-01-02').getTime()"
         :defaultType="defaultType"
-        @update:value="handleValueDatePicker" />
+        @update:value="handleValueDatePicker"
+      />
     </div>
   </div>
 </template>
@@ -333,6 +340,7 @@ const handleClickClear = () => {
   .input-item {
     outline: none;
     padding: 0 6px;
+    white-space: nowrap;
   }
   .input-date {
     width: 2em;

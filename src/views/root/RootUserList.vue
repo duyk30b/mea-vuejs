@@ -1,18 +1,13 @@
 <script setup lang="ts">
-import {
-  AccountBookOutlined,
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-  HistoryOutlined,
-} from '@ant-design/icons-vue'
+import { AccountBookOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import VueTag from '../../common/VueTag.vue'
+import { IconComputer, IconEditSquare, IconHistory, IconSmartphone } from '../../common/icon-google'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
+import { ESTimer } from '../../utils'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
-import { DTimer } from '../../utils'
-import VueTag from '../../common/VueTag.vue'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -58,7 +53,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const handleModalRootUserUpsertSuccess = async (
   data: User,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   await startFetchData()
 }
@@ -121,21 +116,21 @@ const logoutAll = async () => {
               <div v-for="(device, i) in user.devices" :key="i" class="mt-2">
                 <div>
                   <span v-if="device.mobile === 1">
-                    <font-awesome-icon :icon="['fas', 'mobile-screen-button']" />
+                    <IconSmartphone />
                   </span>
                   <span v-else>
-                    <font-awesome-icon :icon="['fas', 'desktop']" />
+                    <IconComputer />
                   </span>
                   <span class="ml-2">{{ device.os }}</span>
                   /
                   <span>{{ device.browser }}</span>
                   -
-                  <span>Exp {{ DTimer.timeToText(device.refreshExp) }}</span>
+                  <span>Exp {{ ESTimer.timeToText(device.refreshExp) }}</span>
                 </div>
                 <div style="white-space: nowrap">IP: {{ device.ip }}</div>
                 <div v-if="device.online !== true">
-                  <HistoryOutlined class="mr-1" />
-                  {{ DTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
+                  <IconHistory class="mr-1" />
+                  {{ ESTimer.timeToText(device.online as number, 'hh:mm DD/MM/YYYY') }}
                 </div>
                 <div class="flex gap-2">
                   <VueButton
@@ -146,7 +141,8 @@ const logoutAll = async () => {
                         refreshExp: device.refreshExp,
                         oid: user.oid,
                       })
-                    ">
+                    "
+                  >
                     Đăng xuất
                   </VueButton>
                   <VueTag v-if="device.online === true" color="green">Online</VueTag>
@@ -165,8 +161,9 @@ const logoutAll = async () => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalRootUserUpsert?.openModal(user)">
-                <FormOutlined />
+                @click="modalRootUserUpsert?.openModal(user)"
+              >
+                <IconEditSquare />
               </a>
             </td>
           </tr>
@@ -179,9 +176,8 @@ const logoutAll = async () => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

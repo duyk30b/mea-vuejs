@@ -1,26 +1,39 @@
-# Run project
+# mea-vuejs-8
+
+This template should help get you started developing with Vue 3 in Vite.
+
+## Recommended IDE Setup
+
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+
+## Type Support for `.vue` Imports in TS
+
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+
+## Customize configuration
+
+See [Vite Configuration Reference](https://vite.dev/config/).
+
+## Project Setup
+
+```sh
+npm install
 ```
-nvm use 16.18.1
-npm install --include=dev
+
+### Compile and Hot-Reload for Development
+
+```sh
 npm run dev
 ```
-Now, access: http://127.0.0.1:5173/ 
 
-# Settings Live Server
-- Change path key and cert in ./.vscode/settings.json
+### Type-Check, Compile and Minify for Production
 
-# Deploy to firebase
-```
-npm install -g firebase-tools
-firebase login
-firebase init
+```sh
 npm run build
-firebase deploy
 ```
 
-## Github
-1. Reset commit master
-```
-git branch -f master HEAD
-git push origin master --force
+### Lint with [ESLint](https://eslint.org/)
+
+```sh
+npm run lint
 ```

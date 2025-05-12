@@ -2,46 +2,32 @@ import { Product } from '../product/product.model'
 
 export class Batch {
   id: number
-  productId: number
   distributorId: number
   warehouseId: number
+  productId: number
 
   lotNumber: string // Lô sản phẩm
   expiryDate?: number
-  costPrice: number // Giá nhập
-  wholesalePrice: number
-  retailPrice: number
+
   quantity: number
+
+  costPrice: number // Giá nhập
+
   updatedAt: number
+  registeredAt: number
 
   product?: Product
 
   get unitQuantity() {
-    return Number(((this.quantity || 0) / (this.product?.unitDefaultRate || 1)).toFixed(3))
+    return Number(((this.quantity || 0) / this.product!.unitDefaultRate).toFixed(3))
   }
 
   get unitCostPrice() {
     return this.costPrice * this.product!.unitDefaultRate
   }
 
-  get unitWholesalePrice() {
-    return this.wholesalePrice * this.product!.unitDefaultRate
-  }
-
-  get unitRetailPrice() {
-    return this.retailPrice * this.product!.unitDefaultRate
-  }
-
   set unitCostPrice(data) {
     this.costPrice = data / this.product!.unitDefaultRate
-  }
-
-  set unitWholesalePrice(data: number) {
-    this.wholesalePrice = data / this.product!.unitDefaultRate
-  }
-
-  set unitRetailPrice(data: number) {
-    this.retailPrice = data / this.product!.unitDefaultRate
   }
 
   static init() {
@@ -53,8 +39,6 @@ export class Batch {
 
     ins.lotNumber = ''
     ins.costPrice = 0
-    ins.wholesalePrice = 0
-    ins.retailPrice = 0
     ins.quantity = 0
     return ins
   }
@@ -93,16 +77,14 @@ export class Batch {
 
   static equal(a: Batch, b: Batch) {
     if (a.id != b.id) return false
+    if (a.warehouseId != b.warehouseId) return false
     if (a.productId != b.productId) return false
     if (a.distributorId != b.distributorId) return false
-    if (a.warehouseId != b.warehouseId) return false
 
     if (a.lotNumber != b.lotNumber) return false
     if (a.expiryDate != b.expiryDate) return false
 
     if (a.costPrice != b.costPrice) return false
-    if (a.wholesalePrice != b.wholesalePrice) return false
-    if (a.retailPrice != b.retailPrice) return false
     if (a.quantity != b.quantity) return false
     return true
   }

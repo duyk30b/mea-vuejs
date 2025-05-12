@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import VueModal from '@/common/vue-modal/VueModal.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney } from '@/common/vue-form'
-import { CloseOutlined } from '@ant-design/icons-vue'
+import VueModal from '@/common/vue-modal/VueModal.vue'
 import { nextTick, ref } from 'vue'
+import { IconClose } from '../../../common/icon-antd'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../modules/ticket'
+import { TicketOrderApi } from '../../../modules/ticket-order'
 import { timeToText } from '../../../utils'
 import CustomerPaymentTypeTag from '../../customer/CustomerPaymentTypeTag.vue'
-import { PaymentViewType, ticket } from './ticket-order-detail.ref'
-import { TicketOrderApi } from '../../../modules/ticket-order'
+import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -48,12 +48,13 @@ const startPrepayment = async () => {
     }
     paymentLoading.value = true
     const response = await TicketOrderApi.prepayment({
-      ticketId: ticket.value.id,
+      ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, response.ticket)
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(response.customerPayment)
+    Object.assign(ticketOrderDetailRef.value, response.ticket)
+    ticketOrderDetailRef.value.customerPaymentList =
+      ticketOrderDetailRef.value.customerPaymentList || []
+    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -67,18 +68,22 @@ const startPrepayment = async () => {
 const startSendProductAndPaymentAndClose = async () => {
   try {
     paymentLoading.value = true
-    if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
+    if (
+      money.value < 0 ||
+      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
+    ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     const response = await TicketOrderApi.sendProductAndPaymentAndClose({
-      ticketId: ticket.value.id,
+      ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, response.ticket)
-    ticket.value.ticketProductList = response.ticketProductList
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
+    Object.assign(ticketOrderDetailRef.value, response.ticket)
+    ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
+    ticketOrderDetailRef.value.customerPaymentList =
+      ticketOrderDetailRef.value.customerPaymentList || []
     if (response.customerPayment) {
-      ticket.value.customerPaymentList.push(response.customerPayment!)
+      ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment!)
     }
 
     emit('success')
@@ -93,16 +98,20 @@ const startSendProductAndPaymentAndClose = async () => {
 const startPaymentAndClose = async () => {
   try {
     paymentLoading.value = true
-    if (money.value < 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
+    if (
+      money.value < 0 ||
+      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
+    ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     const response = await TicketOrderApi.paymentAndClose({
-      ticketId: ticket.value.id,
+      ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, response.ticket)
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(response.customerPayment!)
+    Object.assign(ticketOrderDetailRef.value, response.ticket)
+    ticketOrderDetailRef.value.customerPaymentList =
+      ticketOrderDetailRef.value.customerPaymentList || []
+    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment!)
 
     emit('success')
     showModal.value = false
@@ -116,16 +125,20 @@ const startPaymentAndClose = async () => {
 const startRefundOverpaid = async () => {
   try {
     paymentLoading.value = true
-    if (money.value <= 0 || ticket.value.totalMoney > ticket.value.paid - money.value) {
+    if (
+      money.value <= 0 ||
+      ticketOrderDetailRef.value.totalMoney > ticketOrderDetailRef.value.paid - money.value
+    ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     const response = await TicketOrderApi.refundOverpaid({
-      ticketId: ticket.value.id,
+      ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, response.ticket)
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(response.customerPayment)
+    Object.assign(ticketOrderDetailRef.value, response.ticket)
+    ticketOrderDetailRef.value.customerPaymentList =
+      ticketOrderDetailRef.value.customerPaymentList || []
+    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -139,16 +152,20 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   try {
     paymentLoading.value = true
-    if (money.value <= 0 || ticket.value.totalMoney < ticket.value.paid + money.value) {
+    if (
+      money.value <= 0 ||
+      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
+    ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
     const response = await TicketOrderApi.payDebt({
-      ticketId: ticket.value.id,
+      ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
     })
-    Object.assign(ticket.value, response.ticket)
-    ticket.value.customerPaymentList = ticket.value.customerPaymentList || []
-    ticket.value.customerPaymentList.push(response.customerPayment)
+    Object.assign(ticketOrderDetailRef.value, response.ticket)
+    ticketOrderDetailRef.value.customerPaymentList =
+      ticketOrderDetailRef.value.customerPaymentList || []
+    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
 
     emit('success')
     showModal.value = false
@@ -168,7 +185,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Thông tin thanh toán</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -176,7 +193,7 @@ defineExpose({ openModal })
         <div class="text-right">
           <span class="mr-2">Tổng tiền đơn:</span>
           <span class="pr-4 font-bold" style="font-size: 16px">
-            {{ formatMoney(ticket.totalMoney) }}
+            {{ formatMoney(ticketOrderDetailRef.totalMoney) }}
           </span>
         </div>
         <div class="mt-2 table-wrapper">
@@ -191,7 +208,10 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(customerPayment, index) in ticket.customerPaymentList" :key="index">
+              <tr
+                v-for="(customerPayment, index) in ticketOrderDetailRef.customerPaymentList"
+                :key="index"
+              >
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
@@ -204,7 +224,8 @@ defineExpose({ openModal })
                   </div>
                   <div
                     v-if="customerPayment.description"
-                    style="font-size: 0.8rem; font-style: italic">
+                    style="font-size: 0.8rem; font-style: italic"
+                  >
                     {{ customerPayment.description }}
                   </div>
                 </td>
@@ -220,18 +241,26 @@ defineExpose({ openModal })
               </tr>
               <tr>
                 <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
-                <td class="text-right font-bold">{{ formatMoney(ticket.paid) }}</td>
+                <td class="text-right font-bold">{{ formatMoney(ticketOrderDetailRef.paid) }}</td>
                 <td></td>
               </tr>
-              <tr v-if="ticket.ticketStatus !== TicketStatus.Cancelled">
+              <tr v-if="ticketOrderDetailRef.ticketStatus !== TicketStatus.Cancelled">
                 <td colspan="3" class="text-right">
                   <span v-if="paymentView == PaymentViewType.PayDebt">Đang nợ :</span>
-                  <span v-else-if="ticket.paid > ticket.totalMoney">Đang thừa :</span>
-                  <span v-else-if="ticket.paid <= ticket.totalMoney">Đang thiếu :</span>
+                  <span v-else-if="ticketOrderDetailRef.paid > ticketOrderDetailRef.totalMoney">
+                    Đang thừa :
+                  </span>
+                  <span v-else-if="ticketOrderDetailRef.paid <= ticketOrderDetailRef.totalMoney">
+                    Đang thiếu :
+                  </span>
                 </td>
                 <td></td>
                 <td class="text-right font-bold">
-                  {{ formatMoney(Math.abs(ticket.totalMoney - ticket.paid)) }}
+                  {{
+                    formatMoney(
+                      Math.abs(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid),
+                    )
+                  }}
                   <!-- không tính theo debt được, vì cancel thì debt = 0 -->
                 </td>
               </tr>
@@ -243,7 +272,8 @@ defineExpose({ openModal })
       <!-- Prepayment -->
       <form
         v-if="paymentView == PaymentViewType.Prepayment"
-        @submit.prevent="(e) => startPrepayment()">
+        @submit.prevent="(e) => startPrepayment()"
+      >
         <div class="px-4">
           <table class="w-full">
             <tbody>
@@ -260,7 +290,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = ticket.totalMoney - ticket.paid">
+                      @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -268,7 +299,8 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="{ gt: 0 }" />
+                        :validate="{ gt: 0 }"
+                      />
                     </div>
                   </div>
                 </td>
@@ -279,11 +311,19 @@ defineExpose({ openModal })
               </tr>
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">
-                  <span v-if="ticket.totalMoney < ticket.paid + money">Thừa :</span>
+                  <span v-if="ticketOrderDetailRef.totalMoney < ticketOrderDetailRef.paid + money">
+                    Thừa :
+                  </span>
                   <span v-else>Còn thiếu :</span>
                 </td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(Math.abs(ticket.totalMoney - (ticket.paid + money))) }}
+                  {{
+                    formatMoney(
+                      Math.abs(
+                        ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money),
+                      ),
+                    )
+                  }}
                 </td>
               </tr>
             </tbody>
@@ -299,11 +339,12 @@ defineExpose({ openModal })
               permissionIdMap[PermissionId.TICKET_ORDER_PREPAYMENT] &&
               [
                 TicketStatus.Draft,
-                TicketStatus.Approved,
+                TicketStatus.Prepayment,
                 TicketStatus.Draft,
                 TicketStatus.Executing,
-              ].includes(ticket.ticketStatus)
-            ">
+              ].includes(ticketOrderDetailRef.ticketStatus)
+            "
+          >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
               Tạm ứng
             </VueButton>
@@ -314,7 +355,8 @@ defineExpose({ openModal })
       <!-- SendProductAndPaymentAndClose -->
       <form
         v-else-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose"
-        @submit.prevent="(e) => startSendProductAndPaymentAndClose()">
+        @submit.prevent="(e) => startSendProductAndPaymentAndClose()"
+      >
         <div class="px-4">
           <table class="w-full">
             <tbody>
@@ -331,7 +373,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = ticket.totalMoney - ticket.paid">
+                      @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -339,7 +382,11 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="{ gte: 0, lte: ticket.totalMoney - ticket.paid }" />
+                        :validate="{
+                          gte: 0,
+                          lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
+                        }"
+                      />
                     </div>
                   </div>
                 </td>
@@ -351,7 +398,11 @@ defineExpose({ openModal })
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">Ghi nợ :</td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticket.totalMoney - (ticket.paid + money)) }}
+                  {{
+                    formatMoney(
+                      ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money),
+                    )
+                  }}
                 </td>
               </tr>
             </tbody>
@@ -366,11 +417,18 @@ defineExpose({ openModal })
             v-if="
               permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
               permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-              [TicketStatus.Draft, TicketStatus.Approved].includes(ticket.ticketStatus)
-            ">
+              [TicketStatus.Draft, TicketStatus.Prepayment].includes(
+                ticketOrderDetailRef.ticketStatus,
+              )
+            "
+          >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <span v-if="ticket.totalMoney === ticket.paid + money">Gửi hàng và Thanh toán</span>
-              <span v-if="ticket.totalMoney != ticket.paid + money">Gửi hàng và Ghi nợ</span>
+              <template v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money">
+                Gửi hàng và Thanh toán
+              </template>
+              <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
+                Gửi hàng và Ghi nợ
+              </template>
             </VueButton>
           </div>
         </div>
@@ -379,7 +437,8 @@ defineExpose({ openModal })
       <!-- PaymentAndClose -->
       <form
         v-else-if="paymentView == PaymentViewType.PaymentAndClose"
-        @submit.prevent="(e) => startPaymentAndClose()">
+        @submit.prevent="(e) => startPaymentAndClose()"
+      >
         <div class="px-4">
           <table class="w-full">
             <tbody>
@@ -396,7 +455,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = ticket.totalMoney - ticket.paid">
+                      @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -404,7 +464,11 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="{ gte: 0, lte: ticket.totalMoney - ticket.paid }" />
+                        :validate="{
+                          gte: 0,
+                          lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
+                        }"
+                      />
                     </div>
                   </div>
                 </td>
@@ -416,7 +480,11 @@ defineExpose({ openModal })
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">Ghi nợ :</td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticket.totalMoney - (ticket.paid + money)) }}
+                  {{
+                    formatMoney(
+                      ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money),
+                    )
+                  }}
                 </td>
               </tr>
             </tbody>
@@ -430,11 +498,18 @@ defineExpose({ openModal })
           <div
             v-if="
               permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-              [TicketStatus.Draft, TicketStatus.Approved].includes(ticket.ticketStatus)
-            ">
+              [TicketStatus.Draft, TicketStatus.Prepayment, TicketStatus.Executing].includes(
+                ticketOrderDetailRef.ticketStatus,
+              )
+            "
+          >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <span v-if="ticket.totalMoney === ticket.paid + money">Thanh toán</span>
-              <span v-if="ticket.totalMoney > ticket.paid + money">Thanh toán và Ghi nợ</span>
+              <span v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money">
+                Thanh toán
+              </span>
+              <span v-if="ticketOrderDetailRef.totalMoney > ticketOrderDetailRef.paid + money">
+                Thanh toán và Ghi nợ
+              </span>
             </VueButton>
           </div>
         </div>
@@ -443,7 +518,8 @@ defineExpose({ openModal })
       <!-- RefundOverpaid -->
       <form
         v-else-if="paymentView == PaymentViewType.RefundOverpaid"
-        @submit.prevent="(e) => startRefundOverpaid()">
+        @submit.prevent="(e) => startRefundOverpaid()"
+      >
         <div class="px-4">
           <table class="w-full">
             <tbody>
@@ -460,7 +536,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = ticket.paid - ticket.totalMoney">
+                      @click="money = ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -468,7 +545,11 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="{ gt: 0, lte: ticket.paid - ticket.totalMoney }" />
+                        :validate="{
+                          gt: 0,
+                          lte: ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney,
+                        }"
+                      />
                     </div>
                   </div>
                 </td>
@@ -480,7 +561,9 @@ defineExpose({ openModal })
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">Còn Thừa :</td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticket.paid - money - ticket.totalMoney) }}
+                  {{
+                    formatMoney(ticketOrderDetailRef.paid - money - ticketOrderDetailRef.totalMoney)
+                  }}
                 </td>
               </tr>
             </tbody>
@@ -494,11 +577,18 @@ defineExpose({ openModal })
           <div
             v-if="
               permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
-              [TicketStatus.Approved, TicketStatus.Executing].includes(ticket.ticketStatus)
-            ">
+              [TicketStatus.Prepayment, TicketStatus.Executing].includes(
+                ticketOrderDetailRef.ticketStatus,
+              )
+            "
+          >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <span v-if="ticket.totalMoney != ticket.paid - money">Hoàn trả tiền</span>
-              <span v-if="ticket.totalMoney === ticket.paid - money">Hoàn tiền và kết thúc</span>
+              <span v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid - money">
+                Hoàn trả tiền
+              </span>
+              <span v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid - money">
+                Hoàn tiền và Kết thúc
+              </span>
             </VueButton>
           </div>
         </div>
@@ -507,7 +597,8 @@ defineExpose({ openModal })
       <!-- PayDebt -->
       <form
         v-else-if="paymentView == PaymentViewType.PayDebt"
-        @submit.prevent="(e) => startPayDebt()">
+        @submit.prevent="(e) => startPayDebt()"
+      >
         <div class="px-4">
           <table class="w-full">
             <tbody>
@@ -524,7 +615,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = ticket.totalMoney - ticket.paid">
+                      @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -532,7 +624,11 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="{ gt: 0, lte: ticket.totalMoney - ticket.paid }" />
+                        :validate="{
+                          gt: 0,
+                          lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
+                        }"
+                      />
                     </div>
                   </div>
                 </td>
@@ -544,7 +640,9 @@ defineExpose({ openModal })
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap">Nợ còn :</td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticket.totalMoney - ticket.paid - money) }}
+                  {{
+                    formatMoney(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid - money)
+                  }}
                 </td>
               </tr>
             </tbody>
@@ -564,10 +662,7 @@ defineExpose({ openModal })
       </form>
 
       <div v-else class="mt-4 pb-4 flex justify-center gap-4">
-        <VueButton type="button" @click="closeModal">
-          <CloseOutlined />
-          Đóng lại
-        </VueButton>
+        <VueButton type="button" @click="closeModal" icon="close">Đóng lại</VueButton>
       </div>
     </div>
   </VueModal>

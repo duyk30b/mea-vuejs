@@ -7,8 +7,8 @@ import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { OrganizationService } from '../../modules/organization'
 import { PermissionApi } from '../../modules/permission/permission.api'
-import { SettingApi } from '../../modules/setting/setting.api'
 import { RootDataApi } from '../../modules/root-data/root-data.api'
+import { SettingApi } from '../../modules/setting/setting.api'
 
 const settingStore = useSettingStore()
 const meStore = useMeStore()
@@ -100,14 +100,16 @@ const startMigration = async () => {
                 <VueButton
                   v-if="!settingStore.GOOGLE_DRIVER.email"
                   color="blue"
-                  @click="loginGoogleDriver()">
+                  @click="loginGoogleDriver()"
+                >
                   Login Google Driver
                 </VueButton>
 
                 <VueButton
                   v-if="settingStore.GOOGLE_DRIVER.email"
                   color="blue"
-                  @click="logoutGoogleDriver()">
+                  @click="logoutGoogleDriver()"
+                >
                   Logout
                 </VueButton>
               </td>
@@ -120,7 +122,8 @@ const startMigration = async () => {
                   <InputText
                     v-model:value="keyMigration"
                     placeholder="input key migration"
-                    required />
+                    required
+                  />
                   <VueButton color="blue" type="submit">RUN</VueButton>
                 </form>
               </td>
@@ -139,46 +142,44 @@ const startMigration = async () => {
           </thead>
           <tbody>
             <tr>
-              <td class="text-center">1</td>
+              <td rowspan="6" class="text-center">1</td>
+              <td colspan="2" style="" class="italic underline">Mẫu in mặc định</td>
+            </tr>
+            <tr>
+              <td>Hoá đơn</td>
               <td>
-                <div>Mẫu in mặc định</div>
-                <div>
-                  <table>
-                    <tr>
-                      <td>Hoá đơn</td>
-                      <td class="py-1 pl-2">
-                        <InputNumber v-model:value="meStore.rootSetting.printDefault.invoice" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Đơn thuốc</td>
-                      <td class="py-1 pl-2">
-                        <InputNumber
-                          v-model:value="meStore.rootSetting.printDefault.prescription" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Xét nghiệm</td>
-                      <td class="py-1 pl-2">
-                        <InputNumber v-model:value="meStore.rootSetting.printDefault.laboratory" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>CĐHA</td>
-                      <td class="py-1 pl-2">
-                        <InputNumber v-model:value="meStore.rootSetting.printDefault.radiology" />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Đo thị lực</td>
-                      <td class="py-1 pl-2">
-                        <InputNumber v-model:value="meStore.rootSetting.printDefault.optometry" />
-                      </td>
-                    </tr>
-                  </table>
-                  <div class="mt-2">
-                    <VueButton color="blue" @click="saveRootSetting()">Lưu lại</VueButton>
-                  </div>
+                <InputNumber v-model:value="meStore.rootSetting.printDefault.invoice" />
+              </td>
+            </tr>
+            <tr>
+              <td>Đơn thuốc</td>
+              <td>
+                <InputNumber v-model:value="meStore.rootSetting.printDefault.prescription" />
+              </td>
+            </tr>
+            <tr>
+              <td>Xét nghiệm</td>
+              <td>
+                <InputNumber v-model:value="meStore.rootSetting.printDefault.laboratory" />
+              </td>
+            </tr>
+            <tr>
+              <td>CĐHA</td>
+              <td>
+                <InputNumber v-model:value="meStore.rootSetting.printDefault.radiology" />
+              </td>
+            </tr>
+            <tr>
+              <td>Đo thị lực</td>
+              <td>
+                <InputNumber v-model:value="meStore.rootSetting.printDefault.optometry" />
+              </td>
+            </tr>
+
+            <tr>
+              <td colspan="3">
+                <div class="mt-2">
+                  <VueButton color="blue" @click="saveRootSetting()">Lưu lại</VueButton>
                 </div>
               </td>
             </tr>

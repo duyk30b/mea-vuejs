@@ -14,7 +14,7 @@ import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Ticket } from '../../../../modules/ticket'
 import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
-import { DDom } from '../../../../utils'
+import { ESDom } from '../../../../utils'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
 
@@ -112,34 +112,38 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
   if (ticketMap[ticketDemoId]) {
     ticketDemo.value = ticketMap[ticketDemoId]
   } else {
-    const ticketResponse = await useTicketClinicStore().detail(ticketDemoId, {
-      relation: {
-        customer: true,
-        customerPaymentList: false, // query khi bật modal thanh toán
+    try {
+      const ticketResponse = await useTicketClinicStore().detail(ticketDemoId, {
+        relation: {
+          customer: true,
+          customerPaymentList: false, // query khi bật modal thanh toán
 
-        ticketAttributeList: true,
-        // ticketProductList: true,
-        ticketProductConsumableList: { product: true, batch: true },
-        ticketProductPrescriptionList: { product: true, batch: true },
-        ticketProcedureList: {},
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
-        ticketLaboratoryResultList: true,
-        ticketRadiologyList: {},
-        ticketUserList: {},
-        toAppointment: true,
-      },
-    })
+          ticketAttributeList: true,
+          // ticketProductList: true,
+          ticketProductConsumableList: { product: true },
+          ticketProductPrescriptionList: { product: true },
+          ticketProcedureList: {},
+          ticketLaboratoryList: {},
+          ticketLaboratoryGroupList: {},
+          ticketLaboratoryResultList: true,
+          ticketRadiologyList: {},
+          ticketUserList: {},
+          toAppointment: true,
+        },
+      })
 
-    Ticket.refreshTreeData(ticketResponse, {
-      procedureMap,
-      laboratoryMap,
-      laboratoryGroupMap,
-      radiologyMap,
-    })
+      Ticket.refreshTreeData(ticketResponse, {
+        procedureMap,
+        laboratoryMap,
+        laboratoryGroupMap,
+        radiologyMap,
+      })
 
-    ticketMap[ticketDemoId] = ticketResponse
-    ticketDemo.value = ticketResponse
+      ticketMap[ticketDemoId] = ticketResponse
+      ticketDemo.value = ticketResponse
+    } catch (error) {
+      console.log('🚀 ~ PrintHtmlUpsert.vue:145  ~ error:', error)
+    }
   }
   updatePreview()
 }
@@ -168,7 +172,7 @@ const startTestPrint = async () => {
       printHtml: printHtml.value,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -237,7 +241,7 @@ const startTestPrint = async () => {
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor
             v-model:value="printHtml!.initVariable"
-            language="javascript"
+            language="typescript"
             @update:value="updatePreview" />
         </div>
       </div>

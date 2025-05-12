@@ -3,7 +3,7 @@ import { IconEye } from '../icon'
 
 const props = withDefaults(
   defineProps<{
-    value: string | null
+    value: string | null | undefined
     type?: 'text' | 'password' | 'email'
     name?: string
     prepend?: string

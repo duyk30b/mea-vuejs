@@ -81,7 +81,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton type="reset" icon="close" class="ml-auto" @click="closeModal">
+          <VueButton type="reset" icon="close" style="margin-left:auto" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton icon="save" type="submit" color="blue" :loading="saveLoading">

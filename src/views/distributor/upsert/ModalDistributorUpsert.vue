@@ -240,7 +240,7 @@ defineExpose({ openModal })
             @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" @click="closeModal">
             <template #icon>
               <CloseOutlined />
             </template>

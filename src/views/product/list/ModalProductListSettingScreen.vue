@@ -92,16 +92,6 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.distributor">Hiển thị nhà cung cấp</InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
                 <InputCheckbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</InputCheckbox>
               </td>
             </tr>
@@ -128,7 +118,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

@@ -12,7 +12,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { StatisticService } from '../../../modules/statistics'
 import { TicketStatus, TicketType } from '../../../modules/ticket'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
 
 type DataResponseType = {
@@ -45,8 +45,8 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const now = new Date()
-const endMonth = DTimer.endOfMonth(now)
-const startMonth = DTimer.startOfMonth(now)
+const endMonth = ESTimer.endOfMonth(now)
+const startMonth = ESTimer.startOfMonth(now)
 const ticketTypeFilter = ref<TicketType | null>(null)
 const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])
 const timeType = ref<'date' | 'month'>('date')
@@ -67,11 +67,11 @@ const startFetchData = async () => {
     loaded.value = false
     let fromTime: Date, toTime: Date
     if (timeType.value === 'date') {
-      fromTime = DTimer.startOfDate(timeRanger.value?.[0].toISOString())
-      toTime = DTimer.endOfDate(timeRanger.value?.[1].toISOString())
+      fromTime = ESTimer.startOfDate(timeRanger.value?.[0].toISOString())
+      toTime = ESTimer.endOfDate(timeRanger.value?.[1].toISOString())
     } else {
-      fromTime = DTimer.startOfMonth(timeRanger.value?.[0].toISOString())
-      toTime = DTimer.endOfMonth(timeRanger.value?.[1].toISOString())
+      fromTime = ESTimer.startOfMonth(timeRanger.value?.[0].toISOString())
+      toTime = ESTimer.endOfMonth(timeRanger.value?.[1].toISOString())
     }
     data.value = await StatisticService.statisticTicket({
       fromTime: fromTime.toISOString(),
@@ -113,8 +113,8 @@ const handleChangeTimeType = async (data: 'date' | 'month') => {
     timeRanger.value = [dayjs(startMonth), dayjs(endMonth)]
   }
   if (data === 'month') {
-    const startYear = DTimer.startOfYear(new Date())
-    const endYear = DTimer.endOfYear(new Date())
+    const startYear = ESTimer.startOfYear(new Date())
+    const endYear = ESTimer.endOfYear(new Date())
     timeRanger.value = [dayjs(startYear), dayjs(endYear)]
   }
   await startFetchData()

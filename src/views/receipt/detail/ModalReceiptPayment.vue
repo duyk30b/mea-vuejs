@@ -106,9 +106,6 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-if="receipt.distributorPaymentList!.length == 0">
-                <td colspan="20" class="text-center">Chưa thanh toán</td>
-              </tr>
               <tr
                 v-for="(distributorPayment, index) in receipt.distributorPaymentList"
                 :key="index">

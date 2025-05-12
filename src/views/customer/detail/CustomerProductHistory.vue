@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { TicketProduct, TicketProductApi } from '../../../modules/ticket-product'
-import { DTimer, formatPhone } from '../../../utils'
+import { ESTimer, formatPhone } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
@@ -33,7 +33,6 @@ const startFetchData = async () => {
       relation: {
         product: true,
         ticket: true,
-        batch: true,
       },
       sort: { id: 'DESC' },
     })
@@ -85,7 +84,7 @@ watch(
               </div>
               <LinkAndStatusTicket :ticket="ticketProduct.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(ticketProduct.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -141,7 +140,7 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticketProduct.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketProduct.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticketProduct.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

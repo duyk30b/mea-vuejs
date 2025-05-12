@@ -12,7 +12,7 @@ import {
   InteractType,
 } from '../../../modules/commission'
 import { Role, RoleService } from '../../../modules/role'
-import { DArray } from '../../../utils'
+import { ESArray } from '../../../utils'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -64,7 +64,7 @@ const closeModal = () => {
 }
 
 const handleSave = async () => {
-  if (DArray.checkDuplicate(commissionList.value, 'roleId')) {
+  if (ESArray.checkDuplicate(commissionList.value, 'roleId')) {
     return AlertStore.addError('Không thể có 2 bản ghi trùng vai trò', 2000)
   }
 
@@ -147,7 +147,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton
             icon="save"
             color="blue"

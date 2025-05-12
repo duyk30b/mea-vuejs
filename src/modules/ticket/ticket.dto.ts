@@ -8,9 +8,10 @@ export class TicketGetQuery {
   relation?: {
     customer?: boolean
     customerPaymentList?: boolean
-    ticketProductList?: { product?: boolean; batch?: boolean } | false
-    ticketProductConsumableList?: { product?: boolean; batch?: boolean } | false
-    ticketProductPrescriptionList?: { product?: boolean; batch?: boolean } | false
+    ticketBatchList?: { batch?: boolean } | false
+    ticketProductList?: { product?: boolean } | false
+    ticketProductConsumableList?: { product?: boolean } | false
+    ticketProductPrescriptionList?: { product?: boolean } | false
     ticketProcedureList?: { procedure?: boolean } | false
     ticketLaboratoryList?: { laboratoryList?: boolean; laboratory?: boolean } | false
     ticketLaboratoryGroupList?: { laboratoryGroup?: boolean } | false

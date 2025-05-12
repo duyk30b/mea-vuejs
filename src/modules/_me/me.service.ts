@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
 import type { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
@@ -5,15 +6,23 @@ import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'
 import { useMeStore } from './me.store'
-import { settingDefault, useSettingStore } from './setting.store'
+import {
+  BatchCostPriceRule,
+  BatchDistributorIdRule,
+  BatchWarehouseIdRule,
+  SETTING_DEFAULT,
+} from './setting.default'
+import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 
 export class MeService {
-  static reCalculatorSetting(settingMap: Record<string, any>) {
-    const settingStore = useSettingStore()
-    Object.keys(settingDefault).forEach((key) => {
+  static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
+  static settingMap = ref<typeof SETTING_DEFAULT>({} as any)
+
+  static reCalculatorSetting(settingStore: any, settingMap: Record<string, any>) {
+    Object.keys(SETTING_DEFAULT).forEach((key) => {
       settingStore[key as keyof typeof SettingKey] = JSON.parse(
-        JSON.stringify(settingDefault[key as keyof typeof SettingKey])
+        JSON.stringify(SETTING_DEFAULT[key as keyof typeof SettingKey]),
       )
       if (settingMap[key] == null) return
       if (
@@ -30,7 +39,7 @@ export class MeService {
       } else {
         settingStore[key as keyof typeof SettingKey] = objectUpdatePropertyByObject(
           settingStore[key as keyof typeof SettingKey] as any,
-          settingMap[key]
+          settingMap[key],
         )
       }
     })
@@ -82,10 +91,20 @@ export class MeService {
 
   static async initData() {
     try {
-      const { organization, permissionAll, permissionIds, settingMap, user, rootSetting } =
-        await MeApi.info()
+      const {
+        organization,
+        permissionAll,
+        permissionIds,
+        settingMap,
+        settingMapRoot,
+        user,
+        rootSetting,
+      } = await MeApi.info()
 
-      MeService.reCalculatorSetting(settingMap)
+      const settingStore = useSettingStore()
+      MeService.reCalculatorSetting(settingStore, settingMap)
+      MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
+      MeService.reCalculatorSetting(MeService.settingMapRoot.value, settingMapRoot)
       MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
 
       const meStore = useMeStore()
@@ -97,6 +116,25 @@ export class MeService {
 
   static async reloadSetting() {
     const { settingMap } = await SettingApi.getMap()
-    this.reCalculatorSetting(settingMap)
+    const settingStore = useSettingStore()
+    this.reCalculatorSetting(settingStore, settingMap)
+    MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
+  }
+
+  static getBatchSetting() {
+    const batchSettingCommon = {
+      ...MeService.settingMap.value.BATCH_SETTING,
+    }
+    const batchSettingRoot = MeService.settingMapRoot.value.BATCH_SETTING
+    if (batchSettingCommon.warehouseId === BatchWarehouseIdRule.Inherit) {
+      batchSettingCommon.warehouseId = batchSettingRoot.warehouseId
+    }
+    if (batchSettingCommon.distributorId === BatchDistributorIdRule.Inherit) {
+      batchSettingCommon.distributorId = batchSettingRoot.distributorId
+    }
+    if (batchSettingCommon.costPrice === BatchCostPriceRule.Inherit) {
+      batchSettingCommon.costPrice = batchSettingRoot.costPrice
+    }
+    return batchSettingCommon
   }
 }

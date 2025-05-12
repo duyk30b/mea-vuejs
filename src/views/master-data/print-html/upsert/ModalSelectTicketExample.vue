@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { IconClose } from '../../../../common/icon'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Ticket, TicketApi, TicketType } from '../../../../modules/ticket'
-import { DTimer } from '../../../../utils'
+import { ESTimer } from '../../../../utils'
 
 const emit = defineEmits<{
   (e: 'select', value: number): void
@@ -25,7 +25,6 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {
         customer: true,
-        ticketAttributeList: true,
       },
       filter: { ticketType: { NOT: TicketType.Order } },
       sort: { registeredAt: 'DESC' },
@@ -94,13 +93,9 @@ defineExpose({ openModal })
                 <td class="text-center">KB{{ ticket.id }}</td>
                 <td>{{ ticket.customer?.fullName }}</td>
                 <td class="text-center">
-                  {{ DTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
                 </td>
-                <td>
-                  {{
-                    ticket.ticketAttributeMap?.diagnosis || ticket.ticketAttributeMap?.reason || ''
-                  }}
-                </td>
+                <td>{{ ticket.note }}</td>
                 <td class="text-center">
                   <a @click="selectTicketDemo(ticket.id)">Chọn</a>
                 </td>
@@ -115,7 +110,8 @@ defineExpose({ openModal })
               show-size-changer
               @change="
                 (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-              " />
+              "
+            />
           </div>
         </div>
       </div>

@@ -1,11 +1,8 @@
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { DArray } from '../../utils'
 import { useMeStore } from '../_me/me.store'
 import { AuthService } from '../auth/auth.service'
-import { Batch } from '../batch'
 import { ProductApi } from './product.api'
 import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
@@ -63,21 +60,6 @@ export class ProductService {
     })
     const productList = Product.fromList(productPagination.data)
 
-    if (relation?.batchList) {
-      const productIdList = productList.map((i) => i.id)
-      if (productIdList.length) {
-        const batchList = await BatchDB.findMany({
-          condition: { productId: { IN: productIdList }, quantity: { NOT: 0 } },
-        })
-        const batchListMapProductId = DArray.arrayToKeyArray(batchList, 'productId')
-        productList.forEach((i) => {
-          batchListMapProductId[i.id] ||= []
-          i.batchList = Batch.fromList(batchListMapProductId[i.id])
-          i.batchList.forEach((j) => (j.product = i))
-        })
-      }
-    }
-
     return {
       data: productList,
       meta: {
@@ -99,26 +81,12 @@ export class ProductService {
         quantity: filter?.quantity,
         warehouseIds: filter?.warehouseIds,
         $OR: filter?.$OR,
+        $AND: filter?.$AND,
       },
       sort,
     })
     const productList = Product.fromList(objects)
-    if (relation?.batchList && productList.length) {
-      const productIdList = productList.map((i) => i.id)
-      const batchList = await BatchDB.findMany({
-        condition: {
-          productId: { IN: productIdList },
-          quantity: filter?.batchList?.quantity,
-          warehouseId: filter?.batchList?.warehouseId,
-        },
-      })
-      const batchListMapProductId = DArray.arrayToKeyArray(batchList, 'productId')
-      productList.forEach((i) => {
-        batchListMapProductId[i.id] ||= []
-        i.batchList = Batch.fromList(batchListMapProductId[i.id])
-        i.batchList.forEach((j) => (j.product = i))
-      })
-    }
+
     return productList
   }
 
@@ -136,14 +104,16 @@ export class ProductService {
     return product
   }
 
-  static async detail(id: number, options: ProductDetailQuery) {
-    const product = await ProductApi.detail(id, options)
-    // const product = await ProductDB.findOneByKey(id)
-    if (product) {
+  static async detail(id: number, query: ProductDetailQuery, options?: { refetch?: boolean }) {
+    let product: Product | undefined
+    if (options?.refetch) {
+      product = await ProductApi.detail(id, query)
       await ProductDB.upsertOne(product)
-    }
-    if (product.batchList?.length) {
-      await BatchDB.upsertMany(product.batchList)
+    } else {
+      product = await ProductDB.findOneByKey(id)
+      if (!product) {
+        product = Product.blank()
+      }
     }
     return product
   }

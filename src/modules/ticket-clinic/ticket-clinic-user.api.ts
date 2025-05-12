@@ -6,7 +6,7 @@ export class TicketClinicUserApi {
   static async destroyTicketUser(body: { ticketId: number; ticketUserId: number }) {
     const { ticketId, ticketUserId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/ticket-uer/destroy/${ticketUserId}`
+      `/ticket-clinic/${ticketId}/ticket-user/destroy/${ticketUserId}`
     )
     const { data } = response.data as BaseResponse<boolean>
     return data

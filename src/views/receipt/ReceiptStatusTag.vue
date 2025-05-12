@@ -10,10 +10,10 @@ const props = withDefaults(defineProps<{ receipt?: Receipt | undefined }>(), { r
   <VueTag v-else-if="receipt.status === ReceiptStatus.Draft" color="orange" icon="exclamation">
     Nháp
   </VueTag>
-  <VueTag v-else-if="receipt.status === ReceiptStatus.Prepayment" color="blue" icon="exclamation">
+  <VueTag v-else-if="receipt.status === ReceiptStatus.Prepayment" color="blue" icon="send">
     Tạm ứng
   </VueTag>
-  <VueTag v-else-if="receipt.status === ReceiptStatus.Debt" color="cyan" icon="minus">Nợ</VueTag>
+  <VueTag v-else-if="receipt.status === ReceiptStatus.Debt" color="red" icon="minus">Nợ</VueTag>
   <VueTag v-else-if="receipt.status === ReceiptStatus.Success" color="green" icon="check">
     Hoàn thành
   </VueTag>

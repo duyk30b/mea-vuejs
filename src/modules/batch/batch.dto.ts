@@ -1,6 +1,17 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 
+export class BatchFilterQuery {
+  id?: number | ConditionNumber
+  warehouseId?: number | ConditionNumber
+  productId?: number | ConditionNumber
+  distributorId?: number | ConditionNumber
+  expiryDate?: ConditionNumber
+  quantity?: ConditionNumber
+  updatedAt?: ConditionDate
+  registeredAt?: ConditionDate
+}
+
 export class BatchGetQuery {
   page?: number
   limit?: number
@@ -8,31 +19,13 @@ export class BatchGetQuery {
     product?: boolean
   }
 
-  filter?: {
-    id?: number | ConditionNumber
-    distributorId?: number | ConditionNumber
-    quantity?: ConditionNumber
-    expiryDate?: ConditionNumber
-    productId?: number | ConditionNumber
-    warehouseId?: number | ConditionNumber
-    updatedAt?: ConditionDate
-    product?: {
-      isActive?: 1 | 0
-      searchText?: string
-      productGroupId?: number
-      quantity?: ConditionNumber
-      updatedAt?: ConditionDate
-    }
-    $OR?: {
-      expiryDate?: ConditionNumber
-      quantity?: ConditionNumber
-      warehouseId?: ConditionNumber
-    }[]
-  }
+  filter?: BatchFilterQuery & { $OR?: BatchFilterQuery[] }
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    productId?: 'ASC' | 'DESC'
     expiryDate?: 'ASC' | 'DESC'
+    registeredAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<BatchGetQuery>) {

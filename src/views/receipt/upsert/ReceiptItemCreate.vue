@@ -71,14 +71,14 @@ onUnmounted(() => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+  await Promise.all([ProductService.refreshDB()])
 }
 
 watch(
   () => receipt.value.distributorId,
   () => {
     receiptItem.value.batchId = 0
-  }
+  },
 )
 
 const searchingProduct = async (text: string) => {
@@ -95,7 +95,7 @@ const searchingProduct = async (text: string) => {
 
 const handleModalUpsertProductSuccess = (
   productSuccess: Product,
-  type: 'CREATE' | 'UPDATE' | 'DESTROY'
+  type: 'CREATE' | 'UPDATE' | 'DESTROY',
 ) => {
   if (type === 'CREATE') {
     inputOptionsProduct.value?.setItem({
@@ -165,16 +165,16 @@ const selectProduct = async (productData?: Product) => {
     newBatch.distributorId = receipt.value.distributorId
     newBatch.productId = productData.id
     newBatch.costPrice = productData.costPrice
-    newBatch.warehouseId = warehouseOptions.value.at(-1)?.value || 0
+    newBatch.warehouseId = warehouseOptions.value[warehouseOptions.value.length - 1]?.value || 0
     batchListData.push(newBatch)
 
     const productClone = Product.from(productData)
     batchListData.forEach((i) => (i.product = productClone))
 
     batchOptions.value = batchListData.map((i) => {
-      return { value: i.id, data: i, disabled: i.distributorId !== receipt.value.distributorId }
+      return { value: i.id, data: i }
     })
-    selectBatch(batchListData.at(-1)!)
+    selectBatch(batchListData[batchListData.length - 1])
 
     // productOptions.value = []
   } else {
@@ -236,7 +236,8 @@ const clear = () => {
             (
             <span
               v-if="product.hasManageQuantity"
-              :class="product.quantity <= 0 ? 'text-red-500 font-bold' : ''">
+              :class="product.quantity <= 0 ? 'text-red-500 font-bold' : ''"
+            >
               Tồn:
               <b>{{ product?.unitQuantity }} {{ product.unitDefaultName }}</b>
             </span>
@@ -248,13 +249,15 @@ const clear = () => {
           </div>
           <a
             v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && product.id"
-            @click="modalProductUpsert?.openModal(product.id)">
+            @click="modalProductUpsert?.openModal(product.id)"
+          >
             Sửa thông tin sản phẩm
           </a>
-          <div class="ml-auto">
+          <div style="margin-left: auto">
             <a
               v-if="permissionIdMap[PermissionId.PRODUCT_CREATE] && !product.id"
-              @click="modalProductUpsert?.openModal()">
+              @click="modalProductUpsert?.openModal()"
+            >
               Thêm sản phẩm mới
             </a>
           </div>
@@ -266,10 +269,10 @@ const clear = () => {
             :max-height="260"
             placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
             required
-            :disabled="!receipt.distributorId"
             @selectItem="({ data }) => selectProduct(data)"
             @onFocusinFirst="handleFocusFirstSearchProduct"
-            @update:text="searchingProduct">
+            @update:text="searchingProduct"
+          >
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.brandName }}</b>
@@ -292,13 +295,9 @@ const clear = () => {
           <div>
             <VueSelect
               v-model:value="receiptItem.batchId"
-              :options="
-                batchOptions.map((i) => ({
-                  ...i,
-                  disabled: i.data.distributorId !== receipt.distributorId,
-                }))
-              "
-              @select-item="({ data }) => selectBatch(data)">
+              :options="batchOptions"
+              @select-item="({ data }) => selectBatch(data)"
+            >
               <!-- template #option  là nội dung hiên thị trong danh sách -->
               <template #option="{ item: { data } }">
                 <div v-if="!data.id">Tự động chọn lô</div>
@@ -342,40 +341,46 @@ const clear = () => {
 
         <div
           v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.warehouse"
-          style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+          style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+        >
           <div>Nhập vào kho hàng</div>
           <div>
             <VueSelect
               v-model:value="receiptItem.warehouseId"
               :options="warehouseOptions"
               :disabled="!!receiptItem.batchId"
-              @update:value="receiptItem.batchId = 0"></VueSelect>
+              @update:value="receiptItem.batchId = 0"
+            ></VueSelect>
           </div>
         </div>
       </div>
 
       <div
         v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
-        style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+        style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+      >
         <div>Số lô</div>
         <div>
           <InputText
             v-model:value="receiptItem.lotNumber"
             class="w-full"
-            :disabled="!!receiptItem.batchId" />
+            :disabled="!!receiptItem.batchId"
+          />
         </div>
       </div>
 
       <div
         v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
-        style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+        style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+      >
         <div>Hạn sử dụng</div>
         <div>
           <InputDate
             v-model:value="receiptItem.expiryDate"
             :disabled="!!receiptItem.batchId"
             typeParser="number"
-            class="w-full" />
+            class="w-full"
+          />
         </div>
       </div>
 
@@ -393,9 +398,8 @@ const clear = () => {
             <VueSelect
               v-model:value="receiptItem.unitRate"
               :disabled="product.unitObject.length <= 1"
-              :options="
-                product.unitObject.map((i) => ({ value: i.rate, text: i.name, data: i }))
-              " />
+              :options="product.unitObject.map((i) => ({ value: i.rate, text: i.name, data: i }))"
+            />
           </div>
           <div class="flex-1">
             <InputNumber v-model:value="receiptItem.unitQuantity" required :validate="{ gt: 0 }" />
@@ -419,7 +423,8 @@ const clear = () => {
             style="width: 100%"
             required
             :min="0"
-            :prepend="product.getUnitNameByRate(receiptItem.unitRate)" />
+            :prepend="product.getUnitNameByRate(receiptItem.unitRate)"
+          />
         </div>
       </div>
     </div>

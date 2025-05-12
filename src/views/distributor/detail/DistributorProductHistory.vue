@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
-import { DTimer, formatPhone } from '../../../utils'
+import { ESTimer, formatPhone } from '../../../utils'
 import { ReceiptItem, ReceiptItemApi } from '../../../modules/receipt-item'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 
@@ -107,7 +107,7 @@ const openBlankReceiptDetail = (receiptId: number) => {
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(receiptItem.receipt?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(receiptItem.receipt?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -159,7 +159,7 @@ const openBlankReceiptDetail = (receiptId: number) => {
                 </span>
               </div>
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(receiptItem.receipt?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(receiptItem.receipt?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

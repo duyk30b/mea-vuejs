@@ -1,4 +1,4 @@
-export class DDom {
+export class ESDom {
   static async startPrint(id: string, textDom: string) {
     const iframePrint = document.getElementById(id) as HTMLIFrameElement
     if (!iframePrint) {

@@ -115,7 +115,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         permissionIdMap[PermissionId.RECEIPT_READ] ||
         permissionIdMap[PermissionId.DISTRIBUTOR_READ]
       "
-      key="Goods">
+      key="Inventory">
       <template #icon>
         <AppstoreOutlined />
       </template>

@@ -1,4 +1,4 @@
-import { DImage, DString, DTimer } from '../../utils'
+import { DImage, DString, ESTimer } from '../../utils'
 import type { Laboratory } from '../laboratory'
 import type { LaboratoryGroup } from '../laboratory-group'
 import type { Organization } from '../organization'
@@ -28,7 +28,7 @@ export const printHtmlCompiledTemplate = (options: {
         me,
         data,
         masterData,
-        DTimer,
+        ESTimer,
         DImage,
         DString,
       } = params;
@@ -43,7 +43,7 @@ export const printHtmlCompiledTemplate = (options: {
       me,
       data,
       masterData,
-      DTimer,
+      ESTimer,
       DImage,
       DString,
     })

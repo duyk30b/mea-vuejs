@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClock, IconFileSearch, IconShoppingCart, IconSpin } from '../../../../common/icon'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -44,7 +45,7 @@ watch(
   (newValue, oldValue) => {
     ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 onMounted(async () => {
@@ -126,8 +127,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   "
                   class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
                   :disabled="index === 0 || tpItem.deliveryStatus === DeliveryStatus.Delivered"
-                  @click="changeItemPosition(index, -1)">
-                  <font-awesome-icon :icon="['fas', 'sort-up']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, -1)"
+                >
+                  <IconSortUp style="opacity: 0.6" />
                 </button>
                 <span>{{ index + 1 }}</span>
                 <button
@@ -144,8 +146,9 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                     index === ticketProductConsumableList.length - 1 ||
                     tpItem.deliveryStatus === DeliveryStatus.Delivered
                   "
-                  @click="changeItemPosition(index, 1)">
-                  <font-awesome-icon :icon="['fas', 'sort-down']" style="opacity: 0.6" />
+                  @click="changeItemPosition(index, 1)"
+                >
+                  <IconSortDown style="opacity: 0.6" />
                 </button>
               </div>
             </td>
@@ -155,14 +158,16 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                 <IconClock
                   width="16"
                   height="16"
-                  style="color: orange; cursor: not-allowed !important" />
+                  style="color: orange; cursor: not-allowed !important"
+                />
               </a-tooltip>
               <a-tooltip v-else>
                 <template #title>Đã xuất vật tư</template>
                 <IconShoppingCart
                   width="18"
                   height="18"
-                  style="color: #52c41a; cursor: not-allowed !important" />
+                  style="color: #52c41a; cursor: not-allowed !important"
+                />
               </a-tooltip>
             </td>
             <td>
@@ -198,7 +203,8 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
-                @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)">
+                @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
@@ -213,7 +219,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                   formatMoney(
                     ticketProductConsumableList.reduce((acc: number, item: TicketProduct) => {
                       return (acc += item.actualPrice * item.quantity)
-                    }, 0)
+                    }, 0),
                   )
                 }}
               </b>
@@ -231,9 +237,10 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
         hasChangePriority
       "
       color="blue"
-      class="ml-auto"
+      style="margin-left: auto"
       icon="save"
-      @click="savePriorityTicketProductConsumable">
+      @click="savePriorityTicketProductConsumable"
+    >
       Lưu lại
     </VueButton>
   </div>

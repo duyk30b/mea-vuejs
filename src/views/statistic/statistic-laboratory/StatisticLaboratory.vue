@@ -8,10 +8,10 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
 import { LaboratoryStatisticService } from '../../../modules/statistics'
 import { TicketLaboratory, TicketLaboratoryApi } from '../../../modules/ticket-laboratory'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
-const fromTime = ref<number>(DTimer.startOfMonth(new Date()).getTime())
-const toTime = ref<number>(DTimer.endOfMonth(new Date()).getTime())
+const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
+const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -218,7 +218,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <td>{{ ticketLaboratory.customer?.fullName }}</td>
             <td>{{ laboratoryMap[ticketLaboratory.laboratoryId]?.name }}</td>
             <td class="text-center">
-              {{ DTimer.timeToText(ticketLaboratory.startedAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(ticketLaboratory.startedAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td class="text-center">
               {{ formatMoney(ticketLaboratory.costPrice) }}

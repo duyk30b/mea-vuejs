@@ -4,7 +4,7 @@ import { AuthService } from '../modules/auth/auth.service'
 import { masterDataRouter } from './master-data.router'
 import { statisticRouter } from './statistic.router'
 import { ticketRouter } from './ticket.router'
-import { warehouseRouter } from './warehouse.router'
+import { inventoryRouter } from './inventory.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -28,7 +28,7 @@ const Router = createRouter({
           meta: { title: 'Trang chủ' },
         },
         ...ticketRouter,
-        warehouseRouter,
+        inventoryRouter,
         masterDataRouter,
         statisticRouter,
         {
@@ -105,7 +105,7 @@ const Router = createRouter({
             {
               path: 'setting',
               name: 'SystemSetting',
-              component: () => import('../views/systems/SystemSetting.vue'),
+              component: () => import('../views/systems/setting/SettingSystemContainer.vue'),
               meta: { title: 'Hệ thống' },
             },
           ],

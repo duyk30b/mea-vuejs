@@ -1,6 +1,27 @@
-export const sleep = async (time: number) => {
-  await new Promise((resolve) => setTimeout(resolve, time))
+export class ESFunction {
+  static sleep = async (time: number) => {
+    return await new Promise((resolve) =>
+      setTimeout(() => {
+        resolve(time)
+      }, time)
+    )
+  }
+
+  static runTimeout = <T>(promise: Promise<T>, timeout: number): Promise<T> => {
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout: ${timeout}ms`)), timeout)
+    )
+    return Promise.race([promise, timeoutPromise])
+  }
 }
+
+// ESFunction.runTimeout(ESFunction.sleep(2000), 1000)
+//   .then((result) => {
+//     console.log('[SUCCESS]', result)
+//   })
+//   .catch((error) => {
+//     console.log('[ERROR]:', error.message)
+//   })
 
 export const debounce = (func: (...args: any[]) => void, delay: number) => {
   let timeout: ReturnType<typeof setTimeout> | null
@@ -34,7 +55,7 @@ export const debounceAsync = (func: (...args: any[]) => Promise<any>, delay: num
   return async (...args: any[]): Promise<any> => {
     state++
     const current = state
-    await sleep(delay)
+    await ESFunction.sleep(delay)
     if (current !== state) return null // Hiểu đơn giản là sau khi ngủ dậy thì thấy thằng khác cướp mất state rồi
     return await func(...args)
   }
@@ -47,7 +68,7 @@ export const throttleAsync = (func: (...args: any[]) => Promise<any>, delay: num
     if (state !== 0) return null // Hiểu đơn giản là state đang bị thằng khác xử lý rồi
     state++
     const result = await func(...args)
-    sleep(delay)
+    ESFunction.sleep(delay)
       .then((e) => (state = 0))
       .catch((e) => (state = 0)) // Xử lý xong mới nhả state ra
     return result

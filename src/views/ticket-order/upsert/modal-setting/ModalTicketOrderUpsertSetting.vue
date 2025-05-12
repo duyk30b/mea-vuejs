@@ -11,7 +11,7 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, CustomerService } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
-import { DTimer } from '../../../../utils'
+import { ESTimer } from '../../../../utils'
 import { Warehouse } from '../../../../modules/warehouse'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
@@ -162,13 +162,6 @@ defineExpose({ openModal })
                           </InputCheckbox>
                         </div>
                         <div class="pl-7">
-                          <div class="pt-2">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
-                              Chỉnh sửa hướng dẫn sử dụng
-                            </InputCheckbox>
-                          </div>
                           <div class="pt-3">
                             <InputCheckbox
                               v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
@@ -198,6 +191,13 @@ defineExpose({ openModal })
                               v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
                               :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
                               Chỉnh sửa giá bán thực tế
+                            </InputCheckbox>
+                          </div>
+                          <div class="pt-2">
+                            <InputCheckbox
+                              v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
+                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
+                              Hiển thị hướng dẫn sử dụng
                             </InputCheckbox>
                           </div>
                         </div>
@@ -251,21 +251,6 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <InputCheckbox
-                          v-model:checked="settingDisplay.invoiceItemsTable.lotNumberAndExpiryDate">
-                          Hiển thị số lô và HSD
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemsTable.hintUsage">
-                          Hiển thị hướng dẫn sử dụng
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
                         <InputCheckbox v-model:checked="settingDisplay.invoiceItemsTable.unit">
                           Hiển thị đơn vị
                         </InputCheckbox>
@@ -276,14 +261,6 @@ defineExpose({ openModal })
                         <InputCheckbox
                           v-model:checked="settingDisplay.invoiceItemsTable.expectedPrice">
                           Hiển thị giá niêm yết
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <InputCheckbox
-                          v-model:checked="settingDisplay.invoiceItemsTable.editActualPrice">
-                          Sửa đơn giá trong bảng danh sách
                         </InputCheckbox>
                       </td>
                     </tr>
@@ -325,7 +302,7 @@ defineExpose({ openModal })
                               <div>
                                 <b>{{ data.fullName }}</b>
                                 - {{ data.phone }} -
-                                {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                                {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
                                 {{ data.addressWard }} - {{ data.addressDistrict }} -
@@ -338,7 +315,8 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <InputCheckbox v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
                           Hiển thị tiền hàng
                         </InputCheckbox>
                       </td>
@@ -423,7 +401,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" class="ml-auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

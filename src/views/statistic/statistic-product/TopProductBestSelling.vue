@@ -6,7 +6,7 @@ import { Bar } from 'vue-chartjs'
 import { VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { StatisticService } from '../../../modules/statistics'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 
 const settingStore = useSettingStore()
 const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
@@ -45,8 +45,8 @@ const options: ChartOptions = {
 }
 
 const now = new Date()
-const endMonth = DTimer.endOfMonth(now)
-const startMonth = DTimer.startOfMonth(now)
+const endMonth = ESTimer.endOfMonth(now)
+const startMonth = ESTimer.startOfMonth(now)
 
 const loaded = ref(false)
 const timeRanger = ref<[Dayjs, Dayjs]>([dayjs(startMonth), dayjs(endMonth)])

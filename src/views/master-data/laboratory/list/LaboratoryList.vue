@@ -113,13 +113,16 @@ const handleModalLaboratoryUpsertSuccess = async () => {
 <template>
   <ModalLaboratoryUpsert
     ref="modalLaboratoryUpsert"
-    @success="handleModalLaboratoryUpsertSuccess" />
+    @success="handleModalLaboratoryUpsertSuccess"
+  />
   <ModalCopyLaboratorySystem
     ref="modalCopyLaboratoryExample"
-    @success="handleModalCopyLaboratorySystemSuccess" />
+    @success="handleModalCopyLaboratorySystemSuccess"
+  />
   <ModalLaboratoryGroupManager
     ref="modalLaboratoryGroupManager"
-    @success="handleModalLaboratoryGroupManagerSuccess" />
+    @success="handleModalLaboratoryGroupManagerSuccess"
+  />
   <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
@@ -131,7 +134,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
         color="blue"
         icon="plus"
-        @click="modalLaboratoryUpsert?.openModal()">
+        @click="modalLaboratoryUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
@@ -167,7 +171,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
               { value: 0, text: 'Tất cả' },
               ...laboratoryGroupAll.map((group) => ({ value: group.id, text: group.name })),
             ]"
-            @update:value="startSearch" />
+            @update:value="startSearch"
+          />
         </div>
       </div>
     </div>
@@ -222,8 +227,14 @@ const handleModalLaboratoryUpsertSuccess = async () => {
                 {{ laboratory.children?.map((i) => i.name).join(', ') }}
               </div>
             </td>
-            <td class="text-center">
-              {{ laboratoryGroupMap[laboratory.laboratoryGroupId]?.name }}
+            <td class="text-left">
+              <span v-if="laboratoryGroupMap[laboratory.laboratoryGroupId]">
+                {{ laboratoryGroupMap[laboratory.laboratoryGroupId]?.name }}</span
+              >
+              <span v-else-if="laboratory.laboratoryGroupId === 0" class="italic">
+                Chưa phân nhóm
+              </span>
+              <span v-else class="italic line-through">Nhóm bị xóa</span>
             </td>
             <td class="text-right">
               {{
@@ -240,7 +251,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
               <a
                 style="color: var(--text-orange)"
-                @click="modalLaboratoryUpsert?.openModal(laboratory.id)">
+                @click="modalLaboratoryUpsert?.openModal(laboratory.id)"
+              >
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>
@@ -253,9 +265,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

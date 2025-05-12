@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   AuditOutlined,
-  ContactsOutlined,
   ContainerOutlined,
   DisconnectOutlined,
   LoginOutlined,
@@ -10,7 +9,8 @@ import {
 import { onBeforeMount, onUnmounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting, IconUser } from '../../../common/icon'
+import { IconSetting } from '../../../common/icon'
+import { IconContacts, IconUser } from '../../../common/icon-antd'
 import {
   IconEyeGlasses,
   IconFluidMed,
@@ -21,6 +21,7 @@ import {
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
+import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
@@ -46,6 +47,7 @@ import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicUserList from './TicketClinicUserList.vue'
 import TicketClinicConsumable from './consumable/TicketClinicConsumable.vue'
 import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
+import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
 import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
@@ -53,6 +55,7 @@ import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSet
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
 
+const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 
 const route = useRoute()
@@ -113,8 +116,9 @@ const startFetchData = async (ticketId: number) => {
 
         ticketAttributeList: true,
         // ticketProductList: true,
-        ticketProductConsumableList: { product: true, batch: true },
-        ticketProductPrescriptionList: { product: true, batch: true },
+        ticketProductConsumableList: { product: true },
+        ticketProductPrescriptionList: { product: true },
+        ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
         ticketProcedureList: {},
         ticketLaboratoryList: {},
         ticketLaboratoryGroupList: {},
@@ -199,7 +203,7 @@ const clickCloseVisit = () => {
   }
   if (
     (ticketClinicRef.value.ticketRadiologyList || []).find(
-      (i) => i.status == TicketRadiologyStatus.Pending
+      (i) => i.status == TicketRadiologyStatus.Pending,
     )
   ) {
     return ModalStore.alert({
@@ -244,12 +248,18 @@ const clickCloseVisit = () => {
 
 <template>
   <ModalTicketClinicDetailSetting ref="modalTicketClinicDetailSetting" />
+  <ModalTicketClinicHistory ref="modalTicketClinicHistory" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="md:block flex items-center">
-        <ContactsOutlined />
-        <span class="ml-2">{{ ticketClinicRef.customer?.fullName }}</span>
-        <VueButton size="small">Lịch sử khám</VueButton>
+      <div class="flex items-center gap-2 flex-wrap">
+        <IconContacts />
+        {{ ticketClinicRef.customer?.fullName }}
+        <VueButton
+          size="small"
+          @click="modalTicketClinicHistory?.openModal(ticketClinicRef.customer!)"
+        >
+          Lịch sử khám
+        </VueButton>
       </div>
     </div>
     <div class="page-header-setting">
@@ -267,14 +277,15 @@ const clickCloseVisit = () => {
     </div>
   </div>
   <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
-    <div style="flex-basis: 600px; flex-grow: 2; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
+    <div style="flex-basis: 600px; flex-grow: 3; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
       <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
         <template #menu>
           <VueTabMenu
             v-if="ticketClinicRef.ticketType === TicketType.Clinic"
             :tabKey="TicketClinicDiagnosisGeneral.__name!"
             style="padding: 6px 12px"
-            @active="router.push({ name: TicketClinicDiagnosisGeneral.__name })">
+            @active="router.push({ name: TicketClinicDiagnosisGeneral.__name })"
+          >
             <IconStethoscope />
             Khám
           </VueTabMenu>
@@ -282,7 +293,8 @@ const clickCloseVisit = () => {
             v-if="ticketClinicRef.ticketType === TicketType.Obstetric"
             style="padding: 6px 12px"
             :tabKey="TicketClinicDiagnosisObstetric.__name!"
-            @active="router.push({ name: TicketClinicDiagnosisObstetric.__name })">
+            @active="router.push({ name: TicketClinicDiagnosisObstetric.__name })"
+          >
             <IconStethoscope />
             Khám
           </VueTabMenu>
@@ -290,70 +302,80 @@ const clickCloseVisit = () => {
             v-if="ticketClinicRef.ticketType === TicketType.Eye"
             style="padding: 6px 12px"
             :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
-            @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })">
+            @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })"
+          >
             <IconStethoscope />
             Khám mắt
           </VueTabMenu>
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketClinicRef.ticketStatus
+                ticketClinicRef.ticketStatus,
               )
-            ">
+            "
+          >
             <VueTabMenu
               v-if="ticketClinicRef.ticketType === TicketType.Eye"
               style="padding: 6px 12px"
               :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
-              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })">
+              @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })"
+            >
               <IconEyeGlasses />
               Đo thị lực
             </VueTabMenu>
             <VueTabMenu
               :tabKey="TicketClinicProcedure.__name!"
               style="padding: 6px 12px"
-              @active="router.push({ name: TicketClinicProcedure.__name })">
+              @active="router.push({ name: TicketClinicProcedure.__name })"
+            >
               <IconFluidMed />
               Dịch vụ
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicConsumable.__name!"
-              @active="router.push({ name: TicketClinicConsumable.__name })">
+              @active="router.push({ name: TicketClinicConsumable.__name })"
+            >
               <OneToOneOutlined />
               Vật tư
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicLaboratory.__name!"
-              @active="router.push({ name: TicketClinicLaboratory.__name })">
+              @active="router.push({ name: TicketClinicLaboratory.__name })"
+            >
               <IconLabPanel />
               Xét nghiệm
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicRadiology.__name!"
-              @active="router.push({ name: TicketClinicRadiology.__name })">
+              @active="router.push({ name: TicketClinicRadiology.__name })"
+            >
               <IconRadiology />
               CĐHA
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicPrescription.__name!"
-              @active="router.push({ name: TicketClinicPrescription.__name })">
+              @active="router.push({ name: TicketClinicPrescription.__name })"
+            >
               <DisconnectOutlined />
               Đơn thuốc
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicUser.__name!"
-              @active="router.push({ name: TicketClinicUser.__name })">
+              @active="router.push({ name: TicketClinicUser.__name })"
+            >
               <IconUser />
               Nhân Viên
             </VueTabMenu>
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicSummary.__name!"
-              @active="router.push({ name: TicketClinicSummary.__name })">
+              @active="router.push({ name: TicketClinicSummary.__name })"
+            >
               <AuditOutlined />
               Tổng kết
             </VueTabMenu>
@@ -374,19 +396,20 @@ const clickCloseVisit = () => {
               TicketClinicRadiology.__name,
               TicketClinicPrescription.__name,
             ].join(',')
-          ">
+          "
+        >
           <component :is="Component" ref="childComponent" />
         </KeepAlive>
       </RouterView>
     </div>
-    <div style="flex-basis: 300px; flex-grow: 1" class="">
+    <div style="flex-basis: 260px; flex-grow: 1" class="">
       <TicketClinicInformation />
       <TicketClinicUserList />
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
           v-if="
-            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Approved].includes(
-              ticketClinicRef.ticketStatus
+            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Prepayment].includes(
+              ticketClinicRef.ticketStatus,
             ) &&
             permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
             !!ticketClinicRef.id
@@ -394,7 +417,8 @@ const clickCloseVisit = () => {
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
-          @click="startCheckup">
+          @click="startCheckup"
+        >
           <LoginOutlined />
           VÀO KHÁM
         </VueButton>
@@ -403,7 +427,8 @@ const clickCloseVisit = () => {
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
-          @click="startRegisterExecuting">
+          @click="startRegisterExecuting"
+        >
           <LoginOutlined />
           ĐĂNG KÝ KHÁM
         </VueButton>
@@ -413,7 +438,8 @@ const clickCloseVisit = () => {
           size="default"
           style="margin-left: -4px; margin-right: -4px"
           :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"
-          @click="clickCloseVisit">
+          @click="clickCloseVisit"
+        >
           <ContainerOutlined />
           ĐÓNG PHIẾU KHÁM
         </VueButton>

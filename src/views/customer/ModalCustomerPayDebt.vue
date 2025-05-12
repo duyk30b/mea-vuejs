@@ -9,7 +9,7 @@ import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
 import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
-import { DTimer } from '../../utils'
+import { ESTimer } from '../../utils'
 import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -147,7 +147,7 @@ defineExpose({ openModal })
                 <td>
                   <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
                   <div>
-                    {{ DTimer.timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}
+                    {{ ESTimer.timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}
                   </div>
                 </td>
                 <td class="text-right">

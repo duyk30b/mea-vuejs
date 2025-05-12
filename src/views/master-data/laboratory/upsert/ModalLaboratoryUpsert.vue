@@ -432,7 +432,7 @@ defineExpose({ openModal })
           <VueButton v-if="laboratory.id" color="red" icon="trash" @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton type="reset" class="ml-auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton

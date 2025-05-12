@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
-import { DTimer, formatPhone } from '../../../utils'
+import { ESTimer, formatPhone } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
@@ -83,7 +83,7 @@ watch(
               </div>
               <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketProcedure.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(ticketProcedure.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-center">
@@ -138,7 +138,7 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticketProcedure.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticketProcedure.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>{{ ticketProcedure.procedure?.name }}</td>

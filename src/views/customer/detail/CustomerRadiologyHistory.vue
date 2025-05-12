@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
@@ -89,7 +89,7 @@ watch(
               </div>
               <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(ticketRadiology.ticket?.startedAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td class="text-right">
@@ -140,7 +140,7 @@ watch(
             <td>
               <LinkAndStatusTicket :ticket="ticketRadiology.ticket!" />
               <div style="font-size: 0.8rem">
-                {{ DTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticketRadiology.ticket?.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
             </td>
             <td>

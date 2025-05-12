@@ -10,28 +10,25 @@ export class ProductFilterQuery {
   quantity?: ConditionNumber
   updatedAt?: ConditionDate
   warehouseIds?: string | ((value: string) => boolean)
+  hasManageQuantity?: 0 | 1
+  $OR?: ProductFilterQuery[]
+  $AND?: ProductFilterQuery[]
 }
 
 export class ProductGetQuery {
   page?: number
   limit?: number
   relation?: {
-    batchList?: boolean
+    // batchList?: boolean
     productGroup?: boolean
     commissionList?: boolean
   }
 
-  filter?: ProductFilterQuery & {
-    batchList?: {
-      quantity?: ConditionNumber
-      warehouseId?: ConditionNumber
-      updatedAt?: ConditionDate
-    }
-    $OR?: [{ brandName: { LIKE: string } }, { substance: { LIKE: string } }]
-  }
+  filter?: ProductFilterQuery
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    code?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'
     brandName?: 'ASC' | 'DESC'
   }

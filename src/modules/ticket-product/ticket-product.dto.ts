@@ -9,14 +9,12 @@ export class TicketProductGetQuery {
     ticket?: boolean
     customer?: boolean
     product?: boolean
-    batch?: boolean
   }
 
   filter?: {
     ticketId?: number
     customerId?: number
     productId?: number
-    batchId?: number
     deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
   }
 

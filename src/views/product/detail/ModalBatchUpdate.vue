@@ -2,16 +2,16 @@
 import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon'
-import { InputDate, InputMoney, InputText, VueSelect } from '../../../common/vue-form'
+import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { InputDate, InputMoney, InputNumber, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { Batch, BatchService } from '../../../modules/batch'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 
 const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE' | 'DESTROY'): void }>()
 
@@ -56,7 +56,7 @@ const handleSave = async () => {
     } else {
       const response = await BatchService.updateInfoAndQuantityAndCostPrice(
         batch.value.id,
-        batch.value
+        batch.value,
       )
       response.batch.product = response.product
       emit('success', response.batch, 'UPDATE')
@@ -89,7 +89,11 @@ const clickDelete = () => {
   }
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa lô hàng này',
-    content: 'Lô hàng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: [
+      'Lô hàng đã xóa không thể khôi phục lại được.',
+      'Bạn có thể dùng tính năng "GỘP LÔ" thay thế tính năng này',
+      'Bạn vẫn muốn XÓA ?',
+    ],
     async onOk() {
       try {
         const response = await BatchService.destroyOne(batch.value.id)
@@ -100,9 +104,9 @@ const clickDelete = () => {
           ModalStore.alert({
             title: 'Không thể xóa lô hàng khi đã tồn tại trong phiếu nhập hàng hoặc phiếu bán hàng',
             content: [
-              'Nếu bắt buộc phải xóa, bạn cần phải xóa tất cả phiếu nhập hàng và phiếu bán hàng có lô hàng này',
               `Phiếu nhập hàng đang có: ` + response.data.receiptItemList.map((i) => i.receiptId),
-              `Phiếu ban hàng đang có: ` + response.data.ticketProductList.map((i) => i.ticketId),
+              `Phiếu ban hàng đang có: ` + response.data.ticketBatchList.map((i) => i.ticketId),
+              'Nếu bắt buộc phải xóa, bạn có thể dùng tính năng "GỘP LÔ" thay thế',
             ],
           })
         }
@@ -151,9 +155,10 @@ defineExpose({ openModal })
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
           <div>Số lượng</div>
           <div>
-            <InputMoney
+            <InputNumber
               v-model:value="batch.quantity"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]" />
+              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]"
+            />
           </div>
         </div>
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
@@ -161,7 +166,8 @@ defineExpose({ openModal })
           <div>
             <InputMoney
               v-model:value="batch.unitCostPrice"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]" />
+              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]"
+            />
           </div>
         </div>
         <div style="flex-basis: 90%; flex-grow: 1">
@@ -178,10 +184,11 @@ defineExpose({ openModal })
             v-if="permissionIdMap[PermissionId.BATCH_DELETE] && batch.id"
             color="red"
             type="button"
-            @click="clickDelete">
+            @click="clickDelete"
+          >
             Xóa
           </VueButton>
-          <VueButton class="ml-auto" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton
@@ -189,7 +196,8 @@ defineExpose({ openModal })
             icon="save"
             type="submit"
             :loading="saveLoading"
-            :disabled="!hasChangeData">
+            :disabled="!hasChangeData"
+          >
             Lưu lại
           </VueButton>
         </div>

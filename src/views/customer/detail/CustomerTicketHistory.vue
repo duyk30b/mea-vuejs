@@ -6,7 +6,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
@@ -55,11 +55,11 @@ watch(
     if (newValue) await startFetchData()
     else ticketList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const openBlankTicketOrderUpsert = (customerId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'TicketOrderUpsert',
     query: { customer_id: customerId, mode: 'CREATE' },
   })
@@ -75,7 +75,8 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
           v-if="permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]"
           color="blue"
           icon="plus"
-          @click="openBlankTicketOrderUpsert(customerId!)">
+          @click="openBlankTicketOrderUpsert(customerId!)"
+        >
           Bán hàng mới
         </VueButton>
       </div>
@@ -85,6 +86,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
         <thead>
           <tr>
             <th>Đơn hàng</th>
+            <th>Ghi chú</th>
             <th>Tiền</th>
           </tr>
         </thead>
@@ -96,8 +98,11 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
             <td>
               <LinkAndStatusTicket :ticket="ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
-                {{ DTimer.timeToText(ticket.startedAt, 'hh:mm DD/MM/YYYY') }}
+                {{ ESTimer.timeToText(ticket.startedAt, 'hh:mm DD/MM/YYYY') }}
               </div>
+            </td>
+            <td>
+              <div class="max-line-2">{{ ticket.note }}</div>
             </td>
             <td class="text-right">
               <div style="font-weight: 500">
@@ -106,7 +111,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
               <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Approved" class="text-xs">
+              <div v-if="ticket.ticketStatus === TicketStatus.Prepayment" class="text-xs">
                 Đã thanh toán: {{ formatMoney(ticket.paid) }}
               </div>
             </td>
@@ -119,9 +124,8 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

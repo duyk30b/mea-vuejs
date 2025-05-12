@@ -7,7 +7,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { DDom } from '../../../utils'
+import { ESDom } from '../../../utils'
 import {
   TicketAttributeKeyOptometryList,
   type TicketAttributeKeyOptometryType,
@@ -40,7 +40,7 @@ watch(
       ticketAttributeMap.value[k] = i.value
     })
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 const hasChangeAttribute = computed(() => {
@@ -73,6 +73,7 @@ const saveTicketDiagnosis = async () => {
     }
 
     await TicketClinicApi.updateDiagnosis({
+      note: ticketClinicRef.value.note,
       ticketId: ticketClinicRef.value.id,
       files: [],
       ticketAttributeChangeList,
@@ -110,7 +111,7 @@ const startPrint = async () => {
       printHtml,
     })
 
-    await DDom.startPrint('iframe-print', textDom)
+    await ESDom.startPrint('iframe-print', textDom)
   } catch (error) {
     console.log('🚀 ~ file: TicketEyePrescription.vue:191 ~ startPrint ~ error:', error)
   }
@@ -138,19 +139,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MP_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MP_Loan"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MP_TrucLoan"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td rowspan="2"><input v-model="ticketAttributeMap.KhucXaMay_KhoangCachDongTu" /></td>
             </tr>
@@ -160,19 +164,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MT_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MT_Loan"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaMay_MT_TrucLoan"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
             </tr>
           </tbody>
@@ -201,19 +208,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MP_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MP_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MP_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MP_CoKinh" /></td>
             </tr>
@@ -224,19 +234,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MT_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MT_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaKinhCu_MT_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaKinhCu_MT_CoKinh" /></td>
             </tr>
@@ -272,19 +285,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MP_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MP_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MP_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MP_CoKinh" /></td>
             </tr>
@@ -295,19 +311,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MT_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MT_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinXa_MT_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaNhinXa_MT_CoKinh" /></td>
             </tr>
@@ -341,19 +360,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MP_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MP_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MP_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MP_CoKinh" /></td>
             </tr>
@@ -364,19 +386,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MT_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MT_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.KhucXaNhinGan_MT_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.KhucXaNhinGan_MT_CoKinh" /></td>
             </tr>
@@ -451,19 +476,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MP_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MP_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MP_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.SoKinhChiDinh_MP_ADD" /></td>
               <td rowspan="2">
@@ -476,19 +504,22 @@ const startPrint = async () => {
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MT_Cau"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MT_Tru"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td>
                 <input
                   v-model="ticketAttributeMap.SoKinhChiDinh_MT_Truc"
                   type="text"
-                  style="text-align: left" />
+                  style="text-align: left"
+                />
               </td>
               <td><input v-model="ticketAttributeMap.SoKinhChiDinh_MT_ADD" /></td>
             </tr>
@@ -507,7 +538,8 @@ const startPrint = async () => {
         :disabled="!hasChangeData"
         :loading="saveLoading"
         icon="save"
-        @click="saveTicketDiagnosis">
+        @click="saveTicketDiagnosis"
+      >
         Lưu lại
       </VueButton>
     </div>

@@ -3,9 +3,9 @@ import { ref } from 'vue'
 import VueHeader from './VueHeader.vue'
 import VueSider from './VueSider.vue'
 
-const openSideDrawer = ref(false)
+const openSideDrawer = ref<boolean>(false)
 
-const firstCollapsed = localStorage.getItem('SIDE_COLLAPSED') === 'true' || window.innerWidth < 1200
+const firstCollapsed = localStorage.getItem('SIDE_COLLAPSED') === 'true' || window.innerWidth < 1400
 
 const defaultCollapsed = ref<boolean>(firstCollapsed)
 const collapsed = ref<boolean>(firstCollapsed)
@@ -18,7 +18,7 @@ const setSideCollapsed = (value: boolean) => {
 
 <template>
   <a-layout id="dashboard-layout">
-    <VueHeader @handleShowDrawer="openSideDrawer = $event" />
+    <VueHeader @handleShowDrawer="(value) => (openSideDrawer = value)" />
     <a-layout>
       <a-layout-sider
         theme="light"
@@ -56,7 +56,7 @@ const setSideCollapsed = (value: boolean) => {
           <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333"><strong>MEA-v5.0</strong>©2020 - Hotline: 0376.899.866</span>
+          <span style="color: #333"><strong>MEA-v8.0</strong>©2020 - Hotline: 0376.899.866</span>
         </a-layout-footer>
       </a-layout>
     </a-layout>

@@ -12,7 +12,7 @@ import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules
 import { Customer, CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString, DTimer } from '../../../utils'
+import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
@@ -247,7 +247,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
                 <div>
                   <b>{{ data.fullName }}</b>
                   - {{ data.phone }} -
-                  {{ DTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
+                  {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
                 <div>{{ DString.formatAddress(data) }}</div>
               </template>

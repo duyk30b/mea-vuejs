@@ -6,7 +6,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { DTimer } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import AppointmentStatusTag from '../../appointment/AppointmentStatusTag.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
@@ -98,7 +98,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                 <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
               </div>
               <div style="white-space: nowrap; font-size: 0.9em;">
-                {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
+                {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
             <td>{{ appointment.reason }}</td>
@@ -156,7 +156,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
               </div>
             </td>
             <td class="text-center" style="width: 200px">
-              {{ DTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
+              {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
             </td>
             <td>{{ appointment.reason }}</td>
             <td class="text-center">

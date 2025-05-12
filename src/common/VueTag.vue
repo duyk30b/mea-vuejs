@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import {
+  IconCalendar,
   IconClock,
   IconCloseCircle,
   IconDollar,
   IconExclamationCircle,
+  IconForm,
   IconMinusCircle,
   IconSend,
+  IconSpin,
   IconStop,
 } from './icon'
 import IconCheckCircle from './icon/IconCheckCircle.vue'
@@ -18,13 +21,16 @@ const props = withDefaults(
     icon?:
       | Object
       | ''
+      | 'form'
       | 'check'
       | 'minus'
       | 'clock'
       | 'exclamation'
       | 'close'
       | 'dollar'
+      | 'calendar'
       | 'send'
+      | 'spin'
       | 'stop'
   }>(),
   {
@@ -45,6 +51,7 @@ const props = withDefaults(
         <component :is="icon" />
       </span>
       <span v-else-if="icon === 'check'" class="icon-check"><IconCheckCircle /></span>
+      <span v-else-if="icon === 'form'" class="icon-form"><IconForm/></span>
       <span v-else-if="icon === 'minus'" class="icon-minus"><IconMinusCircle /></span>
       <span v-else-if="icon === 'clock'" class="icon-clock"><IconClock /></span>
       <span v-else-if="icon === 'exclamation'" class="icon-exclamation">
@@ -52,8 +59,10 @@ const props = withDefaults(
       </span>
       <span v-else-if="icon === 'close'" class="icon-close"><IconCloseCircle /></span>
       <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
+      <span v-else-if="icon === 'calendar'" class="icon-calendar"><IconCalendar /></span>
       <span v-else-if="icon === 'send'" class="icon-send"><IconSend /></span>
       <span v-else-if="icon === 'stop'" class="icon-stop"><IconStop /></span>
+      <span v-else-if="icon === 'spin'" class="icon-stop"><IconSpin /></span>
       <slot v-else name="icon"></slot>
       <slot></slot>
     </div>
