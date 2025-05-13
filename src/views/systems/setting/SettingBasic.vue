@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox } from '../../../common/vue-form'
+import VueButton from '../../../common/VueButton.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
 import { SettingApi } from '../../../modules/setting/setting.api'
-import VueButton from '../../../common/VueButton.vue'
 
 const settingStore = useSettingStore()
 

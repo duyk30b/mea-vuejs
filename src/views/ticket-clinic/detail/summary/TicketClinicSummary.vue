@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-import { FileSyncOutlined, MoreOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconDollar } from '../../../../common/icon'
-import { IconFileSearch } from '../../../../common/icon-antd'
+import { IconDollar, IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
@@ -21,7 +19,7 @@ import {
 } from '../../../../modules/print-html'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { TicketStatus, TicketType } from '../../../../modules/ticket'
+import { TicketStatus } from '../../../../modules/ticket'
 import {
   TicketClinicApi,
   TicketClinicProductApi,
@@ -285,7 +283,7 @@ const startPrint = async () => {
             </a-menu-item>
             <a-menu-item key="RETURN_PRODUCT_LIST">
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
+                <IconFileSync class="mr-2" />
                 Hoàn trả thuốc - vật tư
               </span>
             </a-menu-item>
@@ -296,7 +294,7 @@ const startPrint = async () => {
               key="REOPEN_TICKET"
             >
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
+                <IconFileSync class="mr-2" />
                 Mở lại phiếu khám
               </span>
             </a-menu-item>
@@ -310,7 +308,7 @@ const startPrint = async () => {
         </template>
         <a-button shape="circle">
           <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
+            <IconMore style="font-size: 1.2rem; font-weight: bold" />
           </template>
         </a-button>
       </a-dropdown>

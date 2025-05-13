@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconSetting } from '../../../../common/icon'
+import { IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'

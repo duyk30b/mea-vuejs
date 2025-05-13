@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconExclamationCircle } from '../../../common/icon-antd'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
@@ -130,7 +130,7 @@ const handleChangeInvoiceExpense = (data: number) => {
       </template>
       <div>
         <span class="mr-2">Chi phí</span>
-        <ExclamationCircleOutlined />
+        <IconExclamationCircle />
       </div>
     </a-popconfirm>
   </td>

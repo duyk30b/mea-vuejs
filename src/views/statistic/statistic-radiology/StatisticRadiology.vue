@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
+import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
 import { InputDate } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -105,8 +104,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     <div class="flex items-center gap-4">
       <div
         class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem">
-        <ScheduleOutlined class="mr-1" />
+        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
+      >
+        <IconBarChart class="mr-1" />
         Báo cáo phiếu CĐHA
       </div>
     </div>
@@ -133,7 +133,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="fromTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
 
@@ -144,7 +145,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             v-model:value="toTime"
             type-parser="number"
             class="w-full"
-            @selectTime="handleChangeTime" />
+            @selectTime="handleChangeTime"
+          />
         </div>
       </div>
     </div>
@@ -207,10 +209,11 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                   :to="{
                     name: 'TicketClinicDetailContainer',
                     params: { id: ticketRadiology.ticketId },
-                  }">
+                  }"
+                >
                   <div class="flex justify-center items-center gap-2">
                     <span>T{{ ticketRadiology.ticketId }}</span>
-                    <span class="text-lg"><ReadOutlined /></span>
+                    <span class="text-lg"><IconRead /></span>
                   </div>
                 </router-link>
               </div>
@@ -239,9 +242,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

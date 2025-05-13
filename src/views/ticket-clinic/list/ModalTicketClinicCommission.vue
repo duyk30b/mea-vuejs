@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconTrash } from '../../../common/icon'
+import { IconClose, IconDelete } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -135,7 +135,7 @@ defineExpose({ openModal })
             <div>&nbsp;</div>
             <div class="pt-2 flex justify-center">
               <a style="color: var(--text-red)" @click="commissionList!.splice(index, 1)">
-                <IconTrash width="18" height="18" />
+                <IconDelete width="18" height="18" />
               </a>
             </div>
           </div>

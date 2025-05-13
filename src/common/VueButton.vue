@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { IconClose, IconDollar, IconPlus, IconPrint, IconSave, IconTrash, IconSend } from './icon'
+import {
+  IconClose,
+  IconDelete,
+  IconDollar,
+  IconPlus,
+  IconPrint,
+  IconSave,
+  IconSend,
+} from './icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -48,7 +56,7 @@ const props = withDefaults(
     <span v-else-if="icon === 'save'" class="icon-save"><IconSave /></span>
     <span v-else-if="icon === 'print'" class="icon-print"><IconPrint /></span>
     <span v-else-if="icon === 'plus'" class="icon-plus"><IconPlus /></span>
-    <span v-else-if="icon === 'trash'" class="icon-trash"><IconTrash /></span>
+    <span v-else-if="icon === 'trash'" class="icon-trash"><IconDelete /></span>
     <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
     <span v-else-if="icon === 'send'" class="icon-send"><IconSend /></span>
     <slot v-else name="icon"></slot>

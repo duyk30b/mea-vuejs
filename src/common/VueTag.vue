@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {
   IconCalendar,
-  IconClock,
+  IconCheckCircle,
+  IconClockCircle,
   IconCloseCircle,
   IconDollar,
   IconExclamationCircle,
@@ -10,8 +11,7 @@ import {
   IconSend,
   IconSpin,
   IconStop,
-} from './icon'
-import IconCheckCircle from './icon/IconCheckCircle.vue'
+} from './icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -38,22 +38,23 @@ const props = withDefaults(
     bgColor: '',
     size: 'default',
     icon: '',
-  }
+  },
 )
 </script>
 
 <template>
   <div
     :class="`vue-tag vue-tag-${color} vue-tag-size-${size}`"
-    :style="bgColor ? `background-color: ${bgColor}; color: white` : ''">
+    :style="bgColor ? `background-color: ${bgColor}; color: white` : ''"
+  >
     <div>
       <span v-if="typeof icon === 'object'">
         <component :is="icon" />
       </span>
       <span v-else-if="icon === 'check'" class="icon-check"><IconCheckCircle /></span>
-      <span v-else-if="icon === 'form'" class="icon-form"><IconForm/></span>
+      <span v-else-if="icon === 'form'" class="icon-form"><IconForm /></span>
       <span v-else-if="icon === 'minus'" class="icon-minus"><IconMinusCircle /></span>
-      <span v-else-if="icon === 'clock'" class="icon-clock"><IconClock /></span>
+      <span v-else-if="icon === 'clock'" class="icon-clock"><IconClockCircle /></span>
       <span v-else-if="icon === 'exclamation'" class="icon-exclamation">
         <IconExclamationCircle />
       </span>

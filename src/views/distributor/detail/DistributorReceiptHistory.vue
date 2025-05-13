@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import VueButton from '../../../common/VueButton.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor } from '../../../modules/distributor'
 import { ReceiptApi, type Receipt } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import ReceiptStatusTag from '../../../views/receipt/ReceiptStatusTag.vue'
-import VueButton from '../../../common/VueButton.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -21,7 +20,7 @@ const { formatMoney } = settingStore
 const receipts = ref<Receipt[]>([])
 const page = ref(1)
 const limit = ref(
-  Number(localStorage.getItem('DISTRIBUTOR_RECEIPT_HISTORY_PAGINATION_LIMIT')) || 10
+  Number(localStorage.getItem('DISTRIBUTOR_RECEIPT_HISTORY_PAGINATION_LIMIT')) || 10,
 )
 const total = ref(0)
 
@@ -52,11 +51,11 @@ watch(
     if (newValue) await startFetchData()
     else receipts.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const openBlankReceiptDetail = (receiptId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'ReceiptDetail',
     params: { id: receiptId },
   })
@@ -64,7 +63,7 @@ const openBlankReceiptDetail = (receiptId: number) => {
 }
 
 const openBlankReceiptUpsert = (distributorId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'ReceiptUpsert',
     query: { distributor_id: distributorId, mode: 'CREATE' },
   })
@@ -135,9 +134,8 @@ const openBlankReceiptUpsert = (distributorId: number) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

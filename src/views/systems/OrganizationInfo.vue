@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
-import { IconSetting } from '../../common/icon'
+import { IconSetting } from '../../common/icon-antd'
 import ImageUploadSingle from '../../common/image-upload/ImageUploadSingle.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputHint, InputText } from '../../common/vue-form'
@@ -25,7 +25,7 @@ const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
 const organization = ref<Organization>(
-  Organization.from(meStore.organization || Organization.blank())
+  Organization.from(meStore.organization || Organization.blank()),
 )
 const hasChangeImage = ref(false)
 const saveLoading = ref(false)
@@ -43,12 +43,12 @@ onMounted(async () => {
   provinceList.value = await AddressInstance.getAllProvinces()
   if (organization.value.addressProvince) {
     districtList.value = await AddressInstance.getDistrictsByProvince(
-      organization.value.addressProvince
+      organization.value.addressProvince,
     )
     if (organization.value.addressDistrict) {
       wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
         organization.value.addressProvince,
-        organization.value.addressDistrict
+        organization.value.addressDistrict,
       )
     }
   }
@@ -70,7 +70,7 @@ const handleChangeDistrict = async (district: string) => {
   }
   wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
     organization.value.addressProvince,
-    district
+    district,
   )
 }
 
@@ -115,7 +115,8 @@ const sendEmailVerify = async () => {
 <template>
   <ModalChangeOrganizationEmail
     ref="modalChangeOrganizationEmail"
-    @success="(v) => (organization = v)" />
+    @success="(v) => (organization = v)"
+  />
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
@@ -138,7 +139,8 @@ const sendEmailVerify = async () => {
           <VueButton
             color="blue"
             style="width: 100px"
-            @click="modalChangeOrganizationEmail?.openModal(organization)">
+            @click="modalChangeOrganizationEmail?.openModal(organization)"
+          >
             Đổi Email
           </VueButton>
         </div>
@@ -164,7 +166,8 @@ const sendEmailVerify = async () => {
               placeholder="Thành Phố / Tỉnh"
               :maxHeight="180"
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              @update:value="handleChangeProvince" />
+              @update:value="handleChangeProvince"
+            />
           </div>
           <div style="flex: 1; flex-basis: 200px">
             <InputHint
@@ -173,7 +176,8 @@ const sendEmailVerify = async () => {
               :logic-filter="(item: string, text: string) => customFilter(item, text)"
               placeholder="Quận / Huyện"
               :maxHeight="180"
-              @update:value="handleChangeDistrict" />
+              @update:value="handleChangeDistrict"
+            />
           </div>
           <div style="flex: 1; flex-basis: 200px">
             <InputHint
@@ -181,7 +185,8 @@ const sendEmailVerify = async () => {
               :options="wardList"
               placeholder="Phường / Xã"
               :maxHeight="180"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+              :logic-filter="(item: string, text: string) => customFilter(item, text)"
+            />
           </div>
         </div>
       </div>
@@ -190,7 +195,8 @@ const sendEmailVerify = async () => {
         <div style="width: 120px; flex: none"></div>
         <InputText
           v-model:value="organization.addressStreet"
-          placeholder="Số nhà / Tòa nhà / Ngõ / Đường" />
+          placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+        />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
@@ -203,7 +209,8 @@ const sendEmailVerify = async () => {
               id: organization.logoImage?.id || 0,
               src: DImage.getImageLink(organization.logoImage, { size: 400 }),
             }"
-            @changeImage="hasChangeImage = true" />
+            @changeImage="hasChangeImage = true"
+          />
         </div>
       </div>
 
@@ -213,7 +220,8 @@ const sendEmailVerify = async () => {
           color="blue"
           :loading="saveLoading"
           icon="save"
-          @click="saveOrganization">
+          @click="saveOrganization"
+        >
           Lưu lại
         </VueButton>
       </div>

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClock, IconFileSearch, IconShoppingCart, IconSpin } from '../../../../common/icon'
+import { IconClockCircle, IconFileSearch, IconShoppingCart, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -155,7 +155,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
             <td class="text-center">
               <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
                 <template #title>Chưa xuất vật tư</template>
-                <IconClock
+                <IconClockCircle
                   width="16"
                   height="16"
                   style="color: orange; cursor: not-allowed !important"

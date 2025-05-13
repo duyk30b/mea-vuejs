@@ -10,7 +10,6 @@ const props = withDefaults(defineProps<{ width?: number | string; height?: numbe
     :height="height"
     fill="currentColor"
     aria-hidden="true"
-    fill-rule="evenodd"
     viewBox="64 64 896 896"
   >
     <path

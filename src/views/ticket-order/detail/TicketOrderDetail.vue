@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import {
-  CopyOutlined,
-  ExceptionOutlined,
-  EyeOutlined,
-  FileSearchOutlined,
-  FileSyncOutlined,
-  MoreOutlined,
-  ScheduleOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import {
+  IconAudit,
+  IconClose,
+  IconCopy,
+  IconEdit,
+  IconEye,
+  IconFileSearch,
+  IconFileSync,
+  IconMore,
+  IconSetting
+} from '../../../common/icon-antd'
 import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
+import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { useTicketOrderStore } from '../../../modules/ticket-order/ticket-order.store'
 import { timeToText } from '../../../utils'
@@ -273,7 +273,7 @@ const openModalTicketOrderPreview = () => {
 
   <div class="page-header">
     <div class="page-header-content">
-      <ScheduleOutlined />
+      <IconAudit />
       Thông tin hóa đơn
       <span
         v-if="ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled"
@@ -299,7 +299,7 @@ const openModalTicketOrderPreview = () => {
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
@@ -321,7 +321,7 @@ const openModalTicketOrderPreview = () => {
               class="ml-1"
               @click="modalCustomerDetail?.openModal(ticketOrderDetailRef.customerId)"
             >
-              <FileSearchOutlined />
+              <IconFileSearch />
             </a>
           </td>
         </tr>
@@ -354,24 +354,26 @@ const openModalTicketOrderPreview = () => {
   <div class="page-main">
     <div class="px-4 pt-4 flex flex-wrap gap-2">
       <VueButton @click="openModalTicketOrderPreview">
-        <EyeOutlined />
+        <IconEye />
         Xem
       </VueButton>
       <VueButton icon="print" @click="startPrint">In</VueButton>
       <VueButton style="margin-left: auto" @click="startCopy">
-        <CopyOutlined />
+        <IconCopy />
         Copy đơn
       </VueButton>
       <VueButton
         v-if="
-          [TicketStatus.Draft, TicketStatus.Prepayment].includes(ticketOrderDetailRef.ticketStatus) ||
+          [TicketStatus.Draft, TicketStatus.Prepayment].includes(
+            ticketOrderDetailRef.ticketStatus,
+          ) ||
           (settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
             ticketOrderDetailRef.ticketStatus !== TicketStatus.Cancelled)
         "
         color="blue"
         @click="startEdit"
       >
-        <ExceptionOutlined />
+        <IconEdit />
         Sửa đơn
       </VueButton>
 
@@ -388,7 +390,7 @@ const openModalTicketOrderPreview = () => {
               key="RETURN_PRODUCT"
             >
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
+                <IconFileSync class="mr-2" />
                 Trả Hàng
               </span>
             </a-menu-item>
@@ -426,7 +428,7 @@ const openModalTicketOrderPreview = () => {
         </template>
         <a-button shape="circle">
           <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
+            <IconMore style="font-size: 1.2rem; font-weight: bold" />
           </template>
         </a-button>
       </a-dropdown>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
+import { IconSetting } from '../../../common/icon-antd'
 import { VueTabPanel } from '../../../common/vue-tabs'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'

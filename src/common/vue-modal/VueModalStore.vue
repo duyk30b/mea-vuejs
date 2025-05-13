@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../VueButton.vue'
-import { IconClose, IconExclamationCircle, IconQuestionCircle } from '../icon'
+import { IconClose, IconExclamationCircle, IconQuestionCircle } from '../icon-antd'
 import VueModal from './VueModal.vue'
 import { ModalStore } from './vue-modal.store'
 

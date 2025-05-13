@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { IconEye } from '../icon'
 
 const props = withDefaults(
   defineProps<{

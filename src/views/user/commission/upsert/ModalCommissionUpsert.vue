@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputMoney, InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import {
   Commission,
-  CommissionApi,
   CommissionCalculatorType,
-  InteractType,
-  InteractTypeText,
   CommissionService,
+  InteractType,
 } from '../../../../modules/commission'
-import { Role, RoleService } from '../../../../modules/role'
-import { keysEnum } from '../../../../utils'
 
 const emit = defineEmits<{
   (e: 'success', value: Commission, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -103,7 +98,8 @@ defineExpose({ openModal })
 
         <div
           v-if="commission.interactType === InteractType.Ticket"
-          style="flex-basis: 90%; flex-grow: 1">
+          style="flex-basis: 90%; flex-grow: 1"
+        >
           <div class="">Phiếu</div>
           <div>
             <InputText value="Phiếu khám" disabled />
@@ -112,7 +108,8 @@ defineExpose({ openModal })
 
         <div
           v-if="commission.interactType === InteractType.Product"
-          style="flex-basis: 90%; flex-grow: 1">
+          style="flex-basis: 90%; flex-grow: 1"
+        >
           <div class="">Sản phẩm</div>
           <div>
             <InputText :value="commission.product?.brandName || ''" disabled />
@@ -121,7 +118,8 @@ defineExpose({ openModal })
 
         <div
           v-if="commission.interactType === InteractType.Procedure"
-          style="flex-basis: 90%; flex-grow: 1">
+          style="flex-basis: 90%; flex-grow: 1"
+        >
           <div class="">Dịch vụ</div>
           <div>
             <InputText :value="commission.procedure?.name || ''" disabled />
@@ -130,7 +128,8 @@ defineExpose({ openModal })
 
         <div
           v-if="commission.interactType === InteractType.Radiology"
-          style="flex-basis: 90%; flex-grow: 1">
+          style="flex-basis: 90%; flex-grow: 1"
+        >
           <div class="">Phiếu CĐHA</div>
           <div>
             <InputText :value="commission.radiology?.name || ''" disabled />
@@ -139,7 +138,8 @@ defineExpose({ openModal })
 
         <div
           v-if="commission.interactType === InteractType.Laboratory"
-          style="flex-basis: 90%; flex-grow: 1">
+          style="flex-basis: 90%; flex-grow: 1"
+        >
           <div class="">Xét nghiệm</div>
           <div>
             <InputText :value="commission.laboratory?.name || ''" disabled />
@@ -156,7 +156,8 @@ defineExpose({ openModal })
                 { value: CommissionCalculatorType.VND, text: 'VNĐ' },
                 { value: CommissionCalculatorType.PercentExpected, text: '% Giá niêm yết' },
                 { value: CommissionCalculatorType.PercentActual, text: '% Giá sau chiết khấu' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 200px)">
               <InputMoney v-model:value="commission.commissionValue" />
             </div>
@@ -169,7 +170,7 @@ defineExpose({ openModal })
           <VueButton color="red" type="button" @click="clickDelete">Xóa</VueButton>
           <VueButton style="margin-left: auto" type="reset" @click="closeModal">
             <template #icon>
-              <CloseOutlined />
+              <IconClose />
             </template>
             Hủy bỏ
           </VueButton>

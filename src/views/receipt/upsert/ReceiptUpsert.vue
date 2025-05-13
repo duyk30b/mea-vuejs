@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { FileSearchOutlined, SettingOutlined, ShopOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueTag from '../../../common/VueTag.vue'
+import { IconFileSearch, IconGroup, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -19,7 +20,6 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
-import VueTag from '../../../common/VueTag.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -213,9 +213,9 @@ const openModalDistributorDetail = (data?: Distributor) => {
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="md:block">
-        <ShopOutlined class="mr-2" />
+    <div class="flex items-center gap-4">
+      <div class="md:flex items-center gap-2 font-medium text-xl">
+        <IconGroup />
         <span v-if="mode == EReceiptUpsertMode.CREATE">Tạo phiếu nhập hàng mới</span>
         <span v-if="mode == EReceiptUpsertMode.UPDATE">Cập nhật phiếu nhập hàng</span>
         <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
@@ -224,7 +224,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">
@@ -250,7 +250,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <div class="flex gap-1 flex-wrap">
             <span>Tên NCC</span>
             <a v-if="!!distributor.id" @click="openModalDistributorDetail(receipt.distributor)">
-              <FileSearchOutlined />
+              <IconFileSearch />
             </a>
             <span>
               (nợ cũ:

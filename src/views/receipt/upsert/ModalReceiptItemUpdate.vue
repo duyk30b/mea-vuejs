@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { InputDate, InputMoney, InputNumber, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'

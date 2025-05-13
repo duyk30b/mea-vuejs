@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { NodeIndexOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileAdd, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -379,8 +378,8 @@ const handleChangeTabs = (activeKey: any) => {
   <ModalDataTicketOrder ref="modalDataTicketOrder" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="md:block">
-        <NodeIndexOutlined class="mr-2" />
+      <div class="md:flex items-center">
+        <IconFileAdd class="mr-2" />
         <span v-if="mode == ETicketOrderUpsertMode.CREATE">Tạo hóa đơn mới</span>
         <span v-if="mode == ETicketOrderUpsertMode.UPDATE">Cập nhật hóa đơn</span>
         <span v-if="mode == ETicketOrderUpsertMode.COPY">Copy hóa đơn</span>
@@ -390,7 +389,7 @@ const handleChangeTabs = (activeKey: any) => {
     <div class="page-header-setting">
       <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
         <span>
-          <SettingOutlined />
+          <IconSetting />
         </span>
         <template #overlay>
           <a-menu @click="handleMenuSettingClick">

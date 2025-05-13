@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon'
+import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { CONFIG } from '../../../../config'

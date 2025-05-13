@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { SisternodeOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting, IconTrash } from '../../../common/icon'
+import { IconClose, IconDelete, IconSetting, IconSisternode } from '../../../common/icon-antd'
 import {
   InputCheckbox,
   InputFilter,
@@ -270,7 +269,7 @@ defineExpose({ openModal })
           class="px-4 cursor-pointer"
           @click="modalDataProduct?.openModal()"
         >
-          <SisternodeOutlined />
+          <IconSisternode />
         </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
@@ -626,7 +625,7 @@ defineExpose({ openModal })
                         style="color: var(--text-red)"
                         @click="product.commissionList!.splice(index, 1)"
                       >
-                        <IconTrash width="18" height="18" />
+                        <IconDelete width="18" height="18" />
                       </a>
                     </div>
                   </div>
@@ -650,7 +649,7 @@ defineExpose({ openModal })
           >
             Xóa
           </VueButton>
-          <VueButton style="margin-left: auto;" icon="close" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

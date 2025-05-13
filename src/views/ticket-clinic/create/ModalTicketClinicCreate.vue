@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputCheckbox,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NodeIndexOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { IconSort } from '../../../../common/icon'
+import { IconGift } from '../../../../common/icon-antd'
+import { IconSort } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { InputFilter, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -68,7 +68,7 @@ const startFetchData = async () => {
             }
           : undefined,
       },
-      { refresh: false }
+      { refresh: false },
     )
     commissionList.value = response.data
     total.value = response.meta.total
@@ -158,11 +158,12 @@ const handleSelectItemFilterRole = (item: any) => {
 <template>
   <ModalCommissionUpsert
     ref="modalCommissionUpsert"
-    @success="handleModalCommissionUpsertSuccess" />
+    @success="handleModalCommissionUpsertSuccess"
+  />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <NodeIndexOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconGift />
         Quản lý tiền hoa hồng
       </div>
     </div>
@@ -178,7 +179,8 @@ const handleSelectItemFilterRole = (item: any) => {
             v-model:value="roleId"
             :options="roleOptions"
             :maxHeight="120"
-            @selectItem="handleSelectItemFilterRole">
+            @selectItem="handleSelectItemFilterRole"
+          >
             <template #option="{ item: { data } }">{{ data.name }}</template>
           </InputFilter>
         </div>
@@ -196,7 +198,8 @@ const handleSelectItemFilterRole = (item: any) => {
               { text: 'Phiếu CĐHA', value: InteractType.Radiology },
               { text: 'Xét nghiệm', value: InteractType.Laboratory },
             ]"
-            @update:value="() => startSearch()"></VueSelect>
+            @update:value="() => startSearch()"
+          ></VueSelect>
         </div>
       </div>
     </div>
@@ -284,7 +287,8 @@ const handleSelectItemFilterRole = (item: any) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalCommissionUpsert?.openModal(commission.id)">
+                @click="modalCommissionUpsert?.openModal(commission.id)"
+              >
                 <IconEditSquare />
               </a>
             </td>
@@ -298,9 +302,8 @@ const handleSelectItemFilterRole = (item: any) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

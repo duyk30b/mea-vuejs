@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting, IconSort } from '../../../common/icon'
+import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconSort } from '../../../common/icon-font-awesome'
 import {
   IconDownload,
   IconEditSquare,

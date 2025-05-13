@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { NodeIndexOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon'
+import { IconFileSearch, IconReconciliation, IconSetting } from '../../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -16,7 +16,6 @@ import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
 import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
-import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
@@ -138,9 +137,9 @@ const handleModalProcedureGroupManagerSuccess = async () => {
     @success="handleModalProcedureGroupManagerSuccess"
   />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <NodeIndexOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconReconciliation />
         Danh sách dịch vụ
       </div>
       <VueButton
@@ -214,7 +213,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           class="cursor-pointer flex items-center gap-1 justify-center"
           @click="changeSort('name')"
         >
-          <span> Tên </span>
+          <span>Tên</span>
           <IconSort v-if="sortColumn !== 'name'" style="opacity: 0.4" />
           <IconSortUp v-if="sortColumn === 'name' && sortValue === 'ASC'" style="opacity: 0.4" />
           <IconSortDown v-if="sortColumn === 'name' && sortValue === 'DESC'" style="opacity: 0.4" />
@@ -223,7 +222,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           class="cursor-pointer flex items-center gap-1 justify-center"
           @click="changeSort('price')"
         >
-          <span> Giá </span>
+          <span>Giá</span>
           <IconSort v-if="sortColumn !== 'price'" style="opacity: 0.4" />
           <IconSortUp v-if="sortColumn === 'price' && sortValue === 'ASC'" style="opacity: 0.4" />
           <IconSortDown
@@ -287,7 +286,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Mã DV </span>
+                <span>Mã DV</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -301,7 +300,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
             </th>
             <th class="cursor-pointer" @click="changeSort('name')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Tên </span>
+                <span>Tên</span>
                 <IconSort v-if="sortColumn !== 'name'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'name' && sortValue === 'ASC'"
@@ -316,7 +315,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Giá </span>
+                <span>Giá</span>
                 <IconSort v-if="sortColumn !== 'price'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'price' && sortValue === 'ASC'"

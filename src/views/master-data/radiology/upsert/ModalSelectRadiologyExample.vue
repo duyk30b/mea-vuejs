@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'

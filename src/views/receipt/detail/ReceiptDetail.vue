@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import {
-  AuditOutlined,
-  CopyOutlined,
-  ExceptionOutlined,
-  FileDoneOutlined,
-  FileSyncOutlined,
-  MoreOutlined,
-} from '@ant-design/icons-vue'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../../common/icon'
+import {
+  IconCopy,
+  IconDollar,
+  IconEdit,
+  IconFileDone,
+  IconFileExcel,
+  IconFileSearch,
+  IconFileSync,
+  IconGroup,
+  IconMore,
+  IconSetting,
+} from '../../../common/icon-antd'
 import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -205,7 +208,7 @@ const openModalDistributorDetail = (distributorId: number) => {
 
   <div class="page-header">
     <div class="page-header-content">
-      <AuditOutlined />
+      <IconGroup />
       Thông tin phiếu nhập hàng
       <span v-if="receipt.status === ReceiptStatus.Cancelled" style="color: var(--text-red)">
         (Đơn đã bị hủy)
@@ -279,7 +282,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         style="margin-left: auto"
         @click="startCopy"
       >
-        <CopyOutlined />
+        <IconCopy />
         Copy phiếu
       </VueButton>
       <VueButton
@@ -290,7 +293,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         color="blue"
         @click="startEdit"
       >
-        <ExceptionOutlined />
+        <IconEdit />
         Sửa phiếu
       </VueButton>
       <a-dropdown>
@@ -304,7 +307,7 @@ const openModalDistributorDetail = (distributorId: number) => {
               key="REFUND_PREPAYMENT"
             >
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
+                <IconFileSync class="mr-2" />
                 Hoàn trả tiền tạm ứng
               </span>
             </a-menu-item>
@@ -316,7 +319,7 @@ const openModalDistributorDetail = (distributorId: number) => {
               key="CANCEL_RECEIPT"
             >
               <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
+                <IconFileExcel class="mr-2" />
                 Hủy phiếu
               </span>
             </a-menu-item>
@@ -337,7 +340,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         </template>
         <a-button shape="circle">
           <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
+            <IconMore style="font-size: 1.2rem; font-weight: bold" />
           </template>
         </a-button>
       </a-dropdown>
@@ -361,7 +364,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           @click="sendProductAndDebit"
         >
           <template #icon>
-            <FileDoneOutlined />
+            <IconFileDone />
           </template>
           Nhập hàng
         </VueButton>
@@ -378,7 +381,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           @click="modalReceiptPayment?.openModal(PaymentViewType.SendProductAndPaymentAndClose)"
         >
           <template #icon>
-            <FileDoneOutlined />
+            <IconFileDone />
           </template>
           Nhập hàng và Thanh toán
         </VueButton>
@@ -395,7 +398,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           @click="sendProductAndDebit"
         >
           <template #icon>
-            <FileDoneOutlined />
+            <IconFileDone />
           </template>
           Nhập hàng và Ghi nợ
         </VueButton>
@@ -412,7 +415,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"
         >
           <template #icon>
-            <FileDoneOutlined />
+            <IconDollar />
           </template>
           Trả nợ
         </VueButton>

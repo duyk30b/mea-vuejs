@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconTrash } from '../../../common/icon'
+import { IconDelete } from '../../../common/icon-antd'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -113,7 +113,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                 "
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)">
-                <IconTrash width="18" height="18" />
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
@@ -170,7 +170,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                 "
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)">
-                <IconTrash width="18" height="18" />
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ShopOutlined } from '@ant-design/icons-vue'
 import type { ChartData } from 'chart.js'
 import dayjs, { type Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import { IconSetting, IconBarChart } from '../../../common/icon-antd'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -84,7 +83,7 @@ const startFetchData = async () => {
     })
 
     visitBarData.labels = data.value.map((i) =>
-      timeType.value === 'date' ? i.timeLabel.slice(0, 5) : i.timeLabel
+      timeType.value === 'date' ? i.timeLabel.slice(0, 5) : i.timeLabel,
     )
     visitBarData.datasets = [
       {
@@ -145,11 +144,12 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 <template>
   <ModalStatisticTicketSetting
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalStatisticTicketSetting" />
+    ref="modalStatisticTicketSetting"
+  />
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
-        <ShopOutlined />
+        <IconBarChart />
         <span class="ml-2">Báo cáo lượt tiếp đón</span>
       </div>
     </div>
@@ -183,7 +183,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                 ? [{ value: { NOT: TicketType.Order }, text: 'Phiếu khám' }]
                 : []),
             ]"
-            @update:value="startFetchData" />
+            @update:value="startFetchData"
+          />
         </div>
       </div>
       <div>
@@ -191,12 +192,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <div class="flex justify-end items-center gap-2">
           <VueButton
             :color="timeType === 'date' ? 'blue' : 'default'"
-            @click="handleChangeTimeType('date')">
+            @click="handleChangeTimeType('date')"
+          >
             Ngày
           </VueButton>
           <VueButton
             :color="timeType === 'month' ? 'blue' : 'default'"
-            @click="handleChangeTimeType('month')">
+            @click="handleChangeTimeType('month')"
+          >
             Tháng
           </VueButton>
           <a-range-picker
@@ -205,14 +208,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :onChange="handleChangeTime"
             format="DD-MM-YYYY"
             :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-            picker="date" />
+            picker="date"
+          />
           <a-range-picker
             v-if="timeType === 'month'"
             v-model:value="timeRanger"
             :onChange="handleChangeTime"
             format="MM-YYYY"
             :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
-            picker="month" />
+            picker="month"
+          />
         </div>
       </div>
     </div>
@@ -307,7 +312,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             { text: 'Tổng nợ', value: 'sumDebt' },
             { text: 'Số đơn', value: 'countTicket' },
           ]"
-          @selectItem="handleChangeOptionBar" />
+          @selectItem="handleChangeOptionBar"
+        />
       </div>
     </div>
     <div style="height: 500px">

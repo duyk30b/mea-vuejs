@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import { IconFileSearch } from '../../../common/icon-antd'
 import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
@@ -666,7 +665,7 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
                     class="ml-1"
                     @click="openModalProductDetail(ticketProduct.product!)"
                   >
-                    <FileSearchOutlined />
+                    <IconFileSearch />
                   </a>
                 </div>
                 <div
@@ -740,9 +739,9 @@ const changeTicketProcedurePosition = (index: number, count: number) => {
               </td>
               <td class="text-right">
                 <div v-if="ticketProduct.discountMoney" class="text-xs italic text-red-500">
-                  <del>{{
-                    formatMoney(ticketProduct.unitExpectedPrice * ticketProduct.quantity)
-                  }}</del>
+                  <del>
+                    {{ formatMoney(ticketProduct.unitExpectedPrice * ticketProduct.quantity) }}
+                  </del>
                 </div>
                 <div>{{ formatMoney(ticketProduct.unitActualPrice * ticketProduct.quantity) }}</div>
               </td>

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import { IconFileSearch, IconMedicalBox, IconRead, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
@@ -22,8 +21,6 @@ import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicCommission from './ModalTicketClinicCommission.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
-import { IconFileSearch, IconRead } from '../../../common/icon-antd'
-import CKEditor5Vue from '../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -192,11 +189,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
   <ModalTicketClinicCommission ref="modalTicketClinicCommission" />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconMedicalBox />
         Danh sách khám
       </div>
       <div>

@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import {
-  ApartmentOutlined,
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-} from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoleApi, type Role } from '../../../modules/role'
 import VueTag from '../../../common/VueTag.vue'
+import { IconApartment, IconForm } from '../../../common/icon-antd'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { RoleApi, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -63,7 +57,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ApartmentOutlined class="mr-1" />
+        <IconApartment class="mr-1" />
         Danh sách vai trò
       </div>
       <VueButton color="blue" icon="plus" @click="$router.push({ name: 'RoleUpsert' })">
@@ -105,8 +99,9 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })">
-                <FormOutlined />
+                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })"
+              >
+                <IconForm />
               </a>
             </td>
           </tr>
@@ -119,9 +114,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           v-model:pageSize="limit"
           :total="total"
           show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        />
       </div>
     </div>
   </div>

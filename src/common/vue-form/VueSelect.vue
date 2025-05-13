@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, ref, watch } from 'vue'
-import IconTriangleDown from '../icon/IconTriangleDown.vue'
-import IconTriangleUp from '../icon/IconTriangleUp.vue'
+import { IconCaretDown, IconCaretUp } from '../icon-antd'
 
 export type VueSelectOption = {
   value: any
@@ -194,16 +193,16 @@ defineExpose({ focus })
     <div v-if="!disabled" class="icon-append">
       <!-- đang có lỗi icon-clear trên iphone (click 2 lần mới focus được vào ô input) -->
       <!-- <template v-if="iconClear">
-        <IconTriangleDown class="icon-blur" />
+        <IconCaretDown class="icon-blur" />
         <IconClearOutline class="icon-clear-hover" @click="handleClear" />
         <IconClearCircle class="icon-clear-blur" @click="handleClear" />
       </template>
       <template v-else>
-        <IconTriangleDown v-if="!showOptions" />
-        <IconTriangleUp v-if="showOptions" />
+        <IconCaretDown v-if="!showOptions" />
+        <IconCaretUp v-if="showOptions" />
       </template> -->
-      <IconTriangleDown v-if="!showOptions" />
-      <IconTriangleUp v-if="showOptions" />
+      <IconCaretDown v-if="!showOptions" />
+      <IconCaretUp v-if="showOptions" />
     </div>
     <div
       v-if="showOptions"

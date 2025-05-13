@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconExclamationCircle } from '../../../common/icon-antd'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
@@ -12,16 +12,22 @@ const { formatMoney } = settingStore
 
 const handleChangeMoneyInvoiceSurchargeDetail = (money: number, index: number) => {
   ticketOrderUpsertRef.value.ticketSurchargeList![index].money = money
-  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce((acc, cur) => {
-    return acc + cur.money
-  }, 0)
+  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce(
+    (acc, cur) => {
+      return acc + cur.money
+    },
+    0,
+  )
 }
 
 const handleDeleteSurchargeDetail = (index: number) => {
   ticketOrderUpsertRef.value.ticketSurchargeList!.splice(index, 1)
-  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce((acc, cur) => {
-    return acc + cur.money
-  }, 0)
+  ticketOrderUpsertRef.value.surcharge = ticketOrderUpsertRef.value.ticketSurchargeList!.reduce(
+    (acc, cur) => {
+      return acc + cur.money
+    },
+    0,
+  )
 }
 
 const handleAddSurchargeDetail = () => {
@@ -81,7 +87,8 @@ const handleChangeInvoiceSurcharge = (data: number) => {
             <div
               v-for="(surcharge, index) in ticketOrderUpsertRef.ticketSurchargeList"
               :key="index"
-              class="flex items-stretch">
+              class="flex items-stretch"
+            >
               <VueSelect
                 v-model:value="ticketOrderUpsertRef.ticketSurchargeList![index].key"
                 style="width: 160px"
@@ -95,11 +102,13 @@ const handleChangeInvoiceSurcharge = (data: number) => {
                       ? []
                       : [{ value: surcharge.key, text: surcharge.name }]),
                   ].reverse()
-                " />
+                "
+              />
               <div style="flex: 1">
                 <InputMoney
                   :value="surcharge.money"
-                  @update:value="(data) => handleChangeMoneyInvoiceSurchargeDetail(data, index)" />
+                  @update:value="(data) => handleChangeMoneyInvoiceSurchargeDetail(data, index)"
+                />
               </div>
               <div style="width: 60px">
                 <VueButton color="red" danger @click="handleDeleteSurchargeDetail(index)">
@@ -123,7 +132,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
       </template>
       <div>
         <span class="mr-2">Phụ phí</span>
-        <ExclamationCircleOutlined />
+        <IconExclamationCircle />
       </div>
     </a-popconfirm>
   </td>
@@ -132,6 +141,7 @@ const handleChangeInvoiceSurcharge = (data: number) => {
       :value="ticketOrderUpsertRef.surcharge"
       class="input-payment"
       style="width: 100%"
-      @update:value="handleChangeInvoiceSurcharge" />
+      @update:value="handleChangeInvoiceSurcharge"
+    />
   </td>
 </template>

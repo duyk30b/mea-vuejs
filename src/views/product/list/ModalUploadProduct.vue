@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { IconCloudUpload, IconDownload, IconUpload } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'

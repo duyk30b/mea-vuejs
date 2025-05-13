@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { FileSearchOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import { IconAudit, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import { InputOptions, VueSelect } from '../../../common/vue-form'
@@ -155,8 +154,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-1">
+        <IconAudit />
         Danh sách hóa đơn
       </div>
       <div>
@@ -283,7 +282,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div class="font-medium text-justify">
                 {{ ticket.customer?.fullName }}
                 <a class="text-base" @click="modalCustomerDetail?.openModal(ticket.customerId)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div class="text-xs">
@@ -386,7 +385,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ ticket.customer?.fullName }}
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(ticket.customerId)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="ticket.customer?.note" class="text-xs italic">

@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import { FileSearchOutlined } from '@ant-design/icons-vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClock, IconShoppingCart, IconSpin } from '../../../../common/icon'
+import { IconClockCircle, IconShoppingCart, IconSpin } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
@@ -317,7 +316,7 @@ const clickOpenModalSavePrescriptionSample = () => {
             <td class="text-center">
               <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
                 <template #title>Chưa xuất vật tư</template>
-                <IconClock
+                <IconClockCircle
                   width="16"
                   height="16"
                   style="color: orange; cursor: not-allowed !important"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
+import { IconClose } from '../../common/icon-antd'
 import { InputCheckbox } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'

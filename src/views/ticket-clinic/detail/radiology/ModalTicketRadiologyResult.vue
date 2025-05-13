@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import ImageUploadMultiple from '../../../../common/image-upload/ImageUploadMultiple.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputFilter } from '../../../../common/vue-form'

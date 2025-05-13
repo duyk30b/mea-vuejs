@@ -2,7 +2,7 @@
 import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
+import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
@@ -90,7 +90,7 @@ const handleSave = async () => {
 }
 
 const openBlankReceiptDetail = (receiptId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'ReceiptDetail',
     params: { id: receiptId },
   })
@@ -105,7 +105,7 @@ const handleClickPayAllDebt = () => {
 const calculatorEachReceiptPayment = () => {
   let totalMoney = money.value
   receiptPayments.value.forEach((item) => {
-    let number = Math.min(totalMoney, item.receipt.debt)
+    const number = Math.min(totalMoney, item.receipt.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -115,7 +115,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 600px;">
+  <VueModal v-model:show="showModal" style="width: 600px">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
@@ -183,7 +183,8 @@ defineExpose({ openModal })
               v-model:value="money"
               :validate="{ lte: openDebt, gt: 0 }"
               required
-              @update:value="calculatorEachReceiptPayment" />
+              @update:value="calculatorEachReceiptPayment"
+            />
           </div>
           <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
         </div>

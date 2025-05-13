@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { ESTimer } from '../../utils'
-import IconCalendar from '../icon/IconCalendar.vue'
+import { IconCalendar } from '../icon-antd'
 import DatePicker from './DatePicker.vue'
 
 const props = withDefaults(
@@ -16,7 +16,7 @@ const props = withDefaults(
     format: 'DD/MM/YYYY',
     typeParser: 'string',
     disabled: false,
-  }
+  },
 )
 const emit = defineEmits<{ (e: 'update:value', value: string | number | Date | undefined): void }>()
 
@@ -35,7 +35,7 @@ watch(
     if (newValue == null) return (inputDate.value.value = '')
     inputDate.value.value = ESTimer.timeToText(newValue, props.format)
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // onMounted(() => {

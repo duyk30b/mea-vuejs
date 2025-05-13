@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {
-  CloseOutlined,
-  DeploymentUnitOutlined,
-  DollarOutlined,
-  OneToOneOutlined,
-  UserOutlined,
-} from '@ant-design/icons-vue'
 import { ref } from 'vue'
+import {
+  IconClose,
+  IconDollar,
+  IconHistory,
+  IconOneToOne,
+  IconUser,
+} from '../../../common/icon-antd'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import VueButton from '../../../common/VueButton.vue'
@@ -65,17 +65,19 @@ defineExpose({ openModal })
 <template>
   <ModalDistributorPayDebt
     ref="modalDistributorPayDebt"
-    @success="handleModalDistributorPayDebtSuccess" />
+    @success="handleModalDistributorPayDebtSuccess"
+  />
   <VueModal
     v-model:show="showModal"
-    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)">
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
+  >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">
           NCC: {{ distributor.fullName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -83,21 +85,22 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.INFO">
-              <UserOutlined />
+              <IconUser />
               Thông tin cá nhân
             </VueTabMenu>
             <VueTabMenu
               v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
-              :tabKey="TABS_KEY.PAYMENT_HISTORY">
-              <DollarOutlined />
+              :tabKey="TABS_KEY.PAYMENT_HISTORY"
+            >
+              <IconDollar />
               Thanh toán
             </VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.RECEIPT_HISTORY">
-              <DeploymentUnitOutlined />
+              <IconHistory />
               Lịch sử nhập hàng
             </VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRODUCT_HISTORY">
-              <OneToOneOutlined />
+              <IconOneToOne />
               Sản phẩm
             </VueTabMenu>
           </template>
@@ -123,14 +126,16 @@ defineExpose({ openModal })
                     "
                     color="blue"
                     icon="plus"
-                    @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)">
+                    @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
+                  >
                     Trả nợ
                   </VueButton>
                 </div>
               </div>
               <DistributorPaymentHistory
                 ref="distributorPaymentHistory"
-                :distributor="distributor" />
+                :distributor="distributor"
+              />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.RECEIPT_HISTORY">
               <DistributorReceiptHistory :distributor="distributor" />

@@ -1,8 +1,14 @@
 <script lang="ts" setup>
-import { PhoneOutlined, WarningOutlined } from '@ant-design/icons-vue'
 import { ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClock, IconDollar, IconFileSearch, IconSend } from '../../../common/icon'
+import {
+  IconClockCircle,
+  IconDollar,
+  IconFileSearch,
+  IconSend,
+  IconPhone,
+  IconWarning,
+} from '../../../common/icon-antd'
 import { InputOptions } from '../../../common/vue-form'
 import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -148,18 +154,18 @@ const handleClickModalRegisterAppointment = () => {
 
     <div class="mt-2 flex justify-between">
       <div class="">
-        <PhoneOutlined />
+        <IconPhone />
         <span class="ml-4">{{ DString.formatPhone(ticketClinicRef.customer?.phone) }}</span>
       </div>
       <div>{{ DString.formatAddress(ticketClinicRef.customer!) }}</div>
     </div>
     <div class="mt-2">
-      <WarningOutlined />
+      <IconWarning />
       <span class="ml-4">{{ ticketClinicRef.note }}</span>
     </div>
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <IconClock />
+        <IconClockCircle />
         <div>{{ ESTimer.timeToText(ticketClinicRef.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
       </div>
       <div>
@@ -242,7 +248,7 @@ const handleClickModalRegisterAppointment = () => {
     </div>
     <div class="mt-2 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <IconClock />
+        <IconClockCircle />
         <div>Hẹn khám :</div>
       </div>
       <div v-if="!ticketClinicRef.toAppointment">

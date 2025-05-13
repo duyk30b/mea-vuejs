@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
+import { IconClockCircle, IconExclamationCircle, IconFileSearch, IconShoppingCart } from '../../../common/icon-antd'
 import VueTag from '../../../common/VueTag.vue'
+import { CONFIG } from '../../../config'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { DeliveryStatus } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { CONFIG } from '../../../config'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -202,6 +203,7 @@ const colspan = computed(() => {
           <tr>
             <th>#</th>
             <th>Tên</th>
+            <th></th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
             <th>S.Lượng</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>
@@ -218,6 +220,7 @@ const colspan = computed(() => {
             <td class="auto-index text-center">
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProcedure.id }})</span>
             </td>
+            <td class="text-center"></td>
             <td :colspan="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit ? '2' : '1'">
               <div class="text-justify font-medium whitespace-nowrap" style="word-break: break-all">
                 {{ ticketProcedure.procedure!.name }}
@@ -263,6 +266,24 @@ const colspan = computed(() => {
           <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
             <td class="auto-index text-center">
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
+            </td>
+            <td class="text-center">
+              <a-tooltip v-if="ticketProduct.deliveryStatus === DeliveryStatus.Pending">
+                <template #title>Chưa xuất vật tư</template>
+                <IconClockCircle
+                  width="16"
+                  height="16"
+                  style="color: orange; cursor: not-allowed !important"
+                />
+              </a-tooltip>
+              <a-tooltip v-else>
+                <template #title>Đã xuất vật tư</template>
+                <IconShoppingCart
+                  width="18"
+                  height="18"
+                  style="color: #52c41a; cursor: not-allowed !important"
+                />
+              </a-tooltip>
             </td>
             <td>
               <div class="text-justify font-medium">

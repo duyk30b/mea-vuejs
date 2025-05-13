@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { AccountBookOutlined } from '@ant-design/icons-vue'
 import { onMounted, ref } from 'vue'
+import { IconApartment } from '../../common/icon-antd'
 import { InputNumber, InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
@@ -54,9 +54,9 @@ const startMigration = async () => {
 
 <template>
   <div class="mx-4 mt-4">
-    <div class="flex justify-between items-center">
-      <div class="font-medium" style="font-size: 1.2rem">
-        <AccountBookOutlined style="margin-right: 1rem" />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconApartment />
         Dữ liệu hệ thống
       </div>
     </div>

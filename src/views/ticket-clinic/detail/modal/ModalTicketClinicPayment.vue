@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CloseOutlined, SaveOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
@@ -102,7 +102,7 @@ defineExpose({ openModal })
           Thông tin thanh toán: {{ ticketClone.customer?.fullName }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -196,8 +196,7 @@ defineExpose({ openModal })
             </tbody>
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton color="blue" type="submit" :loading="paymentLoading">
-              <SaveOutlined />
+            <VueButton color="blue" type="submit" :loading="paymentLoading" icon="save">
               Tạm ứng
             </VueButton>
           </div>
@@ -236,8 +235,7 @@ defineExpose({ openModal })
             </tbody>
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton type="submit" color="blue" :loading="paymentLoading">
-              <SaveOutlined />
+            <VueButton type="submit" color="blue" :loading="paymentLoading" icon="save">
               Trả nợ
             </VueButton>
           </div>
@@ -279,18 +277,14 @@ defineExpose({ openModal })
             </tbody>
           </table>
           <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton type="submit" color="blue" :loading="paymentLoading">
-              <SaveOutlined />
+            <VueButton type="submit" color="blue" :loading="paymentLoading" icon="save">
               Hoàn trả
             </VueButton>
           </div>
         </form>
 
         <div v-else class="pb-4 pt-8 flex justify-center gap-4">
-          <VueButton type="reset" class="btn" @click="closeModal">
-            <CloseOutlined />
-            Đóng lại
-          </VueButton>
+          <VueButton type="reset" class="btn" @click="closeModal" icon="close">Đóng lại</VueButton>
         </div>
       </div>
     </div>

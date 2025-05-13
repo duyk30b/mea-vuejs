@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import IconCalendar from '../icon/IconCalendar.vue'
+import { IconCalendar } from '../icon-antd'
 import DatePicker from './DatePicker.vue'
-import IconClearOutline from '../icon/IconClearOutline.vue'
-import IconClearCircle from '../icon/IconClearCircle.vue'
+import { IconClose, IconCloseCircle } from '../icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -319,8 +318,8 @@ const handleClickClear = () => {
       </div>
     </div>
     <div class="icon-append">
-      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
-      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
+      <IconClose v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
+      <IconCloseCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
       <IconCalendar style="margin-left: 12px" @click="showDatePicker = !showDatePicker" />
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">

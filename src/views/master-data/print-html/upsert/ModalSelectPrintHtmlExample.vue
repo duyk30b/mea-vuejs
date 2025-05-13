@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
 

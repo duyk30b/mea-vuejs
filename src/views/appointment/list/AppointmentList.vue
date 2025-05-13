@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting, IconTrash } from '../../../common/icon'
+import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -179,11 +178,8 @@ const handleFocusFirstSearchCustomer = async () => {
   />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconSchedule />
         Danh sách hẹn khám
       </div>
       <div>
@@ -406,7 +402,7 @@ const handleFocusFirstSearchCustomer = async () => {
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)"
               >
-                <IconTrash width="18" height="18" />
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>

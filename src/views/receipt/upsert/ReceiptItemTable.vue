@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileSearch } from '../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'

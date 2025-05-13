@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { IconPrint } from '../../../../common/icon'
+import { IconPrint } from '../../../../common/icon-antd'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
@@ -84,7 +84,7 @@ const handleSave = async () => {
 const updatePreview = () => {
   if (!ticketDemo.value.id) return
   if (!iframe.value) return
-  let data = {}
+  const data = {}
   const ticket = ticketDemo.value
   try {
     eval(printHtml.value.dataExample)
@@ -157,7 +157,7 @@ const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
 
 const startTestPrint = async () => {
   try {
-    let data = {}
+    const data = {}
     const ticket = ticketDemo.value
     try {
       eval(printHtml.value.dataExample)
@@ -182,10 +182,12 @@ const startTestPrint = async () => {
 <template>
   <ModalSelectTicketExample
     ref="modalSelectTicketExample"
-    @select="handleModalSelectTicketDemoSuccess" />
+    @select="handleModalSelectTicketDemoSuccess"
+  />
   <ModalSelectPrintHtmlExample
     ref="modalSelectPrintHtmlExample"
-    @select="handleModalSelectPrintHtmlExampleSuccess" />
+    @select="handleModalSelectPrintHtmlExampleSuccess"
+  />
   <div class="page-header">
     <div class="page-header-content">
       <IconPrint />
@@ -211,7 +213,8 @@ const startTestPrint = async () => {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: 600px 200px 200px;
         gap: 16px;
-      ">
+      "
+    >
       <div style="grid-area: content" class="flex flex-col">
         <div>
           <span>Tùy chỉnh hiển thị</span>
@@ -242,7 +245,8 @@ const startTestPrint = async () => {
           <MonacoEditor
             v-model:value="printHtml!.initVariable"
             language="typescript"
-            @update:value="updatePreview" />
+            @update:value="updatePreview"
+          />
         </div>
       </div>
 
@@ -252,7 +256,8 @@ const startTestPrint = async () => {
           <MonacoEditor
             v-model:value="printHtml!.dataExample"
             language="json"
-            @update:value="updatePreview" />
+            @update:value="updatePreview"
+          />
         </div>
       </div>
 

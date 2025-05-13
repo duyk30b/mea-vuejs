@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { SaveOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
+import { IconSetting } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
@@ -48,7 +48,7 @@ const disableButtonSave = computed(() => {
   <div class="mx-4 mt-4">
     <div class="flex justify-between items-center">
       <div class="font-medium" style="font-size: 1.2rem">
-        <SettingOutlined style="margin-right: 1rem" />
+        <IconSetting style="margin-right: 1rem" />
         Thông tin cá nhân
       </div>
     </div>
@@ -72,7 +72,8 @@ const disableButtonSave = computed(() => {
           <VueButton
             color="blue"
             style="width: 120px"
-            @click="modalChangePassword?.openModal(user)">
+            @click="modalChangePassword?.openModal(user)"
+          >
             Đổi mật khẩu
           </VueButton>
         </div>
@@ -85,7 +86,8 @@ const disableButtonSave = computed(() => {
             v-model:value="user.birthday"
             format="DD/MM/YYYY"
             type-parser="number"
-            class="w-full" />
+            class="w-full"
+          />
         </div>
       </div>
 

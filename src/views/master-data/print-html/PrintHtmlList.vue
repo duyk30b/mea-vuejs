@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
+import { IconSetting } from '../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../common/icon-google'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueButton from '../../../common/VueButton.vue'

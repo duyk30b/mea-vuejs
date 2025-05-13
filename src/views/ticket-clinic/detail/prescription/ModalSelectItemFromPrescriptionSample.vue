@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { IconMinus, IconPlus } from '../../../../common/icon-font-awesome'
 import { IconDelete } from '../../../../common/icon-google'
 import InputNumber from '../../../../common/vue-form/InputNumber.vue'

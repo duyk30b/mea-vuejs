@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { IconClock, IconFileSearch, IconShoppingCart } from '../../../../common/icon'
+import { IconClockCircle, IconFileSearch, IconShoppingCart } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueTag from '../../../../common/VueTag.vue'
 import { CONFIG } from '../../../../config'
@@ -98,7 +98,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a-tooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
             <template #title>Chưa xuất thuốc</template>
-            <IconClock
+            <IconClockCircle
               width="16"
               height="16"
               style="color: orange; cursor: not-allowed !important"
@@ -226,7 +226,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a-tooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
             <template #title>Chưa xuất vật tư</template>
-            <IconClock
+            <IconClockCircle
               width="16"
               height="16"
               style="color: orange; cursor: not-allowed !important"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ApartmentOutlined, FormOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
+import { IconApartment, IconForm } from '../../../common/icon-antd'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -73,7 +73,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ApartmentOutlined />
+        <IconApartment />
         Danh sách tài khoản
       </div>
       <VueButton color="blue" icon="plus" @click="modalAccountUpsert?.openModal()">
@@ -123,7 +123,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
                 class="text-xl"
                 @click="modalAccountUpsert?.openModal(user.id)"
               >
-                <FormOutlined />
+                <IconForm />
               </a>
             </td>
           </tr>

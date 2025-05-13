@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, watchEffect } from 'vue'
-import { IconClose } from '../../../../common/icon'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Laboratory, LaboratoryApi, LaboratoryService } from '../../../../modules/laboratory'

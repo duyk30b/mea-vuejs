@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ApartmentOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconContainer, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -15,7 +15,6 @@ import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -135,9 +134,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalDistributorListSettingScreen ref="modalDistributorListSettingScreen" />
 
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <ApartmentOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconContainer />
         Danh sách nhà cung cấp
       </div>
       <VueButton
@@ -196,7 +195,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"
@@ -289,7 +288,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Mã NCC </span>
+                <span>Mã NCC</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -303,7 +302,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Họ Tên </span>
+                <span>Họ Tên</span>
                 <IconSort v-if="sortColumn !== 'fullName'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
@@ -319,7 +318,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"

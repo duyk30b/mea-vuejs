@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileSearch } from '../../../common/icon-antd'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchApi } from '../../../modules/batch'
 import { ESTimer, timeToText } from '../../../utils'

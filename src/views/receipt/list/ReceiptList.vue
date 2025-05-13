@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { AuditOutlined, FileSearchOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import { IconFileSearch, IconGroup, IconPlus, IconSetting } from '../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -15,7 +15,6 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -122,11 +121,8 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <AuditOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconGroup class="mr-1" />
         Danh sách phiếu nhập hàng
       </div>
       <div>
@@ -137,7 +133,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
           "
         >
-          <PlusOutlined />
+          <IconPlus />
           Tạo phiếu nhập hàng mới
         </VueButton>
       </div>
@@ -229,7 +225,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
                     class="text-base"
                     @click="modalDistributorDetail?.openModal(receipt.distributorId)"
                   >
-                    <FileSearchOutlined class="ml-1" />
+                    <IconFileSearch class="ml-1" />
                   </a>
                 </div>
                 <div class="text-xs">
@@ -271,7 +267,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Mã </span>
+                <span>Mã</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -324,7 +320,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               <div>
                 {{ receipt.distributor?.fullName }}
                 <a class="ml-1" @click="modalDistributorDetail?.openModal(receipt.distributorId)">
-                  <FileSearchOutlined />
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="receipt.distributor?.note" class="text-xs italic">
