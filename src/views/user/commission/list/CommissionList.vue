@@ -3,7 +3,7 @@ import { onBeforeMount, ref } from 'vue'
 import { IconGift } from '../../../../common/icon-antd'
 import { IconSort } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
-import { InputFilter, VueSelect } from '../../../../common/vue-form'
+import { InputFilter, InputSelect, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import {
@@ -20,6 +20,7 @@ import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalCommissionUpsert from '../upsert/ModalCommissionUpsert.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 
 const modalCommissionUpsert = ref<InstanceType<typeof ModalCommissionUpsert>>()
 
@@ -295,16 +296,24 @@ const handleSelectItemFilterRole = (item: any) => {
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

@@ -8,6 +8,8 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { ESTimer } from '../../../utils'
 import AppointmentStatusTag from '../../appointment/AppointmentStatusTag.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,
@@ -22,7 +24,7 @@ const { permissionIdMap } = meStore
 const appointmentList = ref<Appointment[]>([])
 const page = ref(1)
 const limit = ref(
-  Number(localStorage.getItem('CUSTOMER_APPOINTMENT_HISTORY_PAGINATION_LIMIT')) || 10
+  Number(localStorage.getItem('CUSTOMER_APPOINTMENT_HISTORY_PAGINATION_LIMIT')) || 10,
 )
 const total = ref(0)
 
@@ -57,7 +59,7 @@ watch(
     if (newValue) await startFetchData()
     else appointmentList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleClickDeleteAppointment = async (appointmentId: number) => {
@@ -97,7 +99,7 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
               <div>
                 <AppointmentStatusTag :appointmentStatus="appointment.appointmentStatus" />
               </div>
-              <div style="white-space: nowrap; font-size: 0.9em;">
+              <div style="white-space: nowrap; font-size: 0.9em">
                 {{ ESTimer.timeToText(appointment.registeredAt, 'DD/MM/YYYY hh:mm') }}
               </div>
             </td>
@@ -112,24 +114,14 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                   ].includes(appointment.appointmentStatus)
                 "
                 class="text-red-500"
-                @click="handleClickDeleteAppointment(appointment.id)">
+                @click="handleClickDeleteAppointment(appointment.id)"
+              >
                 <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          size="small"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
     </div>
     <div v-if="!isMobile" class="mt-4 w-full table-wrapper">
       <table>
@@ -169,23 +161,33 @@ const handleClickDeleteAppointment = async (appointmentId: number) => {
                   ].includes(appointment.appointmentStatus)
                 "
                 class="text-red-500"
-                @click="handleClickDeleteAppointment(appointment.id)">
+                @click="handleClickDeleteAppointment(appointment.id)"
+              >
                 <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

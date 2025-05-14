@@ -8,17 +8,19 @@
 
     <!-- Teleport dropdown to body -->
     <teleport to="body">
-      <div v-if="isOpen" class="input-select-dropdown" :style="dropdownStyle" ref="dropdownRef">
-        <div
-          v-for="(option, index) in options"
-          :key="option.value"
-          class="input-select-option"
-          :class="{ active: index === highlightedIndex }"
-          @click="selectOption(option)"
-        >
-          {{ option.label }}
+      <transition :name="dropdownDirection === 'up' ? 'slide-up' : 'slide-down'">
+        <div v-if="isOpen" class="input-select-dropdown" :style="dropdownStyle" ref="dropdownRef">
+          <div
+            v-for="(option, index) in options"
+            :key="index"
+            class="input-select-option"
+            :class="{ active: index === highlightedIndex }"
+            @click="selectOption(option)"
+          >
+            {{ option.label }}
+          </div>
         </div>
-      </div>
+      </transition>
     </teleport>
   </div>
 </template>
@@ -27,7 +29,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 
 export type InputSelectOption = {
-  value: string | number
+  value: string | number | null
   label: string
 }
 
@@ -38,7 +40,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:value', value: string | number): void
+  (e: 'update:value', value: string | number | null): void
 }>()
 
 const wrapperRef = ref<HTMLElement | null>(null)
@@ -47,27 +49,34 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const dropdownStyle = ref<Record<string, string>>({})
+const dropdownDirection = ref<'up' | 'down'>('down')
 
 const selectedLabel = computed(() => {
   return props.options.find((o) => o.value === props.value)?.label || 'Chọn...'
 })
 
-function toggleDropdown() {
+const toggleDropdown = async () => {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
+    await nextTick()
     updateDropdownPosition()
-    nextTick(() => {
-      highlightedIndex.value = props.options.findIndex((o) => o.value === props.value)
-    })
+    highlightedIndex.value = props.options.findIndex((o) => o.value === props.value)
   }
 }
 
 function updateDropdownPosition() {
   if (!wrapperRef.value) return
   const rect = wrapperRef.value.getBoundingClientRect()
+
+  const dropdownHeight = dropdownRef.value?.offsetHeight || 200
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+
+  const showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
+  dropdownDirection.value = showAbove ? 'up' : 'down'
+
   dropdownStyle.value = {
     position: 'absolute',
-    top: `${rect.bottom + window.scrollY}px`,
     left: `${rect.left + window.scrollX}px`,
     width: `${rect.width}px`,
     zIndex: '9999',
@@ -75,6 +84,9 @@ function updateDropdownPosition() {
     border: '1px solid #ccc',
     maxHeight: props.height || '200px',
     overflowY: 'auto',
+    top: showAbove
+      ? `${rect.top + window.scrollY - dropdownHeight}px`
+      : `${rect.bottom + window.scrollY}px`,
   }
 }
 
@@ -130,16 +142,21 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .input-select {
+  // font-size: 16px;
   position: relative;
   .input-select-display {
-    padding: 8px;
+    padding: 5px 12px 5px 12px;
     border: 1px solid #ccc;
+    border-radius: 2px;
     background: white;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    &:hover {
+      border-color: #40a9ff;
+    }
     .label {
       flex-grow: 1;
       user-select: none;
@@ -148,6 +165,7 @@ onBeforeUnmount(() => {
       text-overflow: ellipsis;
     }
     .arrow {
+      font-size: 0.9em;
       transform: scaleX(1.6);
       color: #777;
     }
@@ -157,7 +175,7 @@ onBeforeUnmount(() => {
 .input-select-dropdown {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   .input-select-option {
-    padding: 8px;
+    padding: 5px 12px 5px 12px;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
@@ -170,5 +188,41 @@ onBeforeUnmount(() => {
       color: #fff;
     }
   }
+}
+
+/* Slide xuống */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition:
+    opacity 0.1s ease,
+    transform 0.1s ease;
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+.slide-down-enter-to,
+.slide-down-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Slide lên */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition:
+    opacity 0.1s ease,
+    transform 0.1s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.slide-up-enter-to,
+.slide-up-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>

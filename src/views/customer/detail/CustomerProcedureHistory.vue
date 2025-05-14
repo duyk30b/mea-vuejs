@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import VuePagination from '../../../common/VuePagination.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer } from '../../../modules/customer'
 import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
-import { ESTimer, formatPhone } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
@@ -57,7 +57,7 @@ watch(
     if (newValue) await startFetchData()
     else ticketProcedureList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -98,7 +98,8 @@ watch(
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                ">
+                "
+              >
                 {{ formatMoney(ticketProcedure.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
@@ -108,17 +109,6 @@ watch(
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
     </div>
     <div v-else class="table-wrapper mt-4 w-full">
       <table>
@@ -154,7 +144,8 @@ watch(
                   text-decoration: line-through;
                   font-style: italic;
                   white-space: nowrap;
-                ">
+                "
+              >
                 {{ formatMoney(ticketProcedure.expectedPrice) }}
               </div>
               <div style="white-space: nowrap">
@@ -164,16 +155,15 @@ watch(
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

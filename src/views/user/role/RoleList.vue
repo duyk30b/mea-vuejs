@@ -5,6 +5,8 @@ import VueTag from '../../../common/VueTag.vue'
 import { IconApartment, IconForm } from '../../../common/icon-antd'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { RoleApi, type Role } from '../../../modules/role'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const roleList = ref<Role[]>([])
 
@@ -107,16 +109,24 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

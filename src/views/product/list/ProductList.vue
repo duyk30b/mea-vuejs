@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort } from '../../../common/icon-font-awesome'
 import {
@@ -9,7 +10,7 @@ import {
   IconUpload,
   IconWarehouse,
 } from '../../../common/icon-google'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -650,17 +651,6 @@ const handleModalUploadProductSuccess = async () => {
           </div>
         </div>
       </div>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
@@ -1020,16 +1010,25 @@ const handleModalUploadProductSuccess = async () => {
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

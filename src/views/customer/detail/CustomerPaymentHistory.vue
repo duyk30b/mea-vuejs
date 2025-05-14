@@ -12,6 +12,8 @@ import { ESTimer } from '../../../utils'
 import CustomerPaymentTypeTag from '../CustomerPaymentTypeTag.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -55,7 +57,7 @@ watch(
     if (newValue) await startFetchData()
     else customerPaymentList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -78,12 +80,13 @@ defineExpose({ startFetchData })
 <template>
   <div class="mt-4">
     <div class="flex flex-wrap items-center gap-2">
-      <div style="margin-left:auto">
+      <div style="margin-left: auto">
         <VueButton
           v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT]"
           color="blue"
           icon="dollar"
-          @click="modalCustomerPayDebt?.openModal(customerId)">
+          @click="modalCustomerPayDebt?.openModal(customerId)"
+        >
           Trả nợ
         </VueButton>
       </div>
@@ -155,7 +158,8 @@ defineExpose({ startFetchData })
             <td>
               <LinkAndStatusTicket
                 :ticketId="customerPayment.ticketId"
-                :ticket="customerPayment.ticket!" />
+                :ticket="customerPayment.ticket!"
+              />
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ ESTimer.timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -182,15 +186,14 @@ defineExpose({ startFetchData })
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 mb-2 flex justify-end">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
+      <div class="p-4 flex flex-wrap justify-end gap-4">
+        <VuePagination
+          class="ml-auto"
+          v-model:page="page"
           :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
+          :limit="limit"
+          @update:page="(p: any) => changePagination({ page: p, limit })"
+        />
       </div>
     </div>
   </div>

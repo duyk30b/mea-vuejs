@@ -38,7 +38,7 @@ export default defineConfig({
           } else if (id.includes('node_modules/lodash')) {
             return 'vendor_lodash'
           } else if (id.includes('node_modules')) {
-            return 'vendor'
+            return 'vendor_node_modules'
           } else if (id.includes('src/modules')) {
             // return 'src_modules'
           } else if (id.includes('src/common')) {

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -17,6 +17,7 @@ import AppointmentStatusTag from '../AppointmentStatusTag.vue'
 import ModalAppointmentUpsert from '../upsert/ModalAppointmentUpsert.vue'
 import ModalAppointmentListSetting from './ModalAppointmentListSetting.vue'
 import ModalAppointmentRegisterTicketClinic from './ModalAppointmentRegisterTicketClinic.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 
 const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
 const modalAppointmentRegisterTicketClinic =
@@ -408,15 +409,24 @@ const handleFocusFirstSearchCustomer = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-4">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

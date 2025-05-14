@@ -8,6 +8,7 @@ import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { RadiologyStatisticService } from '../../../modules/statistics'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { ESTimer } from '../../../utils'
+import VuePagination from '../../../common/VuePagination.vue'
 
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
@@ -235,16 +236,14 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex gap-4 justify-between">
-        <div class=""></div>
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
     </div>
   </div>
 </template>

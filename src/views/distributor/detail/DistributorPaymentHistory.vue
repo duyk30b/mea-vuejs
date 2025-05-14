@@ -9,6 +9,7 @@ import type { DistributorPayment } from '../../../modules/distributor-payment/di
 import { PaymentType } from '../../../modules/enum'
 import { timeToText } from '../../../utils'
 import DistributorPaymentTypeTag from '../DistributorPaymentTypeTag.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 
 const props = withDefaults(defineProps<{ distributor: Distributor }>(), {
   distributor: () => Distributor.blank(),
@@ -47,7 +48,7 @@ watch(
     if (newValue) await startFetchData()
     else distributorPaymentList.value = []
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -60,7 +61,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 const openBlankReceiptDetail = async (receiptId: number) => {
-  let route = router.resolve({
+  const route = router.resolve({
     name: 'ReceiptDetail',
     params: { id: receiptId },
   })
@@ -105,19 +106,19 @@ defineExpose({ startFetchData })
           </td>
           <td class="text-right">
             <div class="flex justify-between item-center">
-              <span> T.Toán: </span>
+              <span>T.Toán:</span>
               <span>{{ formatMoney(distributorPayment.paid) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Ghi nợ: </span>
+              <span>Ghi nợ:</span>
               <span>{{ formatMoney(distributorPayment.debit) }}</span>
             </div>
             <div class="flex justify-between item-center">
-              <span> Nợ: </span>
+              <span>Nợ:</span>
               <span>
                 {{ formatMoney(distributorPayment.openDebt) }} ➞
-                {{ formatMoney(distributorPayment.closeDebt) }}</span
-              >
+                {{ formatMoney(distributorPayment.closeDebt) }}
+              </span>
             </div>
           </td>
         </tr>
@@ -170,13 +171,13 @@ defineExpose({ startFetchData })
         </tr>
       </tbody>
     </table>
-    <div class="mt-4 mb-2 flex justify-end">
-      <a-pagination
-        v-model:current="page"
-        v-model:pageSize="limit"
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
         :total="total"
-        show-size-changer
-        @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
       />
     </div>
   </div>

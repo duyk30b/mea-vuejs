@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
-import { InputDate } from '../../../common/vue-form'
+import { InputDate, InputSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
 import { LaboratoryStatisticService } from '../../../modules/statistics'
 import { TicketLaboratory, TicketLaboratoryApi } from '../../../modules/ticket-laboratory'
 import { ESTimer } from '../../../utils'
+import VuePagination from '../../../common/VuePagination.vue'
 
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
@@ -235,16 +236,25 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex gap-4 justify-between">
-        <div class=""></div>
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

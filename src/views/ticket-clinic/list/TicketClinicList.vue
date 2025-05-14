@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconMedicalBox, IconRead, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { InteractType } from '../../../modules/commission'
@@ -148,12 +149,12 @@ const changeSort = async (column: 'id' | 'registeredAt') => {
   await startFilter()
 }
 
-const changePagination = async (options: { page?: number; limit?: number }) => {
-  if (options.page) page.value = options.page
-  if (options.limit) {
-    limit.value = options.limit
-    localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(options.limit))
-  }
+const changePage = async (pageSelect: number) => {
+  await startFetchData()
+}
+const changeLimit = async (limitSelect: any) => {
+  limit.value = limitSelect
+  localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(limitSelect))
   await startFetchData()
 }
 
@@ -309,12 +310,12 @@ const handleModalTicketClinicListSettingSuccess = async () => {
       <div v-if="settingStore.TICKET_CLINIC_LIST.showCustomType" style="flex: 1; flex-basis: 150px">
         <div>Phân loại</div>
         <div>
-          <VueSelect
+          <InputSelect
             v-model:value="customType"
             :options="[
-              { value: null, text: 'Tất cả' },
+              { value: null, label: 'Tất cả' },
               ...settingStore.TICKET_CLINIC_LIST.customTypeText.map((i, index) => {
-                return { value: index, text: i }
+                return { value: index, label: i }
               }),
             ]"
             @update:value="startFilter"
@@ -493,14 +494,24 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex gap-4 justify-between">
+      <div class="my-4 flex flex-wrap gap-4">
         <div class="">Tổng: {{ total }}</div>
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
+        <VuePagination
+          class="ml-auto"
+          v-model:page="page"
           :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+          :limit="limit"
+          @update:page="changePage"
+        />
+        <InputSelect
+          v-model:value="limit"
+          @update:value="changeLimit"
+          :options="[
+            { value: 10, label: '10 / page' },
+            { value: 20, label: '20 / page' },
+            { value: 50, label: '50 / page' },
+            { value: 100, label: '100 / page' },
+          ]"
         />
       </div>
     </div>
