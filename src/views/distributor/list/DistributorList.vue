@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconContainer, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
@@ -15,7 +17,6 @@ import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
-import VuePagination from '../../../common/VuePagination.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -114,12 +115,6 @@ const handleModalDistributorUpsertSuccess = async () => {
 const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distributor }) => {
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalDistributorListSettingScreen.value?.openModal()
-  }
-}
 </script>
 
 <template>
@@ -149,17 +144,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex gap-8">
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="modalDistributorListSettingScreen?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

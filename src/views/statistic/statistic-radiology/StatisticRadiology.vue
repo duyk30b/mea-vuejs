@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
+import { IconBarChart, IconRead } from '../../../common/icon-antd'
 import { InputDate } from '../../../common/vue-form'
+import VuePagination from '../../../common/VuePagination.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { RadiologyStatisticService } from '../../../modules/statistics'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { ESTimer } from '../../../utils'
-import VuePagination from '../../../common/VuePagination.vue'
 
 const fromTime = ref<number>(ESTimer.startOfMonth(new Date()).getTime())
 const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
@@ -92,12 +92,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    console.log('🚀 ~ StatisticRadiology.vue:153 ~ handleMenuSettingClick ~ menu.key:', menu.key)
-  }
-}
 </script>
 
 <template>
@@ -110,18 +104,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <IconBarChart class="mr-1" />
         Báo cáo phiếu CĐHA
       </div>
-    </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
-        </template>
-      </a-dropdown>
     </div>
   </div>
 

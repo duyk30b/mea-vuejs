@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import {
   IconContacts,
@@ -21,7 +23,6 @@ import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
-import VuePagination from '../../../common/VuePagination.vue'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -131,12 +132,6 @@ const handleModalCustomerPayDebtSuccess = async () => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalCustomerListSettingScreen.value?.openModal()
-  }
-}
-
 const downloadExcelCustomerList = async () => {
   ModalStore.confirm({
     title: 'Xác nhận tải file báo cáo',
@@ -172,25 +167,20 @@ const downloadExcelCustomerList = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="flex mr-2 gap-8">
+    <div class="mr-2 flex gap-8">
       <div style="cursor: pointer">
         <IconDownload width="20" height="20" @click="downloadExcelCustomerList" />
       </div>
-      <span style="cursor: pointer">
-        <a-dropdown
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-          trigger="click"
-        >
-          <span>
-            <IconSetting width="20" height="20" />
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="modalCustomerListSettingScreen?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

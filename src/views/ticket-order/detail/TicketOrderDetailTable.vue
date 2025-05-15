@@ -24,7 +24,7 @@ const showModalInvoicePayment = (paymentView: PaymentViewType) => {
 const colspan = computed(() => {
   if (isMobile) return 2
   return (
-    3 +
+    4 +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount) +
     Number(settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount)
@@ -202,8 +202,8 @@ const colspan = computed(() => {
         <thead>
           <tr>
             <th>#</th>
-            <th>Tên</th>
             <th></th>
+            <th>Tên</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
             <th>S.Lượng</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount">C.Khấu</th>

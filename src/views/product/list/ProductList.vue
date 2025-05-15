@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort } from '../../../common/icon-font-awesome'
@@ -240,18 +241,6 @@ const handleModalProductUpsertSuccess = async (
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalProductListSettingScreen.value?.openModal()
-  }
-  if (menu.key === 'data-setting') {
-    modalDataProduct.value?.openModal()
-  }
-  if (menu.key === 'PRODUCT_GROUP_MANAGER') {
-    modalProductGroupManager.value?.openModal()
-  }
-}
-
 const handleModalProductGroupManagerSuccess = async () => {
   await startFetchProductGroup()
 }
@@ -306,32 +295,31 @@ const handleModalUploadProductSuccess = async () => {
         Thêm Sản Phẩm
       </VueButton>
     </div>
-    <div class="flex mr-2 gap-4 items-center">
+
+    <div class="mr-2 flex items-center gap-8">
       <div>
         <VueButton :icon="IconUpload" @click="modalUploadProduct?.openModal()">Upload</VueButton>
       </div>
       <div>
         <VueButton :icon="IconDownload" @click="downloadExcelProductList">Download</VueButton>
       </div>
-      <span style="cursor: pointer">
-        <a-dropdown trigger="click">
-          <span>
-            <IconSetting width="20" height="20" />
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item
-                v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-                key="screen-setting"
-              >
-                Cài đặt hiển thị
-              </a-menu-item>
-              <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
-              <a-menu-item key="PRODUCT_GROUP_MANAGER">Quản lý nhóm sản phẩm</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalProductListSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+          <a @click="modalDataProduct?.openModal()">Cài đặt dữ liệu</a>
+          <a @click="modalProductGroupManager?.openModal()">Quản lý nhóm sản phẩm</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

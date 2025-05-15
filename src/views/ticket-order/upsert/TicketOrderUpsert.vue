@@ -3,6 +3,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconFileAdd, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -356,15 +357,6 @@ const saveInvoice = async (type: ETicketOrderSave) => {
   }
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'TICKET_ORDER_SETTING') {
-    modalTicketOrderUpsertSetting.value?.openModal()
-  }
-  if (menu.key === 'data-setting') {
-    modalDataTicketOrder.value?.openModal()
-  }
-}
-
 const handleChangeTabs = (activeKey: any) => {
   tabStart.value = activeKey
   localStorage.setItem('TICKET_ORDER_UPSERT_TAB_START', activeKey)
@@ -386,18 +378,23 @@ const handleChangeTabs = (activeKey: any) => {
       </div>
     </div>
 
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="TICKET_ORDER_SETTING">Cài đặt bán hàng</a-menu-item>
-            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketOrderUpsertSetting?.openModal()"
+          >
+            Cài đặt bán hàng
+          </a>
+          <a @click="modalDataTicketOrder?.openModal()">Cài đặt dữ liệu</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

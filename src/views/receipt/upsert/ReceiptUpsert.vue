@@ -3,6 +3,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconFileSearch, IconGroup, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -197,12 +198,6 @@ const handleAddReceiptItem = (ri: ReceiptItem) => {
   receipt.value.receiptItemList!.unshift(receiptItem)
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalReceiptUpsertSettingScreen.value?.openModal()
-  }
-}
-
 const openModalDistributorDetail = (data?: Distributor) => {
   if (data) modalDistributorDetail.value?.openModal(data.id)
 }
@@ -221,17 +216,23 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalReceiptUpsertSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

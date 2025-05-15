@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
+import VueDropdown from '../../../../common/VueDropdown.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
 import { IconFileSearch, IconReconciliation, IconSetting } from '../../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
@@ -16,7 +18,6 @@ import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
 import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
-import VuePagination from '../../../../common/VuePagination.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
@@ -152,18 +153,23 @@ const handleModalProcedureGroupManagerSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="PROCEDURE_GROUP_MANAGER">Quản lý nhóm dịch vụ</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalProcedureListSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+          <a @click="modalProcedureGroupManager?.openModal()">Quản lý nhóm dịch vụ</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

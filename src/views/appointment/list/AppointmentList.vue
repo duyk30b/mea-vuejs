@@ -2,6 +2,8 @@
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
@@ -17,7 +19,6 @@ import AppointmentStatusTag from '../AppointmentStatusTag.vue'
 import ModalAppointmentUpsert from '../upsert/ModalAppointmentUpsert.vue'
 import ModalAppointmentListSetting from './ModalAppointmentListSetting.vue'
 import ModalAppointmentRegisterTicketClinic from './ModalAppointmentRegisterTicketClinic.vue'
-import VuePagination from '../../../common/VuePagination.vue'
 
 const modalAppointmentUpsert = ref<InstanceType<typeof ModalAppointmentUpsert>>()
 const modalAppointmentRegisterTicketClinic =
@@ -155,12 +156,6 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
   window.open(route.href, '_blank')
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SETTING_SCREEN') {
-    modalAppointmentListSetting.value?.openModal()
-  }
-}
-
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
 }
@@ -194,22 +189,17 @@ const handleFocusFirstSearchCustomer = async () => {
         </VueButton>
       </div>
     </div>
-    <div class="flex mr-2 gap-8">
-      <span style="cursor: pointer">
-        <a-dropdown
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-          trigger="click"
-        >
-          <span>
-            <IconSetting width="20" height="20" />
+    <div class="mr-2 flex gap-8">
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="SETTING_SCREEN">Cài đặt hiển thị</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="modalAppointmentListSetting?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

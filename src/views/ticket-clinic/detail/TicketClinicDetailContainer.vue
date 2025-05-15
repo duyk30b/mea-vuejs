@@ -55,6 +55,7 @@ import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
@@ -149,12 +150,6 @@ const startFetchData = async (ticketId: number) => {
     ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
-  }
-}
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SETTING_DATA') {
-    modalTicketClinicDetailSetting.value?.openModal()
   }
 }
 
@@ -263,18 +258,22 @@ const clickCloseVisit = () => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <!-- <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item> -->
-            <a-menu-item key="SETTING_DATA">Cài đặt dữ liệu</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketClinicDetailSetting?.openModal()"
+          >
+            Cài đặt dữ liệu
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 flex flex-wrap gap-4">

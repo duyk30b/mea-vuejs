@@ -4,7 +4,8 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, reactive, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting, IconBarChart } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/VueDropdown.vue'
+import { IconBarChart, IconSetting } from '../../../common/icon-antd'
 import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -133,12 +134,6 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
   await nextTick()
   loaded.value = true
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    modalStatisticTicketSetting.value?.openModal()
-  }
-}
 </script>
 
 <template>
@@ -153,17 +148,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         <span class="ml-2">Báo cáo lượt tiếp đón</span>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt thống kê</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalStatisticTicketSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

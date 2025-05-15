@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconMedicalBox, IconRead, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
@@ -158,15 +159,6 @@ const changeLimit = async (limitSelect: any) => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    modalTicketClinicListSetting.value?.openModal()
-  }
-  if (menu.key === 'ROLE_AND_COMMISSION') {
-    modalTicketClinicCommission.value?.openModal()
-  }
-}
-
 const handleModalTicketClinicCreateSuccess = () => {
   // await startFetchData()
 }
@@ -221,18 +213,18 @@ const handleModalTicketClinicListSettingSuccess = async () => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt phòng khám</a-menu-item>
-            <a-menu-item key="ROLE_AND_COMMISSION">Vai trò và hoa hồng</a-menu-item>
-          </a-menu>
+    <div class="mr-2">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="modalTicketClinicListSetting?.openModal()">Cài đặt phòng khám</a>
+          <a @click="modalTicketClinicCommission?.openModal()">Vai trò và hoa hồng</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -494,7 +486,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex flex-wrap gap-4">
+      <div class="my-4 flex flex-wrap justify-end items-center gap-4">
         <div class="">Tổng: {{ total }}</div>
         <VuePagination
           class="ml-auto"

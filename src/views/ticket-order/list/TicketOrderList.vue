@@ -2,6 +2,7 @@
 import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconAudit, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
@@ -174,17 +175,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketOrderListSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

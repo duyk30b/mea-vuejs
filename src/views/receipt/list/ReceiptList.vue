@@ -16,6 +16,7 @@ import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
 import VuePagination from '../../../common/VuePagination.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -139,17 +140,23 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalReceiptListSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 

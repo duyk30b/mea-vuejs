@@ -89,11 +89,6 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
       </VueButton>
     </div>
     <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-      </a-dropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">

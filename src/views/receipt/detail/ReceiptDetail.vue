@@ -2,7 +2,9 @@
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/VueDropdown.vue'
 import {
+  IconCloseCircle,
   IconCopy,
   IconDollar,
   IconEdit,
@@ -181,12 +183,6 @@ const clickDestroy = () => {
   })
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalReceiptDetailSettingScreen.value?.openModal()
-  }
-}
-
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'REFUND_PREPAYMENT') clickRefundPrepayment()
   if (menu.key === 'CANCEL_RECEIPT') clickCancel()
@@ -223,17 +219,23 @@ const openModalDistributorDetail = (distributorId: number) => {
         Tạo phiếu nhập mới
       </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalReceiptDetailSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -276,7 +278,7 @@ const openModalDistributorDetail = (distributorId: number) => {
   </div>
 
   <div class="page-main">
-    <div class="px-4 pt-2 flex justify-end gap-2">
+    <div class="px-4 pt-2 flex justify-end items-center gap-2">
       <VueButton
         v-if="permissionIdMap[PermissionId.RECEIPT_CREATE_DRAFT]"
         style="margin-left: auto"
@@ -296,54 +298,48 @@ const openModalDistributorDetail = (distributorId: number) => {
         <IconEdit />
         Sửa phiếu
       </VueButton>
-      <a-dropdown>
-        <template #overlay>
-          <a-menu @click="handleMenuActionClick">
-            <a-menu-item
-              v-if="
-                permissionIdMap[PermissionId.RECEIPT_REFUND_PAYMENT] &&
-                [ReceiptStatus.Prepayment].includes(receipt.status)
-              "
-              key="REFUND_PREPAYMENT"
-            >
-              <span class="text-red-500">
-                <IconFileSync class="mr-2" />
-                Hoàn trả tiền tạm ứng
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                permissionIdMap[PermissionId.RECEIPT_CANCEL] &&
-                [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
-              "
-              key="CANCEL_RECEIPT"
-            >
-              <span class="text-red-500">
-                <IconFileExcel class="mr-2" />
-                Hủy phiếu
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                (permissionIdMap[PermissionId.RECEIPT_DESTROY_DRAFT] &&
-                  [ReceiptStatus.Draft].includes(receipt.status)) ||
-                receipt.status === ReceiptStatus.Cancelled
-              "
-              key="DESTROY_RECEIPT"
-            >
-              <span class="text-red-500">
-                <IconDelete class="mr-2" />
-                Xóa phiếu
-              </span>
-            </a-menu-item>
-          </a-menu>
+      <VueDropdown :offset="4">
+        <template #trigger>
+          <div class="vue-circle">
+            <IconMore style="font-size: 1.5rem; font-weight: bold" />
+          </div>
         </template>
-        <a-button shape="circle">
-          <template #icon>
-            <IconMore style="font-size: 1.2rem; font-weight: bold" />
-          </template>
-        </a-button>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT_REFUND_PAYMENT] &&
+              [ReceiptStatus.Prepayment].includes(receipt.status)
+            "
+            @click="clickRefundPrepayment()"
+          >
+            <IconDollar width="16" height="16" />
+            Hoàn trả tiền tạm ứng
+          </a>
+          <a
+            style="color: red"
+            v-if="
+              permissionIdMap[PermissionId.RECEIPT_CANCEL] &&
+              [ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)
+            "
+            @click="clickCancel()"
+          >
+            <IconCloseCircle width="16" height="16" />
+            Hủy phiếu
+          </a>
+          <a
+            style="color: red"
+            v-if="
+              (permissionIdMap[PermissionId.RECEIPT_DESTROY_DRAFT] &&
+                [ReceiptStatus.Draft].includes(receipt.status)) ||
+              receipt.status === ReceiptStatus.Cancelled
+            "
+            @click="clickDestroy()"
+          >
+            <IconDelete width="16" height="16" />
+            Xóa phiếu
+          </a>
+        </div>
+      </VueDropdown>
     </div>
 
     <div class="mt-2">

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
+import VueDropdown from '../../../../common/VueDropdown.vue'
 import VueTag from '../../../../common/VueTag.vue'
 import { IconDollar, IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
@@ -188,6 +189,28 @@ const clickDestroyTicket = () => {
   })
 }
 
+const clickRefundMoney = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
+    })
+  } else {
+    modalTicketClinicPayment.value?.openModal(PaymentViewType.RefundOverpaid)
+  }
+}
+
+const clickReturnProduct = () => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    return ModalStore.alert({
+      title: 'Trạng thái hồ sơ không hợp lệ ?',
+      content: 'Cần mở lại hồ sơ trước khi hoàn trả thuốc - vật tư',
+    })
+  } else {
+    modalTicketReturnProduct.value?.openModal(ticketClinicRef.value)
+  }
+}
+
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'RETURN_PRODUCT_LIST') {
     if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
@@ -248,7 +271,7 @@ const startPrint = async () => {
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
 
-  <div class="mt-4 flex gap-4">
+  <div class="mt-4 flex items-center gap-4">
     <VueButton
       style="margin-left: auto"
       color="green"
@@ -271,48 +294,42 @@ const startPrint = async () => {
     >
       <span class="font-bold">HOÀN TIỀN</span>
     </VueButton>
-    <div class="flex items-center">
-      <a-dropdown>
-        <template #overlay>
-          <a-menu @click="handleMenuActionClick">
-            <a-menu-item key="REFUND_OVERPAID">
-              <span class="text-red-500">
-                <IconDollar class="mr-2" />
-                Hoàn trả tiền
-              </span>
-            </a-menu-item>
-            <a-menu-item key="RETURN_PRODUCT_LIST">
-              <span class="text-red-500">
-                <IconFileSync class="mr-2" />
-                Hoàn trả thuốc - vật tư
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
-              "
-              key="REOPEN_TICKET"
-            >
-              <span class="text-red-500">
-                <IconFileSync class="mr-2" />
-                Mở lại phiếu khám
-              </span>
-            </a-menu-item>
-            <a-menu-item key="DESTROY_TICKET">
-              <span class="text-red-500">
-                <IconDelete class="mr-2" />
-                Xóa phiếu
-              </span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-        <a-button shape="circle">
-          <template #icon>
-            <IconMore style="font-size: 1.2rem; font-weight: bold" />
-          </template>
-        </a-button>
-      </a-dropdown>
-    </div>
+    <VueDropdown :offset="4">
+      <template #trigger>
+        <div class="vue-circle">
+          <IconMore style="font-size: 1.5rem; font-weight: bold" />
+        </div>
+      </template>
+      <div class="vue-menu">
+        <a @click="clickRefundMoney">
+          <span class="text-red-500">
+            <IconDollar />
+            Hoàn trả tiền
+          </span>
+        </a>
+        <a @click="clickReturnProduct">
+          <span class="text-red-500">
+            <IconFileSync />
+            Hoàn trả thuốc - vật tư
+          </span>
+        </a>
+        <a
+          v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)"
+          @click="clickReopenTicket"
+        >
+          <span class="text-red-500">
+            <IconFileSync />
+            Mở lại phiếu khám
+          </span>
+        </a>
+        <a @click="clickDestroyTicket">
+          <span class="text-red-500">
+            <IconDelete />
+            Xóa phiếu
+          </span>
+        </a>
+      </div>
+    </VueDropdown>
   </div>
   <div class="mt-4 table-wrapper">
     <table>
@@ -328,6 +345,7 @@ const startPrint = async () => {
             <th>Chiết khấu</th>
             <th>Tổng tiền</th>
             <th></th>
+            <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
           </tr>
         </thead>
         <tbody>
@@ -383,6 +401,7 @@ const startPrint = async () => {
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
           </tr>
           <tr>
             <td class="text-right" colspan="8">
@@ -397,6 +416,7 @@ const startPrint = async () => {
               {{ formatMoney(ticketClinicRef.procedureMoney) }}
             </td>
             <td></td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
           </tr>
         </tbody>
       </template>

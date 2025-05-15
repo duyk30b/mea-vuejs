@@ -15,6 +15,7 @@ import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
 import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
+import VueDropdown from '../../../../common/VueDropdown.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
@@ -86,18 +87,6 @@ onBeforeMount(async () => {
   }
 })
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'RADIOLOGY_GROUP_MANAGER') {
-    modalRadiologyGroupManager.value?.openModal()
-  }
-  if (menu.key === 'SCREEN_SETTING') {
-    modalRadiologyListSettingScreen.value?.openModal()
-  }
-  if (menu.key === 'COPY_FROM_SYSTEM') {
-    modalCopyRadiologySystem.value?.openModal()
-  }
-}
-
 const handleModalRadiologyGroupManagerSuccess = async () => {
   radiologyGroupAll.value = await RadiologyGroupService.list({})
   await startFetchData()
@@ -139,19 +128,29 @@ const handleModalCopyRadiologySystemSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt hiển thị</a-menu-item>
-            <a-menu-item key="RADIOLOGY_GROUP_MANAGER">Quản lý nhóm CĐHA</a-menu-item>
-            <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalRadiologyListSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+          <a @click="modalRadiologyGroupManager?.openModal()">Quản lý nhóm CĐHA</a>
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalCopyRadiologySystem?.openModal()"
+          >
+            Copy dữ liệu từ hệ thống
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">
