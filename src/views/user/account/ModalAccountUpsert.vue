@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputText } from '../../../common/vue-form'
+import { InputDate, InputRadio, InputText } from '../../../common/vue-form'
 import InputCheckboxList from '../../../common/vue-form/InputCheckboxList.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -158,10 +158,13 @@ defineExpose({ openModal })
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Giới tính</div>
           <div>
-            <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+            <InputRadio
+              v-model:value="user!.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 

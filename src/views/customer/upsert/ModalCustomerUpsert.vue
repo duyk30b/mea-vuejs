@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputHint, InputText, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputHint, InputRadio, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -204,10 +204,13 @@ defineExpose({ openModal })
         >
           <div>Giới tính</div>
           <div>
-            <a-radio-group v-model:value="customer.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+            <InputRadio
+              v-model:value="customer!.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 

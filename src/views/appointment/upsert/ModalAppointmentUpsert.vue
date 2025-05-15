@@ -3,7 +3,14 @@ import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
-import { InputDate, InputHint, InputOptions, InputText, VueSelect } from '../../../common/vue-form'
+import {
+  InputDate,
+  InputHint,
+  InputOptions,
+  InputRadio,
+  InputText,
+  VueSelect,
+} from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { AddressInstance } from '../../../core/address.instance'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -296,13 +303,14 @@ defineExpose({ openModalForCreate, openModalForUpdate })
         >
           <div>Giới tính</div>
           <div>
-            <a-radio-group
+            <InputRadio
               v-model:value="appointment.customer!.gender"
               :disabled="!!appointment.customer!.id"
-            >
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 

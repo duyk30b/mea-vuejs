@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox } from '../../../common/vue-form'
+import { InputCheckbox, InputRadio } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
@@ -91,14 +91,13 @@ const logoutGoogleDriver = async () => {
               <td>
                 <div>Hiển thị tiền</div>
                 <div>
-                  <a-radio-group v-model:value="settingDisplay.moneyDivisionFormat">
-                    <a-radio style="display: flex; line-height: 32px" :value="1">
-                      Hiển thị cơ bản: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230,500
-                    </a-radio>
-                    <a-radio style="display: flex; line-height: 32px" :value="1000">
-                      Hiển thị rút gọn: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230.5
-                    </a-radio>
-                  </a-radio-group>
+                  <InputRadio
+                    v-model:value="settingDisplay.moneyDivisionFormat"
+                    :options="[
+                      { key: 1, label: 'Hiển thị cơ bản: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230,500' },
+                      { key: 1000, label: 'Hiển thị rút gọn: VD: Một triệu hai trăm ba mươi nghìn năm trăm đồng: 1,230.5' },
+                    ]"
+                  />
                 </div>
               </td>
             </tr>

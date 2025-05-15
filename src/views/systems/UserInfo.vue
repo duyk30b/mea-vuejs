@@ -3,7 +3,7 @@ import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconSetting } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputDate, InputText } from '../../common/vue-form'
+import { InputDate, InputRadio, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
 import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
@@ -94,10 +94,13 @@ const disableButtonSave = computed(() => {
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Giới tính</div>
         <div style="flex: 1">
-          <a-radio-group v-model:value="user.gender">
-            <a-radio :value="1">Nam</a-radio>
-            <a-radio :value="0">Nữ</a-radio>
-          </a-radio-group>
+          <InputRadio
+            v-model:value="user.gender"
+            :options="[
+              { key: 1, label: 'Nam' },
+              { key: 0, label: 'Nữ' },
+            ]"
+          />
         </div>
       </div>
 
