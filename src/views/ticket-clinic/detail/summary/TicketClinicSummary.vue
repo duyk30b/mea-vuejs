@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/dropdown/VueDropdown.vue'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import VueTag from '../../../../common/VueTag.vue'
 import { IconDollar, IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
@@ -294,7 +294,7 @@ const startPrint = async () => {
     >
       <span class="font-bold">HOÀN TIỀN</span>
     </VueButton>
-    <VueDropdown :offset="4">
+    <VueDropdown>
       <template #trigger>
         <div class="vue-circle">
           <IconMore style="font-size: 1.5rem; font-weight: bold" />

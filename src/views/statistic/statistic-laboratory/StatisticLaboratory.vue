@@ -2,7 +2,7 @@
 import { onBeforeMount, ref } from 'vue'
 import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
 import { InputDate, InputSelect } from '../../../common/vue-form'
-import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'

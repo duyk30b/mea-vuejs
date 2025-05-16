@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/dropdown/VueDropdown.vue'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'

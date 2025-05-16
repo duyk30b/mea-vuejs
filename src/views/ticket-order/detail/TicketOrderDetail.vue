@@ -35,7 +35,7 @@ import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
-import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -370,7 +370,7 @@ const openModalTicketOrderPreview = () => {
         <IconEdit />
         Sửa đơn
       </VueButton>
-      <VueDropdown :offset="4">
+      <VueDropdown>
         <template #trigger>
           <div class="vue-circle">
             <IconMore style="font-size: 1.5rem; font-weight: bold" />

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { IconClockCircle, IconFileSearch, IconShoppingCart } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueTag from '../../../../common/VueTag.vue'
@@ -15,7 +16,6 @@ import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
-import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =

@@ -2,7 +2,7 @@
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import {
   IconCloseCircle,
   IconCopy,
@@ -298,7 +298,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         <IconEdit />
         Sửa phiếu
       </VueButton>
-      <VueDropdown :offset="4">
+      <VueDropdown>
         <template #trigger>
           <div class="vue-circle">
             <IconMore style="font-size: 1.5rem; font-weight: bold" />

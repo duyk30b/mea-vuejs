@@ -34,7 +34,7 @@ import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelect
 import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconFileSearch } from '../../../../common/icon-antd'
-import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()

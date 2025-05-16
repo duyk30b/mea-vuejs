@@ -19,7 +19,7 @@ import { DImage, ESTimer } from '../../../utils'
 import ModalTicketRadiologyResult from '../detail/radiology/ModalTicketRadiologyResult.vue'
 import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
 import { LaboratoryValueType } from '../../../modules/laboratory'
-import VueTooltip from '../../../common/dropdown/VueTooltip.vue'
+import VueTooltip from '../../../common/popover/VueTooltip.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 

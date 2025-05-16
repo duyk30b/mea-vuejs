@@ -19,7 +19,7 @@ import { TicketProduct } from '../../../../modules/ticket-product'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
-import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
