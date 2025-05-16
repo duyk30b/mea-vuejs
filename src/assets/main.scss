@@ -34,6 +34,14 @@ body {
   line-clamp: 2;
 }
 
+.input-basic {
+  width: 100%;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #ccc;
+}
+
 .ck-editor__editable {
   // min-height: 200px !important;
   // max-height: 300px !important;

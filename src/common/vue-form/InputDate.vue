@@ -184,6 +184,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleValueDatePicker = (value: number) => {
   emit('update:value', value)
+  emit('selectTime', value)
   showDatePicker.value = false
 }
 
@@ -276,7 +277,7 @@ const handleClickClear = () => {
         <div
           ref="inputYear"
           class="input-item input-year"
-          placeholder="Y"
+          placeholder="YY"
           :contenteditable="!disabled"
           @input="(e) => handleInput(e, 'YEAR')"
           @focus="handleFocus"
@@ -318,9 +319,15 @@ const handleClickClear = () => {
       </div>
     </div>
     <div class="icon-append">
-      <IconClose v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
-      <IconCloseCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
-      <IconCalendar style="margin-left: 12px" @click="showDatePicker = !showDatePicker" />
+      <div v-if="!disabled" class="icon-clear-blur" @click="handleClickClear">
+        <IconClose />
+      </div>
+      <div v-if="!disabled" class="icon-clear-hover" @click="handleClickClear">
+        <IconCloseCircle />
+      </div>
+      <div style="margin-left: 12px" @click="showDatePicker = !showDatePicker">
+        <IconCalendar />
+      </div>
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">
       <DatePicker

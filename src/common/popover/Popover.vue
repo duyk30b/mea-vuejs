@@ -217,9 +217,11 @@ onBeforeUnmount(() => {
 .dropdown-content {
   position: absolute;
   border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.15);
   background-color: white;
   color: #333;
+  top: 0; // quan trọng, nếu không set top, mặc định nó sẽ rơi xuống dưới, khi đó thanh scroll xuất hiện đẩy lệch mọi thứ đi
+  left: 0;
   &.dropdown-content-clicked {
     border: 1px solid #cdcdcd;
   }
@@ -243,7 +245,9 @@ onBeforeUnmount(() => {
 .slide-down-leave-active,
 .slide-up-enter-active,
 .slide-up-leave-active {
-  transition: all 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .slide-down-enter-to,

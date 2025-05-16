@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconGroup, IconPlus, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
-import { InputSelect, VueSelect } from '../../../common/vue-form'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -15,8 +16,6 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -33,8 +32,9 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('RECEIPT_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const timeRanger = ref<[Dayjs, Dayjs]>()
 const receiptStatus = ref<ReceiptStatus | null>(null)
+const fromTime = ref<number>()
+const toTime = ref<number>()
 
 const sortColumn = ref<'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -42,9 +42,6 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const startFetchData = async () => {
   try {
     dataLoading.value = true
-
-    const fromTime = timeRanger.value?.[0].startOf('day').toISOString()
-    const toTime = timeRanger.value?.[1].endOf('day').toISOString()
 
     const { data, meta } = await ReceiptApi.pagination({
       relation: {
@@ -54,7 +51,13 @@ const startFetchData = async () => {
           : false,
       },
       filter: {
-        startedAt: fromTime && toTime ? { BETWEEN: [fromTime, toTime] } : undefined,
+        startedAt:
+          fromTime.value || toTime.value
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
         status: receiptStatus.value !== null ? receiptStatus.value : undefined,
       },
       page: page.value,
@@ -162,18 +165,30 @@ const handleMenuSettingClick = (menu: { key: string }) => {
 
   <div class="page-main">
     <div class="page-main-options">
-      <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn thời gian</div>
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Từ ngày</div>
         <div>
-          <a-range-picker
-            v-model:value="timeRanger"
-            :onChange="handleChangeTime"
-            format="DD-MM-YYYY"
-            style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+          <InputDate
+            v-model:value="fromTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
           />
         </div>
       </div>
+
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Đến ngày</div>
+        <div>
+          <InputDate
+            v-model:value="toTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
+          />
+        </div>
+      </div>
+
       <div style="flex: 1; flex-basis: 250px">
         <div>Chọn trạng thái</div>
         <div>

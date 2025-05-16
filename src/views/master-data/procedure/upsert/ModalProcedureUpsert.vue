@@ -380,18 +380,6 @@ defineExpose({ openModal })
                       </div>
                     </div>
                   </div>
-
-                  <div class="mt-8 flex items-center">
-                    <div class="">Active</div>
-                    <div class="ml-4">
-                      <a-switch
-                        :checked="Boolean(procedure.isActive)"
-                        @change="(checked: Boolean) => (procedure.isActive = checked ? 1 : 0)" />
-                    </div>
-                    <div v-if="!procedure.isActive" class="ml-4">
-                      Dịch vụ này tạm thời ngừng kinh doanh
-                    </div>
-                  </div>
                 </div> -->
               </div>
             </VueTabPanel>

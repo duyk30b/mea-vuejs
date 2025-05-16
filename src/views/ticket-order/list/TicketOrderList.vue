@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import type { Dayjs } from 'dayjs'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconAudit, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
-import { InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { InputOptions, InputSelect, VueSelect, InputDate } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../../modules/customer'
@@ -31,12 +30,14 @@ const { permissionIdMap } = meStore
 const ticketList = ref<Ticket[]>([])
 const customerList = ref<Customer[]>([])
 
+const fromTime = ref<number>()
+const toTime = ref<number>()
+
 const dataLoading = ref(false)
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('TICKET_ORDER_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const timeRanger = ref<[Dayjs, Dayjs]>()
 const ticketStatus = ref<TicketStatus | null>(null)
 const customerId = ref<number>()
 
@@ -46,9 +47,6 @@ const sortValue = ref<'ASC' | 'DESC' | ''>('')
 const startFetchData = async () => {
   try {
     dataLoading.value = true
-
-    const fromTime = timeRanger.value?.[0].startOf('day').toDate()
-    const toTime = timeRanger.value?.[1].endOf('day').toDate()
 
     const { data, meta } = await TicketApi.pagination({
       page: page.value,
@@ -61,10 +59,13 @@ const startFetchData = async () => {
       },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
-        startedAt: {
-          GTE: fromTime ? fromTime : undefined,
-          LTE: toTime ? toTime : undefined,
-        },
+        registeredAt:
+          fromTime.value || toTime.value
+            ? {
+                GTE: fromTime.value ? fromTime.value : undefined,
+                LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+              }
+            : undefined,
         ticketStatus: ticketStatus.value ? ticketStatus.value : undefined,
         ticketType: TicketType.Order,
       },
@@ -114,7 +115,7 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const handleChangeTime = async (value: any) => {
+const handleChangeTime = async () => {
   await startFetchData()
 }
 
@@ -221,15 +222,26 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </div>
       </div>
 
-      <div style="flex: 1; flex-basis: 250px">
-        <div>Chọn thời gian</div>
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Từ ngày</div>
         <div>
-          <a-range-picker
-            v-model:value="timeRanger"
-            :onChange="handleChangeTime"
-            format="DD-MM-YYYY"
-            style="width: 100%"
-            :placeholder="['DD-MM-YYYY', 'DD-MM-YYYY']"
+          <InputDate
+            v-model:value="fromTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
+          />
+        </div>
+      </div>
+
+      <div style="flex: 1; flex-basis: 200px">
+        <div>Đến ngày</div>
+        <div>
+          <InputDate
+            v-model:value="toTime"
+            type-parser="number"
+            class="w-full"
+            @selectTime="handleChangeTime"
           />
         </div>
       </div>

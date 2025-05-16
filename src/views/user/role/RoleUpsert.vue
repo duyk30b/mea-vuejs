@@ -140,10 +140,9 @@ const clickDelete = () => {
       </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>
-        <a-switch
-          :checked="Boolean(role.isActive)"
-          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)"
-        />
+        <div>
+          <VueSwitch v-model="role.isActive" type-parser="number" />
+        </div>
         <div v-if="!role.isActive" class="ml-4">Tất cả user thuộc vai trò này tạm thời bị khóa</div>
       </div>
       <div class="flex mt-4">

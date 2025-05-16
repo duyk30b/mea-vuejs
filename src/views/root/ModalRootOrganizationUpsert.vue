@@ -12,6 +12,7 @@ import {
   VueSelect,
 } from '../../common/vue-form'
 import type { CheckboxOptionType } from '../../common/vue-form/InputCheckboxList.vue'
+import VueSwitch from '../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { AddressInstance } from '../../core/address.instance'
 import { useSettingStore } from '../../modules/_me/setting.store'
@@ -175,10 +176,9 @@ defineExpose({ openModal })
 
         <div style="flex-basis: 200px; flex-grow: 1">
           <div>Email Verify</div>
-          <a-switch
-            :checked="Boolean(organization.emailVerify)"
-            @change="(checked: Boolean) => (organization.emailVerify = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="organization.emailVerify" type-parser="number" />
+          </div>
         </div>
 
         <div style="flex-basis: 200px; flex-grow: 1">
@@ -223,9 +223,8 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1">
-          <a-input
+          <InputText
             v-model:value="organization.addressStreet"
-            style="flex: 1"
             placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
           />
         </div>

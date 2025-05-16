@@ -1,37 +1,30 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { IconEye, IconEyeInvisible } from '../icon-antd'
+
 const props = withDefaults(
   defineProps<{
     value: string | null | undefined
-    type?: 'text' | 'email'
     name?: string
-    prepend?: string
-    append?: string
     disabled?: boolean
     required?: boolean
-    textAlign?: 'left' | 'right'
     maxlength?: number
     placeholder?: string
-    pattern?: string
-    title?: string
     autocomplete?: 'on' | 'off'
   }>(),
   {
     value: '',
-    type: 'text',
     name: undefined,
-    prepend: undefined,
-    append: undefined,
     disabled: false,
     required: false,
-    textAlign: undefined,
     maxlength: undefined,
     placeholder: undefined,
-    pattern: undefined,
-    title: undefined,
     autocomplete: undefined,
   },
 )
 const emit = defineEmits<{ (e: 'update:value', value: string): void }>()
+
+const showPassword = ref(false)
 
 const handleInput = (e: Event) => {
   const target = e.target as HTMLInputElement
@@ -41,33 +34,31 @@ const handleInput = (e: Event) => {
 
 <template>
   <div :class="{ 'vue-input': true, 'disabled': disabled }">
-    <div v-if="prepend" class="prepend">{{ prepend }}</div>
     <div class="input-area">
       <input
         ref="inputRef"
         :value="value"
         :name="name"
-        :style="{ textAlign }"
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
         :maxlength="maxlength"
-        :pattern="pattern"
-        :title="title"
-        :type="type"
+        :type="showPassword ? 'text' : 'password'"
         @input="handleInput"
       />
+      <div v-if="showPassword" @click="showPassword = !showPassword" class="password-toggle">
+        <IconEyeInvisible />
+      </div>
+      <div v-else @click="showPassword = !showPassword" class="password-toggle">
+        <IconEye />
+      </div>
     </div>
-    <div v-if="append" class="append">{{ append }}</div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .password-toggle {
-  line-height: 0;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  padding-right: 0.5em;
+  cursor: pointer;
 }
 </style>

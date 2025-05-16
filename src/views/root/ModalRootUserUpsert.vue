@@ -4,6 +4,7 @@ import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputNumber, InputRadio, InputText } from '../../common/vue-form'
+import VueSwitch from '../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
@@ -162,18 +163,16 @@ defineExpose({ openModal })
 
         <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Admin</div>
-          <a-switch
-            :checked="Boolean(user.isAdmin)"
-            @change="(checked: Boolean) => (user.isAdmin = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="user.isAdmin" type-parser="number" />
+          </div>
         </div>
 
         <div class="flex items-center mt-5">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="user.isActive" type-parser="number" />
+          </div>
           <div v-if="!user.isActive" class="ml-4">User này tạm thời không thể hoạt động</div>
         </div>
       </div>

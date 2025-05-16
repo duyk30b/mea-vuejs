@@ -21,6 +21,7 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
+import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -325,14 +326,21 @@ const openModalDistributorDetail = (data?: Distributor) => {
                 <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.discount">
                   <td style="white-space: nowrap; padding-right: 10px">Chiết khấu</td>
                   <td class="cursor-pointer" style="font-size: 16px">
-                    <a-popconfirm>
-                      <template #cancelButton>
-                        <div></div>
+                    <VuePopConfirm>
+                      <template #trigger>
+                        <div class="flex">
+                          <div>
+                            <VueTag color="green">{{ receipt.discountPercent || 0 }}%</VueTag>
+                          </div>
+                          <div
+                            class="flex-1 text-right"
+                            style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
+                          >
+                            {{ formatMoney(receipt.discountMoney) }}
+                          </div>
+                        </div>
                       </template>
-                      <template #okButton>
-                        <div></div>
-                      </template>
-                      <template #title>
+                      <div class="p-4">
                         <div>
                           Chiết khấu (Tiền hàng:
                           <b>{{ formatMoney(receipt.itemsActualMoney) }}</b>
@@ -355,19 +363,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
                             />
                           </div>
                         </div>
-                      </template>
-                      <div class="flex">
-                        <div>
-                          <VueTag color="green">{{ receipt.discountPercent || 0 }}%</VueTag>
-                        </div>
-                        <div
-                          class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
-                        >
-                          {{ formatMoney(receipt.discountMoney) }}
-                        </div>
                       </div>
-                    </a-popconfirm>
+                    </VuePopConfirm>
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.surcharge">
@@ -395,13 +392,13 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
         <div class="mt-4 p-4 bg-white">
           <div>Thông tin khác</div>
-          <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
-            <table class="table w-full mt-2 table-payment">
+          <div class="p-4" style="border: 1px solid #cdcdcd">
+            <table class="table w-full table-payment">
               <tbody>
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <a-input v-model:value="receipt.note" class="input-payment" />
+                    <input v-model="receipt.note" class="input-basic" />
                   </td>
                 </tr>
               </tbody>
@@ -475,33 +472,9 @@ const openModalDistributorDetail = (data?: Distributor) => {
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-tabs-tab) {
-  border-top: 5px solid #d6d6d6 !important;
-
-  &.ant-tabs-tab-active {
-    border-top-color: #1890ff !important;
-  }
-}
-
 .table-payment {
   td {
     padding: 6px 0;
-  }
-}
-
-:deep(.input-payment) {
-  width: 100%;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  box-shadow: none !important;
-
-  .ant-input-number-handler-wrap {
-    display: none !important;
-  }
-
-  & input {
-    text-align: right !important;
   }
 }
 </style>

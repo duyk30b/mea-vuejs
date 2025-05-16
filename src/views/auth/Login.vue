@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { InputText } from '../../common/vue-form'
+import { InputPassword, InputText } from '../../common/vue-form'
 import InputNumber from '../../common/vue-form/InputNumber.vue'
 import VueButton from '../../common/VueButton.vue'
 import { LocalStorageService } from '../../core/local-storage.service'
@@ -81,12 +81,7 @@ const startLoginDemo = async () => {
         <div class="mt-4">
           <div>Mật khẩu</div>
           <div>
-            <InputText
-              v-model:value="formState.password"
-              name="password"
-              type="password"
-              required
-            />
+            <InputPassword v-model:value="formState.password" name="password" required />
           </div>
         </div>
 

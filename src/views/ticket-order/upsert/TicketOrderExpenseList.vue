@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import VueButton from '../../../common/VueButton.vue'
 import { IconExclamationCircle } from '../../../common/icon-antd'
+import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 import { InputMoney, VueSelect } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { UNKNOWN_KEY } from '../../../modules/enum'
@@ -70,69 +71,63 @@ const handleChangeInvoiceExpense = (data: number) => {
 
 <template>
   <td class="cursor-pointer whitespace-nowrap">
-    <a-popconfirm>
-      <template #cancelButton>
-        <div></div>
+    <VuePopConfirm>
+      <template #trigger>
+        <a>
+          <span class="mr-2">Chi phí</span>
+          <IconExclamationCircle />
+        </a>
       </template>
-      <template #okButton>
-        <div></div>
-      </template>
-      <template #title>
-        <div style="max-width: 100vw">
-          <div class="flex">
-            <div style="width: 160px; font-size: 13px">Loại chi phí</div>
-            <div style="flex: 1; font-size: 13px">Số tiền</div>
-          </div>
-          <div class="flex flex-col gap-2 mt-2">
-            <div
-              v-for="(expense, index) in ticketOrderUpsertRef.ticketExpenseList"
-              :key="index"
-              class="flex items-stretch"
-            >
-              <VueSelect
-                v-model:value="ticketOrderUpsertRef.ticketExpenseList![index].key"
-                style="width: 160px"
-                :options="
-                  [
-                    ...Object.entries(settingStore.INVOICE_EXPENSE_DETAIL).map(([key, text]) => ({
-                      value: key,
-                      text: text,
-                    })),
-                    ...(settingStore.INVOICE_EXPENSE_DETAIL[expense.key]
-                      ? []
-                      : [{ value: expense.key, text: expense.name }]),
-                  ].reverse()
-                "
-              />
-              <div style="flex: 1">
-                <InputMoney
-                  :value="expense.money"
-                  @update:value="(data) => handleChangeMoneyInvoiceExpenseDetail(data, index)"
-                />
-              </div>
-              <div style="width: 60px">
-                <VueButton color="red" @click="handleDeleteExpenseDetail(index)">Xóa</VueButton>
-              </div>
-            </div>
-          </div>
-          <div class="text-end mt-1" style="font-size: 13px">
-            <a @click="handleAddExpenseDetail">Thêm chi phí khác</a>
-          </div>
-          <div class="flex mt-2">
-            <div style="width: 160px">Tổng chi phí:</div>
+      <div style="max-width: 100vw" class="p-4">
+        <div class="flex">
+          <div style="width: 160px; font-size: 13px">Loại chi phí</div>
+          <div style="flex: 1; font-size: 13px">Số tiền</div>
+        </div>
+        <div class="flex flex-col gap-2 mt-2">
+          <div
+            v-for="(expense, index) in ticketOrderUpsertRef.ticketExpenseList"
+            :key="index"
+            class="flex items-stretch"
+          >
+            <VueSelect
+              v-model:value="ticketOrderUpsertRef.ticketExpenseList![index].key"
+              style="width: 160px"
+              :options="
+                [
+                  ...Object.entries(settingStore.INVOICE_EXPENSE_DETAIL).map(([key, text]) => ({
+                    value: key,
+                    text: text,
+                  })),
+                  ...(settingStore.INVOICE_EXPENSE_DETAIL[expense.key]
+                    ? []
+                    : [{ value: expense.key, text: expense.name }]),
+                ].reverse()
+              "
+            />
             <div style="flex: 1">
-              <b class="ml-3" style="font-size: 16px">
-                {{ formatMoney(ticketOrderUpsertRef.expense) }}
-              </b>
+              <InputMoney
+                :value="expense.money"
+                @update:value="(data) => handleChangeMoneyInvoiceExpenseDetail(data, index)"
+              />
+            </div>
+            <div style="width: 60px">
+              <VueButton color="red" @click="handleDeleteExpenseDetail(index)">Xóa</VueButton>
             </div>
           </div>
         </div>
-      </template>
-      <div>
-        <span class="mr-2">Chi phí</span>
-        <IconExclamationCircle />
+        <div class="text-end mt-1" style="font-size: 13px">
+          <a @click="handleAddExpenseDetail">Thêm chi phí khác</a>
+        </div>
+        <div class="flex mt-2">
+          <div style="width: 160px">Tổng chi phí:</div>
+          <div style="flex: 1">
+            <b class="ml-3" style="font-size: 16px">
+              {{ formatMoney(ticketOrderUpsertRef.expense) }}
+            </b>
+          </div>
+        </div>
       </div>
-    </a-popconfirm>
+    </VuePopConfirm>
   </td>
   <td>
     <InputMoney

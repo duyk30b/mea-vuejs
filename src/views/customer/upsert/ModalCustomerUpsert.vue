@@ -4,6 +4,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputHint, InputRadio, InputText, VueSelect } from '../../../common/vue-form'
+import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -307,10 +308,9 @@ defineExpose({ openModal })
 
         <div style="flex-basis: 90%; flex-grow: 1; min-width: 300px" class="flex">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(customer.isActive)"
-            @change="(checked: Boolean) => (customer.isActive = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="customer.isActive" type-parser="number" />
+          </div>
           <div v-if="!customer.isActive" class="ml-4">
             Khách hàng này tạm thời không thể mua hàng
           </div>

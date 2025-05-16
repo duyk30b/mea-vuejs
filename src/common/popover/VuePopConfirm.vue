@@ -1,11 +1,12 @@
 <template>
   <Popover
-    :position="{ horizontal: 'end', vertical: 'bottom' }"
+    :position="{ horizontal: 'center', vertical: 'top' }"
     :custom-style="{
       offset: 8,
       arrow: true,
       dropdownContent: {
-        boxShadow: '10px 10px 40px rgba(0, 0, 0, 0.65)',
+        backgroundColor: 'white',
+        boxShadow: '4px 4px 8px rgba(0, 0, 0, 0.35)',
       },
     }"
   >

@@ -9,6 +9,7 @@ import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { RoleService } from '../../../modules/role'
 import { User, UserService } from '../../../modules/user'
+import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
@@ -194,10 +195,9 @@ defineExpose({ openModal })
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="user.isActive" type-parser="number" />
+          </div>
           <div v-if="!user.isActive" class="ml-4">Tài khoản này tạm thời không thể sử dụng</div>
         </div>
       </div>

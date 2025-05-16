@@ -11,6 +11,7 @@ import {
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
+import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
@@ -535,11 +536,7 @@ defineExpose({ openModal })
 
                 <div class="mt-2 grow basis-[600px] flex items-stretch">
                   <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.hasManageQuantity)"
-                      :disabled="!!product.quantity"
-                      @change="(checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)"
-                    />
+                    <VueSwitch v-model="product.hasManageQuantity" type-parser="number" />
                   </div>
                   <div>
                     <span v-if="product.hasManageQuantity">
@@ -553,10 +550,7 @@ defineExpose({ openModal })
 
                 <div class="mt-2 grow basis-[600px] flex items-stretch">
                   <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.isActive)"
-                      @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
-                    />
+                    <VueSwitch v-model="product.isActive" type-parser="number" />
                   </div>
                   <div>
                     <span v-if="product.isActive">Active</span>

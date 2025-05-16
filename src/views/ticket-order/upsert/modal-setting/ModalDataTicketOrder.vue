@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -130,18 +131,12 @@ defineExpose({ openModal })
                 </div>
                 <div v-for="(r, key, index) in SURCHARGE_DETAIL" :key="key">
                   <div class="py-2 flex items-stretch">
-                    <div
-                      class="flex justify-center items-center px-1"
-                      style="
-                        border: 1px solid #d9d9d9;
-                        border-right: none;
-                        width: 40px;
-                        background-color: #f7f7f7;
-                      "
-                    >
-                      <span>{{ index }}</span>
+                    <div style="flex: 1">
+                      <InputText
+                        v-model:value="SURCHARGE_DETAIL[key]"
+                        :prepend="index.toString()"
+                      />
                     </div>
-                    <a-input v-model:value="SURCHARGE_DETAIL[key]" style="flex: 1" />
                     <div v-if="key !== '_unknown'" class="flex items-center mx-2">
                       <a style="color: var(--text-red)" @click="delete SURCHARGE_DETAIL[key]">
                         Xóa
@@ -168,7 +163,9 @@ defineExpose({ openModal })
                   <p class="mt-2 italic">
                     - Tiền
                     <b>chi phí</b>
-                    là tiền <b> người bán phải chịu </b> khi tạo đơn hàng
+                    là tiền
+                    <b>người bán phải chịu</b>
+                    khi tạo đơn hàng
                   </p>
                   <p>
                     - Các chi phí thường gặp như:
@@ -180,12 +177,14 @@ defineExpose({ openModal })
                     <span class="mx-2 font-bold">Tiền lãi</span>
                     =
                     <span class="mx-2">Tổng tiền</span>
-                    <span class="font-bold"> - </span>
-                    ( <span class="mx-2">Tiền vốn</span>
+                    <span class="font-bold">-</span>
+                    (
+                    <span class="mx-2">Tiền vốn</span>
                     +
                     <span class="mx-2">Hoa hồng nhân viên</span>
                     +
-                    <span class="mx-2 font-bold">Chi phí</span>)
+                    <span class="mx-2 font-bold">Chi phí</span>
+                    )
                   </div>
                 </details>
                 <div class="flex mt-4">
@@ -194,18 +193,9 @@ defineExpose({ openModal })
                 </div>
                 <div v-for="(r, key, index) in EXPENSE_DETAIL" :key="key">
                   <div class="py-2 flex">
-                    <div
-                      class="flex justify-center items-center px-1"
-                      style="
-                        border: 1px solid #d9d9d9;
-                        border-right: none;
-                        width: 40px;
-                        background-color: #f7f7f7;
-                      "
-                    >
-                      <span>{{ index }}</span>
+                    <div style="flex: 1">
+                      <InputText v-model:value="EXPENSE_DETAIL[key]" :prepend="index.toString()" />
                     </div>
-                    <a-input v-model:value="EXPENSE_DETAIL[key]" style="flex: 1" />
                     <div v-if="key !== '_unknown'" class="flex items-center mx-2">
                       <a style="color: var(--text-red)" @click="delete EXPENSE_DETAIL[key]">Xóa</a>
                     </div>
