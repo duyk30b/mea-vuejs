@@ -15,6 +15,7 @@ import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
+import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -96,22 +97,19 @@ const prescriptionCostAmount = computed(() => {
           {{ tpPrescriptionIndex + 1 }}
         </td>
         <td class="text-center">
-          <a-tooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
-            <template #title>Chưa xuất thuốc</template>
-            <IconClockCircle
-              width="16"
-              height="16"
-              style="color: orange; cursor: not-allowed !important"
-            />
-          </a-tooltip>
-          <a-tooltip v-else>
-            <template #title>Đã xuất thuốc</template>
-            <IconShoppingCart
-              width="18"
-              height="18"
-              style="color: #52c41a; cursor: not-allowed !important"
-            />
-          </a-tooltip>
+          <VueTooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
+            <template #trigger>
+              <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+            </template>
+            <div>Chưa xuất thuốc</div>
+          </VueTooltip>
+
+          <VueTooltip v-else>
+            <template #trigger>
+              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+            </template>
+            <div>Đã xuất thuốc</div>
+          </VueTooltip>
         </td>
         <td>
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -224,22 +222,21 @@ const prescriptionCostAmount = computed(() => {
           {{ tpConsumableIndex + 1 }}
         </td>
         <td class="text-center">
-          <a-tooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
-            <template #title>Chưa xuất vật tư</template>
-            <IconClockCircle
-              width="16"
-              height="16"
-              style="color: orange; cursor: not-allowed !important"
-            />
-          </a-tooltip>
-          <a-tooltip v-else>
-            <template #title>Đã xuất vật tư</template>
-            <IconShoppingCart
-              width="18"
-              height="18"
-              style="color: #52c41a; cursor: not-allowed !important"
-            />
-          </a-tooltip>
+          <VueTooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
+            <template #trigger>
+              <IconClockCircle
+                style="font-size: 18px; color: orange; cursor: not-allowed !important"
+              />
+            </template>
+            <div>Chưa xuất vật tư</div>
+          </VueTooltip>
+
+          <VueTooltip v-else>
+            <template #trigger>
+              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+            </template>
+            <div>Đã xuất vật tư</div>
+          </VueTooltip>
         </td>
         <td colspan="2">
           <div class="flex items-center gap-1" style="font-weight: 500">

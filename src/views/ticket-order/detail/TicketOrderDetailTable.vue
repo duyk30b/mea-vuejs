@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { IconClockCircle, IconExclamationCircle, IconFileSearch, IconShoppingCart } from '../../../common/icon-antd'
+import {
+  IconClockCircle,
+  IconExclamationCircle,
+  IconFileSearch,
+  IconShoppingCart,
+} from '../../../common/icon-antd'
 import VueTag from '../../../common/VueTag.vue'
 import { CONFIG } from '../../../config'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -268,22 +273,19 @@ const colspan = computed(() => {
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
             </td>
             <td class="text-center">
-              <a-tooltip v-if="ticketProduct.deliveryStatus === DeliveryStatus.Pending">
-                <template #title>Chưa xuất vật tư</template>
-                <IconClockCircle
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important"
-                />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã xuất vật tư</template>
-                <IconShoppingCart
-                  width="18"
-                  height="18"
-                  style="color: #52c41a; cursor: not-allowed !important"
-                />
-              </a-tooltip>
+              <VueTooltip v-if="ticketProduct.deliveryStatus === DeliveryStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa xuất thuốc</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã xuất thuốc</div>
+              </VueTooltip>
             </td>
             <td>
               <div class="text-justify font-medium">

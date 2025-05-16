@@ -2,7 +2,7 @@
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/VueDropdown.vue'
+import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
 import {
   IconCloseCircle,
   IconCopy,

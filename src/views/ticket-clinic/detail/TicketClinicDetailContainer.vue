@@ -2,6 +2,7 @@
 import { onBeforeMount, onUnmounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
 import {
   IconContacts,
   IconDisconnect,
@@ -49,13 +50,12 @@ import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicUserList from './TicketClinicUserList.vue'
 import TicketClinicConsumable from './consumable/TicketClinicConsumable.vue'
 import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
+import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
 import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
 import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
-import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
-import VueDropdown from '../../../common/VueDropdown.vue'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()

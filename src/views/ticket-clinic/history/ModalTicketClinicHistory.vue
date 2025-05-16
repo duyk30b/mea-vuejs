@@ -19,6 +19,7 @@ import { DImage, ESTimer } from '../../../utils'
 import ModalTicketRadiologyResult from '../detail/radiology/ModalTicketRadiologyResult.vue'
 import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
 import { LaboratoryValueType } from '../../../modules/laboratory'
+import VueTooltip from '../../../common/dropdown/VueTooltip.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 
@@ -342,22 +343,23 @@ defineExpose({ openModal })
                             <span>{{ index + 1 }}</span>
                           </td>
                           <td class="text-center">
-                            <a-tooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
-                              <template #title>Chưa có kết quả</template>
-                              <IconClockCircle
-                                width="16"
-                                height="16"
-                                style="color: orange; cursor: not-allowed !important"
-                              />
-                            </a-tooltip>
-                            <a-tooltip v-else>
-                              <template #title>Đã hoàn thành</template>
-                              <IconCheckSquare
-                                width="16"
-                                height="16"
-                                style="color: #52c41a; cursor: not-allowed !important"
-                              />
-                            </a-tooltip>
+                            <VueTooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
+                              <template #trigger>
+                                <IconClockCircle
+                                  style="font-size: 18px; color: orange; cursor: not-allowed"
+                                />
+                              </template>
+                              <div>Chưa có kết quả</div>
+                            </VueTooltip>
+
+                            <VueTooltip v-else>
+                              <template #trigger>
+                                <IconCheckSquare
+                                  style="color: #52c41a; font-size: 18px; cursor: not-allowed"
+                                />
+                              </template>
+                              <div>Đã hoàn thành</div>
+                            </VueTooltip>
                           </td>
                           <td>{{ tlItem.laboratory?.name }}</td>
                           <td class="text-center">

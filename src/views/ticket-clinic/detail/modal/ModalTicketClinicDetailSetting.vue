@@ -28,7 +28,7 @@ const settingStore = useSettingStore()
 const meStore = useMeStore()
 
 const settingDisplay = ref<typeof settingStore.TICKET_CLINIC_DETAIL>(
-  JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL))
+  JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL)),
 )
 
 const warehouseOptions = ref<{ value: number; label: string }[]>([])
@@ -154,7 +154,8 @@ defineExpose({ openModal })
                         <div>
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.diagnosisEyeSpecial"
-                            :options="printHtmlOptions" />
+                            :options="printHtmlOptions"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -180,7 +181,8 @@ defineExpose({ openModal })
                             mode="multiple"
                             style="width: 100%"
                             placeholder="Please select"
-                            :options="warehouseOptions"></a-select>
+                            :options="warehouseOptions"
+                          ></a-select>
                         </div>
                       </td>
                     </tr>
@@ -189,7 +191,8 @@ defineExpose({ openModal })
                         <InputCheckbox
                           v-model:value="settingDisplay.consumable.searchIncludeZeroQuantity"
                           type-parser="number"
-                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0" />
+                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0"
+                        />
                       </td>
                     </tr>
                   </tbody>
@@ -214,7 +217,8 @@ defineExpose({ openModal })
                             mode="multiple"
                             style="width: 100%"
                             placeholder="Please select"
-                            :options="warehouseOptions"></a-select>
+                            :options="warehouseOptions"
+                          ></a-select>
                         </div>
                       </td>
                     </tr>
@@ -224,7 +228,8 @@ defineExpose({ openModal })
                         <div>
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.prescription"
-                            :options="printHtmlOptions" />
+                            :options="printHtmlOptions"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -233,7 +238,8 @@ defineExpose({ openModal })
                         <InputCheckbox
                           v-model:value="settingDisplay.prescriptions.searchIncludeZeroQuantity"
                           type-parser="number"
-                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0" />
+                          label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0"
+                        />
                       </td>
                     </tr>
                   </tbody>
@@ -255,7 +261,8 @@ defineExpose({ openModal })
                         <div>
                           <VueSelect
                             v-model:value="settingDisplay.printHtmlIdSetting.invoice"
-                            :options="printHtmlOptions" />
+                            :options="printHtmlOptions"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -269,7 +276,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

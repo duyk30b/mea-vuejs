@@ -16,7 +16,7 @@ import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import VueDropdown from '../../../common/VueDropdown.vue'
+import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()

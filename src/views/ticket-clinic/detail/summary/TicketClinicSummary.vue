@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/VueDropdown.vue'
+import VueDropdown from '../../../../common/dropdown/VueDropdown.vue'
 import VueTag from '../../../../common/VueTag.vue'
 import { IconDollar, IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'

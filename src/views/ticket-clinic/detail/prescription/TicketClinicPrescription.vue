@@ -34,6 +34,7 @@ import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelect
 import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconFileSearch } from '../../../../common/icon-antd'
+import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -314,22 +315,19 @@ const clickOpenModalSavePrescriptionSample = () => {
               </div>
             </td>
             <td class="text-center">
-              <a-tooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
-                <template #title>Chưa xuất vật tư</template>
-                <IconClockCircle
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important"
-                />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã xuất vật tư</template>
-                <IconShoppingCart
-                  width="18"
-                  height="18"
-                  style="color: #52c41a; cursor: not-allowed !important"
-                />
-              </a-tooltip>
+              <VueTooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa xuất thuốc</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã xuất thuốc</div>
+              </VueTooltip>
             </td>
             <td>
               <div style="font-weight: 500">

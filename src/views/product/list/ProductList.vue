@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/VueDropdown.vue'
+import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort } from '../../../common/icon-font-awesome'

@@ -35,7 +35,7 @@ import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
-import VueDropdown from '../../../common/VueDropdown.vue'
+import VueDropdown from '../../../common/dropdown/VueDropdown.vue'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()

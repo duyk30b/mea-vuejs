@@ -11,6 +11,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
+import VueTooltip from '../../../../common/dropdown/VueTooltip.vue'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -58,22 +59,19 @@ const laboratoryCostAmount = computed(() => {
           </td>
           <td>
             <div class="flex items-center justify-center">
-              <a-tooltip v-if="tl.status === TicketLaboratoryStatus.Pending">
-                <template #title>Chưa có kết quả</template>
-                <IconClockCircle
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important"
-                />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã hoàn thành</template>
-                <IconCheckSquare
-                  width="16"
-                  height="16"
-                  style="color: #52c41a; cursor: not-allowed !important"
-                />
-              </a-tooltip>
+              <VueTooltip v-if="tl.status === TicketLaboratoryStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa có kết quả</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã hoàn thành</div>
+              </VueTooltip>
             </div>
           </td>
           <td colspan="4">
