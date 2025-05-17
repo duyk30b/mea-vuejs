@@ -118,7 +118,14 @@ onBeforeMount(async () => {
       customerDefault = await CustomerService.getCustomerDefault()
     }
 
-    ticketOrderUpsertRef.value.registeredAt ||= Date.now()
+    if (
+      mode.value === ETicketOrderUpsertMode.CREATE ||
+      mode.value === ETicketOrderUpsertMode.COPY
+    ) {
+      ticketOrderUpsertRef.value.registeredAt = Date.now()
+    } else if (mode.value === ETicketOrderUpsertMode.UPDATE) {
+      ticketOrderUpsertRef.value.registeredAt ||= Date.now()
+    }
     customer.value = customerDefault
     ticketOrderUpsertRef.value.customer = customerDefault
     ticketOrderUpsertRef.value.customerId = customerDefault.id
@@ -478,6 +485,14 @@ const handleChangeTabs = (activeKey: any) => {
               </template>
             </InputOptions>
           </div>
+          <div class="mt-3">Thời gian tạo đơn</div>
+          <div>
+            <InputDate
+              v-model:value="ticketOrderUpsertRef.registeredAt"
+              typeParser="number"
+              show-time
+            />
+          </div>
         </div>
 
         <div class="mt-4 p-4 bg-white">
@@ -485,16 +500,6 @@ const handleChangeTabs = (activeKey: any) => {
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">
               <tbody>
-                <tr>
-                  <td style="white-space: nowrap; padding-right: 10px">Thời gian</td>
-                  <td>
-                    <InputDate
-                      v-model:value="ticketOrderUpsertRef.registeredAt"
-                      typeParser="number"
-                      show-time
-                    />
-                  </td>
-                </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
                     Tiền hàng

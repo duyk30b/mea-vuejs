@@ -1,30 +1,23 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { IconCalendar } from '../icon-antd'
-import DatePicker from './DatePicker.vue'
+import DatePickerRanger from './DatePickerRanger.vue'
 import { IconClose, IconCloseCircle } from '../icon-antd'
 
 const props = withDefaults(
   defineProps<{
     value?: string | number | Date | null
-    year?: number
     typeParser?: 'number' | 'string' | 'object'
     disabled?: boolean
-    defaultType?: 'date' | 'month' | 'year'
-    showTime?: boolean
   }>(),
   {
     value: undefined,
-    year: undefined,
     typeParser: 'string',
     disabled: false,
-    defaultType: 'date',
-    showTime: false,
   },
 )
 const emit = defineEmits<{
   (e: 'update:value', value: string | number | Date | null | undefined): void
-  (e: 'update:year', value: number | undefined): void
   (e: 'selectTime', value: string | number | Date | null | undefined): void
 }>()
 
@@ -32,23 +25,14 @@ const inputYear = ref<HTMLElement>()
 const inputMonth = ref<HTMLElement>()
 const inputDate = ref<HTMLElement>()
 
-const inputHour = ref<HTMLElement>()
-const inputMinute = ref<HTMLElement>()
-const inputSecond = ref<HTMLElement>()
-
-const showDatePicker = ref<boolean>(false)
+const showDatePickerRanger = ref<boolean>(false)
 
 onMounted(() => {
   watch(
-    () => [props.value, props.year],
+    () => [props.value],
     ([newTime, newYear], oldValue) => {
       const newDate = new Date(newTime as any)
       if (newTime === null || newDate.toString() == 'Invalid Date') {
-        if (props.showTime) {
-          inputHour.value!.innerHTML = ''
-          inputMinute.value!.innerHTML = ''
-          inputSecond.value!.innerHTML = ''
-        }
         inputDate.value!.innerHTML = ''
         inputMonth.value!.innerHTML = ''
         inputYear.value!.innerHTML = newYear != null ? newYear.toString() : ''
@@ -63,12 +47,6 @@ onMounted(() => {
         .toString()
         .padStart(2, '0')
       inputDate.value!.innerHTML = newDate.getDate().toString().padStart(2, '0')
-
-      if (props.showTime) {
-        inputHour.value!.innerHTML = newDate.getHours().toString().padStart(2, '0')
-        inputMinute.value!.innerHTML = newDate.getMinutes().toString().padStart(2, '0')
-        inputSecond.value!.innerHTML = newDate.getSeconds().toString().padStart(2, '0')
-      }
     },
     { immediate: true },
   )
@@ -107,12 +85,6 @@ const handleInput = (e: Event, type: 'YEAR' | 'MONTH' | 'DATE' | 'HOUR' | 'MINUT
   if (afterValue.length >= CONFIG.LENGTH) {
     if (type === 'DATE') inputMonth.value?.focus()
     if (type === 'MONTH') inputYear.value?.focus()
-
-    if (props.showTime) {
-      if (type === 'YEAR') inputHour.value?.focus()
-      if (type === 'HOUR') inputMinute.value?.focus()
-      if (type === 'MINUTE') inputSecond.value?.focus()
-    }
   }
 }
 
@@ -139,10 +111,6 @@ const handleBlur = (e: Event, LENGTH = 2) => {
 
   const time = getCurrentTime({ requireLength: true })
   if (!time) {
-    const year = getCurrentYear()
-    if (year != null) {
-      emit('update:year', year)
-    }
     return
   }
   if (props.typeParser === 'number') {
@@ -161,10 +129,6 @@ const handleKeydown = (e: KeyboardEvent) => {
     e.preventDefault() // Ngăn hành vi mặc định của phím Enter
     const time = getCurrentTime({ requireLength: false })
     if (!time) {
-      const year = getCurrentYear()
-      if (year != null) {
-        emit('update:year', year)
-      }
       return
     }
     if (props.typeParser === 'number') {
@@ -185,7 +149,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 const handleValueDatePicker = (value: number) => {
   emit('update:value', value)
   emit('selectTime', value)
-  showDatePicker.value = false
+  showDatePickerRanger.value = false
 }
 
 const getCurrentTime = (options: { requireLength: boolean }) => {
@@ -215,12 +179,6 @@ const getCurrentTime = (options: { requireLength: boolean }) => {
   time.setMonth(Number(inputMonth.value.innerHTML) - 1)
   time.setDate(Number(inputDate.value.innerHTML))
 
-  if (props.showTime) {
-    if (inputHour.value) time.setHours(Number(inputHour.value.innerHTML))
-    if (inputMinute.value) time.setMinutes(Number(inputMinute.value.innerHTML))
-    if (inputSecond.value) time.setSeconds(Number(inputSecond.value.innerHTML))
-  }
-
   return time
 }
 
@@ -232,20 +190,14 @@ const getCurrentYear = () => {
 }
 
 const handleClickOutside = () => {
-  showDatePicker.value = false
+  showDatePickerRanger.value = false
 }
 
 const handleClickClear = () => {
   inputDate.value!.innerHTML = ''
   inputMonth.value!.innerHTML = ''
   inputYear.value!.innerHTML = ''
-  if (props.showTime) {
-    inputHour.value!.innerHTML = ''
-    inputMinute.value!.innerHTML = ''
-    inputSecond.value!.innerHTML = ''
-  }
   emit('update:value', undefined)
-  emit('update:year', undefined)
   emit('selectTime', undefined)
 }
 </script>
@@ -255,7 +207,7 @@ const handleClickClear = () => {
     <div
       class="icon-prepend"
       style="padding: 0 8px; cursor: pointer"
-      @click="showDatePicker = !showDatePicker"
+      @click="showDatePickerRanger = !showDatePickerRanger"
     >
       <IconCalendar />
     </div>
@@ -290,38 +242,37 @@ const handleClickClear = () => {
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 4)"
         ></div>
-        <div></div>
+      </div>
+      <span style="opacity: 0.4">➔</span>
+      <div class="wrapper-date-time" @keydown="handleKeydown">
         <div
-          v-if="showTime"
-          ref="inputHour"
-          class="input-item input-hour"
+          ref="inputDate"
+          class="input-item input-date"
           :contenteditable="!disabled"
-          placeholder="h"
-          @input="(e) => handleInput(e, 'HOUR')"
+          placeholder="DD"
+          @input="(e) => handleInput(e, 'DATE')"
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div v-if="showTime">:</div>
+        <div style="opacity: 0.5">⧸</div>
         <div
-          v-if="showTime"
-          ref="inputMinute"
-          class="input-item input-minute"
+          ref="inputMonth"
+          class="input-item input-month"
           :contenteditable="!disabled"
-          placeholder="m"
-          @input="(e) => handleInput(e, 'MINUTE')"
+          placeholder="MM"
+          @input="(e) => handleInput(e, 'MONTH')"
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div v-if="showTime">:</div>
+        <div style="opacity: 0.5">⧸</div>
         <div
-          v-if="showTime"
-          ref="inputSecond"
-          class="input-item input-second"
+          ref="inputYear"
+          class="input-item input-year"
+          placeholder="YYYY"
           :contenteditable="!disabled"
-          placeholder="s"
-          @input="(e) => handleInput(e, 'SECOND')"
+          @input="(e) => handleInput(e, 'YEAR')"
           @focus="handleFocus"
-          @blur="(e) => handleBlur(e, 2)"
+          @blur="(e) => handleBlur(e, 4)"
         ></div>
       </div>
     </div>
@@ -333,10 +284,9 @@ const handleClickClear = () => {
         <IconCloseCircle />
       </div>
     </div>
-    <div v-if="showDatePicker && !disabled" class="date-picker">
-      <DatePicker
+    <div v-if="showDatePickerRanger && !disabled" class="date-picker-ranger">
+      <DatePickerRanger
         :value="new Date(value || '2024-01-02').getTime()"
-        :defaultType="defaultType"
         @update:value="handleValueDatePicker"
       />
     </div>
@@ -364,27 +314,15 @@ const handleClickClear = () => {
     cursor: text;
   }
   .input-year {
-    width: 4em;
-    cursor: text;
-  }
-  .input-hour {
-    width: 2em;
-    cursor: text;
-  }
-  .input-minute {
-    width: 2em;
-    cursor: text;
-  }
-  .input-second {
-    width: 2em;
+    width: 3em;
     cursor: text;
   }
 }
 
-.date-picker {
+.date-picker-ranger {
   position: absolute;
   top: 100%;
-  min-width: 280px;
+  min-width: 900px;
   left: 0;
   width: 100%;
   z-index: 1000;

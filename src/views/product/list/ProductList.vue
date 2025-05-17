@@ -279,7 +279,7 @@ const handleModalUploadProductSuccess = async () => {
     @success="handleModalProductGroupManagerSuccess"
   />
   <div class="page-header">
-    <div class="page-header-content">
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
       <div class="hidden md:block">
         <div class="flex items-center gap-2">
           <IconWarehouse />
@@ -294,15 +294,14 @@ const handleModalUploadProductSuccess = async () => {
       >
         Thêm Sản Phẩm
       </VueButton>
-    </div>
-
-    <div class="mr-2 flex items-center gap-8">
       <div>
         <VueButton :icon="IconUpload" @click="modalUploadProduct?.openModal()">Upload</VueButton>
       </div>
       <div>
         <VueButton :icon="IconDownload" @click="downloadExcelProductList">Download</VueButton>
       </div>
+    </div>
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">

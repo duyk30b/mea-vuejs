@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconFileSearch, IconGroup, IconSetting } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor, DistributorApi, DistributorService } from '../../../modules/distributor'
@@ -21,7 +21,6 @@ import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.v
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
-import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -50,8 +49,6 @@ const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
 const distributor = ref<Distributor>(Distributor.blank())
 const distributorOptions = ref<{ value: number; text: string; data: Distributor }[]>([])
 
-const time = ref<Dayjs>(dayjs())
-
 const saveLoading = ref(false)
 
 onBeforeMount(async () => {
@@ -71,12 +68,6 @@ onBeforeMount(async () => {
 
     receipt.value = receiptResponse
     distributorDefault = receiptResponse.distributor!
-
-    if (mode.value === EReceiptUpsertMode.CREATE || mode.value === EReceiptUpsertMode.COPY) {
-      time.value = dayjs(new Date())
-    } else if (mode.value === EReceiptUpsertMode.UPDATE) {
-      time.value = dayjs(new Date(receipt.value.startedAt))
-    }
   } else if (distributorId) {
     distributorDefault = await DistributorApi.detail(distributorId)
   } else {
@@ -86,6 +77,11 @@ onBeforeMount(async () => {
   distributor.value = distributorDefault
   receipt.value.distributor = distributorDefault
   receipt.value.distributorId = distributorDefault.id
+  if (mode.value === EReceiptUpsertMode.CREATE || mode.value === EReceiptUpsertMode.COPY) {
+    receipt.value.startedAt = Date.now()
+  } else if (mode.value === EReceiptUpsertMode.UPDATE) {
+    receipt.value.startedAt ||= Date.now()
+  }
   nextTick(() => {
     inputOptionsDistributor.value?.setItem({
       text: distributorDefault.fullName,
@@ -171,8 +167,6 @@ const saveReceipt = async (type: EReceiptSave) => {
 
   try {
     saveLoading.value = true
-    receipt.value.startedAt = time.value.valueOf()
-
     switch (type) {
       case EReceiptSave.CREATE_DRAFT: {
         const response = await ReceiptApi.createDraft(receipt.value)
@@ -297,6 +291,11 @@ const openModalDistributorDetail = (data?: Distributor) => {
               </template>
             </InputOptions>
           </div>
+
+          <div class="mt-3">Thời gian tạo đơn</div>
+          <div>
+            <InputDate v-model:value="receipt.startedAt" typeParser="number" show-time />
+          </div>
         </div>
 
         <div class="p-4 bg-white">
@@ -304,17 +303,6 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">
               <tbody>
-                <tr>
-                  <td style="white-space: nowrap; padding-right: 10px">Thời gian</td>
-                  <td>
-                    <a-date-picker
-                      v-model:value="time"
-                      show-time
-                      placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'"
-                    />
-                  </td>
-                </tr>
                 <tr v-if="settingStore.SCREEN_RECEIPT_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
                     Tiền hàng

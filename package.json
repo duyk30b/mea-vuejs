@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "npm run write-config & run-p type-check \"build-only {@}\" --",
     "write-config": "node ./scripts/write-config.js",
     "preview": "vite preview",
