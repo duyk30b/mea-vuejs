@@ -6,6 +6,7 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputPassword } from '../../common/vue-form'
 import InputText from '../../common/vue-form/InputText.vue'
 import { AuthApi } from '../../modules/auth/auth.api'
+import { VueDivider } from '../../common/vue-layout'
 
 const router = useRouter()
 const route = useRoute()
@@ -46,7 +47,9 @@ const startResetPassword = async () => {
 <template>
   <div class="wrapper">
     <div class="form-card pt-4 pb-10 px-4">
-      <a-divider style="font-size: 1.5rem">Đổi mật khẩu</a-divider>
+      <VueDivider class="mt-4" border-width="1px">
+        <div class="mx-4 text-2xl font-medium">ĐỔI MẬT KHẨU</div>
+      </VueDivider>
       <form @submit.prevent="startResetPassword">
         <div class="mt-4">
           <div>ID cơ cở</div>

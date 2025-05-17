@@ -34,7 +34,7 @@ const handleInput = (e: Event) => {
 
 <template>
   <div :class="{ 'vue-input': true, 'disabled': disabled }">
-    <div class="input-area">
+    <div class="input-area" style="gap: 4px;">
       <input
         ref="inputRef"
         :value="value"

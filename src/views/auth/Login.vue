@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { InputPassword, InputText } from '../../common/vue-form'
 import InputNumber from '../../common/vue-form/InputNumber.vue'
+import { VueDivider } from '../../common/vue-layout'
 import VueButton from '../../common/VueButton.vue'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { AuthService } from '../../modules/auth/auth.service'
@@ -60,7 +61,9 @@ const startLoginDemo = async () => {
 <template>
   <div class="wrapper">
     <div class="form-card p-4">
-      <a-divider style="font-size: 1.5rem">ĐĂNG NHẬP</a-divider>
+      <VueDivider class="mt-4" border-width="1px">
+        <div class="mx-4 text-2xl font-medium">ĐĂNG NHẬP</div>
+      </VueDivider>
       <form @submit.prevent="startLogin">
         <div class="mt-4">
           <div>ID cơ cở</div>

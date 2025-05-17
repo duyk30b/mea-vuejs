@@ -26,6 +26,7 @@ import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
+import { VueDivider } from '../../../common/vue-layout'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -172,7 +173,7 @@ const handleClickModalRegisterAppointment = () => {
         <TicketStatusTag :ticket="ticketClinicRef" />
       </div>
     </div>
-    <a-divider />
+    <VueDivider class="my-6"></VueDivider>
     <div class="mt-2 flex gap-4 items-center justify-between">
       <div class="flex items-center gap-4 whitespace-nowrap">
         <IconDollar />
