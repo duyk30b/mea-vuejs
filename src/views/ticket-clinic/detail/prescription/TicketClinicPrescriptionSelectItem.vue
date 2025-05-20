@@ -85,7 +85,13 @@ const searchingProduct = async (text: string) => {
     filter: {
       isActive: 1,
       $AND: [
-        { $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }] },
+        {
+          $OR: [
+            { productCode: { LIKE: text } },
+            { brandName: { LIKE: text } },
+            { substance: { LIKE: text } },
+          ],
+        },
         {
           $OR: [
             {
@@ -366,9 +372,10 @@ defineExpose({ fetchPrescriptionSample })
             <InputOptions
               ref="inputOptionsProduct"
               required
+              :prepend="ticketProductPrescription.product?.productCode"
               :options="productOptions"
               :maxHeight="320"
-              placeholder="Tìm kiếm sản phẩm và lô hàng bằng tên hoặc hoạt chất của sản phẩm"
+              placeholder="Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
               :disabled="
                 [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
               "
@@ -378,6 +385,8 @@ defineExpose({ fetchPrescriptionSample })
             >
               <template #option="{ item: { data } }">
                 <div>
+                  <span>{{ data.productCode }}</span>
+                  -
                   <b>{{ data.brandName }}</b>
                   -
                   <span

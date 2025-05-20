@@ -1,7 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconCheckSquare, IconClockCircle, IconEye, IconPrint, IconSpin } from '../../../../common/icon-antd'
+import {
+  IconCheckSquare,
+  IconClockCircle,
+  IconEye,
+  IconPrint,
+  IconSpin,
+} from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
@@ -22,6 +28,7 @@ import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/tick
 import { TicketRadiology, TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
@@ -228,22 +235,19 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               </div>
             </td>
             <td class="text-center">
-              <a-tooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
-                <template #title>Chưa có kết quả</template>
-                <IconClockCircle
-                  width="16"
-                  height="16"
-                  style="color: orange; cursor: not-allowed !important"
-                />
-              </a-tooltip>
-              <a-tooltip v-else>
-                <template #title>Đã hoàn thành</template>
-                <IconCheckSquare
-                  width="16"
-                  height="16"
-                  style="color: #52c41a; cursor: not-allowed !important"
-                />
-              </a-tooltip>
+              <VueTooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa có kết quả</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã hoàn thành</div>
+              </VueTooltip>
             </td>
             <td>{{ radiologyMap[tpItem.radiologyId]?.name }}</td>
             <td style="max-width: 300px">

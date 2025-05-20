@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { InputDate, InputMoney, InputNumber, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -53,19 +53,19 @@ defineExpose({ openModal })
       </div>
       <form class="p-4 flex flex-wrap gap-4" @submit.prevent="(e) => changeReceiptItem()">
         <div
-          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
+          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.batchCodeAndExpiryDate"
           style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Số lô</div>
           <div>
             <InputText
-              v-model:value="receiptItem.lotNumber"
+              v-model:value="receiptItem.batchCode"
               class="w-full"
               :disabled="!!receiptItem.batchId" />
           </div>
         </div>
 
         <div
-          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
+          v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.batchCodeAndExpiryDate"
           style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Hạn sử dụng</div>
           <div>

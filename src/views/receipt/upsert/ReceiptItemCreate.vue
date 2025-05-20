@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileSearch } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputDate,
@@ -11,9 +11,11 @@ import {
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
@@ -22,9 +24,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { arrayToKeyValue, timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { receipt } from './receipt-upsert.store'
-import { Distributor, DistributorService } from '../../../modules/distributor'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -188,7 +188,7 @@ const selectBatch = (batchData?: Batch) => {
   receiptItem.value.batch = Batch.from(batchData)
 
   receiptItem.value.warehouseId = batchData.warehouseId
-  receiptItem.value.lotNumber = batchData.lotNumber
+  receiptItem.value.batchCode = batchData.batchCode
   receiptItem.value.expiryDate = batchData.expiryDate
   receiptItem.value.costPrice = batchData.costPrice
 }
@@ -267,7 +267,7 @@ const clear = () => {
             ref="inputOptionsProduct"
             :options="productOptions"
             :max-height="260"
-            placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
+            placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
             required
             @selectItem="({ data }) => selectProduct(data)"
             @onFocusinFirst="handleFocusFirstSearchProduct"
@@ -275,13 +275,17 @@ const clear = () => {
           >
             <template #option="{ item: { data } }">
               <div>
+                <span>{{ data.productCode }}</span>
+                <span class="mx-1">-</span>
                 <b>{{ data.brandName }}</b>
-                -
+                <span class="mx-1">-</span>
                 <span :class="data.unitQuantity <= 0 ? 'text-red-500 font-bold' : ''">
-                  {{ data.unitQuantity }}
+                  {{ data.unitQuantity }} {{ data.unitDefaultName }}
                 </span>
-                {{ data.unitDefaultName }} - G.Nhập {{ formatMoney(data.costPrice) }} - G.Bán
-                {{ formatMoney(data.retailPrice) }}
+                <span class="mx-1">-</span>
+                <span>G.Nhập {{ formatMoney(data.costPrice) }}</span>
+                <span class="mx-1">-</span>
+                <span>G.Bán {{ formatMoney(data.retailPrice) }}</span>
               </div>
               <div>{{ data.substance }}</div>
             </template>
@@ -302,7 +306,7 @@ const clear = () => {
               <template #option="{ item: { data } }">
                 <div v-if="!data.id">Tự động chọn lô</div>
                 <div v-if="data.id">
-                  Lô {{ data.lotNumber }}
+                  Lô {{ data.batchCode }}
                   <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
                     {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
                   </span>
@@ -321,7 +325,7 @@ const clear = () => {
               <template #text="{ content: { data } }">
                 <div v-if="!data?.id">Tự động chọn lô</div>
                 <div v-if="data?.id">
-                  Lô {{ data.lotNumber }}
+                  Lô {{ data.batchCode }}
                   <span :style="data.expiryDate < closeExpiryDate ? 'color:red;' : ''">
                     {{ timeToText(data.expiryDate, 'DD/MM/YYYY') }}
                   </span>
@@ -356,13 +360,13 @@ const clear = () => {
       </div>
 
       <div
-        v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
+        v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.batchCodeAndExpiryDate"
         style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
       >
         <div>Số lô</div>
         <div>
           <InputText
-            v-model:value="receiptItem.lotNumber"
+            v-model:value="receiptItem.batchCode"
             class="w-full"
             :disabled="!!receiptItem.batchId"
           />
@@ -370,7 +374,7 @@ const clear = () => {
       </div>
 
       <div
-        v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.lotNumberAndExpiryDate"
+        v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsSelect.batchCodeAndExpiryDate"
         style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
       >
         <div>Hạn sử dụng</div>

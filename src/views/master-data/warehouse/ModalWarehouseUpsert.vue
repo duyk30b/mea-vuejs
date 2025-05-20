@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { CloseOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconClose } from '../../../common/icon-antd'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { Warehouse, WarehouseApi } from '../../../modules/warehouse'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 
 const emit = defineEmits<{
@@ -90,7 +90,7 @@ defineExpose({ openModal })
           {{ warehouse.id ? 'Cập nhật kho hàng' : 'Tạo kho hàng mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
-          <CloseOutlined />
+          <IconClose />
         </div>
       </div>
 
@@ -108,10 +108,11 @@ defineExpose({ openModal })
           <VueButton
             v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] && warehouse.id"
             color="red"
-            @click="clickDelete">
+            @click="clickDelete"
+          >
             Xóa
           </VueButton>
-          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left: auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

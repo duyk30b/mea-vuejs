@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ApartmentOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconContainer, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DistributorService, type Distributor } from '../../../modules/distributor'
@@ -15,7 +17,6 @@ import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
 import ModalDistributorListSettingScreen from './ModalDistributorListSettingScreen.vue'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -114,12 +115,6 @@ const handleModalDistributorUpsertSuccess = async () => {
 const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distributor }) => {
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalDistributorListSettingScreen.value?.openModal()
-  }
-}
 </script>
 
 <template>
@@ -135,9 +130,9 @@ const handleMenuSettingClick = (menu: { key: string }) => {
   <ModalDistributorListSettingScreen ref="modalDistributorListSettingScreen" />
 
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <ApartmentOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconContainer />
         Danh sách nhà cung cấp
       </div>
       <VueButton
@@ -149,17 +144,17 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex gap-8">
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="modalDistributorListSettingScreen?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -196,7 +191,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"
@@ -271,16 +266,6 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
@@ -289,7 +274,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Mã NCC </span>
+                <span>Mã NCC</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -303,7 +288,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Họ Tên </span>
+                <span>Họ Tên</span>
                 <IconSort v-if="sortColumn !== 'fullName'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
@@ -319,7 +304,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             <th v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"
@@ -429,16 +414,25 @@ const handleMenuSettingClick = (menu: { key: string }) => {
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

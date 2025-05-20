@@ -1,19 +1,14 @@
 <script setup lang="ts">
-import {
-  AreaChartOutlined,
-  ForkOutlined,
-  DoubleRightOutlined,
-  ShoppingCartOutlined,
-} from '@ant-design/icons-vue'
 import { onMounted, ref, watch } from 'vue'
+import { IconDoubleRight } from '../../../../common/icon-antd'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Procedure, ProcedureApi } from '../../../../modules/procedure'
 import {
   Commission,
   CommissionCalculatorType,
   CommissionService,
   InteractType,
 } from '../../../../modules/commission'
+import { Procedure, ProcedureApi } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
 
 const props = withDefaults(defineProps<{ procedureId: number }>(), {
@@ -54,7 +49,7 @@ watch(
     console.log('🚀 ~ file: ProcedureInfo.vue:32 ~ newValue:', newValue)
     await startFetchData()
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 onMounted(() => {
@@ -84,7 +79,7 @@ onMounted(() => {
 
   <div class="mt-10">
     <div class="font-bold">
-      <DoubleRightOutlined />
+      <IconDoubleRight />
       Vai trò và hoa hồng
     </div>
     <div class="table-wrapper">
@@ -104,17 +99,20 @@ onMounted(() => {
               }}
             </td>
             <template
-              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected">
+              v-if="
+                commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected
+              "
+            >
               <td class="text-right">{{ commission.commissionValue }}%</td>
               <td>Giá niêm yết</td>
             </template>
             <template
-              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentActual">
+              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentActual"
+            >
               <td class="text-right">{{ commission.commissionValue }}%</td>
               <td>Giá sau chiết khấu</td>
             </template>
-            <template
-              v-if="commission.commissionCalculatorType === CommissionCalculatorType.VND">
+            <template v-if="commission.commissionCalculatorType === CommissionCalculatorType.VND">
               <td class="text-right">{{ formatMoney(commission.commissionValue) }}</td>
               <td>VNĐ</td>
             </template>

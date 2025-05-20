@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import {
-  AuditOutlined,
-  ContainerOutlined,
-  DisconnectOutlined,
-  LoginOutlined,
-  OneToOneOutlined,
-} from '@ant-design/icons-vue'
 import { onBeforeMount, onUnmounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
-import { IconContacts, IconUser } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import {
+  IconContacts,
+  IconDisconnect,
+  IconLogin,
+  IconOneToOne,
+  IconPicCenter,
+  IconSave,
+  IconSetting,
+  IconUser,
+} from '../../../common/icon-antd'
 import {
   IconEyeGlasses,
   IconFluidMed,
@@ -39,6 +41,7 @@ import {
   useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
+import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
 import TicketClinicDiagnosisEyeSpecial from './TicketClinicDiagnosisEyeSpecial.vue'
 import TicketClinicDiagnosisGeneral from './TicketClinicDiagnosisGeneral.vue'
@@ -47,11 +50,10 @@ import TicketClinicInformation from './TicketClinicInformation.vue'
 import TicketClinicUserList from './TicketClinicUserList.vue'
 import TicketClinicConsumable from './consumable/TicketClinicConsumable.vue'
 import TicketClinicLaboratory from './laboratory/TicketClinicLaboratory.vue'
-import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
+import ModalTicketClinicDetailSetting from './modal/ModalTicketClinicDetailSetting.vue'
 import TicketClinicPrescription from './prescription/TicketClinicPrescription.vue'
 import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
-import ModalTicketClinicDetailSetting from './setting/ModalTicketClinicDetailSetting.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
 
@@ -148,12 +150,6 @@ const startFetchData = async (ticketId: number) => {
     ticketClinicRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
-  }
-}
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SETTING_DATA') {
-    modalTicketClinicDetailSetting.value?.openModal()
   }
 }
 
@@ -262,18 +258,22 @@ const clickCloseVisit = () => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <!-- <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item> -->
-            <a-menu-item key="SETTING_DATA">Cài đặt dữ liệu</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketClinicDetailSetting?.openModal()"
+          >
+            Cài đặt dữ liệu
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
@@ -336,7 +336,7 @@ const clickCloseVisit = () => {
               :tabKey="TicketClinicConsumable.__name!"
               @active="router.push({ name: TicketClinicConsumable.__name })"
             >
-              <OneToOneOutlined />
+              <IconOneToOne />
               Vật tư
             </VueTabMenu>
             <VueTabMenu
@@ -360,7 +360,7 @@ const clickCloseVisit = () => {
               :tabKey="TicketClinicPrescription.__name!"
               @active="router.push({ name: TicketClinicPrescription.__name })"
             >
-              <DisconnectOutlined />
+              <IconDisconnect />
               Đơn thuốc
             </VueTabMenu>
             <VueTabMenu
@@ -376,7 +376,7 @@ const clickCloseVisit = () => {
               :tabKey="TicketClinicSummary.__name!"
               @active="router.push({ name: TicketClinicSummary.__name })"
             >
-              <AuditOutlined />
+              <IconPicCenter />
               Tổng kết
             </VueTabMenu>
           </template>
@@ -419,7 +419,7 @@ const clickCloseVisit = () => {
           style="margin-left: -4px; margin-right: -4px"
           @click="startCheckup"
         >
-          <LoginOutlined />
+          <IconLogin />
           VÀO KHÁM
         </VueButton>
         <VueButton
@@ -429,7 +429,7 @@ const clickCloseVisit = () => {
           style="margin-left: -4px; margin-right: -4px"
           @click="startRegisterExecuting"
         >
-          <LoginOutlined />
+          <IconLogin />
           ĐĂNG KÝ KHÁM
         </VueButton>
         <VueButton
@@ -440,7 +440,7 @@ const clickCloseVisit = () => {
           :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"
           @click="clickCloseVisit"
         >
-          <ContainerOutlined />
+          <IconSave />
           ĐÓNG PHIẾU KHÁM
         </VueButton>
       </div>

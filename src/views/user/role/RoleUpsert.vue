@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import { IconApartment } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckboxList, InputText } from '../../../common/vue-form'
 import type { CheckboxOptionType } from '../../../common/vue-form/InputCheckboxList.vue'
@@ -123,7 +123,7 @@ const clickDelete = () => {
 <template>
   <div class="page-header">
     <div class="page-header-content">
-      <ScheduleOutlined />
+      <IconApartment />
       Thông tin vai trò
     </div>
   </div>
@@ -140,10 +140,9 @@ const clickDelete = () => {
       </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>
-        <a-switch
-          :checked="Boolean(role.isActive)"
-          @change="(checked: Boolean) => (role.isActive = checked ? 1 : 0)"
-        />
+        <div>
+          <VueSwitch v-model="role.isActive" type-parser="number" />
+        </div>
         <div v-if="!role.isActive" class="ml-4">Tất cả user thuộc vai trò này tạm thời bị khóa</div>
       </div>
       <div class="flex mt-4">

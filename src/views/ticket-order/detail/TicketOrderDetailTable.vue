@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
+import {
+  IconClockCircle,
+  IconExclamationCircle,
+  IconFileSearch,
+  IconShoppingCart,
+} from '../../../common/icon-antd'
+import VueTooltip from '../../../common/popover/VueTooltip.vue'
 import VueTag from '../../../common/VueTag.vue'
+import { CONFIG } from '../../../config'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { DeliveryStatus } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { CONFIG } from '../../../config'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -23,7 +30,7 @@ const showModalInvoicePayment = (paymentView: PaymentViewType) => {
 const colspan = computed(() => {
   if (isMobile) return 2
   return (
-    3 +
+    4 +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount) +
     Number(settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount)
@@ -200,7 +207,8 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
-            <th>#</th>
+            <th style="width: 40px;">#</th>
+            <th style="width: 40px;"></th>
             <th>Tên</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
             <th>S.Lượng</th>
@@ -218,6 +226,7 @@ const colspan = computed(() => {
             <td class="auto-index text-center">
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProcedure.id }})</span>
             </td>
+            <td class="text-center"></td>
             <td :colspan="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit ? '2' : '1'">
               <div class="text-justify font-medium whitespace-nowrap" style="word-break: break-all">
                 {{ ticketProcedure.procedure!.name }}
@@ -263,6 +272,21 @@ const colspan = computed(() => {
           <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
             <td class="auto-index text-center">
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
+            </td>
+            <td class="text-center">
+              <VueTooltip v-if="ticketProduct.deliveryStatus === DeliveryStatus.Pending">
+                <template #trigger>
+                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+                </template>
+                <div>Chưa xuất thuốc</div>
+              </VueTooltip>
+
+              <VueTooltip v-else>
+                <template #trigger>
+                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+                </template>
+                <div>Đã xuất thuốc</div>
+              </VueTooltip>
             </td>
             <td>
               <div class="text-justify font-medium">

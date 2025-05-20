@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { IconClose, IconDollar, IconPlus, IconPrint, IconSave, IconTrash, IconSend } from './icon'
+import {
+  IconClose,
+  IconDelete,
+  IconDollar,
+  IconDownload,
+  IconPlus,
+  IconPrint,
+  IconSave,
+  IconSend,
+  IconUpload,
+} from './icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -8,7 +18,18 @@ const props = withDefaults(
     color?: 'default' | 'green' | 'blue' | 'red'
     size?: 'small' | 'default' | 'large' | 'text'
     type?: 'reset' | 'submit' | 'button'
-    icon?: Object | '' | 'save' | 'print' | 'plus' | 'close' | 'trash' | 'dollar' | 'send'
+    icon?:
+      | Object
+      | ''
+      | 'save'
+      | 'print'
+      | 'plus'
+      | 'close'
+      | 'trash'
+      | 'dollar'
+      | 'send'
+      | 'upload'
+      | 'download'
   }>(),
   {
     loading: false,
@@ -48,9 +69,11 @@ const props = withDefaults(
     <span v-else-if="icon === 'save'" class="icon-save"><IconSave /></span>
     <span v-else-if="icon === 'print'" class="icon-print"><IconPrint /></span>
     <span v-else-if="icon === 'plus'" class="icon-plus"><IconPlus /></span>
-    <span v-else-if="icon === 'trash'" class="icon-trash"><IconTrash /></span>
+    <span v-else-if="icon === 'trash'" class="icon-trash"><IconDelete /></span>
     <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
     <span v-else-if="icon === 'send'" class="icon-send"><IconSend /></span>
+    <span v-else-if="icon === 'upload'" class="icon-upload"><IconUpload /></span>
+    <span v-else-if="icon === 'download'" class="icon-download"><IconDownload /></span>
     <slot v-else name="icon"></slot>
     <slot></slot>
   </button>

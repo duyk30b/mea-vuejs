@@ -35,12 +35,10 @@ export default defineConfig({
             return 'vendor_monaco_editor'
           } else if (id.includes('node_modules/ant-design-vue')) {
             return 'vendor_ant_design_vue'
-          } else if (id.includes('node_modules/@ant-design/icons')) {
-            return 'vendor_ant_design_icon'
           } else if (id.includes('node_modules/lodash')) {
             return 'vendor_lodash'
           } else if (id.includes('node_modules')) {
-            return 'vendor'
+            return 'vendor_node_modules'
           } else if (id.includes('src/modules')) {
             // return 'src_modules'
           } else if (id.includes('src/common')) {

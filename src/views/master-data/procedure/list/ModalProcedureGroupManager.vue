@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose, IconTrash } from '../../../../common/icon'
+import { IconClose, IconDelete } from '../../../../common/icon-antd'
 import { InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
@@ -86,7 +86,7 @@ defineExpose({ openModal })
                 </td>
                 <td class="text-center">
                   <a style="color: var(--text-red)" @click="procedureGroupList.splice(index, 1)">
-                    <IconTrash />
+                    <IconDelete />
                   </a>
                 </td>
               </tr>

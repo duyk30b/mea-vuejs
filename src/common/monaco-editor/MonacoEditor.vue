@@ -3,16 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import * as monaco from 'monaco-editor'
+import type * as MonacoType from 'monaco-editor'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { emmetHTML } from 'emmet-monaco-es'
-
-// gán emmet vào monaco để tránh gọi nhiều lần
-if (!(monaco.editor as any).__emmetInitialized) {
-  emmetHTML(monaco, ['html'])
-  ;(monaco.editor as any).__emmetInitialized = true
-}
-console.log('🚀 ~ MonacoEditor.vue:14 ~ monaco.editor:', monaco.editor)
 
 const props = withDefaults(
   defineProps<{
@@ -33,10 +26,17 @@ const emit = defineEmits<{
 }>()
 
 const editorRef = ref<HTMLElement | null>(null)
-let editor: monaco.editor.IStandaloneCodeEditor | null = null
+let editor: MonacoType.editor.IStandaloneCodeEditor | null = null
 
 onMounted(async () => {
-  // const monaco = await import('monaco-editor')
+  const monaco = await import('monaco-editor')
+  // gán emmet vào monaco để tránh gọi nhiều lần
+  const monaco_editor = monaco.editor as any
+  if (!monaco_editor.__emmetInitialized) {
+    emmetHTML(monaco, ['html'])
+    monaco_editor.__emmetInitialized = true
+  }
+
   if (!editorRef.value) return
 
   editor = monaco.editor.create(editorRef.value!, {

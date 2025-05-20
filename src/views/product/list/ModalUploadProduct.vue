@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { IconCloudUpload, IconDownload, IconUpload } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -57,7 +57,7 @@ const handleUpload = async () => {
 
   try {
     await ProductApi.uploadExcelProductList(fileSelect.value)
-    AlertStore.addSuccess('Tạo mới sản phẩm từ file excel thành công')
+    AlertStore.addSuccess('Cập nhật danh sách sản phẩm từ excel thành công !')
     emit('success')
     closeModal()
   } catch (error) {
@@ -174,9 +174,20 @@ defineExpose({ openModal })
           </div>
         </div>
         <div class="mt-2 flex justify-between text-xs" style="color: #666; font-style: italic">
-          <div class="flex gap-1">
-            <span style="font-weight: 700">Lưu ý:</span>
-            <span>Tính năng upload chỉ hỗ trợ tạo mới tên và các thuộc tính sản phẩm</span>
+          <div class="flex gap-2">
+            <div style="font-weight: 700">Lưu ý:</div>
+            <div>
+              <div>
+                1. <strong>Mã sản phẩm</strong> là duy nhất
+                và không thể trùng lặp
+              </div>
+              <div>
+                2. Mã sản phẩm đã có trong hệ thống sẽ bị ghi đè bởi thông tin trong excel
+              </div>
+              <div>
+                3. Chưa hỗ trợ cập nhật số lượng bằng excel
+              </div>
+            </div>
           </div>
         </div>
       </div>

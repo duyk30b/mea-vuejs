@@ -5,7 +5,13 @@ const props = withDefaults(defineProps<{ width?: number | string; height?: numbe
 })
 </script>
 <template>
-  <svg :width="width" :height="height" fill="currentColor" viewBox="64 64 896 896">
+  <svg
+    :width="width"
+    :height="height"
+    fill="currentColor"
+    aria-hidden="true"
+    viewBox="64 64 896 896"
+  >
     <path
       d="M696 480H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8z"
     ></path>

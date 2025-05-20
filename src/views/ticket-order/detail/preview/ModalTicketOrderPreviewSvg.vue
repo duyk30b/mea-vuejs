@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { DownloadOutlined } from '@ant-design/icons-vue'
 import { nextTick, ref } from 'vue'
-import type { Ticket } from '../../../../modules/ticket'
+import { IconDownload } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
+import type { Ticket } from '../../../../modules/ticket'
 
 const showModal = ref(false)
 
@@ -65,7 +65,7 @@ defineExpose({ openModal })
       <div class="flex justify-between px-2">
         <VueButton color="blue" @click="startDownloadImage">
           <template #icon>
-            <DownloadOutlined />
+            <IconDownload />
           </template>
           Tải ảnh
         </VueButton>
@@ -83,7 +83,8 @@ defineExpose({ openModal })
               id="svg-demo-content-div"
               xmlns="http://www.w3.org/1999/xhtml"
               style="height: 100%; overflow: auto"
-              v-html="svgDivHtml"></div>
+              v-html="svgDivHtml"
+            ></div>
           </foreignObject>
         </svg>
       </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../common/icon'
+import { IconClose, IconFileSearch } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox, InputOptions } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -129,7 +129,7 @@ defineExpose({ openModal })
                       <td>
                         <InputCheckbox
                           v-model:checked="
-                            settingDisplay.receiptItemsSelect.lotNumberAndExpiryDate
+                            settingDisplay.receiptItemsSelect.batchCodeAndExpiryDate
                           ">
                           Hiển thị số lô và HSD
                         </InputCheckbox>
@@ -162,7 +162,7 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate">
+                          v-model:checked="settingDisplay.receiptItemsTable.batchCodeAndExpiryDate">
                           Hiển thị số lô và HSD
                         </InputCheckbox>
                       </td>

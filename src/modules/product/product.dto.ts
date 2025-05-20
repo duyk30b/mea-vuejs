@@ -5,6 +5,7 @@ export class ProductFilterQuery {
   id?: number | ConditionNumber
   isActive?: 1 | 0
   productGroupId?: number
+  productCode?: ConditionString
   brandName?: ConditionString
   substance?: ConditionString
   quantity?: ConditionNumber
@@ -28,7 +29,7 @@ export class ProductGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    code?: 'ASC' | 'DESC'
+    productCode?: 'ASC' | 'DESC'
     quantity?: 'ASC' | 'DESC'
     brandName?: 'ASC' | 'DESC'
   }

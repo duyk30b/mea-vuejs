@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ContainerOutlined, DeploymentUnitOutlined, OneToOneOutlined } from '@ant-design/icons-vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconCalendar, IconClose, IconDollar } from '../../../common/icon'
-import { IconUser } from '../../../common/icon-antd'
+import {
+  IconAudit,
+  IconClose,
+  IconDollar,
+  IconOneToOne,
+  IconReconciliation,
+  IconSchedule,
+  IconUser
+} from '../../../common/icon-antd'
 import { IconRadiology } from '../../../common/icon-google'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
@@ -93,7 +99,7 @@ defineExpose({ openModal })
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.APPOINTMENT_HISTORY"
             >
-              <IconCalendar />
+              <IconSchedule />
               Lịch hẹn
             </VueTabMenu>
             <VueTabMenu
@@ -104,7 +110,7 @@ defineExpose({ openModal })
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.TICKET_HISTORY"
             >
-              <ContainerOutlined />
+              <IconAudit />
               Phiếu thu
             </VueTabMenu>
             <VueTabMenu
@@ -116,11 +122,11 @@ defineExpose({ openModal })
               Thanh toán
             </VueTabMenu>
             <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PRODUCT_HISTORY">
-              <OneToOneOutlined />
+              <IconOneToOne />
               Sản phẩm
             </VueTabMenu>
             <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PROCEDURE_HISTORY">
-              <DeploymentUnitOutlined />
+              <IconReconciliation />
               Dịch vụ
             </VueTabMenu>
             <VueTabMenu

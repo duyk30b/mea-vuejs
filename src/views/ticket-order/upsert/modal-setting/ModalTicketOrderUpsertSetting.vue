@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../../common/icon'
+import { IconClose, IconFileSearch } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputOptions } from '../../../../common/vue-form'
+import { InputCheckbox, InputOptions, InputRadio } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -11,9 +11,8 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, CustomerService } from '../../../../modules/customer'
 import { OrganizationService } from '../../../../modules/organization'
-import { ESTimer } from '../../../../utils'
-import { Warehouse } from '../../../../modules/warehouse'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
+import { ESTimer } from '../../../../utils'
 
 const TABS_KEY = {
   SELECT_ITEM: 'SELECT_ITEM',
@@ -29,7 +28,7 @@ const store = useSettingStore()
 const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
-  JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT))
+  JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT)),
 )
 
 const warehouseOptions = ref<{ value: number; label: string }[]>([])
@@ -148,7 +147,8 @@ defineExpose({ openModal })
                               mode="multiple"
                               style="width: 100%"
                               placeholder="Please select"
-                              :options="warehouseOptions"></a-select>
+                              :options="warehouseOptions"
+                            ></a-select>
                           </div>
                         </div>
                       </td>
@@ -157,7 +157,8 @@ defineExpose({ openModal })
                       <td>
                         <div>
                           <InputCheckbox
-                            v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch">
+                            v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"
+                          >
                             Lựa chọn thêm sau khi tìm kiếm
                           </InputCheckbox>
                         </div>
@@ -165,7 +166,8 @@ defineExpose({ openModal })
                           <div class="pt-3">
                             <InputCheckbox
                               v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
+                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                            >
                               Hiển thị giá bán niêm yết
                             </InputCheckbox>
                           </div>
@@ -175,28 +177,32 @@ defineExpose({ openModal })
                               :disabled="
                                 !settingDisplay.invoiceItemInput.customAfterSearch ||
                                 !settingDisplay.invoiceItemInput.expectedPrice
-                              ">
+                              "
+                            >
                               Thêm lựa chọn giá bán = giá nhập
                             </InputCheckbox>
                           </div>
                           <div class="pt-3">
                             <InputCheckbox
                               v-model:checked="settingDisplay.invoiceItemInput.discount"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
+                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                            >
                               Chỉnh sửa chiết khấu
                             </InputCheckbox>
                           </div>
                           <div class="pt-3">
                             <InputCheckbox
                               v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
+                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                            >
                               Chỉnh sửa giá bán thực tế
                             </InputCheckbox>
                           </div>
                           <div class="pt-2">
                             <InputCheckbox
                               v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch">
+                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
+                            >
                               Hiển thị hướng dẫn sử dụng
                             </InputCheckbox>
                           </div>
@@ -220,16 +226,17 @@ defineExpose({ openModal })
                       <td>
                         <div>Khi thêm sản phẩm có sẵn trong danh sách</div>
                         <div class="pl-7">
-                          <a-radio-group
-                            v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem">
-                            <a-radio style="display: flex; line-height: 36px" :value="false">
-                              Cộng gộp số lượng
-                            </a-radio>
-                            <a-radio style="display: flex; line-height: 36px" :value="true">
-                              Không cộng gộp (VD: bán 4 tặng 1 thì bản ghi số lượng 1 có thể điền
-                              đơn giá = 0)
-                            </a-radio>
-                          </a-radio-group>
+                          <InputRadio
+                            v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem"
+                            :options="[
+                              { key: false, label: 'Cộng gộp số lượng' },
+                              {
+                                key: true,
+                                label:
+                                  'Không cộng gộp (VD: bán 4 tặng 1 thì bản ghi số lượng 1 có thể điền đơn giá = 0)',
+                              },
+                            ]"
+                          />
                         </div>
                       </td>
                     </tr>
@@ -259,7 +266,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.invoiceItemsTable.expectedPrice">
+                          v-model:checked="settingDisplay.invoiceItemsTable.expectedPrice"
+                        >
                           Hiển thị giá niêm yết
                         </InputCheckbox>
                       </td>
@@ -297,7 +305,8 @@ defineExpose({ openModal })
                             placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                             @selectItem="({ data }) => selectCustomer(data)"
                             @onFocusinFirst="handleFocusFirstSearchCustomer"
-                            @update:text="searchingCustomer">
+                            @update:text="searchingCustomer"
+                          >
                             <template #option="{ item: { data } }">
                               <div>
                                 <b>{{ data.fullName }}</b>
@@ -316,7 +325,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney"
+                        >
                           Hiển thị tiền hàng
                         </InputCheckbox>
                       </td>
@@ -401,7 +411,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

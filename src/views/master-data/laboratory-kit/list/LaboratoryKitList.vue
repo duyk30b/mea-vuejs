@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconSetting } from '../../../../common/icon'
+import { IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import ModalLaboratoryKitUpsert from '../upsert/ModalLaboratoryKitUpsert.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { InputSelect } from '../../../../common/vue-form'
 
 const modalLaboratoryKitUpsert = ref<InstanceType<typeof ModalLaboratoryKitUpsert>>()
 
@@ -69,7 +71,8 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
 <template>
   <ModalLaboratoryKitUpsert
     ref="modalLaboratoryKitUpsert"
-    @success="handleModalLaboratoryKitUpsertSuccess" />
+    @success="handleModalLaboratoryKitUpsertSuccess"
+  />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2">
@@ -80,16 +83,12 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
         v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
         color="blue"
         icon="plus"
-        @click="modalLaboratoryKitUpsert?.openModal()">
+        @click="modalLaboratoryKitUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
     <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-      </a-dropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">
@@ -132,23 +131,32 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
               <a
                 style="color: var(--text-orange)"
-                @click="modalLaboratoryKitUpsert?.openModal(laboratoryKit.id)">
+                @click="modalLaboratoryKitUpsert?.openModal(laboratoryKit.id)"
+              >
                 <IconEditSquare width="24px" height="24px" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

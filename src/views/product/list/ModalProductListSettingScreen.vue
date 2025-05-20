@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../common/icon'
+import { IconClose, IconFileSearch } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -92,7 +92,7 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.lotNumber">Hiển thị số lô</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.batchCode">Hiển thị số lô</InputCheckbox>
               </td>
             </tr>
             <tr>

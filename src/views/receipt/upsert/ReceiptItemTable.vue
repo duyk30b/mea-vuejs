@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileSearch } from '../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -102,10 +102,10 @@ const changeItemPosition = (index: number, count: number) => {
               {{ receiptItem?.product?.substance }}
             </div>
             <div
-              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batchCodeAndExpiryDate"
               style="font-size: 0.8rem"
             >
-              <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+              <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
               <div v-if="receiptItem.expiryDate">
                 - HSD {{ timeToText(receiptItem.expiryDate) }}
               </div>
@@ -127,7 +127,11 @@ const changeItemPosition = (index: number, count: number) => {
             {{ formatMoney(receiptItem.amount) }}
           </td>
           <td class="text-center">
-            <a class="text-orange-500" style="font-size: 20px;" @click="modalReceiptItemUpdate?.openModal(index)">
+            <a
+              class="text-orange-500"
+              style="font-size: 20px"
+              @click="modalReceiptItemUpdate?.openModal(index)"
+            >
               <IconEditSquare />
             </a>
           </td>
@@ -140,7 +144,8 @@ const changeItemPosition = (index: number, count: number) => {
       <thead>
         <tr>
           <th>#</th>
-          <th>Sản phẩm</th>
+          <th>Mã SP</th>
+          <th>Tên Sản phẩm</th>
           <th
             v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse"
             style="width: 200px"
@@ -194,6 +199,7 @@ const changeItemPosition = (index: number, count: number) => {
               </button>
             </div>
           </td>
+          <td style="text-align: center; width: 80px;">{{ receiptItem.product?.productCode }}</td>
           <td style="min-width: 150px">
             <div>
               <div class="font-bold">
@@ -213,10 +219,10 @@ const changeItemPosition = (index: number, count: number) => {
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
-                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batchCodeAndExpiryDate"
                 style="font-size: 0.8rem"
               >
-                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
+                <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
                 <div v-if="receiptItem.expiryDate">
                   - HSD {{ timeToText(receiptItem.expiryDate) }}
                 </div>

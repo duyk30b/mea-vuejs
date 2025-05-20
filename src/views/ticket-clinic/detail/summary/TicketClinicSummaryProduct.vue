@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { IconClock, IconFileSearch, IconShoppingCart } from '../../../../common/icon'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
+import { IconClockCircle, IconFileSearch, IconShoppingCart } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueTag from '../../../../common/VueTag.vue'
 import { CONFIG } from '../../../../config'
@@ -96,22 +97,19 @@ const prescriptionCostAmount = computed(() => {
           {{ tpPrescriptionIndex + 1 }}
         </td>
         <td class="text-center">
-          <a-tooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
-            <template #title>Chưa xuất thuốc</template>
-            <IconClock
-              width="16"
-              height="16"
-              style="color: orange; cursor: not-allowed !important"
-            />
-          </a-tooltip>
-          <a-tooltip v-else>
-            <template #title>Đã xuất thuốc</template>
-            <IconShoppingCart
-              width="18"
-              height="18"
-              style="color: #52c41a; cursor: not-allowed !important"
-            />
-          </a-tooltip>
+          <VueTooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
+            <template #trigger>
+              <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
+            </template>
+            <div>Chưa xuất thuốc</div>
+          </VueTooltip>
+
+          <VueTooltip v-else>
+            <template #trigger>
+              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+            </template>
+            <div>Đã xuất thuốc</div>
+          </VueTooltip>
         </td>
         <td>
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -128,10 +126,10 @@ const prescriptionCostAmount = computed(() => {
           </div>
           <div v-for="tb in tpPrescription.ticketBatchList || []" :key="tb.id">
             <div
-              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
+              v-if="tb.batchId && tb.batch?.batchCode && tb.batch?.expiryDate"
               class="text-xs italic"
             >
-              Lô {{ tb.batch?.lotNumber }} - HSD
+              Lô {{ tb.batch?.batchCode }} - HSD
               {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
             </div>
           </div>
@@ -224,22 +222,21 @@ const prescriptionCostAmount = computed(() => {
           {{ tpConsumableIndex + 1 }}
         </td>
         <td class="text-center">
-          <a-tooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
-            <template #title>Chưa xuất vật tư</template>
-            <IconClock
-              width="16"
-              height="16"
-              style="color: orange; cursor: not-allowed !important"
-            />
-          </a-tooltip>
-          <a-tooltip v-else>
-            <template #title>Đã xuất vật tư</template>
-            <IconShoppingCart
-              width="18"
-              height="18"
-              style="color: #52c41a; cursor: not-allowed !important"
-            />
-          </a-tooltip>
+          <VueTooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
+            <template #trigger>
+              <IconClockCircle
+                style="font-size: 18px; color: orange; cursor: not-allowed !important"
+              />
+            </template>
+            <div>Chưa xuất vật tư</div>
+          </VueTooltip>
+
+          <VueTooltip v-else>
+            <template #trigger>
+              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
+            </template>
+            <div>Đã xuất vật tư</div>
+          </VueTooltip>
         </td>
         <td colspan="2">
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -253,10 +250,10 @@ const prescriptionCostAmount = computed(() => {
           </div>
           <div v-for="tb in tpConsumable.ticketBatchList || []" :key="tb.id">
             <div
-              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
+              v-if="tb.batchId && tb.batch?.batchCode && tb.batch?.expiryDate"
               class="text-xs italic"
             >
-              Lô {{ tb.batch?.lotNumber }} - HSD
+              Lô {{ tb.batch?.batchCode }} - HSD
               {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
             </div>
           </div>

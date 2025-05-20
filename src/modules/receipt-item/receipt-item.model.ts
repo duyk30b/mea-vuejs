@@ -10,7 +10,7 @@ export class ReceiptItem {
   productId: number
   batchId: number
 
-  lotNumber: string // Lô sản phẩm
+  batchCode: string // Lô sản phẩm
   expiryDate?: number
   
   costPrice: number

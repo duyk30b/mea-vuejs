@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { NodeIndexOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
-import { IconSort } from '../../../../common/icon'
+import { IconGift } from '../../../../common/icon-antd'
+import { IconSort } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
-import { InputFilter, VueSelect } from '../../../../common/vue-form'
+import { InputFilter, InputSelect, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import {
@@ -20,6 +20,7 @@ import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalCommissionUpsert from '../upsert/ModalCommissionUpsert.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 
 const modalCommissionUpsert = ref<InstanceType<typeof ModalCommissionUpsert>>()
 
@@ -68,7 +69,7 @@ const startFetchData = async () => {
             }
           : undefined,
       },
-      { refresh: false }
+      { refresh: false },
     )
     commissionList.value = response.data
     total.value = response.meta.total
@@ -158,11 +159,12 @@ const handleSelectItemFilterRole = (item: any) => {
 <template>
   <ModalCommissionUpsert
     ref="modalCommissionUpsert"
-    @success="handleModalCommissionUpsertSuccess" />
+    @success="handleModalCommissionUpsertSuccess"
+  />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <NodeIndexOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconGift />
         Quản lý tiền hoa hồng
       </div>
     </div>
@@ -178,7 +180,8 @@ const handleSelectItemFilterRole = (item: any) => {
             v-model:value="roleId"
             :options="roleOptions"
             :maxHeight="120"
-            @selectItem="handleSelectItemFilterRole">
+            @selectItem="handleSelectItemFilterRole"
+          >
             <template #option="{ item: { data } }">{{ data.name }}</template>
           </InputFilter>
         </div>
@@ -196,7 +199,8 @@ const handleSelectItemFilterRole = (item: any) => {
               { text: 'Phiếu CĐHA', value: InteractType.Radiology },
               { text: 'Xét nghiệm', value: InteractType.Laboratory },
             ]"
-            @update:value="() => startSearch()"></VueSelect>
+            @update:value="() => startSearch()"
+          ></VueSelect>
         </div>
       </div>
     </div>
@@ -284,24 +288,32 @@ const handleSelectItemFilterRole = (item: any) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalCommissionUpsert?.openModal(commission.id)">
+                @click="modalCommissionUpsert?.openModal(commission.id)"
+              >
                 <IconEditSquare />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

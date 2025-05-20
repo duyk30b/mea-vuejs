@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import { computed, ref, watchEffect } from 'vue'
-import { IconClose } from '../../../../common/icon'
-import { InputText, VueSelect } from '../../../../common/vue-form'
+import { IconClose } from '../../../../common/icon-antd'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import VueButton from '../../../../common/VueButton.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupApi } from '../../../../modules/radiology-group'
 import { arrayToKeyValue, customFilter } from '../../../../utils'
-import VueButton from '../../../../common/VueButton.vue'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -158,7 +159,8 @@ defineExpose({ openModal })
               <VueSelect
                 v-model:value="radiologyGroupId"
                 :options="radiologyGroupOptions"
-                @update:value="startSearch" />
+                @update:value="startSearch"
+              />
             </div>
           </div>
         </div>
@@ -172,7 +174,8 @@ defineExpose({ openModal })
                     style="cursor: pointer"
                     :checked="checkedAll"
                     type="checkbox"
-                    @change="(e) => handleChangeCheckedAll(e)" />
+                    @change="(e) => handleChangeCheckedAll(e)"
+                  />
                 </th>
                 <th>Tên</th>
                 <th>Nhóm</th>
@@ -188,27 +191,36 @@ defineExpose({ openModal })
                     style="cursor: pointer"
                     :checked="radiologyIdSelect[radiology.id]"
                     type="checkbox"
-                    @change="(e) => handleChangeInput(e, radiology.id)" />
+                    @change="(e) => handleChangeInput(e, radiology.id)"
+                  />
                 </td>
                 <td>{{ radiology.name }}</td>
                 <td>{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
               </tr>
             </tbody>
           </table>
-          <div class="mt-4 flex justify-between mb-2">
+          <div class="mt-4 flex gap-4 justify-between mb-2">
             <div>
               Đã chọn
               <span class="font-bold">{{ selectedLength }}</span>
               phiếu
             </div>
-            <a-pagination
-              v-model:current="page"
-              v-model:pageSize="limit"
+            <VuePagination
+              v-model:page="page"
               :total="total"
-              show-size-changer
-              @change="
-                (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-              " />
+              :limit="limit"
+              @update:page="(p: any) => changePagination({ page: p, limit })"
+            />
+            <InputSelect
+              v-model:value="limit"
+              @update:value="(l: any) => changePagination({ page, limit: l })"
+              :options="[
+                { value: 10, label: '10 / page' },
+                { value: 20, label: '20 / page' },
+                { value: 50, label: '50 / page' },
+                { value: 100, label: '100 / page' },
+              ]"
+            />
           </div>
         </div>
       </div>

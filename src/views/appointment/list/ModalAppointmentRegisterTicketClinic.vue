@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { InputDate } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -56,7 +56,8 @@ defineExpose({ openModal })
     <form
       ref="appointmentRegisterSuccessForm"
       class="bg-white pb-2"
-      @submit.prevent="handleRegisterTicketClinic">
+      @submit.prevent="handleRegisterTicketClinic"
+    >
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Khách hàng đã đến theo hẹn</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">

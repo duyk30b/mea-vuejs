@@ -2,7 +2,7 @@
 import { nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon'
+import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
@@ -96,7 +96,7 @@ const handleClickPayAllDebt = () => {
 const calculatorEachVoucherPayment = () => {
   let totalMoney = money.value
   ticketPaymentList.value.forEach((item) => {
-    let number = Math.min(totalMoney, item.ticket.debt)
+    const number = Math.min(totalMoney, item.ticket.debt)
     item.money = number
     totalMoney = totalMoney - number
   })
@@ -180,7 +180,8 @@ defineExpose({ openModal })
                       textAlign="right"
                       :validate="{ lte: customer.debt, gt: 0 }"
                       required
-                      @update:value="calculatorEachVoucherPayment" />
+                      @update:value="calculatorEachVoucherPayment"
+                    />
                   </div>
                 </td>
               </tr>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ShopOutlined } from '@ant-design/icons-vue'
-import TopProductBestSelling from './TopProductBestSelling.vue'
+import { IconBarChart } from '../../../common/icon-antd'
 import TopBatchExpiryDate from './TopBatchExpiryDate.vue'
+import TopProductBestSelling from './TopProductBestSelling.vue'
 import TopProductHighMoney from './TopProductHighMoney.vue'
 import TotalProductMoney from './TotalProductMoney.vue'
 </script>
@@ -10,7 +10,7 @@ import TotalProductMoney from './TotalProductMoney.vue'
   <div class="page-header">
     <div class="page-header-content">
       <div class="md:block">
-        <ShopOutlined />
+        <IconBarChart />
         <span class="ml-2">Báo cáo kho</span>
       </div>
     </div>

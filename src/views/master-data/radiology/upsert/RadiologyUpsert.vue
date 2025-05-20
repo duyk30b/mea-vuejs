@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconPrint, IconTrash } from '../../../../common/icon'
+import { IconPrint, IconDelete } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
   InputFilter,
@@ -466,7 +466,7 @@ const handleAddCommission = () => {
                     style="color: var(--text-red)"
                     @click="radiology.commissionList!.splice(index, 1)"
                   >
-                    <IconTrash width="18" height="18" />
+                    <IconDelete width="18" height="18" />
                   </a>
                 </div>
               </div>

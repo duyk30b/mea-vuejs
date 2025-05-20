@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting, IconSort } from '../../../common/icon'
-import {
-  IconDownload,
-  IconEditSquare,
-  IconUpload,
-  IconWarehouse,
-} from '../../../common/icon-google'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../common/icon-antd'
+import { IconSort } from '../../../common/icon-font-awesome'
+import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -67,7 +65,7 @@ const warehouseId = ref<number>(0)
 const distributorId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'expiryDate' | 'code' | 'brandName' | 'quantity' | ''>('')
+const sortColumn = ref<'expiryDate' | 'productCode' | 'brandName' | 'quantity' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchProduct = async () => {
@@ -95,7 +93,7 @@ const startFetchProduct = async () => {
     },
     sort: sortValue.value
       ? {
-          code: sortColumn.value === 'code' ? sortValue.value : undefined,
+          productCode: sortColumn.value === 'productCode' ? sortValue.value : undefined,
           brandName: sortColumn.value === 'brandName' ? sortValue.value : undefined,
           quantity: sortColumn.value === 'quantity' ? sortValue.value : undefined,
         }
@@ -197,7 +195,7 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (value: 'expiryDate' | 'code' | 'brandName' | 'quantity') => {
+const changeSort = async (value: 'expiryDate' | 'productCode' | 'brandName' | 'quantity') => {
   page.value = 1
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
@@ -238,18 +236,6 @@ const handleModalProductUpsertSuccess = async (
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalProductListSettingScreen.value?.openModal()
-  }
-  if (menu.key === 'data-setting') {
-    modalDataProduct.value?.openModal()
-  }
-  if (menu.key === 'PRODUCT_GROUP_MANAGER') {
-    modalProductGroupManager.value?.openModal()
-  }
-}
-
 const handleModalProductGroupManagerSuccess = async () => {
   await startFetchProductGroup()
 }
@@ -288,12 +274,10 @@ const handleModalUploadProductSuccess = async () => {
     @success="handleModalProductGroupManagerSuccess"
   />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <div class="flex items-center gap-2">
-          <IconWarehouse />
-          Tồn kho
-        </div>
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconWarehouse />
+        Tồn kho
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
@@ -303,33 +287,31 @@ const handleModalUploadProductSuccess = async () => {
       >
         Thêm Sản Phẩm
       </VueButton>
-    </div>
-    <div class="flex mr-2 gap-4 items-center">
       <div>
         <VueButton :icon="IconUpload" @click="modalUploadProduct?.openModal()">Upload</VueButton>
       </div>
       <div>
         <VueButton :icon="IconDownload" @click="downloadExcelProductList">Download</VueButton>
       </div>
-      <span style="cursor: pointer">
-        <a-dropdown trigger="click">
-          <span>
-            <IconSetting width="20" height="20" />
+    </div>
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item
-                v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-                key="screen-setting"
-              >
-                Cài đặt hiển thị
-              </a-menu-item>
-              <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
-              <a-menu-item key="PRODUCT_GROUP_MANAGER">Quản lý nhóm sản phẩm</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalProductListSettingScreen?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+          <a @click="modalDataProduct?.openModal()">Cài đặt dữ liệu</a>
+          <a @click="modalProductGroupManager?.openModal()">Quản lý nhóm sản phẩm</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -649,27 +631,16 @@ const handleModalUploadProductSuccess = async () => {
           </div>
         </div>
       </div>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('code')">
+            <th style="width: 100px" class="cursor-pointer" @click="changeSort('productCode')">
               <div class="flex items-center justify-center">
                 Mã SP &nbsp;
-                <IconSort :sort="sortColumn === 'code' ? sortValue : ''" />
+                <IconSort :sort="sortColumn === 'productCode' ? sortValue : ''" />
               </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('brandName')">
@@ -684,7 +655,7 @@ const handleModalUploadProductSuccess = async () => {
             <th v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent">
               NCC
             </th>
-            <th v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber">Số lô</th>
+            <th v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode">Số lô</th>
             <th
               v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
               class="cursor-pointer"
@@ -742,7 +713,7 @@ const handleModalUploadProductSuccess = async () => {
           <template v-for="(product, productIndex) in productList" :key="productIndex">
             <template v-if="!product.batchList || product.batchList.length === 0">
               <tr :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'">
-                <td class="text-center">SP{{ product.code.toString().padStart(4, '0') }}</td>
+                <td class="text-center">{{ product.productCode }}</td>
                 <td>
                   <div>
                     <span>{{ product.brandName }}</span>
@@ -776,7 +747,7 @@ const handleModalUploadProductSuccess = async () => {
                 <td
                   v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
                 ></td>
-                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center"></td>
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center"></td>
 
                 <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
@@ -821,7 +792,7 @@ const handleModalUploadProductSuccess = async () => {
                 :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'"
               >
                 <td v-if="batchIndex === 0" class="text-center" :rowspan="product.batchList.length">
-                  SP{{ product.id }}
+                  {{ product.batchList }}
                 </td>
                 <td v-if="batchIndex === 0" :rowspan="product.batchList.length">
                   <div>
@@ -863,8 +834,8 @@ const handleModalUploadProductSuccess = async () => {
                   {{ distributorMap[batch.distributorId]?.fullName }}
                 </td>
 
-                <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
-                  {{ batch.lotNumber }}
+                <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center">
+                  {{ batch.batchCode }}
                 </td>
                 <td
                   v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
@@ -934,7 +905,7 @@ const handleModalUploadProductSuccess = async () => {
             :key="batchIndex"
             :style="batch.product?.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'"
           >
-            <td class="text-center">SP{{ batch.productId }}</td>
+            <td class="text-center">{{ batch.product?.productCode }}</td>
             <td>
               <div>
                 {{ batch.product?.brandName }}
@@ -968,8 +939,8 @@ const handleModalUploadProductSuccess = async () => {
             >
               {{ distributorMap[batch.distributorId]?.fullName }}
             </td>
-            <td v-if="settingStore.SCREEN_PRODUCT_LIST.lotNumber" class="text-center">
-              {{ batch.lotNumber }}
+            <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center">
+              {{ batch.batchCode }}
             </td>
             <td
               v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"
@@ -1019,16 +990,25 @@ const handleModalUploadProductSuccess = async () => {
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

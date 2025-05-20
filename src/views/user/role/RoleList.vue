@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import {
-  ApartmentOutlined,
-  CheckCircleOutlined,
-  FormOutlined,
-  MinusCircleOutlined,
-} from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { RoleApi, type Role } from '../../../modules/role'
 import VueTag from '../../../common/VueTag.vue'
+import { IconApartment, IconForm } from '../../../common/icon-antd'
+import { useMeStore } from '../../../modules/_me/me.store'
+import { RoleApi, type Role } from '../../../modules/role'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const roleList = ref<Role[]>([])
 
@@ -63,7 +59,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   <div class="page-header">
     <div class="page-header-content">
       <div class="hidden md:block">
-        <ApartmentOutlined class="mr-1" />
+        <IconApartment class="mr-1" />
         Danh sách vai trò
       </div>
       <VueButton color="blue" icon="plus" @click="$router.push({ name: 'RoleUpsert' })">
@@ -105,24 +101,32 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })">
-                <FormOutlined />
+                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })"
+              >
+                <IconForm />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

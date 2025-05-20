@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputMoney, InputNumber, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -143,7 +143,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
           <div>Số lô</div>
           <div>
-            <InputText v-model:value="batch.lotNumber" />
+            <InputText v-model:value="batch.batchCode" />
           </div>
         </div>
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">

@@ -5,7 +5,7 @@ import { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
-  code: number
+  productCode: string
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
 

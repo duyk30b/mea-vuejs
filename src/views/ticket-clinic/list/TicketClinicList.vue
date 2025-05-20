@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { FileSearchOutlined, ReadOutlined, ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconSetting } from '../../../common/icon'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconFileSearch, IconMedicalBox, IconRead, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { InteractType } from '../../../modules/commission'
@@ -22,8 +23,6 @@ import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicCommission from './ModalTicketClinicCommission.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
-import { IconFileSearch, IconRead } from '../../../common/icon-antd'
-import CKEditor5Vue from '../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -151,22 +150,13 @@ const changeSort = async (column: 'id' | 'registeredAt') => {
   await startFilter()
 }
 
-const changePagination = async (options: { page?: number; limit?: number }) => {
-  if (options.page) page.value = options.page
-  if (options.limit) {
-    limit.value = options.limit
-    localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(options.limit))
-  }
+const changePage = async (pageSelect: number) => {
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SCREEN_SETTING') {
-    modalTicketClinicListSetting.value?.openModal()
-  }
-  if (menu.key === 'ROLE_AND_COMMISSION') {
-    modalTicketClinicCommission.value?.openModal()
-  }
+const changeLimit = async (limitSelect: any) => {
+  limit.value = limitSelect
+  localStorage.setItem('TICKET_CLINIC_PAGINATION_LIMIT', String(limitSelect))
+  await startFetchData()
 }
 
 const handleModalTicketClinicCreateSuccess = () => {
@@ -192,11 +182,8 @@ const handleModalTicketClinicListSettingSuccess = async () => {
   <ModalTicketClinicCommission ref="modalTicketClinicCommission" />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconMedicalBox />
         Danh sách khám
       </div>
       <div>
@@ -226,18 +213,18 @@ const handleModalTicketClinicListSettingSuccess = async () => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="SCREEN_SETTING">Cài đặt phòng khám</a-menu-item>
-            <a-menu-item key="ROLE_AND_COMMISSION">Vai trò và hoa hồng</a-menu-item>
-          </a-menu>
+    <div class="mr-2">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="modalTicketClinicListSetting?.openModal()">Cài đặt phòng khám</a>
+          <a @click="modalTicketClinicCommission?.openModal()">Vai trò và hoa hồng</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -315,12 +302,12 @@ const handleModalTicketClinicListSettingSuccess = async () => {
       <div v-if="settingStore.TICKET_CLINIC_LIST.showCustomType" style="flex: 1; flex-basis: 150px">
         <div>Phân loại</div>
         <div>
-          <VueSelect
+          <InputSelect
             v-model:value="customType"
             :options="[
-              { value: null, text: 'Tất cả' },
+              { value: null, label: 'Tất cả' },
               ...settingStore.TICKET_CLINIC_LIST.customTypeText.map((i, index) => {
-                return { value: index, text: i }
+                return { value: index, label: i }
               }),
             ]"
             @update:value="startFilter"
@@ -499,14 +486,24 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="my-4 flex gap-4 justify-between">
+      <div class="my-4 flex flex-wrap justify-end items-center gap-4">
         <div class="">Tổng: {{ total }}</div>
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
+        <VuePagination
+          class="ml-auto"
+          v-model:page="page"
           :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
+          :limit="limit"
+          @update:page="changePage"
+        />
+        <InputSelect
+          v-model:value="limit"
+          @update:value="changeLimit"
+          :options="[
+            { value: 10, label: '10 / page' },
+            { value: 20, label: '20 / page' },
+            { value: 50, label: '50 / page' },
+            { value: 100, label: '100 / page' },
+          ]"
         />
       </div>
     </div>

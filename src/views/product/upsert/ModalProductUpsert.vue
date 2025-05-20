@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { SisternodeOutlined } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconSetting, IconTrash } from '../../../common/icon'
+import { IconClose, IconDelete, IconSetting, IconSisternode } from '../../../common/icon-antd'
 import {
   InputCheckbox,
   InputFilter,
@@ -12,6 +11,7 @@ import {
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
+import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
@@ -200,7 +200,7 @@ const handleSave = async () => {
           title: 'Không thể cập nhật kho hàng quản lý',
           content: response.data.batchError.map((batch) => {
             const warehouseName = warehouseMap.value[batch.warehouseId]?.name || ''
-            return `- Lô hàng ${batch.lotNumber} - HSD ${ESTimer.timeToText(
+            return `- Lô hàng ${batch.batchCode} - HSD ${ESTimer.timeToText(
               batch.expiryDate,
             )} - đang được quản lý bởi "${warehouseName}"". Bắt buộc phải chọn "${warehouseName}" hoặc chọn "Tất cả kho"`
           }),
@@ -270,7 +270,7 @@ defineExpose({ openModal })
           class="px-4 cursor-pointer"
           @click="modalDataProduct?.openModal()"
         >
-          <SisternodeOutlined />
+          <IconSisternode />
         </div>
         <div
           v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
@@ -294,10 +294,17 @@ defineExpose({ openModal })
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.BASIC">
               <div class="mt-4 flex flex-wrap gap-4">
-                <div class="grow basis-[600px]">
-                  <div class="">Tên hàng hóa</div>
+                <div style="flex-grow: 1; flex-basis: 400px">
+                  <div class="">Tên sản phẩm</div>
                   <div class="">
                     <InputText v-model:value="product.brandName" required />
+                  </div>
+                </div>
+
+                <div style="flex-grow: 1; flex-basis: 150px">
+                  <div class="">Mã sản phẩm</div>
+                  <div class="">
+                    <InputText v-model:value="product.productCode" />
                   </div>
                 </div>
 
@@ -435,6 +442,17 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
+                <div class="grow basis-[40%]">
+                  <div class="">Số lượng</div>
+                  <div class="">
+                    <InputMoney
+                      :disabled="!!product.id"
+                      v-model:value="product.quantity"
+                      :prepend="product.unitDefaultName"
+                    />
+                  </div>
+                </div>
+
                 <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="grow basis-[40%]">
                   <div class="">
                     <span>Giá nhập</span>
@@ -447,7 +465,6 @@ defineExpose({ openModal })
                   </div>
                   <div class="">
                     <InputMoney
-                      :disabled="!!product.hasManageQuantity"
                       :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
                       :prepend="product.unitDefaultName"
                       @update:value="
@@ -536,11 +553,7 @@ defineExpose({ openModal })
 
                 <div class="mt-2 grow basis-[600px] flex items-stretch">
                   <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.hasManageQuantity)"
-                      :disabled="!!product.quantity"
-                      @change="(checked: Boolean) => (product.hasManageQuantity = checked ? 1 : 0)"
-                    />
+                    <VueSwitch v-model="product.hasManageQuantity" type-parser="number" />
                   </div>
                   <div>
                     <span v-if="product.hasManageQuantity">
@@ -554,10 +567,7 @@ defineExpose({ openModal })
 
                 <div class="mt-2 grow basis-[600px] flex items-stretch">
                   <div class="w-[60px] flex-none">
-                    <a-switch
-                      :checked="Boolean(product.isActive)"
-                      @change="(checked: Boolean) => (product.isActive = checked ? 1 : 0)"
-                    />
+                    <VueSwitch v-model="product.isActive" type-parser="number" />
                   </div>
                   <div>
                     <span v-if="product.isActive">Active</span>
@@ -626,7 +636,7 @@ defineExpose({ openModal })
                         style="color: var(--text-red)"
                         @click="product.commissionList!.splice(index, 1)"
                       >
-                        <IconTrash width="18" height="18" />
+                        <IconDelete width="18" height="18" />
                       </a>
                     </div>
                   </div>
@@ -650,7 +660,7 @@ defineExpose({ openModal })
           >
             Xóa
           </VueButton>
-          <VueButton style="margin-left: auto;" icon="close" type="reset" @click="closeModal">
+          <VueButton style="margin-left: auto" icon="close" type="reset" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">

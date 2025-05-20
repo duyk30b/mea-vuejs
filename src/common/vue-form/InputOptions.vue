@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import IconClearCircle from '../icon/IconClearCircle.vue'
-import IconClearOutline from '../icon/IconClearOutline.vue'
-import IconSearch from '../icon/IconSearch.vue'
+import { IconSearch } from '../icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -11,10 +9,11 @@ const props = withDefaults(
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
+    prepend?: string
     required?: boolean
     clearAfterSelected?: boolean
     noClearTextWhenNotSelected?: boolean
-    logicFilter?: Function
+    logicFilter?: (data: object, text: string) => boolean
     messageNoResult?: string
   }>(),
   {
@@ -22,13 +21,14 @@ const props = withDefaults(
     options: () => [],
     disabled: false,
     placeholder: '',
+    prepend: undefined,
     maxHeight: 300,
     required: false,
     clearAfterSelected: false,
     noClearTextWhenNotSelected: false,
     logicFilter: () => true,
     messageNoResult: 'Không tìm thấy kết quả phù hợp',
-  }
+  },
 )
 
 const emit = defineEmits<{
@@ -77,7 +77,7 @@ watch(
       emit('update:text', item.text)
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -97,7 +97,7 @@ watch(
       emit('update:text', item.text)
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleInput = (e: Event) => {
@@ -227,6 +227,7 @@ defineExpose({ focus, clear, setItem })
 
 <template>
   <div v-click-outside="handleClickOutside" :class="{ 'vue-input': true, disabled }">
+    <div v-if="prepend" class="prepend">{{ prepend }}</div>
     <div class="input-area">
       <input
         ref="inputRef"
@@ -237,7 +238,8 @@ defineExpose({ focus, clear, setItem })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
-        @focusin="onFocusin" />
+        @focusin="onFocusin"
+      />
     </div>
     <div class="icon-append">
       <IconSearch class="icon-blur" />
@@ -249,12 +251,14 @@ defineExpose({ focus, clear, setItem })
       v-if="showOptions"
       ref="optionsElement"
       class="options"
-      :style="{ maxHeight: `${maxHeight}px` }">
+      :style="{ maxHeight: `${maxHeight}px` }"
+    >
       <div
         v-for="(item, index) in optionsFilter"
         :key="index"
         :class="{ 'item-option': true, 'active': index == indexFocus }"
-        @click="handleSelectItem(index)">
+        @click="handleSelectItem(index)"
+      >
         <slot name="option" :item="item" :index="index">
           <div class="item-text">{{ item.text }}</div>
         </slot>
@@ -262,7 +266,8 @@ defineExpose({ focus, clear, setItem })
       <div
         v-if="!!messageNoResult && !optionsFilter.length && searchText"
         class="item-option"
-        style="font-style: italic">
+        style="font-style: italic"
+      >
         {{ messageNoResult }}
       </div>
     </div>

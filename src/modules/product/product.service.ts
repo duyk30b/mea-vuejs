@@ -93,7 +93,11 @@ export class ProductService {
   static async search(text: string) {
     if (!text) text = ''
     const objects = await ProductDB.findManyBy({
-      $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+      $OR: [
+        { productCode: { LIKE: text } },
+        { brandName: { LIKE: text } },
+        { substance: { LIKE: text } },
+      ],
       isActive: 1,
     })
     return Product.fromList(objects)

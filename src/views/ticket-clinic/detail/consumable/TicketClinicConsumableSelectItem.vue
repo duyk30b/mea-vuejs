@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../../common/icon'
+import { IconFileSearch } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputNumber, InputOptions, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -48,7 +48,13 @@ const searchingProduct = async (text: string) => {
       filter: {
         isActive: 1,
         $AND: [
-          { $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }] },
+          {
+            $OR: [
+              { productCode: { LIKE: text } },
+              { brandName: { LIKE: text } },
+              { substance: { LIKE: text } },
+            ],
+          },
           {
             $OR: [
               {
@@ -234,6 +240,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
           ref="inputOptionsProduct"
           required
           :options="productOptions"
+          :prepend="ticketProductConsumable.product?.productCode"
           :maxHeight="320"
           placeholder="Tìm kiếm sản phẩm bằng tên hoặc hoạt chất của sản phẩm"
           :disabled="
@@ -245,6 +252,8 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         >
           <template #option="{ item: { data } }">
             <div>
+              <span>{{ data.productCode }}</span>
+              -
               <b>{{ data.brandName }}</b>
               -
               <span style="font-weight: 700" :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import { IconFileSearch } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputHint,
@@ -11,18 +12,17 @@ import {
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, BatchService } from '../../../modules/batch'
+import { Batch } from '../../../modules/batch'
 import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { customFilter, ESTimer } from '../../../utils'
-import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
-import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
-import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
-import { IconFileSearch } from '../../../common/icon'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import { customFilter } from '../../../utils'
+import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
+import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
+import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 
 const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -60,7 +60,11 @@ const searchingProduct = async (text: string) => {
     productList.value = await ProductService.list({
       filter: {
         isActive: 1,
-        $OR: [{ brandName: { LIKE: text } }, { substance: { LIKE: text } }],
+        $OR: [
+          { productCode: { LIKE: text } },
+          { brandName: { LIKE: text } },
+          { substance: { LIKE: text } },
+        ],
         warehouseIds: (value) => {
           try {
             const warehouseIdAcceptList =
@@ -295,7 +299,8 @@ defineExpose({ focus })
           ref="inputOptionsProduct"
           :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
           :maxHeight="320"
-          placeholder="(F3) Tìm kiếm bằng tên hoặc hoạt chất của sản phẩm"
+          :prepend="ticketProduct?.product?.productCode"
+          placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
           required
           @selectItem="({ data }) => selectProduct(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
@@ -303,6 +308,8 @@ defineExpose({ focus })
         >
           <template #option="{ item: { data } }">
             <div>
+              <span>{{ data.productCode }}</span>
+              <span class="mx-1">-</span>
               <b>{{ data.brandName }}</b>
               <span v-if="data.hasManageQuantity">
                 - Tồn

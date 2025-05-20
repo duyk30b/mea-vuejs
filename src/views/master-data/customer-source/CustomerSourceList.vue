@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon'
+import { IconSetting } from '../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../common/icon-google'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueButton from '../../../common/VueButton.vue'
@@ -12,6 +12,8 @@ import {
 } from '../../../modules/customer-source'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerSourceUpsert from './ModalCustomerSourceUpsert.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { InputSelect } from '../../../common/vue-form'
 
 const modalCustomerSourceUpsert = ref<InstanceType<typeof ModalCustomerSourceUpsert>>()
 
@@ -66,7 +68,7 @@ onBeforeMount(async () => {
 
 const handleModalCustomerSourceUpsertSuccess = async (
   data: CustomerSource,
-  type: 'CREATE' | 'UPDATE' | 'DELETE'
+  type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
   await startFetchData()
 }
@@ -90,7 +92,8 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
 <template>
   <ModalCustomerSourceUpsert
     ref="modalCustomerSourceUpsert"
-    @success="handleModalCustomerSourceUpsertSuccess" />
+    @success="handleModalCustomerSourceUpsertSuccess"
+  />
 
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
@@ -102,7 +105,8 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
         v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
-        @click="modalCustomerSourceUpsert?.openModal()">
+        @click="modalCustomerSourceUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
@@ -143,12 +147,14 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
               <div class="flex justify-between">
                 <a
                   style="color: var(--text-orange)"
-                  @click="modalCustomerSourceUpsert?.openModal(customerSource.id)">
+                  @click="modalCustomerSourceUpsert?.openModal(customerSource.id)"
+                >
                   <IconEditSquare width="24px" height="24px" />
                 </a>
                 <a
                   style="color: var(--text-red)"
-                  @click="handleClickDeleteCustomerSource(customerSource.id, customerSource.name)">
+                  @click="handleClickDeleteCustomerSource(customerSource.id, customerSource.name)"
+                >
                   <IconDelete width="24px" height="24px" />
                 </a>
               </div>
@@ -156,16 +162,24 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

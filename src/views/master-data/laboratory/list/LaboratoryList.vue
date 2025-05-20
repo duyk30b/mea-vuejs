@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../../common/VuePagination.vue'
+import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
-import { InputText, VueSelect } from '../../../../common/vue-form'
+import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -88,15 +90,6 @@ onBeforeMount(async () => {
   }
 })
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'LABORATORY_GROUP_MANAGER') {
-    modalLaboratoryGroupManager.value?.openModal()
-  }
-  if (menu.key === 'COPY_FROM_SYSTEM') {
-    modalCopyLaboratoryExample.value?.openModal()
-  }
-}
-
 const handleModalCopyLaboratorySystemSuccess = async () => {
   await startFetchData()
 }
@@ -139,18 +132,23 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div>
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span style="font-size: 1.2rem; cursor: pointer">
-          <IconSetting />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="LABORATORY_GROUP_MANAGER">Quản lý phiếu xét nghiệm</a-menu-item>
-            <a-menu-item key="COPY_FROM_SYSTEM">Copy dữ liệu từ hệ thống</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="modalLaboratoryGroupManager?.openModal()">Quản lý phiếu xét nghiệm</a>
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalCopyLaboratoryExample?.openModal()"
+          >
+            Copy dữ liệu từ hệ thống
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">
@@ -229,8 +227,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             </td>
             <td class="text-left">
               <span v-if="laboratoryGroupMap[laboratory.laboratoryGroupId]">
-                {{ laboratoryGroupMap[laboratory.laboratoryGroupId]?.name }}</span
-              >
+                {{ laboratoryGroupMap[laboratory.laboratoryGroupId]?.name }}
+              </span>
               <span v-else-if="laboratory.laboratoryGroupId === 0" class="italic">
                 Chưa phân nhóm
               </span>
@@ -259,15 +257,24 @@ const handleModalLaboratoryUpsertSuccess = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

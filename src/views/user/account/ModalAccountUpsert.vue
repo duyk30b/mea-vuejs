@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputText } from '../../../common/vue-form'
+import { InputDate, InputRadio, InputText } from '../../../common/vue-form'
 import InputCheckboxList from '../../../common/vue-form/InputCheckboxList.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { RoleService } from '../../../modules/role'
 import { User, UserService } from '../../../modules/user'
+import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 
 const emit = defineEmits<{
   (e: 'success', value: User, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
@@ -158,10 +159,13 @@ defineExpose({ openModal })
         <div style="flex-basis: 300px; flex-grow: 1">
           <div>Giới tính</div>
           <div>
-            <a-radio-group v-model:value="user.gender">
-              <a-radio :value="1">Nam</a-radio>
-              <a-radio :value="0">Nữ</a-radio>
-            </a-radio-group>
+            <InputRadio
+              v-model:value="user!.gender"
+              :options="[
+                { key: 1, label: 'Nam' },
+                { key: 0, label: 'Nữ' },
+              ]"
+            />
           </div>
         </div>
 
@@ -191,10 +195,9 @@ defineExpose({ openModal })
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex items-center mt-3">
           <div class="w-[100px] flex-none">Active</div>
-          <a-switch
-            :checked="Boolean(user.isActive)"
-            @change="(checked: Boolean) => (user.isActive = checked ? 1 : 0)"
-          />
+          <div>
+            <VueSwitch v-model="user.isActive" type-parser="number" />
+          </div>
           <div v-if="!user.isActive" class="ml-4">Tài khoản này tạm thời không thể sử dụng</div>
         </div>
       </div>

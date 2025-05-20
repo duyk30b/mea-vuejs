@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ScheduleOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch, IconSetting, IconTrash } from '../../../common/icon'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputDate, InputOptions, VueSelect } from '../../../common/vue-form'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -155,12 +156,6 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
   window.open(route.href, '_blank')
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'SETTING_SCREEN') {
-    modalAppointmentListSetting.value?.openModal()
-  }
-}
-
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
 }
@@ -179,11 +174,8 @@ const handleFocusFirstSearchCustomer = async () => {
   />
   <div class="page-header">
     <div class="flex items-center gap-4">
-      <div
-        class="hidden md:block"
-        style="font-size: 1.25rem; font-weight: 500; line-height: 1.75rem"
-      >
-        <ScheduleOutlined class="mr-1" />
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconSchedule />
         Danh sách hẹn khám
       </div>
       <div>
@@ -197,22 +189,17 @@ const handleFocusFirstSearchCustomer = async () => {
         </VueButton>
       </div>
     </div>
-    <div class="flex mr-2 gap-8">
-      <span style="cursor: pointer">
-        <a-dropdown
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-          trigger="click"
-        >
-          <span>
-            <IconSetting width="20" height="20" />
+    <div class="mr-2 flex gap-8">
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="SETTING_SCREEN">Cài đặt hiển thị</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="modalAppointmentListSetting?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -406,21 +393,30 @@ const handleFocusFirstSearchCustomer = async () => {
                 class="text-red-500"
                 @click="handleClickDeleteAppointment(appointment.id)"
               >
-                <IconTrash width="18" height="18" />
+                <IconDelete width="18" height="18" />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-4">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

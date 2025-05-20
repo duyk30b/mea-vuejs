@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import {
-  CopyOutlined,
-  ExceptionOutlined,
-  EyeOutlined,
-  FileSearchOutlined,
-  FileSyncOutlined,
-  MoreOutlined,
-  ScheduleOutlined,
-  SettingOutlined,
-} from '@ant-design/icons-vue'
 import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon'
+import {
+  IconAudit,
+  IconClose,
+  IconCloseCircle,
+  IconCopy,
+  IconEdit,
+  IconEye,
+  IconFileSearch,
+  IconFileSync,
+  IconMore,
+  IconSetting,
+} from '../../../common/icon-antd'
 import { IconDelete } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
+import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { useTicketOrderStore } from '../../../modules/ticket-order/ticket-order.store'
 import { timeToText } from '../../../utils'
@@ -34,6 +35,7 @@ import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -232,19 +234,6 @@ const clickDestroy = () => {
   })
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalTicketOrderDetailSetting.value?.openModal()
-  }
-}
-
-const handleMenuActionClick = (menu: { key: string }) => {
-  if (menu.key === 'EDIT_INVOICE') startEdit()
-  if (menu.key === 'RETURN_PRODUCT') clickReturnProduct()
-  if (menu.key === 'CANCEL_TICKET') clickCancel()
-  if (menu.key === 'DESTROY_TICKET') clickDestroy()
-}
-
 const startPrint = () => {
   const iframePrint = document.getElementById('iframe-print') as HTMLIFrameElement
   const pri = iframePrint.contentWindow as Window
@@ -273,7 +262,7 @@ const openModalTicketOrderPreview = () => {
 
   <div class="page-header">
     <div class="page-header-content">
-      <ScheduleOutlined />
+      <IconAudit />
       Thông tin hóa đơn
       <span
         v-if="ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled"
@@ -296,17 +285,22 @@ const openModalTicketOrderPreview = () => {
         </VueButton>
       </div>
     </div>
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketOrderDetailSetting?.openModal()"
+          >
+            Cài đặt hiển thị
+          </a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -321,7 +315,7 @@ const openModalTicketOrderPreview = () => {
               class="ml-1"
               @click="modalCustomerDetail?.openModal(ticketOrderDetailRef.customerId)"
             >
-              <FileSearchOutlined />
+              <IconFileSearch />
             </a>
           </td>
         </tr>
@@ -352,84 +346,83 @@ const openModalTicketOrderPreview = () => {
   </div>
 
   <div class="page-main">
-    <div class="px-4 pt-4 flex flex-wrap gap-2">
+    <div class="px-4 pt-4 flex items-center flex-wrap gap-2">
       <VueButton @click="openModalTicketOrderPreview">
-        <EyeOutlined />
+        <IconEye />
         Xem
       </VueButton>
       <VueButton icon="print" @click="startPrint">In</VueButton>
       <VueButton style="margin-left: auto" @click="startCopy">
-        <CopyOutlined />
+        <IconCopy />
         Copy đơn
       </VueButton>
       <VueButton
         v-if="
-          [TicketStatus.Draft, TicketStatus.Prepayment].includes(ticketOrderDetailRef.ticketStatus) ||
+          [TicketStatus.Draft, TicketStatus.Prepayment].includes(
+            ticketOrderDetailRef.ticketStatus,
+          ) ||
           (settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
             ticketOrderDetailRef.ticketStatus !== TicketStatus.Cancelled)
         "
         color="blue"
         @click="startEdit"
       >
-        <ExceptionOutlined />
+        <IconEdit />
         Sửa đơn
       </VueButton>
-
-      <a-dropdown>
-        <template #overlay>
-          <a-menu @click="handleMenuActionClick">
-            <a-menu-item
-              v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_RETURN_PRODUCT] &&
-                [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
-                  ticketOrderDetailRef.ticketStatus,
-                )
-              "
-              key="RETURN_PRODUCT"
-            >
-              <span class="text-red-500">
-                <FileSyncOutlined class="mr-2" />
-                Trả Hàng
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_CANCEL] &&
-                [
-                  TicketStatus.Prepayment,
-                  TicketStatus.Executing,
-                  TicketStatus.Debt,
-                  TicketStatus.Completed,
-                ].includes(ticketOrderDetailRef.ticketStatus)
-              "
-              key="CANCEL_TICKET"
-            >
-              <span class="text-red-500">
-                <IconClose class="mr-2" />
-                Hủy Đơn
-              </span>
-            </a-menu-item>
-            <a-menu-item
-              v-if="
-                (permissionIdMap[PermissionId.TICKET_ORDER_DESTROY_DRAFT] &&
-                  [TicketStatus.Draft].includes(ticketOrderDetailRef.ticketStatus)) ||
-                ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled
-              "
-              key="DESTROY_TICKET"
-            >
-              <span class="text-red-500">
-                <IconDelete class="mr-2" />
-                Xóa Đơn
-              </span>
-            </a-menu-item>
-          </a-menu>
+      <VueDropdown>
+        <template #trigger>
+          <div class="vue-circle">
+            <IconMore style="font-size: 1.5rem; font-weight: bold" />
+          </div>
         </template>
-        <a-button shape="circle">
-          <template #icon>
-            <MoreOutlined style="font-size: 1.2rem; font-weight: bold" />
-          </template>
-        </a-button>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="
+              permissionIdMap[PermissionId.TICKET_ORDER_RETURN_PRODUCT] &&
+              [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
+                ticketOrderDetailRef.ticketStatus,
+              )
+            "
+            @click="clickReturnProduct()"
+          >
+            <span class="text-red-500">
+              <IconFileSync />
+              Trả Hàng
+            </span>
+          </a>
+          <a
+            v-if="
+              permissionIdMap[PermissionId.TICKET_ORDER_CANCEL] &&
+              [
+                TicketStatus.Prepayment,
+                TicketStatus.Executing,
+                TicketStatus.Debt,
+                TicketStatus.Completed,
+              ].includes(ticketOrderDetailRef.ticketStatus)
+            "
+            @click="clickCancel()"
+          >
+            <span class="text-red-500">
+              <IconCloseCircle />
+              Hủy Đơn
+            </span>
+          </a>
+          <a
+            v-if="
+              (permissionIdMap[PermissionId.TICKET_ORDER_DESTROY_DRAFT] &&
+                [TicketStatus.Draft].includes(ticketOrderDetailRef.ticketStatus)) ||
+              ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled
+            "
+            @click="clickDestroy()"
+          >
+            <span class="text-red-500">
+              <IconDelete />
+              Xóa Đơn
+            </span>
+          </a>
+        </div>
+      </VueDropdown>
     </div>
 
     <div class="mt-2">

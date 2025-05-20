@@ -37,8 +37,8 @@ export class ReceiptApi {
     return Receipt.from(data.receipt)
   }
 
-  static async createDraft(receipt: Receipt) {
-    const response = await AxiosInstance.post('/receipt/create-draft', {
+  static async createReceiptDraft(receipt: Receipt) {
+    const response = await AxiosInstance.post('/receipt/create-receipt-draft', {
       distributorId: receipt.distributorId,
       receipt: {
         startedAt: receipt.startedAt,
@@ -54,7 +54,7 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        lotNumber: i.lotNumber || '',
+        batchCode: i.batchCode || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
@@ -65,8 +65,8 @@ export class ReceiptApi {
     return data
   }
 
-  static async updateDraftPrepayment(receiptId: number, receipt: Receipt) {
-    const response = await AxiosInstance.patch(`/receipt/update-draft-prepayment/${receiptId}`, {
+  static async updateReceiptDraft(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/update-receipt-draft/${receiptId}`, {
       distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
       receipt: {
         startedAt: receipt.startedAt,
@@ -82,7 +82,35 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        lotNumber: i.lotNumber || '',
+        batchCode: i.batchCode || '',
+        expiryDate: i.expiryDate,
+        unitRate: i.unitRate,
+        costPrice: i.costPrice,
+        quantity: i.quantity,
+      })),
+    })
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
+  }
+
+  static async updateReceiptPrepayment(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/update-receipt-prepayment/${receiptId}`, {
+      distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
+      receipt: {
+        startedAt: receipt.startedAt,
+        itemsActualMoney: receipt.itemsActualMoney,
+        discountMoney: receipt.discountMoney,
+        discountPercent: receipt.discountPercent,
+        discountType: receipt.discountType,
+        surcharge: receipt.surcharge,
+        totalMoney: receipt.totalMoney,
+        note: receipt.note,
+      },
+      receiptItemList: (receipt.receiptItemList || []).map((i) => ({
+        productId: i.productId,
+        batchId: i.batchId,
+        warehouseId: i.warehouseId,
+        batchCode: i.batchCode || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
         costPrice: i.costPrice,
@@ -159,5 +187,47 @@ export class ReceiptApi {
       receipt: Receipt.from(data.receipt),
       distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
     }
+  }
+
+  static async downloadFileUploadExcelExample() {
+    const response = await AxiosInstance.get(`/file-receipt/upload-excel/file-example`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    const uint8Array = new Uint8Array(data.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: data.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = data.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
+  static async uploadExcelForCreateDraft(file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await AxiosInstance.post(
+      `/file-receipt/upload-excel-for-create-draft`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            console.log(`Đã upload: ${percentCompleted}%`)
+          }
+        },
+      },
+    )
+    const { data } = response.data as BaseResponse<{ receiptId: number }>
+    return data
   }
 }

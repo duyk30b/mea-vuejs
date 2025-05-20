@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import IconCalendar from '../icon/IconCalendar.vue'
+import { IconCalendar } from '../icon-antd'
 import DatePicker from './DatePicker.vue'
-import IconClearOutline from '../icon/IconClearOutline.vue'
-import IconClearCircle from '../icon/IconClearCircle.vue'
+import { IconClose, IconCloseCircle } from '../icon-antd'
 
 const props = withDefaults(
   defineProps<{
@@ -185,6 +184,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleValueDatePicker = (value: number) => {
   emit('update:value', value)
+  emit('selectTime', value)
   showDatePicker.value = false
 }
 
@@ -252,32 +252,39 @@ const handleClickClear = () => {
 
 <template>
   <div v-click-outside="handleClickOutside" :class="{ 'vue-input': true, 'disabled': disabled }">
+    <div
+      class="icon-prepend"
+      style="padding: 0 8px; cursor: pointer"
+      @click="showDatePicker = !showDatePicker"
+    >
+      <IconCalendar />
+    </div>
     <div class="input-area">
       <div class="wrapper-date-time" @keydown="handleKeydown">
         <div
           ref="inputDate"
           class="input-item input-date"
           :contenteditable="!disabled"
-          placeholder="D"
+          placeholder="DD"
           @input="(e) => handleInput(e, 'DATE')"
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div>/</div>
+        <div style="opacity: 0.5">⧸</div>
         <div
           ref="inputMonth"
           class="input-item input-month"
           :contenteditable="!disabled"
-          placeholder="M"
+          placeholder="MM"
           @input="(e) => handleInput(e, 'MONTH')"
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div>/</div>
+        <div style="opacity: 0.5">⧸</div>
         <div
           ref="inputYear"
           class="input-item input-year"
-          placeholder="Y"
+          placeholder="YYYY"
           :contenteditable="!disabled"
           @input="(e) => handleInput(e, 'YEAR')"
           @focus="handleFocus"
@@ -318,10 +325,13 @@ const handleClickClear = () => {
         ></div>
       </div>
     </div>
-    <div class="icon-append">
-      <IconClearOutline v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
-      <IconClearCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
-      <IconCalendar style="margin-left: 12px" @click="showDatePicker = !showDatePicker" />
+    <div class="icon-append" @click="handleClickClear">
+      <div v-if="!disabled" class="icon-clear-blur">
+        <IconClose />
+      </div>
+      <div v-if="!disabled" class="icon-clear-hover">
+        <IconCloseCircle />
+      </div>
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">
       <DatePicker
@@ -335,12 +345,15 @@ const handleClickClear = () => {
 
 <style lang="scss" scoped>
 .wrapper-date-time {
-  padding: 6px 6px;
+  padding: 4px 6px;
   display: flex;
   .input-item {
     outline: none;
     padding: 0 6px;
     white-space: nowrap;
+    font-size: 16px;
+    font-family: monospace;
+    color: #333;
   }
   .input-date {
     width: 2em;
@@ -371,7 +384,7 @@ const handleClickClear = () => {
 .date-picker {
   position: absolute;
   top: 100%;
-  max-width: 400px;
+  min-width: 280px;
   left: 0;
   width: 100%;
   z-index: 1000;

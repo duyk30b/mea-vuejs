@@ -51,6 +51,8 @@ export class ProductApi {
   static async createOne(product: Product) {
     const response = await AxiosInstance.post('/product/create', {
       brandName: product.brandName,
+      productCode: product.productCode || '',
+      quantity: product.quantity,
       substance: product.substance,
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
@@ -82,6 +84,7 @@ export class ProductApi {
   static async updateOne(id: number, product: Product) {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
       brandName: product.brandName,
+      productCode: product.productCode,
       substance: product.substance,
       costPrice: product.hasManageQuantity ? undefined : product.costPrice,
       wholesalePrice: product.wholesalePrice,

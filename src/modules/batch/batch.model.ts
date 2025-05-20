@@ -6,7 +6,7 @@ export class Batch {
   warehouseId: number
   productId: number
 
-  lotNumber: string // Lô sản phẩm
+  batchCode: string // Lô sản phẩm
   expiryDate?: number
 
   quantity: number
@@ -37,7 +37,7 @@ export class Batch {
     ins.warehouseId = 0
     ins.distributorId = 0
 
-    ins.lotNumber = ''
+    ins.batchCode = ''
     ins.costPrice = 0
     ins.quantity = 0
     return ins
@@ -81,7 +81,7 @@ export class Batch {
     if (a.productId != b.productId) return false
     if (a.distributorId != b.distributorId) return false
 
-    if (a.lotNumber != b.lotNumber) return false
+    if (a.batchCode != b.batchCode) return false
     if (a.expiryDate != b.expiryDate) return false
 
     if (a.costPrice != b.costPrice) return false

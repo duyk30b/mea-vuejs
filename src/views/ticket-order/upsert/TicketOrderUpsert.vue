@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { NodeIndexOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch } from '../../../common/icon'
+import { IconFileAdd, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -35,6 +35,7 @@ import {
   ETicketOrderUpsertMode,
   ticketOrderUpsertRef,
 } from './ticket-order-upsert.ref'
+import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -69,8 +70,6 @@ const mode = ref<ETicketOrderUpsertMode>(ETicketOrderUpsertMode.CREATE)
 const oldTicket = ref<Ticket>(Ticket.blank())
 const customer = ref<Customer>(Customer.blank())
 const customerList = ref<Customer[]>([])
-
-const time = ref<Dayjs>(dayjs())
 
 const saveLoading = ref(false)
 
@@ -113,20 +112,20 @@ onBeforeMount(async () => {
       if (ticketOrderUpsertRef.value.ticketSurchargeList!.length === 0) {
         ticketOrderUpsertRef.value.ticketSurchargeList!.push(TicketSurcharge.blank())
       }
-      if (
-        mode.value === ETicketOrderUpsertMode.CREATE ||
-        mode.value === ETicketOrderUpsertMode.COPY
-      ) {
-        time.value = dayjs(new Date())
-      } else if (mode.value === ETicketOrderUpsertMode.UPDATE) {
-        time.value = dayjs(new Date(ticketOrderUpsertRef.value.startedAt || Date.now()))
-      }
     } else if (customerId) {
       customerDefault = await CustomerApi.detail(customerId)
     } else {
       customerDefault = await CustomerService.getCustomerDefault()
     }
 
+    if (
+      mode.value === ETicketOrderUpsertMode.CREATE ||
+      mode.value === ETicketOrderUpsertMode.COPY
+    ) {
+      ticketOrderUpsertRef.value.registeredAt = Date.now()
+    } else if (mode.value === ETicketOrderUpsertMode.UPDATE) {
+      ticketOrderUpsertRef.value.registeredAt ||= Date.now()
+    }
     customer.value = customerDefault
     ticketOrderUpsertRef.value.customer = customerDefault
     ticketOrderUpsertRef.value.customerId = customerDefault.id
@@ -235,7 +234,6 @@ const saveInvoice = async (type: ETicketOrderSave) => {
 
   try {
     saveLoading.value = true
-    ticketOrderUpsertRef.value.registeredAt = time.value.valueOf()
     ticketOrderUpsertRef.value.ticketSurchargeList =
       ticketOrderUpsertRef.value.ticketSurchargeList!.filter((i) => {
         i.name = settingStore.INVOICE_SURCHARGE_DETAIL[i.key] || i.name
@@ -357,15 +355,6 @@ const saveInvoice = async (type: ETicketOrderSave) => {
   }
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'TICKET_ORDER_SETTING') {
-    modalTicketOrderUpsertSetting.value?.openModal()
-  }
-  if (menu.key === 'data-setting') {
-    modalDataTicketOrder.value?.openModal()
-  }
-}
-
 const handleChangeTabs = (activeKey: any) => {
   tabStart.value = activeKey
   localStorage.setItem('TICKET_ORDER_UPSERT_TAB_START', activeKey)
@@ -379,26 +368,31 @@ const handleChangeTabs = (activeKey: any) => {
   <ModalDataTicketOrder ref="modalDataTicketOrder" />
   <div class="page-header">
     <div class="page-header-content">
-      <div class="md:block">
-        <NodeIndexOutlined class="mr-2" />
+      <div class="md:flex items-center">
+        <IconFileAdd class="mr-2" />
         <span v-if="mode == ETicketOrderUpsertMode.CREATE">Tạo hóa đơn mới</span>
         <span v-if="mode == ETicketOrderUpsertMode.UPDATE">Cập nhật hóa đơn</span>
         <span v-if="mode == ETicketOrderUpsertMode.COPY">Copy hóa đơn</span>
       </div>
     </div>
 
-    <div class="page-header-setting">
-      <a-dropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]" trigger="click">
-        <span>
-          <SettingOutlined />
-        </span>
-        <template #overlay>
-          <a-menu @click="handleMenuSettingClick">
-            <a-menu-item key="TICKET_ORDER_SETTING">Cài đặt bán hàng</a-menu-item>
-            <a-menu-item key="data-setting">Cài đặt dữ liệu</a-menu-item>
-          </a-menu>
+    <div class="mr-2 flex items-center gap-8">
+      <VueDropdown>
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
+          </span>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a
+            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            @click="modalTicketOrderUpsertSetting?.openModal()"
+          >
+            Cài đặt bán hàng
+          </a>
+          <a @click="modalDataTicketOrder?.openModal()">Cài đặt dữ liệu</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -491,6 +485,14 @@ const handleChangeTabs = (activeKey: any) => {
               </template>
             </InputOptions>
           </div>
+          <div class="mt-3">Thời gian tạo đơn</div>
+          <div>
+            <InputDate
+              v-model:value="ticketOrderUpsertRef.registeredAt"
+              typeParser="number"
+              show-time
+            />
+          </div>
         </div>
 
         <div class="mt-4 p-4 bg-white">
@@ -498,17 +500,6 @@ const handleChangeTabs = (activeKey: any) => {
           <div class="px-4 pb-4" style="border: 1px solid #cdcdcd">
             <table class="table w-full mt-2 table-payment">
               <tbody>
-                <tr>
-                  <td style="white-space: nowrap; padding-right: 10px">Thời gian</td>
-                  <td style="text-align: right">
-                    <a-date-picker
-                      v-model:value="time"
-                      show-time
-                      placeholder="Select Time"
-                      :format="'DD/MM/YYYY HH:mm:ss'"
-                    />
-                  </td>
-                </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.itemsActualMoney">
                   <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
                     Tiền hàng
@@ -527,14 +518,23 @@ const handleChangeTabs = (activeKey: any) => {
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.discount">
                   <td style="white-space: nowrap; padding-right: 10px">Chiết khấu</td>
                   <td class="cursor-pointer" style="font-size: 16px">
-                    <a-popconfirm>
-                      <template #cancelButton>
-                        <div></div>
+                    <VuePopConfirm>
+                      <template #trigger>
+                        <div class="flex">
+                          <div>
+                            <VueTag color="green">
+                              {{ ticketOrderUpsertRef.discountPercent || 0 }}%
+                            </VueTag>
+                          </div>
+                          <div
+                            class="flex-1 text-right"
+                            style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
+                          >
+                            {{ formatMoney(ticketOrderUpsertRef.discountMoney) }}
+                          </div>
+                        </div>
                       </template>
-                      <template #okButton>
-                        <div></div>
-                      </template>
-                      <template #title>
+                      <div class="p-4">
                         <div>
                           Chiết khấu (Tiền hàng:
                           <b>
@@ -564,21 +564,8 @@ const handleChangeTabs = (activeKey: any) => {
                             />
                           </div>
                         </div>
-                      </template>
-                      <div class="flex">
-                        <div>
-                          <VueTag color="green">
-                            {{ ticketOrderUpsertRef.discountPercent || 0 }}%
-                          </VueTag>
-                        </div>
-                        <div
-                          class="flex-1 text-right"
-                          style="padding-right: 11px; border-bottom: 1px solid #cdcdcd"
-                        >
-                          {{ formatMoney(ticketOrderUpsertRef.discountMoney) }}
-                        </div>
                       </div>
-                    </a-popconfirm>
+                    </VuePopConfirm>
                   </td>
                 </tr>
                 <tr v-if="settingStore.SCREEN_INVOICE_UPSERT.paymentInfo.surcharge">
@@ -651,7 +638,7 @@ const handleChangeTabs = (activeKey: any) => {
                 <tr>
                   <td class="whitespace-nowrap">Ghi chú</td>
                   <td>
-                    <a-input v-model:value="ticketOrderUpsertRef.note" class="input-payment" />
+                    <input v-model="ticketOrderUpsertRef.note" class="input-basic" />
                   </td>
                 </tr>
               </tbody>
@@ -767,22 +754,6 @@ const handleChangeTabs = (activeKey: any) => {
 .table-payment {
   td {
     padding: 6px 0;
-  }
-}
-
-:deep(.input-payment) {
-  width: 100%;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  box-shadow: none !important;
-
-  .ant-input-number-handler-wrap {
-    display: none !important;
-  }
-
-  & input {
-    text-align: right !important;
   }
 }
 </style>

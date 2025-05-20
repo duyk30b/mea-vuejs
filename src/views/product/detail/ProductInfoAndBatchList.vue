@@ -121,9 +121,15 @@ const closeExpiryDate = computed(() => {
   <div class="mt-4 flex flex-wrap">
     <div style="flex-basis: 45%; flex: 1; min-width: 300px">
       <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">ID sản phẩm</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
+          {{ product.id }}
+        </div>
+      </div>
+      <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-          SP{{ product.id }}
+          {{ product.productCode }}
         </div>
       </div>
       <div class="my-2 flex gap-4">
@@ -131,10 +137,6 @@ const closeExpiryDate = computed(() => {
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
           {{ product.brandName }}
         </div>
-      </div>
-      <div class="my-2 flex gap-4">
-        <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
       </div>
       <div class="my-2 flex gap-4 items-center">
         <div style="width: 100px; flex-shrink: 0">Số lượng</div>
@@ -179,6 +181,10 @@ const closeExpiryDate = computed(() => {
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
           {{ product.productGroup?.name }}
         </div>
+      </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
       </div>
       <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
@@ -236,7 +242,7 @@ const closeExpiryDate = computed(() => {
             <td>
               <div>Mã: {{ batch.id }}</div>
               <div class="flex justify-between">
-                <div v-if="batch.lotNumber">S.Lô: {{ batch.lotNumber }}</div>
+                <div v-if="batch.batchCode">S.Lô: {{ batch.batchCode }}</div>
                 <div
                   v-if="batch.expiryDate"
                   :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
@@ -276,8 +282,9 @@ const closeExpiryDate = computed(() => {
       <table>
         <thead>
           <tr>
-            <th>Mã</th>
-            <th>Lô-HSD</th>
+            <th>ID</th>
+            <th>Mã lô</th>
+            <th>HSD</th>
             <th>SL</th>
             <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
             <th v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
@@ -292,17 +299,14 @@ const closeExpiryDate = computed(() => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="(batch, index) in batchList || []" :key="index">
-            <td class="text-center">B{{ batch.id }}</td>
+            <td class="text-center">{{ batch.id }}</td>
+            <td class="text-center">{{ batch.batchCode }}</td>
             <td class="text-center">
-              <div class="flex justify-between gap-2">
-                <div v-if="batch.lotNumber" class="flex-1">{{ batch.lotNumber }} -</div>
-                <div
-                  v-if="batch.expiryDate"
-                  class="flex-1 text-center"
-                  :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
-                >
-                  {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-                </div>
+              <div
+                v-if="batch.expiryDate"
+                :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
+              >
+                {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
               </div>
             </td>
             <td class="text-center">

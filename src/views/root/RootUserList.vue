@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { AccountBookOutlined } from '@ant-design/icons-vue'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import VueTag from '../../common/VueTag.vue'
+import { IconApartment } from '../../common/icon-antd'
 import { IconComputer, IconEditSquare, IconHistory, IconSmartphone } from '../../common/icon-google'
 import { RootUserApi } from '../../modules/root-user/root-user.api'
 import type { User } from '../../modules/user'
 import { ESTimer } from '../../utils'
 import ModalRootUserUpsert from './ModalRootUserUpsert.vue'
+import VuePagination from '../../common/VuePagination.vue'
+import { InputSelect } from '../../common/vue-form'
 
 const modalRootUserUpsert = ref<InstanceType<typeof ModalRootUserUpsert>>()
 
@@ -73,9 +75,9 @@ const logoutAll = async () => {
 <template>
   <ModalRootUserUpsert ref="modalRootUserUpsert" @success="handleModalRootUserUpsertSuccess" />
   <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:block">
-        <AccountBookOutlined />
+    <div class="flex items-center gap-4">
+      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
+        <IconApartment />
         Danh sách User
       </div>
       <VueButton color="blue" icon="plus" @click="modalRootUserUpsert?.openModal()">
@@ -169,16 +171,24 @@ const logoutAll = async () => {
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="(page: number, pageSize: number) => changePagination({ page, limit: pageSize })"
-        />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

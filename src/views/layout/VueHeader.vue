@@ -3,6 +3,8 @@ import { IconHospitalUser } from '@/common/icon-font-awesome'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { IconLogout, IconMenuUnfold, IconUser } from '../../common/icon-antd'
+import VueButton from '../../common/VueButton.vue'
+import VueDropdown from '../../common/popover/VueDropdown.vue'
 import { AxiosLoading } from '../../core/axios.instance'
 import { useMeStore } from '../../modules/_me/me.store'
 import { AuthService } from '../../modules/auth/auth.service'
@@ -23,12 +25,6 @@ watchEffect(() => {
     routeTitle.value = title
   }
 })
-
-const handleUserAction = async (e: any) => {
-  if (e.key === 'logout') {
-    await AuthService.logout()
-  }
-}
 </script>
 
 <template>
@@ -59,24 +55,20 @@ const handleUserAction = async (e: any) => {
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
     <div>
-      <a-dropdown trigger="click">
-        <a-button>
-          <div class="flex items-center gap-2">
+      <VueDropdown>
+        <template #trigger>
+          <VueButton>
             <IconUser />
-            <span> {{ meStore?.user?.fullName }} </span>
-          </div>
-        </a-button>
-        <template #overlay>
-          <a-menu @click="handleUserAction">
-            <a-menu-item key="logout">
-              <div class="flex items-center gap-2">
-                <IconLogout />
-                <span> Đăng xuất </span>
-              </div>
-            </a-menu-item>
-          </a-menu>
+            {{ meStore?.user?.fullName }}
+          </VueButton>
         </template>
-      </a-dropdown>
+        <div class="vue-menu">
+          <a @click="AuthService.logout()">
+            <IconLogout />
+            <span>Đăng xuất</span>
+          </a>
+        </div>
+      </VueDropdown>
     </div>
     <div v-if="AxiosLoading.loading" class="progress-loader">
       <a-progress

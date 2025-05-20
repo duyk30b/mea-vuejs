@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import {
-  ContactsOutlined,
-  FileSearchOutlined,
-  FormOutlined
-} from '@ant-design/icons-vue'
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconDownload, IconSetting } from '../../../common/icon'
-import { InputText, VueSelect } from '../../../common/vue-form'
+import {
+  IconContacts,
+  IconDownload,
+  IconFileSearch,
+  IconForm,
+  IconSetting,
+} from '../../../common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
+import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -19,7 +23,6 @@ import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
@@ -129,12 +132,6 @@ const handleModalCustomerPayDebtSuccess = async () => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalCustomerListSettingScreen.value?.openModal()
-  }
-}
-
 const downloadExcelCustomerList = async () => {
   ModalStore.confirm({
     title: 'Xác nhận tải file báo cáo',
@@ -152,40 +149,38 @@ const downloadExcelCustomerList = async () => {
   <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
   <ModalCustomerListSettingScreen
     v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-    ref="modalCustomerListSettingScreen" />
+    ref="modalCustomerListSettingScreen"
+  />
 
   <div class="page-header">
     <div class="page-header-content">
-      <div class="hidden md:block">
-        <ContactsOutlined />
+      <div class="hidden md:flex items-center gap-2">
+        <IconContacts />
         Danh sách khách hàng
       </div>
       <VueButton
         v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
         color="blue"
         icon="plus"
-        @click="modalCustomerUpsert?.openModal()">
+        @click="modalCustomerUpsert?.openModal()"
+      >
         Thêm mới
       </VueButton>
     </div>
-    <div class="flex mr-2 gap-8">
+    <div class="mr-2 flex gap-8">
       <div style="cursor: pointer">
         <IconDownload width="20" height="20" @click="downloadExcelCustomerList" />
       </div>
-      <span style="cursor: pointer">
-        <a-dropdown
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
-          trigger="click">
-          <span>
-            <IconSetting width="20" height="20" />
+      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+        <template #trigger>
+          <span style="font-size: 1.2rem; cursor: pointer">
+            <IconSetting />
           </span>
-          <template #overlay>
-            <a-menu @click="handleMenuSettingClick">
-              <a-menu-item key="screen-setting">Cài đặt hiển thị</a-menu-item>
-            </a-menu>
-          </template>
-        </a-dropdown>
-      </span>
+        </template>
+        <div class="vue-menu">
+          <a @click="modalCustomerListSettingScreen?.openModal()">Cài đặt hiển thị</a>
+        </div>
+      </VueDropdown>
     </div>
   </div>
 
@@ -208,7 +203,8 @@ const downloadExcelCustomerList = async () => {
               { text: 'Active', value: 1 },
               { text: 'Inactive', value: 0 },
             ]"
-            @update:value="(e) => startSearch()" />
+            @update:value="(e) => startSearch()"
+          />
         </div>
       </div>
     </div>
@@ -221,7 +217,7 @@ const downloadExcelCustomerList = async () => {
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th class="cursor-pointer whitespace-nowrap" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"
@@ -258,16 +254,18 @@ const downloadExcelCustomerList = async () => {
             :key="index"
             @dblclick="
               permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
-                modalCustomerUpsert?.openModal(customer)
-            ">
+              modalCustomerUpsert?.openModal(customer)
+            "
+          >
             <td style="border-right: none">
               <div class="font-medium text-justify">
                 {{ customer.fullName }}
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="text-base"
-                  @click="modalCustomerDetail?.openModal(customer.id)">
-                  <FileSearchOutlined />
+                  @click="modalCustomerDetail?.openModal(customer.id)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
@@ -279,19 +277,22 @@ const downloadExcelCustomerList = async () => {
                 </div>
                 <div
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.gender && customer.gender != null"
-                  class="text-center">
+                  class="text-center"
+                >
                   {{ customer.gender ? 'Nam' : 'Nữ' }}
                 </div>
               </div>
               <div
                 v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
-                class="text-xs italic">
+                class="text-xs italic"
+              >
                 {{ customer.note }}
               </div>
             </td>
             <td
               v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
-              style="white-space: nowrap; border-left: none; border-right: none">
+              style="white-space: nowrap; border-left: none; border-right: none"
+            >
               <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
@@ -300,7 +301,8 @@ const downloadExcelCustomerList = async () => {
                 <VueButton
                   color="default"
                   size="small"
-                  @click="modalCustomerPayDebt?.openModal(customer.id)">
+                  @click="modalCustomerPayDebt?.openModal(customer.id)"
+                >
                   Trả nợ
                 </VueButton>
               </div>
@@ -308,17 +310,6 @@ const downloadExcelCustomerList = async () => {
           </tr>
         </tbody>
       </table>
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          size="small"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
     </div>
 
     <div v-if="!isMobile" class="page-main-table table-wrapper">
@@ -327,7 +318,7 @@ const downloadExcelCustomerList = async () => {
           <tr>
             <th class="cursor-pointer" @click="changeSort('id')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Mã KH </span>
+                <span>Mã KH</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -341,7 +332,7 @@ const downloadExcelCustomerList = async () => {
             </th>
             <th class="cursor-pointer" @click="changeSort('fullName')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Họ Tên </span>
+                <span>Họ Tên</span>
                 <IconSort v-if="sortColumn !== 'fullName'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'fullName' && sortValue === 'ASC'"
@@ -359,7 +350,7 @@ const downloadExcelCustomerList = async () => {
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
-                <span> Nợ </span>
+                <span>Nợ</span>
                 <IconSort v-if="sortColumn !== 'debt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'debt' && sortValue === 'ASC'"
@@ -376,7 +367,8 @@ const downloadExcelCustomerList = async () => {
               v-if="
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
-              ">
+              "
+            >
               Sửa
             </th>
           </tr>
@@ -407,13 +399,15 @@ const downloadExcelCustomerList = async () => {
                 <a
                   v-if="settingStore.SCREEN_CUSTOMER_LIST.detail"
                   class="ml-1"
-                  @click="modalCustomerDetail?.openModal(customer.id)">
-                  <FileSearchOutlined />
+                  @click="modalCustomerDetail?.openModal(customer.id)"
+                >
+                  <IconFileSearch />
                 </a>
               </div>
               <div
                 v-if="settingStore.SCREEN_CUSTOMER_LIST.note && customer.note"
-                class="text-xs italic">
+                class="text-xs italic"
+              >
                 {{ customer.note }}
               </div>
             </td>
@@ -424,7 +418,9 @@ const downloadExcelCustomerList = async () => {
               <span v-if="customer.gender != null">{{ customer.gender ? 'Nam' : 'Nữ' }}</span>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
-              {{ ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || '' }}
+              {{
+                ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || ''
+              }}
             </td>
 
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.address">
@@ -436,7 +432,8 @@ const downloadExcelCustomerList = async () => {
                   <VueButton
                     v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT] && customer.debt != 0"
                     size="small"
-                    @click="modalCustomerPayDebt?.openModal(customer.id)">
+                    @click="modalCustomerPayDebt?.openModal(customer.id)"
+                  >
                     Trả nợ
                   </VueButton>
                 </div>
@@ -454,28 +451,38 @@ const downloadExcelCustomerList = async () => {
                 permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
-              class="text-center">
+              class="text-center"
+            >
               <a
                 style="color: #eca52b"
                 class="text-xl"
-                @click="modalCustomerUpsert?.openModal(customer)">
-                <FormOutlined />
+                @click="modalCustomerUpsert?.openModal(customer)"
+              >
+                <IconForm />
               </a>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="mt-4 float-right mb-2">
-        <a-pagination
-          v-model:current="page"
-          v-model:pageSize="limit"
-          :total="total"
-          show-size-changer
-          @change="
-            (page: number, pageSize: number) => changePagination({ page, limit: pageSize })
-          " />
-      </div>
+    </div>
+    <div class="p-4 flex flex-wrap justify-end gap-4">
+      <VuePagination
+        class="ml-auto"
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+      <InputSelect
+        v-model:value="limit"
+        @update:value="(l: any) => changePagination({ page, limit: l })"
+        :options="[
+          { value: 10, label: '10 / page' },
+          { value: 20, label: '20 / page' },
+          { value: 50, label: '50 / page' },
+          { value: 100, label: '100 / page' },
+        ]"
+      />
     </div>
   </div>
 </template>

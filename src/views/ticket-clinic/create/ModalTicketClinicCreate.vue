@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon'
+import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputCheckbox,
@@ -9,6 +9,7 @@ import {
   InputFilter,
   InputHint,
   InputNumber,
+  InputRadio,
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
@@ -535,10 +536,14 @@ defineExpose({ openModal })
           >
             <div>Giới tính</div>
             <div>
-              <a-radio-group v-model:value="customer.gender" :disabled="!!customer.id">
-                <a-radio :value="1">Nam</a-radio>
-                <a-radio :value="0">Nữ</a-radio>
-              </a-radio-group>
+              <InputRadio
+                v-model:value="customer!.gender"
+                :disabled="!!customer!.id"
+                :options="[
+                  { key: 1, label: 'Nam' },
+                  { key: 0, label: 'Nữ' },
+                ]"
+              />
             </div>
           </div>
 
@@ -935,8 +940,8 @@ defineExpose({ openModal })
           >
             Xóa
           </VueButton>
-          <div style="margin-left:auto">
-            <VueButton icon="close" type="reset" @click="closeModal"> Hủy bỏ </VueButton>
+          <div style="margin-left: auto">
+            <VueButton icon="close" type="reset" @click="closeModal">Hủy bỏ</VueButton>
           </div>
           <VueButton class="btn btn-blue" icon="save" type="submit" :loading="saveLoading">
             <span v-if="!ticket.id">ĐĂNG KÝ KHÁM</span>

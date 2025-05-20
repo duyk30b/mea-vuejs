@@ -69,7 +69,7 @@ export const SETTING_DEFAULT = {
     detail: true,
     substance: true,
     group: true,
-    lotNumber: false,
+    batchCode: false,
     expiryDate: true,
     unit: true,
     costPrice: true,
@@ -77,12 +77,12 @@ export const SETTING_DEFAULT = {
   },
   SCREEN_PRODUCT_DETAIL: {},
   SCREEN_PRODUCT_UPSERT: {
-    substance: true,
+    substance: false,
     unit: false,
     group: false,
     source: false,
     route: false,
-    hintUsage: true,
+    hintUsage: false,
   },
 
   SCREEN_PROCEDURE_LIST: {
@@ -138,7 +138,7 @@ export const SETTING_DEFAULT = {
     receiptItemsTable: {
       substance: true,
       detail: true,
-      lotNumberAndExpiryDate: true,
+      batchCodeAndExpiryDate: true,
       unit: true,
       warehouse: true,
     },
@@ -157,12 +157,12 @@ export const SETTING_DEFAULT = {
   SCREEN_RECEIPT_UPSERT: {
     receiptItemsSelect: {
       warehouse: false,
-      lotNumberAndExpiryDate: true,
+      batchCodeAndExpiryDate: true,
     },
     receiptItemsTable: {
       detail: true,
       substance: true,
-      lotNumberAndExpiryDate: true,
+      batchCodeAndExpiryDate: true,
       unit: true,
       warehouse: false,
     },
