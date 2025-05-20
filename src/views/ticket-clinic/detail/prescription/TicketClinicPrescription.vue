@@ -203,17 +203,16 @@ const openModalProductDetail = (product?: Product) => {
 }
 
 const handleAddTicketProductPrescription = async (ticketProductAddList: TicketProduct[]) => {
+  const tpListOrigin = [...ticketProductPrescriptionList.value]
   try {
-    ticketProductPrescriptionList.value = [
-      ...ticketProductPrescriptionList.value,
-      ...ticketProductAddList,
-    ]
+    ticketProductPrescriptionList.value = [...tpListOrigin, ...ticketProductAddList]
 
     await TicketClinicProductApi.addTicketProductPrescriptionList({
       ticketId: ticketClinicRef.value.id,
       ticketProductList: ticketProductAddList,
     })
   } catch (error) {
+    ticketProductPrescriptionList.value = tpListOrigin
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
 }

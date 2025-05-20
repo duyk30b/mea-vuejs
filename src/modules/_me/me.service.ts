@@ -14,6 +14,7 @@ import {
 } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
+import { InventoryStrategy } from '../enum'
 
 export class MeService {
   static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
@@ -121,20 +122,25 @@ export class MeService {
     MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
   }
 
-  static getBatchSetting() {
-    const batchSettingCommon = {
-      ...MeService.settingMap.value.BATCH_SETTING,
+  static getProductSetting() {
+    const productSettingCommon = {
+      ...MeService.settingMap.value.PRODUCT_SETTING,
     }
-    const batchSettingRoot = MeService.settingMapRoot.value.BATCH_SETTING
-    if (batchSettingCommon.warehouseId === BatchWarehouseIdRule.Inherit) {
-      batchSettingCommon.warehouseId = batchSettingRoot.warehouseId
+    const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
+
+    if (productSettingCommon.inventoryStrategy === InventoryStrategy.Inherit) {
+      productSettingCommon.inventoryStrategy = productSettingRoot.inventoryStrategy
     }
-    if (batchSettingCommon.distributorId === BatchDistributorIdRule.Inherit) {
-      batchSettingCommon.distributorId = batchSettingRoot.distributorId
+
+    if (productSettingCommon.batch_warehouseId === BatchWarehouseIdRule.Inherit) {
+      productSettingCommon.batch_warehouseId = productSettingRoot.batch_warehouseId
     }
-    if (batchSettingCommon.costPrice === BatchCostPriceRule.Inherit) {
-      batchSettingCommon.costPrice = batchSettingRoot.costPrice
+    if (productSettingCommon.batch_distributorId === BatchDistributorIdRule.Inherit) {
+      productSettingCommon.batch_distributorId = productSettingRoot.batch_distributorId
     }
-    return batchSettingCommon
+    if (productSettingCommon.batch_costPrice === BatchCostPriceRule.Inherit) {
+      productSettingCommon.batch_costPrice = productSettingRoot.batch_costPrice
+    }
+    return productSettingCommon
   }
 }

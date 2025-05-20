@@ -1,5 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
+import type { InventoryStrategy } from '../enum'
 
 export class ProductFilterQuery {
   id?: number | ConditionNumber
@@ -10,8 +11,8 @@ export class ProductFilterQuery {
   substance?: ConditionString
   quantity?: ConditionNumber
   updatedAt?: ConditionDate
+  inventoryStrategy?: InventoryStrategy
   warehouseIds?: string | ((value: string) => boolean)
-  hasManageQuantity?: 0 | 1
   $OR?: ProductFilterQuery[]
   $AND?: ProductFilterQuery[]
 }

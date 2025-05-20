@@ -12,14 +12,14 @@ import {
 } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch } from '../../../modules/batch'
-import { DeliveryStatus, DiscountType } from '../../../modules/enum'
+import { Batch, BatchService } from '../../../modules/batch'
+import { DeliveryStatus, DiscountType, InventoryStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { customFilter } from '../../../utils'
+import { customFilter, ESTimer } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
@@ -60,10 +60,24 @@ const searchingProduct = async (text: string) => {
     productList.value = await ProductService.list({
       filter: {
         isActive: 1,
-        $OR: [
-          { productCode: { LIKE: text } },
-          { brandName: { LIKE: text } },
-          { substance: { LIKE: text } },
+        $AND: [
+          {
+            $OR: [
+              { productCode: { LIKE: text } },
+              { brandName: { LIKE: text } },
+              { substance: { LIKE: text } },
+            ],
+          },
+          {
+            $OR: [
+              {
+                quantity: settingStore.TICKET_CLINIC_DETAIL.consumable.searchIncludeZeroQuantity
+                  ? undefined
+                  : { NOT: 0 },
+              },
+              { inventoryStrategy: InventoryStrategy.NoImpact },
+            ],
+          },
         ],
         warehouseIds: (value) => {
           try {
@@ -103,6 +117,7 @@ const selectProduct = async (productProp?: Product) => {
   const tp = TicketProduct.blank()
   tp.productId = productProp.id
   tp.product = Product.from(productProp)
+  tp.inventoryStrategy = productProp.inventoryStrategyFix // set chiến lược lấy lô hàng ở đây
 
   tp.deliveryStatus = DeliveryStatus.Pending
   tp.unitRate = productProp.unitDefaultRate
@@ -117,41 +132,71 @@ const selectProduct = async (productProp?: Product) => {
     tp.hintUsage = productProp?.hintUsage || ''
   }
 
-  tp.warehouseId = 0 // chưa có setup chọn warehouseId
+  tp.warehouseIds = JSON.stringify(
+    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList,
+  )
   tp.costAmount = tp.quantity * (tp.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
-
-  if (productProp.hasManageQuantity) {
-    tp.hasInventoryImpact = 1 // có thể thêm lựa chọn impact = 0 khi thêm config bán hàng ko số lượng
-  } else {
-    tp.hasInventoryImpact = 0 // không quản lý số lượng thì impact phải là 0
-  }
 
   product.value = Product.from(productProp)
   productOutSellType.value = 'retailPrice'
   ticketProduct.value = tp
 
-  // tính toán cho warehouseID
-  const warehouseIdAcceptList: number[] =
-    settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
-  const productWarehouseIdList: number[] = JSON.parse(productProp.warehouseIds)
-  if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) {
-    warehouseIdOptions.value = [0]
-  } else if (!productWarehouseIdList.length || productWarehouseIdList.includes(0)) {
-    warehouseIdOptions.value = [0]
-  } else {
-    // trường hợp này có thể có nhiều warehouseID, thôi kệ, code sau
-    warehouseIdOptions.value = []
-    warehouseIdAcceptList.forEach((i) => {
-      if (productWarehouseIdList.includes(i)) {
-        warehouseIdOptions.value.push(i)
-      }
+  // Tính toán cho batchID // lằng nhằng nhé
+  if (tp.inventoryStrategy === InventoryStrategy.RequireBatchSelection) {
+    const warehouseIdAcceptList: number[] =
+      settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
+    let canGetAllWarehouse = false
+    if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+    else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+    const batchListFetch = await BatchService.list({
+      filter: {
+        productId: productProp.id,
+        ...(canGetAllWarehouse
+          ? {}
+          : {
+              $OR: [{ warehouseId: { EQUAL: 0 } }, { warehouseId: { IN: warehouseIdAcceptList } }],
+            }),
+      },
     })
+    let batchListResponse = batchListFetch
+      .filter((i) => !!i.quantity)
+      .sort((a, b) => {
+        if (a.expiryDate == null && b.expiryDate == null) {
+          return a.registeredAt < b.registeredAt ? 1 : -1 // registeredAt xếp theo DESC
+        }
+        if (b.expiryDate == null) return -1
+        if (a.expiryDate == null) return 1
+        return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
+      })
+    if (settingStore.PRODUCT_SETTING.allowNegativeQuantity && batchListResponse.length < 5) {
+      let batchZero = batchListFetch
+        .filter((i) => !i.quantity)
+        .sort((a, b) => {
+          if (a.expiryDate == null && b.expiryDate == null) {
+            return a.registeredAt < b.registeredAt ? 1 : -1 // registeredAt xếp theo DESC
+          }
+          if (b.expiryDate == null) return 1
+          if (a.expiryDate == null) return -1
+          return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
+        })
+      batchZero = batchZero.slice(0, 5 - batchListResponse.length)
+      batchListResponse = [...batchListResponse, ...batchZero]
+    }
+    batchListResponse.forEach((i) => (i.product = productProp))
+    batchList.value = batchListResponse
+    if (batchListResponse.length) {
+      selectBatch(batchListResponse[0])
+    } else {
+      selectBatch(Batch.blank())
+    }
   }
-  ticketProduct.value.warehouseId = warehouseIdOptions.value[0]
+}
 
-  let canGetAllWarehouse = false
-  if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
-  else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+const selectBatch = (batchSelected: Batch) => {
+  if (!batchSelected) return
+  ticketProduct.value.batch = Batch.from(batchSelected)
+  ticketProduct.value.batchId = batchSelected.id
+  ticketProduct.value.warehouseIds = JSON.stringify([batchSelected.warehouseId])
 }
 
 const handleChangeInvoiceProductSellType = (
@@ -224,19 +269,27 @@ const clear = () => {
 }
 
 const addTicketProduct = () => {
-  const { product } = ticketProduct.value
+  const { product, batch } = ticketProduct.value
   if (!ticketProduct.value.productId) {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.hasManageQuantity) {
+  if (product?.inventoryStrategyFix !== InventoryStrategy.NoImpact) {
     if (ticketProduct.value.quantity > product!.quantity) {
       AlertStore.addWarning(
-        `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
+        `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProduct.value.quantity
         }`,
       )
+    } else if (product?.inventoryStrategyFix == InventoryStrategy.RequireBatchSelection) {
+      if (ticketProduct.value.quantity > batch!.quantity) {
+        AlertStore.addWarning(
+          `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
+            ticketProduct.value.quantity
+          }`,
+        )
+      }
     }
   }
 
@@ -276,7 +329,10 @@ defineExpose({ focus })
           <IconFileSearch />
         </a>
         <span
-          v-if="ticketProduct.productId && ticketProduct.product?.hasManageQuantity"
+          v-if="
+            ticketProduct.productId &&
+            ticketProduct.product?.inventoryStrategyFix !== InventoryStrategy.NoImpact
+          "
           :class="
             ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
           "
@@ -311,7 +367,7 @@ defineExpose({ focus })
               <span>{{ data.productCode }}</span>
               <span class="mx-1">-</span>
               <b>{{ data.brandName }}</b>
-              <span v-if="data.hasManageQuantity">
+              <span v-if="data.inventoryStrategyFix !== InventoryStrategy.NoImpact">
                 - Tồn
                 <span
                   style="font-weight: 700"
@@ -326,6 +382,62 @@ defineExpose({ focus })
             <div>{{ data.substance }}</div>
           </template>
         </InputOptions>
+      </div>
+    </div>
+
+    <div
+      style="flex-grow: 1; flex-basis: 80%"
+      v-if="ticketProduct.inventoryStrategy === InventoryStrategy.RequireBatchSelection"
+    >
+      <div>
+        Lô hàng
+        <span
+          v-if="
+            ticketProduct.batch?.expiryDate &&
+            ticketProduct.batch?.expiryDate < Date.now()
+          "
+          class="text-red-500 font-bold"
+        >
+          (Hết hạn sử dụng)
+        </span>
+        <span
+          v-if="ticketProduct.productId && !batchList.length"
+          class="text-red-500 font-bold"
+        >
+          (Không còn tồn kho)
+        </span>
+      </div>
+      <div>
+        <VueSelect
+          :value="ticketProduct.batch!.id"
+          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
+          :disabled="batchList.length == 0"
+          @selectItem="({ data }) => selectBatch(data)"
+        >
+          <template #option="{ item: { data } }">
+            <div v-if="!data.id">Chưa chọn lô</div>
+            <div v-if="data.id">
+              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              <b>{{ data.unitQuantity }}</b>
+              {{ ticketProduct.product!.unitDefaultName }}
+            </div>
+          </template>
+          <template #text="{ content: { data } }">
+            <div v-if="!data?.id">Chưa chọn lô</div>
+            <div v-if="data?.id">
+              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              <span
+                :class="
+                  ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''
+                "
+              >
+                - Tồn
+                <b>{{ data.unitQuantity }}</b>
+                {{ ticketProduct.product!.unitDefaultName }}
+              </span>
+            </div>
+          </template>
+        </VueSelect>
       </div>
     </div>
 

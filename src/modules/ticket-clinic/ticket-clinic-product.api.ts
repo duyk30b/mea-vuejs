@@ -14,9 +14,10 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          hasInventoryImpact: i.hasInventoryImpact,
-          warehouseId: i.warehouseId,
+          inventoryStrategy: i.inventoryStrategy,
+          warehouseIds: i.warehouseIds,
           productId: i.productId,
+          batchId: i.batchId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,
@@ -42,9 +43,10 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          hasInventoryImpact: i.hasInventoryImpact,
-          warehouseId: i.warehouseId,
+          inventoryStrategy: i.inventoryStrategy,
+          warehouseIds: i.warehouseIds,
           productId: i.productId,
+          batchId: i.batchId,
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           quantity: i.quantity,

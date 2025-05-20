@@ -9,7 +9,7 @@ import SettingBatch from './SettingBatch.vue'
 
 const TABS_KEY = {
   SYSTEM: 'SYSTEM',
-  BATCH: 'BATCH',
+  PRODUCT: 'PRODUCT',
 }
 
 const activeTab = ref(TABS_KEY.SYSTEM)
@@ -28,13 +28,13 @@ const activeTab = ref(TABS_KEY.SYSTEM)
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.SYSTEM">Cài đặt chung</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.BATCH">Cài đặt lô hàng</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.PRODUCT">Cài đặt sản phẩm</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.SYSTEM">
           <SettingBasic />
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.BATCH">
+        <VueTabPanel :tabKey="TABS_KEY.PRODUCT">
           <SettingBatch />
         </VueTabPanel>
       </template>

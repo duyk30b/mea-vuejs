@@ -1,6 +1,7 @@
+import { MeService } from '../_me/me.service'
 import { Batch } from '../batch/batch.model'
 import { Commission } from '../commission'
-import type { UnitType } from '../enum'
+import { InventoryStrategy, type UnitType } from '../enum'
 import { ProductGroup } from '../product-group'
 
 export class Product {
@@ -24,7 +25,7 @@ export class Product {
   warehouseIds: string
   warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
-  hasManageQuantity: 0 | 1
+  inventoryStrategy: InventoryStrategy
   isActive: 1 | 0 // Trạng thái
   updatedAt: number | string | Date
 
@@ -93,6 +94,13 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
+  get inventoryStrategyFix() {
+    if (this.inventoryStrategy === InventoryStrategy.Inherit) {
+      return MeService.getProductSetting().inventoryStrategy
+    }
+    return this.inventoryStrategy
+  }
+
   public getUnitNameByRate(rate: number) {
     return this.unitObject?.find((u) => u.rate === rate)?.name || ''
   }
@@ -110,7 +118,7 @@ export class Product {
     ins.warehouseIds = JSON.stringify([0])
     ins.warehouseIdList = [0]
 
-    ins.hasManageQuantity = 1
+    ins.inventoryStrategy = InventoryStrategy.Inherit
     ins.isActive = 1
     return ins
   }
@@ -181,7 +189,7 @@ export class Product {
     if (a.retailPrice != b.retailPrice) return false
 
     if (a.warehouseIds != b.warehouseIds) return false
-    if (a.hasManageQuantity != b.hasManageQuantity) return false
+    if (a.inventoryStrategy != b.inventoryStrategy) return false
     if (a.isActive != b.isActive) return false
     if (a.updatedAt != b.updatedAt) return false
     return true

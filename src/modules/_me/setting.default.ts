@@ -1,3 +1,4 @@
+import { InventoryStrategy } from '../enum'
 import { TicketStatus, TicketType } from '../ticket'
 
 export enum BatchDistributorIdRule {
@@ -26,12 +27,13 @@ export const SETTING_DEFAULT = {
     moneyDivisionFormat: 1,
     retailPrice: true,
     wholesalePrice: false,
-    allowNegativeQuantity: false,
   },
-  BATCH_SETTING: {
-    distributorId: BatchDistributorIdRule.Inherit,
-    warehouseId: BatchWarehouseIdRule.Inherit,
-    costPrice: BatchCostPriceRule.Inherit,
+  PRODUCT_SETTING: {
+    allowNegativeQuantity: false,
+    inventoryStrategy: InventoryStrategy.Inherit,
+    batch_distributorId: BatchDistributorIdRule.Inherit,
+    batch_warehouseId: BatchWarehouseIdRule.Inherit,
+    batch_costPrice: BatchCostPriceRule.Inherit,
   },
 
   PRODUCT_UNIT: <string[]>[

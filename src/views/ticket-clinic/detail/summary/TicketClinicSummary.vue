@@ -11,7 +11,7 @@ import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, PaymentViewType } from '../../../../modules/enum'
+import { DeliveryStatus, InventoryStrategy, PaymentViewType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
   PrintHtml,
@@ -85,7 +85,7 @@ const disableSendProduct = computed(() => {
 })
 
 const validateQuantity = () => {
-  if (settingStore.SYSTEM_SETTING.allowNegativeQuantity) {
+  if (settingStore.PRODUCT_SETTING.allowNegativeQuantity) {
     return true
   }
 
@@ -98,9 +98,9 @@ const validateQuantity = () => {
 
   for (let i = 0; i < ticketProductUnsentList.length; i++) {
     const ticketProductUnsent = ticketProductUnsentList[i]
-    const { product } = ticketProductUnsent
+    const { product, batch } = ticketProductUnsent
 
-    if (!product?.hasManageQuantity) continue
+    if (product?.inventoryStrategyFix === InventoryStrategy.NoImpact) continue
 
     if (ticketProductUnsent.quantity > (product?.quantity || 0)) {
       AlertStore.addError(
@@ -108,6 +108,14 @@ const validateQuantity = () => {
           `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.quantity})`,
       )
       return false
+    } else if (product?.inventoryStrategyFix == InventoryStrategy.RequireBatchSelection) {
+      if (batch && ticketProductUnsent.quantity > batch!.quantity) {
+        AlertStore.addError(
+          `Lô hàng: ${product!.brandName} không đủ, còn ${batch!.quantity} lấy ${
+            ticketProductUnsent.quantity
+          }`,
+        )
+      }
     }
   }
   return true

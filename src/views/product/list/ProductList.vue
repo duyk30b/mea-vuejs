@@ -26,6 +26,7 @@ import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
+import { InventoryStrategy } from '../../../modules/enum'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalUploadProduct = ref<InstanceType<typeof ModalUploadProduct>>()
@@ -42,7 +43,7 @@ const { permissionIdMap } = meStore
 const productList = ref<Product[]>([])
 const batchList = ref<Batch[]>([])
 
-const batchSetting = MeService.getBatchSetting()
+const productSetting = MeService.getProductSetting()
 
 const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
 const productGroupMap = ref<Record<string, ProductGroup>>({})
@@ -329,7 +330,7 @@ const handleModalUploadProductSuccess = async () => {
       </div>
 
       <div
-        v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+        v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
         style="flex: 2; flex-basis: 160px"
       >
         <div>Chọn kho</div>
@@ -343,7 +344,7 @@ const handleModalUploadProductSuccess = async () => {
       </div>
 
       <div
-        v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
+        v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
         style="flex: 2; flex-basis: 180px"
       >
         <div>Chọn nhà cung cấp</div>
@@ -651,8 +652,8 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
-            <th v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
-            <th v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent">
+            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
+            <th v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent">
               NCC
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode">Số lô</th>
@@ -741,17 +742,21 @@ const handleModalUploadProductSuccess = async () => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
                   {{ product.unitDefaultName }}
                 </td>
-                <td v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+                <td v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
-                  v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
+                  v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
                 ></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center"></td>
 
                 <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
-                  {{ product.hasManageQuantity ? product.unitQuantity || 0 : '' }}
+                  {{
+                    product.inventoryStrategyFix !== InventoryStrategy.NoImpact
+                      ? product.unitQuantity || 0
+                      : ''
+                  }}
                 </td>
                 <td
                   v-if="
@@ -824,11 +829,11 @@ const handleModalUploadProductSuccess = async () => {
                   {{ product.unitDefaultName }}
                 </td>
 
-                <td v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+                <td v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
-                  v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
+                  v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
                   class="text-center"
                 >
                   {{ distributorMap[batch.distributorId]?.fullName }}
@@ -928,13 +933,13 @@ const handleModalUploadProductSuccess = async () => {
               {{ batch.product?.unitDefaultName }}
             </td>
             <td
-              v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+              v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
               class="text-center"
             >
               {{ warehouseMap[batch.warehouseId]?.name }}
             </td>
             <td
-              v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
+              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
               class="text-center"
             >
               {{ distributorMap[batch.distributorId]?.fullName }}

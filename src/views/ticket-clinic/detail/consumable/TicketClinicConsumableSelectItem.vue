@@ -6,12 +6,14 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputNumber, InputOptions, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
+import { Batch, BatchService } from '../../../../modules/batch'
+import { DeliveryStatus, DiscountType, InventoryStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../../modules/product'
 import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProduct, TicketProductType } from '../../../../modules/ticket-product'
+import { ESTimer } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../../product/upsert/ModalProductUpsert.vue'
 
@@ -27,6 +29,7 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
+const batchList = ref<Batch[]>([])
 
 const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
 
@@ -62,7 +65,7 @@ const searchingProduct = async (text: string) => {
                   ? undefined
                   : { NOT: 0 },
               },
-              { hasManageQuantity: 0 },
+              { inventoryStrategy: InventoryStrategy.NoImpact },
             ],
           },
         ],
@@ -93,26 +96,24 @@ const searchingProduct = async (text: string) => {
 const clear = () => {
   ticketProductConsumable.value = TicketProduct.blank()
   productOptions.value = []
+  batchList.value = []
 }
 
 const selectProduct = async (productSelect?: Product) => {
   if (productSelect) {
-    const priorityList = (ticketClinicRef.value.ticketProductConsumableList || []).map(
-      (i) => i.priority,
-    )
+    const priorityList = (ticketClinicRef.value.ticketProductConsumableList || []).map((i) => {
+      return i.priority
+    })
     priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
     const priorityMax = Math.max(...priorityList)
 
     const temp = TicketProduct.blank()
     temp.priority = priorityMax + 1
-    if (productSelect.hasManageQuantity) {
-      temp.hasInventoryImpact = 1
-    } else {
-      temp.hasInventoryImpact = 0
-    }
+    temp.inventoryStrategy = productSelect.inventoryStrategyFix
     temp.customerId = ticketClinicRef.value.customerId
-    temp.productId = productSelect.id
     temp.product = Product.from(productSelect)
+    temp.productId = productSelect.id
+    temp.batchId = 0
 
     temp.type = TicketProductType.Consumable
     temp.deliveryStatus = DeliveryStatus.Pending
@@ -123,46 +124,96 @@ const selectProduct = async (productSelect?: Product) => {
     temp.discountPercent = 0
     temp.discountMoney = 0
     temp.actualPrice = productSelect.retailPrice
+    temp.warehouseIds = JSON.stringify(settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList) // set tạm trước thôi, tí nữa tính toán lại
 
     ticketProductConsumable.value = temp
 
-    // tính toán cho warehouseID
-    const warehouseIdAcceptList: number[] =
-      settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
-    const productWarehouseIdList: number[] = JSON.parse(productSelect.warehouseIds)
-    if (!warehouseIdAcceptList.length || warehouseIdAcceptList.includes(0)) {
-      warehouseIdOptions.value = [0]
-    } else if (!productWarehouseIdList.length || productWarehouseIdList.includes(0)) {
-      warehouseIdOptions.value = [0]
-    } else {
-      // trường hợp này có thể có nhiều warehouseID, thôi kệ, code sau
-      warehouseIdOptions.value = []
-      warehouseIdAcceptList.forEach((i) => {
-        if (productWarehouseIdList.includes(i)) {
-          warehouseIdOptions.value.push(i)
-        }
+    // Tính toán cho batchID // lằng nhằng nhé
+    if (temp.inventoryStrategy === InventoryStrategy.RequireBatchSelection) {
+      const warehouseIdAcceptList: number[] =
+        settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
+      let canGetAllWarehouse = false
+      if (!warehouseIdAcceptList.length) canGetAllWarehouse = true
+      else if (warehouseIdAcceptList.includes(0)) canGetAllWarehouse = true
+      const batchListFetch = await BatchService.list({
+        filter: {
+          productId: productSelect.id,
+          ...(canGetAllWarehouse
+            ? {}
+            : {
+                $OR: [
+                  { warehouseId: { EQUAL: 0 } },
+                  { warehouseId: { IN: warehouseIdAcceptList } },
+                ],
+              }),
+        },
       })
+      let batchListResponse = batchListFetch
+        .filter((i) => !!i.quantity)
+        .sort((a, b) => {
+          if (a.expiryDate == null && b.expiryDate == null) {
+            return a.registeredAt < b.registeredAt ? 1 : -1 // registeredAt xếp theo DESC
+          }
+          if (b.expiryDate == null) return -1
+          if (a.expiryDate == null) return 1
+          return a.expiryDate < b.expiryDate ? -1 : 1 // HSD xếp theo ASC
+        })
+      if (settingStore.PRODUCT_SETTING.allowNegativeQuantity && batchListResponse.length < 5) {
+        let batchZero = batchListFetch
+          .filter((i) => !i.quantity)
+          .sort((a, b) => {
+            if (a.expiryDate == null && b.expiryDate == null) {
+              return a.registeredAt < b.registeredAt ? 1 : -1 // registeredAt xếp theo DESC
+            }
+            if (b.expiryDate == null) return 1
+            if (a.expiryDate == null) return -1
+            return a.expiryDate > b.expiryDate ? -1 : 1 // HSD xếp theo DESC
+          })
+        batchZero = batchZero.slice(0, 5 - batchListResponse.length)
+        batchListResponse = [...batchListResponse, ...batchZero]
+      }
+      batchListResponse.forEach((i) => (i.product = productSelect))
+      batchList.value = batchListResponse
+      if (batchListResponse.length) {
+        selectBatch(batchListResponse[0])
+      } else {
+        selectBatch(Batch.blank())
+      }
     }
-    ticketProductConsumable.value.warehouseId = warehouseIdOptions.value[0]
   } else {
     clear()
   }
 }
 
+const selectBatch = (batchSelected: Batch) => {
+  if (!batchSelected) return
+  ticketProductConsumable.value.batch = Batch.from(batchSelected)
+  ticketProductConsumable.value.batchId = batchSelected.id
+  ticketProductConsumable.value.warehouseIds = JSON.stringify([batchSelected.warehouseId])
+}
+
 const addConsumableItem = async () => {
-  const { product } = ticketProductConsumable.value
+  const { product, batch } = ticketProductConsumable.value
   if (!ticketProductConsumable.value.productId) {
     AlertStore.addError('Lỗi: Sản phẩm không phù hợp')
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.hasManageQuantity) {
+  if (product?.inventoryStrategyFix !== InventoryStrategy.NoImpact) {
     if (ticketProductConsumable.value.quantity > product!.quantity) {
       AlertStore.addWarning(
-        `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
+        `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProductConsumable.value.quantity
         }`,
       )
+    } else if (product?.inventoryStrategyFix == InventoryStrategy.RequireBatchSelection) {
+      if (ticketProductConsumable.value.quantity > batch!.quantity) {
+        AlertStore.addWarning(
+          `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
+            ticketProductConsumable.value.quantity
+          }`,
+        )
+      }
     }
   }
 
@@ -208,7 +259,9 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <div v-if="ticketProductConsumable.productId">
           (
           <span
-            v-if="ticketProductConsumable.product?.hasManageQuantity"
+            v-if="
+              ticketProductConsumable.product?.inventoryStrategyFix !== InventoryStrategy.NoImpact
+            "
             :class="
               ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
                 ? 'text-red-500 font-bold'
@@ -267,6 +320,62 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
             <div>{{ data.substance }}</div>
           </template>
         </InputOptions>
+      </div>
+    </div>
+
+    <div
+      style="flex-grow: 1; flex-basis: 80%"
+      v-if="ticketProductConsumable.inventoryStrategy === InventoryStrategy.RequireBatchSelection"
+    >
+      <div>
+        Lô hàng
+        <span
+          v-if="
+            ticketProductConsumable.batch?.expiryDate &&
+            ticketProductConsumable.batch?.expiryDate < Date.now()
+          "
+          class="text-red-500 font-bold"
+        >
+          (Hết hạn sử dụng)
+        </span>
+        <span
+          v-if="ticketProductConsumable.productId && !batchList.length"
+          class="text-red-500 font-bold"
+        >
+          (Không còn tồn kho)
+        </span>
+      </div>
+      <div>
+        <VueSelect
+          :value="ticketProductConsumable.batch!.id"
+          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
+          :disabled="batchList.length == 0"
+          @selectItem="({ data }) => selectBatch(data)"
+        >
+          <template #option="{ item: { data } }">
+            <div v-if="!data.id">Chưa chọn lô</div>
+            <div v-if="data.id">
+              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              <b>{{ data.unitQuantity }}</b>
+              {{ ticketProductConsumable.product!.unitDefaultName }}
+            </div>
+          </template>
+          <template #text="{ content: { data } }">
+            <div v-if="!data?.id">Chưa chọn lô</div>
+            <div v-if="data?.id">
+              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              <span
+                :class="
+                  ticketProductConsumable.quantity > data.quantity ? 'text-red-500 font-bold' : ''
+                "
+              >
+                - Tồn
+                <b>{{ data.unitQuantity }}</b>
+                {{ ticketProductConsumable.product!.unitDefaultName }}
+              </span>
+            </div>
+          </template>
+        </VueSelect>
       </div>
     </div>
 

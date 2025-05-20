@@ -284,7 +284,7 @@ defineExpose({ openModal })
                           <template #option="{ item: { data } }">
                             <div>
                               <b>{{ data.brandName }}</b>
-                              <span v-if="data.hasManageQuantity">
+                              <span v-if="data.inventoryStrategy">
                                 - Tồn
                                 <span
                                   style="font-weight: 700"

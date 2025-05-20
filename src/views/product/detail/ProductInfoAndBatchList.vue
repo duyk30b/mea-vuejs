@@ -17,6 +17,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer } from '../../../utils'
 import ModalBatchMerge from './ModalBatchMerge.vue'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
+import { InventoryStrategy } from '../../../modules/enum'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 const modalBatchMerge = ref<InstanceType<typeof ModalBatchMerge>>()
@@ -30,7 +31,7 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const batchSetting = ref(MeService.getBatchSetting())
+const productSetting = ref(MeService.getProductSetting())
 
 const hasZeroQuantity = ref<boolean>(false)
 const warehouseMap = ref<Record<string, Warehouse>>({})
@@ -140,7 +141,10 @@ const closeExpiryDate = computed(() => {
       </div>
       <div class="my-2 flex gap-4 items-center">
         <div style="width: 100px; flex-shrink: 0">Số lượng</div>
-        <div v-if="product.hasManageQuantity" style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
+        <div
+          v-if="product.inventoryStrategyFix !== InventoryStrategy.NoImpact"
+          style="flex-shrink: 1; flex-grow: 1; flex-basis: 0"
+        >
           <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
           {{ product.unitDefaultName }}
           <span v-if="product.unitDefaultRate != 1" class="ml-2">
@@ -257,7 +261,7 @@ const closeExpiryDate = computed(() => {
               >
                 <span>G.Nhập: {{ formatMoney(batch.costPrice) }}</span>
               </div>
-              <div v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+              <div v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
                 Kho: {{ warehouseMap[batch.warehouseId]?.name }}
               </div>
             </td>
@@ -287,8 +291,8 @@ const closeExpiryDate = computed(() => {
             <th>HSD</th>
             <th>SL</th>
             <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
-            <th v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
-            <th v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent">
+            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
+            <th v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent">
               NCC
             </th>
             <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
@@ -316,13 +320,13 @@ const closeExpiryDate = computed(() => {
               {{ formatMoney(batch.unitCostPrice) }}
             </td>
             <td
-              v-if="batchSetting.warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+              v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
               class="text-center"
             >
               {{ warehouseMap[batch.warehouseId]?.name }}
             </td>
             <td
-              v-if="batchSetting.distributorId === BatchDistributorIdRule.SplitOnDifferent"
+              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
               class="text-center"
             >
               {{ distributorMap[batch.distributorId]?.fullName }}

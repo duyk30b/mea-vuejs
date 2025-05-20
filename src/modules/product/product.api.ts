@@ -64,7 +64,7 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      hasManageQuantity: product.hasManageQuantity,
+      inventoryStrategy: product.inventoryStrategy,
       isActive: product.isActive,
 
       commissionList: (product.commissionList || [])
@@ -86,7 +86,7 @@ export class ProductApi {
       brandName: product.brandName,
       productCode: product.productCode,
       substance: product.substance,
-      costPrice: product.hasManageQuantity ? undefined : product.costPrice,
+      costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
       retailPrice: product.retailPrice,
       productGroupId: product.productGroupId || 0,
@@ -96,7 +96,7 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      hasManageQuantity: product.hasManageQuantity,
+      inventoryStrategy: product.inventoryStrategy,
       isActive: product.isActive,
 
       commissionList: (product.commissionList || [])

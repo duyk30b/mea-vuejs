@@ -8,6 +8,7 @@ import {
   InputHint,
   InputMoney,
   InputNumber,
+  InputSelect,
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
@@ -18,7 +19,7 @@ import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
-import type { UnitType } from '../../../modules/enum'
+import { InventoryStrategy, type UnitType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
@@ -29,9 +30,11 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { customFilter, ESTimer } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
+  WAREHOUSE: 'WAREHOUSE',
   ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
@@ -46,6 +49,7 @@ const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
+const productSetting = MeService.getProductSetting()
 
 const productOrigin = ref(Product.blank())
 const product = ref(Product.blank())
@@ -80,6 +84,20 @@ const hasChangeData = computed(() => {
   return false
 })
 
+const inventoryStrategyOptions = [
+  { value: InventoryStrategy.Inherit, label: '-' },
+  { value: InventoryStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: InventoryStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: InventoryStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: InventoryStrategy.AutoWithLIFO, label: 'Tự động chọn lô theo LIFO' },
+  { value: InventoryStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+]
+inventoryStrategyOptions.forEach((i) => {
+  if (i.value === productSetting.inventoryStrategy) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
 const handleAddCommission = () => {
   const commissionBlank = Commission.blank()
   commissionBlank.interactType = InteractType.Product
@@ -101,9 +119,17 @@ const openModal = async (productId?: number) => {
     )
     productOrigin.value = Product.from(productFetch)
     product.value = productFetch
-    unit.value = JSON.parse(
-      productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }]),
-    )
+    try {
+      let unitParse: UnitType[] = JSON.parse(
+        productFetch.unit || JSON.stringify([{ name: '', rate: 1, default: true }]),
+      )
+      if (!Array.isArray(unitParse) || !unitParse.length) {
+        unitParse = [{ name: '', rate: 1, default: true }]
+      }
+      unit.value = unitParse
+    } catch (error) {
+      unit.value = [{ name: '', rate: 1, default: true }]
+    }
   }
   if (product.value.commissionList?.length == 0) {
     handleAddCommission()
@@ -289,6 +315,7 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.WAREHOUSE">Quản lý kho</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
@@ -456,7 +483,10 @@ defineExpose({ openModal })
                 <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="grow basis-[40%]">
                   <div class="">
                     <span>Giá nhập</span>
-                    <span v-if="product.hasManageQuantity" style="margin-left: 0.5rem">
+                    <span
+                      v-if="product.inventoryStrategy != InventoryStrategy.NoImpact"
+                      style="margin-left: 0.5rem"
+                    >
                       (tự động cập nhật mỗi khi nhập hàng)
                     </span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -517,7 +547,19 @@ defineExpose({ openModal })
                     />
                   </div>
                 </div>
-
+                <div class="mt-2 grow basis-[600px] flex items-stretch">
+                  <div class="w-[60px] flex-none">
+                    <VueSwitch v-model="product.isActive" type-parser="number" />
+                  </div>
+                  <div>
+                    <span v-if="product.isActive">Active</span>
+                    <span v-else>Inactive (Ngừng kinh doanh)</span>
+                  </div>
+                </div>
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.WAREHOUSE">
+              <div class="mt-4 flex flex-wrap gap-4">
                 <div style="flex-basis: 90%; flex-grow: 1">
                   <div class="italic font-bold">* Kho quản lý</div>
                   <div class="flex gap-4">
@@ -551,27 +593,13 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div class="mt-2 grow basis-[600px] flex items-stretch">
-                  <div class="w-[60px] flex-none">
-                    <VueSwitch v-model="product.hasManageQuantity" type-parser="number" />
-                  </div>
+                <div style="flex-basis: 90%; flex-grow: 1">
+                  <div>Chiến lược trừ kho</div>
                   <div>
-                    <span v-if="product.hasManageQuantity">
-                      Quản lý số lượng (Số lượng trong kho sẽ được cập nhật khi nhập hoặc xuất)
-                    </span>
-                    <span v-if="!product.hasManageQuantity">
-                      Không quản lý số lượng (Sản phẩm này không cần nhập hàng, chỉ bán hàng)
-                    </span>
-                  </div>
-                </div>
-
-                <div class="mt-2 grow basis-[600px] flex items-stretch">
-                  <div class="w-[60px] flex-none">
-                    <VueSwitch v-model="product.isActive" type-parser="number" />
-                  </div>
-                  <div>
-                    <span v-if="product.isActive">Active</span>
-                    <span v-else>Inactive (Ngừng kinh doanh)</span>
+                    <InputSelect
+                      v-model:value="product.inventoryStrategy"
+                      :options="inventoryStrategyOptions"
+                    />
                   </div>
                 </div>
               </div>

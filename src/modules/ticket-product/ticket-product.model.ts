@@ -1,6 +1,7 @@
+import { MeService } from '../_me/me.service'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType } from '../enum'
+import { DeliveryStatus, DiscountType, InventoryStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
@@ -12,11 +13,12 @@ export enum TicketProductType {
 export class TicketProduct {
   id: number
   priority: number
-  hasInventoryImpact: 0 | 1
+  inventoryStrategy: InventoryStrategy
   customerId: number
   ticketId: number
-  warehouseId: number
+  warehouseIds: string
   productId: number
+  batchId: number
   type: TicketProductType
   deliveryStatus: DeliveryStatus
   unitRate: number
@@ -33,6 +35,7 @@ export class TicketProduct {
   ticket?: Ticket
   customer?: Customer
   product?: Product | null
+  batch?: Batch | null
 
   ticketBatchList?: TicketBatch[]
 
@@ -83,9 +86,11 @@ export class TicketProduct {
   static init(): TicketProduct {
     const ins = new TicketProduct()
     ins.id = 0
+    ins.inventoryStrategy = MeService.getProductSetting().inventoryStrategy
     ins.ticketId = 0
     ins.customerId = 0
     ins.productId = 0
+    ins.batchId = 0
     ins.deliveryStatus = DeliveryStatus.Pending
     ins.quantity = 0
     ins.quantityPrescription = 0
@@ -96,12 +101,14 @@ export class TicketProduct {
     ins.discountType = DiscountType.Percent
     ins.actualPrice = 0
     ins.hintUsage = ''
+    ins.warehouseIds = JSON.stringify([0])
     return ins
   }
 
   static blank(): TicketProduct {
     const ins = TicketProduct.init()
     ins.product = Product.init()
+    ins.batch = Batch.init()
     ins.ticketBatchList = []
     return ins
   }
@@ -125,6 +132,9 @@ export class TicketProduct {
     if (Object.prototype.hasOwnProperty.call(source, 'product')) {
       target.product = source.product ? Product.basic(source.product) : source.product
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'batch')) {
+      target.batch = source.batch ? Batch.basic(source.batch) : source.batch
+    }
     if (source.ticketBatchList) {
       target.ticketBatchList = TicketBatch.basicList(source.ticketBatchList)
       target.ticketBatchList.forEach((i) => {
@@ -141,10 +151,12 @@ export class TicketProduct {
   static equal(a: TicketProduct, b: TicketProduct) {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
-    if (a.ticketId != b.ticketId) return false
-    if (a.warehouseId != b.warehouseId) return false
+    if (a.inventoryStrategy != b.inventoryStrategy) return false
     if (a.customerId != b.customerId) return false
+    if (a.ticketId != b.ticketId) return false
+    if (a.warehouseIds != b.warehouseIds) return false
     if (a.productId != b.productId) return false
+    if (a.batchId != b.batchId) return false
     if (a.type != b.type) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.unitRate != b.unitRate) return false

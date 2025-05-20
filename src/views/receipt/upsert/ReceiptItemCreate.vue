@@ -25,6 +25,7 @@ import { arrayToKeyValue, timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { receipt } from './receipt-upsert.store'
+import { InventoryStrategy } from '../../../modules/enum'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -124,10 +125,10 @@ const selectProduct = async (productData?: Product) => {
   if (productData) {
     product.value = Product.from(productData)
 
-    if (!productData.hasManageQuantity) {
+    if (productData.inventoryStrategy === InventoryStrategy.NoImpact) {
       return ModalStore.alert({
         title: 'Không thể nhập hàng cho sản phẩm này',
-        content: ['Sản phẩm này đang ở chế độ không theo dõi số lượng tồn kho'],
+        content: ['Sản phẩm này đang ở chế độ không quản lý số lượng tồn kho'],
       })
     }
 
@@ -229,13 +230,13 @@ const clear = () => {
           <a v-if="product.id" @click="modalProductDetail?.openModal(product)">
             <IconFileSearch />
           </a>
-          <span v-if="!product.hasManageQuantity" style="font-weight: 500; color: var(--text-red)">
+          <span v-if="product.inventoryStrategy === InventoryStrategy.NoImpact" style="font-weight: 500; color: var(--text-red)">
             (Sản phẩm không quản lý tồn kho)
           </span>
           <div v-if="product.id">
             (
             <span
-              v-if="product.hasManageQuantity"
+              v-if="product.inventoryStrategy !== InventoryStrategy.NoImpact"
               :class="product.quantity <= 0 ? 'text-red-500 font-bold' : ''"
             >
               Tồn:
@@ -267,6 +268,7 @@ const clear = () => {
             ref="inputOptionsProduct"
             :options="productOptions"
             :max-height="260"
+            :prepend="receiptItem.product?.productCode"
             placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
             required
             @selectItem="({ data }) => selectProduct(data)"

@@ -76,14 +76,9 @@ function updateDropdownPosition() {
   dropdownDirection.value = showAbove ? 'up' : 'down'
 
   dropdownStyle.value = {
-    position: 'absolute',
     left: `${rect.left + window.scrollX}px`,
     width: `${rect.width}px`,
-    zIndex: '9999',
-    background: 'white',
-    border: '1px solid #ccc',
     maxHeight: props.height || '200px',
-    overflowY: 'auto',
     top: showAbove
       ? `${rect.top + window.scrollY - dropdownHeight}px`
       : `${rect.bottom + window.scrollY}px`,
@@ -173,7 +168,14 @@ onBeforeUnmount(() => {
 }
 
 .input-select-dropdown {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: auto;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ccc;
+  background: white;
+  z-index: 9999;
   .input-select-option {
     padding: 5px 12px 5px 12px;
     cursor: pointer;
@@ -192,37 +194,31 @@ onBeforeUnmount(() => {
 
 /* Slide xuống */
 .slide-down-enter-active,
-.slide-down-leave-active {
-  transition:
-    opacity 0.1s ease,
-    transform 0.1s ease;
-}
-.slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.slide-down-enter-to,
-.slide-down-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Slide lên */
+.slide-down-leave-active,
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition:
     opacity 0.1s ease,
     transform 0.1s ease;
 }
-.slide-up-enter-from,
-.slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
+
+.slide-down-enter-to,
+.slide-down-leave-from,
 .slide-up-enter-to,
 .slide-up-leave-from {
   opacity: 1;
-  transform: translateY(0);
+  transform: scaleY(1) translateY(0);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: scaleY(1) translateY(-10px);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: scaleY(1) translateY(10px);
 }
 </style>

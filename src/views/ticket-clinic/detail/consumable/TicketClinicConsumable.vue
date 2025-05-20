@@ -80,16 +80,15 @@ const openModalProductDetail = (product?: Product) => {
 }
 
 const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProduct[]) => {
+  const tpListOrigin = [...ticketProductConsumableList.value]
   try {
-    ticketProductConsumableList.value = [
-      ...ticketProductConsumableList.value,
-      ...ticketProductAddList,
-    ]
+    ticketProductConsumableList.value = [...tpListOrigin, ...ticketProductAddList]
     await TicketClinicProductApi.addTicketProductConsumableList({
       ticketId: ticketClinicRef.value.id,
       ticketProductList: ticketProductAddList,
     })
   } catch (error) {
+    ticketProductConsumableList.value = tpListOrigin
     console.log('🚀 TicketClinicConsumable.vue:90 ~ error:', error)
   }
 }

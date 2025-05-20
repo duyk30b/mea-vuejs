@@ -114,11 +114,6 @@ const logoutGoogleDriver = async () => {
                     Sử dụng giá bán sỉ
                   </InputCheckbox>
                 </div>
-                <div style="line-height: 32px">
-                  <InputCheckbox v-model:checked="settingDisplay.allowNegativeQuantity">
-                    Cho phép tồn kho có số lượng âm (xuất kho được phép nhiều hơn số lượng tồn)
-                  </InputCheckbox>
-                </div>
               </td>
             </tr>
           </tbody>
