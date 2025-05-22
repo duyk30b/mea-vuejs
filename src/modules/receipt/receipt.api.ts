@@ -37,8 +37,8 @@ export class ReceiptApi {
     return Receipt.from(data.receipt)
   }
 
-  static async createReceiptDraft(receipt: Receipt) {
-    const response = await AxiosInstance.post('/receipt/create-receipt-draft', {
+  static async createDraft(receipt: Receipt) {
+    const response = await AxiosInstance.post('/receipt/create-draft', {
       distributorId: receipt.distributorId,
       receipt: {
         startedAt: receipt.startedAt,
@@ -65,8 +65,8 @@ export class ReceiptApi {
     return data
   }
 
-  static async updateReceiptDraft(receiptId: number, receipt: Receipt) {
-    const response = await AxiosInstance.patch(`/receipt/update-receipt-draft/${receiptId}`, {
+  static async updateDraft(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/update-draft/${receiptId}`, {
       distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
       receipt: {
         startedAt: receipt.startedAt,
@@ -93,8 +93,8 @@ export class ReceiptApi {
     return data
   }
 
-  static async updateReceiptPrepayment(receiptId: number, receipt: Receipt) {
-    const response = await AxiosInstance.patch(`/receipt/update-receipt-prepayment/${receiptId}`, {
+  static async updateDeposited(receiptId: number, receipt: Receipt) {
+    const response = await AxiosInstance.patch(`/receipt/update-deposited/${receiptId}`, {
       distributorId: receipt.distributorId, // sửa thì không cho thay đổi distributor
       receipt: {
         startedAt: receipt.startedAt,
@@ -127,8 +127,12 @@ export class ReceiptApi {
     return data
   }
 
-  static async prepayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/prepayment/${receiptId}`, { money })
+  static async prepayment(options: { receiptId: number; money: number; paymentMethodId: number }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/prepayment/${receiptId}`, {
+      money,
+      paymentMethodId,
+    })
     const { data } = response.data as BaseResponse<{
       receiptBasic: any
       distributorPaymentList: any[]
@@ -139,8 +143,16 @@ export class ReceiptApi {
     }
   }
 
-  static async refundPrepayment(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/refund-prepayment/${receiptId}`, { money })
+  static async refundPrepayment(options: {
+    receiptId: number
+    money: number
+    paymentMethodId: number
+  }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/refund-prepayment/${receiptId}`, {
+      money,
+      paymentMethodId,
+    })
     const { data } = response.data as BaseResponse<{
       receiptBasic: any
       distributorPaymentList: any[]
@@ -151,9 +163,31 @@ export class ReceiptApi {
     }
   }
 
-  static async sendProductAndPayment(receiptId: number, money: number) {
+  static async payDebt(options: { receiptId: number; money: number; paymentMethodId: number }) {
+    const { receiptId, money, paymentMethodId } = options
+    const response = await AxiosInstance.post(`/receipt/pay-debt/${receiptId}`, {
+      money,
+      paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{
+      receiptBasic: any
+      distributorPaymentList: any[]
+    }>
+    return {
+      receiptBasic: Receipt.from(data.receiptBasic || {}),
+      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
+    }
+  }
+
+  static async sendProductAndPayment(options: {
+    receiptId: number
+    money: number
+    paymentMethodId: number
+  }) {
+    const { receiptId, money, paymentMethodId } = options
     const response = await AxiosInstance.post(`/receipt/send-product-and-payment/${receiptId}`, {
       money,
+      paymentMethodId,
     })
     const { data } = response.data as BaseResponse<{
       receipt: any
@@ -161,18 +195,6 @@ export class ReceiptApi {
     }>
     return {
       receipt: Receipt.from(data.receipt || {}),
-      distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
-    }
-  }
-
-  static async payDebt(receiptId: number, money: number) {
-    const response = await AxiosInstance.post(`/receipt/pay-debt/${receiptId}`, { money })
-    const { data } = response.data as BaseResponse<{
-      receiptBasic: any
-      distributorPaymentList: any[]
-    }>
-    return {
-      receiptBasic: Receipt.from(data.receiptBasic || {}),
       distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
     }
   }

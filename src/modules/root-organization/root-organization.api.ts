@@ -62,7 +62,10 @@ export class RootOrganizationApi {
     return Organization.from(data.organization)
   }
 
-  static async clearOne(oid: number, body: { tableNameList: string[] }) {
+  static async clearOne(
+    oid: number,
+    body: { tableNameDeleteList: string[]; tableNameClearList: string[] },
+  ) {
     const response = await AxiosInstance.put(`/root/organization/clear/${oid}`, body)
     const { data } = response.data as BaseResponse
 

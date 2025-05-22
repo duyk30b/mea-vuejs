@@ -176,17 +176,17 @@ const saveReceipt = async (type: EReceiptSave) => {
     saveLoading.value = true
     switch (type) {
       case EReceiptSave.CREATE_DRAFT: {
-        const response = await ReceiptApi.createReceiptDraft(receipt.value)
+        const response = await ReceiptApi.createDraft(receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.UPDATE_DRAFT: {
-        const response = await ReceiptApi.updateReceiptDraft(receipt.value.id, receipt.value)
+        const response = await ReceiptApi.updateDraft(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.UPDATE_PREPAYMENT: {
-        const response = await ReceiptApi.updateReceiptPrepayment(receipt.value.id, receipt.value)
+        const response = await ReceiptApi.updateDeposited(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -293,7 +293,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
               :options="distributorOptions"
               :max-height="260"
               placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
-              :disabled="receipt.status === ReceiptStatus.Prepayment"
+              :disabled="receipt.status === ReceiptStatus.Deposited"
               required
               @onFocusinFirst="handleFocusFirstSearchDistributor"
               @onFocusin="handleFocusSearchDistributor"
@@ -415,7 +415,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT] &&
+              permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
               settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
             class="mt-4 w-full flex flex-col px-1"
@@ -436,7 +436,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT] &&
+              permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1"
@@ -455,8 +455,8 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_UPDATE_PREPAYMENT] &&
-              [ReceiptStatus.Prepayment].includes(receipt.status)
+              permissionIdMap[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
+              [ReceiptStatus.Deposited].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1"
           >

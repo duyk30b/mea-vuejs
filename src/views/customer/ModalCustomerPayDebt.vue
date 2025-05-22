@@ -4,13 +4,14 @@ import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputText } from '../../common/vue-form'
+import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
 import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { ESTimer } from '../../utils'
 import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
+import { PaymentMethodService } from '../../modules/payment-method'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -24,8 +25,10 @@ const { formatMoney, isMobile } = settingStore
 
 const money = ref(0)
 const note = ref('')
+const paymentMethodId = ref<number>(0)
 const customer = ref<Customer>(Customer.blank())
 const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
+const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
@@ -47,9 +50,13 @@ const openModal = async (customerId: number) => {
         },
         sort: { id: 'ASC' },
       }),
+      PaymentMethodService.list({ sort: { priority: 'ASC' } }),
     ])
     customer.value = fetchPromise[0] || Customer.blank()
     ticketPaymentList.value = fetchPromise[1].map((i) => ({ ticket: i, money: 0 }))
+    const paymentMethodAll = fetchPromise[2]
+    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+    paymentMethodId.value = paymentMethodAll[0]?.id || 0
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerPayDebt.vue:52 ~ openModal ~ error:', error)
   } finally {
@@ -63,6 +70,8 @@ const closeModal = () => {
   money.value = 0
   note.value = ''
   customer.value = Customer.blank()
+  paymentMethodId.value = 0
+  paymentMethodOptions.value = []
 }
 
 const handleSave = async () => {
@@ -73,6 +82,7 @@ const handleSave = async () => {
     }
     const data = await CustomerService.payDebt({
       customerId: customer.value.id,
+      paymentMethodId: paymentMethodId.value,
       note: note.value,
       ticketPaymentList: ticketPaymentList.value
         .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
@@ -118,7 +128,13 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <div class="">Tính tiền vào phiếu (tự động)</div>
+        <div class="flex flex-wrap justify-between">
+          <span>Chọn phiếu trả nợ (tự động)</span>
+          <span>
+            Tổng nợ
+            <strong>{{ formatMoney(customer.debt) }}</strong>
+          </span>
+        </div>
         <div class="mt-2 table-wrapper">
           <table>
             <thead>
@@ -160,48 +176,52 @@ defineExpose({ openModal })
             </tbody>
           </table>
         </div>
-        <div class="mt-4">
-          <table style="width: 100%">
-            <tbody>
-              <tr>
-                <td style="width: 30%; text-align: right">Công nợ:</td>
-                <td style="font-size: 16px; text-align: right; padding-right: 12px">
-                  {{ formatMoney(customer.debt) }}
-                </td>
-              </tr>
-              <tr>
-                <td style="width: 30%; text-align: right">Số tiền trả:</td>
-                <td style="padding: 1rem 0 1rem 1rem">
-                  <div class="flex">
-                    <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
-                    <InputMoney
-                      ref="inputMoneyPay"
-                      v-model:value="money"
-                      textAlign="right"
-                      :validate="{ lte: customer.debt, gt: 0 }"
-                      required
-                      @update:value="calculatorEachVoucherPayment"
-                    />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="width: 30%; text-align: right">Còn nợ:</td>
-                <td style="font-size: 16px; text-align: right; padding-right: 12px">
-                  {{ formatMoney(customer.debt - money) }}
-                </td>
-              </tr>
-              <tr>
-                <td style="width: 30%; text-align: right">Ghi chú:</td>
-                <td style="padding: 1rem 0 0 1rem"><InputText v-model:value="note" /></td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="flex flex-wrap gap-4 mt-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức thanh toán</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền thanh toán</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
+                  <InputMoney
+                    ref="inputMoneyPay"
+                    v-model:value="money"
+                    textAlign="right"
+                    :validate="{ lte: customer.debt, gt: 0 }"
+                    required
+                    @update:value="calculatorEachVoucherPayment"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Số nợ còn lại</div>
+              <div>
+                <InputMoney :value="customer.debt - money" disabled textAlign="right" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="p-4">
-        <div class="flex justify-end gap-4">
+        <div class="flex justify-center gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton type="submit" color="blue" :loading="saveLoading" icon="save">
             Xác nhận trả nợ

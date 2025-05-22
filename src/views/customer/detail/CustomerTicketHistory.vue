@@ -73,7 +73,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
     <div class="flex flex-wrap items-center gap-2">
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]"
+          v-if="permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT]"
           color="blue"
           icon="plus"
           @click="openBlankTicketOrderUpsert(customerId!)"
@@ -112,7 +112,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
               <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Prepayment" class="text-xs">
+              <div v-if="ticket.ticketStatus === TicketStatus.Deposited" class="text-xs">
                 Đã thanh toán: {{ formatMoney(ticket.paid) }}
               </div>
             </td>

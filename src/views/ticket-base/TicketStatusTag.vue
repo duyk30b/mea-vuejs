@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{ ticket?: Ticket | undefined }>(), { tic
     <span v-if="ticket.ticketType === TicketType.Order">Nháp</span>
     <span v-else>Chờ khám</span>
   </VueTag>
-  <VueTag v-else-if="ticket.ticketStatus === TicketStatus.Prepayment" color="blue" icon="clock">
+  <VueTag v-else-if="ticket.ticketStatus === TicketStatus.Deposited" color="blue" icon="clock">
     <span v-if="ticket.ticketType === TicketType.Order">Đặt hàng</span>
     <span v-else>Chờ khám</span>
   </VueTag>

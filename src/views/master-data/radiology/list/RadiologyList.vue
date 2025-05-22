@@ -4,6 +4,7 @@ import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconPulmonology } from '../../../../common/icon-google'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -13,14 +14,12 @@ import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radio
 import { arrayToKeyValue } from '../../../../utils'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
-import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologySystem = ref<InstanceType<typeof ModalCopyRadiologySystem>>()
-const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -87,11 +86,6 @@ onBeforeMount(async () => {
   }
 })
 
-const handleModalRadiologyGroupManagerSuccess = async () => {
-  radiologyGroupAll.value = await RadiologyGroupService.list({})
-  await startFetchData()
-}
-
 const handleModalCopyRadiologySystemSuccess = async () => {
   await startFetchData()
 }
@@ -107,18 +101,11 @@ const handleModalCopyRadiologySystemSuccess = async () => {
     ref="modalCopyRadiologySystem"
     @success="handleModalCopyRadiologySystemSuccess"
   />
-  <ModalRadiologyGroupManager
-    ref="modalRadiologyGroupManager"
-    @success="handleModalRadiologyGroupManagerSuccess"
-  />
-  <div class="mx-4 mt-4 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconPulmonology style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">
-          Danh sách phiếu chẩn đoán hình ảnh
-        </span>
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div class="">
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
         color="blue"
@@ -128,7 +115,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="mr-2 flex gap-8">
+    <div class="ml-auto flex items-center gap-8">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -142,7 +129,6 @@ const handleModalCopyRadiologySystemSuccess = async () => {
           >
             Cài đặt hiển thị
           </a>
-          <a @click="modalRadiologyGroupManager?.openModal()">Quản lý nhóm CĐHA</a>
           <a
             v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalCopyRadiologySystem?.openModal()"
@@ -153,6 +139,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
       </VueDropdown>
     </div>
   </div>
+  
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="flex flex-wrap gap-4">
       <div style="flex: 2; flex-basis: 500px">

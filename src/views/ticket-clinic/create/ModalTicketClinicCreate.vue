@@ -865,8 +865,11 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-          <div>Tủy chỉnh phân loại</div>
+        <div
+          v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
+          :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+        >
+          <div>Tùy chỉnh phân loại</div>
           <div>
             <VueSelect
               v-model:value="ticket.customType"

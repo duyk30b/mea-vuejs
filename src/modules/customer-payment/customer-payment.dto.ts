@@ -3,6 +3,7 @@ import type { PaymentType } from '../enum'
 
 export interface CustomerPaymentPayDebtBody {
   customerId: number
+  paymentMethodId: number
   note: string
   ticketPaymentList: { ticketId: number; money: number }[]
 }
@@ -10,7 +11,12 @@ export interface CustomerPaymentPayDebtBody {
 export class CustomerPaymentGetQuery {
   page: number
   limit?: number
-  relation?: { ticket?: boolean; customer?: boolean }
+  relation?: {
+    ticket?: boolean
+    customer?: boolean
+    paymentMethod?: boolean
+  }
+
   filter: {
     customerId?: number
     ticketId?: number

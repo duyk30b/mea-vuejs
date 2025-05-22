@@ -8,4 +8,11 @@ export class RootDataApi {
 
     return data
   }
+
+  static async uploadPostgresToGoogleDriver() {
+    const response = await AxiosInstance.post('/cron-job/job-backup-postgres')
+    const { data } = response.data as BaseResponse<any>
+
+    return data
+  }
 }

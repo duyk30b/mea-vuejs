@@ -3,13 +3,14 @@ import { OmitClass, PickClass } from '../../utils'
 export interface DistributorPaymentPayDebtBody {
   distributorId: number
   note: string
-  receiptPayments: { receiptId: number; money: number }[]
+  paymentMethodId: number
+  receiptPaymentList: { receiptId: number; money: number }[]
 }
 
 export class DistributorPaymentGetQuery {
   page: number
   limit?: number
-  relation?: {}
+  relation?: { paymentMethod?: boolean; distributor?: boolean }
   filter: { distributorId: number }
   sort?: { id?: 'ASC' | 'DESC' }
 

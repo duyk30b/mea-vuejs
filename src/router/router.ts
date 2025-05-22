@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
 import { useMeStore } from '../modules/_me/me.store'
 import { AuthService } from '../modules/auth/auth.service'
+import { inventoryRouter } from './inventory.router'
 import { masterDataRouter } from './master-data.router'
 import { statisticRouter } from './statistic.router'
 import { ticketRouter } from './ticket.router'
-import { inventoryRouter } from './inventory.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',

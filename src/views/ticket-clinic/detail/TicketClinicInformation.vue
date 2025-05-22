@@ -186,7 +186,7 @@ const handleClickModalRegisterAppointment = () => {
               [
                 TicketStatus.Schedule,
                 TicketStatus.Draft,
-                TicketStatus.Prepayment,
+                TicketStatus.Deposited,
                 TicketStatus.Executing,
               ].includes(ticketClinicRef.ticketStatus)
             "

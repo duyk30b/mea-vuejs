@@ -16,7 +16,7 @@ import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { CustomerApi, CustomerService, type Customer } from '../../../modules/customer'
+import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString, ESTimer } from '../../../utils'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
@@ -128,8 +128,12 @@ const handleModalCustomerUpsertSuccess = async () => {
   await startFetchData()
 }
 
-const handleModalCustomerPayDebtSuccess = async () => {
-  await startFetchData()
+const handleModalCustomerPayDebtSuccess = async (data: { customer: Customer }) => {
+  // await startFetchData()
+  const index = customerList.value.findIndex((i) => i.id === data.customer.id)
+  if (index !== -1) {
+    customerList.value[index] = Customer.from(data.customer)
+  }
 }
 
 const downloadExcelCustomerList = async () => {

@@ -29,7 +29,6 @@ const emit = defineEmits<{
   (e: 'change', event: Event): void
 }>()
 
-
 const handleChangeCheckbox = (e: Event) => {
   const target = e.target as HTMLInputElement
   emit('update:checked', target.checked)
@@ -90,6 +89,7 @@ defineExpose({ focus })
       position: relative;
       display: block;
       width: 16px;
+      min-width: 16px;
       height: 16px;
       direction: ltr;
       background-color: #fff;

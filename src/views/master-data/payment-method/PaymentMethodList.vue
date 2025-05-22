@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon-antd'
-import { IconDelete, IconEditSquare } from '../../../common/icon-google'
+import { IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { PaymentMethodService, type PaymentMethod } from '../../../modules/payment-method'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../modules/print-html'
 import Breadcrumb from '../../component/Breadcrumb.vue'
+import ModalPaymentMethodUpsert from './ModalPaymentMethodUpsert.vue'
+
+const modalPaymentMethodUpsert = ref<InstanceType<typeof ModalPaymentMethodUpsert>>()
 
 const meStore = useMeStore()
 
 const { permissionIdMap } = meStore
 
-const printHtmlList = ref<PrintHtml[]>([])
+const paymentMethodList = ref<PaymentMethod[]>([])
 
 const page = ref(1)
 const limit = ref(10)
@@ -27,7 +28,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await PrintHtmlApi.pagination({
+    const { data, meta } = await PaymentMethodService.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -35,10 +36,10 @@ const startFetchData = async () => {
       sort: { id: 'ASC' },
     })
 
-    printHtmlList.value = data
+    paymentMethodList.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: PrintHtmlList.vue:39 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ PaymentMethodList.vue:45 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -55,33 +56,29 @@ onBeforeMount(async () => {
   await startFetchData()
 })
 
-const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
-  ModalStore.confirm({
-    title: 'Bạn có chắc muốn xóa dữ liệu này ?',
-    content: `Bạn chắc chắn cần xóa bản ghi "${printHtml.name}" ?`,
-    onOk: async () => {
-      try {
-        await PrintHtmlService.destroyOne(printHtml.id)
-        await startFetchData()
-      } catch (error) {
-        console.log('🚀 ~ file: PrintHtmlList.vue:79 ~ onOk: ~ error:', error)
-      }
-    },
-  })
+const handleModalPaymentMethodUpsertSuccess = async (
+  data: PaymentMethod,
+  type: 'CREATE' | 'UPDATE' | 'DESTROY',
+) => {
+  await startFetchData()
 }
 </script>
 
 <template>
+  <ModalPaymentMethodUpsert
+    ref="modalPaymentMethodUpsert"
+    @success="handleModalPaymentMethodUpsertSuccess"
+  />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
     </div>
-    <div class="">
+    <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
+        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'PrintHtmlUpsert' })"
+        @click="modalPaymentMethodUpsert?.openModal()"
       >
         Thêm mới
       </VueButton>
@@ -94,9 +91,9 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
       <table>
         <thead>
           <tr>
-            <th style="width: 100px">ID</th>
+            <th>STT</th>
             <th>Tên</th>
-            <th style="width: 100px"></th>
+            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -114,24 +111,23 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="printHtmlList.length === 0">
+          <tr v-if="paymentMethodList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-            <td class="text-center">P{{ printHtml.id }}</td>
-            <td>{{ printHtml.name }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]">
-              <div class="flex justify-between">
-                <a
-                  style="color: var(--text-orange)"
-                  @click="$router.push({ name: 'PrintHtmlUpsert', params: { id: printHtml.id } })"
-                >
-                  <IconEditSquare width="24px" height="24px" />
-                </a>
-                <a style="color: var(--text-red)" @click="handleClickDeletePrintHtml(printHtml)">
-                  <IconDelete width="24px" height="24px" />
-                </a>
-              </div>
+          <tr v-for="paymentMethod in paymentMethodList" :key="paymentMethod.id">
+            <td class="text-center" style="width: 100px">{{ paymentMethod.priority }}</td>
+            <td>{{ paymentMethod.name }}</td>
+            <td
+              v-if="permissionIdMap[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+              class="text-center"
+              style="width: 100px"
+            >
+              <a
+                style="color: var(--text-orange)"
+                @click="modalPaymentMethodUpsert?.openModal(paymentMethod.id)"
+              >
+                <IconEditSquare width="24px" height="24px" />
+              </a>
             </td>
           </tr>
         </tbody>

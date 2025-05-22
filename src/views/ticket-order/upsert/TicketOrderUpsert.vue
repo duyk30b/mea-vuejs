@@ -118,12 +118,15 @@ onBeforeMount(async () => {
       customerDefault = await CustomerService.getCustomerDefault()
     }
 
-    if (
-      mode.value === ETicketOrderUpsertMode.CREATE ||
-      mode.value === ETicketOrderUpsertMode.COPY
-    ) {
+    if (mode.value === ETicketOrderUpsertMode.CREATE) {
       ticketOrderUpsertRef.value.registeredAt = Date.now()
-    } else if (mode.value === ETicketOrderUpsertMode.UPDATE) {
+    }
+    if (mode.value === ETicketOrderUpsertMode.COPY) {
+      ticketOrderUpsertRef.value.registeredAt = Date.now()
+      ticketOrderUpsertRef.value.id = 0
+      ticketOrderUpsertRef.value.ticketStatus = TicketStatus.Draft
+    }
+    if (mode.value === ETicketOrderUpsertMode.UPDATE) {
       ticketOrderUpsertRef.value.registeredAt ||= Date.now()
     }
     customer.value = customerDefault
@@ -258,14 +261,23 @@ const saveInvoice = async (type: ETicketOrderSave) => {
 
     switch (type) {
       case ETicketOrderSave.CREATE_DRAFT: {
-        const ticketResponse = await TicketOrderApi.createDraft({
+        const ticketResponse = await TicketOrderApi.draftUpsert({
+          ticketId: 0,
           ticket: ticketOrderUpsertRef.value,
         })
         router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
         break
       }
-      case ETicketOrderSave.UPDATE_DRAFT_APPROVED: {
-        const ticketResponse = await TicketOrderApi.updateDraftApproved({
+      case ETicketOrderSave.UPDATE_DRAFT: {
+        const ticketResponse = await TicketOrderApi.draftUpsert({
+          ticketId: ticketOrderUpsertRef.value.id,
+          ticket: ticketOrderUpsertRef.value,
+        })
+        router.push({ name: 'TicketOrderDetail', params: { id: ticketResponse!.id } })
+        break
+      }
+      case ETicketOrderSave.UPDATE_DEPOSITED: {
+        const ticketResponse = await TicketOrderApi.updateDeposited({
           ticket: ticketOrderUpsertRef.value,
           ticketId: ticketOrderUpsertRef.value.id,
         })
@@ -647,13 +659,13 @@ const handleChangeTabs = (activeKey: any) => {
         </div>
 
         <template
-          v-if="[ETicketOrderUpsertMode.CREATE, ETicketOrderUpsertMode.COPY].includes(mode)"
+          v-if="
+            permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT] &&
+            [TicketStatus.Draft].includes(ticketOrderUpsertRef.ticketStatus)
+          "
         >
           <div
-            v-if="
-              settingStore.SCREEN_INVOICE_UPSERT.save.createDraft &&
-              permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT]
-            "
+            v-if="settingStore.SCREEN_INVOICE_UPSERT.save.createDraft && !ticketOrderUpsertRef.id"
             class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
@@ -668,6 +680,23 @@ const handleChangeTabs = (activeKey: any) => {
             </VueButton>
           </div>
 
+          <div v-if="!!ticketOrderUpsertRef.id" class="mt-4 w-full flex flex-col px-1">
+            <VueButton
+              color="blue"
+              :loading="saveLoading"
+              size="large"
+              type="button"
+              icon="save"
+              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT)"
+            >
+              Cập nhật đơn nháp
+            </VueButton>
+          </div>
+        </template>
+
+        <template
+          v-if="[ETicketOrderUpsertMode.CREATE, ETicketOrderUpsertMode.COPY].includes(mode)"
+        >
           <div
             v-if="
               settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew &&
@@ -691,8 +720,8 @@ const handleChangeTabs = (activeKey: any) => {
         <template v-if="[ETicketOrderUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              [TicketStatus.Draft].includes(ticketOrderUpsertRef.ticketStatus) &&
-              permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DRAFT_APPROVED]
+              [TicketStatus.Deposited].includes(ticketOrderUpsertRef.ticketStatus) &&
+              permissionIdMap[PermissionId.TICKET_ORDER_DEPOSITED_UPDATE]
             "
             class="mt-4 w-full flex flex-col px-1"
           >
@@ -702,25 +731,7 @@ const handleChangeTabs = (activeKey: any) => {
               size="large"
               type="button"
               icon="save"
-              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)"
-            >
-              Cập nhật đơn nháp
-            </VueButton>
-          </div>
-          <div
-            v-if="
-              [TicketStatus.Prepayment].includes(ticketOrderUpsertRef.ticketStatus) &&
-              permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DRAFT_APPROVED]
-            "
-            class="mt-4 w-full flex flex-col px-1"
-          >
-            <VueButton
-              color="blue"
-              :loading="saveLoading"
-              size="large"
-              type="button"
-              icon="save"
-              @click="saveInvoice(ETicketOrderSave.UPDATE_DRAFT_APPROVED)"
+              @click="saveInvoice(ETicketOrderSave.UPDATE_DEPOSITED)"
             >
               Cập nhật đơn tạm ứng
             </VueButton>

@@ -17,6 +17,7 @@ import ModalLaboratoryDetail from '../detail/ModalLaboratoryDetail.vue'
 import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
@@ -117,12 +118,11 @@ const handleModalLaboratoryUpsertSuccess = async () => {
     @success="handleModalLaboratoryGroupManagerSuccess"
   />
   <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
-  <div class="mx-4 mt-4 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconLabPanel style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách xét nghiệm</span>
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div class="">
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
         color="blue"
@@ -132,7 +132,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="mr-2 flex gap-8">
+    <div class="ml-auto flex items-center gap-8">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">

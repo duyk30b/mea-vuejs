@@ -9,18 +9,23 @@ import {
 import VueTooltip from '../../../common/popover/VueTooltip.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { CONFIG } from '../../../config'
+import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../modules/enum'
-import { TicketStatus } from '../../../modules/ticket'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { Ticket, TicketStatus } from '../../../modules/ticket'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
+import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const emit = defineEmits<{ (e: 'showInvoicePayment', value: PaymentViewType): void }>()
 
@@ -207,8 +212,8 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
-            <th style="width: 40px;">#</th>
-            <th style="width: 40px;"></th>
+            <th style="width: 40px">#</th>
+            <th style="width: 40px"></th>
             <th>Tên</th>
             <th v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit">Đ.Vị</th>
             <th>S.Lượng</th>
@@ -465,13 +470,16 @@ const colspan = computed(() => {
         >
           <td
             v-if="
-              [TicketStatus.Draft, TicketStatus.Prepayment, TicketStatus.Executing].includes(
+              [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketOrderDetailRef.ticketStatus,
               )
             "
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.Prepayment)"
+            @click="
+              permissionIdMap[PermissionId.TICKET_ORDER_PREPAYMENT] &&
+              showModalInvoicePayment(PaymentViewType.Prepayment)
+            "
           >
             <a>
               <span class="mr-1">Đã tạm ứng</span>
@@ -482,7 +490,10 @@ const colspan = computed(() => {
             v-else-if="[TicketStatus.Debt].includes(ticketOrderDetailRef.ticketStatus)"
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.PayDebt)"
+            @click="
+              permissionIdMap[PermissionId.TICKET_ORDER_PAY_DEBT] &&
+              showModalInvoicePayment(PaymentViewType.PayDebt)
+            "
           >
             <a>
               <span class="mr-1">Đã thanh toán</span>
@@ -512,7 +523,7 @@ const colspan = computed(() => {
         >
           <template
             v-if="
-              [TicketStatus.Draft, TicketStatus.Prepayment, TicketStatus.Executing].includes(
+              [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketOrderDetailRef.ticketStatus,
               )
             "

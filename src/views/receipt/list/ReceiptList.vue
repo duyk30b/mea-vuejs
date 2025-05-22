@@ -132,7 +132,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
       </div>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT]"
+          v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT]"
           color="blue"
           icon="plus"
           @click="
@@ -197,7 +197,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: ReceiptStatus.Draft },
-              { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Prepayment },
+              { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Deposited },
               { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
               { text: 'Hoàn thành', value: ReceiptStatus.Success },
               { text: 'Hủy', value: ReceiptStatus.Cancelled },

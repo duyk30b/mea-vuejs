@@ -1,22 +1,22 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose, IconDelete } from '../../../../common/icon-antd'
-import { InputText } from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
+import { IconClose, IconDelete } from '../../../common/icon-antd'
+import { InputText } from '../../../common/vue-form'
+import VueModal from '../../../common/vue-modal/VueModal.vue'
+import VueButton from '../../../common/VueButton.vue'
+import { ProcedureGroup, ProcedureGroupService } from '../../../modules/procedure-group'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const showModal = ref(false)
-const radiologyGroupList = ref<RadiologyGroup[]>([])
+const procedureGroupList = ref<ProcedureGroup[]>([])
 const saveLoading = ref(false)
 
 const startFetchData = async () => {
   try {
-    radiologyGroupList.value = await RadiologyGroupService.list({})
+    procedureGroupList.value = await ProcedureGroupService.list({})
   } catch (error) {
-    console.log('🚀 ~ file: ModalRadiologyGroupManager.vue:30 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: ModalProcedureGroupManager.vue:30 ~ startFetchData ~ error:', error)
   }
 }
 
@@ -29,14 +29,14 @@ const closeModal = () => {
   showModal.value = false
 }
 
-const handleClickAddRadiologyGroup = () => {
-  radiologyGroupList.value.push(RadiologyGroup.blank())
+const handleClickAddProcedureGroup = () => {
+  procedureGroupList.value.push(ProcedureGroup.blank())
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    await RadiologyGroupService.replaceAll(radiologyGroupList.value)
+    await ProcedureGroupService.replaceAll(procedureGroupList.value)
     emit('success')
     closeModal()
   } catch (error) {
@@ -53,7 +53,7 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="margin-top: 100px">
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý nhóm CĐHA</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý nhóm dịch vụ</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -70,22 +70,23 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr v-if="radiologyGroupList.length === 0">
+              <tr v-if="procedureGroupList.length === 0">
                 <td colspan="20" class="text-center">Không có dữ liệu</td>
               </tr>
-              <tr v-for="(radiologyGroup, index) in radiologyGroupList" :key="radiologyGroup.id">
+              <tr v-for="(procedureGroup, index) in procedureGroupList" :key="procedureGroup.id">
                 <td class="text-center">
-                  <span v-if="!!radiologyGroup.id">G{{ radiologyGroup.id }}</span>
-                  <span v-if="!radiologyGroup.id"></span>
+                  <span v-if="!!procedureGroup.id">G{{ procedureGroup.id }}</span>
+                  <span v-if="!procedureGroup.id"></span>
                 </td>
                 <td>
                   <InputText
-                    v-model:value="radiologyGroup.name"
+                    v-model:value="procedureGroup.name"
                     required
-                    placeholder="Điền tên nhóm CĐHA ở đây" />
+                    placeholder="Điền tên nhóm dịch vụ ở đây"
+                  />
                 </td>
                 <td class="text-center">
-                  <a style="color: var(--text-red)" @click="radiologyGroupList.splice(index, 1)">
+                  <a style="color: var(--text-red)" @click="procedureGroupList.splice(index, 1)">
                     <IconDelete />
                   </a>
                 </td>
@@ -93,14 +94,14 @@ defineExpose({ openModal })
             </tbody>
           </table>
           <div class="mt-2">
-            <VueButton icon="plus" @click="handleClickAddRadiologyGroup">Thêm mới</VueButton>
+            <VueButton icon="plus" @click="handleClickAddProcedureGroup">Thêm mới</VueButton>
           </div>
         </div>
       </div>
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" type="submit" color="blue" :loading="saveLoading">
             Lưu lại
           </VueButton>

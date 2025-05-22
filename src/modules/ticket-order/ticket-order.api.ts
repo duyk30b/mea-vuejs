@@ -5,10 +5,11 @@ import { TicketProduct } from '../ticket-product'
 import { Ticket } from '../ticket/ticket.model'
 
 export class TicketOrderApi {
-  static async createDraft(options: { ticket: Ticket }) {
-    const { ticket } = options
-    const response = await AxiosInstance.post('/ticket-order/create-draft', {
-      ticketOrderDraftInsert: {
+  static async draftUpsert(options: { ticketId: number; ticket: Ticket }) {
+    const { ticketId, ticket } = options
+    const response = await AxiosInstance.post('/ticket-order/draft-upsert', {
+      ticketId,
+      ticketOrderDraftUpsert: {
         customerId: ticket.customerId,
         itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
@@ -71,9 +72,15 @@ export class TicketOrderApi {
     return Ticket.from(data.ticket)
   }
 
-  static async updateDraftApproved(options: { ticketId: number; ticket: Ticket }) {
+  static async draftDestroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/draft-destroy`)
+    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    return data
+  }
+
+  static async updateDeposited(options: { ticketId: number; ticket: Ticket }) {
     const { ticketId, ticket } = options
-    const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-draft-approved`, {
+    const response = await AxiosInstance.patch(`/ticket-order/${ticketId}/update-deposited`, {
       ticketOrderDraftApprovedUpdate: {
         itemsCostAmount: ticket.itemsCostAmount,
         procedureMoney: ticket.procedureMoney,
@@ -269,10 +276,17 @@ export class TicketOrderApi {
     return data
   }
 
-  static async prepayment(options: { ticketId: number; money: number }) {
-    const { ticketId, money } = options
+  static async prepayment(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/prepayment`, {
-      money,
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
     })
     const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
     return {
@@ -281,11 +295,20 @@ export class TicketOrderApi {
     }
   }
 
-  static async sendProductAndPaymentAndClose(options: { ticketId: number; money: number }) {
-    const { ticketId, money } = options
+  static async sendProductAndPaymentAndClose(options: {
+    ticketId: number
+    money: number
+    paymentMethodId: number
+    note: string
+  }) {
+    const { ticketId } = options
     const response = await AxiosInstance.post(
       `/ticket-order/${ticketId}/send-product-and-payment-and-close`,
-      { money },
+      {
+        money: options.money,
+        paymentMethodId: options.paymentMethodId,
+        note: options.note,
+      },
     )
     const { data } = response.data as BaseResponse<{
       ticket: any
@@ -299,10 +322,17 @@ export class TicketOrderApi {
     }
   }
 
-  static async paymentAndClose(options: { ticketId: number; money: number }) {
-    const { ticketId, money } = options
+  static async paymentAndClose(options: {
+    ticketId: number
+    money: number
+    paymentMethodId: number
+    note: string
+  }) {
+    const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/payment-and-close`, {
-      money,
+      money: options.money,
+      paymentMethodId: options.paymentMethodId,
+      note: options.note,
     })
     const { data } = response.data as BaseResponse<{ ticket: any; customerPayment?: any }>
     return {
@@ -311,10 +341,17 @@ export class TicketOrderApi {
     }
   }
 
-  static async refundOverpaid(options: { ticketId: number; money: number }) {
-    const { ticketId, money } = options
+  static async refundOverpaid(options: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/refund-overpaid`, {
-      money,
+      money: options.money,
+      note: options.note,
+      paymentMethodId: options.paymentMethodId,
     })
     const { data } = response.data as BaseResponse<{
       ticket: any
@@ -358,10 +395,17 @@ export class TicketOrderApi {
     }
   }
 
-  static async payDebt(options: { ticketId: number; money: number }) {
-    const { ticketId, money } = options
+  static async payDebt(options: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/pay-debt`, {
-      money,
+      money: options.money,
+      note: options.note,
+      paymentMethodId: options.paymentMethodId,
     })
     const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
     return {
@@ -384,8 +428,8 @@ export class TicketOrderApi {
     }
   }
 
-  static async destroy(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/destroy`)
+  static async cancelDestroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/cancel-destroy`)
     const { data } = response.data as BaseResponse<{ ticketId: number }>
     return data
   }

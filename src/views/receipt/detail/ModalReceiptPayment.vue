@@ -2,7 +2,7 @@
 import { nextTick, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
-import { InputMoney } from '../../../common/vue-form'
+import { InputMoney, InputSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -12,6 +12,7 @@ import { ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
 import DistributorPaymentTypeTag from '../../../views/distributor/DistributorPaymentTypeTag.vue'
 import { receipt } from './receipt-detail.ref'
+import { PaymentMethodService } from '../../../modules/payment-method'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 
@@ -27,11 +28,20 @@ const paymentLoading = ref(false)
 const paymentView = ref(PaymentViewType.Success)
 
 const money = ref(0)
+const paymentMethodId = ref<number>(0)
+const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
-const openModal = (view = PaymentViewType.Success) => {
+const openModal = async (view = PaymentViewType.Success) => {
   paymentView.value = view
   money.value = 0
   showModal.value = true
+  try {
+    const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+    paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  } catch (error) {
+    console.log('🚀 ~ ModalReceiptPayment.vue:43 ~ openModal ~ error:', error)
+  }
   if (!isMobile) {
     nextTick(() => inputMoneyPayment.value?.focus())
   }
@@ -45,23 +55,29 @@ const handlePayment = async () => {
   paymentLoading.value = true
   try {
     if (paymentView.value === PaymentViewType.Prepayment) {
-      const { receiptBasic, distributorPaymentList } = await ReceiptApi.prepayment(
-        receipt.value.id,
-        money.value
-      )
+      const { receiptBasic, distributorPaymentList } = await ReceiptApi.prepayment({
+        receiptId: receipt.value.id,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+      })
       Object.assign(receipt.value, receiptBasic)
       receipt.value.distributorPaymentList = distributorPaymentList
     }
     if (paymentView.value === PaymentViewType.SendProductAndPaymentAndClose) {
-      const result = await ReceiptApi.sendProductAndPayment(receipt.value.id, money.value)
+      const result = await ReceiptApi.sendProductAndPayment({
+        receiptId: receipt.value.id,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+      })
       Object.assign(receipt.value, result.receipt)
       receipt.value.distributorPaymentList = result.distributorPaymentList
     }
     if (paymentView.value === PaymentViewType.PayDebt) {
-      const { receiptBasic, distributorPaymentList } = await ReceiptApi.payDebt(
-        receipt.value.id,
-        money.value
-      )
+      const { receiptBasic, distributorPaymentList } = await ReceiptApi.payDebt({
+        receiptId: receipt.value.id,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+      })
       Object.assign(receipt.value, receiptBasic)
       receipt.value.distributorPaymentList = distributorPaymentList
     }
@@ -108,7 +124,8 @@ defineExpose({ openModal })
             <tbody>
               <tr
                 v-for="(distributorPayment, index) in receipt.distributorPaymentList"
-                :key="index">
+                :key="index"
+              >
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
@@ -152,13 +169,26 @@ defineExpose({ openModal })
       <form @submit.prevent="(e) => handlePayment()">
         <div
           v-if="
-            [ReceiptStatus.Draft, ReceiptStatus.Prepayment, ReceiptStatus.Debt].includes(
-              receipt.status
+            [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Debt].includes(
+              receipt.status,
             )
           "
-          class="px-4">
+          class="px-4"
+        >
           <table class="w-full mt-2">
             <tbody>
+              <tr>
+                <td class="pr-4 py-2 text-right" style="white-space: nowrap">PT Thanh toán :</td>
+                <td>
+                  <div class="pl-6">
+                    <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-2"></td>
+                <td></td>
+              </tr>
               <tr>
                 <td class="pr-4 py-2 text-right" style="white-space: nowrap; width: 30%">
                   <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng lần này :</span>
@@ -172,7 +202,8 @@ defineExpose({ openModal })
                     <VueButton
                       color="default"
                       type="button"
-                      @click="money = receipt.totalMoney - receipt.paid">
+                      @click="money = receipt.totalMoney - receipt.paid"
+                    >
                       Tất cả
                     </VueButton>
                     <div class="flex-1">
@@ -184,7 +215,8 @@ defineExpose({ openModal })
                           paymentView === PaymentViewType.SendProductAndPaymentAndClose
                             ? {}
                             : { gt: 0 }
-                        " />
+                        "
+                      />
                     </div>
                   </div>
                 </td>
@@ -210,10 +242,11 @@ defineExpose({ openModal })
           <div
             v-if="
               permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
-              [ReceiptStatus.Draft, ReceiptStatus.Prepayment, ReceiptStatus.Debt].includes(
-                receipt.status
+              [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Debt].includes(
+                receipt.status,
               )
-            ">
+            "
+          >
             <VueButton type="submit" color="blue" icon="save" :loading="paymentLoading">
               <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng</span>
               <span v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">

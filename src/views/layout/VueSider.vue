@@ -97,7 +97,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #title>Bán hàng</template>
       <a-menu-item
         v-if="
-          permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DRAFT] ||
+          permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT] ||
           permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DEBT_SUCCESS]
         "
         key="TicketOrderUpsert"
@@ -138,54 +138,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'Distributor' }">Nhà cung cấp</router-link>
       </a-menu-item>
     </a-sub-menu>
-    <a-sub-menu
-      v-if="
-        permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] ||
-        permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] ||
-        permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY] ||
-        permissionIdMap[PermissionId.MASTER_DATA_LABORATORY] ||
-        permissionIdMap[PermissionId.MASTER_DATA_TICKET_SOURCE]
-      "
-      key="MasterData"
-    >
+    <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA]" key="MasterData">
       <template #icon>
         <IconPicCenter />
       </template>
-      <template #title>Danh mục</template>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]" key="ProcedureList">
-        <router-link :to="{ name: 'ProcedureList' }">Dịch vụ</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" key="LaboratoryList">
-        <router-link :to="{ name: 'LaboratoryList' }">Xét nghiệm</router-link>
-      </a-menu-item>
-      <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
-        key="LaboratoryKitList"
-      >
-        <router-link :to="{ name: 'LaboratoryKitList' }">Bộ xét nghiệm</router-link>
-      </a-menu-item>
-      <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
-        key="PrescriptionSampleList"
-      >
-        <router-link :to="{ name: 'PrescriptionSampleList' }">Đơn thuốc mẫu</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" key="RadiologyList">
-        <router-link :to="{ name: 'RadiologyList' }">Phiếu CĐHA</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]" key="WarehouseList">
-        <router-link :to="{ name: 'WarehouseList' }">Danh sách kho</router-link>
-      </a-menu-item>
-      <a-menu-item
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_TICKET_SOURCE]"
-        key="CustomerSourceList"
-      >
-        <router-link :to="{ name: 'CustomerSourceList' }">DS nguồn khách hàng</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]" key="PrintHtmlList">
-        <router-link :to="{ name: 'PrintHtmlList' }">Mẫu in</router-link>
-      </a-menu-item>
-    </a-sub-menu>
+      <span>
+        <router-link :to="{ name: 'MasterData' }">Danh mục</router-link>
+      </span>
+    </a-menu-item>
     <a-sub-menu
       v-if="
         permissionIdMap[PermissionId.STATISTIC_TICKET] ||

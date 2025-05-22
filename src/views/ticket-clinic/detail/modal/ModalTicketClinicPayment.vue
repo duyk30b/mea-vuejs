@@ -3,15 +3,19 @@ import { nextTick, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber } from '../../../../common/vue-form'
+import { InputMoney, InputNumber, InputSelect, InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CustomerPaymentApi } from '../../../../modules/customer-payment/customer-payment.api'
 import { PaymentViewType } from '../../../../modules/enum'
 import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { timeToText } from '../../../../utils'
+import { ESArray, timeToText } from '../../../../utils'
 import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
+import { PaymentMethodService, type PaymentMethod } from '../../../../modules/payment-method'
+import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { useMeStore } from '../../../../modules/_me/me.store'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -19,6 +23,8 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap } = meStore
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -26,20 +32,34 @@ const paymentView = ref(PaymentViewType.Success)
 const ticketClone = ref(Ticket.blank())
 
 const money = ref(0)
+const paymentMethodId = ref<number>(0)
+const note = ref('')
+const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
 const openModal = async (view: PaymentViewType) => {
   paymentView.value = view
   money.value = 0
   showModal.value = true
 
+  const fetchData = await Promise.all([
+    CustomerPaymentApi.list({
+      filter: {
+        customerId: ticketClinicRef.value.customerId,
+        ticketId: ticketClinicRef.value.id,
+      },
+      sort: { id: 'ASC' },
+    }),
+    PaymentMethodService.list({ sort: { priority: 'ASC' } }),
+  ])
+
+  ticketClinicRef.value.customerPaymentList = fetchData[0]
   ticketClone.value = Ticket.from(ticketClinicRef.value)
-  ticketClone.value.customerPaymentList = await CustomerPaymentApi.list({
-    filter: {
-      customerId: ticketClone.value.customerId,
-      ticketId: ticketClone.value.id,
-    },
-    sort: { id: 'ASC' },
-  })
+
+  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+  paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
+  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+  paymentMethodId.value = paymentMethodAll[0]?.id || 0
   if (!isMobile) {
     nextTick(() => inputMoneyPayment.value?.focus())
   }
@@ -47,12 +67,21 @@ const openModal = async (view: PaymentViewType) => {
 
 const closeModal = () => {
   showModal.value = false
+  money.value = 0
+  note.value = ''
+  paymentMethodId.value = 0
+  paymentMethodOptions.value = []
 }
 
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    await TicketClinicApi.prepayment(ticketClone.value.id, money.value)
+    await TicketClinicApi.prepayment({
+      ticketId: ticketClone.value.id,
+      money: money.value,
+      paymentMethodId: paymentMethodId.value,
+      note: note.value,
+    })
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -68,9 +97,14 @@ const startRefundOverpaid = async () => {
   }
   paymentLoading.value = true
   try {
-    await TicketClinicApi.refundOverpaid(ticketClone.value.id, money.value)
+    await TicketClinicApi.refundOverpaid({
+      ticketId: ticketClone.value.id,
+      money: money.value,
+      paymentMethodId: paymentMethodId.value,
+      note: note.value,
+    })
     emit('success')
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalVisitPayment.vue:67 ~ startRefundOverpaid ~ error:', error)
   } finally {
@@ -81,9 +115,14 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    await TicketClinicApi.payDebt(ticketClone.value.id, money.value)
+    await TicketClinicApi.payDebt({
+      ticketId: ticketClone.value.id,
+      money: money.value,
+      paymentMethodId: paymentMethodId.value,
+      note: note.value,
+    })
     emit('success')
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalVisitPayment.vue:80 ~ startPayDebt ~ error:', error)
   } finally {
@@ -95,7 +134,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 600px">
+  <VueModal v-model:show="showModal" style="width: 800px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -107,185 +146,232 @@ defineExpose({ openModal })
       </div>
 
       <div class="p-4">
-        <div class="text-right">
-          <span class="mr-2">Tổng chi phí:</span>
-          <span class="font-bold" style="font-size: 16px">
-            {{ formatMoney(ticketClone.totalMoney) }}
-          </span>
+        <TicketPaymentList :ticket="ticketClone" :payment-method-map="paymentMethodMap" />
+      </div>
+
+      <!-- Prepayment -->
+      <form
+        class="p-4"
+        v-if="paymentView === PaymentViewType.Prepayment"
+        @submit.prevent="startPrepayment"
+      >
+        <div class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức thanh toán</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền thanh toán</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton
+                    color="default"
+                    type="button"
+                    @click="money = ticketClone.debt > 0 ? ticketClone.debt : 0"
+                  >
+                    Tất cả
+                  </VueButton>
+                  <InputMoney
+                    ref="inputMoneyPayment"
+                    v-model:value="money"
+                    :validate="{ gt: 0 }"
+                    text-align="right"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div v-if="ticketClone.totalMoney >= ticketClone.paid + money">Còn thiếu</div>
+              <div v-else>Còn thừa</div>
+              <div>
+                <InputMoney
+                  :value="Math.abs(ticketClone.totalMoney - (ticketClone.paid + money))"
+                  disabled
+                  textAlign="right"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="table-wrapper mt-2">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Thời gian</th>
-                <th>Loại</th>
-                <th>Tiền</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(customerPayment, index) in ticketClone.customerPaymentList" :key="index">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td class="text-center">
-                  {{ timeToText(customerPayment.createdAt, 'hh:mm DD/MM/YY') }}
-                </td>
-                <td><CustomerPaymentTypeTag :paymentType="customerPayment.paymentType" /></td>
-                <td class="text-right">
-                  <div>{{ formatMoney(customerPayment.paid) }}</div>
-                  <div v-if="customerPayment.debit" style="font-size: 12px; font-style: italic">
-                    Ghi nợ: {{ formatMoney(customerPayment.debit) }}
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
-                <td class="text-right font-bold">{{ formatMoney(ticketClone.paid) }}</td>
-              </tr>
-              <tr v-if="ticketClone.ticketStatus !== TicketStatus.Completed">
-                <td colspan="3" class="text-right">
-                  <span v-if="ticketClone.debt >= 0">Đang thiếu:</span>
-                  <span v-else>Đang thừa :</span>
-                </td>
-                <td class="text-right font-bold">{{ formatMoney(Math.abs(ticketClone.debt)) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <form v-if="paymentView === PaymentViewType.Prepayment" @submit.prevent="startPrepayment">
-          <table class="w-full mt-4">
-            <tbody>
-              <tr>
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap; width: 30%">
-                  Tạm ứng lần này :
-                </td>
-                <td>
-                  <div class="flex items-stretch pl-6">
-                    <VueButton
-                      type="button"
-                      @click="money = ticketClone.debt > 0 ? ticketClone.debt : 0"
-                    >
-                      Tất cả
-                    </VueButton>
-                    <div class="flex-1">
-                      <InputMoney
-                        ref="inputMoneyPayment"
-                        v-model:value="money"
-                        :validate="{ gt: 0 }"
-                        text-align="right"
-                      />
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="py-1"></td>
-                <td></td>
-              </tr>
-              <tr v-if="ticketClone.debt - money >= 0">
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap">Còn thiếu :</td>
-                <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticketClone.debt - money) }}
-                </td>
-              </tr>
-              <tr v-else style="color: var(--text-red)">
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap">Thừa :</td>
-                <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(money - ticketClone.debt) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton color="blue" type="submit" :loading="paymentLoading" icon="save">
+
+        <div class="mt-8 pb-4 flex justify-center gap-4">
+          <div>
+            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
+          </div>
+          <div
+            v-if="
+              permissionIdMap[PermissionId.TICKET_CLINIC_PREPAYMENT] &&
+              [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
+                ticketClone.ticketStatus,
+              )
+            "
+          >
+            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
               Tạm ứng
             </VueButton>
           </div>
-        </form>
-        <form v-else-if="paymentView === PaymentViewType.PayDebt" @submit.prevent="startPayDebt">
-          <table class="w-full mt-4">
-            <tbody>
-              <tr>
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap; width: 30%">
-                  Trả nợ :
-                </td>
-                <td>
-                  <div class="flex items-stretch pl-6">
-                    <VueButton type="button" @click="money = ticketClone.debt">Tất cả</VueButton>
-                    <div class="flex-1">
-                      <InputMoney
-                        ref="inputMoneyPayment"
-                        v-model:value="money"
-                        :validate="{ gt: 0, lte: ticketClone.debt }"
-                        text-align="right"
-                      />
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="py-1"></td>
-                <td></td>
-              </tr>
-              <tr>
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap">Nợ còn :</td>
-                <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticketClone.debt - money) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton type="submit" color="blue" :loading="paymentLoading" icon="save">
-              Trả nợ
-            </VueButton>
-          </div>
-        </form>
-        <form
-          v-else-if="paymentView === PaymentViewType.RefundOverpaid"
-          @submit.prevent="startRefundOverpaid"
-        >
-          <table class="w-full mt-4">
-            <tbody>
-              <tr>
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap; width: 30%">
-                  Hoàn trả:
-                </td>
-                <td>
-                  <div class="flex items-stretch pl-6">
-                    <VueButton type="button" @click="money = -ticketClone.debt">Tất cả</VueButton>
-                    <div class="flex-1">
-                      <InputMoney
-                        ref="inputMoneyPayment"
-                        v-model:value="money"
-                        :validate="{ gt: 0, lte: ticketClone.paid }"
-                        text-align="right"
-                      />
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td class="py-1"></td>
-                <td></td>
-              </tr>
-              <tr v-if="ticketClone.paid - ticketClone.totalMoney > money">
-                <td class="pr-4 py-2 text-right" style="white-space: nowrap">Còn thừa</td>
-                <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(ticketClone.paid - ticketClone.totalMoney - money) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pb-4 pt-8 flex justify-center gap-4">
-            <VueButton type="submit" color="blue" :loading="paymentLoading" icon="save">
-              Hoàn trả
-            </VueButton>
-          </div>
-        </form>
-
-        <div v-else class="pb-4 pt-8 flex justify-center gap-4">
-          <VueButton type="reset" class="btn" @click="closeModal" icon="close">Đóng lại</VueButton>
         </div>
+      </form>
+
+      <!-- Refund overpaid -->
+      <form
+        class="p-4"
+        v-else-if="paymentView === PaymentViewType.RefundOverpaid"
+        @submit.prevent="startRefundOverpaid"
+      >
+        <div class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức hoàn trả</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền hoàn trả</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton
+                    color="default"
+                    type="button"
+                    @click="money = ticketClone.paid - ticketClone.totalMoney"
+                  >
+                    Tất cả
+                  </VueButton>
+                  <InputMoney
+                    ref="inputMoneyPayment"
+                    v-model:value="money"
+                    text-align="right"
+                    :validate="{
+                      gt: 0,
+                      lte: ticketClone.paid - ticketClone.totalMoney,
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Còn thừa</div>
+              <div>
+                <InputMoney
+                  :value="ticketClone.paid - money - ticketClone.totalMoney"
+                  disabled
+                  textAlign="right"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 pb-4 flex justify-center gap-4">
+          <div>
+            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
+          </div>
+          <div
+            v-if="
+              permissionIdMap[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] &&
+              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.ticketStatus)
+            "
+          >
+            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
+              <span>Hoàn trả tiền</span>
+            </VueButton>
+          </div>
+        </div>
+      </form>
+
+      <!-- PayDebt -->
+      <form
+        class="p-4"
+        v-else-if="paymentView === PaymentViewType.PayDebt"
+        @submit.prevent="startPayDebt"
+      >
+        <div class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức thanh toán</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền thanh toán</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton color="default" type="button" @click="money = ticketClone.debt">
+                    Tất cả
+                  </VueButton>
+                  <InputMoney
+                    ref="inputMoneyPayment"
+                    v-model:value="money"
+                    text-align="right"
+                    :validate="{ gt: 0, lte: ticketClone.debt }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Nợ còn</div>
+              <div>
+                <InputMoney :value="ticketClone.debt - money" disabled textAlign="right" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 pb-4 flex justify-center gap-4">
+          <div>
+            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
+          </div>
+          <div
+            v-if="
+              permissionIdMap[PermissionId.TICKET_CLINIC_PAY_DEBT] &&
+              [TicketStatus.Debt].includes(ticketClone.ticketStatus)
+            "
+          >
+            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
+              <template v-if="ticketClone.debt === money">Trả nợ và Hoàn thành</template>
+              <template v-if="ticketClone.debt != money">Trả nợ</template>
+            </VueButton>
+          </div>
+        </div>
+      </form>
+
+      <div v-else class="pb-4 pt-8 flex justify-center gap-4">
+        <VueButton type="reset" class="btn" @click="closeModal" icon="close">Đóng lại</VueButton>
       </div>
     </div>
   </VueModal>

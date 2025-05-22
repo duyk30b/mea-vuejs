@@ -197,7 +197,7 @@ const clickDestroyTicket = () => {
   })
 }
 
-const clickRefundMoney = () => {
+const clickRefundOverpaid = () => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
@@ -292,15 +292,13 @@ const startPrint = async () => {
     </VueButton>
     <VueButton
       v-if="
-        [TicketStatus.Prepayment, TicketStatus.Executing].includes(ticketClinicRef.ticketStatus) &&
+        [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClinicRef.ticketStatus) &&
         ticketClinicRef.paid > ticketClinicRef.totalMoney
       "
       icon="dollar"
-      size="small"
-      color="green"
-      @click="modalTicketClinicPayment?.openModal(PaymentViewType.RefundOverpaid)"
+      @click="clickRefundOverpaid"
     >
-      <span class="font-bold">HOÀN TIỀN</span>
+      <span>HOÀN TIỀN</span>
     </VueButton>
     <VueDropdown>
       <template #trigger>
@@ -309,12 +307,6 @@ const startPrint = async () => {
         </div>
       </template>
       <div class="vue-menu">
-        <a @click="clickRefundMoney">
-          <span class="text-red-500">
-            <IconDollar />
-            Hoàn trả tiền
-          </span>
-        </a>
         <a @click="clickReturnProduct">
           <span class="text-red-500">
             <IconFileSync />

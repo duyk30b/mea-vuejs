@@ -23,7 +23,6 @@ import { ESTimer, arrayToKeyValue } from '../../../utils'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
-import ModalProductGroupManager from './ModalProductGroupManager.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
 import { InventoryStrategy } from '../../../modules/enum'
@@ -33,7 +32,6 @@ const modalUploadProduct = ref<InstanceType<typeof ModalUploadProduct>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
-const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -237,10 +235,6 @@ const handleModalProductUpsertSuccess = async (
   await startFetchData()
 }
 
-const handleModalProductGroupManagerSuccess = async () => {
-  await startFetchProductGroup()
-}
-
 const downloadExcelProductList = async () => {
   ModalStore.confirm({
     title: 'Xác nhận tải file báo cáo',
@@ -270,10 +264,6 @@ const handleModalUploadProductSuccess = async () => {
   />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductDetail ref="modalProductDetail" />
-  <ModalProductGroupManager
-    ref="modalProductGroupManager"
-    @success="handleModalProductGroupManagerSuccess"
-  />
   <div class="page-header">
     <div class="mr-2 flex items-center gap-4 flex-wrap">
       <div class="hidden md:flex items-center gap-2 font-medium text-xl">
@@ -310,7 +300,6 @@ const handleModalUploadProductSuccess = async () => {
             Cài đặt hiển thị
           </a>
           <a @click="modalDataProduct?.openModal()">Cài đặt dữ liệu</a>
-          <a @click="modalProductGroupManager?.openModal()">Quản lý nhóm sản phẩm</a>
         </div>
       </VueDropdown>
     </div>
@@ -652,8 +641,12 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
-            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
-            <th v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent">
+            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+              Kho
+            </th>
+            <th
+              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+            >
               NCC
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode">Số lô</th>
@@ -742,11 +735,15 @@ const handleModalUploadProductSuccess = async () => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.unit" class="text-center">
                   {{ product.unitDefaultName }}
                 </td>
-                <td v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+                <td
+                  v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+                >
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
-                  v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+                  v-if="
+                    productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent
+                  "
                 ></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate" class="text-center"></td>
@@ -829,11 +826,15 @@ const handleModalUploadProductSuccess = async () => {
                   {{ product.unitDefaultName }}
                 </td>
 
-                <td v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+                <td
+                  v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+                >
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
-                  v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+                  v-if="
+                    productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent
+                  "
                   class="text-center"
                 >
                   {{ distributorMap[batch.distributorId]?.fullName }}

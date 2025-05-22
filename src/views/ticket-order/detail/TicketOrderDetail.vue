@@ -129,6 +129,8 @@ const sendProductAndClose = async () => {
     const response = await TicketOrderApi.sendProductAndPaymentAndClose({
       ticketId: ticketOrderDetailRef.value.id!,
       money: 0,
+      paymentMethodId: 0,
+      note: '',
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
@@ -150,6 +152,8 @@ const close = async () => {
     const response = await TicketOrderApi.paymentAndClose({
       ticketId: ticketOrderDetailRef.value.id!,
       money: 0,
+      paymentMethodId: 0,
+      note: '',
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.customerPaymentList ||= []
@@ -215,14 +219,33 @@ const clickReturnProduct = () => {
   modalTicketReturnProduct.value?.openModal(ticketOrderDetailRef.value)
 }
 
-const clickDestroy = () => {
+const clickDestroyDraft = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa hóa đơn này ?',
     content: 'Đơn hàng sẽ bị xóa vĩnh viễn khỏi hệ thống. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
         loadingProcess.value = true
-        await TicketOrderApi.destroy(ticketOrderDetailRef.value.id!)
+        await TicketOrderApi.draftDestroy(ticketOrderDetailRef.value.id!)
+        AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
+        router.push({ name: 'TicketOrderList' })
+      } catch (error) {
+        console.log('🚀 ~ file: TicketOrderDetail.vue:226 ~ clickDestroy ~ error:', error)
+      } finally {
+        loadingProcess.value = false
+      }
+    },
+  })
+}
+
+const clickDestroyCancel = () => {
+  ModalStore.confirm({
+    title: 'Bạn có chắc chắn muốn xóa hóa đơn này ?',
+    content: 'Đơn hàng sẽ bị xóa vĩnh viễn khỏi hệ thống. Bạn vẫn muốn xóa ?',
+    async onOk() {
+      try {
+        loadingProcess.value = true
+        await TicketOrderApi.cancelDestroy(ticketOrderDetailRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {
@@ -358,7 +381,7 @@ const openModalTicketOrderPreview = () => {
       </VueButton>
       <VueButton
         v-if="
-          [TicketStatus.Draft, TicketStatus.Prepayment].includes(
+          [TicketStatus.Draft, TicketStatus.Deposited].includes(
             ticketOrderDetailRef.ticketStatus,
           ) ||
           (settingStore.SCREEN_INVOICE_DETAIL.process.forceEdit &&
@@ -395,7 +418,7 @@ const openModalTicketOrderPreview = () => {
             v-if="
               permissionIdMap[PermissionId.TICKET_ORDER_CANCEL] &&
               [
-                TicketStatus.Prepayment,
+                TicketStatus.Deposited,
                 TicketStatus.Executing,
                 TicketStatus.Debt,
                 TicketStatus.Completed,
@@ -410,11 +433,22 @@ const openModalTicketOrderPreview = () => {
           </a>
           <a
             v-if="
-              (permissionIdMap[PermissionId.TICKET_ORDER_DESTROY_DRAFT] &&
-                [TicketStatus.Draft].includes(ticketOrderDetailRef.ticketStatus)) ||
+              permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT] &&
+              ticketOrderDetailRef.ticketStatus === TicketStatus.Draft
+            "
+            @click="clickDestroyDraft()"
+          >
+            <span class="text-red-500">
+              <IconDelete />
+              Xóa Đơn
+            </span>
+          </a>
+          <a
+            v-if="
+              permissionIdMap[PermissionId.TICKET_ORDER_CANCEL_DESTROY] &&
               ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled
             "
-            @click="clickDestroy()"
+            @click="clickDestroyCancel()"
           >
             <span class="text-red-500">
               <IconDelete />
@@ -435,11 +469,12 @@ const openModalTicketOrderPreview = () => {
       <!-- Nháp, Đặt hàng và Đang xử lý thì cần xử lý -->
       <template
         v-if="
-          [TicketStatus.Draft, TicketStatus.Prepayment, TicketStatus.Executing].includes(
+          [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
             ticketOrderDetailRef.ticketStatus,
           )
         "
       >
+        <!-- Truờng hợp cần gửi hàng -->
         <template v-if="[DeliveryStatus.Pending].includes(ticketOrderDeliveryStatus)">
           <template
             v-if="
@@ -486,6 +521,7 @@ const openModalTicketOrderPreview = () => {
             </VueButton>
           </template>
         </template>
+        <!-- Truờng hợp không cần gửi hàng -->
         <template
           v-if="
             [DeliveryStatus.Delivered, DeliveryStatus.NoStock].includes(ticketOrderDeliveryStatus)

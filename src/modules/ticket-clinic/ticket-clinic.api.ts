@@ -1,9 +1,10 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
+import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import type { DiscountType } from '../enum'
 import type { TicketUser } from '../ticket-user'
-import type { TicketStatus, TicketType } from '../ticket/ticket.model'
+import { Ticket, type TicketStatus, type TicketType } from '../ticket/ticket.model'
 
 export class TicketClinicApi {
   static async create(body: {
@@ -169,21 +170,51 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse
   }
 
-  static async prepayment(ticketId: number, money: number) {
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/prepayment`, { money })
-    const { data } = response.data as BaseResponse
+  static async prepayment(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/prepayment`, {
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
+    })
+    const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
+    return {
+      ticket: Ticket.from(data.ticket),
+      customerPayment: CustomerPayment.from(data.customerPayment),
+    }
   }
 
-  static async refundOverpaid(ticketId: number, money: number) {
+  static async refundOverpaid(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/refund-overpaid`, {
-      money,
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
     })
     const { data } = response.data as BaseResponse
   }
 
-  static async payDebt(ticketId: number, money: number) {
+  static async payDebt(body: {
+    ticketId: number
+    money: number
+    note: string
+    paymentMethodId: number
+  }) {
+    const { ticketId } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/pay-debt`, {
-      money,
+      money: body.money,
+      note: body.note,
+      paymentMethodId: body.paymentMethodId,
     })
     const { data } = response.data as BaseResponse
   }

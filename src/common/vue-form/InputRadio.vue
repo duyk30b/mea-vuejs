@@ -77,6 +77,7 @@ defineExpose({ focus })
     .input-radio-fake {
       position: relative;
       display: block;
+      min-width: 16px;
       width: 16px;
       height: 16px;
       border: 1px solid #d9d9d9;

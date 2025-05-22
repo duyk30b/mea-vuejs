@@ -408,7 +408,7 @@ const clickCloseVisit = () => {
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
           v-if="
-            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Prepayment].includes(
+            [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
               ticketClinicRef.ticketStatus,
             ) &&
             permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&

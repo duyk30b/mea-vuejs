@@ -11,7 +11,7 @@ import {
   IconFileSearch,
   IconGroup,
   IconMore,
-  IconSetting
+  IconSetting,
 } from '../../../common/icon-antd'
 import { IconDelete } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
@@ -91,10 +91,11 @@ const startCopy = () => {
 const startRefundPrepayment = async () => {
   try {
     loadingProcess.value = true
-    const { receiptBasic, distributorPaymentList } = await ReceiptApi.refundPrepayment(
-      receipt.value.id,
-      receipt.value.paid,
-    )
+    const { receiptBasic, distributorPaymentList } = await ReceiptApi.refundPrepayment({
+      receiptId: receipt.value.id,
+      money: receipt.value.paid,
+      paymentMethodId: 0,
+    })
     Object.assign(receipt.value, receiptBasic)
     receipt.value.distributorPaymentList = distributorPaymentList
     AlertStore.add({ type: 'success', message: 'Trả tiền tạm ứng thành công', time: 1000 })
@@ -122,7 +123,11 @@ const startCancel = async () => {
 const sendProductAndDebit = async () => {
   try {
     loadingProcess.value = true
-    const result = await ReceiptApi.sendProductAndPayment(receipt.value.id!, 0)
+    const result = await ReceiptApi.sendProductAndPayment({
+      receiptId: receipt.value.id!,
+      money: 0,
+      paymentMethodId: 0,
+    })
     Object.assign(receipt.value, result.receipt)
     receipt.value.distributorPaymentList = result.distributorPaymentList
   } catch (error) {
@@ -205,7 +210,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       </div>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT]"
+          v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT]"
           color="blue"
           icon="plus"
           @click="
@@ -277,7 +282,7 @@ const openModalDistributorDetail = (distributorId: number) => {
   <div class="page-main">
     <div class="px-4 pt-2 flex justify-end items-center gap-2">
       <VueButton
-        v-if="permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT]"
+        v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT]"
         style="margin-left: auto"
         @click="startCopy"
       >
@@ -286,7 +291,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       </VueButton>
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT] &&
+          permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
           [ReceiptStatus.Draft].includes(receipt.status)
         "
         color="blue"
@@ -297,8 +302,8 @@ const openModalDistributorDetail = (distributorId: number) => {
       </VueButton>
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.RECEIPT_UPDATE_PREPAYMENT] &&
-          [ReceiptStatus.Prepayment].includes(receipt.status)
+          permissionIdMap[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
+          [ReceiptStatus.Deposited].includes(receipt.status)
         "
         color="blue"
         @click="startEdit"
@@ -316,7 +321,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           <a
             v-if="
               permissionIdMap[PermissionId.RECEIPT_REFUND_PAYMENT] &&
-              [ReceiptStatus.Prepayment].includes(receipt.status)
+              [ReceiptStatus.Deposited].includes(receipt.status)
             "
             @click="clickRefundPrepayment()"
           >
@@ -337,7 +342,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           <a
             style="color: red"
             v-if="
-              (permissionIdMap[PermissionId.RECEIPT_UPSERT_DRAFT] &&
+              (permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
                 [ReceiptStatus.Draft].includes(receipt.status)) ||
               receipt.status === ReceiptStatus.Cancelled
             "
@@ -358,7 +363,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       <template
         v-if="
           permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
-          [ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)
+          [ReceiptStatus.Draft, ReceiptStatus.Deposited].includes(receipt.status)
         "
       >
         <VueButton

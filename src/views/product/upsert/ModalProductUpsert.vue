@@ -11,11 +11,12 @@ import {
   InputSelect,
   InputText,
   VueSelect,
+  VueSwitch,
 } from '../../../common/vue-form'
-import VueSwitch from '../../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
+import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
@@ -30,7 +31,6 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { customFilter, ESTimer } from '../../../utils'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
-import { MeService } from '../../../modules/_me/me.service'
 
 const TABS_KEY = {
   BASIC: 'BASIC',

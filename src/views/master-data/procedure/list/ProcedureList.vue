@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconFileSearch, IconReconciliation, IconSetting } from '../../../../common/icon-antd'
+import {
+  IconFileSearch,
+  IconHome,
+  IconReconciliation,
+  IconRight,
+  IconSetting,
+} from '../../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -16,13 +22,13 @@ import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/proce
 import { arrayToKeyValue } from '../../../../utils'
 import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
-import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
+import { useRouter } from 'vue-router'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -115,35 +121,17 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 const handleModalProcedureUpsertSuccess = async () => {
   await startFetchData()
 }
-
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalProcedureListSettingScreen.value?.openModal()
-  }
-  if (menu.key === 'PROCEDURE_GROUP_MANAGER') {
-    modalProcedureGroupManager.value?.openModal()
-  }
-}
-
-const handleModalProcedureGroupManagerSuccess = async () => {
-  procedureGroupAll.value = await ProcedureGroupService.list({})
-}
 </script>
 
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalProcedureGroupManager
-    ref="modalProcedureGroupManager"
-    @success="handleModalProcedureGroupManagerSuccess"
-  />
-  <div class="page-header">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconReconciliation />
-        Danh sách dịch vụ
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div>
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
         color="blue"
@@ -153,7 +141,7 @@ const handleModalProcedureGroupManagerSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="mr-2 flex items-center gap-8">
+    <div class="ml-auto flex items-center gap-8">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -167,7 +155,6 @@ const handleModalProcedureGroupManagerSuccess = async () => {
           >
             Cài đặt hiển thị
           </a>
-          <a @click="modalProcedureGroupManager?.openModal()">Quản lý nhóm dịch vụ</a>
         </div>
       </VueDropdown>
     </div>

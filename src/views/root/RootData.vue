@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { IconApartment } from '../../common/icon-antd'
+import { IconApartment, IconCloudUpload, IconLogout } from '../../common/icon-antd'
 import { InputNumber, InputText } from '../../common/vue-form'
 import VueButton from '../../common/VueButton.vue'
 import { useMeStore } from '../../modules/_me/me.store'
@@ -37,6 +37,14 @@ const logoutGoogleDriver = async () => {
   await SettingApi.logoutGGDriver()
   settingStore.GOOGLE_DRIVER = { email: '' }
   await loadGoogleDriverAccounts()
+}
+
+const uploadPostgresToGoogleDriver = async () => {
+  try {
+    await RootDataApi.uploadPostgresToGoogleDriver()
+  } catch (error) {
+    console.log('🚀 ~ RootData.vue:46 ~ uploadPostgresToGoogleDriver ~ error:', error)
+  }
 }
 
 const saveRootSetting = async () => {
@@ -110,6 +118,7 @@ const startMigration = async () => {
                   color="blue"
                   @click="logoutGoogleDriver()"
                 >
+                  <IconLogout />
                   Logout
                 </VueButton>
               </td>
@@ -126,6 +135,16 @@ const startMigration = async () => {
                   />
                   <VueButton color="blue" type="submit">RUN</VueButton>
                 </form>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-center">4</td>
+              <td>Upload postgres to GoogleDriver</td>
+              <td>
+                <VueButton color="blue" @click="uploadPostgresToGoogleDriver">
+                  <IconCloudUpload />
+                  Start Upload
+                </VueButton>
               </td>
             </tr>
           </tbody>

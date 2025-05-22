@@ -10,6 +10,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { InputSelect } from '../../../common/vue-form'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalWarehouseUpsert = ref<InstanceType<typeof ModalWarehouseUpsert>>()
 
@@ -74,13 +75,11 @@ const handleModalWarehouseUpsertSuccess = async (
 
 <template>
   <ModalWarehouseUpsert ref="modalWarehouseUpsert" @success="handleModalWarehouseUpsertSuccess" />
-
-  <div class="mx-4 mt-4 flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconWarehouse style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách kho</span>
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
+    </div>
+    <div>
       <VueButton
         v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
@@ -90,8 +89,9 @@ const handleModalWarehouseUpsertSuccess = async (
         Thêm mới
       </VueButton>
     </div>
-    <div></div>
+    <div class="ml-auto flex items-center gap-8"></div>
   </div>
+
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="mt-4 table-wrapper">
       <table>

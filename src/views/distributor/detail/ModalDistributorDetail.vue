@@ -63,10 +63,6 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <ModalDistributorPayDebt
-    ref="modalDistributorPayDebt"
-    @success="handleModalDistributorPayDebtSuccess"
-  />
   <VueModal
     v-model:show="showModal"
     style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
@@ -125,8 +121,8 @@ defineExpose({ openModal })
                       distributor.debt != 0
                     "
                     color="blue"
-                    icon="plus"
-                    @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
+                    icon="dollar"
+                    @click="modalDistributorPayDebt?.openModal(distributor.id)"
                   >
                     Trả nợ
                   </VueButton>
@@ -154,6 +150,10 @@ defineExpose({ openModal })
       </div>
     </div>
   </VueModal>
+  <ModalDistributorPayDebt
+    ref="modalDistributorPayDebt"
+    @success="handleModalDistributorPayDebtSuccess"
+  />
 </template>
 
 <style lang="scss" scoped></style>

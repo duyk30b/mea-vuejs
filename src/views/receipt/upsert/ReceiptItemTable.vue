@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { IconFileSearch } from '../../../common/icon-antd'
-import { IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
+import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Warehouse } from '../../../modules/warehouse'
@@ -10,6 +10,7 @@ import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalReceiptItemUpdate from './ModalReceiptItemUpdate.vue'
 import { receipt } from './receipt-upsert.store'
+import { InputNumber } from '../../../common/vue-form'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalReceiptItemUpdate = ref<InstanceType<typeof ModalReceiptItemUpdate>>()
@@ -25,6 +26,10 @@ const changeItemPosition = (index: number, count: number) => {
   const temp = receipt.value.receiptItemList![index]
   receipt.value.receiptItemList![index] = receipt.value.receiptItemList![index + count]
   receipt.value.receiptItemList![index + count] = temp
+}
+
+const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number) => {
+  receipt.value.receiptItemList![index].unitQuantity = unitQuantity
 }
 </script>
 
@@ -118,7 +123,40 @@ const changeItemPosition = (index: number, count: number) => {
             </div>
           </td>
           <td class="text-center whitespace-nowrap">
-            {{ receiptItem.unitQuantity }}
+            <div>
+              <button
+                style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                @click="
+                  (e) => handleChangeReceiptItemUnitQuantity(receiptItem.unitQuantity + 1, index)
+                "
+              >
+                <IconSortUp style="opacity: 0.6" />
+              </button>
+              <div
+                style="font-size: 1.1rem"
+                contenteditable="true"
+                @input="
+                  (e) =>
+                    handleChangeReceiptItemUnitQuantity(
+                      Number((e.target as HTMLElement)?.innerText) || 0,
+                      index,
+                    )
+                "
+              >
+                {{ receiptItem.unitQuantity }}
+              </div>
+              <button
+                style="border: none; font-size: 1.2rem; line-height: 0.5; background: none"
+                class="disabled:opacity-[30%] disabled:cursor-not-allowed"
+                :disabled="receiptItem.unitQuantity == 0"
+                @click="
+                  (e) => handleChangeReceiptItemUnitQuantity(receiptItem.unitQuantity - 1, index)
+                "
+              >
+                <IconSortDown style="opacity: 0.6" />
+              </button>
+            </div>
           </td>
           <td class="text-right whitespace-nowrap">
             {{ formatMoney(receiptItem.unitCostPrice) }}
@@ -199,7 +237,7 @@ const changeItemPosition = (index: number, count: number) => {
               </button>
             </div>
           </td>
-          <td style="text-align: center; width: 80px;">{{ receiptItem.product?.productCode }}</td>
+          <td style="text-align: center; width: 80px">{{ receiptItem.product?.productCode }}</td>
           <td style="min-width: 150px">
             <div>
               <div class="font-bold">
@@ -232,7 +270,36 @@ const changeItemPosition = (index: number, count: number) => {
           <td v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse">
             {{ warehouseMap[receiptItem.warehouseId]?.name }}
           </td>
-          <td class="text-center font-bold">{{ receipt.receiptItemList![index].unitQuantity }}</td>
+          <td>
+            <div class="flex items-center justify-between">
+              <button
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                :disabled="receiptItem.quantity === 0"
+                @click="
+                  (e) => handleChangeReceiptItemUnitQuantity(receiptItem.unitQuantity - 1, index)
+                "
+              >
+                <IconMinus />
+              </button>
+              <div style="width: calc(100% - 60px); min-width: 50px">
+                <InputNumber
+                  :value="receiptItem.unitQuantity"
+                  textAlign="right"
+                  @update:value="(v) => handleChangeReceiptItemUnitQuantity(v, index)"
+                />
+              </div>
+              <button
+                style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                @click="
+                  (e) => handleChangeReceiptItemUnitQuantity(receiptItem.unitQuantity + 1, index)
+                "
+              >
+                <IconPlus />
+              </button>
+            </div>
+          </td>
           <td v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit" class="text-center">
             {{ receiptItem.unitName }}
           </td>

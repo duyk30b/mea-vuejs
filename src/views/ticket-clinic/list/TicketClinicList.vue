@@ -289,7 +289,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
               { value: null, text: 'Tất cả' },
               { value: TicketStatus.Schedule, text: 'Hẹn khám' },
               { value: TicketStatus.Draft, text: 'Chờ khám' },
-              { value: TicketStatus.Prepayment, text: 'Tạm ứng' },
+              { value: TicketStatus.Deposited, text: 'Tạm ứng' },
               { value: TicketStatus.Executing, text: 'Đang khám' },
               { value: TicketStatus.Debt, text: 'Nợ' },
               { value: TicketStatus.Completed, text: 'Hoàn thành' },
@@ -472,7 +472,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                   [
                     TicketStatus.Schedule,
                     TicketStatus.Draft,
-                    TicketStatus.Prepayment,
+                    TicketStatus.Deposited,
                     TicketStatus.Executing,
                   ].includes(ticket.ticketStatus)
                 "

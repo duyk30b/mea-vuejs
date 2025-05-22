@@ -280,7 +280,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     ![
       TicketStatus.Schedule,
       TicketStatus.Draft,
-      TicketStatus.Prepayment,
+      TicketStatus.Deposited,
       TicketStatus.Executing,
     ].includes(ticketClinicRef.value.ticketStatus)
   ) {

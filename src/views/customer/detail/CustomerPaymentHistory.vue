@@ -40,7 +40,7 @@ const startFetchData = async () => {
     const { data, meta } = await CustomerPaymentApi.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { ticket: true },
+      relation: { ticket: true, paymentMethod: true },
       filter: { customerId: props.customerId },
       sort: { id: 'DESC' },
     })
@@ -145,7 +145,8 @@ defineExpose({ startFetchData })
           <tr>
             <th>Hóa đơn</th>
             <th>Loại</th>
-            <th>Thanh toán</th>
+            <th>PTTT</th>
+            <th>Số tiền</th>
             <th>Ghi nợ</th>
             <th>Công nợ</th>
           </tr>
@@ -173,6 +174,7 @@ defineExpose({ startFetchData })
                 {{ customerPayment.note }}
               </div>
             </td>
+            <td>{{ customerPayment.paymentMethod?.name }}</td>
             <td style="white-space: nowrap; text-align: right">
               {{ formatMoney(customerPayment.paid) }}
             </td>

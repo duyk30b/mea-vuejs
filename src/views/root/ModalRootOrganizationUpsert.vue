@@ -10,9 +10,9 @@ import {
   InputNumber,
   InputText,
   VueSelect,
+  VueSwitch,
 } from '../../common/vue-form'
 import type { CheckboxOptionType } from '../../common/vue-form/InputCheckboxList.vue'
-import VueSwitch from '../../common/vue-form/VueSwitch.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { AddressInstance } from '../../core/address.instance'
 import { useSettingStore } from '../../modules/_me/setting.store'

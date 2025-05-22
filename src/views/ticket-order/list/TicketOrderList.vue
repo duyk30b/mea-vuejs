@@ -254,7 +254,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: TicketStatus.Draft },
-              { text: 'Đặt hàng', value: TicketStatus.Prepayment },
+              { text: 'Đặt hàng', value: TicketStatus.Deposited },
               { text: 'Đang xử lý', value: TicketStatus.Executing },
               { text: 'Nợ', value: TicketStatus.Debt },
               { text: 'Hoàn thành', value: TicketStatus.Completed },

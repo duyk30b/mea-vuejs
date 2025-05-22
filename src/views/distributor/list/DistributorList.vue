@@ -10,7 +10,7 @@ import { IconEditSquare } from '../../../common/icon-google'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DistributorService, type Distributor } from '../../../modules/distributor'
+import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString } from '../../../utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
@@ -113,7 +113,11 @@ const handleModalDistributorUpsertSuccess = async () => {
 }
 
 const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distributor }) => {
-  await startFetchData()
+  // await startFetchData()
+  const index = distributorList.value.findIndex((i) => i.id === data.distributor.id)
+  if (index !== -1) {
+    distributorList.value[index] = Distributor.from(data.distributor)
+  }
 }
 </script>
 
@@ -255,10 +259,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
                 "
                 class="flex justify-end"
               >
-                <VueButton
-                  size="small"
-                  @click="modalDistributorPayDebt?.openModal(distributor.id!, distributor.debt)"
-                >
+                <VueButton size="small" @click="modalDistributorPayDebt?.openModal(distributor.id)">
                   Trả nợ
                 </VueButton>
               </div>
@@ -380,7 +381,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
                       distributor.debt != 0
                     "
                     size="small"
-                    @click="modalDistributorPayDebt?.openModal(distributor.id, distributor.debt)"
+                    @click="modalDistributorPayDebt?.openModal(distributor.id)"
                   >
                     Trả nợ
                   </VueButton>

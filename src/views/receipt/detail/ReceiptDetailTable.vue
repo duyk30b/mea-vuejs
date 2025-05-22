@@ -141,7 +141,7 @@ const colspan = computed(() => {
           "
         >
           <td
-            v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)"
+            v-if="[ReceiptStatus.Draft, ReceiptStatus.Deposited].includes(receipt.status)"
             class="text-right cursor-pointer"
             :colspan="colspan"
             @click="showModalReceiptPayment(PaymentViewType.Prepayment)"
@@ -177,15 +177,11 @@ const colspan = computed(() => {
             {{ formatMoney(receipt.paid) }}
           </td>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.totalMoney - receipt.paid
-          "
-        >
-          <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Prepayment].includes(receipt.status)">
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.debt">
+          <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Deposited].includes(receipt.status)">
             <td class="text-right" :colspan="colspan">Còn thiếu</td>
             <td colspan="2" class="text-right font-medium">
-              {{ formatMoney(receipt.totalMoney - receipt.paid) }}
+              {{ formatMoney(receipt.debt) }}
             </td>
           </template>
           <template v-else>

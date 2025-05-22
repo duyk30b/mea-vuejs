@@ -8,7 +8,7 @@ import { ReceiptItem } from '../receipt-item/receipt-item.model'
 export enum ReceiptStatus {
   Cancelled = -1,
   Draft = 0,
-  Prepayment = 1, // Chờ gửi hàng
+  Deposited = 1, // Chờ gửi hàng
   Debt = 2,
   Success = 3,
 }

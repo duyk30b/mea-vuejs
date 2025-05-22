@@ -1,5 +1,6 @@
 import { Customer } from '../customer/customer.model'
 import type { PaymentType } from '../enum'
+import { PaymentMethod } from '../payment-method'
 import { Ticket } from '../ticket'
 
 export class CustomerPayment {
@@ -7,6 +8,7 @@ export class CustomerPayment {
   customerId: number
   ticketId: number
   createdAt: number
+  paymentMethodId: number
   paymentType: PaymentType
   paid: number // Số tiền thanh toán
   debit: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
@@ -17,6 +19,7 @@ export class CustomerPayment {
 
   ticket?: Ticket
   customer?: Customer
+  paymentMethod?: PaymentMethod
 
   static init(): CustomerPayment {
     const ins = new CustomerPayment()
@@ -54,6 +57,11 @@ export class CustomerPayment {
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'paymentMethod')) {
+      target.paymentMethod = source.paymentMethod
+        ? PaymentMethod.basic(source.paymentMethod)
+        : source.paymentMethod
     }
     return target
   }

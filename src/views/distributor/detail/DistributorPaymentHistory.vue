@@ -30,6 +30,7 @@ const total = ref(0)
 const startFetchData = async () => {
   try {
     const { data, meta } = await DistributorPaymentApi.pagination({
+      relation: { paymentMethod: true },
       page: page.value,
       limit: limit.value,
       filter: { distributorId: props.distributor.id! },
@@ -129,7 +130,8 @@ defineExpose({ startFetchData })
         <tr>
           <th>Phiếu nhập</th>
           <th>Loại</th>
-          <th>Thanh toán</th>
+          <th>PTTT</th>
+          <th>Số tiền</th>
           <th>Ghi nợ</th>
           <th>Công nợ</th>
         </tr>
@@ -158,6 +160,7 @@ defineExpose({ startFetchData })
               {{ distributorPayment.note }}
             </div>
           </td>
+          <td>{{ distributorPayment.paymentMethod?.name }}</td>
           <td style="white-space: nowrap; text-align: right">
             {{ formatMoney(distributorPayment.paid) }}
           </td>
