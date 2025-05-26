@@ -21,6 +21,7 @@ import { Role, RoleService } from '../../../../modules/role'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalCommissionUpsert from '../upsert/ModalCommissionUpsert.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalCommissionUpsert = ref<InstanceType<typeof ModalCommissionUpsert>>()
 
@@ -161,14 +162,10 @@ const handleSelectItemFilterRole = (item: any) => {
     ref="modalCommissionUpsert"
     @success="handleModalCommissionUpsertSuccess"
   />
-  <div class="page-header">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconGift />
-        Quản lý tiền hoa hồng
-      </div>
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:block">
+      <Breadcrumb />
     </div>
-    <div class="page-header-setting"></div>
   </div>
 
   <div class="page-main">

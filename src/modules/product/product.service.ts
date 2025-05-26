@@ -3,6 +3,7 @@ import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { useMeStore } from '../_me/me.store'
 import { AuthService } from '../auth/auth.service'
+import { CommissionService } from '../commission'
 import { ProductApi } from './product.api'
 import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
 import { Product } from './product.model'
@@ -125,6 +126,7 @@ export class ProductService {
   static async createOne(instance: Product) {
     const response = await ProductApi.createOne(instance)
     await ProductDB.upsertOne(response)
+    CommissionService.loadedAll = false
     return response
   }
 
@@ -132,6 +134,7 @@ export class ProductService {
     const response = await ProductApi.updateOne(id, instance)
     if (response.success) {
       await ProductDB.replaceOne(id, response.data.product)
+      CommissionService.loadedAll = false
     }
     return response
   }
@@ -140,6 +143,7 @@ export class ProductService {
     const response = await ProductApi.destroyOne(id)
     if (response.success) {
       await ProductDB.deleteOneByKey(id)
+      CommissionService.loadedAll = false
     }
     return response
   }

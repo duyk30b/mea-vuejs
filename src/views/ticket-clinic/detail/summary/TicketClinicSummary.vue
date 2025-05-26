@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconDollar, IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
+import { IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
+import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CONFIG } from '../../../../config'
@@ -14,8 +14,8 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DeliveryStatus, InventoryStrategy, PaymentViewType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
@@ -260,13 +260,16 @@ const startPrint = async () => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       printHtml: printHtml!,
     })
-
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      AlertStore.addError('Cài đặt in không hợp lệ')
+      return
+    }
+    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:297 ~ startPrint ~ error:', error)
   }

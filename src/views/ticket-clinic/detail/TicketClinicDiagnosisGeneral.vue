@@ -3,8 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import CKEditor5Vue from '../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
+import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
@@ -13,7 +13,7 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
-import { CustomerService } from '../../../modules/customer'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
@@ -148,11 +148,11 @@ defineExpose({ getDataTicketDiagnosis })
       <div class="flex-1">
         <div>Tiền sử</div>
         <div class="healthHistory" style="height: 150px">
-          <CKEditor5Vue v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
         <div class="mt-4">Tóm tắt</div>
         <div class="summary" style="height: 150px">
-          <CKEditor5Vue v-model:value="ticketAttributeMap.summary" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.summary" />
         </div>
       </div>
       <div class="md:w-[220px] w-full flex flex-col">

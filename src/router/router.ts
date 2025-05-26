@@ -78,12 +78,6 @@ const Router = createRouter({
                 },
               ],
             },
-            {
-              path: 'commission',
-              meta: { title: 'Hoa hồng' },
-              name: 'Commission',
-              component: () => import('../views/user/commission/list/CommissionList.vue'),
-            },
           ],
         },
         {

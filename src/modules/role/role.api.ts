@@ -34,7 +34,7 @@ export class RoleApi {
   static async createOne(role: Role, userIdList: number[]) {
     const response = await AxiosInstance.post('/role/create', {
       name: role.name,
-      displayName: role.displayName || '',
+      roleCode: role.roleCode || '',
       permissionIds: role.permissionIds,
       isActive: role.isActive,
 
@@ -48,7 +48,7 @@ export class RoleApi {
   static async updateOne(id: number, role: Role, userIdList: number[]) {
     const response = await AxiosInstance.patch(`/role/update/${id}`, {
       name: role.name,
-      displayName: role.displayName || '',
+      roleCode: role.roleCode || '',
       permissionIds: role.permissionIds,
       isActive: role.isActive,
 

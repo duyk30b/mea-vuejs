@@ -56,6 +56,8 @@ import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
+import { UserService, type User } from '../../../modules/user'
+import { RoleService, type Role } from '../../../modules/role'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
@@ -73,6 +75,8 @@ const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
+const userMap = ref<Record<string, User>>({})
+const roleMap = ref<Record<string, Role>>({})
 
 onBeforeMount(async () => {
   const ticketId = Number(route.params.id)
@@ -89,11 +93,15 @@ onBeforeMount(async () => {
     LaboratoryService.getMap(),
     LaboratoryGroupService.getMap(),
     RadiologyService.getMap(),
+    UserService.getMap(),
+    RoleService.getMap(),
   ])
   procedureMap.value = fetchData[0]
   laboratoryMap.value = fetchData[1]
   laboratoryGroupMap.value = fetchData[2]
   radiologyMap.value = fetchData[3]
+  userMap.value = fetchData[4]
+  roleMap.value = fetchData[5]
 })
 
 onUnmounted(async () => {
@@ -106,6 +114,8 @@ watchEffect(() => {
     laboratoryMap: laboratoryMap.value,
     laboratoryGroupMap: laboratoryGroupMap.value,
     radiologyMap: radiologyMap.value,
+    userMap: userMap.value,
+    roleMap: roleMap.value,
   })
 })
 

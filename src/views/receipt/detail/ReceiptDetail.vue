@@ -204,7 +204,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       <div class="hidden md:flex items-center gap-2 font-medium text-xl">
         <IconGroup />
         Thông tin phiếu nhập hàng
-        <span v-if="receipt.status === ReceiptStatus.Cancelled" style="color: var(--text-red)">
+        <span v-if="receipt.status === ReceiptStatus.Voided" style="color: var(--text-red)">
           (Đơn đã bị hủy)
         </span>
       </div>
@@ -344,7 +344,7 @@ const openModalDistributorDetail = (distributorId: number) => {
             v-if="
               (permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
                 [ReceiptStatus.Draft].includes(receipt.status)) ||
-              receipt.status === ReceiptStatus.Cancelled
+              receipt.status === ReceiptStatus.Voided
             "
             @click="clickDestroy()"
           >

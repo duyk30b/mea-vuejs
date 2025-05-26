@@ -35,7 +35,7 @@ const { formatMoney, isMobile } = settingStore
 
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 const ticketUserList = ref<TicketUser[]>([])
 
@@ -163,7 +163,8 @@ const addTicketProcedure = async () => {
         <span>Chỉ định dịch vụ</span>
         <a
           v-if="ticketProcedure.procedureId && ticketProcedure.procedure"
-          @click="modalProcedureDetail?.openModal(ticketProcedure.procedure)">
+          @click="modalProcedureDetail?.openModal(ticketProcedure.procedure)"
+        >
           <IconFileSearch />
         </a>
       </div>
@@ -177,7 +178,8 @@ const addTicketProcedure = async () => {
           :disabled="
             [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
           "
-          @selectItem="({ data }) => selectProcedure(data)">
+          @selectItem="({ data }) => selectProcedure(data)"
+        >
           <template #option="{ item: { data } }">
             <div>
               <b>{{ data.name }}</b>
@@ -190,7 +192,8 @@ const addTicketProcedure = async () => {
 
     <div
       style="flex-grow: 1"
-      :style="ticketUserList.length % 2 == 0 ? 'flex-basis: 80%' : 'flex-basis: 45%'">
+      :style="ticketUserList.length % 2 == 0 ? 'flex-basis: 80%' : 'flex-basis: 45%'"
+    >
       <div>Số lượng</div>
       <div>
         <InputNumber v-model:value="ticketProcedure.quantity" required :validate="{ gt: 0 }" />
@@ -201,16 +204,16 @@ const addTicketProcedure = async () => {
       <div
         v-for="(ticketUser, index) in ticketUserList"
         :key="index"
-        style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
-        <div>
-          {{ roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || '' }}
-        </div>
+        style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+      >
+        <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
         <div>
           <InputFilter
             v-model:value="ticketUserList[index].userId"
             :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
             :maxHeight="200"
-            placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+            placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+          >
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
@@ -230,7 +233,8 @@ const addTicketProcedure = async () => {
           !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"
-        type="submit">
+        type="submit"
+      >
         Thêm mới
       </VueButton>
     </div>

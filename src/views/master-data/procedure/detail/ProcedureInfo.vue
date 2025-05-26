@@ -93,11 +93,7 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="commission in commissionList" :key="commission.id">
-            <td>
-              {{
-                roleMap[commission.roleId]?.displayName || roleMap[commission.roleId]?.name || ''
-              }}
-            </td>
+            <td>{{ roleMap[commission.roleId]?.name || '' }}</td>
             <template
               v-if="
                 commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected

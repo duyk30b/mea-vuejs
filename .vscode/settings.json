@@ -39,19 +39,16 @@
     "Axios",
     "CĐHA",
     "chartjs",
-    "ckeditor",
     "colspan",
     "contenteditable",
     "Medihome",
     "oneline",
     "pinia",
     "tailwindcss",
+    "tinymce",
     "vuejs"
   ],
-  "liveServer.settings.host": "172.17.0.1",
-  "liveServer.settings.port": 5501,
-  "liveServer.settings.root": "/dist/",
-  "liveServer.settings.CustomBrowser": "chrome",
   "editor.linkedEditing": true,
-  "explorer.compactFolders": false
+  "explorer.compactFolders": false,
+  "workbench.editor.enablePreview": false
 }

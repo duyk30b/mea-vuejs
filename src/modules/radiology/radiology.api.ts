@@ -36,7 +36,7 @@ export class RadiologyApi {
       const { data } = response.data as BaseResponse
       return Radiology.fromList(data)
     },
-    200
+    200,
   )
 
   static async detail(id: number, options: RadiologyDetailQuery): Promise<Radiology> {
@@ -58,6 +58,8 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+      customVariables: radiology.customVariables,
+      customStyles: radiology.customStyles,
 
       commissionList: (radiology.commissionList || [])
         .filter((i) => !!i.roleId)
@@ -84,6 +86,8 @@ export class RadiologyApi {
       requestNoteDefault: radiology.requestNoteDefault,
       descriptionDefault: radiology.descriptionDefault,
       resultDefault: radiology.resultDefault,
+      customVariables: radiology.customVariables,
+      customStyles: radiology.customStyles,
 
       commissionList: (radiology.commissionList || [])
         .filter((i) => !!i.roleId)

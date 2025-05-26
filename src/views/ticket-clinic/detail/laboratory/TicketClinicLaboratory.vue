@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { IconCheckSquare, IconClockCircle, IconPrint, IconSpin } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
@@ -15,8 +15,8 @@ import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/lab
 import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -148,7 +148,7 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       data: {
@@ -156,8 +156,11 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
       },
       printHtml: printHtml!,
     })
-
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      AlertStore.addError('Cài đặt in không hợp lệ')
+      return
+    }
+    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
   }

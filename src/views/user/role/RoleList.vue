@@ -75,8 +75,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <thead>
           <tr>
             <th>ID</th>
+            <th>Mã vai trò</th>
             <th>Tên vai trò</th>
-            <th>Tên hiển thị</th>
             <th>Tài khoản</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
@@ -88,8 +88,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </tr>
           <tr v-for="(role, index) in roleList" :key="index">
             <td class="text-center">R{{ role.id }}</td>
+            <td>{{ role.roleCode }}</td>
             <td>{{ role.name }}</td>
-            <td>{{ role.displayName }}</td>
             <td>
               {{ role.userRoleList?.map((i) => i.user?.fullName).join(', ') }}
             </td>

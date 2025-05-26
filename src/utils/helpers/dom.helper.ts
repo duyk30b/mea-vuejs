@@ -1,16 +1,32 @@
 export class ESDom {
-  static async startPrint(id: string, textDom: string) {
+  static writeWindow = (doc: Document, options: { html: string; css?: string; js?: string }) => {
+    const { html, css, js } = options
+    doc.open()
+    doc.write(html)
+    if (css) {
+      let cssElement = document.createElement('style')
+      cssElement.innerHTML = css
+      doc.head.append(cssElement)
+    }
+    if (js) {
+      let jsElement = document.createElement('script')
+      jsElement.innerHTML = js
+      doc.body.append(jsElement)
+    }
+    doc.close()
+  }
+
+  static async startPrint(id: string, options: { html: string; css?: string; js?: string }) {
     const iframePrint = document.getElementById(id) as HTMLIFrameElement
     if (!iframePrint) {
       alert(`Lỗi: Không tìm thấy iframe với id = "${id}"`)
     }
-    const pri = iframePrint.contentWindow as Window
-    pri.document.open()
-    pri.document.write(textDom)
-    pri.document.close()
+    const w = iframePrint.contentWindow as Window
+
+    ESDom.writeWindow(w.document, options)
 
     // Đợi tất cả hình ảnh tải xong
-    const images = pri.document.images
+    const images = w.document.images
     const imagePromises = []
     for (let i = 0; i < images.length; i++) {
       const img = images[i]
@@ -19,12 +35,12 @@ export class ESDom {
           new Promise<void>((resolve) => {
             img.onload = () => resolve()
             img.onerror = () => resolve() // Xử lý trường hợp tải hình ảnh thất bại
-          })
+          }),
         )
       }
     }
     await Promise.all(imagePromises)
-    pri.focus()
-    pri.print()
+    w.focus()
+    w.print()
   }
 }

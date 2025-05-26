@@ -28,7 +28,7 @@ export default defineConfigWithVueTs(
       '@typescript-eslint/no-unused-vars': 0,
       'vue/multi-word-component-names': 0,
       'vue/no-v-html': 0,
-
+      'prefer-const': 0,
       'padding-line-between-statements': [
         // quy tắc cách 1 dòng
         1,

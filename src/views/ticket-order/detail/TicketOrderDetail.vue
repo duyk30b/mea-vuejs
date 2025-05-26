@@ -245,7 +245,7 @@ const clickDestroyCancel = () => {
     async onOk() {
       try {
         loadingProcess.value = true
-        await TicketOrderApi.cancelDestroy(ticketOrderDetailRef.value.id!)
+        await TicketOrderApi.voidedDestroy(ticketOrderDetailRef.value.id!)
         AlertStore.add({ type: 'success', message: 'Xóa đơn thành công', time: 1000 })
         router.push({ name: 'TicketOrderList' })
       } catch (error) {
@@ -445,7 +445,7 @@ const openModalTicketOrderPreview = () => {
           </a>
           <a
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_CANCEL_DESTROY] &&
+              permissionIdMap[PermissionId.TICKET_ORDER_VOIDED_DESTROY] &&
               ticketOrderDetailRef.ticketStatus === TicketStatus.Cancelled
             "
             @click="clickDestroyCancel()"

@@ -15,6 +15,8 @@ export class Radiology {
   requestNoteDefault: string
   descriptionDefault: string
   resultDefault: string
+  customVariables: string // Dạng Javascript
+  customStyles: string // Dạng Style
 
   updatedAt: number
   deletedAt: number
@@ -37,6 +39,8 @@ export class Radiology {
     ins.requestNoteDefault = ''
     ins.descriptionDefault = ''
     ins.resultDefault = 'Chưa phát hiện dấu hiệu bất thường'
+    ins.customVariables = ''
+    ins.customStyles = ''
     return ins
   }
 
@@ -92,6 +96,8 @@ export class Radiology {
     if (a.requestNoteDefault != b.requestNoteDefault) return false
     if (a.descriptionDefault != b.descriptionDefault) return false
     if (a.resultDefault != b.resultDefault) return false
+    if (a.customVariables != b.customVariables) return false
+    if (a.customStyles != b.customStyles) return false
     if (a.updatedAt != b.updatedAt) return false
     if (a.deletedAt != b.deletedAt) return false
     return true

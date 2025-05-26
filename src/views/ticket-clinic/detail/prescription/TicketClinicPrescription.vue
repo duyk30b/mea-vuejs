@@ -1,17 +1,25 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClockCircle, IconShoppingCart, IconSpin } from '../../../../common/icon-antd'
+import {
+  IconClockCircle,
+  IconFileSearch,
+  IconShoppingCart,
+  IconSpin,
+} from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
+import VueButton from '../../../../common/VueButton.vue'
+import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
+import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import type { Product } from '../../../../modules/product'
@@ -31,10 +39,6 @@ import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
-import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
-import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
-import { IconFileSearch } from '../../../../common/icon-antd'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -149,14 +153,17 @@ const startPrint = async () => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       masterData: {},
       printHtml: printHtml!,
     })
-
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      AlertStore.addError('Cài đặt in không hợp lệ')
+      return
+    }
+    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -389,7 +396,7 @@ const clickOpenModalSavePrescriptionSample = () => {
     <div class="mt-4">
       <div>Lời dặn của bác sĩ</div>
       <div style="height: 140px">
-        <CKEditor5Vue v-model:value="ticketAttributeMap.advice" menuType="COLLAPSE" />
+        <VueTinyMCE v-model="ticketAttributeMap.advice" />
       </div>
     </div>
   </div>

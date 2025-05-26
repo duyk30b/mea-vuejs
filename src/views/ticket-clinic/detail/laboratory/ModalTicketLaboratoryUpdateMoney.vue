@@ -28,7 +28,7 @@ const { formatMoney, isMobile } = settingStore
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 
 const ticketLaboratoryOrigin = ref<TicketLaboratory>(TicketLaboratory.blank())
@@ -236,7 +236,8 @@ defineExpose({ openModal })
               v-if="
                 ticketLaboratory.discountType === DiscountType.Percent &&
                 ticketLaboratory.discountPercent !== 0
-              ">
+              "
+            >
               (
               <b>{{ formatMoney(ticketLaboratory.discountMoney) }}</b>
               )
@@ -249,16 +250,19 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="ticketLaboratory.discountType === DiscountType.VND"
                 :value="ticketLaboratory.discountMoney"
-                @update:value="handleChangeUnitDiscountMoney" />
+                @update:value="handleChangeUnitDiscountMoney"
+              />
               <InputNumber
                 v-else
                 :value="ticketLaboratory.discountPercent"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+              />
             </div>
           </div>
         </div>
@@ -268,7 +272,8 @@ defineExpose({ openModal })
           <div style="width: 100%">
             <InputMoney
               :value="ticketLaboratory.actualPrice"
-              @update:value="handleChangeActualPrice" />
+              @update:value="handleChangeActualPrice"
+            />
           </div>
         </div>
 
@@ -276,18 +281,18 @@ defineExpose({ openModal })
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
+            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+          >
             <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
+              {{ roleMap[ticketUser.roleId]?.name || '' }}
             </div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -301,7 +306,7 @@ defineExpose({ openModal })
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
-          <VueButton style="margin-left: auto;" type="reset" icon="close" @click="closeModal">
+          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>
           <VueButton
@@ -309,7 +314,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

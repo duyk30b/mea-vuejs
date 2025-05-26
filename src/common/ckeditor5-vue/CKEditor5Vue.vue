@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { CKEditor5Collapse, CKEditor5Normal } from './CKEditor5'
 
@@ -93,4 +93,4 @@ watch(
     margin-bottom: 0 !important;
   }
 }
-</style>
+</style> -->

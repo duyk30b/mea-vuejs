@@ -428,8 +428,8 @@ export class TicketOrderApi {
     }
   }
 
-  static async cancelDestroy(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/cancel-destroy`)
+  static async voidedDestroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket-order/${ticketId}/voided-destroy`)
     const { data } = response.data as BaseResponse<{ ticketId: number }>
     return data
   }

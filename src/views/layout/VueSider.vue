@@ -208,9 +208,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <a-menu-item v-if="permissionIdMap[PermissionId.ACCOUNT_CRUD]" key="Account">
         <router-link :to="{ name: 'Account' }">Tài khoản</router-link>
       </a-menu-item>
-      <a-menu-item v-if="permissionIdMap[PermissionId.COMMISSION_CRUD]" key="Commission">
+      <!-- <a-menu-item v-if="permissionIdMap[PermissionId.COMMISSION_CRUD]" key="Commission">
         <router-link :to="{ name: 'Commission' }">Hoa hồng</router-link>
-      </a-menu-item>
+      </a-menu-item> -->
     </a-sub-menu>
     <a-sub-menu key="Systems">
       <template #icon>

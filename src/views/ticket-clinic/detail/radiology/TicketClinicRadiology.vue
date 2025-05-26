@@ -10,6 +10,7 @@ import {
 } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -17,8 +18,8 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -28,7 +29,6 @@ import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/tick
 import { TicketRadiology, TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
@@ -140,7 +140,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
@@ -148,9 +148,16 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
         radiology: radiologyData,
       },
       printHtml: printHtml!,
+      customVariables: ticketRadiologyData.radiology?.customVariables || '',
     })
-
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      AlertStore.addError('Cài đặt in không hợp lệ')
+      return
+    }
+    await ESDom.startPrint('iframe-print', {
+      html: compiledResult.html,
+      css: ticketRadiologyData.radiology?.customStyles || '',
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }

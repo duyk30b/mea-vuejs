@@ -5,13 +5,13 @@ import VueButton from '../../../common/VueButton.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtml, printHtmlCompiledTemplate, PrintHtmlService } from '../../../modules/print-html'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { ESDom } from '../../../utils'
+import { compiledTemplatePrintHtml, PrintHtml, PrintHtmlService } from '../../../modules/print-html'
 import {
   TicketAttributeKeyOptometryList,
   type TicketAttributeKeyOptometryType,
 } from '../../../modules/ticket-attribute'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { ESDom } from '../../../utils'
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -104,14 +104,19 @@ const startPrint = async () => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       masterData: {},
       printHtml,
     })
 
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      AlertStore.addError('Cài đặt in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
   } catch (error) {
     console.log('🚀 ~ file: TicketEyePrescription.vue:191 ~ startPrint ~ error:', error)
   }

@@ -64,7 +64,7 @@ watch(
     }
     productMap.value = productMapLocal
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 </script>
 <template>
@@ -90,11 +90,7 @@ watch(
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               {{ index + 1 }}
             </td>
-            <td>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
-            </td>
+            <td>{{ roleMap[ticketUser.roleId]?.name || '' }}</td>
             <td>
               <div class="flex gap-1">
                 <span>{{ userMap[ticketUser.userId]?.fullName }}</span>
@@ -123,7 +119,8 @@ watch(
               <template v-if="ticketUser.interactType !== InteractType.Ticket">
                 <div
                   v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
-                  class="text-xs italic text-red-500">
+                  class="text-xs italic text-red-500"
+                >
                   <del>
                     {{ formatMoney(ticketUser.ticketItemExpectedPrice) }}
                   </del>
@@ -145,13 +142,15 @@ watch(
               <div
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentExpected
-                ">
+                "
+              >
                 {{ ticketUser.commissionPercentExpected }} % Giá niêm yết
               </div>
               <div
                 v-if="
                   ticketUser.commissionCalculatorType === CommissionCalculatorType.PercentActual
-                ">
+                "
+              >
                 {{ ticketUser.commissionPercentActual }} % Giá sau chiết khấu
               </div>
             </td>
@@ -162,7 +161,8 @@ watch(
               <a
                 v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_USER_COMMISSION]"
                 class="text-orange-500"
-                @click="modalTicketUserUpdate?.openModal(ticketUser)">
+                @click="modalTicketUserUpdate?.openModal(ticketUser)"
+              >
                 <IconEditSquare width="20" height="20" />
               </a>
             </td>

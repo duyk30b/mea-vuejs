@@ -6,7 +6,7 @@ import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
 
 export enum ReceiptStatus {
-  Cancelled = -1,
+  Voided = -1,
   Draft = 0,
   Deposited = 1, // Chờ gửi hàng
   Debt = 2,

@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import CKEditor5Vue from '../../../common/ckeditor5-vue/CKEditor5Vue.vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
@@ -229,13 +229,13 @@ defineExpose({ getDataTicketDiagnosis })
       <div style="flex: 1 1 300px; min-width: 300px">
         <div>Tiền sử</div>
         <div style="height: 150px">
-          <CKEditor5Vue v-model:value="ticketAttributeMap.healthHistory" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.healthHistory" />
         </div>
       </div>
       <div class="" style="flex: 1 1 300px; min-width: 300px">
         <div>Toàn thân</div>
         <div style="height: 150px">
-          <CKEditor5Vue v-model:value="ticketAttributeMap.body" menuType="COLLAPSE" />
+          <VueTinyMCE v-model="ticketAttributeMap.body" />
         </div>
       </div>
     </div>

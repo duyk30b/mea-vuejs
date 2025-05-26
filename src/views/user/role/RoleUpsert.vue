@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import { IconApartment } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckboxList, InputText } from '../../../common/vue-form'
+import { InputCheckboxList, InputText, VueSwitch } from '../../../common/vue-form'
 import type { CheckboxOptionType } from '../../../common/vue-form/InputCheckboxList.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
@@ -131,12 +131,12 @@ const clickDelete = () => {
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
     <div style="max-width: 800px">
       <div class="flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none">Tên vai trò</div>
-        <InputText v-model:value="role.name" required />
+        <div style="width: 100px; flex: none">Mã vai trò</div>
+        <InputText v-model:value="role.roleCode" />
       </div>
       <div class="flex mt-4" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 100px; flex: none">Tên hiển thị</div>
-        <InputText v-model:value="role.displayName" />
+        <div style="width: 100px; flex: none">Tên vai trò</div>
+        <InputText v-model:value="role.name" required />
       </div>
       <div class="flex items-center mt-4">
         <div class="w-[100px] flex-none">Active</div>

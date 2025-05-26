@@ -363,7 +363,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
             <th v-if="settingStore.TICKET_CLINIC_LIST.address" style="min-width: 120px">Địa chỉ</th>
             <th style="white-space: nowrap">Chẩn đoán</th>
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
-              {{ roleMap[roleId]?.displayName || roleMap[roleId]?.name || '' }}
+              {{ roleMap[roleId]?.name || '' }}
             </th>
             <th>Tổng tiền</th>
             <th></th>

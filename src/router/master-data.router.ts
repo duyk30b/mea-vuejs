@@ -54,7 +54,7 @@ export const masterDataRouter: RouteRecordRaw = {
           component: () => import('../views/master-data/radiology/upsert/RadiologyUpsert.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
-              if (route.query?.mode === 'UPDATE') return 'Cập nhật phiếu CĐHA'
+              if (route.params.id) return 'Cập nhật phiếu CĐHA'
               return 'Tạo mới phiếu CĐHA'
             },
           },
@@ -78,7 +78,7 @@ export const masterDataRouter: RouteRecordRaw = {
           component: () => import('../views/master-data/print-html/upsert/PrintHtmlUpsert.vue'),
           meta: {
             title: (route: RouteLocationNormalizedLoaded) => {
-              if (route.query?.mode === 'UPDATE') return 'Cập nhật mẫu in'
+              if (route.params.id) return 'Cập nhật mẫu in'
               return 'Tạo mới mẫu in'
             },
           },
@@ -111,6 +111,13 @@ export const masterDataRouter: RouteRecordRaw = {
         },
       ],
     },
+    {
+      path: 'commission',
+      meta: { title: 'Quy định về Hoa hồng' },
+      name: 'Commission',
+      component: () => import('../views/master-data/commission/list/CommissionList.vue'),
+    },
+
     {
       path: 'laboratory-kit',
       name: 'LaboratoryKit',

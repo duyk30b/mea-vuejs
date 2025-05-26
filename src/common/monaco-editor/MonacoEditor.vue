@@ -146,6 +146,13 @@ watch(
 onBeforeUnmount(() => {
   if (editor) editor.dispose()
 })
+
+// const layout = () => {
+//   if (editor) {
+//     editor.layout()
+//   }
+// }
+// window.addEventListener('resize', layout)
 </script>
 
 <style lang="scss" scoped>

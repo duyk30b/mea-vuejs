@@ -1,21 +1,20 @@
-import ckeditor5 from '@ckeditor/vite-plugin-ckeditor5'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
+import { createRequire } from 'node:module'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/',
   plugins: [
     vue(),
     vueDevTools(),
     tailwindcss(),
-    ckeditor5({ theme: require.resolve('@ckeditor/ckeditor5-theme-lark') }),
     (monacoEditorPlugin as any).default({
       languageWorkers: ['editorWorkerService', 'json', 'html', 'typescript', 'css'],
     }),
@@ -29,8 +28,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/@ckeditor') || id.includes('node_modules/ckeditor5')) {
-            return 'vendor_ckeditor'
+          if (id.includes('node_modules/tinymce')) {
+            return 'vendor_tinymce'
           } else if (id.includes('node_modules/monaco-editor')) {
             return 'vendor_monaco_editor'
           } else if (id.includes('node_modules/ant-design-vue')) {

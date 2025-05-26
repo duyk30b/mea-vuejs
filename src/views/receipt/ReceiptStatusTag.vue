@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<{ receipt?: Receipt | undefined }>(), { r
   <VueTag v-else-if="receipt.status === ReceiptStatus.Success" color="green" icon="check">
     Hoàn thành
   </VueTag>
-  <VueTag v-else-if="receipt.status === ReceiptStatus.Cancelled" color="default" icon="stop">
+  <VueTag v-else-if="receipt.status === ReceiptStatus.Voided" color="default" icon="stop">
     Hủy
   </VueTag>
 </template>

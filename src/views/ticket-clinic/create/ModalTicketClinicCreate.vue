@@ -908,9 +908,7 @@ defineExpose({ openModal })
             style="flex-basis: 45%; flex: 1; min-width: 300px"
           >
             <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
+              {{ roleMap[ticketUser.roleId]?.name || '' }}
             </div>
             <div>
               <InputFilter

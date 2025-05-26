@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconPrint, IconDelete } from '../../../../common/icon-antd'
+import { IconDelete, IconPrint, IconRight } from '../../../../common/icon-antd'
+import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
   InputFilter,
@@ -13,25 +13,29 @@ import {
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import CKEditor5Vue from '../../../../common/ckeditor5-vue/CKEditor5Vue.vue'
+import VueButton from '../../../../common/VueButton.vue'
+import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
+import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
+  compiledTemplatePrintHtml,
   PrintHtml,
-  printHtmlCompiledTemplate,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { Role, RoleService } from '../../../../modules/role'
 import { Ticket } from '../../../../modules/ticket'
+import { TicketRadiology } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
-  PRINT_SETTING: 'PRINT_SETTING',
+  DATA_AND_PRINT: 'DATA_AND_PRINT',
   ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
@@ -51,13 +55,13 @@ const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const printHtmlOptions = ref<{ text: string; value: number }[]>([])
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 
-const activeTab = ref(TABS_KEY.BASIC)
-const saveLoading = ref(false)
-
 const ticketDemo = Ticket.blank()
 ticketDemo.note = 'Viêm mũi dị ứng'
 ticketDemo.startedAt = Date.now()
 ticketDemo.customer = Customer.example()
+
+const activeTab = ref(TABS_KEY.BASIC)
+const saveLoading = ref(false)
 
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
@@ -151,44 +155,70 @@ const handleSave = async () => {
   }
 }
 
-const updatePreview = async () => {
-  if (!iframe.value) return
-  const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
-  if (!doc) return
-
-  let printHtmlId = radiology.value.printHtmlId
+const getPrintHtml = async (printHtmlId: number) => {
   let printHtml: PrintHtml | undefined
-  if (printHtmlId !== 0) {
+  if (printHtmlId != 0) {
     printHtml = await PrintHtmlService.detail(printHtmlId)
     if (!printHtml || !printHtml.content) {
       printHtmlId = 0
     }
   }
-  if (printHtmlId === 0) {
+  if (printHtmlId == 0) {
     printHtmlId = meStore.rootSetting.printDefault.radiology
     printHtml = await PrintHtmlService.detail(printHtmlId)
   }
+  return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
+}
 
+const handleSelectPrintHtml = async () => {
+  radiology.value.printHtml = await getPrintHtml(radiology.value.printHtmlId)
+  updatePreview()
+}
+
+const hostGoogleDriverIdExampleList = [
+  '1d6VOuyrjyG9_HDG6TyB8-b3dslmJPo29',
+  '1f4H08hSUzRSfS4oM5AX4tPbxG_bTqm7L',
+  '1LsOS-RAWtL-_hR-dviAb59e6KKCenkPb',
+  '1N9UKIJHbfbq8dGo93T3hWiHK7_e2vPPQ',
+]
+
+const updatePreview = async () => {
+  if (!iframe.value) return
+  const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
+  if (!doc) return
+
+  const printHtml = await getPrintHtml(radiology.value.printHtmlId)
   if (!printHtml || !printHtml.content) {
     return
   }
-
-  const data = JSON.parse(printHtml.dataExample || '{}')
+  const data = TicketRadiology.blank()
   data.radiology = Radiology.from(radiology.value)
   data.result = radiology.value.resultDefault
   data.description = radiology.value.descriptionDefault
+  data.imageList = Array.from({ length: 4 }, (_, i) => {
+    const image = Image.blank()
+    image.hostType = ImageHost.GoogleDriver
+    image.hostId = hostGoogleDriverIdExampleList[i]
+    return image
+  })
 
-  const textDom = printHtmlCompiledTemplate({
+  const compiledResult = compiledTemplatePrintHtml({
     organization,
     ticket: ticketDemo,
     data,
     masterData: {},
     printHtml,
+    customVariables: radiology.value.customVariables,
   })
 
-  doc.open()
-  doc.write(textDom)
-  doc.close()
+  if (!compiledResult || !compiledResult.html) {
+    return
+  }
+
+  ESDom.writeWindow(doc, {
+    html: compiledResult.html,
+    css: radiology.value.customStyles,
+  })
 }
 
 const handleUpdateTabShow = () => {
@@ -247,20 +277,34 @@ const startTestPrint = async () => {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const data = JSON.parse(printHtml.dataExample || '{}')
+    const data = TicketRadiology.blank()
     data.radiology = Radiology.from(radiology.value)
     data.result = radiology.value.resultDefault
     data.description = radiology.value.descriptionDefault
+    data.imageList = Array.from({ length: 4 }, (_, i) => {
+      const image = Image.blank()
+      image.hostType = ImageHost.GoogleDriver
+      image.hostId = hostGoogleDriverIdExampleList[i]
+      return image
+    })
 
-    const textDom = printHtmlCompiledTemplate({
+    const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketDemo,
       data,
       masterData: {},
       printHtml,
+      customVariables: radiology.value.customVariables,
     })
 
-    await ESDom.startPrint('iframe-print', textDom)
+    if (!compiledResult.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledResult.html,
+      css: radiology.value.customStyles,
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }
@@ -283,10 +327,12 @@ const handleAddCommission = () => {
     ref="modalSelectRadiologyExample"
     @select="handleModalSelectRadiologyExampleSuccess"
   />
-  <div class="page-header">
-    <div class="page-header-content">
-      <IconPrint />
-      Thông tin phiếu {{ radiology.name }}
+
+  <div class="mx-4 mt-4 gap-4 flex items-center">
+    <div class="hidden md:flex items-center gap-2 text-lg font-medium">
+      <Breadcrumb />
+      <IconRight style="font-size: 0.7em; opacity: 0.5" />
+      {{ radiology.name }}
     </div>
   </div>
 
@@ -294,7 +340,7 @@ const handleAddCommission = () => {
     <VueTabs v-model:tabShow="activeTab" @update:tab-show="handleUpdateTabShow">
       <template #menu>
         <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.PRINT_SETTING">
+        <VueTabMenu :tabKey="TABS_KEY.DATA_AND_PRINT">
           <IconPrint />
           Dữ liệu và In
         </VueTabMenu>
@@ -353,24 +399,17 @@ const handleAddCommission = () => {
             </div>
           </div>
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.PRINT_SETTING">
+        <VueTabPanel :tabKey="TABS_KEY.DATA_AND_PRINT">
           <div class="mt-4 flex flex-wrap gap-4">
-            <div style="flex-basis: 90%; flex-grow: 1">
-              <div class="">Chọn mẫu in</div>
+            <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div>
-                <VueSelect
-                  v-model:value="radiology.printHtmlId"
-                  :options="printHtmlOptions"
-                  @select-item="updatePreview"
-                />
-              </div>
-            </div>
-
-            <div style="flex-basis: 600px; flex-grow: 1; min-height: 800px" class="flex flex-col">
-              <div>
-                <div>Nội dung yêu cầu thêm mặc định</div>
+                <div class="">Chọn mẫu in</div>
                 <div>
-                  <InputText v-model:value="radiology.requestNoteDefault" />
+                  <VueSelect
+                    v-model:value="radiology.printHtmlId"
+                    :options="printHtmlOptions"
+                    @select-item="handleSelectPrintHtml"
+                  />
                 </div>
               </div>
               <div class="mt-4">
@@ -379,21 +418,62 @@ const handleAddCommission = () => {
                   <a @click="modalSelectRadiologyExample?.openModal()">( Lấy từ dữ liệu mẫu )</a>
                 </span>
               </div>
-              <div style="flex-grow: 1">
-                <CKEditor5Vue
-                  v-model:value="radiology.descriptionDefault"
-                  @update:value="updatePreview"
+              <div style="flex-grow: 1; min-height: 400px">
+                <VueTinyMCE
+                  v-model:modelValue="radiology.descriptionDefault"
+                  @update:modelValue="updatePreview"
+                  menu-bar
+                  status-bar
                 />
               </div>
               <div class="mt-4">
                 <div>Kết luận mặc định</div>
                 <div>
-                  <InputText v-model:value="radiology.resultDefault" />
+                  <InputText
+                    v-model:value="radiology.resultDefault"
+                    @update:value="updatePreview"
+                  />
                 </div>
+              </div>
+
+              <div class="mt-10">
+                <details>
+                  <summary><a>Cài đặt nâng cao</a></summary>
+                  <div class="mt-4">
+                    <div class="">Khời tạo biến mặc định</div>
+                    <div style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        :value="radiology.printHtml?.initVariable || ''"
+                        language="javascript"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="">Tùy chỉnh biến</div>
+                    <div class="" style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        v-model:value="radiology!.customVariables"
+                        @update:value="updatePreview"
+                        language="javascript"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="">Tùy chỉnh style</div>
+                    <div class="" style="height: 150px; border: 1px solid #cdcdcd">
+                      <MonacoEditor
+                        v-model:value="radiology!.customStyles"
+                        @update:value="updatePreview"
+                        language="css"
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
 
-            <div style="flex-basis: 600px; flex-grow: 1; min-height: 800px" class="flex flex-col">
+            <div style="flex-basis: 500px; flex-grow: 1; min-height: 800px" class="flex flex-col">
               <div class="flex justify-end">
                 <a @click="startTestPrint">In thử</a>
               </div>

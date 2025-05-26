@@ -28,7 +28,7 @@ const { formatMoney, isMobile } = settingStore
 const radiologyMap = ref<Record<string, Radiology>>({})
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
-  {}
+  {},
 )
 
 const ticketRadiologyOrigin = ref<TicketRadiology>(TicketRadiology.blank())
@@ -236,7 +236,8 @@ defineExpose({ openModal })
               v-if="
                 ticketRadiology.discountType === DiscountType.Percent &&
                 ticketRadiology.discountPercent !== 0
-              ">
+              "
+            >
               (
               <b>{{ formatMoney(ticketRadiology.discountMoney) }}</b>
               )
@@ -249,16 +250,19 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="ticketRadiology.discountType === DiscountType.VND"
                 :value="ticketRadiology.discountMoney"
-                @update:value="handleChangeUnitDiscountMoney" />
+                @update:value="handleChangeUnitDiscountMoney"
+              />
               <InputNumber
                 v-else
                 :value="ticketRadiology.discountPercent"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+              />
             </div>
           </div>
         </div>
@@ -268,7 +272,8 @@ defineExpose({ openModal })
           <div style="width: 100%">
             <InputMoney
               :value="ticketRadiology.actualPrice"
-              @update:value="handleChangeActualPrice" />
+              @update:value="handleChangeActualPrice"
+            />
           </div>
         </div>
 
@@ -276,18 +281,16 @@ defineExpose({ openModal })
           <div
             v-for="(ticketUser, index) in ticketUserList"
             :key="index"
-            style="flex-basis: 45%; flex-grow: 1; min-width: 300px">
-            <div>
-              {{
-                roleMap[ticketUser.roleId]?.displayName || roleMap[ticketUser.roleId]?.name || ''
-              }}
-            </div>
+            style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+          >
+            <div>{{ roleMap[ticketUser.roleId]?.name || '' }}</div>
             <div>
               <InputFilter
                 v-model:value="ticketUserList[index].userId"
                 :options="userRoleMapRoleIdOptions[ticketUser.roleId] || []"
                 :maxHeight="200"
-                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên">
+                placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
@@ -309,7 +312,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

@@ -3,7 +3,7 @@ import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
-import { IconEditSquare, IconPulmonology } from '../../../../common/icon-google'
+import { IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
@@ -12,10 +12,10 @@ import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
 import { arrayToKeyValue } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
-import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
@@ -139,7 +139,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
       </VueDropdown>
     </div>
   </div>
-  
+
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="flex flex-wrap gap-4">
       <div style="flex: 2; flex-basis: 500px">

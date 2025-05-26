@@ -3,22 +3,19 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IconDollar,
-  IconHome,
-  IconLeft,
-  IconPicCenter,
+  IconGift,
   IconPrint,
   IconReconciliation,
-  IconRight,
   IconTool,
   IconUser,
 } from '../../common/icon-antd'
 import { IconLabPanel, IconPulmonology, IconWarehouse } from '../../common/icon-google'
 import { useMeStore } from '../../modules/_me/me.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
-import ModalProductGroupManager from './modal/ModalProductGroupManager.vue'
-import ModalProcedureGroupManager from './modal/ModalProcedureGroupManager.vue'
-import ModalRadiologyGroupManager from './modal/ModalRadiologyGroupManager.vue'
 import Breadcrumb from '../component/Breadcrumb.vue'
+import ModalProcedureGroupManager from './modal/ModalProcedureGroupManager.vue'
+import ModalProductGroupManager from './modal/ModalProductGroupManager.vue'
+import ModalRadiologyGroupManager from './modal/ModalRadiologyGroupManager.vue'
 
 const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
@@ -135,6 +132,22 @@ const { permissionIdMap } = meStore
           <div class="card-title">Phương thức thanh toán</div>
           <div class="card-description">
             Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="card"
+        @click="router.push({ name: 'Commission' })"
+        v-if="permissionIdMap[PermissionId.COMMISSION_CRUD]"
+      >
+        <div class="card-icon">
+          <IconGift />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Quy định tính hoa hồng</div>
+          <div class="card-description">
+            Tổng hợp các cách tính hoa hồng cho sản phẩm, dịch vụ, xét nghiệm, ...
           </div>
         </div>
       </div>

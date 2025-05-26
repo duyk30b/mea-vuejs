@@ -200,7 +200,7 @@ const handleMenuSettingClick = (menu: { key: string }) => {
               { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Deposited },
               { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
               { text: 'Hoàn thành', value: ReceiptStatus.Success },
-              { text: 'Hủy', value: ReceiptStatus.Cancelled },
+              { text: 'Hủy', value: ReceiptStatus.Voided },
             ]"
             @update:value="startSearch"
           />

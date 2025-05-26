@@ -127,7 +127,7 @@ const hasChangeData = computed(() => {
       class="mb-4"
       style="flex-basis: 45%; flex: 1; min-width: 300px">
       <div>
-        {{ roleMap[roleId]?.displayName || roleMap[roleId]?.name || '' }}
+        {{ roleMap[roleId]?.name || '' }}
       </div>
       <div>
         <InputFilter

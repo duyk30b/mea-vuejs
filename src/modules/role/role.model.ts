@@ -3,8 +3,8 @@ import { UserRole } from '../user-role/user-role.model'
 
 export class Role {
   id: number
+  roleCode: string
   name: string
-  displayName: string
   permissionIds: string
   isActive: 0 | 1
   updatedAt: number

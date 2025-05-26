@@ -1,3 +1,4 @@
+export { default as InputArea } from './InputArea.vue'
 export { default as InputCheckbox } from './InputCheckbox.vue'
 export { default as InputCheckboxList } from './InputCheckboxList.vue'
 export { default as InputDate } from './InputDate.vue'

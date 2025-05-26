@@ -11,6 +11,7 @@ import { LaboratoryGroup } from '../laboratory-group'
 import { Procedure } from '../procedure'
 import { Product, ProductService } from '../product'
 import type { Radiology } from '../radiology'
+import type { Role } from '../role'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
@@ -22,6 +23,7 @@ import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
+import type { User } from '../user'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -187,8 +189,31 @@ export class Ticket {
       radiologyMap?: Record<string, Radiology>
       laboratoryMap?: Record<string, Laboratory>
       laboratoryGroupMap?: Record<string, LaboratoryGroup>
+      roleMap?: Record<string, Role>
+      userMap?: Record<string, User>
     },
   ) {
+    if (masterData.roleMap) {
+      ticket.ticketUserList?.forEach((i) => {
+        i.role = masterData.roleMap![i.roleId]
+      })
+    }
+    if (masterData.userMap) {
+      ticket.ticketUserList?.forEach((i) => {
+        i.user = masterData.userMap![i.userId]
+      })
+    }
+    if (masterData.procedureMap) {
+      ticket.ticketProcedureList?.forEach((i) => {
+        i.procedure = masterData.procedureMap![i.procedureId]
+      })
+    }
+    if (masterData.radiologyMap) {
+      ticket.ticketRadiologyList?.forEach((i) => {
+        i.radiology = masterData.radiologyMap![i.radiologyId]
+      })
+    }
+
     if (masterData.productMap) {
       const tpList = [
         ...(ticket.ticketProductList || []),
@@ -198,11 +223,6 @@ export class Ticket {
       tpList.forEach((i) => (i.product = masterData.productMap![i.productId]))
     }
 
-    ;(ticket.ticketProcedureList || []).forEach((i) => {
-      if (masterData.procedureMap) {
-        i.procedure = masterData.procedureMap[i.procedureId]
-      }
-    })
     ;(ticket.ticketLaboratoryList || []).forEach((tl) => {
       if (masterData.laboratoryMap) {
         tl.laboratory = masterData.laboratoryMap[tl.laboratoryId]
@@ -270,11 +290,6 @@ export class Ticket {
     }
     // === fix cho những xét nghiệm cũ chưa phân nhóm
 
-    ;(ticket.ticketRadiologyList || []).forEach((i) => {
-      if (masterData.radiologyMap) {
-        i.radiology = masterData.radiologyMap[i.radiologyId]
-      }
-    })
     if (ticket.ticketBatchList) {
       const tpList = [
         ...(ticket.ticketProductList || []),

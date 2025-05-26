@@ -1,9 +1,10 @@
 export class PrintHtml {
+  oid: number
   id: number
   name: string
   content: string // Dạng HTML
   initVariable: string // Dạng JS
-  dataExample: string // Dạng JS
+  dataExample: string // Dạng JS (cách lấy data từ ticket. Không dùng khi cài đặt Radiology)
   updatedAt: number
 
   static init(): PrintHtml {
