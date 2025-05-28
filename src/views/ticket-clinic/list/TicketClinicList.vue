@@ -1,33 +1,34 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconFileSearch, IconMedicalBox, IconRead, IconSetting } from '../../../common/icon-antd'
+import { IconDownload, IconFileSearch, IconRead, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { InteractType } from '../../../modules/commission'
 import { CustomerService, type Customer } from '../../../modules/customer'
+import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Role, RoleService } from '../../../modules/role'
 import { TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { ticketClinicPagination } from '../../../modules/ticket-clinic'
 import { User, UserService } from '../../../modules/user'
 import { DString, ESTimer, formatPhone } from '../../../utils'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
-import ModalTicketClinicCommission from './ModalTicketClinicCommission.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
-const modalTicketClinicCommission = ref<InstanceType<typeof ModalTicketClinicCommission>>()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -166,6 +167,36 @@ const handleModalTicketClinicCreateSuccess = () => {
 const handleModalTicketClinicListSettingSuccess = async () => {
   // await startFetchData()
 }
+
+const downloadTicketClinicList = (menu: { key: string }) => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileTicketApi.downloadExcelTicketClinicList({
+        filter: {
+          customerId: customerId.value ? customerId.value : undefined,
+          registeredAt:
+            fromTime.value || toTime.value
+              ? {
+                  GTE: fromTime.value ? fromTime.value : undefined,
+                  LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+                }
+              : undefined,
+          ticketStatus: ticketStatus.value ?? undefined,
+          ticketType: { NOT: TicketType.Order },
+          customType: customType.value == null ? undefined : customType.value,
+        },
+        sort: sortValue.value
+          ? {
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              registeredAt: sortColumn.value === 'registeredAt' ? sortValue.value : undefined,
+            }
+          : { registeredAt: 'DESC' },
+      })
+    },
+  })
+}
 </script>
 
 <template>
@@ -179,12 +210,11 @@ const handleModalTicketClinicListSettingSuccess = async () => {
     ref="modalTicketClinicListSetting"
     @success="handleModalTicketClinicListSettingSuccess"
   />
-  <ModalTicketClinicCommission ref="modalTicketClinicCommission" />
-  <div class="page-header">
+
+  <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconMedicalBox />
-        Danh sách khám
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
       <div>
         <VueButton
@@ -213,7 +243,16 @@ const handleModalTicketClinicListSettingSuccess = async () => {
         </VueButton>
       </div>
     </div>
-    <div class="mr-2">
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_TICKET_CLINIC_DOWNLOAD_EXCEL]"
+          :icon="IconDownload"
+          @click="downloadTicketClinicList"
+        >
+          Download
+        </VueButton>
+      </div>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -222,7 +261,6 @@ const handleModalTicketClinicListSettingSuccess = async () => {
         </template>
         <div class="vue-menu">
           <a @click="modalTicketClinicListSetting?.openModal()">Cài đặt phòng khám</a>
-          <a @click="modalTicketClinicCommission?.openModal()">Vai trò và hoa hồng</a>
         </div>
       </VueDropdown>
     </div>
@@ -389,7 +427,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
           </tr>
           <tr v-for="(ticket, index) in ticketClinicPagination" :key="index">
             <td class="text-center">
-              <div class="flex gap-4 justify-center">
+              <div class="flex gap-4 justify-center items-center">
                 <router-link
                   :to="{ name: 'TicketClinicDetailContainer', params: { id: ticket.id } }"
                 >
@@ -403,7 +441,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
                     </span>
-                    <span class="text-lg"><IconRead /></span>
+                    <IconRead style="width: 16px; height: 16px;"/>
                   </div>
                 </router-link>
               </div>

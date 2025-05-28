@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import {
   IconClockCircle,
@@ -43,37 +43,32 @@ const updateCustomer = () => {}
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-watch(
-  () => ticketClinicRef.value.id,
-  (newValue) => {
-    if (newValue) {
-      inputOptionsCustomer.value?.setItem({
-        value: ticketClinicRef.value.customer!.id,
-        text: ticketClinicRef.value.customer!.fullName,
-        data: ticketClinicRef.value.customer!,
-      })
-    }
-  },
-)
+onMounted(() => {
+  inputOptionsCustomer.value?.setItem({
+    value: ticketClinicRef.value.customer!.id,
+    text: ticketClinicRef.value.customer!.fullName,
+    data: ticketClinicRef.value.customer!,
+  })
+})
 
 const handleFocusFirstSearchCustomer = async () => {
   await CustomerService.refreshDB()
 }
 
 const searchingCustomer = async (text: string) => {
-  ticketClinicRef.value.customer = Customer.blank()
-  ticketClinicRef.value.customerId = 0
-  if (text) {
-    customerList.value = await CustomerService.search(text)
-  } else {
-    customerList.value = []
-  }
+  // ticketClinicRef.value.customer = Customer.blank()
+  // ticketClinicRef.value.customerId = 0
+  // if (text) {
+  //   customerList.value = await CustomerService.search(text)
+  // } else {
+  //   customerList.value = []
+  // }
 }
 
 const selectCustomer = (data?: Customer) => {
-  ticketClinicRef.value.customerId = data?.id || 0
-  ticketClinicRef.value.customer = Customer.from(data || Customer.blank())
-  ticketClinicRef.value.ticketAttributeMap!.healthHistory = data?.healthHistory || ''
+  // ticketClinicRef.value.customerId = data?.id || 0
+  // ticketClinicRef.value.customer = Customer.from(data || Customer.blank())
+  // ticketClinicRef.value.ticketAttributeMap!.healthHistory = data?.healthHistory || ''
 }
 
 const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
@@ -110,7 +105,7 @@ const handleClickModalRegisterAppointment = () => {
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <div class="bg-white p-4">
     <div class="">
-      <div class="flex justify-between">
+      <div class="flex flex-wrap justify-between">
         <div>
           <span>Tên KH</span>
           <span v-if="ticketClinicRef.customer!.id" class="ml-1">
@@ -126,7 +121,7 @@ const handleClickModalRegisterAppointment = () => {
           v-if="ticketClinicRef.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
           @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)"
         >
-          Sửa thông tin khách hàng
+          Sửa thông tin KH
         </a>
       </div>
       <div style="height: 40px">

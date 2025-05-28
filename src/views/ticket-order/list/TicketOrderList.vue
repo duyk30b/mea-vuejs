@@ -2,7 +2,7 @@
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconAudit, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconAudit, IconDownload, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
@@ -18,6 +18,10 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
+import Breadcrumb from '../../component/Breadcrumb.vue'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { TicketOrderApi } from '../../../modules/ticket-order'
+import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
 
 const modalTicketOrderListSetting = ref<InstanceType<typeof ModalTicketOrderListSetting>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -142,10 +146,32 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalTicketOrderListSetting.value?.openModal()
-  }
+const downloadTicketOrderList = (menu: { key: string }) => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileTicketApi.downloadExcelTicketOrderList({
+        filter: {
+          customerId: customerId.value ? customerId.value : undefined,
+          registeredAt:
+            fromTime.value || toTime.value
+              ? {
+                  GTE: fromTime.value ? fromTime.value : undefined,
+                  LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
+                }
+              : undefined,
+          ticketStatus: ticketStatus.value ? ticketStatus.value : undefined,
+          ticketType: TicketType.Order,
+        },
+        sort: sortValue.value
+          ? {
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+            }
+          : { id: 'DESC' },
+      })
+    },
+  })
 }
 </script>
 
@@ -155,13 +181,13 @@ const handleMenuSettingClick = (menu: { key: string }) => {
     ref="modalTicketOrderListSetting"
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:flex items-center gap-1">
-        <IconAudit />
-        Danh sách hóa đơn
+
+  <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
-      <div>
+      <div class="">
         <VueButton
           color="blue"
           icon="plus"
@@ -176,8 +202,16 @@ const handleMenuSettingClick = (menu: { key: string }) => {
         </VueButton>
       </div>
     </div>
-
-    <div class="mr-2 flex items-center gap-8">
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_TICKET_ORDER_DOWNLOAD_EXCEL]"
+          :icon="IconDownload"
+          @click="downloadTicketOrderList"
+        >
+          Download
+        </VueButton>
+      </div>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">

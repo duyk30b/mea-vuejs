@@ -210,46 +210,4 @@ export class ReceiptApi {
       distributorPaymentList: DistributorPayment.fromList(data.distributorPaymentList || []),
     }
   }
-
-  static async downloadFileUploadExcelExample() {
-    const response = await AxiosInstance.get(`/file-receipt/upload-excel/file-example`)
-    const { data } = response.data as BaseResponse<{
-      buffer: { type: 'Buffer'; data: any[] }
-      mimeType: string
-      filename: string
-    }>
-    const uint8Array = new Uint8Array(data.buffer.data)
-    const blob = new Blob([uint8Array], {
-      type: data.mimeType,
-    })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = data.filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  }
-
-  static async uploadExcelForCreateDraft(file: File) {
-    const formData = new FormData()
-    formData.append('file', file)
-    const response = await AxiosInstance.post(
-      `/file-receipt/upload-excel-for-create-draft`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            console.log(`Đã upload: ${percentCompleted}%`)
-          }
-        },
-      },
-    )
-    const { data } = response.data as BaseResponse<{ receiptId: number }>
-    return data
-  }
 }

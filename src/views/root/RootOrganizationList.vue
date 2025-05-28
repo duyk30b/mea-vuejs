@@ -85,7 +85,7 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
           <tr>
             <th>ID</th>
             <th>Phone</th>
-            <th>Email</th>
+            <th>Facebook</th>
             <th>Name</th>
             <th>ExpiryDate</th>
             <th>Note</th>
@@ -100,7 +100,7 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
           <tr v-for="(organization, i) in organizationList" :key="i">
             <td class="text-center">{{ organization.id }}</td>
             <td class="text-center">{{ organization.phone }}</td>
-            <td>{{ organization.email }}</td>
+            <td>{{ organization.facebook }}</td>
             <td>{{ organization.name }}</td>
             <td class="text-center">{{ timeToText(organization.expiryDate) }}</td>
             <td>{{ organization.note }}</td>

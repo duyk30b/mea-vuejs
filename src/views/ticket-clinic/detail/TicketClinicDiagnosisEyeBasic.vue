@@ -32,7 +32,6 @@ const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisEyeBasic.vue:30 ~ onMounted')
 })
 
 watch(

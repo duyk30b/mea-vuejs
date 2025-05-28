@@ -5,6 +5,8 @@ export class Customer {
   fullName: string
   customerSourceId: number
   phone?: string
+  zalo?: string
+  facebook?: string
   birthday?: number
   yearOfBirth?: number
   gender?: EGender
@@ -36,9 +38,9 @@ export class Customer {
   static example(): Customer {
     const customer = Customer.blank()
     customer.fullName = 'Nguyễn Văn A'
+    customer.phone = '0968123456'
     customer.birthday = new Date('1990-09-04').getTime()
     customer.gender = 1
-    customer.phone = '0968123456'
     customer.addressProvince = 'Hà Nội'
     customer.addressDistrict = 'Long Biên'
     customer.addressWard = 'Thạch Bàn'

@@ -53,7 +53,6 @@ watch(
 )
 
 onMounted(() => {
-  console.log('🚀 ~ file: ProcedureInfo.vue:39 ~ onMounted ~ onMounted:')
 })
 </script>
 

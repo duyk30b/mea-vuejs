@@ -10,7 +10,7 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicProcedureApi, ticketClinicRef, TicketClinicUserApi } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import type { TicketUser } from '../../../../modules/ticket-user'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
@@ -47,7 +47,6 @@ const hasChangePriority = computed(() => {
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicProcedure.vue:45 ~ onMounted')
   try {
     procedureMap.value = await ProcedureService.getMap()
   } catch (error: any) {

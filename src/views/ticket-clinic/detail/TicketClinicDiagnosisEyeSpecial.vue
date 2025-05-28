@@ -23,7 +23,6 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>
 const saveLoading = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicDiagnosisEyeSpecial.vue:26 ~ onMounted')
 })
 
 watch(

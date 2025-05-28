@@ -59,7 +59,6 @@ const radiologyMap = ref<Record<string, Radiology>>({})
 const sendProductLoading = ref(false)
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicSummary.vue:46 ~ onMounted')
   const fetchData = await Promise.all([ProcedureService.getMap(), RadiologyService.getMap()])
   procedureMap.value = fetchData[0]
   radiologyMap.value = fetchData[1]

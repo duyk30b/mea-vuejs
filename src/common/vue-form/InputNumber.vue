@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { ref, watch, watchEffect } from 'vue'
-import { formatNumber } from '../../utils'
+import { ESNumber } from '../../utils'
 
 const props = withDefaults(
   defineProps<{
@@ -36,7 +36,7 @@ const props = withDefaults(
     placeholder: '',
     required: false,
     validate: () => ({}),
-  }
+  },
 )
 const emit = defineEmits<{ (e: 'update:value', value: number): void }>()
 
@@ -48,25 +48,25 @@ watchEffect(() => {
     ;['GT', 'gt', '>'].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
       if (propsValid != null && !(Number(props.value) > propsValid)) {
-        msg = `Giá trị phải lớn hơn ${formatNumber({ number: propsValid })}`
+        msg = `Giá trị phải lớn hơn ${ESNumber.format({ number: propsValid })}`
       }
     })
     ;['GTE', 'gte', '>='].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
       if (propsValid != null && !(Number(props.value) >= propsValid)) {
-        msg = `Giá trị phải lớn hơn hoặc bằng ${formatNumber({ number: propsValid })}`
+        msg = `Giá trị phải lớn hơn hoặc bằng ${ESNumber.format({ number: propsValid })}`
       }
     })
     ;['LT', 'lt', '<'].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
       if (propsValid != null && !(Number(props.value) < propsValid)) {
-        msg = `Giá trị phải nhỏ hơn hoặc bằng ${formatNumber({ number: propsValid })}`
+        msg = `Giá trị phải nhỏ hơn hoặc bằng ${ESNumber.format({ number: propsValid })}`
       }
     })
     ;['LTE', 'lte', '<='].forEach((rule) => {
       const propsValid = props.validate[rule as keyof typeof props.validate]
       if (propsValid != null && !(Number(props.value) <= propsValid)) {
-        msg = `Giá trị phải nhỏ hơn hoặc bằng ${formatNumber({ number: propsValid })}`
+        msg = `Giá trị phải nhỏ hơn hoặc bằng ${ESNumber.format({ number: propsValid })}`
       }
     })
     return inputNumber.value.setCustomValidity(msg)
@@ -86,7 +86,7 @@ onMounted(() => {
           .join('.')
       }
     },
-    { immediate: true }
+    { immediate: true },
   )
 })
 
@@ -144,7 +144,8 @@ defineExpose({ focus })
         :required="required"
         inputmode="decimal"
         @focus="handleFocus"
-        @input="handleInput" />
+        @input="handleInput"
+      />
     </div>
     <div v-if="append" class="append">
       {{ append }}

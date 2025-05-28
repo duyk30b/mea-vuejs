@@ -57,7 +57,8 @@ import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
 import { UserService, type User } from '../../../modules/user'
-import { RoleService, type Role } from '../../../modules/role'
+import { Role, RoleService } from '../../../modules/role'
+import { UserRoleService } from '../../../modules/user-role'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
@@ -75,51 +76,53 @@ const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
 const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
-const userMap = ref<Record<string, User>>({})
-const roleMap = ref<Record<string, Role>>({})
+
+const ticketLoaded = ref(false)
 
 onBeforeMount(async () => {
   const ticketId = Number(route.params.id)
-  if (ticketId) {
-    await startFetchData(ticketId)
-  } else {
-    ticketClinicRef.value = Ticket.blank()
-    ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
-    ticketClinicRef.value.customer = Customer.init()
-  }
-
   const fetchData = await Promise.all([
+    startFetchData(ticketId),
     ProcedureService.getMap(),
     LaboratoryService.getMap(),
     LaboratoryGroupService.getMap(),
     RadiologyService.getMap(),
-    UserService.getMap(),
-    RoleService.getMap(),
+    UserService.reloadMap(),
+    RoleService.reloadMap(),
+    UserRoleService.reloadMap(),
   ])
-  procedureMap.value = fetchData[0]
-  laboratoryMap.value = fetchData[1]
-  laboratoryGroupMap.value = fetchData[2]
-  radiologyMap.value = fetchData[3]
-  userMap.value = fetchData[4]
-  roleMap.value = fetchData[5]
+  procedureMap.value = fetchData[1]
+  laboratoryMap.value = fetchData[2]
+  laboratoryGroupMap.value = fetchData[3]
+  radiologyMap.value = fetchData[4]
+
+  ticketLoaded.value = true
+
+  watchEffect(() => {
+    Ticket.refreshTreeData(ticketClinicRef.value, {
+      procedureMap: procedureMap.value,
+      laboratoryMap: laboratoryMap.value,
+      laboratoryGroupMap: laboratoryGroupMap.value,
+      radiologyMap: radiologyMap.value,
+      userMap: UserService.userMap.value,
+      roleMap: RoleService.roleMap.value,
+    })
+  })
 })
 
 onUnmounted(async () => {
   ticketClinicRef.value = Ticket.blank()
+  ticketLoaded.value = false
 })
 
-watchEffect(() => {
-  Ticket.refreshTreeData(ticketClinicRef.value, {
-    procedureMap: procedureMap.value,
-    laboratoryMap: laboratoryMap.value,
-    laboratoryGroupMap: laboratoryGroupMap.value,
-    radiologyMap: radiologyMap.value,
-    userMap: userMap.value,
-    roleMap: roleMap.value,
-  })
-})
+const startFetchData = async (ticketId?: number) => {
+  if (!ticketId) {
+    ticketClinicRef.value = Ticket.blank()
+    ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
+    ticketClinicRef.value.customer = Customer.init()
+    return
+  }
 
-const startFetchData = async (ticketId: number) => {
   try {
     const ticketData = await ticketClinicStore.detail(ticketId, {
       relation: {
@@ -286,7 +289,19 @@ const clickCloseVisit = () => {
       </VueDropdown>
     </div>
   </div>
-  <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
+  <div v-if="!ticketLoaded" class="mt-4 md:mx-4 flex flex-wrap gap-4">
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+    <div class="vue-skeleton-loading mt-2"></div>
+  </div>
+  <div v-if="ticketLoaded" class="mt-4 md:mx-4 flex flex-wrap gap-4">
     <div style="flex-basis: 600px; flex-grow: 3; max-width: 100%" class="px-4 pt-2 pb-4 bg-white">
       <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
         <template #menu>

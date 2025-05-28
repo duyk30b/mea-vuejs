@@ -33,7 +33,6 @@ const closeModal = () => {
 }
 
 onMounted(() => {
-  console.log('🚀 ~ file: ModalProcedureDetail.vue:37 ~ onMounted ~ onMounted:')
 })
 
 defineExpose({ openModal })

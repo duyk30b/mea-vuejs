@@ -5,7 +5,7 @@ import { IconClose } from '../../../common/icon-antd'
 import { IconCloudUpload, IconDownload, IconUpload } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ProductApi } from '../../../modules/product'
+import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
@@ -56,7 +56,7 @@ const handleUpload = async () => {
   if (!fileSelect.value) return
 
   try {
-    await ProductApi.uploadExcelProductList(fileSelect.value)
+    await FileProductApi.uploadExcelProductList(fileSelect.value)
     AlertStore.addSuccess('Cập nhật danh sách sản phẩm từ excel thành công !')
     emit('success')
     closeModal()
@@ -69,7 +69,7 @@ const handleUpload = async () => {
 
 const downloadFileUploadExcelExample = async () => {
   try {
-    await ProductApi.downloadFileUploadExcelExample()
+    await FileProductApi.downloadFileUploadExcelExample()
   } catch (error) {
     console.log('🚀 ~ ModalUploadProduct.vue:73 ~ downloadFileUploadExcelExample ~ error:', error)
   }
@@ -178,15 +178,12 @@ defineExpose({ openModal })
             <div style="font-weight: 700">Lưu ý:</div>
             <div>
               <div>
-                1. <strong>Mã sản phẩm</strong> là duy nhất
-                và không thể trùng lặp
+                1.
+                <strong>Mã sản phẩm</strong>
+                là duy nhất và không thể trùng lặp
               </div>
-              <div>
-                2. Mã sản phẩm đã có trong hệ thống sẽ bị ghi đè bởi thông tin trong excel
-              </div>
-              <div>
-                3. Chưa hỗ trợ cập nhật số lượng bằng excel
-              </div>
+              <div>2. Mã sản phẩm đã có trong hệ thống sẽ bị ghi đè bởi thông tin trong excel</div>
+              <div>3. Chưa hỗ trợ cập nhật số lượng bằng excel</div>
             </div>
           </div>
         </div>

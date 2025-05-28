@@ -89,7 +89,6 @@ const startFilterLaboratory = (text: string) => {
 }
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicLaboratory.vue:75 ~ onMounted ~ onMounted:')
   try {
     const promiseResult = await Promise.all([
       LaboratoryService.list({ sort: { priority: 'ASC' } }),

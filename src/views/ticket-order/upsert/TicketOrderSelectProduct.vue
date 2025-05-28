@@ -45,7 +45,6 @@ const warehouseMap = ref<Record<string, Warehouse>>({})
 const warehouseIdOptions = ref<number[]>([0])
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketOrderSelectProduct.vue:45  ~ onMounted')
   warehouseMap.value = await WarehouseService.getMap()
 })
 

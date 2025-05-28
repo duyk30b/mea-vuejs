@@ -112,13 +112,6 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'commission',
-      meta: { title: 'Quy định về Hoa hồng' },
-      name: 'Commission',
-      component: () => import('../views/master-data/commission/list/CommissionList.vue'),
-    },
-
-    {
       path: 'laboratory-kit',
       name: 'LaboratoryKit',
       redirect: () => ({ name: 'LaboratoryKitList' }),

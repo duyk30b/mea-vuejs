@@ -33,7 +33,6 @@ watch(
 )
 
 onMounted(() => {
-  console.log('🚀 ~ file: LaboratoryInfo.vue:39 ~ onMounted ~ onMounted:')
 })
 </script>
 

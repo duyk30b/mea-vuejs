@@ -124,6 +124,8 @@ export const SETTING_DEFAULT = {
   },
   SCREEN_CUSTOMER_DETAIL: {},
   SCREEN_CUSTOMER_UPSERT: {
+    facebook: false,
+    zalo: false,
     birthday: true,
     gender: true,
     addressFull: false,
@@ -309,6 +311,8 @@ export const SETTING_DEFAULT = {
   },
   TICKET_CLINIC_CREATE: {
     ticketStatus: TicketStatus.Executing,
+    facebook: false,
+    zalo: false,
     birthday: true,
     gender: true,
     addressFull: false,

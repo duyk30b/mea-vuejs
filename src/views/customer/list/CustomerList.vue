@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import {
-  IconContacts,
   IconDownload,
   IconFileSearch,
   IconForm,
-  IconSetting,
+  IconSetting
 } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
+import { Customer, CustomerService } from '../../../modules/customer'
+import { FileCustomerApi } from '../../../modules/file-excel/file-customer.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { DString, ESTimer } from '../../../utils'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
@@ -141,7 +142,7 @@ const downloadExcelCustomerList = async () => {
     title: 'Xác nhận tải file báo cáo',
     content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
     onOk: async () => {
-      await CustomerApi.downloadExcelCustomerList()
+      await FileCustomerApi.downloadExcelCustomerList()
     },
   })
 }
@@ -156,24 +157,31 @@ const downloadExcelCustomerList = async () => {
     ref="modalCustomerListSettingScreen"
   />
 
-  <div class="page-header">
-    <div class="page-header-content">
-      <div class="hidden md:flex items-center gap-2">
-        <IconContacts />
-        Danh sách khách hàng
+  <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
-      <VueButton
-        v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
-        color="blue"
-        icon="plus"
-        @click="modalCustomerUpsert?.openModal()"
-      >
-        Thêm mới
-      </VueButton>
+      <div class="">
+        <VueButton
+          v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+          color="blue"
+          icon="plus"
+          @click="modalCustomerUpsert?.openModal()"
+        >
+          Thêm mới
+        </VueButton>
+      </div>
     </div>
-    <div class="mr-2 flex gap-8">
-      <div style="cursor: pointer">
-        <IconDownload width="20" height="20" @click="downloadExcelCustomerList" />
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_CUSTOMER_DOWNLOAD_EXCEL]"
+          :icon="IconDownload"
+          @click="downloadExcelCustomerList"
+        >
+          Download
+        </VueButton>
       </div>
       <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
         <template #trigger>

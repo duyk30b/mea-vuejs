@@ -32,13 +32,20 @@ import {
   TicketClinicAttributeApi,
   TicketClinicProductApi,
   ticketClinicRef,
+  TicketClinicUserApi,
 } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
-import { ESDom } from '../../../../utils'
+import { DString, ESDom } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { RoleService } from '../../../../modules/role'
+import { UserService } from '../../../../modules/user'
+import { UserRoleService } from '../../../../modules/user-role'
+import { InputFilter } from '../../../../common/vue-form'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -55,6 +62,12 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProductPrescriptionList = ref<TicketProduct[]>([])
+const roleMap = RoleService.roleMap
+const userMap = UserService.userMap
+const userRoleMapList = UserRoleService.userRoleMapList
+
+let ticketUserListOrigin: TicketUser[] = []
+const ticketUserList = ref<TicketUser[]>([])
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyAdviceType]?: any } = {}
 const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & { advice: string }>({
@@ -62,8 +75,45 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicPrescription.vue:70 ~ onMounted')
+  refreshTicketUserList()
 })
+
+const refreshTicketUserList = async () => {
+  const tuListOrigin: TicketUser[] = []
+  const ticketUserListRef =
+    ticketClinicRef.value.ticketUserGroup?.[InteractType.PrescriptionList]?.[0] || []
+
+  const commissionList = await CommissionService.list({
+    filter: {
+      interactType: InteractType.PrescriptionList,
+      interactId: 0,
+    },
+  })
+
+  // lấy tất cả role có trong commission trước
+  commissionList.forEach((i, index) => {
+    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      tuListOrigin.push(TicketUser.from(findExist))
+    } else {
+      const ticketUserBlank = TicketUser.blank()
+      ticketUserBlank.roleId = i.roleId
+      tuListOrigin.push(ticketUserBlank)
+    }
+  })
+
+  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
+  ticketUserListRef.forEach((i) => {
+    const findExist = tuListOrigin.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      return // nếu đã có rồi thì bỏ qua
+    } else {
+      tuListOrigin.push(TicketUser.from(i))
+    }
+  })
+  ticketUserListOrigin = tuListOrigin
+  ticketUserList.value = TicketUser.fromList(tuListOrigin)
+}
 
 watch(
   () => ticketClinicRef.value.ticketProductPrescriptionList,
@@ -86,6 +136,14 @@ watch(
       ticketAttributeOriginMap[k] = i.value
       ticketAttributeMap.value[k] = i.value
     })
+  },
+  { immediate: true, deep: true },
+)
+
+watch(
+  () => ticketClinicRef.value.ticketUserList,
+  (newValue, oldValue) => {
+    refreshTicketUserList()
   },
   { immediate: true, deep: true },
 )
@@ -116,17 +174,32 @@ const hasChangeAttribute = computed(() => {
   return hasChange
 })
 
+const hasChangeTicketUserList = computed(() => {
+  const result = !TicketUser.equalList(
+    ticketUserListOrigin.filter((i) => !!i.userId),
+    ticketUserList.value.filter((i) => !!i.userId),
+  )
+  return result
+})
+
+const hasChangeData = computed(() => {
+  if (hasChangePriority.value) {
+    return true
+  }
+  if (hasChangeAttribute.value) {
+    return true
+  }
+  if (hasChangeTicketUserList.value) {
+    return true
+  }
+  return false
+})
+
 const disabledButton = computed(() => {
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
     return true
   }
-  if (hasChangePriority.value) {
-    return false
-  }
-  if (hasChangeAttribute.value) {
-    return false
-  }
-  return true
+  return !hasChangeData.value
 })
 
 const changeItemPosition = (index: number, count: number) => {
@@ -196,12 +269,30 @@ const saveAdvicePrescription = async () => {
   }
 }
 
-const savePriorityTicketProductPrescriptionAndAdvice = async () => {
+const saveTicketUserList = async () => {
+  try {
+    await TicketClinicUserApi.chooseUserId({
+      ticketId: ticketClinicRef.value.id,
+      interactType: InteractType.PrescriptionList,
+      interactId: 0,
+      ticketItemId: 0,
+      quantity: 1,
+      ticketUserList: Object.values(ticketUserList.value),
+    })
+  } catch (e: any) {
+    console.log('🚀 ~ TicketClinicPrescription.vue:184 ~ e:', e)
+  }
+}
+
+const savePrescription = async () => {
   if (hasChangePriority.value) {
     savePriorityTicketProductPrescription()
   }
   if (hasChangeAttribute.value) {
     saveAdvicePrescription()
+  }
+  if (hasChangeTicketUserList.value) {
+    saveTicketUserList()
   }
 }
 
@@ -399,6 +490,43 @@ const clickOpenModalSavePrescriptionSample = () => {
         <VueTinyMCE v-model="ticketAttributeMap.advice" />
       </div>
     </div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-4">
+      <template v-if="ticketUserList.length">
+        <div
+          v-for="(ticketUser, index) in ticketUserList"
+          :key="index"
+          style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+        >
+          <div>
+            {{ roleMap[ticketUser.roleId]?.name || '' }}
+          </div>
+          <div>
+            <InputFilter
+              v-model:value="ticketUserList[index].userId"
+              :options="
+                (userRoleMapList[ticketUser.roleId] || []).map((i) => {
+                  return {
+                    value: userMap[i.userId]?.id || 0,
+                    text: userMap[i.userId]?.fullName || '',
+                    data: userMap[i.userId],
+                  }
+                })
+              "
+              :maxHeight="200"
+              placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+            >
+              <template #option="{ item: { data } }">
+                <div>
+                  <b>{{ data.fullName }}</b>
+                  - {{ DString.formatPhone(data.phone) }} -
+                </div>
+              </template>
+            </InputFilter>
+          </div>
+        </div>
+      </template>
+    </div>
   </div>
   <div class="mt-4 flex gap-2">
     <VueButton color="blue" icon="print" @click="startPrint">In đơn thuốc</VueButton>
@@ -409,7 +537,7 @@ const clickOpenModalSavePrescriptionSample = () => {
       style="margin-left: auto"
       :disabled="disabledButton"
       icon="save"
-      @click="savePriorityTicketProductPrescriptionAndAdvice"
+      @click="savePrescription"
     >
       Lưu lại
     </VueButton>

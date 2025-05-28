@@ -2,7 +2,7 @@
 const props = withDefaults(
   defineProps<{
     value: string | null | undefined
-    type?: 'text' | 'email'
+    type?: 'text' | 'email' | 'url'
     name?: string
     prepend?: string
     append?: string

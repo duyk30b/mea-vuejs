@@ -40,8 +40,8 @@ export class CommissionApi {
 
   static async createOne(commission: Commission) {
     const response = await AxiosInstance.post('/commission/create', {
-      interactType: commission.interactType,
       roleId: commission.roleId,
+      interactType: commission.interactType,
       interactId: commission.interactId,
       commissionValue: commission.commissionValue,
       commissionCalculatorType: commission.commissionCalculatorType,
@@ -52,8 +52,8 @@ export class CommissionApi {
 
   static async updateOne(id: number, commission: Commission) {
     const response = await AxiosInstance.patch(`/commission/update/${id}`, {
-      interactType: commission.interactType,
       roleId: commission.roleId,
+      interactType: commission.interactType,
       interactId: commission.interactId,
       commissionValue: commission.commissionValue,
       commissionCalculatorType: commission.commissionCalculatorType,

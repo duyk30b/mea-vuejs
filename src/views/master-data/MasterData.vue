@@ -135,22 +135,6 @@ const { permissionIdMap } = meStore
           </div>
         </div>
       </div>
-
-      <div
-        class="card"
-        @click="router.push({ name: 'Commission' })"
-        v-if="permissionIdMap[PermissionId.COMMISSION_CRUD]"
-      >
-        <div class="card-icon">
-          <IconGift />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Quy định tính hoa hồng</div>
-          <div class="card-description">
-            Tổng hợp các cách tính hoa hồng cho sản phẩm, dịch vụ, xét nghiệm, ...
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 

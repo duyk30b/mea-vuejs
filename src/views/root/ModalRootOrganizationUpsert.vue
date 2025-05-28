@@ -250,7 +250,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 90%; flex-grow: 1">
+        <div style="flex-basis: 40%; flex-grow: 1">
+          <div>Link Facebook</div>
+          <div class="flex-auto">
+            <InputText v-model:value="organization.facebook" />
+          </div>
+        </div>
+
+        <div style="flex-basis: 40%; flex-grow: 1">
           <div>Note</div>
           <div class="flex-auto">
             <InputText v-model:value="organization.note" />

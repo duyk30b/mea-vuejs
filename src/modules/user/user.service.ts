@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { arrayToKeyValue } from '../../utils'
 import { UserRoleService } from '../user-role'
 import { UserApi } from './user.api'
@@ -7,6 +8,7 @@ import { User } from './user.model'
 export class UserService {
   static loadedAll: boolean = false
   static userAll: User[] = []
+  static userMap = ref<Record<string, User>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static getAll = (() => {
@@ -45,6 +47,11 @@ export class UserService {
       }
     }
     return data
+  }
+
+  static async reloadMap() {
+    await UserService.getAll()
+    UserService.userMap.value = arrayToKeyValue(UserService.userAll, 'id')
   }
 
   static async getMap() {

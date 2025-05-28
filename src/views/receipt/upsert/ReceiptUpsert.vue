@@ -3,7 +3,7 @@ import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch, IconGroup, IconSetting } from '../../../common/icon-antd'
+import { IconFileSearch, IconGroup, IconRight, IconSetting } from '../../../common/icon-antd'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
@@ -22,6 +22,7 @@ import ModalUploadReceipt from './ModalUploadReceipt.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
 import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalUploadReceipt = ref<InstanceType<typeof ModalUploadReceipt>>()
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
@@ -215,22 +216,24 @@ const openModalDistributorDetail = (data?: Distributor) => {
   <ModalDistributorDetail ref="modalDistributorDetail" />
   <ModalUploadReceipt ref="modalUploadReceipt" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
-  <div class="page-header">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconGroup />
-        <span v-if="mode == EReceiptUpsertMode.CREATE">Tạo phiếu nhập hàng mới</span>
-        <span v-if="mode == EReceiptUpsertMode.UPDATE">Cập nhật phiếu nhập hàng</span>
-        <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
-      </div>
+  <div class="mx-4 mt-4 gap-2 flex items-center justify-between">
+    <div class="hidden md:flex gap-2 items-center text-lg font-medium">
+      <Breadcrumb />
+      <IconRight style="font-size: 0.7em; opacity: 0.5" />
+      <span v-if="mode == EReceiptUpsertMode.CREATE">Tạo phiếu nhập hàng mới</span>
+      <span v-if="mode == EReceiptUpsertMode.UPDATE">Cập nhật phiếu nhập hàng</span>
+      <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
       <div>
-        <VueButton icon="upload" @click="modalUploadReceipt?.openModal()">
-          Tạo phiếu nhập hàng bằng Excel
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_RECEIPT_UPLOAD_EXCEL]"
+          icon="upload"
+          @click="modalUploadReceipt?.openModal()"
+        >
+          Thêm sản phẩm nhập hàng bằng Excel
         </VueButton>
       </div>
     </div>
-
-    <div class="mr-2 flex items-center gap-8">
+    <div class="mr-2 flex items-center gap-4 flex-wrap">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">

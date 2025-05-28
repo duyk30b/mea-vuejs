@@ -220,6 +220,7 @@ defineExpose({ openModal })
 
       <!-- Prepayment -->
       <form
+        class="p-4"
         v-if="paymentView == PaymentViewType.Prepayment"
         @submit.prevent="(e) => startPrepayment()"
       >
@@ -301,7 +302,7 @@ defineExpose({ openModal })
       <!-- SendProductAndPaymentAndClose -->
       <form
         class="p-4"
-        v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose"
+        v-else-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose"
         @submit.prevent="(e) => startSendProductAndPaymentAndClose()"
       >
         <div class="flex flex-wrap gap-4">

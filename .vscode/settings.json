@@ -46,7 +46,8 @@
     "pinia",
     "tailwindcss",
     "tinymce",
-    "vuejs"
+    "vuejs",
+    "zalo"
   ],
   "editor.linkedEditing": true,
   "explorer.compactFolders": false,

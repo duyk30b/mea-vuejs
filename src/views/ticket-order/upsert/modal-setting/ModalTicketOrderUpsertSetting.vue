@@ -228,6 +228,9 @@ defineExpose({ openModal })
                         <div class="pl-7">
                           <InputRadio
                             v-model:value="settingDisplay.invoiceItemsTable.allowDuplicateItem"
+                            :customStyle="{
+                              item: { width: '100%' },
+                            }"
                             :options="[
                               { key: false, label: 'Cộng gộp số lượng' },
                               {

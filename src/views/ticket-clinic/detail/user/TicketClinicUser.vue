@@ -14,6 +14,7 @@ import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { User, UserService } from '../../../../modules/user'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalTicketUserUpdate from './ModalTicketUserUpdate.vue'
+import { CONFIG } from '../../../../config'
 
 const modalTicketUserUpdate = ref<InstanceType<typeof ModalTicketUserUpdate>>()
 
@@ -31,8 +32,6 @@ const laboratoryMap = ref<Record<string, Laboratory>>({})
 const radiologyMap = ref<Record<string, Radiology>>({})
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicUserCommission.vue:35 ~ onMounted')
-
   const fetchData = await Promise.all([
     UserService.getMap(),
     RoleService.getMap(),
@@ -75,6 +74,7 @@ watch(
         <thead>
           <tr>
             <th>#</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Vai trò</th>
             <th>Nhân viên</th>
             <th>Phiếu</th>
@@ -90,7 +90,10 @@ watch(
             <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
               {{ index + 1 }}
             </td>
-            <td>{{ roleMap[ticketUser.roleId]?.name || '' }}</td>
+            <td class="text-center whitespace-nowrap" v-if="CONFIG.MODE === 'development'">
+              {{ ticketUser.id }}
+            </td>
+            <td style="">{{ roleMap[ticketUser.roleId]?.name || '' }}</td>
             <td>
               <div class="flex gap-1">
                 <span>{{ userMap[ticketUser.userId]?.fullName }}</span>
@@ -100,6 +103,12 @@ watch(
               <div style="min-width: 100px">
                 <template v-if="ticketUser.interactType === InteractType.Ticket">
                   Phiếu khám
+                </template>
+                <template v-if="ticketUser.interactType === InteractType.PrescriptionList">
+                  Đơn thuốc
+                </template>
+                <template v-if="ticketUser.interactType === InteractType.ConsumableList">
+                  Vật tư
                 </template>
                 <template v-if="ticketUser.interactType === InteractType.Product">
                   {{ productMap[ticketUser.interactId]?.brandName }}
@@ -159,7 +168,7 @@ watch(
             </td>
             <td class="text-center">
               <a
-                v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_USER_COMMISSION]"
+                v-if="permissionIdMap[PermissionId.TICKET_CLINIC_USER_UPDATE_COMMISSION]"
                 class="text-orange-500"
                 @click="modalTicketUserUpdate?.openModal(ticketUser)"
               >

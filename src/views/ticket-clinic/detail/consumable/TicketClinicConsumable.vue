@@ -14,12 +14,24 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
-import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import {
+  TicketClinicProductApi,
+  ticketClinicRef,
+  TicketClinicUserApi,
+} from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
 import VueTooltip from '../../../../common/popover/VueTooltip.vue'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { RoleService } from '../../../../modules/role'
+import { UserService } from '../../../../modules/user'
+import { UserRoleService } from '../../../../modules/user-role'
+import { InputFilter } from '../../../../common/vue-form'
+import { CommissionService, InteractType } from '../../../../modules/commission'
+import { TicketStatus } from '../../../../modules/ticket'
+import { DString } from '../../../../utils'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -31,6 +43,69 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProductConsumableList = ref<TicketProduct[]>([])
+const roleMap = RoleService.roleMap
+const userMap = UserService.userMap
+const userRoleMapList = UserRoleService.userRoleMapList
+
+let ticketUserListOrigin: TicketUser[] = []
+const ticketUserList = ref<TicketUser[]>([])
+
+const refreshTicketUserList = async () => {
+  const tuListOrigin: TicketUser[] = []
+  const ticketUserListRef =
+    ticketClinicRef.value.ticketUserGroup?.[InteractType.ConsumableList]?.[0] || []
+
+  const commissionList = await CommissionService.list({
+    filter: {
+      interactType: InteractType.ConsumableList,
+      interactId: 0,
+    },
+  })
+
+  // lấy tất cả role có trong commission trước
+  commissionList.forEach((i, index) => {
+    const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      tuListOrigin.push(TicketUser.from(findExist))
+    } else {
+      const ticketUserBlank = TicketUser.blank()
+      ticketUserBlank.roleId = i.roleId
+      tuListOrigin.push(ticketUserBlank)
+    }
+  })
+
+  // lấy role còn thừa ra ở trong ticketUser vẫn phải hiển thị
+  ticketUserListRef.forEach((i) => {
+    const findExist = tuListOrigin.find((j) => j.roleId === i.roleId)
+    if (findExist) {
+      return // nếu đã có rồi thì bỏ qua
+    } else {
+      tuListOrigin.push(TicketUser.from(i))
+    }
+  })
+  ticketUserListOrigin = tuListOrigin
+  ticketUserList.value = TicketUser.fromList(tuListOrigin)
+}
+
+watch(
+  () => ticketClinicRef.value.ticketProductConsumableList,
+  (newValue, oldValue) => {
+    ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
+  },
+  { immediate: true, deep: true },
+)
+
+watch(
+  () => ticketClinicRef.value.ticketUserList,
+  (newValue, oldValue) => {
+    refreshTicketUserList()
+  },
+  { immediate: true, deep: true },
+)
+
+onMounted(async () => {
+  refreshTicketUserList()
+})
 
 const hasChangePriority = computed(() => {
   for (
@@ -46,16 +121,29 @@ const hasChangePriority = computed(() => {
   return false
 })
 
-watch(
-  () => ticketClinicRef.value.ticketProductConsumableList,
-  (newValue, oldValue) => {
-    ticketProductConsumableList.value = TicketProduct.fromList(newValue || [])
-  },
-  { immediate: true, deep: true },
-)
+const hasChangeTicketUserList = computed(() => {
+  const result = !TicketUser.equalList(
+    ticketUserListOrigin.filter((i) => !!i.userId),
+    ticketUserList.value.filter((i) => !!i.userId),
+  )
+  return result
+})
 
-onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicConsumable.vue:52  ~ onMounted')
+const hasChangeData = computed(() => {
+  if (hasChangePriority.value) {
+    return true
+  }
+  if (hasChangeTicketUserList.value) {
+    return true
+  }
+  return false
+})
+
+const disabledButton = computed(() => {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    return true
+  }
+  return !hasChangeData.value
 })
 
 const changeItemPosition = (index: number, count: number) => {
@@ -71,7 +159,31 @@ const savePriorityTicketProductConsumable = async () => {
       ticketProductList: ticketProductConsumableList.value,
     })
   } catch (e: any) {
-    console.log('🚀 ~ TicketClinicConsumable.vue:70 ~ savePriorityTicketProductConsumable ~ e:', e)
+    console.log('🚀 ~ TicketClinicConsumable.vue:70 ~ saveConsumable ~ e:', e)
+  }
+}
+
+const saveTicketUserList = async () => {
+  try {
+    await TicketClinicUserApi.chooseUserId({
+      ticketId: ticketClinicRef.value.id,
+      interactType: InteractType.ConsumableList,
+      interactId: 0,
+      ticketItemId: 0,
+      quantity: 1,
+      ticketUserList: Object.values(ticketUserList.value),
+    })
+  } catch (e: any) {
+    console.log('🚀 ~ TicketClinicPrescription.vue:184 ~ e:', e)
+  }
+}
+
+const saveConsumable = async () => {
+  if (hasChangePriority.value) {
+    savePriorityTicketProductConsumable()
+  }
+  if (hasChangeTicketUserList.value) {
+    saveTicketUserList()
   }
 }
 
@@ -232,16 +344,51 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
       </table>
     </div>
   </div>
+  <div class="mt-4 flex flex-wrap items-center gap-4">
+    <template v-if="ticketUserList.length">
+      <div
+        v-for="(ticketUser, index) in ticketUserList"
+        :key="index"
+        style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
+      >
+        <div>
+          {{ roleMap[ticketUser.roleId]?.name || '' }}
+        </div>
+        <div>
+          <InputFilter
+            v-model:value="ticketUserList[index].userId"
+            :options="
+              (userRoleMapList[ticketUser.roleId] || []).map((i) => {
+                return {
+                  value: userMap[i.userId]?.id || 0,
+                  text: userMap[i.userId]?.fullName || '',
+                  data: userMap[i.userId],
+                }
+              })
+            "
+            :maxHeight="200"
+            placeholder="Tìm kiếm bằng tên hoặc SĐT của nhân viên"
+          >
+            <template #option="{ item: { data } }">
+              <div>
+                <b>{{ data.fullName }}</b>
+                - {{ DString.formatPhone(data.phone) }} -
+              </div>
+            </template>
+          </InputFilter>
+        </div>
+      </div>
+    </template>
+  </div>
+
   <div class="mt-4 flex gap-4">
     <VueButton
-      v-if="
-        permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE] &&
-        hasChangePriority
-      "
+      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]"
+      :disabled="disabledButton"
       color="blue"
       style="margin-left: auto"
       icon="save"
-      @click="savePriorityTicketProductConsumable"
+      @click="saveConsumable"
     >
       Lưu lại
     </VueButton>

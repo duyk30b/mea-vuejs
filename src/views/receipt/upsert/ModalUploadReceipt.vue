@@ -6,7 +6,7 @@ import { IconClose } from '../../../common/icon-antd'
 import { IconCloudUpload, IconDownload, IconUpload } from '../../../common/icon-google'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ReceiptApi } from '../../../modules/receipt'
+import { FileReceiptApi } from '../../../modules/file-excel/file-receipt.api'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 
 const elementUploadRef = ref<HTMLElement | null>(null)
@@ -60,7 +60,7 @@ const handleUpload = async () => {
   if (!fileSelect.value) return
 
   try {
-    const response = await ReceiptApi.uploadExcelForCreateDraft(fileSelect.value)
+    const response = await FileReceiptApi.uploadExcelForCreateDraft(fileSelect.value)
     console.log('🚀 ~ ModalUploadReceipt.vue:61 ~ handleUpload ~ response:', response)
     AlertStore.addSuccess('Upload file excel thành công')
     emit('success')
@@ -79,7 +79,7 @@ const handleUpload = async () => {
 
 const downloadFileUploadExcelExample = async () => {
   try {
-    await ReceiptApi.downloadFileUploadExcelExample()
+    await FileReceiptApi.downloadFileUploadExcelExample()
   } catch (error) {
     console.log('🚀 ~ ModalUploadReceipt.vue:75 ~ downloadFileUploadExcelExample ~ error:', error)
   }

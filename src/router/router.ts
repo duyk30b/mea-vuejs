@@ -57,13 +57,13 @@ const Router = createRouter({
             {
               path: 'role',
               name: 'Role',
+              meta: { title: 'Vai trò' },
               redirect: () => ({ name: 'RoleList' }),
               children: [
                 {
                   path: 'list',
                   name: 'RoleList',
                   component: () => import('../views/user/role/RoleList.vue'),
-                  meta: { title: 'Vai trò' },
                 },
                 {
                   path: 'upsert/:id?',
@@ -77,6 +77,12 @@ const Router = createRouter({
                   },
                 },
               ],
+            },
+            {
+              path: 'commission',
+              meta: { title: 'Vị trí' },
+              name: 'Commission',
+              component: () => import('../views/user/commission/list/CommissionList.vue'),
             },
           ],
         },

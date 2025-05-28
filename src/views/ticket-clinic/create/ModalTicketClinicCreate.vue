@@ -514,6 +514,26 @@ defineExpose({ openModal })
 
         <template v-if="!ticket.customerId">
           <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.facebook"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <div>Link Facebook</div>
+            <div>
+              <InputText v-model:value="customer.facebook" :disabled="!!customer.id" type="url" />
+            </div>
+          </div>
+
+          <div
+            v-if="settingStore.TICKET_CLINIC_CREATE.zalo"
+            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
+          >
+            <div>Link Zalo</div>
+            <div>
+              <InputText v-model:value="customer.zalo" :disabled="!!customer.id" type="url" />
+            </div>
+          </div>
+
+          <div
             v-if="settingStore.TICKET_CLINIC_CREATE.birthday"
             :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
           >

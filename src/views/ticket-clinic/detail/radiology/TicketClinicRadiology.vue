@@ -63,7 +63,6 @@ const hasChangePriority = computed(() => {
 })
 
 onMounted(async () => {
-  console.log('🚀 ~ file: TicketClinicRadiology.vue:54 ~ onMounted ~ onMounted:')
   try {
     const radiologyAll = await RadiologyService.list({})
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))

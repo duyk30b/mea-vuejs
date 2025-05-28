@@ -1,6 +1,11 @@
 <template>
   <div class="input-select" ref="wrapperRef">
-    <div class="input-select-display" @click="toggleDropdown" :tabindex="0" @keydown="onKeyDown">
+    <div
+      :class="{ 'input-select-display': true, disabled }"
+      @click="toggleDropdown"
+      :tabindex="0"
+      @keydown="onKeyDown"
+    >
       <div class="label">{{ selectedLabel }}</div>
       <div v-if="!isOpen" class="arrow">&#9662;</div>
       <div v-else class="arrow">&#9652;</div>
@@ -37,6 +42,7 @@ const props = defineProps<{
   options: InputSelectOption[]
   value: string | number | null | undefined
   height?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -56,6 +62,7 @@ const selectedLabel = computed(() => {
 })
 
 const toggleDropdown = async () => {
+  if (props.disabled) return
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     await nextTick()
@@ -141,16 +148,25 @@ onBeforeUnmount(() => {
   position: relative;
   .input-select-display {
     padding: 5px 12px 5px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid #d9d9d9;
     border-radius: 2px;
     background: white;
-    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    &:hover {
-      border-color: #40a9ff;
+    &.disabled {
+      cursor: not-allowed;
+      background-color: #eeeeee;
+      &:hover {
+        border-color: #ccc;
+      }
+    }
+    &:not(.disabled):hover {
+      cursor: pointer;
+      &:hover {
+        border-color: #40a9ff;
+      }
     }
     .label {
       flex-grow: 1;

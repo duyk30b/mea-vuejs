@@ -28,7 +28,7 @@ export class TicketClinicProductApi {
           costAmount: i.costAmount,
           actualPrice: i.actualPrice,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -58,7 +58,7 @@ export class TicketClinicProductApi {
           costAmount: i.costAmount,
           hintUsage: i.hintUsage,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -66,7 +66,7 @@ export class TicketClinicProductApi {
   static async destroyTicketProductConsumable(body: { ticketId: number; ticketProductId: number }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-product-consumable/${ticketProductId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-product-consumable/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -77,7 +77,7 @@ export class TicketClinicProductApi {
   }) {
     const { ticketId, ticketProductId } = body
     const response = await AxiosInstance.delete(
-      `/ticket-clinic/${ticketId}/destroy-ticket-product-prescription/${ticketProductId}`
+      `/ticket-clinic/${ticketId}/destroy-ticket-product-prescription/${ticketProductId}`,
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -94,7 +94,7 @@ export class TicketClinicProductApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -111,7 +111,7 @@ export class TicketClinicProductApi {
           id: i.id,
           priority: index + 1,
         })),
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -141,11 +141,12 @@ export class TicketClinicProductApi {
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
@@ -175,11 +176,12 @@ export class TicketClinicProductApi {
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
+              id: i.id || 0,
               roleId: i.roleId || 0,
               userId: i.userId || 0,
             }))
           : undefined,
-      }
+      },
     )
     const { data } = response.data as BaseResponse<boolean>
   }

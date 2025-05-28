@@ -3,7 +3,14 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputHint, InputRadio, InputText, VueSelect, VueSwitch } from '../../../common/vue-form'
+import {
+  InputDate,
+  InputHint,
+  InputRadio,
+  InputText,
+  VueSelect,
+  VueSwitch,
+} from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -179,6 +186,26 @@ defineExpose({ openModal })
               title="Định dạng số điện thoại không đúng"
               @update:value="(e) => (customer.phone = e.replace(/ /g, ''))"
             />
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.facebook"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+        >
+          <div>Link Facebook</div>
+          <div>
+            <InputText type="url" v-model:value="customer.facebook" />
+          </div>
+        </div>
+
+        <div
+          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.zalo"
+          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
+        >
+          <div>Link Zalo</div>
+          <div>
+            <InputText type="url" v-model:value="customer.zalo" />
           </div>
         </div>
 

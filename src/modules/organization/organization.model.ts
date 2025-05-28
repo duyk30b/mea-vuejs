@@ -12,6 +12,7 @@ export class Organization {
   phone: string
   email: string
   emailVerify: 0 | 1
+  facebook: string // Facebook
   level: number
   name: string
   addressProvince: string

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { formatNumber } from '../../utils'
+import { ESNumber } from '../../utils'
 import { SETTING_DEFAULT } from './setting.default'
 
 export const useSettingStore = defineStore('setting-store', {
@@ -14,12 +14,12 @@ export const useSettingStore = defineStore('setting-store', {
       return (money?: number) => {
         if (!money) return '0'
         if (state.SYSTEM_SETTING.moneyDivisionFormat === 1) {
-          return formatNumber({ number: money, fixed: 0 })
+          return ESNumber.format({ number: money, round: 0 })
         }
         if (state.SYSTEM_SETTING.moneyDivisionFormat === 1000) {
-          return formatNumber({
+          return ESNumber.format({
             number: money / state.SYSTEM_SETTING.moneyDivisionFormat,
-            fixed: 3,
+            round: 3,
           })
         }
       }

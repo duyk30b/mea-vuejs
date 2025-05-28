@@ -43,4 +43,24 @@ export class ESDom {
     w.focus()
     w.print()
   }
+
+  static downloadFile = (file: {
+    buffer: { type: 'Buffer'; data: any[] }
+    mimeType: string
+    filename: string
+  }) => {
+    const uint8Array = new Uint8Array(file.buffer.data)
+    const blob = new Blob([uint8Array], {
+      type: file.mimeType,
+    })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = file.filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
 }

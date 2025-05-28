@@ -26,6 +26,8 @@ import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
 import { InventoryStrategy } from '../../../modules/enum'
+import Breadcrumb from '../../component/Breadcrumb.vue'
+import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalUploadProduct = ref<InstanceType<typeof ModalUploadProduct>>()
@@ -240,7 +242,7 @@ const downloadExcelProductList = async () => {
     title: 'Xác nhận tải file báo cáo',
     content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
     onOk: async () => {
-      await ProductApi.downloadExcelProductList()
+      await FileProductApi.downloadExcelProductList()
     },
   })
 }
@@ -264,28 +266,41 @@ const handleModalUploadProductSuccess = async () => {
   />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductDetail ref="modalProductDetail" />
-  <div class="page-header">
-    <div class="mr-2 flex items-center gap-4 flex-wrap">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconWarehouse />
-        Tồn kho
+  <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
-      <VueButton
-        v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
-        color="blue"
-        icon="plus"
-        @click="modalProductUpsert?.openModal()"
-      >
-        Thêm Sản Phẩm
-      </VueButton>
-      <div>
-        <VueButton :icon="IconUpload" @click="modalUploadProduct?.openModal()">Upload</VueButton>
-      </div>
-      <div>
-        <VueButton :icon="IconDownload" @click="downloadExcelProductList">Download</VueButton>
+      <div class="">
+        <VueButton
+          v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
+          color="blue"
+          icon="plus"
+          @click="modalProductUpsert?.openModal()"
+        >
+          Thêm Sản Phẩm
+        </VueButton>
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_PRODUCT_UPLOAD_EXCEL]"
+          :icon="IconUpload"
+          @click="modalUploadProduct?.openModal()"
+        >
+          Upload
+        </VueButton>
+      </div>
+      <div>
+        <VueButton
+          v-if="permissionIdMap[PermissionId.FILE_PRODUCT_DOWNLOAD_EXCEL]"
+          :icon="IconDownload"
+          @click="downloadExcelProductList"
+        >
+          Download
+        </VueButton>
+      </div>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">

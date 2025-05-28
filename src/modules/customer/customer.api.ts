@@ -44,6 +44,8 @@ export class CustomerApi {
     const response = await AxiosInstance.post('/customer/create', {
       fullName: customer.fullName,
       phone: customer.phone,
+      facebook: customer.facebook || '',
+      zalo: customer.zalo || '',
       birthday: customer.birthday,
       yearOfBirth: customer.yearOfBirth,
       gender: customer.gender,
@@ -65,6 +67,8 @@ export class CustomerApi {
     const response = await AxiosInstance.patch(`/customer/update/${id}`, {
       fullName: customer.fullName !== undefined ? customer.fullName : undefined,
       phone: customer.phone !== undefined ? customer.phone : undefined,
+      facebook: customer.facebook !== undefined ? customer.facebook : undefined,
+      zalo: customer.zalo !== undefined ? customer.zalo : undefined,
       birthday: customer.birthday !== undefined ? customer.birthday || null : undefined,
       yearOfBirth: customer.yearOfBirth !== undefined ? customer.yearOfBirth || null : undefined,
       gender: customer.gender !== undefined ? customer.gender : undefined,
@@ -90,27 +94,5 @@ export class CustomerApi {
     const result = response.data as BaseResponse<{ customerId: number; ticketList: Ticket[] }>
     result.data.ticketList = Ticket.fromList(result.data.ticketList)
     return result
-  }
-
-  static async downloadExcelCustomerList() {
-    const response = await AxiosInstance.get(`/customer/download-excel`)
-    const { data } = response.data as BaseResponse<{
-      buffer: { type: 'Buffer'; data: any[] }
-      mimeType: string
-      filename: string
-    }>
-    const uint8Array = new Uint8Array(data.buffer.data)
-    const blob = new Blob([uint8Array], {
-      type: data.mimeType,
-    })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = data.filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
   }
 }

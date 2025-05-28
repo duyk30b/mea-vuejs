@@ -120,6 +120,20 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.facebook">
+                          Hiển thị điền link facebook
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                                       <tr>
+                      <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.zalo">
+                          Hiển thị điền link zalo
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                                       <tr>
+                      <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
                         </InputCheckbox>

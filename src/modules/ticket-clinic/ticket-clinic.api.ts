@@ -28,6 +28,8 @@ export class TicketClinicApi {
           ? {
               fullName: customer.fullName,
               phone: customer.phone,
+              facebook: customer.facebook || '',
+              zalo: customer.zalo || '',
               birthday: customer.birthday,
               yearOfBirth: customer.yearOfBirth,
               gender: customer.gender,
@@ -55,7 +57,7 @@ export class TicketClinicApi {
         return { key: i.key, value: i.value }
       }),
       ticketUserList: body.ticketUserList.map((i) => {
-        return { userId: i.userId || 0, roleId: i.roleId }
+        return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
     const { data } = response.data as BaseResponse<boolean>
@@ -82,7 +84,7 @@ export class TicketClinicApi {
         return { key: i.key, value: i.value != null ? i.value : '' }
       }),
       ticketUserList: ticketUserList.map((i) => {
-        return { userId: i.userId || 0, roleId: i.roleId }
+        return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
     const { data } = response.data as BaseResponse<boolean>
