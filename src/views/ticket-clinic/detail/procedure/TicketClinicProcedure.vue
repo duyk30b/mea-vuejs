@@ -8,9 +8,8 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProcedureApi, ticketClinicRef, TicketClinicUserApi } from '../../../../modules/ticket-clinic'
+import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import type { TicketUser } from '../../../../modules/ticket-user'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
@@ -25,8 +24,6 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const ticketProcedureList = ref<TicketProcedure[]>([])
-
-const procedureMap = ref<Record<string, Procedure>>({})
 
 watch(
   () => ticketClinicRef.value.ticketProcedureList!,
@@ -48,7 +45,7 @@ const hasChangePriority = computed(() => {
 
 onMounted(async () => {
   try {
-    procedureMap.value = await ProcedureService.getMap()
+    await ticketClinicRef.value.refreshProcedure()
   } catch (error: any) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:52 ~ ProcedureService.list ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
@@ -145,7 +142,7 @@ const savePriorityTicketProcedure = async () => {
                 </button>
               </div>
             </td>
-            <td>{{ procedureMap[tpItem.procedureId]?.name }}</td>
+            <td>{{ tpItem.procedure?.name }}</td>
             <td class="text-center">{{ tpItem.quantity }}</td>
             <td class="text-right">
               <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">

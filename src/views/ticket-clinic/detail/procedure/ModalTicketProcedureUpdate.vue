@@ -6,8 +6,9 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
+import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
+import { DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
@@ -15,8 +16,6 @@ import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
-import { DiscountType } from '../../../../modules/enum'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketProcedure, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -25,7 +24,6 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const procedureMap = ref<Record<string, Procedure>>({})
 const roleMap = ref<Record<string, Role>>({})
 const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: string; data: User }[]>>(
   {},
@@ -79,16 +77,14 @@ const refreshTicketUserList = async () => {
 onMounted(async () => {
   try {
     const fetchPromise = await Promise.all([
-      ProcedureService.getMap(),
       RoleService.getMap(),
       UserService.getMap(),
       UserRoleService.list(),
     ])
 
-    procedureMap.value = fetchPromise[0]
-    roleMap.value = fetchPromise[1]
-    const userMap = fetchPromise[2]
-    const userRoleList = fetchPromise[3]
+    roleMap.value = fetchPromise[0]
+    const userMap = fetchPromise[1]
+    const userRoleList = fetchPromise[2]
 
     userRoleList.forEach((i) => {
       const key = i.roleId
@@ -215,7 +211,7 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ procedureMap[ticketProcedure.procedureId]?.name }}
+          {{ ticketProcedure.procedure?.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />

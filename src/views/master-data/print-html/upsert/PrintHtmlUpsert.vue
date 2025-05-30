@@ -6,20 +6,13 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
-import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
 import { compiledTemplatePrintHtml } from '../../../../modules/print-html/print-html.compiled'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Ticket } from '../../../../modules/ticket'
-import { useTicketClinicStore } from '../../../../modules/ticket-clinic'
+import { Ticket, TicketService } from '../../../../modules/ticket'
 import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
-import { Role, RoleService } from '../../../../modules/role'
-import { User, UserService } from '../../../../modules/user'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -33,13 +26,6 @@ const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
 const organization = meStore.organization
-
-let procedureMap: Record<string, Procedure> = {}
-let laboratoryMap: Record<string, Laboratory> = {}
-let laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
-let radiologyMap: Record<string, Radiology> = {}
-let roleMap: Record<string, Role> = {}
-let userMap: Record<string, User> = {}
 
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
@@ -57,21 +43,6 @@ onBeforeMount(async () => {
   } else {
     printHtml.value = PrintHtml.blank()
   }
-
-  const fetchData = await Promise.all([
-    ProcedureService.getMap(),
-    LaboratoryService.getMap(),
-    LaboratoryGroupService.getMap(),
-    RadiologyService.getMap(),
-    RoleService.getMap(),
-    UserService.getMap(),
-  ])
-  procedureMap = fetchData[0]
-  laboratoryMap = fetchData[1]
-  laboratoryGroupMap = fetchData[2]
-  radiologyMap = fetchData[3]
-  roleMap = fetchData[4]
-  userMap = fetchData[5]
 })
 
 const handleSave = async () => {
@@ -131,7 +102,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
     ticketDemo.value = ticketMap[ticketDemoId]
   } else {
     try {
-      const ticketResponse = await useTicketClinicStore().detail(ticketDemoId, {
+      const ticketResponse = await TicketService.detail(ticketDemoId, {
         relation: {
           customer: true,
           customerPaymentList: false, // query khi bật modal thanh toán
@@ -150,15 +121,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
         },
       })
 
-      Ticket.refreshTreeData(ticketResponse, {
-        procedureMap,
-        laboratoryMap,
-        laboratoryGroupMap,
-        radiologyMap,
-        userMap,
-        roleMap,
-      })
-
+      await ticketResponse.refreshAllData()
       ticketMap[ticketDemoId] = ticketResponse
       ticketDemo.value = ticketResponse
     } catch (error) {

@@ -103,7 +103,7 @@ const searchingProduct = async (text: string) => {
 
 const handleModalProductUpsertSuccess = (instance?: Product) => {
   inputOptionsProduct.value?.setItem({
-    text: instance?.brandName,
+    text: instance?.brandName || '',
     data: instance,
     value: instance?.id,
   })

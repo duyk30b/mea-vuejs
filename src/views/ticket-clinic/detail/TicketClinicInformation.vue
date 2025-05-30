@@ -27,6 +27,7 @@ import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
 import { VueDivider } from '../../../common/vue-layout'
+import type { ItemOption } from '../../../common/vue-form/InputOptions.vue'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -36,6 +37,7 @@ const modalTicketClinicRegisterAppointment =
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 
 const customerList = ref<Customer[]>([])
+const customerOptions = ref<ItemOption[]>([])
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -73,7 +75,7 @@ const selectCustomer = (data?: Customer) => {
 
 const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
-    text: instance?.fullName,
+    text: instance?.fullName || '',
     data: instance,
     value: instance?.id,
   })
@@ -127,7 +129,7 @@ const handleClickModalRegisterAppointment = () => {
       <div style="height: 40px">
         <InputOptions
           ref="inputOptionsCustomer"
-          :options="customerList.map((i) => ({ value: i.id, text: i.fullName, data: i }))"
+          :options="customerOptions"
           :maxHeight="320"
           placeholder="(F4) Tìm kiếm bằng Tên hoặc Số Điện Thoại"
           :disabled="!!ticketClinicRef.id"

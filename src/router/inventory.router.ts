@@ -42,6 +42,30 @@ export const inventoryRouter: RouteRecordRaw = {
       ],
     },
     {
+      path: 'stock-check',
+      name: 'StockCheck',
+      meta: { title: 'Kiểm hàng' },
+      redirect: () => ({ name: 'StockCheckList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'StockCheckList',
+          component: () => import('../views/stock-check/list/StockCheckList.vue'),
+        },
+        {
+          path: 'detail/:id',
+          name: 'StockCheckDetail',
+          meta: { title: 'Thông tin kiểm hàng' },
+          component: () => import('../views/stock-check/detail/StockCheckDetail.vue'),
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'StockCheckUpsert',
+          component: () => import('../views/stock-check/upsert/StockCheckUpsert.vue'),
+        },
+      ],
+    },
+    {
       path: 'distributor',
       name: 'Distributor',
       redirect: () => ({ name: 'DistributorList' }),

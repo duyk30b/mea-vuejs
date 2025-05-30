@@ -1,3 +1,4 @@
+import type { Tick } from 'chart.js'
 import { ESArray } from '../../utils'
 import { Appointment } from '../appointment'
 import { Batch, BatchService } from '../batch'
@@ -6,12 +7,12 @@ import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
 import { DiscountType } from '../enum'
 import { Image } from '../image/image.model'
-import { Laboratory, LaboratoryValueType } from '../laboratory'
-import { LaboratoryGroup } from '../laboratory-group'
-import { Procedure } from '../procedure'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '../laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
+import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
-import type { Radiology } from '../radiology'
-import type { Role } from '../role'
+import { RadiologyService, type Radiology } from '../radiology'
+import { RoleService, type Role } from '../role'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
@@ -23,7 +24,7 @@ import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
-import type { User } from '../user'
+import { UserService, type User } from '../user'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -168,73 +169,79 @@ export class Ticket {
     return sources.map((i) => Ticket.basic(i))
   }
 
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
-    ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.interactType]) {
-        this.ticketUserGroup[i.interactType] = {}
-      }
-      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
-        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+  async refreshProduct() {
+    const ticketProductList = [
+      ...(this.ticketProductList || []),
+      ...(this.ticketProductPrescriptionList || []),
+      ...(this.ticketProductConsumableList || []),
+    ].filter((i) => !!i)
+
+    if (!ticketProductList.length) return
+
+    const productIdList = ticketProductList.map((i) => i.productId)
+    let productMap: Record<string, Product> = {}
+    if (productIdList.length) {
+      const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
+      productMap = ESArray.arrayToKeyValue(productList, 'id')
+    }
+
+    ticketProductList.forEach((i) => (i.product = productMap[i.productId]))
+  }
+
+  async refreshProcedure() {
+    if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
+      return
+    }
+    const procedureMap = await ProcedureService.getMap()
+    this.ticketProcedureList?.forEach((i) => {
+      i.procedure = procedureMap![i.procedureId]
     })
   }
 
-  static refreshTreeData(
-    ticket: Ticket,
-    masterData: {
-      productMap?: Record<string, Product>
-      procedureMap?: Record<string, Procedure>
-      radiologyMap?: Record<string, Radiology>
-      laboratoryMap?: Record<string, Laboratory>
-      laboratoryGroupMap?: Record<string, LaboratoryGroup>
-      roleMap?: Record<string, Role>
-      userMap?: Record<string, User>
-    },
-  ) {
-    if (masterData.roleMap) {
-      ticket.ticketUserList?.forEach((i) => {
-        i.role = masterData.roleMap![i.roleId]
-      })
+  async refreshRadiology() {
+    if (!this.ticketRadiologyList || !this.ticketRadiologyList.length) {
+      return
     }
-    if (masterData.userMap) {
-      ticket.ticketUserList?.forEach((i) => {
-        i.user = masterData.userMap![i.userId]
-      })
-    }
-    if (masterData.procedureMap) {
-      ticket.ticketProcedureList?.forEach((i) => {
-        i.procedure = masterData.procedureMap![i.procedureId]
-      })
-    }
-    if (masterData.radiologyMap) {
-      ticket.ticketRadiologyList?.forEach((i) => {
-        i.radiology = masterData.radiologyMap![i.radiologyId]
-      })
-    }
+    const radiologyMap = await RadiologyService.getMap()
+    this.ticketRadiologyList.forEach((i) => {
+      i.radiology = radiologyMap![i.radiologyId]
+    })
+  }
 
-    if (masterData.productMap) {
-      const tpList = [
-        ...(ticket.ticketProductList || []),
-        ...(ticket.ticketProductPrescriptionList || []),
-        ...(ticket.ticketProductConsumableList || []),
-      ]
-      tpList.forEach((i) => (i.product = masterData.productMap![i.productId]))
+  async refreshUserAndRole() {
+    if (!this.ticketUserList || !this.ticketUserList.length) {
+      return
     }
+    const [userMap, roleMap] = await Promise.all([UserService.getMap(), RoleService.getMap()])
+    this.ticketUserList.forEach((i) => {
+      i.user = userMap![i.userId]
+      i.role = roleMap![i.roleId]
+    })
+  }
 
-    ;(ticket.ticketLaboratoryList || []).forEach((tl) => {
-      if (masterData.laboratoryMap) {
-        tl.laboratory = masterData.laboratoryMap[tl.laboratoryId]
-      }
-      tl.ticketLaboratoryResult = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+  async refreshLaboratory() {
+    if (!this.ticketLaboratoryList || !this.ticketLaboratoryList.length) {
+      return
+    }
+    if (!this.ticketLaboratoryGroupList) this.ticketLaboratoryGroupList = []
+    if (!this.ticketLaboratoryResultList) this.ticketLaboratoryResultList = []
+
+    const [laboratoryMap, laboratoryGroupMap] = await Promise.all([
+      LaboratoryService.getMap(),
+      LaboratoryGroupService.getMap(),
+    ])
+
+    this.ticketLaboratoryList.forEach((tl) => {
+      tl.laboratory = laboratoryMap[tl.laboratoryId]
+
+      tl.ticketLaboratoryResult = this.ticketLaboratoryResultList!.find((tlr) => {
         return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
       })
 
       if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
         tl.children =
           tl.laboratory?.children?.map((laboratoryChild) => {
-            let currentTlr = (ticket.ticketLaboratoryResultList || []).find((tlr) => {
+            let currentTlr = this.ticketLaboratoryResultList!.find((tlr) => {
               return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
             })
             if (!currentTlr) {
@@ -251,86 +258,77 @@ export class Ticket {
       }
     })
 
-    if (!ticket.ticketLaboratoryGroupList) {
-      ticket.ticketLaboratoryGroupList = []
-    }
-    ticket.ticketLaboratoryGroupList.forEach((tlg) => {
-      if (masterData.laboratoryGroupMap) {
-        let laboratoryGroup
-        if (masterData.laboratoryGroupMap[tlg.laboratoryGroupId]) {
-          laboratoryGroup = masterData.laboratoryGroupMap[tlg.laboratoryGroupId]
-        } else if (tlg.laboratoryGroupId === 0) {
-          laboratoryGroup = LaboratoryGroup.blank()
-          laboratoryGroup.name = 'Chưa phân nhóm phiếu'
-        } else {
-          laboratoryGroup = LaboratoryGroup.blank()
-          laboratoryGroup.name = `(ID${tlg.laboratoryGroupId}) Nhóm bị xóa`
-        }
-        tlg.laboratoryGroup = laboratoryGroup
+    this.ticketLaboratoryGroupList.forEach((tlg) => {
+      let laboratoryGroup
+      if (laboratoryGroupMap[tlg.laboratoryGroupId]) {
+        laboratoryGroup = laboratoryGroupMap[tlg.laboratoryGroupId]
+      } else if (tlg.laboratoryGroupId === 0) {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.name = 'Chưa phân nhóm phiếu'
+      } else {
+        laboratoryGroup = LaboratoryGroup.blank()
+        laboratoryGroup.name = `(ID${tlg.laboratoryGroupId}) Nhóm bị xóa`
       }
-      tlg.ticketLaboratoryList = (ticket.ticketLaboratoryList || []).filter((tl) => {
+      tlg.laboratoryGroup = laboratoryGroup
+      tlg.ticketLaboratoryList = this.ticketLaboratoryList!.filter((tl) => {
         return tl.ticketLaboratoryGroupId === tlg.id
       })
     })
 
     // === fix cho những xét nghiệm cũ chưa phân nhóm
-    const tlNoGroup = (ticket.ticketLaboratoryList || []).filter((tl) => {
+    const tlNoGroup = this.ticketLaboratoryList.filter((tl) => {
       return tl.ticketLaboratoryGroupId === 0
     })
     if (tlNoGroup.length) {
-      let tlgZero = ticket.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
+      let tlgZero = this.ticketLaboratoryGroupList.find((tlg) => tlg.id === 0)
       if (!tlgZero) {
         tlgZero = TicketLaboratoryGroup.blank()
         tlgZero.laboratoryGroup = LaboratoryGroup.blank()
-        ticket.ticketLaboratoryGroupList.unshift(tlgZero)
+        this.ticketLaboratoryGroupList.unshift(tlgZero)
       }
       tlgZero.ticketLaboratoryList = tlNoGroup
     } else {
-      ticket.ticketLaboratoryGroupList = ticket.ticketLaboratoryGroupList.filter((i) => !!i.id)
-    }
-    // === fix cho những xét nghiệm cũ chưa phân nhóm
-
-    if (ticket.ticketBatchList) {
-      const tpList = [
-        ...(ticket.ticketProductList || []),
-        ...(ticket.ticketProductConsumableList || []),
-        ...(ticket.ticketProductPrescriptionList || []),
-      ]
-      tpList.forEach((tp) => {
-        tp.ticketBatchList = ticket.ticketBatchList!.filter((tb) => tp.id === tb.ticketProductId)
-      })
+      this.ticketLaboratoryGroupList = this.ticketLaboratoryGroupList.filter((i) => !!i.id)
     }
   }
 
-  static async refreshProduct(ticket: Ticket) {
+  refreshTicketProductHasTicketBatchList() {
+    this.ticketBatchList ||= []
     const ticketProductList = [
-      ...(ticket.ticketProductList || []),
-      ...(ticket.ticketProductPrescriptionList || []),
-      ...(ticket.ticketProductConsumableList || []),
-    ].filter((i) => !!i)
-
-    const productIdList = ticketProductList.map((i) => i.productId)
-    let productMap: Record<string, Product> = {}
-    if (productIdList.length) {
-      const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
-      productMap = ESArray.arrayToKeyValue(productList, 'id')
-    }
-
-    ticketProductList.forEach((i) => (i.product = productMap[i.productId]))
-  }
-
-  static async refreshTicketBatch(ticket: Ticket) {
-    ticket.ticketBatchList ||= []
-    const ticketProductList = [
-      ...(ticket.ticketProductList || []),
-      ...(ticket.ticketProductConsumableList || []),
-      ...(ticket.ticketProductPrescriptionList || []),
+      ...(this.ticketProductList || []),
+      ...(this.ticketProductConsumableList || []),
+      ...(this.ticketProductPrescriptionList || []),
     ]
     ticketProductList.forEach((tp) => {
-      tp.ticketBatchList = ticket.ticketBatchList!.filter((tb) => {
+      tp.ticketBatchList = this.ticketBatchList!.filter((tb) => {
         return tp.id === tb.ticketProductId
       })
     })
+  }
+
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    ;(this.ticketUserList || []).forEach((i) => {
+      if (!this.ticketUserGroup[i.interactType]) {
+        this.ticketUserGroup[i.interactType] = {}
+      }
+      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
+        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+    })
+  }
+
+  async refreshAllData() {
+    await Promise.all([
+      this.refreshProduct(),
+      this.refreshProcedure(),
+      this.refreshRadiology(),
+      this.refreshLaboratory(),
+      this.refreshUserAndRole(),
+    ])
+    this.refreshTicketProductHasTicketBatchList()
+    this.refreshTicketUserGroup()
   }
 
   static from(source: Ticket) {

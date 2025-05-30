@@ -18,7 +18,8 @@ const route = useRoute()
 
 const routeTitle = ref<string>('')
 watchEffect(() => {
-  const title = route.matched.slice(-1)[0]?.meta?.title
+  const titleList = route.matched.map((i) => i?.meta?.title).filter((i) => !!i)
+  const title = titleList[titleList.length - 1]
   if (typeof title === 'function') {
     routeTitle.value = title(route)
   } else if (typeof title === 'string') {

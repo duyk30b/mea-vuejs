@@ -1,11 +1,13 @@
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, watchEffect } from 'vue'
 import { IconSearch } from '../icon-antd'
+
+export type ItemOption = { value?: any; text: string; data?: any }
 
 const props = withDefaults(
   defineProps<{
     value?: string | number | boolean | null
-    options?: { value: any; text: string; data?: any }[]
+    options?: ItemOption[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
@@ -15,6 +17,7 @@ const props = withDefaults(
     noClearTextWhenNotSelected?: boolean
     logicFilter?: (data: object, text: string) => boolean
     messageNoResult?: string
+    nullOption?: ItemOption
   }>(),
   {
     value: null,
@@ -28,13 +31,15 @@ const props = withDefaults(
     noClearTextWhenNotSelected: false,
     logicFilter: () => true,
     messageNoResult: 'Không tìm thấy kết quả phù hợp',
+    nullOption: () => ({ text: '' }),
   },
 )
 
 const emit = defineEmits<{
+  (e: 'searching', value: string): void
   (e: 'update:text', value: string): void
   (e: 'update:value', value: string | number | boolean | null): void
-  (e: 'selectItem', value: { value?: any; text?: string; data?: any }): void
+  (e: 'selectItem', value: ItemOption): void
   (e: 'onFocusin'): void
   (e: 'onFocusinFirst'): void
 }>()
@@ -45,9 +50,10 @@ const optionsElement = ref<HTMLElement>()
 const searchText = ref('')
 const indexFocus = ref<number>(-1)
 const showOptions = ref<boolean>(false)
-const itemSelected = ref<any>(null)
+const itemSelected = ref<ItemOption>({ text: '' })
 
-const optionsStringify = ref<string>('')
+let optionsStringify = ''
+let currentValue = props.nullOption.value
 
 const optionsFilter = computed(() => {
   return props.options.filter((item) => {
@@ -55,77 +61,61 @@ const optionsFilter = computed(() => {
   })
 })
 
-watch(
-  () => props.options, // mục đích của watch value là để tìm và show ra text
-  (newOptions: { value: any; text: string; data?: any }[]) => {
-    if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
-    const optionsStringifyNew = JSON.stringify(newOptions)
-    if (optionsStringify.value === optionsStringifyNew) return
+watchEffect(() => {
+  // mục đích của watchEffect là để tìm và show ra text khi có sẵn value
+  if (currentValue === props.value) return
 
-    optionsStringify.value = optionsStringifyNew
+  const optionsStringifyNew = JSON.stringify(props.options)
+  optionsStringify = optionsStringifyNew
+  currentValue = props.value
 
-    const findIndex = newOptions.findIndex((item) => item.value === props.value)
-    if (findIndex === -1) {
-      itemSelected.value = {}
-      searchText.value = ''
-      emit('update:text', '')
-    } else {
-      const item = newOptions[findIndex]
-      itemSelected.value = item
-      searchText.value = item.text
-      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
-      emit('update:text', item.text)
-    }
-  },
-  { immediate: true },
-)
-
-watch(
-  () => props.value, // mục đích của watch value là để tìm và show ra text
-  (newVal) => {
-    if (newVal == null) return
-    const findIndex = props.options.findIndex((item) => item.value === newVal)
-    if (findIndex === -1) {
-      itemSelected.value = {}
-      searchText.value = ''
-      emit('update:text', '')
-    } else {
-      const item = props.options[findIndex]
-      itemSelected.value = item
-      searchText.value = item.text
-      // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
-      emit('update:text', item.text)
-    }
-  },
-  { immediate: true },
-)
+  const findIndex = props.options.findIndex((item) => item.value === props.value)
+  if (findIndex === -1) {
+    itemSelected.value = props.nullOption
+    searchText.value = props.nullOption.text
+    emit('update:text', props.nullOption.text)
+  } else {
+    const item = props.options[findIndex]
+    itemSelected.value = item
+    searchText.value = item.text
+    // indexFocus.value = findIndex // muốn focus đến thằng nào đang giữ luôn, nhưng lỗi, chưa giải quyết được
+    emit('update:text', item.text)
+  }
+})
 
 const handleInput = (e: Event) => {
   const target = e.target as HTMLInputElement
   indexFocus.value = -1
   showOptions.value = true
 
-  itemSelected.value = null
+  itemSelected.value = props.nullOption
   searchText.value = target.value
+  emit('searching', target.value)
   emit('update:text', target.value)
-  emit('update:value', null)
+  emit('update:value', props.nullOption.value)
   // emit('selectItem', {}) // không được bắn event này khi input, nó làm ô input nháy khi gõ
 }
 
 const handleClickOutside = () => {
   showOptions.value = false
-  if (itemSelected.value == null && !props.noClearTextWhenNotSelected) {
-    searchText.value = ''
-    emit('update:text', '')
+  if (itemSelected.value.value == props.nullOption.value && !props.noClearTextWhenNotSelected) {
+    if (currentValue !== props.value) {
+      searchText.value = ''
+      emit('update:text', '')
+      emit('update:value', props.nullOption.value)
+    }
   }
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Tab' || e.key === 'Escape') {
     showOptions.value = false
-    if (itemSelected.value == null && !props.noClearTextWhenNotSelected) {
-      searchText.value = ''
-      emit('update:text', '')
+    if (itemSelected.value.value == props.nullOption.value && !props.noClearTextWhenNotSelected) {
+      if (currentValue !== props.value) {
+        searchText.value = ''
+        emit('update:text', '')
+        emit('update:value', props.nullOption.value)
+      }
     }
   } else if (e.key === 'ArrowDown') {
     indexFocus.value += 1
@@ -149,12 +139,12 @@ const handleClickClear = () => {
   indexFocus.value = -1
   showOptions.value = false
 
-  itemSelected.value = null
+  itemSelected.value = props.nullOption
   searchText.value = ''
 
   emit('update:text', '')
   emit('update:value', null)
-  emit('selectItem', {})
+  emit('selectItem', props.nullOption)
 }
 
 const handleSelectItem = (index: number) => {
@@ -168,8 +158,7 @@ const handleSelectItem = (index: number) => {
   emit('selectItem', item) // phải để event này cuối cùng, để ghi đè: update:text
 
   if (props.clearAfterSelected) {
-    itemSelected.value = null
-    searchText.value = ''
+    clear()
   } else {
     itemSelected.value = item
     searchText.value = item.text
@@ -204,12 +193,13 @@ const focus = () => {
   }
 }
 const clear = () => {
-  itemSelected.value = null
-  searchText.value = ''
+  itemSelected.value = props.nullOption
+  searchText.value = props.nullOption.text
 }
-const setItem = (item: { text?: string; value?: any; data: any }) => {
-  searchText.value = item.text || ''
-  itemSelected.value = item.data || 0
+const setItem = (item: ItemOption) => {
+  searchText.value = item.text
+  itemSelected.value = item
+  currentValue = item.value
 }
 
 let focusFirst = true
@@ -227,7 +217,9 @@ defineExpose({ focus, clear, setItem })
 
 <template>
   <div v-click-outside="handleClickOutside" :class="{ 'vue-input': true, disabled }">
-    <div v-if="prepend" class="prepend">{{ prepend }}</div>
+    <div v-if="prepend" class="prepend">
+      <span>{{ prepend }}</span>
+    </div>
     <div class="input-area">
       <input
         ref="inputRef"
@@ -274,4 +266,11 @@ defineExpose({ focus, clear, setItem })
   </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.prepend {
+  min-width: 60px;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+</style>

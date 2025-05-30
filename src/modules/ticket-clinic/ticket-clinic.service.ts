@@ -1,14 +1,22 @@
-import { ESArray } from '../../utils'
-import { LaboratoryService } from '../laboratory'
-import { LaboratoryGroupService } from '../laboratory-group'
-import { ProcedureService } from '../procedure'
-import { ProductService } from '../product'
-import { RadiologyService } from '../radiology'
+import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
+import { Customer } from '../customer'
 import { TicketApi } from '../ticket/ticket.api'
+import type { TicketDetailQuery } from '../ticket/ticket.dto'
 import { Ticket } from '../ticket/ticket.model'
 
 export class TicketClinicService {
   static ticketMap: Record<string, Ticket> = {} // lưu history
+
+  static async detail(id: number, options: TicketDetailQuery) {
+    const ticketClinic = await TicketApi.detail(id, options)
+
+    if (ticketClinic.customer) {
+      const customer = Customer.from(ticketClinic.customer)
+      await CustomerDB.upsertOne(customer)
+    }
+
+    return ticketClinic
+  }
 
   static async getTicket(ticket: Ticket) {
     if (
@@ -28,26 +36,7 @@ export class TicketClinicService {
           ticketLaboratoryResultList: true,
         },
       })
-      const fetchData = await Promise.all([
-        ProcedureService.getMap(),
-        LaboratoryService.getMap(),
-        LaboratoryGroupService.getMap(),
-        RadiologyService.getMap(),
-        ProductService.list({}),
-      ])
-      const procedureMap = fetchData[0]
-      const laboratoryMap = fetchData[1]
-      const laboratoryGroupMap = fetchData[2]
-      const radiologyMap = fetchData[3]
-      const productMap = ESArray.arrayToKeyValue(fetchData[4], 'id')
-
-      Ticket.refreshTreeData(ticketResponse, {
-        procedureMap,
-        laboratoryMap,
-        laboratoryGroupMap,
-        radiologyMap,
-        productMap,
-      })
+      ticketResponse.refreshAllData()
 
       TicketClinicService.ticketMap[ticket.id] = ticketResponse
     }

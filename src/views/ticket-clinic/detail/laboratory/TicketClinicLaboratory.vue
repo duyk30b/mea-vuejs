@@ -95,7 +95,7 @@ onMounted(async () => {
       LaboratoryGroupService.list({}),
       LaboratoryKitService.list({}),
     ])
-
+    await ticketClinicRef.value.refreshLaboratory()
     laboratoryAll = promiseResult[0]
     laboratoryGroupMap.value = await LaboratoryGroupService.getMap()
 

@@ -335,7 +335,7 @@ const handleClickClear = () => {
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">
       <DatePicker
-        :value="new Date(value || '2024-01-02').getTime()"
+        :value=" value ? new Date(value).getTime() : Date.now()"
         :defaultType="defaultType"
         @update:value="handleValueDatePicker"
       />

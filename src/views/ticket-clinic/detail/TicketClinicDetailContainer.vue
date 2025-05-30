@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { onBeforeMount, onUnmounted, ref, watchEffect } from 'vue'
+import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import {
   IconContacts,
   IconDisconnect,
@@ -20,6 +19,7 @@ import {
   IconRadiology,
   IconStethoscope,
 } from '../../../common/icon-google'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
@@ -28,17 +28,12 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
-import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../modules/laboratory-group'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '../../../modules/procedure'
-import { Radiology, RadiologyService } from '../../../modules/radiology'
-import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
+import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
 import {
   TicketClinicApi,
   ticketClinicRef,
   ticketRefDeliveryStatus,
-  useTicketClinicStore,
 } from '../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
@@ -56,9 +51,6 @@ import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
-import { UserService, type User } from '../../../modules/user'
-import { Role, RoleService } from '../../../modules/role'
-import { UserRoleService } from '../../../modules/user-role'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
@@ -67,47 +59,17 @@ const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
 const settingStore = useSettingStore()
-const ticketClinicStore = useTicketClinicStore()
 const { permissionIdMap } = meStore
 const { formatMoney } = settingStore
 const childComponent = ref<any>(null)
-
-const procedureMap = ref<Record<string, Procedure>>({})
-const laboratoryMap = ref<Record<string, Laboratory>>({})
-const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
-const radiologyMap = ref<Record<string, Radiology>>({})
 
 const ticketLoaded = ref(false)
 
 onBeforeMount(async () => {
   const ticketId = Number(route.params.id)
-  const fetchData = await Promise.all([
-    startFetchData(ticketId),
-    ProcedureService.getMap(),
-    LaboratoryService.getMap(),
-    LaboratoryGroupService.getMap(),
-    RadiologyService.getMap(),
-    UserService.reloadMap(),
-    RoleService.reloadMap(),
-    UserRoleService.reloadMap(),
-  ])
-  procedureMap.value = fetchData[1]
-  laboratoryMap.value = fetchData[2]
-  laboratoryGroupMap.value = fetchData[3]
-  radiologyMap.value = fetchData[4]
+  await startFetchData(ticketId)
 
   ticketLoaded.value = true
-
-  watchEffect(() => {
-    Ticket.refreshTreeData(ticketClinicRef.value, {
-      procedureMap: procedureMap.value,
-      laboratoryMap: laboratoryMap.value,
-      laboratoryGroupMap: laboratoryGroupMap.value,
-      radiologyMap: radiologyMap.value,
-      userMap: UserService.userMap.value,
-      roleMap: RoleService.roleMap.value,
-    })
-  })
 })
 
 onUnmounted(async () => {
@@ -124,7 +86,7 @@ const startFetchData = async (ticketId?: number) => {
   }
 
   try {
-    const ticketData = await ticketClinicStore.detail(ticketId, {
+    const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
         customerPaymentList: false, // query khi bật modal thanh toán

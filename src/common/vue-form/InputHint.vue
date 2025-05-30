@@ -128,8 +128,18 @@ defineExpose({ focus, clear })
       />
     </div>
     <div class="icon-append">
-      <IconClose v-if="!disabled" class="icon-clear-blur" @click="handleClickClear" />
-      <IconCloseCircle v-if="!disabled" class="icon-clear-hover" @click="handleClickClear" />
+      <IconClose
+        style="font-size: 0.7em"
+        v-if="!disabled"
+        class="icon-clear-blur"
+        @click="handleClickClear"
+      />
+      <IconCloseCircle
+        style="font-size: 0.7em"
+        v-if="!disabled"
+        class="icon-clear-hover"
+        @click="handleClickClear"
+      />
     </div>
     <div
       v-if="showOptions"

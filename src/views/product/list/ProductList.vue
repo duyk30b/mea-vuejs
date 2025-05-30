@@ -3,8 +3,8 @@ import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../common/icon-antd'
-import { IconSort } from '../../../common/icon-font-awesome'
-import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
+import { IconSortChange } from '../../../common/icon-font-awesome'
+import { IconEditSquare } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -14,20 +14,20 @@ import { BatchDistributorIdRule, BatchWarehouseIdRule } from '../../../modules/_
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
+import { InventoryStrategy } from '../../../modules/enum'
+import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ProductApi, ProductService, type Product } from '../../../modules/product'
+import { ProductService, type Product } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
 import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer, arrayToKeyValue } from '../../../utils'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalProductDetail from '../detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../upsert/ModalProductUpsert.vue'
 import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
-import { InventoryStrategy } from '../../../modules/enum'
-import Breadcrumb from '../../component/Breadcrumb.vue'
-import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalUploadProduct = ref<InstanceType<typeof ModalUploadProduct>>()
@@ -396,21 +396,21 @@ const handleModalUploadProductSuccess = async () => {
           @click="changeSort('brandName')"
         >
           Tên &nbsp;
-          <IconSort :sort="sortColumn === 'brandName' ? sortValue : ''" />
+          <IconSortChange :sort="sortColumn === 'brandName' ? sortValue : ''" />
         </div>
         <div
           class="cursor-pointer flex items-center justify-center"
           @click="changeSort('expiryDate')"
         >
           HSD &nbsp;
-          <IconSort :sort="sortColumn === 'expiryDate' ? sortValue : ''" />
+          <IconSortChange :sort="sortColumn === 'expiryDate' ? sortValue : ''" />
         </div>
         <div
           class="cursor-pointer ml-auto flex items-center justify-center"
           @click="changeSort('quantity')"
         >
           SL &nbsp;
-          <IconSort :sort="sortColumn === 'quantity' ? sortValue : ''" />
+          <IconSortChange :sort="sortColumn === 'quantity' ? sortValue : ''" />
         </div>
       </div>
       <div v-if="dataLoading">
@@ -645,13 +645,13 @@ const handleModalUploadProductSuccess = async () => {
             <th style="width: 100px" class="cursor-pointer" @click="changeSort('productCode')">
               <div class="flex items-center justify-center">
                 Mã SP &nbsp;
-                <IconSort :sort="sortColumn === 'productCode' ? sortValue : ''" />
+                <IconSortChange :sort="sortColumn === 'productCode' ? sortValue : ''" />
               </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('brandName')">
               <div class="flex items-center justify-center">
                 Tên &nbsp;
-                <IconSort :sort="sortColumn === 'brandName' ? sortValue : ''" />
+                <IconSortChange :sort="sortColumn === 'brandName' ? sortValue : ''" />
               </div>
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
@@ -672,13 +672,13 @@ const handleModalUploadProductSuccess = async () => {
             >
               <div class="flex items-center justify-center">
                 HSD &nbsp;
-                <IconSort :sort="sortColumn === 'expiryDate' ? sortValue : ''" />
+                <IconSortChange :sort="sortColumn === 'expiryDate' ? sortValue : ''" />
               </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('quantity')">
               <div class="flex items-center justify-center">
                 SL &nbsp;
-                <IconSort :sort="sortColumn === 'quantity' ? sortValue : ''" />
+                <IconSortChange :sort="sortColumn === 'quantity' ? sortValue : ''" />
               </div>
             </th>
             <th

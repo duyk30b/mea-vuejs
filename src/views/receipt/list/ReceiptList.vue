@@ -111,11 +111,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const handleMenuSettingClick = (menu: { key: string }) => {
-  if (menu.key === 'screen-setting') {
-    modalReceiptListSetting.value?.openModal()
-  }
-}
 </script>
 
 <template>

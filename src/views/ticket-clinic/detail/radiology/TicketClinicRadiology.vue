@@ -37,7 +37,6 @@ const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
 
 const radiologyOptions = ref<{ value: number; text: string; data: Radiology }[]>([])
-const radiologyMap = ref<Record<string, Radiology>>({})
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
@@ -65,8 +64,8 @@ const hasChangePriority = computed(() => {
 onMounted(async () => {
   try {
     const radiologyAll = await RadiologyService.list({})
+    ticketClinicRef.value.refreshRadiology()
     radiologyOptions.value = radiologyAll.map((i) => ({ value: i.id, text: i.name, data: i }))
-    radiologyMap.value = await RadiologyService.getMap()
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -121,7 +120,7 @@ const savePriorityTicketRadiology = async () => {
 
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
-    const radiologyData = radiologyMap.value[ticketRadiologyData.radiologyId] || Radiology.blank()
+    const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
     let printHtmlId = radiologyData.printHtmlId
     let printHtml: PrintHtml | undefined
     if (printHtmlId !== 0) {
@@ -255,7 +254,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                 <div>Đã hoàn thành</div>
               </VueTooltip>
             </td>
-            <td>{{ radiologyMap[tpItem.radiologyId]?.name }}</td>
+            <td>{{ tpItem.radiology?.name }}</td>
             <td style="max-width: 300px">
               <div class="flex items-center justify-between gap-2">
                 <div

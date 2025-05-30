@@ -3,14 +3,14 @@ import { onMounted, ref } from 'vue'
 import { IconFileSearch } from '../../../common/icon-antd'
 import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
+import { InputNumber } from '../../../common/vue-form'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { timeToText } from '../../../utils'
+import { ESTimer } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalReceiptItemUpdate from './ModalReceiptItemUpdate.vue'
 import { receipt } from './receipt-upsert.store'
-import { InputNumber } from '../../../common/vue-form'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalReceiptItemUpdate = ref<InstanceType<typeof ModalReceiptItemUpdate>>()
@@ -112,7 +112,7 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
             >
               <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
               <div v-if="receiptItem.expiryDate">
-                - HSD {{ timeToText(receiptItem.expiryDate) }}
+                - HSD {{ ESTimer.timeToText(receiptItem.expiryDate) }}
               </div>
             </div>
             <div
@@ -262,7 +262,7 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
               >
                 <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
                 <div v-if="receiptItem.expiryDate">
-                  - HSD {{ timeToText(receiptItem.expiryDate) }}
+                  - HSD {{ ESTimer.timeToText(receiptItem.expiryDate) }}
                 </div>
               </div>
             </div>

@@ -120,7 +120,7 @@ const addTicketProcedure = () => {
 
 const createProcedure = (instance?: Procedure) => {
   inputOptionsProcedure.value?.setItem({
-    text: instance?.name,
+    text: instance?.name || '',
     data: instance,
     value: instance?.id,
   })

@@ -189,7 +189,7 @@ const searchingCustomer = async (text: string) => {
 
 const handleModalCustomerUpsertSuccess = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
-    text: instance?.fullName,
+    text: instance?.fullName || '',
     data: instance,
     value: instance?.id,
   })

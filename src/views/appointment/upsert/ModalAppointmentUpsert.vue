@@ -87,7 +87,7 @@ const openModalForUpdate = async (appointmentProp: Appointment) => {
   appointment.value = Appointment.from(appointmentProp)
   nextTick(() => {
     inputOptionsCustomer.value?.setItem({
-      text: appointment.value.customer?.fullName,
+      text: appointment.value.customer?.fullName || '',
       data: appointment.value.customer,
       value: appointment.value.customer?.id,
     })
@@ -128,7 +128,7 @@ const handleUpsertAppointment = async () => {
 
 const createCustomer = (instance?: Customer) => {
   inputOptionsCustomer.value?.setItem({
-    text: instance?.fullName,
+    text: instance?.fullName || '',
     data: instance,
     value: instance?.id,
   })

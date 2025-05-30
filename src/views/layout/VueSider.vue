@@ -120,6 +120,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       v-if="
         permissionIdMap[PermissionId.PRODUCT_READ] ||
         permissionIdMap[PermissionId.RECEIPT_READ] ||
+        permissionIdMap[PermissionId.STOCK_CHECK_READ] ||
         permissionIdMap[PermissionId.DISTRIBUTOR_READ]
       "
       key="Inventory"
@@ -127,7 +128,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #icon>
         <IconAppstore />
       </template>
-      <template #title>Kho hàng</template>
+      <template #title>Sản phẩm</template>
       <a-menu-item v-if="permissionIdMap[PermissionId.PRODUCT_READ]" key="Product">
         <router-link :to="{ name: 'Product' }">Tồn kho</router-link>
       </a-menu-item>
@@ -136,6 +137,9 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </a-menu-item>
       <a-menu-item v-if="permissionIdMap[PermissionId.DISTRIBUTOR_READ]" key="Distributor">
         <router-link :to="{ name: 'Distributor' }">Nhà cung cấp</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="permissionIdMap[PermissionId.STOCK_CHECK_READ]" key="StockCheck">
+        <router-link :to="{ name: 'StockCheck' }">Kiểm hàng</router-link>
       </a-menu-item>
     </a-sub-menu>
     <a-menu-item v-if="permissionIdMap[PermissionId.MASTER_DATA]" key="MasterData">

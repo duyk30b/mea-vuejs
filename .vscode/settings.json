@@ -51,5 +51,6 @@
   ],
   "editor.linkedEditing": true,
   "explorer.compactFolders": false,
-  "workbench.editor.enablePreview": false
+  "workbench.editor.enablePreview": false,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

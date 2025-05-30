@@ -135,7 +135,7 @@ const searchingDistributor = async (text: string) => {
 
 const handleUpsertDistributorSuccess = (instance?: Distributor) => {
   inputOptionsDistributor.value?.setItem({
-    text: instance?.fullName,
+    text: instance?.fullName || '',
     data: instance,
     value: instance?.id,
   })

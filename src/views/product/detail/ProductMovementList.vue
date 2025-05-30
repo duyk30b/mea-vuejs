@@ -15,6 +15,7 @@ import { timeToText } from '../../../utils'
 import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 import VuePagination from '../../../common/VuePagination.vue'
+import StockCheckStatusTag from '../../stock-check/StockCheckStatusTag.vue'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -48,6 +49,7 @@ const startFetchData = async () => {
       relation: {
         ticket: true,
         receipt: true,
+        stockCheck: true,
         distributor: true,
         customer: true,
         user: true,
@@ -83,10 +85,18 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
-const openBlankReceiptDetail = async (receiptId: number) => {
+const openBlankReceiptDetail = async (voucherId: number) => {
   const route = router.resolve({
     name: 'ReceiptDetail',
-    params: { id: receiptId },
+    params: { id: voucherId },
+  })
+  window.open(route.href, '_blank')
+}
+
+const openBlankStockCheckDetail = async (voucherId: number) => {
+  const route = router.resolve({
+    name: 'StockCheckDetail',
+    params: { id: voucherId },
   })
   window.open(route.href, '_blank')
 }
@@ -105,6 +115,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
             { value: MovementType.Receipt, text: 'Nhập hàng' },
             { value: MovementType.Ticket, text: 'Bán hàng' },
             { value: MovementType.UserChange, text: 'Người dùng sửa' },
+            { value: MovementType.StockCheck, text: 'Kiểm hàng' },
           ]"
           @selectItem="startFetchData"
         />
@@ -209,7 +220,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
         </tr>
         <tr v-for="(productMovement, index) in productMovementList" :key="index">
           <template v-if="productMovement.movementType === MovementType.Receipt">
-            <td>Nhập</td>
+            <td>Nhập hàng</td>
             <td>
               <div>{{ productMovement.distributor!.fullName }}</div>
               <div v-if="productMovement.isRefund">
@@ -232,7 +243,7 @@ const openBlankReceiptDetail = async (receiptId: number) => {
             </td>
           </template>
           <template v-if="productMovement.movementType === MovementType.Ticket">
-            <td>Xuất</td>
+            <td>Xuất hàng</td>
             <td>
               <div>{{ productMovement.customer!.fullName }}</div>
               <div v-if="productMovement.isRefund">
@@ -258,6 +269,26 @@ const openBlankReceiptDetail = async (receiptId: number) => {
               <div>
                 {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
+            </td>
+          </template>
+          <template v-if="productMovement.movementType === MovementType.StockCheck">
+            <td>Kiểm hàng</td>
+            <td>
+              <div>{{ productMovement.user!.fullName }}</div>
+            </td>
+            <td>
+              <div>
+                <a
+                  style="font-size: 0.8rem"
+                  @click="openBlankStockCheckDetail(productMovement.voucherId)"
+                >
+                  SC{{ productMovement.voucherId }}
+                </a>
+                <span class="ml-2">
+                  <StockCheckStatusTag :stockCheck="productMovement.stockCheck" />
+                </span>
+              </div>
+              <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>
           </template>
           <td class="text-center">B{{ productMovement.batchId }}</td>

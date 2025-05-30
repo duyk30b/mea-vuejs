@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch } from 'vue'
 import { IconEditSquare } from '../../../../common/icon-google'
+import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionCalculatorType, InteractType } from '../../../../modules/commission'
@@ -9,12 +10,9 @@ import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Product, ProductService } from '../../../../modules/product'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Role, RoleService } from '../../../../modules/role'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { User, UserService } from '../../../../modules/user'
 import { arrayToKeyValue } from '../../../../utils'
 import ModalTicketUserUpdate from './ModalTicketUserUpdate.vue'
-import { CONFIG } from '../../../../config'
 
 const modalTicketUserUpdate = ref<InstanceType<typeof ModalTicketUserUpdate>>()
 
@@ -23,9 +21,6 @@ const { formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const userMap = ref<Record<string, User>>({})
-const roleMap = ref<Record<string, Role>>({})
-
 const productMap = ref<Record<string, Product>>({})
 const procedureMap = ref<Record<string, Procedure>>({})
 const laboratoryMap = ref<Record<string, Laboratory>>({})
@@ -33,17 +28,13 @@ const radiologyMap = ref<Record<string, Radiology>>({})
 
 onMounted(async () => {
   const fetchData = await Promise.all([
-    UserService.getMap(),
-    RoleService.getMap(),
     ProcedureService.getMap(),
     LaboratoryService.getMap(),
     RadiologyService.getMap(),
   ])
-  userMap.value = fetchData[0]
-  roleMap.value = fetchData[1]
-  procedureMap.value = fetchData[2]
-  laboratoryMap.value = fetchData[3]
-  radiologyMap.value = fetchData[4]
+  procedureMap.value = fetchData[0]
+  laboratoryMap.value = fetchData[1]
+  radiologyMap.value = fetchData[2]
 })
 
 watch(
@@ -93,10 +84,10 @@ watch(
             <td class="text-center whitespace-nowrap" v-if="CONFIG.MODE === 'development'">
               {{ ticketUser.id }}
             </td>
-            <td style="">{{ roleMap[ticketUser.roleId]?.name || '' }}</td>
+            <td style="">{{ ticketUser.role?.name || '' }}</td>
             <td>
               <div class="flex gap-1">
-                <span>{{ userMap[ticketUser.userId]?.fullName }}</span>
+                <span>{{ ticketUser.user?.fullName }}</span>
               </div>
             </td>
             <td>

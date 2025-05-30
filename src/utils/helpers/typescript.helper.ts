@@ -1,11 +1,17 @@
+export class ESTypescript {
+  static keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
+    return Object.keys(e).filter((key) => isNaN(Number(key))) as (keyof T)[]
+  }
+}
+
 export const OmitClass = <T, K extends keyof T>(
   Class: new () => T,
-  keys: K[]
+  keys: K[],
 ): new () => Omit<T, (typeof keys)[number]> => Class
 
 export const PickClass = <T, K extends keyof T>(
   Class: new () => T,
-  keys: K[]
+  keys: K[],
 ): new () => Pick<T, (typeof keys)[number]> => Class
 
 export const keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
@@ -17,14 +23,14 @@ export const valuesEnum = <T extends Record<string, string | number>>(e: T): T[k
 }
 
 export const objectEnum = <T extends Record<string, string | number>>(
-  e: T
+  e: T,
 ): { [K in keyof T]: T[K] } => {
   return keysEnum(e).reduce(
     (acc, key) => {
       acc[key] = e[key]
       return acc
     },
-    {} as { [K in keyof T]: T[K] }
+    {} as { [K in keyof T]: T[K] },
   )
 }
 

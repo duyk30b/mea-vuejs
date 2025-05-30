@@ -262,7 +262,7 @@ const addPrescriptionItem = () => {
 }
 const handleModalProductUpsertSuccess = (instance?: Product) => {
   inputOptionsProduct.value?.setItem({
-    text: instance?.brandName,
+    text: instance?.brandName || '',
     data: instance,
     value: instance?.id,
   })
@@ -339,7 +339,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     })
     .filter((i) => !!i)
 
-  emit('success', ticketProductList)
+  emit('success', ticketProductList as TicketProduct[])
   clear()
 }
 
