@@ -6,7 +6,7 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Procedure } from '../../../../modules/procedure'
 import { TicketProcedure, TicketProcedureApi } from '../../../../modules/ticket-procedure'
 import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ procedure: Procedure }>(), {
   procedure: () => Procedure.blank(),

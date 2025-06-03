@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import VuePagination from '../../../../common/VuePagination.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory } from '../../../../modules/laboratory'
 import { TicketLaboratory, TicketLaboratoryApi } from '../../../../modules/ticket-laboratory'
 import { timeToText } from '../../../../utils'
-import LinkAndStatusTicket from '../../../customer/detail/LinkAndStatusTicket.vue'
-import VuePagination from '../../../../common/VuePagination.vue'
+import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ laboratory: Laboratory }>(), {
   laboratory: () => Laboratory.blank(),

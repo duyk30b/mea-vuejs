@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { DistributorPayment } from '../distributor-payment/distributor-payment.model'
 import {
   StockCheckDetailQuery,
   StockCheckGetQuery,
@@ -25,8 +24,8 @@ export class StockCheckApi {
     const params = StockCheckGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/stock-check/list', { params })
-    const { data } = response.data as BaseResponse
-    return StockCheck.fromList(data)
+    const { data } = response.data as BaseResponse<{ stockCheckList: any[] }>
+    return StockCheck.fromList(data.stockCheckList)
   }
 
   static async detail(id: number, options: StockCheckDetailQuery): Promise<StockCheck> {

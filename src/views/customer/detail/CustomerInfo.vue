@@ -76,10 +76,30 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <div style="flex-basis: 90%; flex: 1; min-width: 90%" class="my-2 flex gap-4 items-center">
+    <div
+      v-if="customer.debt >= 0"
+      style="flex-basis: 90%; flex: 1; min-width: 90%"
+      class="my-2 flex gap-4 items-center"
+    >
       <div style="width: 100px; flex-shrink: 0">Công nợ</div>
-      <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium; text-xl">
+      <div
+        style="flex-shrink: 1; flex-grow: 1; flex-basis: 0; color: var(--text-red)"
+        class="font-bold text-xl"
+      >
         {{ formatMoney(customer.debt) }}
+      </div>
+    </div>
+    <div
+      v-if="customer.debt < 0"
+      style="flex-basis: 90%; flex: 1; min-width: 90%"
+      class="my-2 flex gap-4 items-center"
+    >
+      <div style="width: 100px; flex-shrink: 0">Quỹ</div>
+      <div
+        style="flex-shrink: 1; flex-grow: 1; flex-basis: 0; color: var(--text-green)"
+        class="font-bold text-xl"
+      >
+        {{ formatMoney(-customer.debt) }}
       </div>
     </div>
   </div>

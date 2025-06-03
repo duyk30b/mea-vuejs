@@ -110,7 +110,7 @@ defineExpose({ openModal })
                       <td>
                         <div>
                           <VueSelect
-                            v-model:value="settingDisplay.ticketStatus"
+                            v-model:value="settingDisplay.status"
                             :options="[
                               { value: TicketStatus.Draft, text: 'Chờ khám' },
                               { value: TicketStatus.Executing, text: 'Vào khám' },

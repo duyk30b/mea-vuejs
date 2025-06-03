@@ -309,7 +309,7 @@ const downloadExcelCustomerList = async () => {
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
-              <div v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT] && customer.debt != 0">
+              <div v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0">
                 <VueButton
                   color="default"
                   size="small"
@@ -442,7 +442,7 @@ const downloadExcelCustomerList = async () => {
               <div class="flex justify-between gap-1 items-center">
                 <div>
                   <VueButton
-                    v-if="permissionIdMap[PermissionId.CUSTOMER_PAY_DEBT] && customer.debt != 0"
+                    v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0"
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id)"
                   >

@@ -38,7 +38,7 @@ const openModal = async (distributorId?: number) => {
   if (!distributorId) {
     distributor.value = Distributor.blank()
   } else {
-    distributor.value = await DistributorApi.detail(distributorId)
+    distributor.value = await DistributorService.detail(distributorId)
   }
 
   provinceList.value = await AddressInstance.getAllProvinces()

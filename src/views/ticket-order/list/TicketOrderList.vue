@@ -42,7 +42,7 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('TICKET_ORDER_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const ticketStatus = ref<TicketStatus | null>(null)
+const status = ref<TicketStatus | null>(null)
 const customerId = ref<number>()
 
 const sortColumn = ref<'full_name_en' | 'debt' | 'id' | ''>('')
@@ -70,7 +70,7 @@ const startFetchData = async () => {
                 LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
-        ticketStatus: ticketStatus.value ? ticketStatus.value : undefined,
+        status: status.value ? status.value : undefined,
         ticketType: TicketType.Order,
       },
       sort: sortValue.value
@@ -161,7 +161,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
                   LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
                 }
               : undefined,
-          ticketStatus: ticketStatus.value ? ticketStatus.value : undefined,
+          status: status.value ? status.value : undefined,
           ticketType: TicketType.Order,
         },
         sort: sortValue.value
@@ -284,7 +284,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            v-model:value="ticketStatus"
+            v-model:value="status"
             :options="[
               { text: 'Tất cả', value: null },
               { text: 'Nháp', value: TicketStatus.Draft },
@@ -354,7 +354,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
               <div v-if="settingStore.SCREEN_TICKET_ORDER_LIST.profit" class="text-xs italic">
@@ -444,7 +444,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
             </td>

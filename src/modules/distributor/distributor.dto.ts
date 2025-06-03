@@ -4,7 +4,7 @@ import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/b
 export class DistributorGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: { paymentList?: boolean }
   filter?: {
     isActive?: 1 | 0
     searchText?: string

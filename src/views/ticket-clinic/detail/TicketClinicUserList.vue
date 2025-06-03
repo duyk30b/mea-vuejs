@@ -129,7 +129,7 @@ const hasChangeData = computed(() => {
           v-model:value="ticketUserTicketMap[roleId]!.userId"
           :disabled="
             !permissionIdMap[PermissionId.TICKET_CLINIC_USER_CHOOSE_USERID] ||
-            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+            [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)
           "
           :options="
             userRoleList
@@ -158,7 +158,7 @@ const hasChangeData = computed(() => {
       <VueButton
         v-if="
           permissionIdMap[PermissionId.TICKET_CLINIC_USER_CHOOSE_USERID] &&
-          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)
+          ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)
         "
         style="margin-left: auto"
         color="blue"

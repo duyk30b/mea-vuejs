@@ -141,29 +141,6 @@ const colspan = computed(() => {
           "
         >
           <td
-            v-if="[ReceiptStatus.Draft, ReceiptStatus.Deposited].includes(receipt.status)"
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.Prepayment)"
-          >
-            <a>
-              <span class="mr-1">Đã tạm ứng</span>
-              <IconExclamationCircle />
-            </a>
-          </td>
-          <td
-            v-else-if="[ReceiptStatus.Debt, ReceiptStatus.Success].includes(receipt.status)"
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalReceiptPayment(PaymentViewType.PayDebt)"
-          >
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <IconExclamationCircle />
-            </a>
-          </td>
-          <td
-            v-else
             class="text-right cursor-pointer"
             :colspan="colspan"
             @click="showModalReceiptPayment(PaymentViewType.Success)"
@@ -178,16 +155,16 @@ const colspan = computed(() => {
           </td>
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || receipt.debt">
-          <template v-if="[ReceiptStatus.Draft, ReceiptStatus.Deposited].includes(receipt.status)">
+          <template v-if="receipt.debt >= 0">
             <td class="text-right" :colspan="colspan">Còn thiếu</td>
-            <td colspan="2" class="text-right font-medium">
-              {{ formatMoney(receipt.debt) }}
-            </td>
+            <td colspan="2" class="text-right">{{ formatMoney(receipt.debt) }}</td>
           </template>
-          <template v-else>
-            <td class="text-right" :colspan="colspan">Ghi nợ</td>
-            <td colspan="2" class="text-right font-medium">
-              {{ formatMoney(receipt.debt) }}
+          <template v-if="receipt.debt < 0">
+            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
+              <span>Thanh toán dư</span>
+            </td>
+            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+              {{ formatMoney(-receipt.debt) }}
             </td>
           </template>
         </tr>

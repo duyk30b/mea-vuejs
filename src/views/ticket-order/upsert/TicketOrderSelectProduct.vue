@@ -391,18 +391,12 @@ defineExpose({ focus })
       <div>
         Lô hàng
         <span
-          v-if="
-            ticketProduct.batch?.expiryDate &&
-            ticketProduct.batch?.expiryDate < Date.now()
-          "
+          v-if="ticketProduct.batch?.expiryDate && ticketProduct.batch?.expiryDate < Date.now()"
           class="text-red-500 font-bold"
         >
           (Hết hạn sử dụng)
         </span>
-        <span
-          v-if="ticketProduct.productId && !batchList.length"
-          class="text-red-500 font-bold"
-        >
+        <span v-if="ticketProduct.productId && !batchList.length" class="text-red-500 font-bold">
           (Không còn tồn kho)
         </span>
       </div>
@@ -425,11 +419,7 @@ defineExpose({ focus })
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
               Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
-              <span
-                :class="
-                  ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''
-                "
-              >
+              <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>
                 {{ ticketProduct.product!.unitDefaultName }}
@@ -562,11 +552,13 @@ defineExpose({ focus })
             v-if="ticketProduct.discountType === DiscountType.VND"
             :value="ticketProduct.unitDiscountMoney"
             @update:value="handleChangeUnitDiscountMoney"
+            :validate="{ gte: 0 }"
           />
           <InputNumber
             v-else
             :value="ticketProduct.discountPercent"
             @update:value="handleChangeDiscountPercent"
+            :validate="{ gte: 0, lte: 100 }"
           />
         </div>
       </div>

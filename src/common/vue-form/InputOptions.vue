@@ -99,11 +99,9 @@ const handleInput = (e: Event) => {
 const handleClickOutside = () => {
   showOptions.value = false
   if (itemSelected.value.value == props.nullOption.value && !props.noClearTextWhenNotSelected) {
-    if (currentValue !== props.value) {
-      searchText.value = ''
-      emit('update:text', '')
-      emit('update:value', props.nullOption.value)
-    }
+    searchText.value = ''
+    emit('update:text', '')
+    emit('update:value', props.nullOption.value)
   }
 }
 

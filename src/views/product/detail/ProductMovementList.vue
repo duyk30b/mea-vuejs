@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { VueSelect } from '../../../common/vue-form'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
+import { VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch } from '../../../modules/batch'
 import { MovementType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
 import type { ProductMovement } from '../../../modules/product-movement/product-movement.model'
 import { timeToText } from '../../../utils'
-import LinkAndStatusTicket from '../../customer/detail/LinkAndStatusTicket.vue'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
-import VuePagination from '../../../common/VuePagination.vue'
 import StockCheckStatusTag from '../../stock-check/StockCheckStatusTag.vue'
+import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -28,9 +27,7 @@ const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
 const productMovementList = ref<ProductMovement[]>([])
-const batchList = ref<Batch[]>([])
 
-const batchId = ref<number>(0)
 const movementType = ref<MovementType>()
 
 const page = ref(1)

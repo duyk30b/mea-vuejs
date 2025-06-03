@@ -124,6 +124,14 @@ const hasChangeData = computed(() => {
   return result
 })
 
+const disabledButtonSave = computed(() => {
+  // Dù đã gửi hàng thì vẫn được phép sửa vì có thể điền hoa hồng sau
+  // if (ticketProduct.value.deliveryStatus === DeliveryStatus.Delivered) {
+  //   return true
+  // }
+  return !hasChangeData.value
+})
+
 const handleChangeUnitQuantity = (data: number) => {
   if (ticketProduct.value.deliveryStatus === DeliveryStatus.Pending) {
     const { product, unitRate } = ticketProduct.value
@@ -178,7 +186,7 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -275,7 +283,7 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitQuantity"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeUnitQuantity"
-                :validate="{ gt: 0 }"
+                :validate="{ gte: 0 }"
               />
             </div>
           </div>
@@ -332,12 +340,14 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
               />
             </div>
           </div>
@@ -395,7 +405,7 @@ defineExpose({ openModal })
             Đóng lại
           </VueButton>
           <VueButton
-            :disabled="!hasChangeData"
+            :disabled="disabledButtonSave"
             :loading="saveLoading"
             color="blue"
             type="submit"

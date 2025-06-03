@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import VueTag from '../../../common/VueTag.vue'
-import { Ticket, TicketType } from '../../../modules/ticket'
-import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
+import VueTag from '../../common/VueTag.vue'
+import { Ticket, TicketType } from '../../modules/ticket'
+import TicketStatusTag from './TicketStatusTag.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -38,7 +38,7 @@ const openBlankTicketClinicDetail = async (ticketId: number) => {
 </script>
 
 <template>
-  <div v-if="!ticket" style="font-size: 0.8rem">
+  <div v-if="!ticket.id" style="font-size: 0.8rem">
     <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
   </div>
   <div v-else-if="ticket!.ticketType === TicketType.Order" style="font-size: 0.8rem">

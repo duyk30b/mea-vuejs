@@ -1,8 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import type { Customer } from '../customer'
-import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import type { DiscountType } from '../enum'
+import { Payment } from '../payment/payment.model'
 import type { TicketUser } from '../ticket-user'
 import { Ticket, type TicketStatus, type TicketType } from '../ticket/ticket.model'
 
@@ -11,7 +11,7 @@ export class TicketClinicApi {
     customer?: Customer
     ticketInformation: {
       ticketType: TicketType
-      ticketStatus: TicketStatus
+      status: TicketStatus
       customType: number
       customerSourceId: number
       registeredAt: number
@@ -50,7 +50,7 @@ export class TicketClinicApi {
         customType: ticketInformation.customType,
         customerSourceId: ticketInformation.customerSourceId || 0,
         ticketType: ticketInformation.ticketType,
-        ticketStatus: ticketInformation.ticketStatus,
+        status: ticketInformation.status,
         registeredAt: ticketInformation.registeredAt,
       },
       ticketAttributeList: body.ticketAttributeList.map((i) => {
@@ -184,10 +184,10 @@ export class TicketClinicApi {
       note: body.note,
       paymentMethodId: body.paymentMethodId,
     })
-    const { data } = response.data as BaseResponse<{ ticket: any; customerPayment: any }>
+    const { data } = response.data as BaseResponse<{ ticket: any; payment: any }>
     return {
       ticket: Ticket.from(data.ticket),
-      customerPayment: CustomerPayment.from(data.customerPayment),
+      payment: Payment.from(data.payment),
     }
   }
 

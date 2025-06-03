@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
+import { VueButton } from '../../../common'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconFileSearch } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
+import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
   StockCheck,
   StockCheckApi,
@@ -16,10 +16,7 @@ import {
 } from '../../../modules/stock-check'
 import { ESTimer, ESTypescript, timeToText } from '../../../utils'
 import { Breadcrumb } from '../../component'
-import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import StockCheckStatusTag from '../StockCheckStatusTag.vue'
-import { VueButton } from '../../../common'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -30,7 +27,7 @@ const stockCheckList = ref<StockCheck[]>([])
 
 const dataLoading = ref(false)
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('RECEIPT_PAGINATION_LIMIT')) || 10)
+const limit = ref(Number(localStorage.getItem('STOCK_CHECK_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
 const stockCheckStatus = ref<StockCheckStatus | null>(null)
@@ -110,7 +107,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('RECEIPT_PAGINATION_LIMIT', String(options.limit))
+    localStorage.setItem('STOCK_CHECK_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }

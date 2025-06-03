@@ -254,7 +254,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
               <div style="white-space: nowrap">{{ formatMoney(distributor.debt) }}</div>
               <div
                 v-if="
-                  permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                  permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                   distributor.debt != 0
                 "
                 class="flex justify-end"
@@ -373,11 +373,11 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
               {{ DString.formatAddress(distributor) }}
             </td>
             <td class="text-right">
-              <div class="flex justify-between">
+              <div v-if="distributor.debt > 0" class="flex justify-between gap-2">
                 <div>
                   <VueButton
                     v-if="
-                      permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                      permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                       distributor.debt != 0
                     "
                     size="small"
@@ -386,8 +386,12 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
                     Trả nợ
                   </VueButton>
                 </div>
-                <div class="ml-2">
-                  {{ formatMoney(distributor.debt) }}
+                <div>{{ formatMoney(distributor.debt) }}</div>
+              </div>
+
+              <div v-if="distributor.debt < 0">
+                <div style="color: var(--text-green); font-weight: 500">
+                  Số dư quỹ: {{ formatMoney(-distributor.debt) }}
                 </div>
               </div>
             </td>

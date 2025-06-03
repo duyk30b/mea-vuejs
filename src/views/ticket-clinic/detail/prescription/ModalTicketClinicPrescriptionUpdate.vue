@@ -184,7 +184,7 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -320,7 +320,7 @@ defineExpose({ openModal })
               <InputNumber
                 v-model:value="ticketProduct.unitQuantity"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
-                :validate="{ gt: 0 }"
+                :validate="{ gte: 0 }"
               />
             </div>
           </div>
@@ -374,12 +374,14 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
               />
             </div>
           </div>
@@ -400,6 +402,7 @@ defineExpose({ openModal })
               :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
               :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
               @update:value="handleChangeUnitActualPrice"
+              :validate="{ gte: 0 }"
             />
           </div>
         </div>

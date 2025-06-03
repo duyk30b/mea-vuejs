@@ -8,7 +8,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
 import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,
@@ -73,7 +73,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
     <div class="flex flex-wrap items-center gap-2">
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT]"
+          v-if="permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD]"
           color="blue"
           icon="plus"
           @click="openBlankTicketOrderUpsert(customerId!)"
@@ -109,10 +109,10 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
               <div style="font-weight: 500">
                 {{ formatMoney(ticket.totalMoney) }}
               </div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Deposited" class="text-xs">
+              <div v-if="ticket.status === TicketStatus.Deposited" class="text-xs">
                 Đã thanh toán: {{ formatMoney(ticket.paid) }}
               </div>
             </td>

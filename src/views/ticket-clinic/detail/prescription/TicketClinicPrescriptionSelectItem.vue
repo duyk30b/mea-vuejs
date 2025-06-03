@@ -282,7 +282,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       TicketStatus.Draft,
       TicketStatus.Deposited,
       TicketStatus.Executing,
-    ].includes(ticketClinicRef.value.ticketStatus)
+    ].includes(ticketClinicRef.value.status)
   ) {
     return AlertStore.addWarning(`Trạng thái phiếu khám không hợp lệ`)
   }
@@ -409,7 +409,7 @@ defineExpose({ fetchPrescriptionSample })
               :maxHeight="320"
               placeholder="Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
               :disabled="
-                [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+                [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
               "
               @onFocusinFirst="handleFocusFirstSearchProduct"
               @selectItem="({ data }) => selectProduct(data)"
@@ -551,7 +551,7 @@ defineExpose({ fetchPrescriptionSample })
           <VueButton
             icon="plus"
             :disabled="
-              [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+              [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
             "
             color="blue"
             type="submit"

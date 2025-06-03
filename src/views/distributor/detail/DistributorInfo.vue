@@ -40,12 +40,24 @@ const { formatMoney } = settingStore
           {{ distributor.addressStreet }}
         </td>
       </tr>
-      <tr>
+      <tr v-if="distributor.debt >= 0">
         <td class="px-2 py-1 whitespace-nowrap">Công nợ</td>
-        <td class="px-2 font-medium">
+        <td class="px-2 font-bold text-xl" style="color: var(--text-red)">
           {{ formatMoney(distributor.debt) }}
+        </td>
+      </tr>
+      <tr v-if="distributor.debt < 0">
+        <td class="px-2 py-1 whitespace-nowrap">Quỹ</td>
+        <td class="px-2 font-bold text-xl" style="color: var(--text-green)">
+          {{ formatMoney(-distributor.debt) }}
         </td>
       </tr>
     </tbody>
   </table>
 </template>
+
+<style scoped lang="scss">
+td {
+  padding: 10px 6px;
+}
+</style>

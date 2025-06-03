@@ -46,11 +46,14 @@
     "pinia",
     "tailwindcss",
     "tinymce",
+    "viettelpost",
     "vuejs",
     "zalo"
   ],
   "editor.linkedEditing": true,
   "explorer.compactFolders": false,
   "workbench.editor.enablePreview": false,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "vue.autoInsert.dotValue": true,
+  "vue.complete.casing.props": "autoCamel"
 }

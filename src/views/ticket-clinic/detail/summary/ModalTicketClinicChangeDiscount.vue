@@ -123,16 +123,21 @@ defineExpose({ openModal })
               :options="[
                 { value: DiscountType.Percent, text: '%' },
                 { value: DiscountType.VND, text: 'VNĐ' },
-              ]" />
+              ]"
+            />
             <div style="width: calc(100% - 120px)">
               <InputMoney
                 v-if="money.discountType === DiscountType.VND"
                 v-model:value="money.discountMoney"
-                @update:value="handleChangeDiscountMoney" />
+                @update:value="handleChangeDiscountMoney"
+                :validate="{ gte: 0 }"
+              />
               <InputNumber
                 v-else
                 v-model:value="money.discountPercent"
-                @update:value="handleChangeDiscountPercent" />
+                @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
+              />
             </div>
           </div>
         </div>
@@ -153,7 +158,8 @@ defineExpose({ openModal })
             :loading="saveLoading"
             color="blue"
             type="submit"
-            icon="save">
+            icon="save"
+          >
             Cập nhật
           </VueButton>
         </div>

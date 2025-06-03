@@ -79,7 +79,7 @@ const startFetchData = async () => {
       groupTimeType: timeType.value,
       filter: {
         ticketType: ticketTypeFilter.value ?? undefined,
-        ticketStatus: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
+        status: { IN: [TicketStatus.Debt, TicketStatus.Completed] },
       },
     })
 

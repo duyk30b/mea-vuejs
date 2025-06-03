@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../modules/distributor'
-import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { timeToText } from '../../utils'
 import { PaymentMethodService } from '../../modules/payment-method'
+import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
+import { ESTimer } from '../../utils'
+import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -21,18 +23,26 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap, user } = meStore
 
 const money = ref<number>(0)
 const note = ref('')
+const distributor = ref<Distributor>(Distributor.blank())
 const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
-const distributor = ref<Distributor>(Distributor.blank())
 
 const receiptPaymentList = ref<{ receipt: Receipt; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
+
+onMounted(async () => {
+  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+})
 
 const openModal = async (distributorId: number) => {
   showModal.value = true
@@ -47,18 +57,14 @@ const openModal = async (distributorId: number) => {
       DistributorService.detail(distributorId),
       ReceiptApi.list({
         filter: {
-          distributorId: distributorId,
+          distributorId,
           status: ReceiptStatus.Debt,
         },
         sort: { id: 'ASC' },
       }),
-      PaymentMethodService.list({ sort: { priority: 'ASC' } }),
     ])
     distributor.value = fetchPromise[0] || Distributor.blank()
     receiptPaymentList.value = fetchPromise[1].map((i) => ({ receipt: i, money: 0 }))
-    const paymentMethodAll = fetchPromise[2]
-    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-    paymentMethodId.value = paymentMethodAll[0]?.id || 0
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:62 ~ openModal ~ error:', error)
   } finally {
@@ -73,7 +79,6 @@ const closeModal = () => {
   note.value = ''
   distributor.value = Distributor.blank()
   paymentMethodId.value = 0
-  paymentMethodOptions.value = []
 }
 
 const handleSave = async () => {
@@ -82,29 +87,24 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await DistributorService.payDebt({
+    const data = await DistributorService.distributorPayment({
       distributorId: distributor.value.id,
-      note: note.value,
       paymentMethodId: paymentMethodId.value,
+      note: note.value,
+      cashierId: user?.id || 0,
+      money: money.value,
       receiptPaymentList: receiptPaymentList.value
         .map((i) => ({ receiptId: i.receipt.id, money: i.money }))
         .filter((i) => i.money > 0),
     })
+    AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
     emit('success', data)
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalDistributorUpsert.vue:87 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalDistributorPayDebt.vue:104 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
-}
-
-const openBlankReceiptDetail = (receiptId: number) => {
-  const route = router.resolve({
-    name: 'ReceiptDetail',
-    params: { id: receiptId },
-  })
-  window.open(route.href, '_blank')
 }
 
 const handleClickPayAllDebt = () => {
@@ -170,12 +170,10 @@ defineExpose({ openModal })
             <tbody>
               <tr v-for="(receiptPayment, index) in receiptPaymentList" :key="index">
                 <td>
+                  <LinkAndStatusReceipt :receipt="receiptPayment.receipt" />
                   <div>
-                    <a @click="openBlankReceiptDetail(receiptPayment.receipt.id)">
-                      IV{{ receiptPayment.receipt.id }}
-                    </a>
+                    {{ ESTimer.timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}
                   </div>
-                  <div>{{ timeToText(receiptPayment.receipt.startedAt, 'DD/MM/YYYY hh:mm') }}</div>
                 </td>
                 <td class="text-right">
                   {{ formatMoney(receiptPayment.receipt.debt) }}

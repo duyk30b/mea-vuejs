@@ -1,22 +1,12 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../common/vue-form'
+import { InputMoney, InputNumber, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../modules/commission'
 import { DiscountType } from '../../../modules/enum'
-import { Procedure, ProcedureService } from '../../../modules/procedure'
-import { Role, RoleService } from '../../../modules/role'
-import { TicketClinicProcedureApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../modules/ticket-procedure'
-import { TicketUser } from '../../../modules/ticket-user'
-import { User, UserService } from '../../../modules/user'
-import { UserRoleService } from '../../../modules/user-role'
-import { DString } from '../../../utils'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 
 const emit = defineEmits<{
@@ -158,11 +148,13 @@ defineExpose({ openModal })
                 v-if="ticketProcedure.discountType === DiscountType.VND"
                 :value="ticketProcedure.discountMoney"
                 @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProcedure.discountPercent"
                 @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
               />
             </div>
           </div>

@@ -1,18 +1,17 @@
-import type { Tick } from 'chart.js'
 import { ESArray } from '../../utils'
 import { Appointment } from '../appointment'
-import { Batch, BatchService } from '../batch'
+import { Batch } from '../batch'
 import { Customer } from '../customer'
-import { CustomerPayment } from '../customer-payment/customer-payment.model'
 import { CustomerSource } from '../customer-source'
-import { DiscountType } from '../enum'
+import { DeliveryStatus, DiscountType } from '../enum'
 import { Image } from '../image/image.model'
-import { Laboratory, LaboratoryService, LaboratoryValueType } from '../laboratory'
+import { LaboratoryService, LaboratoryValueType } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
+import { Payment } from '../payment/payment.model'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
-import { RadiologyService, type Radiology } from '../radiology'
-import { RoleService, type Role } from '../role'
+import { RadiologyService } from '../radiology'
+import { RoleService } from '../role'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
 import { TicketExpense } from '../ticket-expense/ticket-expense.model'
@@ -24,7 +23,7 @@ import { TicketProduct } from '../ticket-product/ticket-product.model'
 import { TicketRadiology } from '../ticket-radiology'
 import { TicketSurcharge } from '../ticket-surcharge/ticket-surcharge.model'
 import { TicketUser } from '../ticket-user'
-import { UserService, type User } from '../user'
+import { UserService } from '../user'
 
 export enum TicketStatus {
   Schedule = 1,
@@ -50,7 +49,8 @@ export class Ticket {
   customerSourceId: number
   ticketType: TicketType
   customType: number
-  ticketStatus: TicketStatus
+  status: TicketStatus
+  deliveryStatus: DeliveryStatus
 
   itemsCostAmount: number
   procedureMoney: number
@@ -89,7 +89,7 @@ export class Ticket {
   updatedAt: number | null // Giờ kết thúc khám
 
   customer?: Customer
-  customerPaymentList?: CustomerPayment[]
+  paymentList?: Payment[]
   customerSource?: CustomerSource
   ticketAttributeList?: TicketAttribute[]
   ticketBatchList?: TicketBatch[]
@@ -115,7 +115,7 @@ export class Ticket {
     const ins = new Ticket()
     ins.id = 0
     ins.customType = 0
-    ins.ticketStatus = TicketStatus.Draft
+    ins.status = TicketStatus.Draft
     ins.itemsCostAmount = 0
     ins.procedureMoney = 0
     ins.productMoney = 0
@@ -136,7 +136,7 @@ export class Ticket {
   static blank(): Ticket {
     const ins = Ticket.init()
     ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
-    ins.customerPaymentList = []
+    ins.paymentList = []
     ins.ticketAttributeList = []
     ins.ticketBatchList = []
     ins.ticketProductList = []
@@ -357,8 +357,8 @@ export class Ticket {
       target.refreshTicketUserGroup()
     }
 
-    if (source.customerPaymentList) {
-      target.customerPaymentList = CustomerPayment.basicList(source.customerPaymentList)
+    if (source.paymentList) {
+      target.paymentList = Payment.basicList(source.paymentList)
     }
     if (source.ticketProductList) {
       target.ticketProductList = TicketProduct.basicList(source.ticketProductList)
@@ -434,7 +434,8 @@ export class Ticket {
     if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
     if (a.ticketType != b.ticketType) return false
-    if (a.ticketStatus != b.ticketStatus) return false
+    if (a.status != b.status) return false
+    if (a.deliveryStatus != b.deliveryStatus) return false
 
     if (a.itemsCostAmount != b.itemsCostAmount) return false
     if (a.procedureMoney != b.procedureMoney) return false

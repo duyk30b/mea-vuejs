@@ -7,7 +7,7 @@ export class TicketGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
-    customerPaymentList?: boolean
+    paymentList?: boolean
     ticketBatchList?: { batch?: boolean } | false
     ticketProductList?: { product?: boolean } | false
     ticketProductConsumableList?: { product?: boolean } | false
@@ -26,7 +26,7 @@ export class TicketGetQuery {
 
   filter?: {
     customerId?: number
-    ticketStatus?: TicketStatus | ConditionEnum<TicketStatus>
+    status?: TicketStatus | ConditionEnum<TicketStatus>
     ticketType?: TicketType | ConditionEnum<TicketType>
     customType?: number
     registeredAt?: ConditionDate

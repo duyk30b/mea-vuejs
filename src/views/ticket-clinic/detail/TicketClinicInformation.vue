@@ -1,15 +1,17 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import {
-  IconClockCircle,
-  IconDollar,
-  IconFileSearch,
-  IconSend,
-  IconPhone,
-  IconWarning,
+IconClockCircle,
+IconDollar,
+IconFileSearch,
+IconPhone,
+IconSend,
+IconWarning,
 } from '../../../common/icon-antd'
 import { InputOptions } from '../../../common/vue-form'
+import type { ItemOption } from '../../../common/vue-form/InputOptions.vue'
+import { VueDivider } from '../../../common/vue-layout'
 import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -18,7 +20,7 @@ import { Customer, CustomerService } from '../../../modules/customer'
 import { PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../modules/ticket'
-import { ticketClinicRef, ticketRefDeliveryStatus } from '../../../modules/ticket-clinic'
+import { ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
@@ -26,8 +28,6 @@ import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
-import { VueDivider } from '../../../common/vue-layout'
-import type { ItemOption } from '../../../common/vue-form/InputOptions.vue'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -185,7 +185,7 @@ const handleClickModalRegisterAppointment = () => {
                 TicketStatus.Draft,
                 TicketStatus.Deposited,
                 TicketStatus.Executing,
-              ].includes(ticketClinicRef.ticketStatus)
+              ].includes(ticketClinicRef.status)
             "
             size="small"
             color="green"
@@ -195,7 +195,7 @@ const handleClickModalRegisterAppointment = () => {
             <span class="font-bold">TẠM ỨNG</span>
           </VueButton>
           <VueButton
-            v-if="[TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
+            v-if="[TicketStatus.Debt].includes(ticketClinicRef.status)"
             size="small"
             color="green"
             icon="dollar"
@@ -206,7 +206,7 @@ const handleClickModalRegisterAppointment = () => {
           <VueButton
             v-if="
               [TicketStatus.Completed, TicketStatus.Cancelled].includes(
-                ticketClinicRef.ticketStatus,
+                ticketClinicRef.status,
               )
             "
             size="small"
@@ -241,7 +241,7 @@ const handleClickModalRegisterAppointment = () => {
         <div>Lấy thuốc :</div>
       </div>
       <div>
-        <TicketClinicDeliveryStatusTag :deliveryStatus="ticketRefDeliveryStatus" />
+        <TicketClinicDeliveryStatusTag :deliveryStatus="ticketClinicRef.deliveryStatus" />
       </div>
     </div>
     <div class="mt-2 flex items-center justify-between">

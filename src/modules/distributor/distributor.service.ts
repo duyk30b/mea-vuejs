@@ -1,7 +1,7 @@
 import { arrayToKeyValue, DString } from '../../utils'
 import { useSettingStore } from '../_me/setting.store'
-import { DistributorPaymentApi } from '../distributor-payment/distributor-payment.api'
-import type { DistributorPaymentPayDebtBody } from '../distributor-payment/distributor-payment.dto'
+import { PaymentApi } from '../payment/payment.api'
+import type { DistributorPaymentBody } from '../payment/payment.dto'
 import { DistributorApi } from './distributor.api'
 import type {
   DistributorDetailQuery,
@@ -152,10 +152,10 @@ export class DistributorService {
     return result
   }
 
-  static async payDebt(body: DistributorPaymentPayDebtBody) {
-    const response = await DistributorPaymentApi.payDebt(body)
+  static async distributorPayment(body: DistributorPaymentBody) {
+    const data = await PaymentApi.distributorPayment(body)
     DistributorService.loadedAll = false
-    return response
+    return data
   }
 
   static async getDistributorDefault() {

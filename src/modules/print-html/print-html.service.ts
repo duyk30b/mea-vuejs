@@ -1,3 +1,4 @@
+import { ESArray } from '../../utils'
 import { PrintHtmlApi } from './print-html.api'
 import type { PrintHtmlGetListQuery } from './print-html.dto'
 import { PrintHtml } from './print-html.model'
@@ -6,10 +7,7 @@ export class PrintHtmlService {
   static loadedAll: boolean = false
   static printHtmlAll: PrintHtml[] = []
 
-  static loadedSystem = false
-  static printHtmlSystemList: PrintHtml[] = []
-
-  static getAll = (() => {
+  static fetchAll = (() => {
     const start = async () => {
       try {
         const { data } = await PrintHtmlApi.getList({})
@@ -29,22 +27,19 @@ export class PrintHtmlService {
   })()
 
   static async list(options: PrintHtmlGetListQuery) {
-    await PrintHtmlService.getAll()
+    await PrintHtmlService.fetchAll()
     return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
   }
 
-  static async getSystemList() {
-    if (!PrintHtmlService.loadedSystem) {
-      PrintHtmlService.printHtmlSystemList = await PrintHtmlApi.systemList()
-      PrintHtmlService.loadedSystem = true
-    }
-
-    return PrintHtmlService.printHtmlSystemList
+  static async getMap() {
+    await PrintHtmlService.fetchAll()
+    const printHtmlMap = ESArray.arrayToKeyValue(PrintHtmlService.printHtmlAll, 'id')
+    return printHtmlMap
   }
 
   static async detail(id: number) {
-    await Promise.all([PrintHtmlService.getAll(), PrintHtmlService.getSystemList()])
-    return [...PrintHtmlService.printHtmlAll, ...PrintHtmlService.printHtmlSystemList].find((i) => {
+    await PrintHtmlService.fetchAll()
+    return PrintHtmlService.printHtmlAll.find((i) => {
       return i.id === id
     })
   }

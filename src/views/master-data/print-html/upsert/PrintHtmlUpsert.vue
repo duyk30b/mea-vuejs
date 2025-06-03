@@ -25,7 +25,7 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 const meStore = useMeStore()
-const organization = meStore.organization
+const { organization, user } = meStore
 
 const printHtml = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
@@ -105,7 +105,7 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
       const ticketResponse = await TicketService.detail(ticketDemoId, {
         relation: {
           customer: true,
-          customerPaymentList: false, // query khi bật modal thanh toán
+          paymentList: false, // query khi bật modal thanh toán
 
           ticketAttributeList: true,
           // ticketProductList: true,
@@ -271,7 +271,15 @@ const showDataSystemPrint = () => {
 
     <div class="mt-4 flex justify-between">
       <div></div>
-      <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">Lưu lại</VueButton>
+      <VueButton
+        v-if="printHtml.oid != 1 || user?.id == 1"
+        color="blue"
+        type="submit"
+        :loading="saveLoading"
+        icon="save"
+      >
+        Lưu lại
+      </VueButton>
     </div>
   </form>
 </template>

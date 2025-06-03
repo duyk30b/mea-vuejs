@@ -239,7 +239,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 200px; flex-grow: 1">
           <div>Data Version</div>
           <div class="flex-auto">
-            <InputNumber v-model:value="organization.dataVersion" required />
+            <InputText v-model:value="organization.dataVersion" required />
           </div>
         </div>
 

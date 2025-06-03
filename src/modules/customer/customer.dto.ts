@@ -5,7 +5,7 @@ export class CustomerGetQuery {
   page?: number
   limit?: number
   relation?: {
-    customerPayments?: boolean
+    paymentList: boolean
   }
 
   filter?: {

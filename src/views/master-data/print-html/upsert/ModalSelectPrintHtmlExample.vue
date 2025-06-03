@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { IconClose } from '../../../../common/icon-antd'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
 import VuePagination from '../../../../common/VuePagination.vue'
+import { IconClose } from '../../../../common/icon-antd'
 import { InputSelect } from '../../../../common/vue-form'
+import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { PrintHtml, PrintHtmlApi } from '../../../../modules/print-html'
 
 const emit = defineEmits<{
   (e: 'select', value: PrintHtml): void
@@ -21,7 +21,7 @@ let firstLoad = true
 
 const startFetchData = async () => {
   try {
-    printHtmlList.value = await PrintHtmlService.getSystemList()
+    printHtmlList.value = await PrintHtmlApi.systemList()
   } catch (error) {
     console.log('🚀 ~ file: ModalSelectPrintHtmlExample.vue:24 ~ startFetchData ~ error:', error)
   }

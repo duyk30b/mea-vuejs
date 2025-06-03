@@ -497,6 +497,7 @@ defineExpose({ openModal })
                     <InputMoney
                       :value="product.costPrice * (unit.find((i) => i.default)?.rate || 1)"
                       :prepend="product.unitDefaultName"
+                      :disabled="!!product.id"
                       @update:value="
                         (value) =>
                           (product.costPrice = value / (unit.find((i) => i.default)?.rate || 1))

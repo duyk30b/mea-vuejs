@@ -1,18 +1,17 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
-import { IconClockCircle, IconFileSearch, IconShoppingCart } from '../../../../common/icon-antd'
-import { IconEditSquare } from '../../../../common/icon-google'
+import { computed, onMounted, ref } from 'vue'
 import VueTag from '../../../../common/VueTag.vue'
+import { IconFileSearch } from '../../../../common/icon-antd'
+import { IconEditSquare } from '../../../../common/icon-google'
 import { CONFIG } from '../../../../config'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { ESTimer } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
+import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
@@ -27,6 +26,10 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
+
+onMounted(async () => {
+  await ticketClinicRef.value.refreshProduct()
+})
 
 const consumableDiscount = computed(() => {
   return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
@@ -97,19 +100,7 @@ const prescriptionCostAmount = computed(() => {
           {{ tpPrescriptionIndex + 1 }}
         </td>
         <td class="text-center">
-          <VueTooltip v-if="tpPrescription.deliveryStatus === DeliveryStatus.Pending">
-            <template #trigger>
-              <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-            </template>
-            <div>Chưa xuất thuốc</div>
-          </VueTooltip>
-
-          <VueTooltip v-else>
-            <template #trigger>
-              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-            </template>
-            <div>Đã xuất thuốc</div>
-          </VueTooltip>
+          <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpPrescription.deliveryStatus" />
         </td>
         <td>
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -166,7 +157,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
               permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
@@ -222,21 +213,7 @@ const prescriptionCostAmount = computed(() => {
           {{ tpConsumableIndex + 1 }}
         </td>
         <td class="text-center">
-          <VueTooltip v-if="tpConsumable.deliveryStatus === DeliveryStatus.Pending">
-            <template #trigger>
-              <IconClockCircle
-                style="font-size: 18px; color: orange; cursor: not-allowed !important"
-              />
-            </template>
-            <div>Chưa xuất vật tư</div>
-          </VueTooltip>
-
-          <VueTooltip v-else>
-            <template #trigger>
-              <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-            </template>
-            <div>Đã xuất vật tư</div>
-          </VueTooltip>
+          <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />
         </td>
         <td colspan="2">
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -287,7 +264,7 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
               permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"

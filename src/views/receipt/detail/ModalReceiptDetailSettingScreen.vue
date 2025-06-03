@@ -153,27 +153,6 @@ defineExpose({ openModal })
               </td>
             </tr>
           </tbody>
-          <thead>
-            <tr>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.process.sendProductAndPayment">
-                  Hiển thị nút: Nhập hàng và thanh toán
-                </InputCheckbox>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <InputCheckbox v-model:checked="settingDisplay.process.sendProductAndDebit">
-                  Hiển thị nút: Nhập hàng và ghi nợ
-                </InputCheckbox>
-              </td>
-            </tr>
-          </tbody>
         </table>
       </div>
       <div class="p-4 mt-2">

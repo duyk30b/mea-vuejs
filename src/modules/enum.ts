@@ -25,14 +25,6 @@ export enum DiscountType {
   VND = 'VNĐ',
 }
 
-export enum PaymentType {
-  Prepayment = 1, // Thanh toán trước mua hàng
-  ReceiveRefund = 2, // Nhận tiền hoàn trả
-  Close = 3, // Đóng hồ sơ
-  PayDebt = 4, // Trả nợ (thanh toán sau mua hàng )
-  Reopen = 5, // Mở lại hồ sơ
-}
-
 export type UnitType = { name: string; rate: number; default?: boolean }
 
 export enum InventoryStrategy {
@@ -52,9 +44,18 @@ export enum MovementType {
 }
 
 export enum DeliveryStatus {
-  NoStock = 1, // không có hàng
+  NoStock = 1,
   Pending = 2,
   Delivered = 3,
+  // Returned = 4,
+  // PartiallyReturned = 4,
+  // FullyReturned = 5,
+}
+
+export const DeliveryStatusText = {
+  [DeliveryStatus.NoStock]: 'Không có hàng',
+  [DeliveryStatus.Pending]: 'Chưa gửi hàng',
+  [DeliveryStatus.Delivered]: 'Đã gửi hàng',
   // Returned = 4,
   // PartiallyReturned = 4,
   // FullyReturned = 5,

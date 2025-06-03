@@ -1,37 +1,32 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import {
-  IconClockCircle,
-  IconFileSearch,
-  IconShoppingCart,
-  IconSpin,
-} from '../../../../common/icon-antd'
+import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
+import { InputFilter } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
+import { RoleService } from '../../../../modules/role'
+import { TicketStatus } from '../../../../modules/ticket'
 import {
   TicketClinicProductApi,
-  ticketClinicRef,
   TicketClinicUserApi,
+  ticketClinicRef,
 } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
-import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
-import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { TicketUser } from '../../../../modules/ticket-user'
-import { RoleService } from '../../../../modules/role'
 import { UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { InputFilter } from '../../../../common/vue-form'
-import { CommissionService, InteractType } from '../../../../modules/commission'
-import { TicketStatus } from '../../../../modules/ticket'
 import { DString } from '../../../../utils'
+import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
+import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
+import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
+import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -105,6 +100,7 @@ watch(
 
 onMounted(async () => {
   refreshTicketUserList()
+  await ticketClinicRef.value.refreshProduct()
 })
 
 const hasChangePriority = computed(() => {
@@ -140,7 +136,7 @@ const hasChangeData = computed(() => {
 })
 
 const disabledButton = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return true
   }
   return !hasChangeData.value
@@ -270,19 +266,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               </div>
             </td>
             <td class="text-center">
-              <VueTooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
-                <template #trigger>
-                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-                </template>
-                <div>Chưa xuất vật tư</div>
-              </VueTooltip>
-
-              <VueTooltip v-else>
-                <template #trigger>
-                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-                </template>
-                <div>Đã xuất vật tư</div>
-              </VueTooltip>
+              <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
             <td>
               <div style="font-weight: 500">

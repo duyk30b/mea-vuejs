@@ -187,7 +187,7 @@ const saveReceipt = async (type: EReceiptSave) => {
         break
       }
       case EReceiptSave.UPDATE_PREPAYMENT: {
-        const response = await ReceiptApi.updateDeposited(receipt.value.id, receipt.value)
+        const response = await ReceiptApi.depositedUpdate(receipt.value.id, receipt.value)
         router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
@@ -418,7 +418,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
+              permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
               settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
             class="mt-4 w-full flex flex-col px-1"
@@ -439,7 +439,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT] &&
+              permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1"

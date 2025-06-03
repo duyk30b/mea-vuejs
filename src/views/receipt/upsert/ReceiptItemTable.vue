@@ -184,13 +184,8 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
           <th>#</th>
           <th>Mã SP</th>
           <th>Tên Sản phẩm</th>
-          <th
-            v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse"
-            style="width: 200px"
-          >
-            Nhập kho
-          </th>
-          <th>S.Lượng</th>
+          <th v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.warehouse">Nhập kho</th>
+          <th style="min-width: 150px">S.Lượng</th>
           <th v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.unit">Đ.Vị</th>
           <th>G.Nhập</th>
           <th>T.Tiền</th>

@@ -17,12 +17,3 @@ watchEffect(() => {
   ticketOrderDetailRef.value.itemsDiscountProcedure = itemsDiscountProcedure
   ticketOrderDetailRef.value.itemsDiscountProduct = itemsDiscountProduct
 })
-
-export enum PaymentViewType {
-  Prepayment = 1,
-  SendProductAndPaymentAndClose = 2,
-  PaymentAndClose = 3,
-  PayDebt = 4,
-  RefundOverpaid = 5,
-  Success = 6,
-}

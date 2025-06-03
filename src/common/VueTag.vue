@@ -8,6 +8,7 @@ import {
   IconExclamationCircle,
   IconForm,
   IconMinusCircle,
+  IconRollback,
   IconSend,
   IconSpin,
   IconStop,
@@ -21,14 +22,15 @@ const props = withDefaults(
     icon?:
       | Object
       | ''
-      | 'form'
-      | 'check'
-      | 'minus'
-      | 'clock'
-      | 'exclamation'
-      | 'close'
-      | 'dollar'
       | 'calendar'
+      | 'close'
+      | 'check'
+      | 'clock'
+      | 'dollar'
+      | 'exclamation'
+      | 'form'
+      | 'minus'
+      | 'rollback'
       | 'send'
       | 'spin'
       | 'stop'
@@ -51,17 +53,18 @@ const props = withDefaults(
       <span v-if="typeof icon === 'object'">
         <component :is="icon" />
       </span>
+      <span v-else-if="icon === 'close'" class="icon-close"><IconCloseCircle /></span>
+      <span v-else-if="icon === 'calendar'" class="icon-calendar"><IconCalendar /></span>
       <span v-else-if="icon === 'check'" class="icon-check"><IconCheckCircle /></span>
-      <span v-else-if="icon === 'form'" class="icon-form"><IconForm /></span>
-      <span v-else-if="icon === 'minus'" class="icon-minus"><IconMinusCircle /></span>
       <span v-else-if="icon === 'clock'" class="icon-clock"><IconClockCircle /></span>
+      <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
       <span v-else-if="icon === 'exclamation'" class="icon-exclamation">
         <IconExclamationCircle />
       </span>
-      <span v-else-if="icon === 'close'" class="icon-close"><IconCloseCircle /></span>
-      <span v-else-if="icon === 'dollar'" class="icon-dollar"><IconDollar /></span>
-      <span v-else-if="icon === 'calendar'" class="icon-calendar"><IconCalendar /></span>
+      <span v-else-if="icon === 'form'" class="icon-form"><IconForm /></span>
+      <span v-else-if="icon === 'minus'" class="icon-minus"><IconMinusCircle /></span>
       <span v-else-if="icon === 'send'" class="icon-send"><IconSend /></span>
+      <span v-else-if="icon === 'rollback'" class="icon-rollback"><IconRollback /></span>
       <span v-else-if="icon === 'stop'" class="icon-stop"><IconStop /></span>
       <span v-else-if="icon === 'spin'" class="icon-stop"><IconSpin /></span>
       <slot v-else name="icon"></slot>

@@ -30,11 +30,7 @@ import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
-import {
-  TicketClinicApi,
-  ticketClinicRef,
-  ticketRefDeliveryStatus,
-} from '../../../modules/ticket-clinic'
+import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
@@ -89,12 +85,12 @@ const startFetchData = async (ticketId?: number) => {
     const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        customerPaymentList: false, // query khi bật modal thanh toán
+        paymentList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
         // ticketProductList: true,
-        ticketProductConsumableList: { product: true },
-        ticketProductPrescriptionList: { product: true },
+        ticketProductConsumableList: {},
+        ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
         ticketProcedureList: {},
         ticketLaboratoryList: {},
@@ -163,7 +159,7 @@ const startCloseVisit = async () => {
 }
 
 const clickCloseVisit = () => {
-  if (ticketRefDeliveryStatus.value === DeliveryStatus.Pending) {
+  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
@@ -297,7 +293,7 @@ const clickCloseVisit = () => {
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketClinicRef.ticketStatus,
+                ticketClinicRef.status,
               )
             "
           >
@@ -396,7 +392,7 @@ const clickCloseVisit = () => {
         <VueButton
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
-              ticketClinicRef.ticketStatus,
+              ticketClinicRef.status,
             ) &&
             permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
             !!ticketClinicRef.id
@@ -424,7 +420,7 @@ const clickCloseVisit = () => {
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
-          :disabled="![TicketStatus.Executing].includes(ticketClinicRef.ticketStatus)"
+          :disabled="![TicketStatus.Executing].includes(ticketClinicRef.status)"
           @click="clickCloseVisit"
         >
           <IconSave />

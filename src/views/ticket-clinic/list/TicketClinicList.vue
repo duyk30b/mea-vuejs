@@ -39,7 +39,7 @@ const customerList = ref<Customer[]>([])
 const dataLoading = ref(false)
 
 const customerId = ref<number>()
-const ticketStatus = ref<TicketStatus | null>(null)
+const status = ref<TicketStatus | null>(null)
 const customType = ref<number | null>(null)
 
 const roleMap = ref<Record<string, Role>>({})
@@ -73,7 +73,7 @@ const startFetchData = async () => {
                 LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
               }
             : undefined,
-        ticketStatus: ticketStatus.value ?? undefined,
+        status: status.value ?? undefined,
         ticketType: { NOT: TicketType.Order },
         customType: customType.value == null ? undefined : customType.value,
       },
@@ -183,7 +183,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                   LT: toTime.value ? toTime.value + 24 * 60 * 60 * 1000 : undefined,
                 }
               : undefined,
-          ticketStatus: ticketStatus.value ?? undefined,
+          status: status.value ?? undefined,
           ticketType: { NOT: TicketType.Order },
           customType: customType.value == null ? undefined : customType.value,
         },
@@ -322,7 +322,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
         <div>Chọn trạng thái</div>
         <div>
           <VueSelect
-            v-model:value="ticketStatus"
+            v-model:value="status"
             :options="[
               { value: null, text: 'Tất cả' },
               { value: TicketStatus.Schedule, text: 'Hẹn khám' },
@@ -500,7 +500,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
             </td>
             <td class="text-right">
               <div>{{ formatMoney(ticket.totalMoney) }}</div>
-              <div v-if="ticket.ticketStatus === TicketStatus.Debt" class="text-xs">
+              <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
             </td>
@@ -512,7 +512,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                     TicketStatus.Draft,
                     TicketStatus.Deposited,
                     TicketStatus.Executing,
-                  ].includes(ticket.ticketStatus)
+                  ].includes(ticket.status)
                 "
                 style="color: #eca52b"
                 class="text-xl"

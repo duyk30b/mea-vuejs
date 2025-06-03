@@ -96,6 +96,7 @@ export const SETTING_DEFAULT = {
 
   SCREEN_LABORATORY_LIST: {},
   SCREEN_RADIOLOGY_LIST: {
+    table: { printHtml: false },
     SORT: {},
   },
 
@@ -152,10 +153,6 @@ export const SETTING_DEFAULT = {
       surcharge: true,
       paid: true,
       debt: true,
-    },
-    process: {
-      sendProductAndPayment: true,
-      sendProductAndDebit: false,
     },
   },
   SCREEN_RECEIPT_UPSERT: {
@@ -310,7 +307,7 @@ export const SETTING_DEFAULT = {
     },
   },
   TICKET_CLINIC_CREATE: {
-    ticketStatus: TicketStatus.Executing,
+    status: TicketStatus.Executing,
     facebook: false,
     zalo: false,
     birthday: true,

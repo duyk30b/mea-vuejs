@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
+import { AlertStore } from '../../../common/vue-alert'
 import { InputMoney, InputSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
+import { PaymentMethodService } from '../../../modules/payment-method'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
-import DistributorPaymentTypeTag from '../../../views/distributor/DistributorPaymentTypeTag.vue'
+import PaymentTimingTag from '../../payment/PaymentTimingTag.vue'
 import { receipt } from './receipt-detail.ref'
-import { PaymentMethodService } from '../../../modules/payment-method'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 
@@ -31,10 +32,7 @@ const money = ref(0)
 const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
-const openModal = async (view = PaymentViewType.Success) => {
-  paymentView.value = view
-  money.value = 0
-  showModal.value = true
+onMounted(async () => {
   try {
     const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
     paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
@@ -42,6 +40,13 @@ const openModal = async (view = PaymentViewType.Success) => {
   } catch (error) {
     console.log('🚀 ~ ModalReceiptPayment.vue:43 ~ openModal ~ error:', error)
   }
+})
+
+const openModal = async (view = PaymentViewType.Success) => {
+  paymentView.value = view
+  money.value = 0
+  showModal.value = true
+
   if (!isMobile) {
     nextTick(() => inputMoneyPayment.value?.focus())
   }
@@ -49,41 +54,76 @@ const openModal = async (view = PaymentViewType.Success) => {
 
 const closeModal = () => {
   showModal.value = false
+  paymentView.value = PaymentViewType.Success
+  money.value = 0
 }
 
 const handlePayment = async () => {
   paymentLoading.value = true
   try {
-    if (paymentView.value === PaymentViewType.Prepayment) {
-      const { receiptBasic, distributorPaymentList } = await ReceiptApi.prepayment({
-        receiptId: receipt.value.id,
-        money: money.value,
-        paymentMethodId: paymentMethodId.value,
-      })
-      Object.assign(receipt.value, receiptBasic)
-      receipt.value.distributorPaymentList = distributorPaymentList
-    }
     if (paymentView.value === PaymentViewType.SendProductAndPaymentAndClose) {
-      const result = await ReceiptApi.sendProductAndPayment({
+      if (money.value < 0 || money.value + receipt.value.paid > receipt.value.totalMoney) {
+        inputMoneyPayment.value?.focus()
+        return AlertStore.addError('Số tiền thanh toán không hợp lệ')
+      }
+      const result = await ReceiptApi.sendProductAndPaymentAndClose({
         receiptId: receipt.value.id,
         money: money.value,
         paymentMethodId: paymentMethodId.value,
       })
       Object.assign(receipt.value, result.receipt)
-      receipt.value.distributorPaymentList = result.distributorPaymentList
+      if (result.payment) {
+        receipt.value.paymentList?.push(result.payment)
+      }
     }
-    if (paymentView.value === PaymentViewType.PayDebt) {
-      const { receiptBasic, distributorPaymentList } = await ReceiptApi.payDebt({
+    if (paymentView.value === PaymentViewType.Prepayment) {
+      if (money.value <= 0) {
+        inputMoneyPayment.value?.focus()
+        return AlertStore.addError('Số tiền thanh toán không hợp lệ')
+      }
+      const result = await ReceiptApi.prepayment({
         receiptId: receipt.value.id,
         money: money.value,
         paymentMethodId: paymentMethodId.value,
       })
-      Object.assign(receipt.value, receiptBasic)
-      receipt.value.distributorPaymentList = distributorPaymentList
+      Object.assign(receipt.value, result.receipt)
+      if (result.payment) {
+        receipt.value.paymentList?.push(result.payment)
+      }
+    }
+    if (paymentView.value === PaymentViewType.PayDebt) {
+      if (money.value <= 0 || money.value + receipt.value.paid > receipt.value.totalMoney) {
+        inputMoneyPayment.value?.focus()
+        return AlertStore.addError('Số tiền thanh toán không hợp lệ')
+      }
+      const result = await ReceiptApi.payDebt({
+        receiptId: receipt.value.id,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+      })
+      Object.assign(receipt.value, result.receipt)
+      if (result.payment) {
+        receipt.value.paymentList?.push(result.payment)
+      }
+    }
+    if (paymentView.value === PaymentViewType.RefundOverpaid) {
+      if (money.value <= 0 || receipt.value.paid - money.value < receipt.value.totalMoney) {
+        inputMoneyPayment.value?.focus()
+        return AlertStore.addError('Số tiền thanh toán không hợp lệ')
+      }
+      const result = await ReceiptApi.refundOverpaid({
+        receiptId: receipt.value.id,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+      })
+      Object.assign(receipt.value, result.receipt)
+      if (result.payment) {
+        receipt.value.paymentList?.push(result.payment)
+      }
     }
 
     emit('success')
-    showModal.value = false
+    closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalDistributorUpsert.vue:75 ~ handlePayment ~ error:', error)
   } finally {
@@ -122,59 +162,121 @@ defineExpose({ openModal })
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(distributorPayment, index) in receipt.distributorPaymentList"
-                :key="index"
-              >
+              <tr v-for="(payment, index) in receipt.paymentList" :key="index">
                 <td class="text-center">
                   {{ index + 1 }}
                 </td>
                 <td class="text-left">
                   <div>
-                    {{ timeToText(distributorPayment.createdAt, 'DD/MM/YY hh:mm') }}
+                    {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
                   </div>
                   <div></div>
-                  <div v-if="distributorPayment.note" style="font-size: 0.8rem">
-                    {{ distributorPayment.note }}
+                  <div v-if="payment.note" style="font-size: 0.8rem">
+                    {{ payment.note }}
                   </div>
-                  <div v-if="distributorPayment.description" style="font-size: 0.8rem">
-                    {{ distributorPayment.description }}
+                  <div v-if="payment.description" style="font-size: 0.8rem">
+                    {{ payment.description }}
                   </div>
                 </td>
                 <td>
-                  <DistributorPaymentTypeTag :paymentType="distributorPayment.paymentType" />
+                  <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
                 </td>
-                <td class="text-right" style="padding-right: 12px">
-                  <div>{{ formatMoney(distributorPayment.paid) }}</div>
+                <td class="text-right" style="padding-right: 8px">
+                  <div>{{ formatMoney(-payment.paidAmount) }}</div>
                 </td>
               </tr>
               <tr>
                 <td colspan="3" class="text-right">Tổng đã thanh toán :</td>
                 <td class="text-right font-bold">{{ formatMoney(receipt.paid) }}</td>
               </tr>
-              <tr>
-                <td colspan="3" class="text-right">
-                  <span v-if="paymentView == PaymentViewType.PayDebt">Đang nợ :</span>
-                  <span v-else>Đang thiếu :</span>
-                </td>
-                <td class="text-right font-bold">
-                  {{ formatMoney(receipt.totalMoney - receipt.paid) }}
-                </td>
+              <tr v-if="receipt.debt >= 0">
+                <td colspan="3" class="text-right">Đang thiếu :</td>
+                <td class="text-right font-bold">{{ formatMoney(receipt.debt) }}</td>
+              </tr>
+              <tr v-else style="color: var(--text-green)">
+                <td colspan="3" class="text-right">Đang thừa</td>
+                <td class="text-right font-bold">{{ formatMoney(-receipt.debt) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <form @submit.prevent="(e) => handlePayment()">
-        <div
-          v-if="
-            [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Debt].includes(
-              receipt.status,
-            )
-          "
-          class="px-4"
-        >
+      <form
+        v-if="paymentView === PaymentViewType.RefundOverpaid"
+        @submit.prevent="(e) => handlePayment()"
+      >
+        <div class="px-4">
+          <table class="w-full mt-2">
+            <tbody>
+              <tr>
+                <td class="pr-4 py-2 text-right" style="white-space: nowrap">PT Thanh toán :</td>
+                <td>
+                  <div class="pl-6">
+                    <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-2"></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="pr-4 py-2 text-right" style="white-space: nowrap; width: 30%">
+                  Số tiền hoàn trả :
+                </td>
+                <td>
+                  <div class="flex items-stretch pl-6">
+                    <VueButton
+                      color="default"
+                      type="button"
+                      @click="money = receipt.paid - receipt.totalMoney"
+                    >
+                      Tất cả
+                    </VueButton>
+                    <div class="flex-1">
+                      <InputMoney
+                        ref="inputMoneyPayment"
+                        v-model:value="money"
+                        text-align="right"
+                        :validate="{ gt: 0, lte: receipt.paid - receipt.totalMoney }"
+                      />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="py-1"></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="pr-4 py-2 text-right" style="white-space: nowrap">Còn thừa :</td>
+                <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
+                  {{ formatMoney(receipt.paid - money - receipt.totalMoney) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 pb-6 flex justify-center gap-4">
+          <VueButton
+            v-if="permissionIdMap[PermissionId.RECEIPT_REFUND_OVERPAID]"
+            type="submit"
+            color="blue"
+            icon="save"
+            :loading="paymentLoading"
+          >
+            Hoàn trả
+          </VueButton>
+        </div>
+      </form>
+
+      <form
+        v-else-if="paymentView !== PaymentViewType.Success"
+        @submit.prevent="(e) => handlePayment()"
+      >
+        <div class="px-4">
           <table class="w-full mt-2">
             <tbody>
               <tr>
@@ -211,11 +313,6 @@ defineExpose({ openModal })
                         ref="inputMoneyPayment"
                         v-model:value="money"
                         text-align="right"
-                        :validate="
-                          paymentView === PaymentViewType.SendProductAndPaymentAndClose
-                            ? {}
-                            : { gt: 0 }
-                        "
                       />
                     </div>
                   </div>
@@ -231,7 +328,7 @@ defineExpose({ openModal })
                   <span v-else>Còn thiếu :</span>
                 </td>
                 <td class="w-full font-bold text-right pr-3" style="font-size: 16px">
-                  {{ formatMoney(receipt.totalMoney - receipt.paid - money) }}
+                  {{ formatMoney(receipt.totalMoney - (receipt.paid + money)) }}
                 </td>
               </tr>
             </tbody>
@@ -239,27 +336,24 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-4 pb-6 flex justify-center gap-4">
-          <div
-            v-if="
-              permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
-              [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Debt].includes(
-                receipt.status,
-              )
-            "
+          <VueButton
+            v-if="permissionIdMap[PermissionId.RECEIPT_PAYMENT]"
+            type="submit"
+            color="blue"
+            icon="save"
+            :loading="paymentLoading"
           >
-            <VueButton type="submit" color="blue" icon="save" :loading="paymentLoading">
-              <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng</span>
-              <span v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">
-                Nhập hàng và thanh toán
-              </span>
-              <span v-if="paymentView == PaymentViewType.PayDebt">Trả nợ</span>
-            </VueButton>
-          </div>
-          <div v-else>
-            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
-          </div>
+            <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng</span>
+            <span v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">
+              Nhập hàng và thanh toán
+            </span>
+            <span v-if="paymentView == PaymentViewType.PayDebt">Trả nợ</span>
+          </VueButton>
         </div>
       </form>
+      <div v-else class="pb-6 flex justify-center">
+        <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
+      </div>
     </div>
   </VueModal>
 </template>

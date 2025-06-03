@@ -182,12 +182,14 @@ defineExpose({ openModal })
                 :value="ticketProduct.unitDiscountMoney"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProduct.discountPercent"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
               />
             </div>
           </div>

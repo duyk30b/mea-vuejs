@@ -11,13 +11,12 @@ import VueTag from '../../../common/VueTag.vue'
 import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DeliveryStatus } from '../../../modules/enum'
+import { DeliveryStatus, PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../modules/ticket'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
-import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
-import type { CustomerPayment } from '../../../modules/customer-payment/customer-payment.model'
+import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -455,7 +454,7 @@ const colspan = computed(() => {
         </tr>
         <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.profit">
           <td class="text-right" :colspan="colspan">
-            <span v-if="ticketOrderDetailRef.ticketStatus === TicketStatus.Draft">Dự kiến lãi</span>
+            <span v-if="ticketOrderDetailRef.status === TicketStatus.Draft">Dự kiến lãi</span>
             <span v-else>Tiền lãi</span>
           </td>
           <td class="text-right font-medium" :colspan="2">
@@ -469,83 +468,31 @@ const colspan = computed(() => {
           "
         >
           <td
-            v-if="
-              [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
-                ticketOrderDetailRef.ticketStatus,
-              )
-            "
             class="text-right cursor-pointer"
             :colspan="colspan"
-            @click="
-              permissionIdMap[PermissionId.TICKET_ORDER_PREPAYMENT] &&
-              showModalInvoicePayment(PaymentViewType.Prepayment)
-            "
+            @click="showModalInvoicePayment(PaymentViewType.Success)"
           >
             <a>
               <span class="mr-1">Đã tạm ứng</span>
               <IconExclamationCircle />
             </a>
           </td>
-          <td
-            v-else-if="[TicketStatus.Debt].includes(ticketOrderDetailRef.ticketStatus)"
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="
-              permissionIdMap[PermissionId.TICKET_ORDER_PAY_DEBT] &&
-              showModalInvoicePayment(PaymentViewType.PayDebt)
-            "
-          >
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <IconExclamationCircle />
-            </a>
-          </td>
-          <td
-            v-else
-            class="text-right cursor-pointer"
-            :colspan="colspan"
-            @click="showModalInvoicePayment(PaymentViewType.Success)"
-          >
-            <a>
-              <span class="mr-1">Đã thanh toán</span>
-              <IconExclamationCircle />
-            </a>
-          </td>
+
           <td class="text-right" :colspan="2">
             {{ formatMoney(ticketOrderDetailRef.paid) }}
           </td>
         </tr>
-        <tr
-          v-if="
-            settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt ||
-            ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid
-          "
-        >
-          <template
-            v-if="
-              [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
-                ticketOrderDetailRef.ticketStatus,
-              )
-            "
-          >
-            <td
-              v-if="ticketOrderDetailRef.paid <= ticketOrderDetailRef.totalMoney"
-              class="text-right"
-              :colspan="colspan"
-            >
-              Còn thiếu
-            </td>
-            <td v-else class="text-right" :colspan="colspan">Thừa</td>
-            <td class="text-right font-medium" :colspan="2">
-              {{
-                formatMoney(Math.abs(ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid))
-              }}
-            </td>
+        <tr v-if="settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.debt || ticketOrderDetailRef.debt">
+          <template v-if="ticketOrderDetailRef.debt >= 0">
+            <td class="text-right" :colspan="colspan">Còn thiếu</td>
+            <td colspan="2" class="text-right">{{ formatMoney(ticketOrderDetailRef.debt) }}</td>
           </template>
-          <template v-else>
-            <td class="text-right" :colspan="colspan">Ghi nợ</td>
-            <td class="text-right font-medium" :colspan="2">
-              {{ formatMoney(ticketOrderDetailRef.debt) }}
+          <template v-if="ticketOrderDetailRef.debt < 0">
+            <td class="text-right" :colspan="colspan" style="color: var(--text-green)">
+              <span>Thanh toán dư</span>
+            </td>
+            <td colspan="2" class="text-right font-medium" style="color: var(--text-green)">
+              {{ formatMoney(-ticketOrderDetailRef.debt) }}
             </td>
           </template>
         </tr>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon-antd'
@@ -10,8 +10,9 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
 import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { ESTimer } from '../../utils'
-import LinkAndStatusTicket from './detail/LinkAndStatusTicket.vue'
 import { PaymentMethodService } from '../../modules/payment-method'
+import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
+import { useMeStore } from '../../modules/_me/me.store'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -22,20 +23,31 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+const meStore = useMeStore()
+const { permissionIdMap, user } = meStore
 
 const money = ref(0)
 const note = ref('')
-const paymentMethodId = ref<number>(0)
 const customer = ref<Customer>(Customer.blank())
-const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
+const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+
+const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
 
 const showModal = ref(false)
 const dataLoading = ref(false)
 const saveLoading = ref(false)
 
+onMounted(async () => {
+  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+})
+
 const openModal = async (customerId: number) => {
   showModal.value = true
+  money.value = 0
+  note.value = ''
   if (!isMobile) {
     nextTick(() => inputMoneyPay.value?.focus())
   }
@@ -46,7 +58,7 @@ const openModal = async (customerId: number) => {
       TicketApi.list({
         filter: {
           customerId,
-          ticketStatus: TicketStatus.Debt,
+          status: TicketStatus.Debt,
         },
         sort: { id: 'ASC' },
       }),
@@ -54,11 +66,8 @@ const openModal = async (customerId: number) => {
     ])
     customer.value = fetchPromise[0] || Customer.blank()
     ticketPaymentList.value = fetchPromise[1].map((i) => ({ ticket: i, money: 0 }))
-    const paymentMethodAll = fetchPromise[2]
-    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-    paymentMethodId.value = paymentMethodAll[0]?.id || 0
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerPayDebt.vue:52 ~ openModal ~ error:', error)
+    console.log('🚀 ~ ModalCustomerPayDebt.vue:70 ~ openModal ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -71,7 +80,6 @@ const closeModal = () => {
   note.value = ''
   customer.value = Customer.blank()
   paymentMethodId.value = 0
-  paymentMethodOptions.value = []
 }
 
 const handleSave = async () => {
@@ -80,10 +88,12 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await CustomerService.payDebt({
+    const data = await CustomerService.customerPayment({
       customerId: customer.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
+      cashierId: user?.id || 0,
+      money: money.value,
       ticketPaymentList: ticketPaymentList.value
         .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
         .filter((i) => i.money > 0),
@@ -92,7 +102,7 @@ const handleSave = async () => {
     emit('success', data)
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:83 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalCustomerPayDebt.vue:105 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }

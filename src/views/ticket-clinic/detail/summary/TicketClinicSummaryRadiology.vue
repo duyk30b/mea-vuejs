@@ -107,7 +107,7 @@ const radiologyCostAmount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
               permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
             "
             class="text-orange-500"

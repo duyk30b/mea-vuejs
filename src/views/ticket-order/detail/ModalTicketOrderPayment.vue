@@ -3,7 +3,7 @@ import VueButton from '@/common/VueButton.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { IconClose } from '../../../common/icon-antd'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
@@ -13,7 +13,8 @@ import { TicketStatus } from '../../../modules/ticket'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { ESArray } from '../../../utils'
 import TicketPaymentList from '../../ticket-base/TicketPaymentList.vue'
-import { PaymentViewType, ticketOrderDetailRef } from './ticket-order-detail.ref'
+import { ticketOrderDetailRef } from './ticket-order-detail.ref'
+import { PaymentViewType } from '../../../modules/enum'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -33,15 +34,21 @@ const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
+onMounted(async () => {
+  try {
+    const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+    paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
+    paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+    paymentMethodId.value = paymentMethodAll[0]?.id || 0
+  } catch (error) {
+    console.log('🚀 ~ ModalReceiptPayment.vue:43 ~ openModal ~ error:', error)
+  }
+})
+
 const openModal = async (view = PaymentViewType.Success) => {
   showModal.value = true
   paymentView.value = view
   money.value = 0
-
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
 
   if (!isMobile) {
     nextTick(() => inputMoneyPayment.value?.focus())
@@ -53,30 +60,32 @@ const closeModal = () => {
   money.value = 0
   note.value = ''
   paymentMethodId.value = 0
-  paymentMethodOptions.value = []
 }
 
 const startPrepayment = async () => {
   try {
-    if (money.value <= 0) {
+    if (ticketOrderDetailRef.value.status === TicketStatus.Draft && money.value < 0) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
+    if (ticketOrderDetailRef.value.status !== TicketStatus.Draft && money.value <= 0) {
+      return AlertStore.addError('Số tiền không hợp lệ')
+    }
+
     paymentLoading.value = true
-    const response = await TicketOrderApi.prepayment({
+    const result = await TicketOrderApi.prepayment({
       ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
       note: note.value,
       paymentMethodId: paymentMethodId.value,
     })
-    Object.assign(ticketOrderDetailRef.value, response.ticket)
-    ticketOrderDetailRef.value.customerPaymentList =
-      ticketOrderDetailRef.value.customerPaymentList || []
-    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
-
+    Object.assign(ticketOrderDetailRef.value, result.ticket)
+    if (result.payment) {
+      ticketOrderDetailRef.value.paymentList?.push(result.payment)
+    }
     emit('success')
     showModal.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:61 ~ startPrepayment ~ error:', error)
+    console.log('🚀 ~ ModalTicketOrderPayment.vue:85 ~ startPrepayment ~ error:', error)
   } finally {
     paymentLoading.value = false
   }
@@ -99,45 +108,18 @@ const startSendProductAndPaymentAndClose = async () => {
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
-    ticketOrderDetailRef.value.customerPaymentList =
-      ticketOrderDetailRef.value.customerPaymentList || []
-    if (response.customerPayment) {
-      ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment!)
+    ticketOrderDetailRef.value.paymentList = ticketOrderDetailRef.value.paymentList || []
+    if (response.payment) {
+      ticketOrderDetailRef.value.paymentList.push(response.payment!)
     }
 
     emit('success')
     showModal.value = false
   } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:107 ~ handlePayment ~ error:', error)
-  } finally {
-    paymentLoading.value = false
-  }
-}
-
-const startPaymentAndClose = async () => {
-  try {
-    paymentLoading.value = true
-    if (
-      money.value < 0 ||
-      ticketOrderDetailRef.value.totalMoney < ticketOrderDetailRef.value.paid + money.value
-    ) {
-      return AlertStore.addError('Số tiền không hợp lệ')
-    }
-    const response = await TicketOrderApi.paymentAndClose({
-      ticketId: ticketOrderDetailRef.value.id,
-      money: money.value,
-      paymentMethodId: paymentMethodId.value,
-      note: note.value,
-    })
-    Object.assign(ticketOrderDetailRef.value, response.ticket)
-    ticketOrderDetailRef.value.customerPaymentList =
-      ticketOrderDetailRef.value.customerPaymentList || []
-    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment!)
-
-    emit('success')
-    showModal.value = false
-  } catch (error) {
-    console.log('🚀 ~ file: ModalCustomerUpsert.vue:107 ~ handlePayment ~ error:', error)
+    console.log(
+      '🚀 ~ ModalTicketOrderPayment.vue:116 ~ startSendProductAndPaymentAndClose ~ error:',
+      error,
+    )
   } finally {
     paymentLoading.value = false
   }
@@ -152,17 +134,16 @@ const startRefundOverpaid = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const response = await TicketOrderApi.refundOverpaid({
+    const result = await TicketOrderApi.refundOverpaid({
       ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
     })
-    Object.assign(ticketOrderDetailRef.value, response.ticket)
-    ticketOrderDetailRef.value.customerPaymentList =
-      ticketOrderDetailRef.value.customerPaymentList || []
-    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
-
+    Object.assign(ticketOrderDetailRef.value, result.ticket)
+    if (result.payment) {
+      ticketOrderDetailRef.value.paymentList?.push(result.payment)
+    }
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -181,16 +162,16 @@ const startPayDebt = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const response = await TicketOrderApi.payDebt({
+    const result = await TicketOrderApi.payDebt({
       ticketId: ticketOrderDetailRef.value.id,
       money: money.value,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
     })
-    Object.assign(ticketOrderDetailRef.value, response.ticket)
-    ticketOrderDetailRef.value.customerPaymentList =
-      ticketOrderDetailRef.value.customerPaymentList || []
-    ticketOrderDetailRef.value.customerPaymentList.push(response.customerPayment)
+    Object.assign(ticketOrderDetailRef.value, result.ticket)
+    if (result.payment) {
+      ticketOrderDetailRef.value.paymentList?.push(result.payment)
+    }
 
     emit('success')
     showModal.value = false
@@ -218,10 +199,87 @@ defineExpose({ openModal })
         <TicketPaymentList :ticket="ticketOrderDetailRef" :payment-method-map="paymentMethodMap" />
       </div>
 
+      <!-- RefundOverpaid -->
+      <form
+        class="p-4"
+        v-if="paymentView == PaymentViewType.RefundOverpaid"
+        @submit.prevent="(e) => startRefundOverpaid()"
+      >
+        <div class="flex flex-wrap gap-4">
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div>
+              <div>Phương thức hoàn trả</div>
+              <div>
+                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Ghi chú</div>
+              <div>
+                <InputText v-model:value="note" />
+              </div>
+            </div>
+          </div>
+          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+            <div class="">
+              <div class="flex flex-wrap justify-between">
+                <span>Số tiền hoàn trả</span>
+              </div>
+              <div>
+                <div class="flex">
+                  <VueButton
+                    color="default"
+                    type="button"
+                    @click="money = ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney"
+                  >
+                    Tất cả
+                  </VueButton>
+                  <InputMoney
+                    ref="inputMoneyPayment"
+                    v-model:value="money"
+                    text-align="right"
+                    :validate="{
+                      gt: 0,
+                      lte: ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney,
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>Còn thừa</div>
+              <div>
+                <InputMoney
+                  :value="ticketOrderDetailRef.paid - money - ticketOrderDetailRef.totalMoney"
+                  disabled
+                  textAlign="right"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 pb-4 flex justify-center gap-4">
+          <div>
+            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
+          </div>
+          <div
+            v-if="
+              permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
+              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketOrderDetailRef.status)
+            "
+          >
+            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
+              <span>Hoàn trả tiền</span>
+            </VueButton>
+          </div>
+        </div>
+      </form>
+
       <!-- Prepayment -->
       <form
         class="p-4"
-        v-if="paymentView == PaymentViewType.Prepayment"
+        v-else-if="paymentView == PaymentViewType.Prepayment"
         @submit.prevent="(e) => startPrepayment()"
       >
         <div class="flex flex-wrap gap-4">
@@ -242,7 +300,7 @@ defineExpose({ openModal })
           <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
             <div class="">
               <div class="flex flex-wrap justify-between">
-                <span>Số tiền thanh toán</span>
+                <span>Tạm ứng lần này</span>
               </div>
               <div>
                 <div class="flex">
@@ -257,7 +315,9 @@ defineExpose({ openModal })
                     ref="inputMoneyPayment"
                     v-model:value="money"
                     text-align="right"
-                    :validate="{ gt: 0 }"
+                    :validate="
+                      ticketOrderDetailRef.status === TicketStatus.Draft ? { gte: 0 } : { gt: 0 }
+                    "
                   />
                 </div>
               </div>
@@ -286,9 +346,9 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_PREPAYMENT] &&
+              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
-                ticketOrderDetailRef.ticketStatus,
+                ticketOrderDetailRef.status,
               )
             "
           >
@@ -366,10 +426,9 @@ defineExpose({ openModal })
           <div
             v-if="
               permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-              [TicketStatus.Draft, TicketStatus.Deposited].includes(
-                ticketOrderDetailRef.ticketStatus,
-              )
+              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
+              permissionIdMap[PermissionId.TICKET_ORDER_CLOSE] &&
+              [TicketStatus.Draft].includes(ticketOrderDetailRef.status)
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
@@ -381,177 +440,6 @@ defineExpose({ openModal })
               <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
                 Gửi hàng và Ghi nợ
               </template>
-            </VueButton>
-          </div>
-        </div>
-      </form>
-
-      <!-- PaymentAndClose -->
-      <form
-        class="p-4"
-        v-else-if="paymentView == PaymentViewType.PaymentAndClose"
-        @submit.prevent="(e) => startPaymentAndClose()"
-      >
-        <div class="flex flex-wrap gap-4">
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div>
-              <div>Phương thức thanh toán</div>
-              <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Ghi chú</div>
-              <div>
-                <InputText v-model:value="note" />
-              </div>
-            </div>
-          </div>
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div class="">
-              <div class="flex flex-wrap justify-between">
-                <span>Số tiền thanh toán</span>
-              </div>
-              <div>
-                <div class="flex">
-                  <VueButton
-                    color="default"
-                    type="button"
-                    @click="money = ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid"
-                  >
-                    Tất cả
-                  </VueButton>
-                  <InputMoney
-                    ref="inputMoneyPayment"
-                    v-model:value="money"
-                    text-align="right"
-                    :validate="{
-                      gte: 0,
-                      lte: ticketOrderDetailRef.totalMoney - ticketOrderDetailRef.paid,
-                    }"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Ghi nợ</div>
-              <div>
-                <InputMoney
-                  :value="ticketOrderDetailRef.totalMoney - (ticketOrderDetailRef.paid + money)"
-                  disabled
-                  textAlign="right"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-8 pb-4 flex justify-center gap-4">
-          <div>
-            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
-          </div>
-          <div
-            v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT_AND_CLOSE] &&
-              [TicketStatus.Draft, TicketStatus.Deposited].includes(
-                ticketOrderDetailRef.ticketStatus,
-              )
-            "
-          >
-            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <template
-                v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money"
-              >
-                Gửi hàng và Thanh toán
-              </template>
-              <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
-                Gửi hàng và Ghi nợ
-              </template>
-            </VueButton>
-          </div>
-        </div>
-      </form>
-
-      <!-- RefundOverpaid -->
-      <form
-        class="p-4"
-        v-else-if="paymentView == PaymentViewType.RefundOverpaid"
-        @submit.prevent="(e) => startRefundOverpaid()"
-      >
-        <div class="flex flex-wrap gap-4">
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div>
-              <div>Phương thức hoàn trả</div>
-              <div>
-                <InputSelect v-model:value="paymentMethodId" :options="paymentMethodOptions" />
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Ghi chú</div>
-              <div>
-                <InputText v-model:value="note" />
-              </div>
-            </div>
-          </div>
-          <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-            <div class="">
-              <div class="flex flex-wrap justify-between">
-                <span>Số tiền hoàn trả</span>
-              </div>
-              <div>
-                <div class="flex">
-                  <VueButton
-                    color="default"
-                    type="button"
-                    @click="money = ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney"
-                  >
-                    Tất cả
-                  </VueButton>
-                  <InputMoney
-                    ref="inputMoneyPayment"
-                    v-model:value="money"
-                    text-align="right"
-                    :validate="{
-                      gt: 0,
-                      lte: ticketOrderDetailRef.paid - ticketOrderDetailRef.totalMoney,
-                    }"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="mt-4">
-              <div>Còn thừa</div>
-              <div>
-                <InputMoney
-                  :value="ticketOrderDetailRef.paid - money - ticketOrderDetailRef.totalMoney"
-                  disabled
-                  textAlign="right"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-8 pb-4 flex justify-center gap-4">
-          <div>
-            <VueButton type="button" icon="close" @click="closeModal">Đóng lại</VueButton>
-          </div>
-          <div
-            v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(
-                ticketOrderDetailRef.ticketStatus,
-              )
-            "
-          >
-            <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
-              <span v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid - money">
-                Hoàn trả tiền
-              </span>
-              <span v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid - money">
-                Hoàn tiền và Kết thúc
-              </span>
             </VueButton>
           </div>
         </div>
@@ -623,8 +511,8 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_PAY_DEBT] &&
-              [TicketStatus.Debt].includes(ticketOrderDetailRef.ticketStatus)
+              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
+              [TicketStatus.Debt].includes(ticketOrderDetailRef.status)
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">

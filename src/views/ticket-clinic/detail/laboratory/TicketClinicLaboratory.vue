@@ -243,7 +243,7 @@ const handleChangeCheckboxLaboratoryKit = async (
 }
 
 const disabledButtonSaveLaboratorySelect = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return true
   }
 
@@ -573,7 +573,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                        ticketClinicRef.ticketStatus,
+                        ticketClinicRef.status,
                       ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     size="small"

@@ -69,8 +69,18 @@ defineExpose({ openModal })
   >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">
-          NCC: {{ distributor.fullName }}
+        <div class="flex-1 font-medium flex flex-wrap gap-1" style="font-size: 16px">
+          <span>NCC: {{ distributor.fullName }}</span>
+          <div>
+            <span v-if="distributor.debt > 0">
+              - Nợ:
+              <b style="color: var(--text-red)">{{ formatMoney(distributor.debt) }}</b>
+            </span>
+            <span v-if="distributor.debt < 0">
+              - Quỹ:
+              <b style="color: var(--text-green)">{{ formatMoney(-distributor.debt) }}</b>
+            </span>
+          </div>
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -85,7 +95,7 @@ defineExpose({ openModal })
               Thông tin cá nhân
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_READ]"
+              v-if="permissionIdMap[PermissionId.PAYMENT_READ]"
               :tabKey="TABS_KEY.PAYMENT_HISTORY"
             >
               <IconDollar />
@@ -109,15 +119,13 @@ defineExpose({ openModal })
             <VueTabPanel :tabKey="TABS_KEY.PAYMENT_HISTORY">
               <div class="mt-4 flex justify-between items-end">
                 <div>
-                  Khách hàng:
+                  NCC:
                   <b>{{ distributor.fullName }}</b>
-                  - Công nợ hiện tại:
-                  <b>{{ formatMoney(distributor.debt) }}</b>
                 </div>
                 <div>
                   <VueButton
                     v-if="
-                      permissionIdMap[PermissionId.DISTRIBUTOR_PAYMENT_PAY_DEBT] &&
+                      permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                       distributor.debt != 0
                     "
                     color="blue"
@@ -130,7 +138,7 @@ defineExpose({ openModal })
               </div>
               <DistributorPaymentHistory
                 ref="distributorPaymentHistory"
-                :distributor="distributor"
+                :distributorId="distributor.id"
               />
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.RECEIPT_HISTORY">

@@ -87,6 +87,18 @@ const Router = createRouter({
           ],
         },
         {
+          path: 'finance',
+          name: 'Finance',
+          children: [
+            {
+              path: 'payment',
+              name: 'PaymentList',
+              component: () => import('../views/payment/PaymentList.vue'),
+              meta: { title: 'Thu chi' },
+            },
+          ],
+        },
+        {
           path: 'systems',
           name: 'Systems',
           children: [

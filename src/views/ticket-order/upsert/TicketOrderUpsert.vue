@@ -124,7 +124,7 @@ onBeforeMount(async () => {
     if (mode.value === ETicketOrderUpsertMode.COPY) {
       ticketOrderUpsertRef.value.registeredAt = Date.now()
       ticketOrderUpsertRef.value.id = 0
-      ticketOrderUpsertRef.value.ticketStatus = TicketStatus.Draft
+      ticketOrderUpsertRef.value.status = TicketStatus.Draft
     }
     if (mode.value === ETicketOrderUpsertMode.UPDATE) {
       ticketOrderUpsertRef.value.registeredAt ||= Date.now()
@@ -277,7 +277,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
         break
       }
       case ETicketOrderSave.UPDATE_DEPOSITED: {
-        const ticketResponse = await TicketOrderApi.updateDeposited({
+        const ticketResponse = await TicketOrderApi.depositedUpdate({
           ticket: ticketOrderUpsertRef.value,
           ticketId: ticketOrderUpsertRef.value.id,
         })
@@ -285,7 +285,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
         break
       }
       case ETicketOrderSave.CREATE_DEBT_SUCCESS: {
-        await TicketOrderApi.createDebtSuccess({
+        await TicketOrderApi.debtSuccessCreate({
           ticket: ticketOrderUpsertRef.value,
         })
         ticketOrderUpsertRef.value = Ticket.blank()
@@ -347,7 +347,7 @@ const saveInvoice = async (type: ETicketOrderSave) => {
               : []),
           ],
           async onOk() {
-            const res = await TicketOrderApi.updateDebtSuccess({
+            const res = await TicketOrderApi.debtSuccessUpdate({
               ticketId: ticketOrderUpsertRef.value.id,
               ticket: ticketOrderUpsertRef.value,
             })
@@ -660,8 +660,8 @@ const handleChangeTabs = (activeKey: any) => {
 
         <template
           v-if="
-            permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT] &&
-            [TicketStatus.Draft].includes(ticketOrderUpsertRef.ticketStatus)
+            permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD] &&
+            [TicketStatus.Draft].includes(ticketOrderUpsertRef.status)
           "
         >
           <div
@@ -700,7 +700,7 @@ const handleChangeTabs = (activeKey: any) => {
           <div
             v-if="
               settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew &&
-              permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DEBT_SUCCESS]
+              permissionIdMap[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
             "
             class="mt-4 w-full flex flex-col px-1"
           >
@@ -720,7 +720,7 @@ const handleChangeTabs = (activeKey: any) => {
         <template v-if="[ETicketOrderUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              [TicketStatus.Deposited].includes(ticketOrderUpsertRef.ticketStatus) &&
+              [TicketStatus.Deposited].includes(ticketOrderUpsertRef.status) &&
               permissionIdMap[PermissionId.TICKET_ORDER_DEPOSITED_UPDATE]
             "
             class="mt-4 w-full flex flex-col px-1"
@@ -739,8 +739,8 @@ const handleChangeTabs = (activeKey: any) => {
           <div
             v-if="
               [TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketOrderUpsertRef.ticketStatus,
-              ) && permissionIdMap[PermissionId.TICKET_ORDER_UPDATE_DEBT_SUCCESS]
+                ticketOrderUpsertRef.status,
+              ) && permissionIdMap[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
             "
             class="mt-4 w-full flex flex-col px-1"
           >

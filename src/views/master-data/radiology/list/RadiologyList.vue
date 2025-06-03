@@ -46,7 +46,10 @@ const startFetchData = async () => {
     const { data, meta } = await RadiologyService.pagination({
       page: page.value,
       limit: limit.value,
-      relation: { radiologyGroup: false },
+      relation: {
+        radiologyGroup: false,
+        printHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml,
+      },
       filter: {
         radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
         name: searchText.value ? { LIKE: searchText.value } : undefined,
@@ -115,7 +118,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
         Thêm mới
       </VueButton>
     </div>
-    <div class="ml-auto flex items-center gap-8">
+    <div class="ml-auto mr-2 flex items-center gap-8">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -170,6 +173,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             <th>STT</th>
             <th>Tên</th>
             <th>Nhóm</th>
+            <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
             <th>Giá vốn</th>
             <th>Giá tiền</th>
             <th>Action</th>
@@ -208,15 +212,15 @@ const handleModalCopyRadiologySystemSuccess = async () => {
               </div>
             </td>
             <td class="text-center">{{ radiologyGroupMap[radiology.radiologyGroupId]?.name }}</td>
+            <td v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">
+              {{ radiology.printHtml?.name }}
+            </td>
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
-              <a
-                style="color: var(--text-orange)"
-                @click="$router.push({ name: 'RadiologyUpsert', params: { id: radiology.id } })"
-              >
-                <IconEditSquare width="24px" height="24px" />
-              </a>
+              <router-link :to="{ name: 'RadiologyUpsert', params: { id: radiology.id } }">
+                <IconEditSquare width="20px" height="20px" />
+              </router-link>
             </td>
           </tr>
         </tbody>

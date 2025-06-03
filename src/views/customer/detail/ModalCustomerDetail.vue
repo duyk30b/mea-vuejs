@@ -8,7 +8,7 @@ import {
   IconOneToOne,
   IconReconciliation,
   IconSchedule,
-  IconUser
+  IconUser,
 } from '../../../common/icon-antd'
 import { IconRadiology } from '../../../common/icon-google'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
@@ -75,12 +75,18 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium flex flex-wrap gap-1" style="font-size: 16px">
-          <span>{{ customer.fullName }} -</span>
+          <div>{{ customer.fullName }} -</div>
           <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
-          <span>
-            - Nợ:
-            <b>{{ formatMoney(customer.debt) }}</b>
-          </span>
+          <div>
+            <span v-if="customer.debt > 0">
+              - Nợ:
+              <b style="color: var(--text-red)">{{ formatMoney(customer.debt) }}</b>
+            </span>
+            <span v-if="customer.debt < 0">
+              - Quỹ:
+              <b style="color: var(--text-green)">{{ formatMoney(-customer.debt) }}</b>
+            </span>
+          </div>
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -114,7 +120,7 @@ defineExpose({ openModal })
               Phiếu thu
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.CUSTOMER_PAYMENT_READ]"
+              v-if="permissionIdMap[PermissionId.PAYMENT_READ]"
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.PAYMENT_HISTORY"
             >

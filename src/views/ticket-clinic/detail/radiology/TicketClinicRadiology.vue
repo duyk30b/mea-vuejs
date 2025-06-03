@@ -173,7 +173,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       :options="radiologyOptions"
       :maxHeight="320"
       placeholder="Tìm kiếm tên phiếu CĐHA"
-      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)"
+      :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
       @selectItem="({ data }) => selectRadiology(data)"
     >
       <template #option="{ item: { data } }">
@@ -282,7 +282,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus,
+                    ticketClinicRef.status,
                   ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 class="text-orange-500"
@@ -293,7 +293,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   [TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus,
+                    ticketClinicRef.status,
                   ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
@@ -326,7 +326,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     <VueButton
       v-if="
         permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST] &&
-        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus) &&
+        ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
         hasChangePriority
       "
       color="blue"

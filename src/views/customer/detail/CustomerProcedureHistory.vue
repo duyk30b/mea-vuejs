@@ -5,7 +5,7 @@ import VuePagination from '../../../common/VuePagination.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketProcedure, TicketProcedureApi } from '../../../modules/ticket-procedure'
 import { ESTimer } from '../../../utils'
-import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
+import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,

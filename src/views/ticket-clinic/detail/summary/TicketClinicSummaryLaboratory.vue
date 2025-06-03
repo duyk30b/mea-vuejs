@@ -102,7 +102,7 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketClinicRef.ticketStatus,
+                  ticketClinicRef.status,
                 ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"

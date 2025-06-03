@@ -1,28 +1,25 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import {
-  IconClockCircle,
-  IconFileSearch,
-  IconShoppingCart,
-  IconSpin,
-} from '../../../../common/icon-antd'
-import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../../common/icon-google'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
+import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
+import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
+import { IconEditSquare } from '../../../../common/icon-google'
+import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
+import { InputFilter } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
+import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { type MedicineType, PrescriptionSample } from '../../../../modules/prescription-sample'
+import { PrescriptionSample, type MedicineType } from '../../../../modules/prescription-sample'
 import {
-  compiledTemplatePrintHtml,
   PrintHtml,
   PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import type { Product } from '../../../../modules/product'
+import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import {
   TicketAttributeKeyAdviceList,
@@ -31,21 +28,19 @@ import {
 import {
   TicketClinicAttributeApi,
   TicketClinicProductApi,
-  ticketClinicRef,
   TicketClinicUserApi,
+  ticketClinicRef,
 } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
+import { TicketUser } from '../../../../modules/ticket-user'
+import { UserService } from '../../../../modules/user'
+import { UserRoleService } from '../../../../modules/user-role'
 import { DString, ESDom } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
+import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
-import { TicketUser } from '../../../../modules/ticket-user'
-import { RoleService } from '../../../../modules/role'
-import { UserService } from '../../../../modules/user'
-import { UserRoleService } from '../../../../modules/user-role'
-import { InputFilter } from '../../../../common/vue-form'
-import { CommissionService, InteractType } from '../../../../modules/commission'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -76,6 +71,7 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & {
 
 onMounted(async () => {
   refreshTicketUserList()
+  await ticketClinicRef.value.refreshProduct()
 })
 
 const refreshTicketUserList = async () => {
@@ -196,7 +192,7 @@ const hasChangeData = computed(() => {
 })
 
 const disabledButton = computed(() => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return true
   }
   return !hasChangeData.value
@@ -412,19 +408,7 @@ const clickOpenModalSavePrescriptionSample = () => {
               </div>
             </td>
             <td class="text-center">
-              <VueTooltip v-if="tpItem.deliveryStatus === DeliveryStatus.Pending">
-                <template #trigger>
-                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-                </template>
-                <div>Chưa xuất thuốc</div>
-              </VueTooltip>
-
-              <VueTooltip v-else>
-                <template #trigger>
-                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-                </template>
-                <div>Đã xuất thuốc</div>
-              </VueTooltip>
+              <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
             <td>
               <div style="font-weight: 500">

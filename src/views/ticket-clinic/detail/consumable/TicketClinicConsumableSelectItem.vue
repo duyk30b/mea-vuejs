@@ -297,7 +297,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
           :maxHeight="320"
           placeholder="Tìm kiếm sản phẩm bằng tên hoặc hoạt chất của sản phẩm"
           :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
           "
           @onFocusinFirst="handleFocusFirstSearchProduct"
           @selectItem="({ data }) => selectProduct(data)"
@@ -437,7 +437,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
     <div style="flex-grow: 1; flex-basis: 80%" class="mt-2 flex justify-center">
       <VueButton
         :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus) ||
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status) ||
           !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"

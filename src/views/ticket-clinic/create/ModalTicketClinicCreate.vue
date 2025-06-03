@@ -389,7 +389,7 @@ const handleSubmitFormTicketClinic = async () => {
         customer: customer.value,
         ticketInformation: {
           ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
-          ticketStatus: settingStore.TICKET_CLINIC_CREATE.ticketStatus,
+          status: settingStore.TICKET_CLINIC_CREATE.status,
           customType: ticket.value.customType,
           registeredAt: ticket.value.registeredAt,
           customerSourceId: ticket.value.customerSourceId,
@@ -953,7 +953,7 @@ defineExpose({ openModal })
         <div class="flex flex-wrap gap-4">
           <VueButton
             v-if="
-              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.ticketStatus)
+              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status)
             "
             color="red"
             icon="trash"

@@ -16,6 +16,7 @@ import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDet
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -110,7 +111,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   }
   await startFetchData()
 }
-
 </script>
 
 <template>
@@ -119,27 +119,22 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     ref="modalReceiptListSetting"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <div class="page-header">
-    <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2 font-medium text-xl">
-        <IconGroup />
-        Danh sách phiếu nhập hàng
-      </div>
-      <div>
-        <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_UPSERT]"
-          color="blue"
-          icon="plus"
-          @click="
-            $router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })
-          "
-        >
-          Tạo phiếu nhập hàng mới
-        </VueButton>
-      </div>
-    </div>
 
-    <div class="mr-2 flex items-center gap-8">
+  <div class="mx-4 mt-4 gap-2 flex items-center">
+    <div class="hidden md:flex gap-2 items-center text-lg font-medium">
+      <Breadcrumb />
+    </div>
+    <div>
+      <VueButton
+        v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD]"
+        color="blue"
+        icon="plus"
+        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+      >
+        Tạo phiếu nhập hàng mới
+      </VueButton>
+    </div>
+    <div class="ml-auto flex items-center gap-4 flex-wrap">
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -194,8 +189,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               { text: 'Nháp', value: ReceiptStatus.Draft },
               { text: 'Tạm ứng (Chờ nhập hàng)', value: ReceiptStatus.Deposited },
               { text: 'Nợ (Đã gửi hàng)', value: ReceiptStatus.Debt },
-              { text: 'Hoàn thành', value: ReceiptStatus.Success },
-              { text: 'Hủy', value: ReceiptStatus.Voided },
+              { text: 'Hoàn thành', value: ReceiptStatus.Completed },
+              { text: 'Hủy', value: ReceiptStatus.Cancelled },
             ]"
             @update:value="startSearch"
           />

@@ -260,11 +260,13 @@ defineExpose({ openModal })
                 v-if="ticketProcedure.discountType === DiscountType.VND"
                 :value="ticketProcedure.discountMoney"
                 @update:value="handleChangeUnitDiscountMoney"
+                :validate="{ gte: 0 }"
               />
               <InputNumber
                 v-else
                 :value="ticketProcedure.discountPercent"
                 @update:value="handleChangeDiscountPercent"
+                :validate="{ gte: 0, lte: 100 }"
               />
             </div>
           </div>

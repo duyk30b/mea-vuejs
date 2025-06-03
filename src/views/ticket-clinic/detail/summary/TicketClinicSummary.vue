@@ -14,9 +14,9 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DeliveryStatus, InventoryStrategy, PaymentViewType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
-  compiledTemplatePrintHtml,
   PrintHtml,
   PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -25,7 +25,6 @@ import {
   TicketClinicApi,
   TicketClinicProductApi,
   ticketClinicRef,
-  ticketRefDeliveryStatus,
 } from '../../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
@@ -72,11 +71,11 @@ const procedureDiscount = computed(() => {
 
 const disableSendProduct = computed(() => {
   // chỉ được phép khi ở trạng thái đang khám (Executing)
-  if (ticketClinicRef.value.ticketStatus !== TicketStatus.Executing) {
+  if (ticketClinicRef.value.status !== TicketStatus.Executing) {
     return true
   }
   // chỉ được phép khi có hàng chưa gửi (Pending)
-  if (ticketRefDeliveryStatus.value !== DeliveryStatus.Pending) {
+  if (ticketClinicRef.value.deliveryStatus !== DeliveryStatus.Pending) {
     return true
   }
 
@@ -154,14 +153,14 @@ const clickReopenTicket = () => {
 }
 
 const clickDestroyTicket = () => {
-  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Phiếu khám đã đóng',
       content: ['- Bắt buộc MỞ LẠI hồ sơ trước khi HỦY phiếu khám'],
     })
   }
 
-  if (ticketRefDeliveryStatus.value === DeliveryStatus.Delivered) {
+  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Delivered) {
     return ModalStore.alert({
       title: 'Đã xuất thuốc - vật tư',
       content: ['- Bắt buộc HOÀN TRẢ thuốc và vật tư trước khi HỦY phiếu khám'],
@@ -197,7 +196,7 @@ const clickDestroyTicket = () => {
 }
 
 const clickRefundOverpaid = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
@@ -208,7 +207,7 @@ const clickRefundOverpaid = () => {
 }
 
 const clickReturnProduct = () => {
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
     return ModalStore.alert({
       title: 'Trạng thái hồ sơ không hợp lệ ?',
       content: 'Cần mở lại hồ sơ trước khi hoàn trả thuốc - vật tư',
@@ -220,7 +219,7 @@ const clickReturnProduct = () => {
 
 const handleMenuActionClick = (menu: { key: string }) => {
   if (menu.key === 'RETURN_PRODUCT_LIST') {
-    if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.ticketStatus)) {
+    if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
       return ModalStore.alert({
         title: 'Trạng thái hồ sơ không hợp lệ ?',
         content: 'Cần mở lại hồ sơ trước khi hoàn trả',
@@ -294,10 +293,11 @@ const startPrint = async () => {
     </VueButton>
     <VueButton
       v-if="
-        [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClinicRef.ticketStatus) &&
+        [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClinicRef.status) &&
         ticketClinicRef.paid > ticketClinicRef.totalMoney
       "
       icon="dollar"
+      color="green"
       @click="clickRefundOverpaid"
     >
       <span>HOÀN TIỀN</span>
@@ -316,7 +316,7 @@ const startPrint = async () => {
           </span>
         </a>
         <a
-          v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.ticketStatus)"
+          v-if="[TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status)"
           @click="clickReopenTicket"
         >
           <span class="text-red-500">
@@ -393,9 +393,8 @@ const startPrint = async () => {
             <td class="text-center">
               <a
                 v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.ticketStatus,
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
                 @click="modalTicketProcedureUpdate?.openModal(ticketProcedure)"
@@ -455,9 +454,8 @@ const startPrint = async () => {
           <td class="text-center">
             <a
               v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketClinicRef.ticketStatus,
-                ) && permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
               "
               class="text-orange-500"
               @click="modalTicketClinicChangeDiscount?.openModal()"
@@ -465,6 +463,7 @@ const startPrint = async () => {
               <IconEditSquare width="20" height="20" />
             </a>
           </td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
         </tr>
         <tr>
           <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>

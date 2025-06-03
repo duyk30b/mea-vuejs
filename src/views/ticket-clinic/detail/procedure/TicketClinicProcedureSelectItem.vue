@@ -176,7 +176,7 @@ const addTicketProcedure = async () => {
           :maxHeight="320"
           placeholder="Tìm kiếm tên dịch vụ"
           :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus)
+            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
           "
           @selectItem="({ data }) => selectProcedure(data)"
         >
@@ -229,7 +229,7 @@ const addTicketProcedure = async () => {
       <VueButton
         icon="plus"
         :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.ticketStatus) ||
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status) ||
           !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"

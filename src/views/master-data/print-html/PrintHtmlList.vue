@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconSetting } from '../../../common/icon-antd'
+import { IconEye } from '../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../common/icon-google'
 import { InputSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
@@ -12,6 +12,8 @@ import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../modules/prin
 import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const meStore = useMeStore()
+const { user } = meStore
+console.log('🚀 ~ PrintHtmlList.vue:16 ~ user:', user)
 
 const { permissionIdMap } = meStore
 
@@ -122,15 +124,24 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
             <td>{{ printHtml.name }}</td>
             <td v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]">
               <div class="flex justify-between">
-                <a
-                  style="color: var(--text-orange)"
-                  @click="$router.push({ name: 'PrintHtmlUpsert', params: { id: printHtml.id } })"
-                >
-                  <IconEditSquare width="24px" height="24px" />
-                </a>
-                <a style="color: var(--text-red)" @click="handleClickDeletePrintHtml(printHtml)">
-                  <IconDelete width="24px" height="24px" />
-                </a>
+                <router-link :to="{ name: 'PrintHtmlUpsert', params: { id: printHtml.id } }">
+                  <IconEditSquare
+                    v-if="printHtml.oid !== 1 || user?.id === 1"
+                    width="20px"
+                    height="20px"
+                    style="color: var(--text-orange)"
+                  />
+                  <IconEye v-else width="20px" height="20px" />
+                </router-link>
+                <span>
+                  <a
+                    v-if="printHtml.oid !== 1 || user?.id === 1"
+                    style="color: var(--text-red)"
+                    @click="handleClickDeletePrintHtml(printHtml)"
+                  >
+                    <IconDelete width="20px" height="20px" />
+                  </a>
+                </span>
               </div>
             </td>
           </tr>

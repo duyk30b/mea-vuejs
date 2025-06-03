@@ -6,8 +6,8 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { ESTimer } from '../../../utils'
 import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
-import LinkAndStatusTicket from './LinkAndStatusTicket.vue'
 import VuePagination from '../../../common/VuePagination.vue'
+import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 

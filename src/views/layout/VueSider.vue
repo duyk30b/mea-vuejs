@@ -7,6 +7,7 @@ import {
   IconAreaChart,
   IconContacts,
   IconControl,
+  IconDollar,
   IconHome,
   IconMedicalBox,
   IconPicCenter,
@@ -97,8 +98,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #title>Bán hàng</template>
       <a-menu-item
         v-if="
-          permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_UPSERT] ||
-          permissionIdMap[PermissionId.TICKET_ORDER_CREATE_DEBT_SUCCESS]
+          permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD] ||
+          permissionIdMap[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
         "
         key="TicketOrderUpsert"
       >
@@ -150,6 +151,15 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'MasterData' }">Danh mục</router-link>
       </span>
     </a-menu-item>
+    <a-sub-menu v-if="permissionIdMap[PermissionId.PAYMENT_READ]" key="Finance">
+      <template #icon>
+        <IconDollar />
+      </template>
+      <template #title>Tài chính</template>
+      <a-menu-item v-if="permissionIdMap[PermissionId.PAYMENT_READ]" key="PaymentList">
+        <router-link :to="{ name: 'PaymentList' }">Danh sách thu chi</router-link>
+      </a-menu-item>
+    </a-sub-menu>
     <a-sub-menu
       v-if="
         permissionIdMap[PermissionId.STATISTIC_TICKET] ||

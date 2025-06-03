@@ -5,17 +5,18 @@ import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputSelect, InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
+import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CustomerPaymentApi } from '../../../../modules/customer-payment/customer-payment.api'
 import { PaymentViewType } from '../../../../modules/enum'
+import { PaymentMethodService, type PaymentMethod } from '../../../../modules/payment-method'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { ESArray, timeToText } from '../../../../utils'
-import CustomerPaymentTypeTag from '../../../customer/CustomerPaymentTypeTag.vue'
-import { PaymentMethodService, type PaymentMethod } from '../../../../modules/payment-method'
+import { ESArray } from '../../../../utils'
 import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { PaymentApi } from '../../../../modules/payment/payment.api'
+import { onMounted } from 'vue'
+import { VoucherType } from '../../../../modules/payment/payment.model'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -37,31 +38,33 @@ const note = ref('')
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 const paymentMethodMap = ref<Record<string, PaymentMethod>>({})
 
+onMounted(async () => {
+  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
+  paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
+  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
+  paymentMethodId.value = paymentMethodAll[0]?.id || 0
+})
+
 const openModal = async (view: PaymentViewType) => {
   paymentView.value = view
   money.value = 0
   showModal.value = true
 
-  const fetchData = await Promise.all([
-    CustomerPaymentApi.list({
+  try {
+    ticketClinicRef.value.paymentList = await PaymentApi.list({
       filter: {
-        customerId: ticketClinicRef.value.customerId,
-        ticketId: ticketClinicRef.value.id,
+        voucherId: ticketClinicRef.value.id,
+        voucherType: VoucherType.Ticket,
       },
       sort: { id: 'ASC' },
-    }),
-    PaymentMethodService.list({ sort: { priority: 'ASC' } }),
-  ])
+    })
+    ticketClone.value = Ticket.from(ticketClinicRef.value)
 
-  ticketClinicRef.value.customerPaymentList = fetchData[0]
-  ticketClone.value = Ticket.from(ticketClinicRef.value)
-
-  const paymentMethodAll = await PaymentMethodService.list({ sort: { priority: 'ASC' } })
-  paymentMethodMap.value = ESArray.arrayToKeyValue(paymentMethodAll, 'id')
-  paymentMethodOptions.value = paymentMethodAll.map((i) => ({ value: i.id, label: i.name }))
-  paymentMethodId.value = paymentMethodAll[0]?.id || 0
-  if (!isMobile) {
-    nextTick(() => inputMoneyPayment.value?.focus())
+    if (!isMobile) {
+      nextTick(() => inputMoneyPayment.value?.focus())
+    }
+  } catch (error) {
+    console.log('🚀 ~ ModalTicketClinicPayment.vue:67 ~ openModal ~ error:', error)
   }
 }
 
@@ -70,7 +73,6 @@ const closeModal = () => {
   money.value = 0
   note.value = ''
   paymentMethodId.value = 0
-  paymentMethodOptions.value = []
 }
 
 const startPrepayment = async () => {
@@ -213,9 +215,9 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_CLINIC_PREPAYMENT] &&
+              permissionIdMap[PermissionId.TICKET_CLINIC_PAYMENT] &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
-                ticketClone.ticketStatus,
+                ticketClone.status,
               )
             "
           >
@@ -293,7 +295,7 @@ defineExpose({ openModal })
           <div
             v-if="
               permissionIdMap[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] &&
-              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.ticketStatus)
+              [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.status)
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">
@@ -358,8 +360,8 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_CLINIC_PAY_DEBT] &&
-              [TicketStatus.Debt].includes(ticketClone.ticketStatus)
+              permissionIdMap[PermissionId.TICKET_CLINIC_PAYMENT] &&
+              [TicketStatus.Debt].includes(ticketClone.status)
             "
           >
             <VueButton type="submit" color="blue" icon="dollar" :loading="paymentLoading">

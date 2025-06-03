@@ -60,6 +60,8 @@ ticketDemo.note = 'Viêm mũi dị ứng'
 ticketDemo.startedAt = Date.now()
 ticketDemo.customer = Customer.example()
 
+let systemVarLog = {}
+
 const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
@@ -67,20 +69,18 @@ onBeforeMount(async () => {
   const promiseInit = await Promise.all([
     RadiologyGroupService.list({}),
     PrintHtmlService.list({}),
-    PrintHtmlService.getSystemList(),
     RoleService.list({}),
   ])
   radiologyGroupAll.value = promiseInit[0]
+  const printHtmlAll = promiseInit[1]
+  const roleAll = promiseInit[2]
   printHtmlOptions.value = [
     { text: 'Mặc định', value: 0 },
-    ...promiseInit[1].map((i) => {
-      return { value: i.id, text: i.name }
-    }),
-    ...promiseInit[2].map((i) => {
+    ...printHtmlAll.map((i) => {
       return { value: i.id, text: i.name }
     }),
   ]
-  roleOptions.value = promiseInit[3].map((i) => ({ value: i.id, text: i.name, data: i }))
+  roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
 })
 
 onMounted(async () => {
@@ -210,6 +210,7 @@ const updatePreview = async () => {
     printHtml,
     customVariables: radiology.value.customVariables,
   })
+  systemVarLog = compiledResult.systemVar || {}
 
   if (!compiledResult || !compiledResult.html) {
     return
@@ -319,6 +320,10 @@ const handleAddCommission = () => {
     radiology.value.commissionList = []
   }
   radiology.value.commissionList!.push(commissionBlank)
+}
+
+const showDataSystemPrint = () => {
+  console.log(systemVarLog)
 }
 </script>
 
@@ -440,7 +445,10 @@ const handleAddCommission = () => {
                 <details>
                   <summary><a>Cài đặt nâng cao</a></summary>
                   <div class="mt-4">
-                    <div class="">Khời tạo biến mặc định</div>
+                    <div class="flex justify-between">
+                      <span>Khởi tạo biến mặc định</span>
+                      <a @click="showDataSystemPrint">Xem biến hệ thống (console.log)</a>
+                    </div>
                     <div style="height: 150px; border: 1px solid #cdcdcd">
                       <MonacoEditor
                         :value="radiology.printHtml?.initVariable || ''"
