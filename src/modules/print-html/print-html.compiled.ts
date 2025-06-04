@@ -20,6 +20,9 @@ export const compiledTemplatePrintHtml = (options: {
   data?: Record<string, any>
   printHtml: PrintHtml
   customVariables?: string
+  _LAYOUT?: {
+    HEADER?: string
+  }
 }) => {
   const _SYSTEM_VARIABLE = {
     organization: options.organization || {},
@@ -30,6 +33,9 @@ export const compiledTemplatePrintHtml = (options: {
     ESTimer,
     DImage,
     DString,
+    _LAYOUT: {
+      HEADER: options?._LAYOUT?.HEADER || '',
+    },
     _UTILS: {
       InteractType,
       LaboratoryValueType,
@@ -39,6 +45,7 @@ export const compiledTemplatePrintHtml = (options: {
     },
   }
   let html = ''
+  let css = ''
 
   try {
     const compiledTemplate = new Function(
@@ -52,16 +59,18 @@ export const compiledTemplatePrintHtml = (options: {
         ESTimer,
         DImage,
         DString,
+        _LAYOUT,
         _UTILS,
       } = params;
       ${options.printHtml.initVariable || ''};
       ${options.customVariables || ''};
-      return \`${options.printHtml.content}\`;
+      return \`${options.printHtml.html}\`;
     `,
     )
     html = compiledTemplate(_SYSTEM_VARIABLE)
+    css = options.printHtml.css
   } catch (error) {
-    console.log('🚀 ~ print-html.compiled.ts:51 ~ error:', error)
+    console.log('🚀 ~ print-html.compiled.ts:73 ~ error:', error)
   }
-  return { html, systemVar: _SYSTEM_VARIABLE }
+  return { html, css, systemVar: _SYSTEM_VARIABLE }
 }

@@ -1,4 +1,5 @@
 import { ESArray } from '../../utils'
+import { MeService } from '../_me/me.service'
 import { PrintHtmlApi } from './print-html.api'
 import type { PrintHtmlGetListQuery } from './print-html.dto'
 import { PrintHtml } from './print-html.model'
@@ -60,5 +61,125 @@ export class PrintHtmlService {
     const result = await PrintHtmlApi.destroyOne(id)
     PrintHtmlService.loadedAll = false
     return result
+  }
+
+  static async getPrintHtmlHeader() {
+    let printHtml: PrintHtml | undefined
+
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING._LAYOUT_HEADER.printHtmlId
+    if (printHtmlId != 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING._LAYOUT_HEADER.printHtmlId
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlOptometry() {
+    let printHtml: PrintHtml | undefined
+
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.optometry.printHtmlId
+    if (printHtmlId != 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.optometry.printHtmlId
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlLaboratory(printHtmlId: number) {
+    let printHtmlTemp: PrintHtml | undefined
+    if (printHtmlId != 0) {
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtmlTemp || !printHtmlTemp.html) {
+        printHtmlId = 0
+      }
+    }
+
+    printHtmlId = MeService.settingMap.value.PRINT_SETTING.laboratory.printHtmlId
+    if (printHtmlId != 0) {
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtmlTemp || !printHtmlTemp.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.laboratory.printHtmlId
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtmlTemp ? PrintHtml.from(printHtmlTemp) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlRadiology(printHtmlId: number) {
+    let printHtmlTemp: PrintHtml | undefined
+    if (printHtmlId != 0) {
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtmlTemp || !printHtmlTemp.html) {
+        printHtmlId = 0
+      }
+    }
+
+    printHtmlId = MeService.settingMap.value.PRINT_SETTING.radiology.printHtmlId
+    if (printHtmlId != 0) {
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtmlTemp || !printHtmlTemp.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.radiology.printHtmlId
+      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtmlTemp ? PrintHtml.from(printHtmlTemp) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlInvoice() {
+    let printHtml: PrintHtml | undefined
+
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.invoice.printHtmlId
+    if (printHtmlId != 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.invoice.printHtmlId
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlPrescription() {
+    let printHtml: PrintHtml | undefined
+
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.prescription.printHtmlId
+    if (printHtmlId != 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.prescription.printHtmlId
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 }

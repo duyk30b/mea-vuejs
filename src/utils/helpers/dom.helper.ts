@@ -1,22 +1,31 @@
 export class ESDom {
-  static writeWindow = (doc: Document, options: { html: string; css?: string; js?: string }) => {
-    const { html, css, js } = options
+  static writeWindow = (
+    doc: Document,
+    options: { html: string; cssList?: string[]; jsList?: string[] },
+  ) => {
+    const { html, cssList, jsList } = options
     doc.open()
     doc.write(html)
-    if (css) {
-      let cssElement = document.createElement('style')
-      cssElement.innerHTML = css
-      doc.head.append(cssElement)
+    if (cssList) {
+      cssList.forEach((css) => {
+        if (!css) return
+        let cssElement = document.createElement('style')
+        cssElement.innerHTML = css
+        doc.head.append(cssElement)
+      })
     }
-    if (js) {
-      let jsElement = document.createElement('script')
-      jsElement.innerHTML = js
-      doc.body.append(jsElement)
+    if (jsList) {
+      jsList.forEach((js) => {
+        if (!js) return
+        let jsElement = document.createElement('script')
+        jsElement.innerHTML = js
+        doc.body.append(jsElement)
+      })
     }
     doc.close()
   }
 
-  static async startPrint(id: string, options: { html: string; css?: string; js?: string }) {
+  static async startPrint(id: string, options: { html: string; cssList?: string[]; jsList?: string[] }) {
     const iframePrint = document.getElementById(id) as HTMLIFrameElement
     if (!iframePrint) {
       alert(`Lỗi: Không tìm thấy iframe với id = "${id}"`)

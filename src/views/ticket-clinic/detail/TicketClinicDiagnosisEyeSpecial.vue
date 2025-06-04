@@ -12,6 +12,7 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { ESDom } from '../../../utils'
+import { MeService } from '../../../modules/_me/me.service'
 
 const meStore = useMeStore()
 const settingStore = useSettingStore()
@@ -22,8 +23,7 @@ const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>
 
 const saveLoading = ref(false)
 
-onMounted(async () => {
-})
+onMounted(async () => {})
 
 watch(
   () => ticketClinicRef.value.ticketAttributeList,
@@ -87,35 +87,37 @@ const saveTicketDiagnosis = async () => {
 
 const startPrint = async () => {
   try {
-    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.diagnosisEyeSpecial
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.optometry
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-    if (!printHtml || !printHtml.content) {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlOptometry = await PrintHtmlService.getPrintHtmlOptometry()
+
+    if (!printHtmlHeader || !printHtmlOptometry || !printHtmlOptometry.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const compiledResult = compiledTemplatePrintHtml({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       masterData: {},
-      printHtml,
+      printHtml: printHtmlOptometry,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
     })
 
-    if (!compiledResult.html) {
-      AlertStore.addError('Cài đặt in không hợp lệ')
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
       return
     }
 
-    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
   } catch (error) {
     console.log('🚀 ~ file: TicketEyePrescription.vue:191 ~ startPrint ~ error:', error)
   }

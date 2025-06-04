@@ -15,7 +15,7 @@ export class TicketBatch {
   deliveryStatus: DeliveryStatus
   unitRate: number
   quantity: number
-  costPrice: number
+  costAmount: number
   expectedPrice: number
   actualPrice: number
 
@@ -112,7 +112,7 @@ export class TicketBatch {
     if (a.batchId != b.batchId) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.quantity != b.quantity) return false
-    if (a.costPrice != b.costPrice) return false
+    if (a.costAmount != b.costAmount) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.actualPrice != b.actualPrice) return false
     return true

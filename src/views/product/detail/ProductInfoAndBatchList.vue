@@ -6,7 +6,6 @@ import { InputCheckbox } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { BatchDistributorIdRule, BatchWarehouseIdRule } from '../../../modules/_me/setting.default'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
@@ -17,7 +16,12 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer } from '../../../utils'
 import ModalBatchMerge from './ModalBatchMerge.vue'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
-import { InventoryStrategy } from '../../../modules/enum'
+import {
+  InventoryStrategy,
+  SplitBatchByDistributor,
+  SplitBatchByWarehouse,
+} from '../../../modules/enum'
+import { CONFIG } from '../../../config'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 const modalBatchMerge = ref<InstanceType<typeof ModalBatchMerge>>()
@@ -31,7 +35,7 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const productSetting = ref(MeService.getProductSetting())
+const productSettingCommon = ref(MeService.getProductSettingCommon())
 
 const hasZeroQuantity = ref<boolean>(false)
 const warehouseMap = ref<Record<string, Warehouse>>({})
@@ -178,6 +182,10 @@ const closeExpiryDate = computed(() => {
           / {{ product.unitDefaultName }}
         </div>
       </div>
+      <div class="my-2 flex gap-4">
+        <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
+        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ unitString(product) }}</div>
+      </div>
     </div>
     <div style="flex-basis: 45%; flex: 1; min-width: 300px">
       <div class="my-2 flex gap-4">
@@ -189,10 +197,6 @@ const closeExpiryDate = computed(() => {
       <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Hoạt chất</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ product.substance }}</div>
-      </div>
-      <div class="my-2 flex gap-4">
-        <div style="width: 100px; flex-shrink: 0">Đơn vị</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">{{ unitString(product) }}</div>
       </div>
       <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Đường dùng</div>
@@ -234,6 +238,7 @@ const closeExpiryDate = computed(() => {
         <thead>
           <tr>
             <th>Lô</th>
+            <th>Giá</th>
             <th>SL</th>
             <th></th>
           </tr>
@@ -244,30 +249,45 @@ const closeExpiryDate = computed(() => {
           </tr>
           <tr v-for="(batch, index) in batchList || []" :key="index">
             <td>
-              <div>Mã: {{ batch.id }}</div>
               <div class="flex justify-between">
-                <div v-if="batch.batchCode">S.Lô: {{ batch.batchCode }}</div>
-                <div
-                  v-if="batch.expiryDate"
-                  :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
-                >
-                  HSD: {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
-                </div>
+                <span>ID:</span>
+                <span>{{ batch.id }}</span>
               </div>
+              <div v-if="batch.batchCode" class="flex justify-between">
+                <div>Mã lô:</div>
+                <div>{{ batch.batchCode }}</div>
+              </div>
+              <div
+                v-if="batch.expiryDate"
+                class="flex justify-between"
+                :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
+              >
+                <div>HSD:</div>
+                <div>{{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}</div>
+              </div>
+              <div v-if="warehouseMap[batch.warehouseId]?.name" class="flex justify-between">
+                <span>Kho:</span>
+                <span>{{ warehouseMap[batch.warehouseId]?.name }}</span>
+              </div>
+              <div
+                v-if="distributorMap[batch.distributorId]?.fullName"
+                class="flex justify-between"
+              >
+                <span>NCC:</span>
+                <span>{{ distributorMap[batch.distributorId]?.fullName }}</span>
+              </div>
+            </td>
+            <td class="">
               <div
                 v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
                 class="flex justify-between"
-                style="font-size: 0.9em"
               >
-                <span>G.Nhập: {{ formatMoney(batch.costPrice) }}</span>
-              </div>
-              <div v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
-                Kho: {{ warehouseMap[batch.warehouseId]?.name }}
+                <span>G.Vốn:</span>
+                <span v-if="batch.quantity === 0">{{ formatMoney(batch.costPrice) }}</span>
+                <span v-else>{{ formatMoney(Math.round(batch.costAmount / batch.quantity)) }}</span>
               </div>
             </td>
-            <td class="text-right whitespace-nowrap">
-              {{ batch.quantity }}
-            </td>
+            <td class="text-right whitespace-nowrap">{{ batch.quantity }}</td>
             <td>
               <div
                 v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
@@ -287,14 +307,11 @@ const closeExpiryDate = computed(() => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Mã lô</th>
-            <th>HSD</th>
+            <th>Thông tin</th>
             <th>SL</th>
-            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Nhập</th>
-            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">Kho</th>
-            <th v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent">
-              NCC
-            </th>
+            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
+            <th v-if="CONFIG.MODE === 'development'">G.Nhập</th>
+            <th v-if="CONFIG.MODE === 'development'">T.Vốn</th>
             <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
           </tr>
         </thead>
@@ -304,32 +321,31 @@ const closeExpiryDate = computed(() => {
           </tr>
           <tr v-for="(batch, index) in batchList || []" :key="index">
             <td class="text-center">{{ batch.id }}</td>
-            <td class="text-center">{{ batch.batchCode }}</td>
-            <td class="text-center">
+            <td class="">
+              <div>{{ batch.batchCode }}</div>
               <div
                 v-if="batch.expiryDate"
                 :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
               >
-                {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+                HSD: {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+              </div>
+              <div v-if="warehouseMap[batch.warehouseId]?.name">
+                Kho: {{ warehouseMap[batch.warehouseId]?.name }}
+              </div>
+              <div v-if="distributorMap[batch.distributorId]?.fullName">
+                NCC: {{ distributorMap[batch.distributorId]?.fullName }}
               </div>
             </td>
-            <td class="text-center">
-              {{ batch.unitQuantity }}
-            </td>
+            <td class="text-center">{{ batch.quantity }}</td>
             <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
-              {{ formatMoney(batch.unitCostPrice) }}
+              <span v-if="batch.quantity === 0">{{ formatMoney(batch.costPrice) }}</span>
+              <span v-else>{{ formatMoney(Math.round(batch.costAmount / batch.quantity)) }}</span>
             </td>
-            <td
-              v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
-              class="text-center"
-            >
-              {{ warehouseMap[batch.warehouseId]?.name }}
+            <td v-if="CONFIG.MODE === 'development'" class="text-right">
+              <span>{{ formatMoney(batch.costPrice) }}</span>
             </td>
-            <td
-              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
-              class="text-center"
-            >
-              {{ distributorMap[batch.distributorId]?.fullName }}
+            <td v-if="CONFIG.MODE === 'development'" class="text-right">
+              <span>{{ formatMoney(batch.costAmount) }}</span>
             </td>
             <td>
               <div

@@ -1,7 +1,14 @@
 import { MeService } from '../_me/me.service'
 import { Batch } from '../batch/batch.model'
 import { Commission } from '../commission'
-import { InventoryStrategy, type UnitType } from '../enum'
+import {
+  InventoryStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+  type UnitType,
+} from '../enum'
 import { ProductGroup } from '../product-group'
 
 export class Product {
@@ -26,6 +33,11 @@ export class Product {
   warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
   inventoryStrategy: InventoryStrategy
+  splitBatchByWarehouse: SplitBatchByWarehouse
+  splitBatchByDistributor: SplitBatchByDistributor
+  splitBatchByExpiryDate: SplitBatchByExpiryDate
+  splitBatchByCostPrice: SplitBatchByCostPrice
+
   isActive: 1 | 0 // Trạng thái
   updatedAt: number | string | Date
 
@@ -96,7 +108,7 @@ export class Product {
 
   get inventoryStrategyFix() {
     if (this.inventoryStrategy === InventoryStrategy.Inherit) {
-      return MeService.getProductSetting().inventoryStrategy
+      return MeService.getProductSetting(this).inventoryStrategy
     }
     return this.inventoryStrategy
   }
@@ -119,6 +131,10 @@ export class Product {
     ins.warehouseIdList = [0]
 
     ins.inventoryStrategy = InventoryStrategy.Inherit
+    ins.splitBatchByWarehouse = SplitBatchByWarehouse.Inherit
+    ins.splitBatchByDistributor = SplitBatchByDistributor.Inherit
+    ins.splitBatchByExpiryDate = SplitBatchByExpiryDate.Inherit
+    ins.splitBatchByCostPrice = SplitBatchByCostPrice.Inherit
     ins.isActive = 1
     return ins
   }

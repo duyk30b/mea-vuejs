@@ -3,8 +3,8 @@ import { OmitClass, PickClass } from '../../utils'
 export class PrintHtmlGetQuery {
   page?: number
   limit?: number
-  relation?: {}
-  filter?: {}
+  relation?: object
+  filter?: { id?: number }
 
   sort?: {
     id?: 'ASC' | 'DESC'

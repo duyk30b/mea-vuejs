@@ -1,20 +1,23 @@
 import { ref } from 'vue'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
+import {
+  InventoryStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+} from '../enum'
 import type { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
 import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'
 import { useMeStore } from './me.store'
-import {
-  BatchCostPriceRule,
-  BatchDistributorIdRule,
-  BatchWarehouseIdRule,
-  SETTING_DEFAULT,
-} from './setting.default'
+import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
-import { InventoryStrategy } from '../enum'
+import type { Product } from '../product'
+import { PrintHtml, PrintHtmlService } from '../print-html'
 
 export class MeService {
   static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
@@ -92,24 +95,14 @@ export class MeService {
 
   static async initData() {
     try {
-      const {
-        organization,
-        permissionAll,
-        permissionIds,
-        settingMap,
-        settingMapRoot,
-        user,
-        rootSetting,
-      } = await MeApi.info()
+      const { organization, permissionAll, permissionIds, settingMap, settingMapRoot, user } =
+        await MeApi.info()
 
       const settingStore = useSettingStore()
       MeService.reCalculatorSetting(settingStore, settingMap)
       MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
       MeService.reCalculatorSetting(MeService.settingMapRoot.value, settingMapRoot)
       MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
-
-      const meStore = useMeStore()
-      meStore.rootSetting = objectUpdatePropertyByObject(meStore.rootSetting, rootSetting)
     } catch (error) {
       console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }
@@ -122,25 +115,94 @@ export class MeService {
     MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
   }
 
-  static getProductSetting() {
-    const productSettingCommon = {
-      ...MeService.settingMap.value.PRODUCT_SETTING,
+  static getProductSetting(product: Product) {
+    const splitRule: typeof MeService.settingMap.value.PRODUCT_SETTING = {
+      allowNegativeQuantity: false,
+      inventoryStrategy: product.inventoryStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
     }
+
+    const productSettingCommon = MeService.getProductSettingCommon()
+
+    splitRule.allowNegativeQuantity = productSettingCommon.allowNegativeQuantity
+
+    if (splitRule.inventoryStrategy === InventoryStrategy.Inherit) {
+      splitRule.inventoryStrategy = productSettingCommon.inventoryStrategy
+    }
+
+    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
+      splitRule.splitBatchByWarehouse = productSettingCommon.splitBatchByWarehouse
+    }
+
+    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
+      splitRule.splitBatchByDistributor = productSettingCommon.splitBatchByDistributor
+    }
+
+    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
+      splitRule.splitBatchByExpiryDate = productSettingCommon.splitBatchByExpiryDate
+    }
+
+    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
+      splitRule.splitBatchByCostPrice = productSettingCommon.splitBatchByCostPrice
+    }
+    return splitRule
+  }
+
+  static getProductSettingCommon() {
+    const splitRule = { ...MeService.settingMap.value.PRODUCT_SETTING }
+
     const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
 
-    if (productSettingCommon.inventoryStrategy === InventoryStrategy.Inherit) {
-      productSettingCommon.inventoryStrategy = productSettingRoot.inventoryStrategy
+    if (splitRule.inventoryStrategy === InventoryStrategy.Inherit) {
+      splitRule.inventoryStrategy = productSettingRoot.inventoryStrategy
     }
 
-    if (productSettingCommon.batch_warehouseId === BatchWarehouseIdRule.Inherit) {
-      productSettingCommon.batch_warehouseId = productSettingRoot.batch_warehouseId
+    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
+      splitRule.splitBatchByWarehouse = productSettingRoot.splitBatchByWarehouse
     }
-    if (productSettingCommon.batch_distributorId === BatchDistributorIdRule.Inherit) {
-      productSettingCommon.batch_distributorId = productSettingRoot.batch_distributorId
+
+    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
+      splitRule.splitBatchByDistributor = productSettingRoot.splitBatchByDistributor
     }
-    if (productSettingCommon.batch_costPrice === BatchCostPriceRule.Inherit) {
-      productSettingCommon.batch_costPrice = productSettingRoot.batch_costPrice
+
+    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
+      splitRule.splitBatchByExpiryDate = productSettingRoot.splitBatchByExpiryDate
     }
-    return productSettingCommon
+
+    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
+      splitRule.splitBatchByCostPrice = productSettingRoot.splitBatchByCostPrice
+    }
+    return splitRule
   }
+
+  static getPrintSetting() {
+    const printSettingCommon = {
+      ...MeService.settingMap.value.PRINT_SETTING,
+    }
+    const printSettingRoot = MeService.settingMapRoot.value.PRINT_SETTING
+    if (printSettingCommon._LAYOUT_HEADER.printHtmlId === 0) {
+      printSettingCommon._LAYOUT_HEADER.printHtmlId = printSettingRoot._LAYOUT_HEADER.printHtmlId
+    }
+    if (printSettingCommon.invoice.printHtmlId === 0) {
+      printSettingCommon.invoice.printHtmlId = printSettingRoot.invoice.printHtmlId
+    }
+    if (printSettingCommon.prescription.printHtmlId === 0) {
+      printSettingCommon.prescription.printHtmlId = printSettingRoot.prescription.printHtmlId
+    }
+    if (printSettingCommon.optometry.printHtmlId === 0) {
+      printSettingCommon.optometry.printHtmlId = printSettingRoot.optometry.printHtmlId
+    }
+    if (printSettingCommon.laboratory.printHtmlId === 0) {
+      printSettingCommon.laboratory.printHtmlId = printSettingRoot.laboratory.printHtmlId
+    }
+    if (printSettingCommon.radiology.printHtmlId === 0) {
+      printSettingCommon.radiology.printHtmlId = printSettingRoot.radiology.printHtmlId
+    }
+    return printSettingCommon
+  }
+
+
 }

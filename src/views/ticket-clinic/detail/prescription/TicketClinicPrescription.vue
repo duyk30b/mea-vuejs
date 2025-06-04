@@ -206,33 +206,38 @@ const changeItemPosition = (index: number, count: number) => {
 
 const startPrint = async () => {
   try {
-    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.prescription
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.prescription
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-    if (!printHtml || !printHtml.content) {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlPrescription = await PrintHtmlService.getPrintHtmlPrescription()
+
+    if (!printHtmlHeader || !printHtmlPrescription || !printHtmlPrescription.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const compiledResult = compiledTemplatePrintHtml({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      printHtml: printHtmlHeader,
+    })
+
+    const compiledContent = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       masterData: {},
-      printHtml: printHtml!,
+      printHtml: printHtmlPrescription,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
     })
-    if (!compiledResult.html) {
-      AlertStore.addError('Cài đặt in không hợp lệ')
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
       return
     }
-    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
   }

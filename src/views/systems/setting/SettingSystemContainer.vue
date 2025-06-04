@@ -5,14 +5,14 @@ import { VueTabPanel } from '../../../common/vue-tabs'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import SettingBasic from './SettingBasic.vue'
-import SettingBatch from './SettingBatch.vue'
+import SettingProduct from './SettingProduct.vue'
 
 const TABS_KEY = {
-  SYSTEM: 'SYSTEM',
-  PRODUCT: 'PRODUCT',
+  SETTING_SYSTEM: 'SETTING_SYSTEM',
+  SETTING_PRODUCT: 'SETTING_PRODUCT',
 }
 
-const activeTab = ref(TABS_KEY.SYSTEM)
+const activeTab = ref(TABS_KEY.SETTING_SYSTEM)
 </script>
 
 <template>
@@ -27,15 +27,15 @@ const activeTab = ref(TABS_KEY.SYSTEM)
   <div class="mt-4 md:mx-4">
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
-        <VueTabMenu :tabKey="TABS_KEY.SYSTEM">Cài đặt chung</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.PRODUCT">Cài đặt sản phẩm</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.SETTING_SYSTEM">Cài đặt chung</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.SETTING_PRODUCT">Cài đặt sản phẩm</VueTabMenu>
       </template>
       <template #panel>
-        <VueTabPanel :tabKey="TABS_KEY.SYSTEM">
+        <VueTabPanel :tabKey="TABS_KEY.SETTING_SYSTEM">
           <SettingBasic />
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.PRODUCT">
-          <SettingBatch />
+        <VueTabPanel :tabKey="TABS_KEY.SETTING_PRODUCT">
+          <SettingProduct />
         </VueTabPanel>
       </template>
     </VueTabs>

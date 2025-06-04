@@ -98,7 +98,7 @@ const startReturnProduct = async () => {
       .map((i) => {
         return {
           ticketBatchId: i.ticketBatchId,
-          quantity: i.quantityReturn,
+          quantityReturn: i.quantityReturn,
         }
       })
     if (ticket.value.ticketType === TicketType.Order) {

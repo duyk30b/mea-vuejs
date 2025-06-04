@@ -443,7 +443,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           @click="close()"
         >
           <IconFileDone />
-          <span v-if="receipt.debt > 0">Đóng phiếu và ghi nợ</span>
+          <span v-if="receipt.debt > 0">Đóng phiếu và Ghi nợ</span>
           <span v-else>Kết thúc</span>
         </VueButton>
       </template>

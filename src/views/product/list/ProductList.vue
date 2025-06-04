@@ -10,11 +10,10 @@ import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
-import { BatchDistributorIdRule, BatchWarehouseIdRule } from '../../../modules/_me/setting.default'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
-import { InventoryStrategy } from '../../../modules/enum'
+import { InventoryStrategy, SplitBatchByDistributor, SplitBatchByWarehouse } from '../../../modules/enum'
 import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService, type Product } from '../../../modules/product'
@@ -43,7 +42,7 @@ const { permissionIdMap } = meStore
 const productList = ref<Product[]>([])
 const batchList = ref<Batch[]>([])
 
-const productSetting = MeService.getProductSetting()
+const productSetting = MeService.getProductSettingCommon()
 
 const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
 const productGroupMap = ref<Record<string, ProductGroup>>({})
@@ -334,7 +333,7 @@ const handleModalUploadProductSuccess = async () => {
       </div>
 
       <div
-        v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+        v-if="productSetting.splitBatchByWarehouse === SplitBatchByWarehouse.SplitOnDifferent"
         style="flex: 2; flex-basis: 160px"
       >
         <div>Chọn kho</div>
@@ -348,7 +347,7 @@ const handleModalUploadProductSuccess = async () => {
       </div>
 
       <div
-        v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+        v-if="productSetting.splitBatchByDistributor === SplitBatchByDistributor.SplitOnDifferent"
         style="flex: 2; flex-basis: 180px"
       >
         <div>Chọn nhà cung cấp</div>
@@ -656,11 +655,11 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.group">Nhóm</th>
             <th v-if="settingStore.SCREEN_PRODUCT_LIST.unit">Đ.Vị</th>
-            <th v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent">
+            <th v-if="productSetting.splitBatchByWarehouse === SplitBatchByWarehouse.SplitOnDifferent">
               Kho
             </th>
             <th
-              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+              v-if="productSetting.splitBatchByDistributor === SplitBatchByDistributor.SplitOnDifferent"
             >
               NCC
             </th>
@@ -751,13 +750,13 @@ const handleModalUploadProductSuccess = async () => {
                   {{ product.unitDefaultName }}
                 </td>
                 <td
-                  v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+                  v-if="productSetting.splitBatchByWarehouse === SplitBatchByWarehouse.SplitOnDifferent"
                 >
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
                   v-if="
-                    productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent
+                    productSetting.splitBatchByDistributor === SplitBatchByDistributor.SplitOnDifferent
                   "
                 ></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.batchCode" class="text-center"></td>
@@ -842,13 +841,13 @@ const handleModalUploadProductSuccess = async () => {
                 </td>
 
                 <td
-                  v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+                  v-if="productSetting.splitBatchByWarehouse === SplitBatchByWarehouse.SplitOnDifferent"
                 >
                   {{ product.warehouseIdList.map((i) => warehouseMap[i]?.name).join(', ') }}
                 </td>
                 <td
                   v-if="
-                    productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent
+                    productSetting.splitBatchByDistributor === SplitBatchByDistributor.SplitOnDifferent
                   "
                   class="text-center"
                 >
@@ -949,13 +948,13 @@ const handleModalUploadProductSuccess = async () => {
               {{ batch.product?.unitDefaultName }}
             </td>
             <td
-              v-if="productSetting.batch_warehouseId === BatchWarehouseIdRule.SplitOnDifferent"
+              v-if="productSetting.splitBatchByWarehouse === SplitBatchByWarehouse.SplitOnDifferent"
               class="text-center"
             >
               {{ warehouseMap[batch.warehouseId]?.name }}
             </td>
             <td
-              v-if="productSetting.batch_distributorId === BatchDistributorIdRule.SplitOnDifferent"
+              v-if="productSetting.splitBatchByDistributor === SplitBatchByDistributor.SplitOnDifferent"
               class="text-center"
             >
               {{ distributorMap[batch.distributorId]?.fullName }}

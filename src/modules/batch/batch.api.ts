@@ -37,13 +37,6 @@ export class BatchApi {
     return Batch.from(data.batch)
   }
 
-  static async createOne(instance: Batch) {
-    const plain = Batch.from(instance)
-    const response = await AxiosInstance.post('/batch/create', plain)
-    const { data } = response.data as BaseResponse<{ batch: any }>
-    return Batch.from(data.batch)
-  }
-
   static async updateInfo(id: number, batch: Batch) {
     const response = await AxiosInstance.patch(`/batch/update-info/${id}`, {
       batchCode: batch.batchCode,
@@ -61,7 +54,9 @@ export class BatchApi {
         batchCode: batch.batchCode,
         expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
         warehouseId: batch.warehouseId,
+        distributorId: batch.distributorId,
         quantity: batch.quantity,
+        costAmount: batch.costAmount,
         costPrice: batch.costPrice,
       },
     )

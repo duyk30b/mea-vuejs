@@ -3,7 +3,6 @@ import type { BaseResponse } from '../_base/base-dto'
 import { Organization } from '../organization'
 import { Permission } from '../permission/permission.model'
 import { User } from '../user/user.model'
-import type { SETTING_DEFAULT } from './setting.default'
 
 export class MeApi {
   static async info() {
@@ -16,7 +15,6 @@ export class MeApi {
       settingMap: data.settingMap as Record<string, any>,
       settingMapRoot: data.settingMapRoot as Record<string, any>,
       user: User.from(data.user),
-      rootSetting: data.rootSetting,
     }
   }
 

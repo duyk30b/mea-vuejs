@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconDelete, IconSetting, IconSisternode } from '../../../common/icon-antd'
 import {
@@ -20,7 +20,14 @@ import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
-import { InventoryStrategy, type UnitType } from '../../../modules/enum'
+import {
+  InventoryStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+  type UnitType,
+} from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
@@ -34,7 +41,7 @@ import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.v
 
 const TABS_KEY = {
   BASIC: 'BASIC',
-  WAREHOUSE: 'WAREHOUSE',
+  WAREHOUSE_AND_BATCH: 'WAREHOUSE_AND_BATCH',
   ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
 }
 
@@ -49,7 +56,7 @@ const settingStore = useSettingStore()
 const { isMobile, formatMoney } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
-const productSetting = MeService.getProductSetting()
+const productSettingCommon = MeService.getProductSettingCommon()
 
 const productOrigin = ref(Product.blank())
 const product = ref(Product.blank())
@@ -84,16 +91,81 @@ const hasChangeData = computed(() => {
   return false
 })
 
+onMounted(async () => {
+  try {
+    warehouseAll.value = await WarehouseService.list({})
+    warehouseMap.value = await WarehouseService.getMap()
+
+    const productGroupAll = await ProductGroupService.list({})
+    productGroupOptions.value = productGroupAll.map((i) => ({
+      value: i.id,
+      text: i.name,
+      data: i,
+    }))
+
+    const roleAll = await RoleService.list({})
+    roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
+  } catch (error) {
+    console.log('🚀 ~ ModalProductUpsert.vue:104 ~ onMounted ~ error:', error)
+  }
+})
+
 const inventoryStrategyOptions = [
   { value: InventoryStrategy.Inherit, label: '-' },
   { value: InventoryStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
   { value: InventoryStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
   { value: InventoryStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
-  { value: InventoryStrategy.AutoWithLIFO, label: 'Tự động chọn lô theo LIFO' },
   { value: InventoryStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
 ]
 inventoryStrategyOptions.forEach((i) => {
-  if (i.value === productSetting.inventoryStrategy) {
+  if (i.value === productSettingCommon.inventoryStrategy) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByWarehouseOptions = [
+  { value: SplitBatchByWarehouse.Inherit, label: '-' },
+  { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByWarehouse.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByWarehouseOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByWarehouse) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByDistributorOptions = [
+  { value: SplitBatchByDistributor.Inherit, label: '-' },
+  { value: SplitBatchByDistributor.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByDistributor.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByDistributorOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByDistributor) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByExpiryDateOptions = [
+  { value: SplitBatchByExpiryDate.Inherit, label: '-' },
+  { value: SplitBatchByExpiryDate.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByExpiryDate.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByExpiryDateOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByExpiryDate) {
+    i.label = '(Mặc định) - ' + i.label
+  }
+})
+
+const splitBatchByCostPriceOptions = [
+  { value: SplitBatchByCostPrice.Inherit, label: '-' },
+  {
+    value: SplitBatchByCostPrice.OverrideAndMAC,
+    label: 'Ghi đè giá nhập cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
+  },
+  { value: SplitBatchByCostPrice.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByCostPriceOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByCostPrice) {
     i.label = '(Mặc định) - ' + i.label
   }
 })
@@ -143,24 +215,6 @@ const openModal = async (productId?: number) => {
   } catch (error) {
     warehouseIdSelect.value = { '0': true }
   }
-
-  const productGroupAll = await ProductGroupService.list({})
-  productGroupOptions.value = productGroupAll.map((i) => ({
-    value: i.id,
-    text: i.name,
-    data: i,
-  }))
-
-  warehouseAll.value = await WarehouseService.list({})
-  warehouseMap.value = await WarehouseService.getMap()
-
-  RoleService.list({})
-    .then((result) => {
-      roleOptions.value = result.map((i) => ({ value: i.id, text: i.name, data: i }))
-    })
-    .catch((e) => {
-      console.log('🚀 ~ file: ModalProductUpsert.vue:111 ~ openModal ~ e:', e)
-    })
 }
 
 const handleAddUnit = () => {
@@ -315,7 +369,7 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.WAREHOUSE">Quản lý kho</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.WAREHOUSE_AND_BATCH">Kho và lô</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
@@ -469,7 +523,7 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div class="grow basis-[40%]">
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div class="">Số lượng</div>
                   <div class="">
                     <InputMoney
@@ -480,7 +534,10 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="grow basis-[40%]">
+                <div
+                  v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
+                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+                >
                   <div class="">
                     <span>Giá nhập</span>
                     <span
@@ -506,7 +563,10 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="grow basis-[40%]">
+                <div
+                  v-if="settingStore.SYSTEM_SETTING.wholesalePrice"
+                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+                >
                   <div class="">
                     <span>Giá bán sỉ</span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -528,7 +588,10 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="grow basis-[40%]">
+                <div
+                  v-if="settingStore.SYSTEM_SETTING.retailPrice"
+                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
+                >
                   <div class="">
                     <span>Giá bán lẻ</span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -559,12 +622,12 @@ defineExpose({ openModal })
                 </div>
               </div>
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.WAREHOUSE">
+            <VueTabPanel :tabKey="TABS_KEY.WAREHOUSE_AND_BATCH">
               <div class="mt-4 flex flex-wrap gap-4">
                 <div style="flex-basis: 90%; flex-grow: 1">
                   <div class="italic font-bold">* Kho quản lý</div>
-                  <div class="flex gap-4">
-                    <div class="mt-2">
+                  <div class="flex flex-wrap gap-4">
+                    <div class="mt-2" style="flex-grow: 1; flex-basis: 90%">
                       <input
                         :id="'MEA_' + randomId + '_' + 0"
                         style="cursor: pointer"
@@ -576,7 +639,11 @@ defineExpose({ openModal })
                         Tất cả kho
                       </label>
                     </div>
-                    <div v-for="warehouse in warehouseAll" :key="warehouse.id" class="mt-2">
+                    <div
+                      v-for="warehouse in warehouseAll"
+                      :key="warehouse.id"
+                      style="flex-grow: 1; flex-basis: 30%; min-width: 200px"
+                    >
                       <input
                         :id="'MEA_' + randomId + '_' + warehouse.id"
                         style="cursor: pointer"
@@ -594,13 +661,53 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div style="flex-basis: 90%; flex-grow: 1">
-                  <div>Chiến lược trừ kho</div>
+                <div class="mt-4" style="flex-basis: 90%; flex-grow: 1">
+                  <div class="italic font-bold">* Chiến lược trừ kho</div>
                   <div>
                     <InputSelect
                       v-model:value="product.inventoryStrategy"
                       :options="inventoryStrategyOptions"
                     />
+                  </div>
+                </div>
+
+                <div style="flex-basis: 90%; flex-grow: 1">
+                  <div class="italic font-bold">* Quản lý logic tách lô hàng</div>
+                  <div class="mt-4">
+                    <div>Kho hàng</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByWarehouse"
+                        :options="splitBatchByWarehouseOptions"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <div>Nhà cung cấp</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByDistributor"
+                        :options="splitBatchByDistributorOptions"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <div>Hạn sử dụng</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByExpiryDate"
+                        :options="splitBatchByExpiryDateOptions"
+                      />
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <div>Giá nhập</div>
+                    <div>
+                      <InputSelect
+                        v-model:value="product.splitBatchByCostPrice"
+                        :options="splitBatchByCostPriceOptions"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,23 +1,11 @@
-import { InventoryStrategy } from '../enum'
+import {
+  InventoryStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+} from '../enum'
 import { TicketStatus, TicketType } from '../ticket'
-
-export enum BatchDistributorIdRule {
-  Inherit = 0,
-  Override = 1,
-  SplitOnDifferent = 2,
-}
-
-export enum BatchWarehouseIdRule {
-  Inherit = 0,
-  Override = 1,
-  SplitOnDifferent = 2,
-}
-
-export enum BatchCostPriceRule {
-  Inherit = 0,
-  OverrideAndMAC = 1,
-  SplitOnDifferent = 2,
-}
 
 export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
@@ -28,12 +16,43 @@ export const SETTING_DEFAULT = {
     retailPrice: true,
     wholesalePrice: false,
   },
+  PRINT_SETTING: {
+    _LAYOUT_HEADER: {
+      printHtmlId: 0,
+    },
+    invoice: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '', 
+    },
+    prescription: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    optometry: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    radiology: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    laboratory: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+  },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,
     inventoryStrategy: InventoryStrategy.Inherit,
-    batch_distributorId: BatchDistributorIdRule.Inherit,
-    batch_warehouseId: BatchWarehouseIdRule.Inherit,
-    batch_costPrice: BatchCostPriceRule.Inherit,
+    splitBatchByWarehouse: SplitBatchByWarehouse.Inherit,
+    splitBatchByDistributor: SplitBatchByDistributor.Inherit,
+    splitBatchByExpiryDate: SplitBatchByExpiryDate.Inherit,
+    splitBatchByCostPrice: SplitBatchByCostPrice.Inherit,
   },
 
   PRODUCT_UNIT: <string[]>[
@@ -299,11 +318,6 @@ export const SETTING_DEFAULT = {
     prescriptions: {
       warehouseIdList: [0],
       searchIncludeZeroQuantity: 1,
-    },
-    printHtmlIdSetting: {
-      invoice: 0,
-      prescription: 0,
-      diagnosisEyeSpecial: 0,
     },
   },
   TICKET_CLINIC_CREATE: {

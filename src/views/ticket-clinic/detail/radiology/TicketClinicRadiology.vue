@@ -122,39 +122,41 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
     const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
     let printHtmlId = radiologyData.printHtmlId
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.radiology
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiology(printHtmlId)
 
-    if (!printHtml || !printHtml.content) {
+    if (!printHtmlHeader || !printHtmlRadiology || !printHtmlRadiology.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const compiledResult = compiledTemplatePrintHtml({
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      data: ticketRadiologyData,
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       masterData: {
         radiology: radiologyData,
       },
-      printHtml: printHtml!,
-      customVariables: ticketRadiologyData.radiology?.customVariables || '',
+      printHtml: printHtmlRadiology,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+      customVariables: radiologyData.customVariables || '',
     })
-    if (!compiledResult.html) {
-      AlertStore.addError('Cài đặt in không hợp lệ')
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
       return
     }
+
     await ESDom.startPrint('iframe-print', {
-      html: compiledResult.html,
-      css: ticketRadiologyData.radiology?.customStyles || '',
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css, radiologyData.customStyles],
     })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
@@ -281,9 +283,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               </a>
               <a
                 v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.status,
-                  ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
@@ -292,9 +293,8 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               </a>
               <a
                 v-else-if="
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.status,
-                  ) && permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
                 "
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
               >

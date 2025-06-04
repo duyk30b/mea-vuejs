@@ -32,8 +32,31 @@ export enum InventoryStrategy {
   NoImpact = 0, // Không tác động đến kho
   RequireBatchSelection = 1, // Bắt buộc chọn lô
   AutoWithFIFO = 2, // Auto theo FIFO
-  AutoWithLIFO = 3, // Auto theo LIFO
-  AutoWithExpiryDate = 4, // Auto ưu tiên hạn gần
+  AutoWithExpiryDate = 3, // Auto ưu tiên hạn gần
+}
+
+export enum SplitBatchByWarehouse {
+  Inherit = 0,
+  Override = 1,
+  SplitOnDifferent = 2,
+}
+
+export enum SplitBatchByDistributor {
+  Inherit = 0,
+  Override = 1,
+  SplitOnDifferent = 2,
+}
+
+export enum SplitBatchByExpiryDate {
+  Inherit = 0,
+  Override = 1,
+  SplitOnDifferent = 2,
+}
+
+export enum SplitBatchByCostPrice {
+  Inherit = 0,
+  OverrideAndMAC = 1,
+  SplitOnDifferent = 2,
 }
 
 export enum MovementType {

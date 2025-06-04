@@ -36,7 +36,6 @@ const closeModal = () => {
 }
 
 const handleChangeProduct = (p: Product) => {
-  console.log('🚀 ~ file: ModalProductDetail.vue:38 ~ handleChangeProduct ~ p:', p)
   product.value = Product.from(p)
 }
 

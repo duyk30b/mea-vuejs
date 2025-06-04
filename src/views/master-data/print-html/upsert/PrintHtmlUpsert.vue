@@ -13,6 +13,7 @@ import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -28,7 +29,9 @@ const meStore = useMeStore()
 const { organization, user } = meStore
 
 const printHtml = ref(PrintHtml.blank())
+const printHtmlHeader = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
+
 const saveLoading = ref(false)
 
 const ticketMap: Record<string, Ticket> = {}
@@ -39,29 +42,14 @@ let systemVarLog = {}
 onBeforeMount(async () => {
   const printHtmlId = Number(route.params.id)
   if (printHtmlId) {
-    printHtml.value = await PrintHtmlApi.detail(printHtmlId)
+    const result = await PrintHtmlService.detail(printHtmlId)
+    printHtml.value = result || PrintHtml.blank()
   } else {
     printHtml.value = PrintHtml.blank()
   }
-})
 
-const handleSave = async () => {
-  saveLoading.value = true
-  try {
-    if (!printHtml.value.id) {
-      const response = await PrintHtmlService.createOne(printHtml.value)
-      emit('success', response, 'CREATE')
-    } else {
-      const response = await PrintHtmlService.updateOne(printHtml.value.id, printHtml.value)
-      emit('success', response, 'UPDATE')
-    }
-    router.push({ name: 'PrintHtmlList' })
-  } catch (error) {
-    console.log('🚀 ~ file: PrintHtmlUpsert.vue:46 ~ handleSave ~ error:', error)
-  } finally {
-    saveLoading.value = false
-  }
-}
+  printHtmlHeader.value = await PrintHtmlService.getPrintHtmlHeader()
+})
 
 const updatePreview = () => {
   if (!ticketDemo.value.id) return
@@ -76,17 +64,25 @@ const updatePreview = () => {
     dataStringExample.value = JSON.stringify(data, null, 2)
   } catch (error) {
     data = {}
-    console.log('🚀 ~ PrintHtmlUpsert.vue:93 ~ updatePreview ~ error:', error)
   }
 
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
+  const compiledHeader = compiledTemplatePrintHtml({
+    organization,
+    ticket,
+    data,
+    printHtml: printHtmlHeader.value,
+  })
   const compiledResult = compiledTemplatePrintHtml({
     organization,
     ticket,
     data,
     printHtml: printHtml.value,
+    _LAYOUT: {
+      HEADER: compiledHeader.html,
+    },
   })
   systemVarLog = compiledResult.systemVar || {}
 
@@ -94,7 +90,10 @@ const updatePreview = () => {
     return
   }
 
-  ESDom.writeWindow(doc, { html: compiledResult.html })
+  ESDom.writeWindow(doc, {
+    html: compiledResult.html,
+    cssList: [compiledHeader.css, compiledResult.css],
+  })
 }
 
 const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
@@ -132,7 +131,8 @@ const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
 }
 
 const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
-  printHtml.value.content = printHtmlProp.content
+  printHtml.value.html = printHtmlProp.html
+  printHtml.value.css = printHtmlProp.css
   printHtml.value.dataExample = printHtmlProp.dataExample
   printHtml.value.initVariable = printHtmlProp.initVariable
   updatePreview()
@@ -152,11 +152,22 @@ const startTestPrint = async () => {
       console.log('🚀 ~ PrintHtmlUpsert.vue:163 ~ startTestPrint ~ error:', error)
     }
 
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket,
+      data,
+      printHtml: printHtmlHeader.value,
+    })
+    const _LAYOUT_HEADER = compiledHeader.html
+
     const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket,
       data,
       printHtml: printHtml.value,
+      _LAYOUT: {
+        HEADER: _LAYOUT_HEADER,
+      },
     })
     systemVarLog = compiledResult.systemVar || {}
 
@@ -165,14 +176,33 @@ const startTestPrint = async () => {
     }
     await ESDom.startPrint('iframe-print', {
       html: compiledResult.html,
+      cssList: [compiledHeader.css, compiledResult.css],
     })
   } catch (error) {
-    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+    console.log('🚀 ~ PrintHtmlUpsert.vue:182 ~ startTestPrint ~ error:', error)
   }
 }
 
 const showDataSystemPrint = () => {
   console.log(systemVarLog)
+}
+
+const handleSave = async () => {
+  saveLoading.value = true
+  try {
+    if (!printHtml.value.id) {
+      const response = await PrintHtmlService.createOne(printHtml.value)
+      emit('success', response, 'CREATE')
+    } else {
+      const response = await PrintHtmlService.updateOne(printHtml.value.id, printHtml.value)
+      emit('success', response, 'UPDATE')
+    }
+    router.push({ name: 'PrintHtml' })
+  } catch (error) {
+    console.log('🚀 ~ file: PrintHtmlUpsert.vue:46 ~ handleSave ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
 }
 </script>
 
@@ -206,13 +236,13 @@ const showDataSystemPrint = () => {
       class="mt-4"
       style="
         display: grid;
-        grid-template-areas: 'content viewer' 'getDataExample dataText' 'initVariable  dataText';
+        grid-template-areas: 'html viewer' 'css viewer' 'getDataExample dataText' 'initVariable  dataText';
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: 600px 100px 200px;
+        grid-template-rows: 500px 300px 100px 200px;
         gap: 16px;
       "
     >
-      <div style="grid-area: content" class="flex flex-col">
+      <div style="grid-area: html" class="flex flex-col">
         <div>
           <span>Tùy chỉnh hiển thị</span>
           <span>
@@ -221,8 +251,19 @@ const showDataSystemPrint = () => {
             </a>
           </span>
         </div>
-        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
-          <MonacoEditor v-model:value="printHtml!.content" @update:value="updatePreview" />
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd">
+          <MonacoEditor v-model:value="printHtml!.html" @update:value="updatePreview" />
+        </div>
+      </div>
+
+      <div style="grid-area: css" class="flex flex-col">
+        <div>CSS</div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd">
+          <MonacoEditor
+            v-model:value="printHtml!.css"
+            @update:value="updatePreview"
+            language="css"
+          />
         </div>
       </div>
 

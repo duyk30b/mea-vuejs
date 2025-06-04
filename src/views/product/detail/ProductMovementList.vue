@@ -175,18 +175,11 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             <div class="flex justify-between">
               <span v-if="productMovement.quantity > 0">Nhập:</span>
               <span v-if="productMovement.quantity < 0">Xuất:</span>
-              <span class="font-bold">{{ productMovement.unitQuantity }}</span>
-              <span v-if="productMovement.unitRate !== 1">
-                &nbsp;{{ productMovement.unitName }} ({{ productMovement.quantity }}
-                {{ product.unitBasicName }})
-              </span>
+              <span class="font-bold">{{ productMovement.quantity }}</span>
             </div>
             <div class="flex justify-between">
               <span>Giá:</span>
-              <span>
-                {{ formatMoney(productMovement.unitActualPrice) }}
-                <span v-if="productMovement.unitName">/ {{ productMovement.unitName }}</span>
-              </span>
+              <span>{{ formatMoney(productMovement.actualPrice) }}</span>
             </div>
             <div class="flex justify-between">
               <span>SL:</span>
@@ -206,8 +199,8 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <th>Phiếu</th>
           <th>Lô</th>
           <th>Nhập/Xuất</th>
-          <th>Tồn kho ({{ product.unitBasicName }})</th>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
+          <th>Tồn kho</th>
+          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
           <th>Giá</th>
         </tr>
       </thead>
@@ -290,22 +283,15 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           </template>
           <td class="text-center">B{{ productMovement.batchId }}</td>
           <td class="text-center">
-            <div>
-              {{ (productMovement.quantity > 0 ? '+' : '') + productMovement.unitQuantity }}
-              <span v-if="productMovement.unitRate !== 1">
-                {{ productMovement.unitName }}
-              </span>
-            </div>
-            <div v-if="productMovement.unitRate !== 1" class="text-xs">
-              ({{ productMovement.quantity }} {{ product.unitBasicName }})
-            </div>
+            {{ (productMovement.quantity > 0 ? '+' : '') + productMovement.quantity }}
           </td>
           <td class="text-center">
             {{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}
           </td>
           <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
-            {{ formatMoney(productMovement.costPrice) }}
-            <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
+            {{
+              (productMovement.costAmount > 0 ? '+' : '') + formatMoney(productMovement.costAmount)
+            }}
           </td>
           <td class="text-right">
             <div
@@ -318,15 +304,10 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
                 color: var(--text-red);
               "
             >
-              {{ formatMoney(productMovement.unitExpectedPrice) }}
-              <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
+              {{ formatMoney(productMovement.expectedPrice) }}
             </div>
             <div>
-              {{ formatMoney(productMovement.unitActualPrice) }}
-              <span v-if="productMovement.unitRate !== 1">/ {{ productMovement.unitName }}</span>
-            </div>
-            <div v-if="productMovement.unitRate !== 1" class="text-xs">
-              ({{ formatMoney(productMovement.actualPrice) }} / {{ product.unitBasicName }})
+              {{ formatMoney(productMovement.actualPrice) }}
             </div>
           </td>
         </tr>

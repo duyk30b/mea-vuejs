@@ -64,8 +64,13 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      inventoryStrategy: product.inventoryStrategy,
       isActive: product.isActive,
+
+      inventoryStrategy: product.inventoryStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
 
       commissionList: (product.commissionList || [])
         .filter((i) => !!i.roleId)
@@ -96,8 +101,13 @@ export class ProductApi {
       image: product.image,
       hintUsage: product.hintUsage,
       warehouseIds: product.warehouseIds,
-      inventoryStrategy: product.inventoryStrategy,
       isActive: product.isActive,
+
+      inventoryStrategy: product.inventoryStrategy,
+      splitBatchByWarehouse: product.splitBatchByWarehouse,
+      splitBatchByDistributor: product.splitBatchByDistributor,
+      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+      splitBatchByCostPrice: product.splitBatchByCostPrice,
 
       commissionList: (product.commissionList || [])
         .filter((i) => !!i.roleId)

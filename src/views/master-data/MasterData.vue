@@ -99,7 +99,7 @@ const { permissionIdMap } = meStore
           <IconPrint />
         </div>
         <div class="card-content">
-          <div class="card-title">Danh sách mẫu in</div>
+          <div class="card-title">Cài đặt mẫu in</div>
           <div class="card-description">
             Quản lý cách hiển thị mẫu in cho phiếu xét nghiệm, CĐHA, hóa đơn, ...
           </div>

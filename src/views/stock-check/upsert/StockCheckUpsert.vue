@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import {
@@ -121,8 +121,10 @@ const selectBatch = (batchData?: Batch) => {
   stockCheckItem.value.batch = Batch.from(batchData)
 
   stockCheckItem.value.systemQuantity = batchData.quantity
+  stockCheckItem.value.systemCostAmount = batchData.costAmount
   if (batchData.quantity >= 0) {
     stockCheckItem.value.actualQuantity = batchData.quantity
+    stockCheckItem.value.actualCostAmount = batchData.costAmount
   }
 }
 
@@ -182,6 +184,12 @@ const handleModalStockCheckAddMultipleProductSuccess = (data: {
   })
 }
 
+const sumCostAmountDifferent = computed(() => {
+  return stockCheck.value.stockCheckItemList.reduce((acc, cur) => {
+    return acc + cur.actualCostAmount - cur.systemCostAmount
+  }, 0)
+})
+
 const addStockCheckItem = (scItem: StockCheckItem) => {
   const findExits = stockCheck.value.stockCheckItemList.find((i) => {
     return i.batchId === scItem.batchId
@@ -191,6 +199,18 @@ const addStockCheckItem = (scItem: StockCheckItem) => {
   } else {
     stockCheck.value.stockCheckItemList!.push(scItem)
     return true
+  }
+}
+
+const handleChangeActualQuantity = (index: number, actualQuantity: number) => {
+  const scItem = stockCheck.value.stockCheckItemList![index]
+  scItem.actualQuantity = actualQuantity
+  if (scItem.systemQuantity === 0) {
+    scItem.actualCostAmount = scItem.actualQuantity * (scItem.batch?.costPrice || 0)
+  } else {
+    scItem.actualCostAmount = Math.round(
+      (scItem.systemCostAmount * scItem.actualQuantity) / scItem.systemQuantity,
+    )
   }
 }
 
@@ -478,12 +498,16 @@ const saveStockCheck = async () => {
                         border: 1px solid #cdcdcd;
                       "
                       class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                      @click="scItem.actualQuantity--"
+                      @click="handleChangeActualQuantity(index, scItem.actualQuantity - 1)"
                     >
                       <IconMinus />
                     </button>
                     <div style="width: calc(100% - 60px); min-width: 50px">
-                      <InputNumber v-model:value="scItem.actualQuantity" textAlign="right" />
+                      <InputNumber
+                        :value="scItem.actualQuantity"
+                        @update:value="(v) => handleChangeActualQuantity(index, v)"
+                        textAlign="right"
+                      />
                     </div>
                     <button
                       style="
@@ -493,7 +517,7 @@ const saveStockCheck = async () => {
                         border: 1px solid #cdcdcd;
                       "
                       class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                      @click="scItem.actualQuantity++"
+                      @click="handleChangeActualQuantity(index, scItem.actualQuantity + 1)"
                     >
                       <IconPlus />
                     </button>
@@ -519,6 +543,15 @@ const saveStockCheck = async () => {
                   >
                     <IconDelete style="font-size: 18px" />
                   </div>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="100">Tổng số sản phẩm: {{ stockCheck.stockCheckItemList.length }}</td>
+              </tr>
+              <tr>
+                <td colspan="100">
+                  <span>Tổng vốn bị lệch:</span>
+                  <span class="ml-4 font-medium">{{ formatMoney(sumCostAmountDifferent) }}</span>
                 </td>
               </tr>
             </tbody>

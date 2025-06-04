@@ -519,7 +519,7 @@ defineExpose({ openModal })
               <template
                 v-if="ticketOrderDetailRef.totalMoney === ticketOrderDetailRef.paid + money"
               >
-                Trả nợ và Hoàn thành
+                Trả nợ và Kết thúc
               </template>
               <template v-if="ticketOrderDetailRef.totalMoney != ticketOrderDetailRef.paid + money">
                 Trả nợ

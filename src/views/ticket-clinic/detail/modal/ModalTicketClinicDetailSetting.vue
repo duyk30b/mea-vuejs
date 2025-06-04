@@ -15,11 +15,8 @@ import { TicketType } from '../../../../modules/ticket'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
-  GENERAL: 'GENERAL',
-  DIAGNOSIS: 'DIAGNOSIS',
   CONSUMABLE: 'CONSUMABLE',
   PRESCRIPTION: 'PRESCRIPTION',
-  INVOICE: 'INVOICE',
 }
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -37,7 +34,7 @@ const printHtmlOptions = ref<{ value: number; text: string; data: PrintHtml }[]>
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref(TABS_KEY.GENERAL)
+const activeTab = ref(TABS_KEY.PRESCRIPTION)
 
 const openModal = async () => {
   showModal.value = true
@@ -118,51 +115,10 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
-            <VueTabMenu :tabKey="TABS_KEY.GENERAL">Cài đặt chung</VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.DIAGNOSIS">Khám</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.CONSUMABLE">Vật tư</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRESCRIPTION">Đơn thuốc</VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.INVOICE">Hóa đơn</VueTabMenu>
           </template>
           <template #panel>
-            <VueTabPanel :tabKey="TABS_KEY.GENERAL">
-              <div class="mt-4 pb-20 table-wrapper">
-                <table class="">
-                  <thead>
-                    <tr>
-                      <th colspan="2">Cài đặt chung</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr></tr>
-                  </tbody>
-                </table>
-              </div>
-            </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS">
-              <div class="mt-4 pb-20 table-wrapper">
-                <table class="">
-                  <thead>
-                    <tr>
-                      <th colspan="2">Cài đặt khám</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-if="settingStore.TICKET_CLINIC_LIST.ticketType === TicketType.Eye">
-                      <td>Mẫu in phiếu đo thị lực</td>
-                      <td>
-                        <div>
-                          <VueSelect
-                            v-model:value="settingDisplay.printHtmlIdSetting.diagnosisEyeSpecial"
-                            :options="printHtmlOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.CONSUMABLE">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">
@@ -223,47 +179,12 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
-                      <td>Mẫu in đơn thuốc</td>
-                      <td>
-                        <div>
-                          <VueSelect
-                            v-model:value="settingDisplay.printHtmlIdSetting.prescription"
-                            :options="printHtmlOptions"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
                       <td colspan="2">
                         <InputCheckbox
                           v-model:value="settingDisplay.prescriptions.searchIncludeZeroQuantity"
                           type-parser="number"
                           label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0"
                         />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.INVOICE">
-              <div class="mt-4 pb-20 table-wrapper">
-                <table class="">
-                  <thead>
-                    <tr>
-                      <th colspan="2">Cài đặt hóa đơn</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style="width: 30%">Mẫu in hóa đơn</td>
-                      <td>
-                        <div>
-                          <VueSelect
-                            v-model:value="settingDisplay.printHtmlIdSetting.invoice"
-                            :options="printHtmlOptions"
-                          />
-                        </div>
                       </td>
                     </tr>
                   </tbody>

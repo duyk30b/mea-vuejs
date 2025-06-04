@@ -65,12 +65,12 @@ export const masterDataRouter: RouteRecordRaw = {
       path: 'print-html',
       name: 'PrintHtml',
       meta: { title: 'Mẫu in' },
-      redirect: () => ({ name: 'PrintHtmlList' }),
+      redirect: () => ({ name: 'PrintHtmlContainer' }),
       children: [
         {
           path: 'list',
-          name: 'PrintHtmlList',
-          component: () => import('../views/master-data/print-html/PrintHtmlList.vue'),
+          name: 'PrintHtmlContainer',
+          component: () => import('../views/master-data/print-html/PrintHtmlContainer.vue'),
         },
         {
           path: 'upsert/:id?',

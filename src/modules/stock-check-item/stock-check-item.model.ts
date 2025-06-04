@@ -9,7 +9,10 @@ export class StockCheckItem {
   batchId: number
 
   systemQuantity: number
-  actualQuantity: number = 0
+  actualQuantity: number
+
+  systemCostAmount: number
+  actualCostAmount: number
 
   note: string // Ghi chú
 
@@ -24,6 +27,8 @@ export class StockCheckItem {
     ins.productId = 0
     ins.systemQuantity = 0
     ins.actualQuantity = 0
+    ins.systemCostAmount = 0
+    ins.actualCostAmount = 0
     ins.note = ''
     return ins
   }

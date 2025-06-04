@@ -25,6 +25,9 @@ const warehouseOptions = ref<{ value: number; text: string; data: Warehouse }[]>
 const showModal = ref(false)
 const saveLoading = ref(false)
 
+let primeCostOrigin = ref(0)
+const primeCost = ref(0)
+
 const openModal = async (batchProp: Batch) => {
   batchOrigin.value = Batch.from(batchProp)
   batch.value = Batch.from(batchProp)
@@ -42,6 +45,14 @@ const openModal = async (batchProp: Batch) => {
       .filter((i) => batchProp.product!.warehouseIdList.includes(i.id))
       .map((i) => ({ value: i.id, text: i.name, data: i }))
   }
+
+  if (batch.value.quantity === 0) {
+    primeCostOrigin.value = batch.value.costPrice
+    primeCost.value = primeCostOrigin.value
+  } else {
+    primeCostOrigin.value = Math.round(batch.value.costAmount / batch.value.quantity)
+    primeCost.value = primeCostOrigin.value
+  }
 }
 
 const handleSave = async () => {
@@ -49,11 +60,12 @@ const handleSave = async () => {
   try {
     if (
       batch.value.quantity === batchOrigin.value.quantity &&
-      batch.value.costPrice === batchOrigin.value.costPrice
+      primeCost.value === primeCostOrigin.value
     ) {
       const batchDraft = await BatchService.updateInfo(batch.value.id, batch.value)
       emit('success', batchDraft, 'UPDATE')
     } else {
+      batch.value.costAmount = batch.value.quantity * primeCost.value
       const response = await BatchService.updateInfoAndQuantityAndCostPrice(
         batch.value.id,
         batch.value,
@@ -70,12 +82,20 @@ const handleSave = async () => {
 }
 
 const hasChangeData = computed(() => {
-  return !Batch.equal(batch.value, batchOrigin.value)
+  if (!Batch.equal(batch.value, batchOrigin.value)) {
+    return true
+  }
+  if (primeCost.value !== primeCostOrigin.value) {
+    return true
+  }
+  return false
 })
 
 const closeModal = () => {
   batch.value = Batch.blank()
   batch.value.product = Product.blank()
+  primeCostOrigin.value = 0
+  primeCost.value = 0
   showModal.value = false
 }
 
@@ -162,10 +182,10 @@ defineExpose({ openModal })
           </div>
         </div>
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
-          <div>Giá nhập</div>
+          <div>Giá vốn</div>
           <div>
             <InputMoney
-              v-model:value="batch.unitCostPrice"
+              v-model:value="primeCost"
               :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]"
             />
           </div>

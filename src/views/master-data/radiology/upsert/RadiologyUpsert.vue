@@ -22,6 +22,7 @@ import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
   compiledTemplatePrintHtml,
   PrintHtml,
+  PrintHtmlApi,
   PrintHtmlService,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
@@ -32,6 +33,7 @@ import { TicketRadiology } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -65,6 +67,8 @@ let systemVarLog = {}
 const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
+const printHtmlHeader = ref(PrintHtml.blank())
+
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
     RadiologyGroupService.list({}),
@@ -81,6 +85,8 @@ onBeforeMount(async () => {
     }),
   ]
   roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
+
+  printHtmlHeader.value = await PrintHtmlService.getPrintHtmlHeader()
 })
 
 onMounted(async () => {
@@ -99,7 +105,7 @@ onMounted(async () => {
   if (!radiology.value.commissionList?.length) {
     handleAddCommission()
   }
-  updatePreview()
+  await handleSelectPrintHtml()
 })
 
 const hasChangeData = computed(() => {
@@ -155,23 +161,10 @@ const handleSave = async () => {
   }
 }
 
-const getPrintHtml = async (printHtmlId: number) => {
-  let printHtml: PrintHtml | undefined
-  if (printHtmlId != 0) {
-    printHtml = await PrintHtmlService.detail(printHtmlId)
-    if (!printHtml || !printHtml.content) {
-      printHtmlId = 0
-    }
-  }
-  if (printHtmlId == 0) {
-    printHtmlId = meStore.rootSetting.printDefault.radiology
-    printHtml = await PrintHtmlService.detail(printHtmlId)
-  }
-  return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
-}
-
 const handleSelectPrintHtml = async () => {
-  radiology.value.printHtml = await getPrintHtml(radiology.value.printHtmlId)
+  radiology.value.printHtml = await PrintHtmlService.getPrintHtmlRadiology(
+    radiology.value.printHtmlId,
+  )
   updatePreview()
 }
 
@@ -187,8 +180,8 @@ const updatePreview = async () => {
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  const printHtml = await getPrintHtml(radiology.value.printHtmlId)
-  if (!printHtml || !printHtml.content) {
+  const printHtml = radiology.value.printHtml
+  if (!printHtml?.html) {
     return
   }
   const data = TicketRadiology.blank()
@@ -202,6 +195,15 @@ const updatePreview = async () => {
     return image
   })
 
+  const compiledHeader = compiledTemplatePrintHtml({
+    organization,
+    ticket: ticketDemo,
+    data,
+    printHtml: printHtmlHeader.value,
+    customVariables: radiology.value.customVariables,
+  })
+  const _LAYOUT_HEADER = compiledHeader.html
+
   const compiledResult = compiledTemplatePrintHtml({
     organization,
     ticket: ticketDemo,
@@ -209,6 +211,9 @@ const updatePreview = async () => {
     masterData: {},
     printHtml,
     customVariables: radiology.value.customVariables,
+    _LAYOUT: {
+      HEADER: _LAYOUT_HEADER,
+    },
   })
   systemVarLog = compiledResult.systemVar || {}
 
@@ -218,7 +223,7 @@ const updatePreview = async () => {
 
   ESDom.writeWindow(doc, {
     html: compiledResult.html,
-    css: radiology.value.customStyles,
+    cssList: [compiledHeader.css, compiledResult.css, radiology.value.customStyles],
   })
 }
 
@@ -261,20 +266,8 @@ const handleClickDelete = async () => {
 
 const startTestPrint = async () => {
   try {
-    let printHtmlId = radiology.value.printHtmlId
-    let printHtml: PrintHtml | undefined
-
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.radiology
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-    if (!printHtml || !printHtml.content) {
+    const printHtml = radiology.value.printHtml
+    if (!printHtml?.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
@@ -289,12 +282,24 @@ const startTestPrint = async () => {
       return image
     })
 
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketDemo,
+      data,
+      printHtml: printHtmlHeader.value,
+      customVariables: radiology.value.customVariables,
+    })
+    const _LAYOUT_HEADER = compiledHeader.html
+
     const compiledResult = compiledTemplatePrintHtml({
       organization,
       ticket: ticketDemo,
       data,
       masterData: {},
       printHtml,
+      _LAYOUT: {
+        HEADER: _LAYOUT_HEADER,
+      },
       customVariables: radiology.value.customVariables,
     })
 
@@ -304,7 +309,7 @@ const startTestPrint = async () => {
 
     await ESDom.startPrint('iframe-print', {
       html: compiledResult.html,
-      css: radiology.value.customStyles,
+      cssList: [compiledHeader.css, compiledResult.css, radiology.value.customStyles],
     })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)

@@ -11,7 +11,8 @@ export class Batch {
 
   quantity: number
 
-  costPrice: number // Giá nhập
+  costPrice: number // Giá nhập // Vẫn rất cần thiết giữ lại giá nhập này, vì khi thay đổi costAmount gây ra số lượng âm thì có costPrice để fix lại
+  costAmount: number // Tổng vốn
 
   updatedAt: number
   registeredAt: number

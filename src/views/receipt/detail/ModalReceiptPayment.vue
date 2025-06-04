@@ -77,9 +77,11 @@ const handlePayment = async () => {
       }
     }
     if (paymentView.value === PaymentViewType.Prepayment) {
-      if (money.value <= 0) {
-        inputMoneyPayment.value?.focus()
-        return AlertStore.addError('Số tiền thanh toán không hợp lệ')
+      if (receipt.value.status === ReceiptStatus.Draft && money.value < 0) {
+        return AlertStore.addError('Số tiền không hợp lệ')
+      }
+      if (receipt.value.status !== ReceiptStatus.Draft && money.value <= 0) {
+        return AlertStore.addError('Số tiền không hợp lệ')
       }
       const result = await ReceiptApi.prepayment({
         receiptId: receipt.value.id,
@@ -344,10 +346,14 @@ defineExpose({ openModal })
             :loading="paymentLoading"
           >
             <span v-if="paymentView == PaymentViewType.Prepayment">Tạm ứng</span>
-            <span v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">
-              Nhập hàng và thanh toán
-            </span>
-            <span v-if="paymentView == PaymentViewType.PayDebt">Trả nợ</span>
+            <template v-if="paymentView == PaymentViewType.SendProductAndPaymentAndClose">
+              <span v-if="receipt.totalMoney <= money">Nhập hàng và Thanh toán</span>
+              <span v-else>Nhập hàng và ghi nợ</span>
+            </template>
+            <template v-if="paymentView == PaymentViewType.PayDebt">
+              <span v-if="money < receipt.debt">Trả nợ</span>
+              <span v-else>Trả nợ và Kết thúc</span>
+            </template>
           </VueButton>
         </div>
       </form>

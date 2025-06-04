@@ -145,7 +145,7 @@ export class TicketClinicApi {
     ticketId: number
     returnList: {
       ticketBatchId: number
-      quantity: number
+      quantityReturn: number
     }[]
   }) {
     const { ticketId, returnList } = body

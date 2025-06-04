@@ -2,7 +2,8 @@ export class PrintHtml {
   oid: number
   id: number
   name: string
-  content: string // Dạng HTML
+  html: string // Dạng HTML
+  css: string // Dạng HTML
   initVariable: string // Dạng JS
   dataExample: string // Dạng JS (cách lấy data từ ticket. Không dùng khi cài đặt Radiology)
   updatedAt: number
@@ -11,7 +12,8 @@ export class PrintHtml {
     const ins = new PrintHtml()
     ins.id = 0
     ins.name = ''
-    ins.content = ''
+    ins.html = ''
+    ins.css = ''
     ins.initVariable = ''
     ins.dataExample = '{}'
     return ins
@@ -48,7 +50,8 @@ export class PrintHtml {
   static equal(a: PrintHtml, b: PrintHtml) {
     if (a.id != b.id) return false
     if (a.name != b.name) return false
-    if (a.content != b.content) return false
+    if (a.html != b.html) return false
+    if (a.css != b.css) return false
     if (a.updatedAt != b.updatedAt) return
     return true
   }

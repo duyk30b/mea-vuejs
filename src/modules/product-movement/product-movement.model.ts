@@ -21,7 +21,7 @@ export class ProductMovement {
   openQuantity: number // Số lượng ban đầu
   quantity: number // Số lượng +/-
   closeQuantity: number // Số lượng sau thay đổi
-  costPrice: number
+  costAmount: number
   expectedPrice: number
   actualPrice: number
   createdAt: number

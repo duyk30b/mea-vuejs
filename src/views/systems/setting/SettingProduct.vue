@@ -4,14 +4,15 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox, InputSelect } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import { MeService } from '../../../modules/_me/me.service'
-import {
-  BatchCostPriceRule,
-  BatchDistributorIdRule,
-  BatchWarehouseIdRule,
-} from '../../../modules/_me/setting.default'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
-import { InventoryStrategy } from '../../../modules/enum'
+import {
+  InventoryStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+} from '../../../modules/enum'
 import { OrganizationService } from '../../../modules/organization'
 
 const settingStore = useSettingStore()
@@ -28,52 +29,62 @@ const unsubscribe = settingStore.$subscribe((mutation, state) => {
 onUnmounted(() => unsubscribe())
 
 const inventoryStrategyOptions = [
-  { value: InventoryStrategy.Inherit, label: '-' },
+  { value: InventoryStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
   { value: InventoryStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
   { value: InventoryStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
   { value: InventoryStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
-  { value: InventoryStrategy.AutoWithLIFO, label: 'Tự động chọn lô theo LIFO' },
   { value: InventoryStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
 ]
 inventoryStrategyOptions.forEach((i) => {
   if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.inventoryStrategy) {
-    i.label = '(Mặc định) - ' + i.label
+    i.label = '(Hệ thống) - ' + i.label
   }
 })
 
-const batchWarehouseIdOptions = [
-  { value: BatchWarehouseIdRule.Inherit, label: '-' },
-  { value: BatchWarehouseIdRule.Override, label: 'Không sử dụng' },
-  { value: BatchWarehouseIdRule.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+const splitBatchByWarehouseOptions = [
+  { value: SplitBatchByWarehouse.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByWarehouse.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
 ]
-batchWarehouseIdOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.batch_warehouseId) {
-    i.label = '(Mặc định) - ' + i.label
+splitBatchByWarehouseOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByWarehouse) {
+    i.label = '(Hệ thống) - ' + i.label
   }
 })
 
-const batchDistributorIdOptions = [
-  { value: BatchDistributorIdRule.Inherit, label: '-' },
-  { value: BatchDistributorIdRule.Override, label: 'Không sử dụng' },
-  { value: BatchDistributorIdRule.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+const splitBatchByDistributorOptions = [
+  { value: SplitBatchByDistributor.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: SplitBatchByDistributor.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByDistributor.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
 ]
-batchDistributorIdOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.batch_distributorId) {
-    i.label = '(Mặc định) - ' + i.label
+splitBatchByDistributorOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByDistributor) {
+    i.label = '(Hệ thống) - ' + i.label
   }
 })
 
-const batchCostPriceOptions = [
-  { value: BatchCostPriceRule.Inherit, label: '-' },
+const splitBatchByExpiryDateOptions = [
+  { value: SplitBatchByExpiryDate.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: SplitBatchByExpiryDate.Override, label: 'Không phân biệt giữa các lô' },
+  { value: SplitBatchByExpiryDate.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+]
+splitBatchByExpiryDateOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByExpiryDate) {
+    i.label = '(Hệ thống) - ' + i.label
+  }
+})
+
+const splitBatchByCostPriceOptions = [
+  { value: SplitBatchByCostPrice.Inherit, label: '--- Mặc định theo hệ thống ---' },
   {
-    value: BatchCostPriceRule.OverrideAndMAC,
-    label: 'Ghi đè giá cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
+    value: SplitBatchByCostPrice.OverrideAndMAC,
+    label: 'Ghi đè giá nhập cũ, giá vốn sử dụng công thức tính bình quân gia quyền',
   },
-  { value: BatchCostPriceRule.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
+  { value: SplitBatchByCostPrice.SplitOnDifferent, label: 'Phân biệt giữa các lô' },
 ]
-batchCostPriceOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.batch_costPrice) {
-    i.label = '(Mặc định) - ' + i.label
+splitBatchByCostPriceOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.splitBatchByCostPrice) {
+    i.label = '(Hệ thống) - ' + i.label
   }
 })
 
@@ -132,7 +143,7 @@ const saveBatchSetting = async () => {
               </tr>
               <tr>
                 <td colspan="2">
-                  <div class="mt-1 font-medium">2. Quản lý thông tin của lô hàng</div>
+                  <div class="mt-1 font-medium">2. Quản lý logic tách lô hàng</div>
                 </td>
               </tr>
               <tr>
@@ -140,8 +151,8 @@ const saveBatchSetting = async () => {
                 <td>
                   <div>
                     <InputSelect
-                      v-model:value="productSetting.batch_warehouseId"
-                      :options="batchWarehouseIdOptions"
+                      v-model:value="productSetting.splitBatchByWarehouse"
+                      :options="splitBatchByWarehouseOptions"
                     />
                   </div>
                 </td>
@@ -151,8 +162,19 @@ const saveBatchSetting = async () => {
                 <td>
                   <div>
                     <InputSelect
-                      v-model:value="productSetting.batch_distributorId"
-                      :options="batchDistributorIdOptions"
+                      v-model:value="productSetting.splitBatchByDistributor"
+                      :options="splitBatchByDistributorOptions"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Hạn sử dụng</td>
+                <td>
+                  <div>
+                    <InputSelect
+                      v-model:value="productSetting.splitBatchByExpiryDate"
+                      :options="splitBatchByExpiryDateOptions"
                     />
                   </div>
                 </td>
@@ -162,8 +184,8 @@ const saveBatchSetting = async () => {
                 <td style="width: 400px">
                   <div>
                     <InputSelect
-                      v-model:value="productSetting.batch_costPrice"
-                      :options="batchCostPriceOptions"
+                      v-model:value="productSetting.splitBatchByCostPrice"
+                      :options="splitBatchByCostPriceOptions"
                     />
                   </div>
                 </td>

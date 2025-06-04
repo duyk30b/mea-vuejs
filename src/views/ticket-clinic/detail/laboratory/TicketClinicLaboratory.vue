@@ -26,6 +26,7 @@ import { TicketLaboratoryGroup } from '../../../../modules/ticket-laboratory-gro
 import { DString, ESArray, ESDom } from '../../../../utils'
 import ModalTicketLaboratoryResult from './ModalTicketLaboratoryResult.vue'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -131,35 +132,42 @@ onMounted(async () => {
 const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
   try {
     let printHtmlId = ticketLaboratoryGroup.laboratoryGroup?.printHtmlId || 0
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.laboratory
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratory(printHtmlId)
 
-    if (!printHtml || !printHtml.content) {
+    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const compiledResult = compiledTemplatePrintHtml({
+    const compiledHeader = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
       data: {
         ticketLaboratoryGroup,
       },
-      printHtml: printHtml!,
+      printHtml: printHtmlHeader,
     })
-    if (!compiledResult.html) {
-      AlertStore.addError('Cài đặt in không hợp lệ')
+    const compiledContent = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      data: {
+        ticketLaboratoryGroup,
+      },
+      printHtml: printHtmlLaboratory,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+    
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
       return
     }
-    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
   }

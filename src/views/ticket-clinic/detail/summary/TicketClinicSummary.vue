@@ -241,33 +241,34 @@ const handleMenuActionClick = (menu: { key: string }) => {
 
 const startPrint = async () => {
   try {
-    let printHtmlId = settingStore.TICKET_CLINIC_DETAIL.printHtmlIdSetting.invoice
-    let printHtml: PrintHtml | undefined
-    if (printHtmlId !== 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.content) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId === 0) {
-      printHtmlId = meStore.rootSetting.printDefault.invoice
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    if (!printHtml || !printHtml.content) {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlInvoice = await PrintHtmlService.getPrintHtmlInvoice()
+    if (!printHtmlHeader || !printHtmlInvoice || !printHtmlInvoice.html) {
       return AlertStore.addError('Cài đặt in thất bại')
     }
 
-    const compiledResult = compiledTemplatePrintHtml({
+    const compiledHeader = compiledTemplatePrintHtml({
       organization,
       ticket: ticketClinicRef.value,
-      printHtml: printHtml!,
+      printHtml: printHtmlHeader,
     })
-    if (!compiledResult.html) {
-      AlertStore.addError('Cài đặt in không hợp lệ')
+    const compiledContent = compiledTemplatePrintHtml({
+      organization,
+      ticket: ticketClinicRef.value,
+      masterData: {},
+      printHtml: printHtmlInvoice,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
       return
     }
-    await ESDom.startPrint('iframe-print', { html: compiledResult.html })
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:297 ~ startPrint ~ error:', error)
   }

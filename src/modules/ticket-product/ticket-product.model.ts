@@ -86,7 +86,7 @@ export class TicketProduct {
   static init(): TicketProduct {
     const ins = new TicketProduct()
     ins.id = 0
-    ins.inventoryStrategy = MeService.getProductSetting().inventoryStrategy
+    ins.inventoryStrategy = MeService.getProductSettingCommon().inventoryStrategy
     ins.ticketId = 0
     ins.customerId = 0
     ins.productId = 0

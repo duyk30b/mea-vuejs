@@ -381,7 +381,7 @@ export class TicketOrderApi {
     ticketId: number
     returnList: {
       ticketBatchId: number
-      quantity: number
+      quantityReturn: number
     }[]
   }) {
     const { ticketId, returnList } = body
