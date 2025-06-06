@@ -13,23 +13,19 @@ import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { PrescriptionSample, type MedicineType } from '../../../../modules/prescription-sample'
-import {
-  PrintHtml,
-  PrintHtmlService,
-  compiledTemplatePrintHtml,
-} from '../../../../modules/print-html'
+import { PrintHtmlService, compiledTemplatePrintHtml } from '../../../../modules/print-html'
 import type { Product } from '../../../../modules/product'
 import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import {
-  TicketAttributeKeyAdviceList,
-  type TicketAttributeKeyAdviceType,
+TicketAttributeKeyAdviceList,
+type TicketAttributeKeyAdviceType,
 } from '../../../../modules/ticket-attribute'
 import {
-  TicketClinicAttributeApi,
-  TicketClinicProductApi,
-  TicketClinicUserApi,
-  ticketClinicRef,
+TicketClinicAttributeApi,
+TicketClinicProductApi,
+TicketClinicUserApi,
+ticketClinicRef,
 } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
@@ -37,7 +33,7 @@ import { UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString, ESDom } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
@@ -413,7 +409,7 @@ const clickOpenModalSavePrescriptionSample = () => {
               </div>
             </td>
             <td class="text-center">
-              <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
             <td>
               <div style="font-weight: 500">

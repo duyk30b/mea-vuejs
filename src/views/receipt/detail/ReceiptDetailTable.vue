@@ -10,6 +10,7 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { timeToText } from '../../../utils'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
 import { receipt } from './receipt-detail.ref'
+import { CONFIG } from '../../../config'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const emit = defineEmits<{ (e: 'showReceiptPayment', value: PaymentViewType): void }>()
@@ -53,7 +54,10 @@ const colspan = computed(() => {
       </thead>
       <tbody>
         <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
-          <td class="text-center">{{ index + 1 }}</td>
+          <td class="text-center">
+            <span>{{ index + 1 }}</span>
+            <span v-if="CONFIG.MODE === 'development'">({{ receiptItem.id }})</span>
+          </td>
           <td>
             <div class="text-justify">
               <div style="font-weight: 500">

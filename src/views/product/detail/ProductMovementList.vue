@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { VueSelect } from '../../../common/vue-form'
+import { InputCheckbox, VueSelect } from '../../../common/vue-form'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { MovementType } from '../../../modules/enum'
@@ -15,6 +15,7 @@ import { timeToText } from '../../../utils'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 import StockCheckStatusTag from '../../stock-check/StockCheckStatusTag.vue'
 import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
+import { CONFIG } from '../../../config'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -26,6 +27,7 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
+const showAllInformation = ref(CONFIG.MODE === 'development')
 const productMovementList = ref<ProductMovement[]>([])
 
 const movementType = ref<MovementType>()
@@ -135,7 +137,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <td>
             <div v-if="productMovement.movementType === MovementType.Receipt">
               <div>
-                {{ productMovement.distributor!.fullName }}
+                {{ productMovement.distributor?.fullName }}
               </div>
               <div style="font-size: 0.8rem">
                 <a @click="openBlankReceiptDetail(productMovement.voucherId)">
@@ -151,7 +153,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             </div>
             <div v-if="productMovement.movementType === MovementType.Ticket">
               <div>
-                {{ productMovement.customer!.fullName }}
+                {{ productMovement.customer?.fullName }}
               </div>
               <LinkAndStatusTicket :ticket="productMovement.ticket!" />
               <div style="font-size: 0.8rem; white-space: nowrap">
@@ -160,7 +162,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             </div>
             <div v-if="productMovement.movementType === MovementType.UserChange">
               <div>
-                <VueTag bg-color="violet">{{ productMovement.user!.fullName }}</VueTag>
+                <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
               </div>
               <div style="font-size: 0.8rem; font-style: italic">Sửa số lượng</div>
               <div style="font-size: 0.8rem; white-space: nowrap">
@@ -183,7 +185,10 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             </div>
             <div class="flex justify-between">
               <span>SL:</span>
-              <span>{{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}</span>
+              <span>
+                {{ productMovement.openQuantityProduct }} ➞
+                {{ productMovement.closeQuantityProduct }}
+              </span>
             </div>
           </td>
         </tr>
@@ -200,8 +205,11 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <th>Lô</th>
           <th>Nhập/Xuất</th>
           <th>Tồn kho</th>
-          <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">Vốn</th>
           <th>Giá</th>
+          <th v-if="showAllInformation">Giá Vốn</th>
+          <th v-if="showAllInformation">Tồn Lô</th>
+          <th v-if="showAllInformation">Tồn Vốn</th>
+          <th v-if="showAllInformation">N/X Vốn</th>
         </tr>
       </thead>
       <tbody>
@@ -212,7 +220,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <template v-if="productMovement.movementType === MovementType.Receipt">
             <td>Nhập hàng</td>
             <td>
-              <div>{{ productMovement.distributor!.fullName }}</div>
+              <div>{{ productMovement.distributor?.fullName }}</div>
               <div v-if="productMovement.isRefund">
                 <VueTag icon="minus" color="red">Hoàn trả</VueTag>
               </div>
@@ -235,7 +243,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <template v-if="productMovement.movementType === MovementType.Ticket">
             <td>Xuất hàng</td>
             <td>
-              <div>{{ productMovement.customer!.fullName }}</div>
+              <div>{{ productMovement.customer?.fullName }}</div>
               <div v-if="productMovement.isRefund">
                 <VueTag icon="minus" color="red">Hoàn trả</VueTag>
               </div>
@@ -253,7 +261,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <template v-if="productMovement.movementType === MovementType.UserChange">
             <td>Sửa</td>
             <td>
-              <VueTag bg-color="violet">{{ productMovement.user!.fullName }}</VueTag>
+              <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
             </td>
             <td>
               <div>
@@ -264,7 +272,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
           <template v-if="productMovement.movementType === MovementType.StockCheck">
             <td>Kiểm hàng</td>
             <td>
-              <div>{{ productMovement.user!.fullName }}</div>
+              <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
             </td>
             <td>
               <div>
@@ -286,12 +294,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
             {{ (productMovement.quantity > 0 ? '+' : '') + productMovement.quantity }}
           </td>
           <td class="text-center">
-            {{ productMovement.openQuantity }} ➞ {{ productMovement.closeQuantity }}
-          </td>
-          <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
-            {{
-              (productMovement.costAmount > 0 ? '+' : '') + formatMoney(productMovement.costAmount)
-            }}
+            {{ productMovement.openQuantityProduct }} ➞ {{ productMovement.closeQuantityProduct }}
           </td>
           <td class="text-right">
             <div
@@ -310,16 +313,50 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
               {{ formatMoney(productMovement.actualPrice) }}
             </div>
           </td>
+          <td v-if="showAllInformation" class="text-center">
+            {{
+              formatMoney(
+                Math.round(
+                  productMovement.openCostAmountBatch / (productMovement.openQuantityBatch || 1),
+                ),
+              )
+            }}
+            ➞
+            {{
+              formatMoney(
+                Math.round(
+                  productMovement.closeCostAmountBatch / (productMovement.closeQuantityBatch || 1),
+                ),
+              )
+            }}
+          </td>
+          <td v-if="showAllInformation" class="text-center">
+            {{ productMovement.openQuantityBatch }} ➞ {{ productMovement.closeQuantityBatch }}
+          </td>
+          <td v-if="showAllInformation" class="text-center">
+            {{ formatMoney(productMovement.openCostAmountBatch) }} ➞
+            {{ formatMoney(productMovement.closeCostAmountBatch) }}
+          </td>
+          <td v-if="showAllInformation" class="text-right">
+            {{
+              (productMovement.costAmount > 0 ? '+' : '') + formatMoney(productMovement.costAmount)
+            }}
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="p-4 flex flex-wrap justify-end gap-4">
-    <VuePagination
-      v-model:page="page"
-      :total="total"
-      :limit="limit"
-      @update:page="(p: any) => changePagination({ page: p, limit })"
-    />
+  <div class="mt-4 flex flex-wrap justify-between">
+    <div>
+      <InputCheckbox v-model:value="showAllInformation" label="Hiện đầy đủ thông tin" />
+    </div>
+    <div class="">
+      <VuePagination
+        v-model:page="page"
+        :total="total"
+        :limit="limit"
+        @update:page="(p: any) => changePagination({ page: p, limit })"
+      />
+    </div>
   </div>
 </template>

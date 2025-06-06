@@ -407,7 +407,10 @@ const clickCancelledDestroy = () => {
               {{ scItem.actualQuantity }}
             </td>
             <td class="text-right">
-              {{ scItem.actualQuantity - scItem.systemQuantity }}
+              {{
+                (scItem.actualQuantity > scItem.systemQuantity ? '+' : '') +
+                (scItem.actualQuantity - scItem.systemQuantity)
+              }}
             </td>
             <td class="text-right">
               {{ scItem.note }}

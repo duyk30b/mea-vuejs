@@ -310,8 +310,7 @@ const closeExpiryDate = computed(() => {
             <th>Thông tin</th>
             <th>SL</th>
             <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
-            <th v-if="CONFIG.MODE === 'development'">G.Nhập</th>
-            <th v-if="CONFIG.MODE === 'development'">T.Vốn</th>
+            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">T.Vốn</th>
             <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
           </tr>
         </thead>
@@ -341,10 +340,7 @@ const closeExpiryDate = computed(() => {
               <span v-if="batch.quantity === 0">{{ formatMoney(batch.costPrice) }}</span>
               <span v-else>{{ formatMoney(Math.round(batch.costAmount / batch.quantity)) }}</span>
             </td>
-            <td v-if="CONFIG.MODE === 'development'" class="text-right">
-              <span>{{ formatMoney(batch.costPrice) }}</span>
-            </td>
-            <td v-if="CONFIG.MODE === 'development'" class="text-right">
+            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
               <span>{{ formatMoney(batch.costAmount) }}</span>
             </td>
             <td>

@@ -11,7 +11,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { ESTimer } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
@@ -100,7 +100,7 @@ const prescriptionCostAmount = computed(() => {
           {{ tpPrescriptionIndex + 1 }}
         </td>
         <td class="text-center">
-          <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpPrescription.deliveryStatus" />
+          <TicketDeliveryStatusTooltip :deliveryStatus="tpPrescription.deliveryStatus" />
         </td>
         <td>
           <div class="flex items-center gap-1" style="font-weight: 500">
@@ -213,7 +213,7 @@ const prescriptionCostAmount = computed(() => {
           {{ tpConsumableIndex + 1 }}
         </td>
         <td class="text-center">
-          <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />
+          <TicketDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />
         </td>
         <td colspan="2">
           <div class="flex items-center gap-1" style="font-weight: 500">

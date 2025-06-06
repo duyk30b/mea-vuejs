@@ -3,7 +3,6 @@ import { computed, onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import {
-  IconAudit,
   IconCloseCircle,
   IconCopy,
   IconDollar,
@@ -13,7 +12,6 @@ import {
   IconFileSearch,
   IconFileSync,
   IconMore,
-  IconRight,
   IconSetting,
 } from '../../../common/icon-antd'
 import { IconDelete } from '../../../common/icon-google'
@@ -26,6 +24,7 @@ import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketService, TicketStatus } from '../../../modules/ticket'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { timeToText } from '../../../utils'
+import { Breadcrumb } from '../../component'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalTicketReturnProduct from '../../ticket-base/ModalTicketReturnProduct.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
@@ -37,7 +36,6 @@ import TicketOrderDetailTable from './TicketOrderDetailTable.vue'
 import ModalTicketOrderPreview from './preview/ModalTicketOrderPreview.vue'
 import { ticketOrderHtmlContent } from './preview/ticket-order-html-content'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { Breadcrumb } from '../../component'
 
 const modalTicketOrderDetailSetting = ref<InstanceType<typeof ModalTicketOrderDetailSetting>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -182,6 +180,9 @@ const clickTerminate = () => {
         })
         Object.assign(ticketOrderDetailRef.value, response.ticket)
         ticketOrderDetailRef.value.paymentList = response.paymentList
+        if (response.ticketProductList) {
+          // ticketOrderDetailRef.value.ticketProductList = response.ticketProductList // thiếu product và batch nên thôi
+        }
       } catch (error) {
         console.log('🚀 ~ file: TicketOrderDetail.vue:203 ~ clickTerminate ~ error:', error)
       } finally {

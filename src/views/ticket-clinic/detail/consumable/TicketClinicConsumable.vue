@@ -24,7 +24,7 @@ import { UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
 import { DString } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
-import TicketClinicDeliveryStatusTooltip from '../../TicketClinicDeliveryStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
 
@@ -266,7 +266,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               </div>
             </td>
             <td class="text-center">
-              <TicketClinicDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
+              <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
             <td>
               <div style="font-weight: 500">

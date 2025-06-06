@@ -17,11 +17,16 @@ export class ProductMovement {
   productId: number
   batchId: number
   isRefund: 0 | 1
-  unitRate: number
-  openQuantity: number // Số lượng ban đầu
+
   quantity: number // Số lượng +/-
-  closeQuantity: number // Số lượng sau thay đổi
   costAmount: number
+  openQuantityProduct: number // Số lượng ban đầu
+  closeQuantityProduct: number // Số lượng sau thay đổi
+  openQuantityBatch: number // Số lượng ban đầu
+  closeQuantityBatch: number // Số lượng sau thay đổi
+  openCostAmountBatch: number
+  closeCostAmountBatch: number
+
   expectedPrice: number
   actualPrice: number
   createdAt: number
@@ -33,22 +38,6 @@ export class ProductMovement {
   distributor?: Distributor
   customer?: Customer
   user?: User
-
-  get unitQuantity() {
-    return this.quantity / this.unitRate
-  }
-
-  get unitActualPrice() {
-    return this.actualPrice * this.unitRate
-  }
-
-  get unitExpectedPrice() {
-    return this.expectedPrice * this.unitRate
-  }
-
-  get unitName() {
-    return this.product!.getUnitNameByRate(this.unitRate) || ''
-  }
 
   static basic(source: ProductMovement) {
     const target = new ProductMovement()

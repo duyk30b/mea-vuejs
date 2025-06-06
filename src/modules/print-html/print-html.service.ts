@@ -108,8 +108,8 @@ export class PrintHtmlService {
       }
     }
 
-    printHtmlId = MeService.settingMap.value.PRINT_SETTING.laboratory.printHtmlId
-    if (printHtmlId != 0) {
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMap.value.PRINT_SETTING.laboratory.printHtmlId
       printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
       if (!printHtmlTemp || !printHtmlTemp.html) {
         printHtmlId = 0
@@ -132,8 +132,8 @@ export class PrintHtmlService {
       }
     }
 
-    printHtmlId = MeService.settingMap.value.PRINT_SETTING.radiology.printHtmlId
-    if (printHtmlId != 0) {
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMap.value.PRINT_SETTING.radiology.printHtmlId
       printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
       if (!printHtmlTemp || !printHtmlTemp.html) {
         printHtmlId = 0

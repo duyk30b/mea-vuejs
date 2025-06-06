@@ -66,6 +66,7 @@ const handleSave = async () => {
       emit('success', batchDraft, 'UPDATE')
     } else {
       batch.value.costAmount = batch.value.quantity * primeCost.value
+      batch.value.costPrice = primeCost.value
       const response = await BatchService.updateInfoAndQuantityAndCostPrice(
         batch.value.id,
         batch.value,

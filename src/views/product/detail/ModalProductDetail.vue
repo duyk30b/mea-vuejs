@@ -45,7 +45,7 @@ defineExpose({ openModal })
 <template>
   <VueModal
     v-model:show="showModal"
-    style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+    style="width: 1200px; margin-top: 50px; max-height: calc(100vh - 100px)"
   >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">

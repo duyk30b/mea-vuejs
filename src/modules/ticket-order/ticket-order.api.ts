@@ -416,10 +416,18 @@ export class TicketOrderApi {
   static async terminate(options: { ticketId: number }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(`/ticket-order/${ticketId}/terminate`)
-    const { data } = response.data as BaseResponse<{ ticket: any; paymentList: any; customer?: any }>
+    const { data } = response.data as BaseResponse<{
+      ticket: any
+      paymentList: any
+      customer?: any
+      ticketProductList?: any[]
+    }>
     return {
       ticket: Ticket.from(data.ticket),
       paymentList: Payment.fromList(data.paymentList),
+      ticketProductList: data.ticketProductList
+        ? TicketProduct.fromList(data.ticketProductList)
+        : null,
     }
   }
 }

@@ -1,21 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  IconClockCircle,
-  IconExclamationCircle,
-  IconFileSearch,
-  IconShoppingCart,
-} from '../../../common/icon-antd'
-import VueTooltip from '../../../common/popover/VueTooltip.vue'
 import VueTag from '../../../common/VueTag.vue'
+import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
 import { CONFIG } from '../../../config'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DeliveryStatus, PaymentViewType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus } from '../../../modules/ticket'
+import { PaymentViewType } from '../../../modules/enum'
+import { TicketStatus } from '../../../modules/ticket'
 import ModalProcedureDetail from '../../../views/master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalProductDetail from '../../../views/product/detail/ModalProductDetail.vue'
+import TicketDeliveryStatusTooltip from '../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
@@ -278,19 +272,7 @@ const colspan = computed(() => {
               <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
             </td>
             <td class="text-center">
-              <VueTooltip v-if="ticketProduct.deliveryStatus === DeliveryStatus.Pending">
-                <template #trigger>
-                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-                </template>
-                <div>Chưa xuất thuốc</div>
-              </VueTooltip>
-
-              <VueTooltip v-else>
-                <template #trigger>
-                  <IconShoppingCart style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-                </template>
-                <div>Đã xuất thuốc</div>
-              </VueTooltip>
+              <TicketDeliveryStatusTooltip :deliveryStatus="ticketProduct.deliveryStatus" />
             </td>
             <td>
               <div class="text-justify font-medium">
@@ -314,6 +296,9 @@ const colspan = computed(() => {
                 style="font-size: 0.8rem"
               >
                 {{ ticketProduct.hintUsage }}
+              </div>
+              <div v-if="CONFIG.MODE === 'development'">
+                InventoryStrategy - {{ ticketProduct.inventoryStrategy }}
               </div>
             </td>
             <td

@@ -21,7 +21,7 @@ export const PaymentTimingText = {
   [PaymentTiming.ReceiveRefund]: 'Hoàn trả',
   [PaymentTiming.Close]: 'Đóng phiếu',
   [PaymentTiming.PayDebt]: 'Trả nợ',
-  [PaymentTiming.Reopen]: 'Mở lại hồ sơ',
+  [PaymentTiming.Reopen]: 'Mở lại phiếu',
   [PaymentTiming.TopUp]: 'Ghi quỹ',
 }
 

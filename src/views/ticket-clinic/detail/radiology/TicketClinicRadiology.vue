@@ -134,6 +134,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       printHtml: printHtmlHeader,
+      customVariables: radiologyData.customVariables || '',
     })
     const compiledContent = compiledTemplatePrintHtml({
       organization,

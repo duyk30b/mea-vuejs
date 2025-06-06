@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../../common/VueButton.vue'
+import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
 import { IconDelete, IconPrint, IconRight } from '../../../../common/icon-antd'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
@@ -13,17 +15,14 @@ import {
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import VueButton from '../../../../common/VueButton.vue'
-import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
 import { Customer } from '../../../../modules/customer'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
-  compiledTemplatePrintHtml,
   PrintHtml,
-  PrintHtmlApi,
   PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
@@ -33,7 +32,6 @@ import { TicketRadiology } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
-import { MeService } from '../../../../modules/_me/me.service'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
