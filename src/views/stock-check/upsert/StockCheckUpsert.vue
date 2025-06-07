@@ -23,7 +23,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
-import { InventoryStrategy } from '../../../modules/enum'
+import { PickupStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { StockCheck, StockCheckApi } from '../../../modules/stock-check'
@@ -84,7 +84,7 @@ const searchingProduct = async (text: string) => {
 
 const selectProduct = async (productData?: Product) => {
   if (productData) {
-    if (productData.inventoryStrategy === InventoryStrategy.NoImpact) {
+    if (productData.pickupStrategy === PickupStrategy.NoImpact) {
       return ModalStore.alert({
         title: 'Không thể kiểm kê cho sản phẩm này',
         content: ['Sản phẩm này đang ở chế độ không quản lý số lượng tồn kho'],
@@ -228,6 +228,10 @@ const saveStockCheck = async () => {
     saveLoading.value = false
   }
 }
+
+const handleFocusFirstSearchProduct = async () => {
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
+}
 </script>
 
 <template>
@@ -259,7 +263,7 @@ const saveStockCheck = async () => {
               <IconFileSearch />
             </a>
             <span
-              v-if="stockCheckItem.product?.inventoryStrategy === InventoryStrategy.NoImpact"
+              v-if="stockCheckItem.product?.pickupStrategy === PickupStrategy.NoImpact"
               style="font-weight: 500; color: var(--text-red)"
             >
               (Sản phẩm không quản lý tồn kho)
@@ -267,7 +271,7 @@ const saveStockCheck = async () => {
             <div v-if="stockCheckItem.productId">
               (
               <span
-                v-if="stockCheckItem.product?.inventoryStrategy !== InventoryStrategy.NoImpact"
+                v-if="stockCheckItem.product?.pickupStrategy !== PickupStrategy.NoImpact"
                 :class="
                   (stockCheckItem.product?.quantity || 0) <= 0 ? 'text-red-500 font-bold' : ''
                 "
@@ -298,6 +302,7 @@ const saveStockCheck = async () => {
               placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
               required
               @selectItem="({ data }) => selectProduct(data)"
+              @onFocusinFirst="handleFocusFirstSearchProduct"
               @searching="searchingProduct"
             >
               <template #option="{ item: { data } }">

@@ -108,6 +108,18 @@ export class PrescriptionSampleService {
     return PrescriptionSample.fromList(data)
   }
 
+  static async search(text: string) {
+    await PrescriptionSampleService.fetchAll()
+    if (!text) text = ''
+    const data = PrescriptionSampleService.prescriptionSampleAll.filter((i) => {
+      if (DString.customFilter(i.name || '', text, 2)) {
+        return true
+      }
+      return false
+    })
+    return PrescriptionSample.fromList(data)
+  }
+
   static async createOne(
     prescriptionSample: PrescriptionSample,
     options?: { clearCache?: boolean },
@@ -159,12 +171,5 @@ export class PrescriptionSampleService {
       }
     }
     return result
-  }
-
-  static async search(text: string) {
-    if (!text) text = ''
-    return PrescriptionSampleService.prescriptionSampleAll.filter((i) => {
-      return DString.customFilter(i.name, text)
-    })
   }
 }

@@ -1,7 +1,7 @@
 import { MeService } from '../_me/me.service'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType, InventoryStrategy } from '../enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
@@ -13,7 +13,7 @@ export enum TicketProductType {
 export class TicketProduct {
   id: number
   priority: number
-  inventoryStrategy: InventoryStrategy
+  pickupStrategy: PickupStrategy
   customerId: number
   ticketId: number
   warehouseIds: string
@@ -86,7 +86,7 @@ export class TicketProduct {
   static init(): TicketProduct {
     const ins = new TicketProduct()
     ins.id = 0
-    ins.inventoryStrategy = MeService.getProductSettingCommon().inventoryStrategy
+    ins.pickupStrategy = MeService.getProductSettingCommon().pickupStrategy
     ins.ticketId = 0
     ins.customerId = 0
     ins.productId = 0
@@ -151,7 +151,7 @@ export class TicketProduct {
   static equal(a: TicketProduct, b: TicketProduct) {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
-    if (a.inventoryStrategy != b.inventoryStrategy) return false
+    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.customerId != b.customerId) return false
     if (a.ticketId != b.ticketId) return false
     if (a.warehouseIds != b.warehouseIds) return false

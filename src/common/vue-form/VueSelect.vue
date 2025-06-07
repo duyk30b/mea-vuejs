@@ -2,17 +2,17 @@
 import { nextTick, ref, watch } from 'vue'
 import { IconCaretDown, IconCaretUp } from '../icon-antd'
 
-export type VueSelectOption = {
+export type VueSelectOption<T> = {
   value: any
   text?: string
-  data?: any
+  data?: T
   disabled?: boolean
 }
 
 const props = withDefaults(
   defineProps<{
     value?: any
-    options: VueSelectOption[]
+    options: VueSelectOption<any>[]
     disabled?: boolean
     placeholder?: string
     maxHeight?: number
@@ -63,7 +63,7 @@ watch(
 
 watch(
   () => props.options, // mục đích của watch value là để tìm và show ra text
-  (newOptions: VueSelectOption[]) => {
+  (newOptions: VueSelectOption<any>[]) => {
     if (props.value == null) return // nếu không có value thì thôi, watch làm chi cho mệt
     const optionsStringifyNew = JSON.stringify(newOptions)
     if (optionsStringify.value === optionsStringifyNew) return

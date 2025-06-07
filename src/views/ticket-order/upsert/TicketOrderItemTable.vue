@@ -6,7 +6,7 @@ import { IconEditSquare } from '../../../common/icon-google'
 import { InputNumber } from '../../../common/vue-form'
 import VueTag from '../../../common/VueTag.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DiscountType, InventoryStrategy } from '../../../modules/enum'
+import { DiscountType, PickupStrategy } from '../../../modules/enum'
 import type { Procedure } from '../../../modules/procedure'
 import type { Product } from '../../../modules/product'
 import type { TicketProduct } from '../../../modules/ticket-product'
@@ -29,7 +29,7 @@ const handleChangeHintUsage = (data: string, index: number) => {
 }
 
 const overQuantityTicketProduct = (ticketProduct: TicketProduct): boolean => {
-  if (ticketProduct.product?.inventoryStrategyFix !== InventoryStrategy.NoImpact) {
+  if (ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
     return ticketProduct.quantity >= ticketProduct.product!.quantity
   }
   return false

@@ -7,7 +7,7 @@ import { InputNumber, InputOptions, VueSelect } from '../../../../common/vue-for
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../../modules/batch'
-import { DeliveryStatus, DiscountType, InventoryStrategy } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../../modules/product'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -34,11 +34,7 @@ const batchList = ref<Batch[]>([])
 const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
 
 const handleFocusFirstSearchProduct = async () => {
-  try {
-    await ProductService.refreshDB()
-  } catch (error) {
-    console.log('🚀 ~ TicketClinicConsumableSelectItem.vue:41 ~ error:', error)
-  }
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const warehouseIdOptions = ref<number[]>([0])
@@ -65,7 +61,7 @@ const searchingProduct = async (text: string) => {
                   ? undefined
                   : { NOT: 0 },
               },
-              { inventoryStrategy: InventoryStrategy.NoImpact },
+              { pickupStrategy: PickupStrategy.NoImpact },
             ],
           },
         ],
@@ -109,7 +105,7 @@ const selectProduct = async (productSelect?: Product) => {
 
     const temp = TicketProduct.blank()
     temp.priority = priorityMax + 1
-    temp.inventoryStrategy = productSelect.inventoryStrategyFix
+    temp.pickupStrategy = productSelect.pickupStrategyFix
     temp.customerId = ticketClinicRef.value.customerId
     temp.product = Product.from(productSelect)
     temp.productId = productSelect.id
@@ -129,7 +125,7 @@ const selectProduct = async (productSelect?: Product) => {
     ticketProductConsumable.value = temp
 
     // Tính toán cho batchID // lằng nhằng nhé
-    if (temp.inventoryStrategy === InventoryStrategy.RequireBatchSelection) {
+    if (temp.pickupStrategy === PickupStrategy.RequireBatchSelection) {
       const warehouseIdAcceptList: number[] =
         settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
       let canGetAllWarehouse = false
@@ -199,14 +195,14 @@ const addConsumableItem = async () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.inventoryStrategyFix !== InventoryStrategy.NoImpact) {
+  if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
     if (ticketProductConsumable.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProductConsumable.value.quantity
         }`,
       )
-    } else if (product?.inventoryStrategyFix == InventoryStrategy.RequireBatchSelection) {
+    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
       if (ticketProductConsumable.value.quantity > batch!.quantity) {
         AlertStore.addWarning(
           `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
@@ -259,9 +255,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <div v-if="ticketProductConsumable.productId">
           (
           <span
-            v-if="
-              ticketProductConsumable.product?.inventoryStrategyFix !== InventoryStrategy.NoImpact
-            "
+            v-if="ticketProductConsumable.product?.pickupStrategyFix !== PickupStrategy.NoImpact"
             :class="
               ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
                 ? 'text-red-500 font-bold'
@@ -296,9 +290,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
           :prepend="ticketProductConsumable.product?.productCode"
           :maxHeight="320"
           placeholder="Tìm kiếm sản phẩm bằng tên hoặc hoạt chất của sản phẩm"
-          :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
-          "
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
           @selectItem="({ data }) => selectProduct(data)"
           @update:text="searchingProduct"
@@ -325,7 +317,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
 
     <div
       style="flex-grow: 1; flex-basis: 80%"
-      v-if="ticketProductConsumable.inventoryStrategy === InventoryStrategy.RequireBatchSelection"
+      v-if="ticketProductConsumable.pickupStrategy === PickupStrategy.RequireBatchSelection"
     >
       <div>
         Lô hàng

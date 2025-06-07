@@ -3,17 +3,15 @@ import { computed, ref, watchEffect } from 'vue'
 import { VueButton, VuePagination } from '../../../common'
 import { IconClose } from '../../../common/icon-antd'
 import { IconSortChange } from '../../../common/icon-font-awesome'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { VueModal } from '../../../common/vue-modal'
-import { ProductService, Product } from '../../../modules/product'
+import { Batch, BatchService } from '../../../modules/batch'
+import { Product, ProductService } from '../../../modules/product'
 import { ProductGroup, ProductGroupService } from '../../../modules/product-group'
+import { StockCheckItem } from '../../../modules/stock-check-item'
 import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESArray, arrayToKeyValue } from '../../../utils'
-import { Batch, BatchService } from '../../../modules/batch'
-import { StockCheck } from '../../../modules/stock-check'
-import { StockCheckItem } from '../../../modules/stock-check-item'
 
 const emit = defineEmits<{ (e: 'success', data: { stockCheckItemList: StockCheckItem[] }): void }>()
 
@@ -69,7 +67,7 @@ watchEffect(() => {
 })
 
 const startFetchProduct = async () => {
-  const { data, meta } = await ProductService.pagination({
+  const productPagination = await ProductService.pagination({
     relation: {},
     page: page.value,
     limit: limit.value,
@@ -101,8 +99,8 @@ const startFetchProduct = async () => {
         }
       : { id: 'DESC' },
   })
-  productList.value = data
-  total.value = meta.total
+  productList.value = productPagination.productList
+  total.value = productPagination.total
 }
 
 const startSearch = async () => {

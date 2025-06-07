@@ -419,7 +419,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
               :add-other="!customerSourceAll.length"
             >
               <template #addOther>
-                <div class="flex items-center gap-4" style="font-style: italic">
+                <div class="flex flex-wrap items-center gap-2" style="font-style: italic">
                   <span>Chưa có dữ liệu phù hợp.</span>
                   <a @click="openBlankCustomerSourceList">Quản lý danh sách nguồn khách hàng</a>
                 </div>
@@ -487,7 +487,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
       </div>
 
       <div class="p-4 mt-4">
-        <div class="flex flex-wrap gap-4">
+        <div class="flex flex-wrap gap-4 justify-end">
           <VueButton class="mr-auto btn" type="reset" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>

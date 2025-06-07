@@ -4,11 +4,11 @@ import { IconMergeCells, IconRead } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
 import { InputCheckbox } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import { MeService } from '../../../modules/_me/me.service'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
+import { PickupStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import type { Warehouse } from '../../../modules/warehouse'
@@ -16,12 +16,6 @@ import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
 import { ESTimer } from '../../../utils'
 import ModalBatchMerge from './ModalBatchMerge.vue'
 import ModalBatchUpdate from './ModalBatchUpdate.vue'
-import {
-  InventoryStrategy,
-  SplitBatchByDistributor,
-  SplitBatchByWarehouse,
-} from '../../../modules/enum'
-import { CONFIG } from '../../../config'
 
 const modalBatchUpdate = ref<InstanceType<typeof ModalBatchUpdate>>()
 const modalBatchMerge = ref<InstanceType<typeof ModalBatchMerge>>()
@@ -35,9 +29,7 @@ const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap } = meStore
 
-const productSettingCommon = ref(MeService.getProductSettingCommon())
-
-const hasZeroQuantity = ref<boolean>(false)
+const hasZeroQuantity = ref<boolean>(true)
 const warehouseMap = ref<Record<string, Warehouse>>({})
 const distributorMap = ref<Record<string, Distributor>>({})
 
@@ -51,13 +43,16 @@ onMounted(async () => {
 })
 
 const fetchBatchList = async () => {
-  batchList.value = await BatchService.list({
-    filter: {
-      productId: props.productId,
-      quantity: hasZeroQuantity.value ? undefined : { NOT: 0 },
+  batchList.value = await BatchService.list(
+    {
+      filter: {
+        productId: props.productId,
+        quantity: hasZeroQuantity.value ? undefined : { NOT: 0 },
+      },
+      sort: { registeredAt: 'ASC' },
     },
-    sort: { registeredAt: 'ASC' },
-  })
+    { refresh: true },
+  )
   batchList.value.forEach((i) => (i.product = product.value))
 }
 
@@ -146,7 +141,7 @@ const closeExpiryDate = computed(() => {
       <div class="my-2 flex gap-4 items-center">
         <div style="width: 100px; flex-shrink: 0">Số lượng</div>
         <div
-          v-if="product.inventoryStrategyFix !== InventoryStrategy.NoImpact"
+          v-if="product.pickupStrategyFix !== PickupStrategy.NoImpact"
           style="flex-shrink: 1; flex-grow: 1; flex-basis: 0"
         >
           <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
@@ -175,7 +170,7 @@ const closeExpiryDate = computed(() => {
           / {{ product.unitDefaultName }}
         </div>
       </div>
-      <div v-if="settingStore.SYSTEM_SETTING.retailPrice" class="my-2 flex gap-4">
+      <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Giá bán lẻ</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
           <b>{{ formatMoney(product.unitRetailPrice) }}</b>
@@ -227,11 +222,11 @@ const closeExpiryDate = computed(() => {
         </VueButton>
       </div>
 
-      <div class="cursor-pointer">
+      <!-- <div class="cursor-pointer">
         <InputCheckbox v-model:value="hasZeroQuantity" @change="fetchBatchList">
           Hiển thị lô hàng có số lượng = 0
         </InputCheckbox>
-      </div>
+      </div> -->
     </div>
     <div v-if="isMobile" class="table-wrapper mt-2">
       <table>

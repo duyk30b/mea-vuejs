@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
-import type { InventoryStrategy } from '../enum'
+import type { PickupStrategy } from '../enum'
 
 export class ProductFilterQuery {
   id?: number | ConditionNumber
@@ -11,7 +11,7 @@ export class ProductFilterQuery {
   substance?: ConditionString
   quantity?: ConditionNumber
   updatedAt?: ConditionDate
-  inventoryStrategy?: InventoryStrategy
+  pickupStrategy?: PickupStrategy
   warehouseIds?: string | ((value: string) => boolean)
   $OR?: ProductFilterQuery[]
   $AND?: ProductFilterQuery[]
@@ -21,7 +21,7 @@ export class ProductGetQuery {
   page?: number
   limit?: number
   relation?: {
-    // batchList?: boolean
+    batchList?: boolean
     productGroup?: boolean
     commissionList?: boolean
   }

@@ -6,28 +6,32 @@ import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputFilter } from '../../../../common/vue-form'
+import { InputFilter, InputOptions } from '../../../../common/vue-form'
 import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { CommissionService, InteractType } from '../../../../modules/commission'
-import { DeliveryStatus } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { PrescriptionSample, type MedicineType } from '../../../../modules/prescription-sample'
+import {
+  PrescriptionSample,
+  PrescriptionSampleService,
+  type MedicineType,
+} from '../../../../modules/prescription-sample'
 import { PrintHtmlService, compiledTemplatePrintHtml } from '../../../../modules/print-html'
-import type { Product } from '../../../../modules/product'
+import { Product } from '../../../../modules/product'
 import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import {
-TicketAttributeKeyAdviceList,
-type TicketAttributeKeyAdviceType,
+  TicketAttributeKeyAdviceList,
+  type TicketAttributeKeyAdviceType,
 } from '../../../../modules/ticket-attribute'
 import {
-TicketClinicAttributeApi,
-TicketClinicProductApi,
-TicketClinicUserApi,
-ticketClinicRef,
+  TicketClinicAttributeApi,
+  TicketClinicProductApi,
+  TicketClinicUserApi,
+  ticketClinicRef,
 } from '../../../../modules/ticket-clinic'
-import { TicketProduct } from '../../../../modules/ticket-product'
+import { TicketProduct, TicketProductType } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
@@ -37,12 +41,15 @@ import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStat
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
+import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescriptionSample.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
 
 const ticketClinicPrescriptionSelectItem =
   ref<InstanceType<typeof TicketClinicPrescriptionSelectItem>>()
+const modalSelectItemFromPrescriptionSample =
+  ref<InstanceType<typeof ModalSelectItemFromPrescriptionSample>>()
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalSavePrescriptionSample = ref<InstanceType<typeof ModalSavePrescriptionSample>>()
@@ -64,6 +71,10 @@ const ticketAttributeOriginMap: { [P in TicketAttributeKeyAdviceType]?: any } = 
 const ticketAttributeMap = ref<{ [P in TicketAttributeKeyAdviceType]?: any } & { advice: string }>({
   advice: '',
 })
+
+const prescriptionSampleOptions = ref<{ value: number; text: string; data: PrescriptionSample }[]>(
+  [],
+)
 
 onMounted(async () => {
   refreshTicketUserList()
@@ -105,6 +116,20 @@ const refreshTicketUserList = async () => {
   })
   ticketUserListOrigin = tuListOrigin
   ticketUserList.value = TicketUser.fromList(tuListOrigin)
+}
+
+const searchingPrescriptionSample = async (text: string) => {
+  const prescriptionList = await PrescriptionSampleService.search(text)
+  prescriptionSampleOptions.value = prescriptionList.map((i) => ({
+    value: i.id,
+    text: i.name,
+    data: i,
+  }))
+}
+
+const selectPrescriptionSample = async (psSelect: PrescriptionSample) => {
+  modalSelectItemFromPrescriptionSample?.value?.openModal(psSelect)
+  prescriptionSampleOptions.value = []
 }
 
 watch(
@@ -312,12 +337,6 @@ const handleAddTicketProductPrescription = async (ticketProductAddList: TicketPr
   }
 }
 
-const handleModalSavePrescriptionSampleChange = async (v: boolean) => {
-  if (v) {
-    await ticketClinicPrescriptionSelectItem.value?.fetchPrescriptionSample()
-  }
-}
-
 const clickOpenModalSavePrescriptionSample = () => {
   const medicineList: MedicineType[] = ticketProductPrescriptionList.value.map((i) => ({
     productId: i.productId,
@@ -331,6 +350,73 @@ const clickOpenModalSavePrescriptionSample = () => {
   psGenerate.medicines = JSON.stringify(medicineList)
   modalSavePrescriptionSample.value?.openModal(psGenerate)
 }
+
+const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
+  if (
+    ![
+      TicketStatus.Schedule,
+      TicketStatus.Draft,
+      TicketStatus.Deposited,
+      TicketStatus.Executing,
+    ].includes(ticketClinicRef.value.status)
+  ) {
+    return AlertStore.addWarning(`Trạng thái phiếu khám không hợp lệ`)
+  }
+
+  const priorityList = (ticketClinicRef.value.ticketProductPrescriptionList || []).map(
+    (i) => i.priority,
+  )
+  priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
+  let priority = Math.max(...priorityList)
+
+  const ticketProductList = medicineList
+    .map((medicine) => {
+      const { product } = medicine
+      if (!product) {
+        return null
+      }
+      priority = priority + 1
+      const temp = TicketProduct.blank()
+      temp.priority = priority
+      temp.pickupStrategy = PickupStrategy.AutoWithFIFO // tự động nhặt thuốc nên chuyển sang dạng AUTO thôi
+      temp.customerId = ticketClinicRef.value.customerId
+      temp.product = Product.from(product)
+      temp.productId = medicine.productId
+      temp.batchId = 0
+
+      temp.quantity = medicine.quantity // lấy theo mẫu
+      temp.costAmount = medicine.quantity * (product.costPrice || 0)
+      temp.quantityPrescription = medicine.quantity // lấy theo mẫu
+      if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+        if (temp.quantity > product!.quantity) {
+          AlertStore.addWarning(
+            `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
+              medicine.quantity
+            }`,
+          )
+        }
+      }
+
+      temp.type = TicketProductType.Prescription
+      temp.deliveryStatus = DeliveryStatus.Pending
+      temp.unitRate = product.unitDefaultRate
+
+      temp.expectedPrice = product.retailPrice
+      temp.discountType = DiscountType.Percent
+      temp.discountPercent = 0
+      temp.discountMoney = 0
+      temp.actualPrice = product.retailPrice
+      temp.hintUsage = medicine.hintUsage // lấy theo mẫu
+      temp.warehouseIds = JSON.stringify(
+        settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,
+      )
+
+      return temp
+    })
+    .filter((i) => !!i)
+
+  handleAddTicketProductPrescription(ticketProductList)
+}
 </script>
 <template>
   <ModalProductDetail ref="modalProductDetail" />
@@ -339,15 +425,35 @@ const clickOpenModalSavePrescriptionSample = () => {
     @success="handleAddTicketProductPrescription"
   />
   <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
-  <ModalSavePrescriptionSample
-    ref="modalSavePrescriptionSample"
-    @hasChangeData="handleModalSavePrescriptionSampleChange"
+  <ModalSavePrescriptionSample ref="modalSavePrescriptionSample" />
+  <ModalSelectItemFromPrescriptionSample
+    ref="modalSelectItemFromPrescriptionSample"
+    @success="handleSelectMedicineList"
   />
-  <div class="">
-    <div class="flex justify-between items-center">
-      <span>Đơn thuốc</span>
+  <div class="mt-4">
+    <div class="flex justify-between items-baseline">
+      <div>Đơn thuốc</div>
+      <div style="width: 500px; max-width: 90%">
+        <InputOptions
+          ref="inputOptionsPrescriptionSample"
+          prepend="Đơn mẫu"
+          required
+          :options="prescriptionSampleOptions"
+          :maxHeight="320"
+          placeholder="Chọn từ đơn thuốc mẫu"
+          clearAfterSelected
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
+          @selectItem="({ data }: any) => selectPrescriptionSample(data)"
+          @update:text="searchingPrescriptionSample"
+        >
+          <template #option="{ item: { data } }">
+            <div>{{ data.name }}</div>
+            <div>{{ data.substance }}</div>
+          </template>
+        </InputOptions>
+      </div>
     </div>
-    <div class="table-wrapper">
+    <div class="mt-1 table-wrapper">
       <table>
         <thead>
           <tr>

@@ -12,6 +12,7 @@ import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import VueTooltip from '../../../../common/popover/VueTooltip.vue'
+import { onMounted } from 'vue'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -20,6 +21,10 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
+
+onMounted(async () => {
+  await ticketClinicRef.value.refreshLaboratory()
+})
 
 const laboratoryDiscount = computed(() => {
   return ticketClinicRef.value.ticketLaboratoryList?.reduce((acc, item) => {
@@ -101,9 +106,8 @@ const laboratoryCostAmount = computed(() => {
           <td class="text-center">
             <a
               v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                  ticketClinicRef.status,
-                ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
               @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)"

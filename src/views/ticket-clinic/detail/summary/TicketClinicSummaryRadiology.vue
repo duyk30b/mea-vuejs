@@ -13,6 +13,7 @@ import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
 import VueTooltip from '../../../../common/popover/VueTooltip.vue'
+import { onMounted } from 'vue'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
@@ -21,6 +22,10 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const meStore = useMeStore()
 const { permissionIdMap, organization } = meStore
+
+onMounted(async () => {
+  await ticketClinicRef.value.refreshRadiology()
+})
 
 const radiologyDiscount = computed(() => {
   return ticketClinicRef.value.ticketRadiologyList?.reduce((acc, item) => {

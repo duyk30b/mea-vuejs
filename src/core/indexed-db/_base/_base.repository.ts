@@ -1,13 +1,13 @@
 import type { NoExtra } from '../../../utils'
 import type { BaseIndexedDB } from './_base.indexed-db'
-import { IndexedDBCondition, type BaseCondition } from './indexed-db.condition'
+import { IndexedDBQuery, type BaseCondition } from './indexed-db.query'
 
 export class BaseRepository<
   _ENTITY,
   _SORT = {
     [P in keyof _ENTITY]?: 'ASC' | 'DESC' | ((a: string, b: string) => 1 | -1)
   },
-> extends IndexedDBCondition<_ENTITY> {
+> extends IndexedDBQuery<_ENTITY> {
   public storeName: string
   public baseDB: BaseIndexedDB
 
@@ -57,7 +57,7 @@ export class BaseRepository<
         request.onsuccess = (event) => {
           const cursor = (event.target as IDBRequest).result
           if (cursor) {
-            if (this.checkCondition(cursor.value, condition)) {
+            if (this.executeFilter(cursor.value, condition)) {
               result.push(cursor.value)
             }
             cursor.continue()
@@ -214,7 +214,7 @@ export class BaseRepository<
         request.onsuccess = (event) => {
           const cursor = (event.target as IDBRequest).result
           if (cursor) {
-            if (this.checkCondition(cursor.value, condition)) {
+            if (this.executeFilter(cursor.value, condition)) {
               resolve(cursor.value)
             }
             cursor.continue()

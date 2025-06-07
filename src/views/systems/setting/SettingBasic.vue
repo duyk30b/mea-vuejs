@@ -105,11 +105,6 @@ const logoutGoogleDriver = async () => {
               <td>
                 <div>Sản phẩm</div>
                 <div style="line-height: 32px">
-                  <InputCheckbox v-model:checked="settingDisplay.retailPrice">
-                    Sử dụng giá bán lẻ
-                  </InputCheckbox>
-                </div>
-                <div style="line-height: 32px">
                   <InputCheckbox v-model:checked="settingDisplay.wholesalePrice">
                     Sử dụng giá bán sỉ
                   </InputCheckbox>

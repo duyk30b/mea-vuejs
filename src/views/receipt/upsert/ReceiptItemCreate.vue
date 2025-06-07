@@ -11,11 +11,12 @@ import {
   InputText,
   VueSelect,
 } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import type { VueSelectOption } from '../../../common/vue-form/VueSelect.vue'
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
+import { PickupStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
@@ -25,7 +26,6 @@ import { arrayToKeyValue, timeToText } from '../../../utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { receipt } from './receipt-upsert.store'
-import { InventoryStrategy } from '../../../modules/enum'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
@@ -48,10 +48,12 @@ const { permissionIdMap } = meStore
 const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const batchOptions = ref<{ value: number; text?: string; data: Batch; disabled?: boolean }[]>([])
 
-const warehouseOptions = ref<{ value: number; text: string; data: Warehouse }[]>([])
 const warehouseMap = ref<Record<string, Warehouse>>({})
 const distributorMap = ref<Record<string, Distributor>>({})
+
 const warehouseAll = ref<Warehouse[]>([])
+const warehouseOptions = ref<VueSelectOption<Warehouse>[]>([])
+const warehouseId = ref<number>(0)
 
 const product = ref<Product>(Product.blank())
 const receiptItem = ref<ReceiptItem>(ReceiptItem.blank())
@@ -62,7 +64,12 @@ onMounted(async () => {
     const fetchData = await Promise.all([WarehouseService.list({}), DistributorService.getMap()])
     warehouseAll.value = fetchData[0]
     distributorMap.value = fetchData[1]
+
     warehouseMap.value = arrayToKeyValue(warehouseAll.value, 'id')
+    warehouseOptions.value = [
+      ...warehouseAll.value.map((i) => ({ value: i.id, text: i.name, data: i })),
+      { value: 0, text: 'Không chọn kho', data: Warehouse.blank() },
+    ]
   } catch (error: any) {
     AlertStore.add({ type: 'error', message: error.message })
   }
@@ -72,7 +79,7 @@ onUnmounted(() => {
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  await Promise.all([ProductService.refreshDB()])
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 watch(
@@ -125,22 +132,8 @@ const selectProduct = async (productData?: Product) => {
   if (productData) {
     product.value = Product.from(productData)
 
-    if (productData.inventoryStrategy === InventoryStrategy.NoImpact) {
-      return ModalStore.alert({
-        title: 'Không thể nhập hàng cho sản phẩm này',
-        content: ['Sản phẩm này đang ở chế độ không quản lý số lượng tồn kho'],
-      })
-    }
-
-    if (productData.warehouseIds === JSON.stringify([0])) {
-      warehouseOptions.value = [
-        ...warehouseAll.value.map((i) => ({ value: i.id, text: i.name, data: i })),
-        { value: 0, text: 'Không chọn kho', data: Warehouse.blank() },
-      ]
-    } else {
-      warehouseOptions.value = warehouseAll.value
-        .filter((i) => productData.warehouseIdList.includes(i.id))
-        .map((i) => ({ value: i.id, text: i.name, data: i }))
+    if (productData.pickupStrategy === PickupStrategy.NoImpact) {
+      return AlertStore.addWarning('Sản phẩm này đang ở chế độ không quản lý số lượng tồn kho')
     }
 
     receiptItem.value.product = Product.from(productData)
@@ -166,7 +159,6 @@ const selectProduct = async (productData?: Product) => {
     newBatch.distributorId = receipt.value.distributorId
     newBatch.productId = productData.id
     newBatch.costPrice = productData.costPrice
-    newBatch.warehouseId = warehouseOptions.value[warehouseOptions.value.length - 1]?.value || 0
     batchListData.push(newBatch)
 
     const productClone = Product.from(productData)
@@ -196,6 +188,7 @@ const selectBatch = (batchData?: Batch) => {
 
 const addReceiptItem = async () => {
   try {
+    receiptItem.value.warehouseId = warehouseId.value
     emit('addReceiptItem', receiptItem.value)
     inputOptionsProduct.value?.clear()
     clear()
@@ -215,7 +208,6 @@ const clear = () => {
   receiptItem.value = ReceiptItem.blank()
   batchOptions.value = []
   productOptions.value = []
-  warehouseOptions.value = []
 }
 </script>
 
@@ -230,13 +222,16 @@ const clear = () => {
           <a v-if="product.id" @click="modalProductDetail?.openModal(product)">
             <IconFileSearch />
           </a>
-          <span v-if="product.inventoryStrategy === InventoryStrategy.NoImpact" style="font-weight: 500; color: var(--text-red)">
+          <span
+            v-if="product.pickupStrategy === PickupStrategy.NoImpact"
+            style="font-weight: 500; color: var(--text-red)"
+          >
             (Sản phẩm không quản lý tồn kho)
           </span>
           <div v-if="product.id">
             (
             <span
-              v-if="product.inventoryStrategy !== InventoryStrategy.NoImpact"
+              v-if="product.pickupStrategy !== PickupStrategy.NoImpact"
               :class="product.quantity <= 0 ? 'text-red-500 font-bold' : ''"
             >
               Tồn:
@@ -352,10 +347,9 @@ const clear = () => {
           <div>Nhập vào kho hàng</div>
           <div>
             <VueSelect
-              v-model:value="receiptItem.warehouseId"
-              :options="warehouseOptions"
+              v-model:value="warehouseId"
               :disabled="!!receiptItem.batchId"
-              @update:value="receiptItem.batchId = 0"
+              :options="warehouseOptions"
             ></VueSelect>
           </div>
         </div>

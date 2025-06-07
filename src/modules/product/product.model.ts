@@ -2,12 +2,12 @@ import { MeService } from '../_me/me.service'
 import { Batch } from '../batch/batch.model'
 import { Commission } from '../commission'
 import {
-  InventoryStrategy,
-  SplitBatchByCostPrice,
-  SplitBatchByDistributor,
-  SplitBatchByExpiryDate,
-  SplitBatchByWarehouse,
-  type UnitType,
+    PickupStrategy,
+    SplitBatchByCostPrice,
+    SplitBatchByDistributor,
+    SplitBatchByExpiryDate,
+    SplitBatchByWarehouse,
+    type UnitType,
 } from '../enum'
 import { ProductGroup } from '../product-group'
 
@@ -32,7 +32,7 @@ export class Product {
   warehouseIds: string
   warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
-  inventoryStrategy: InventoryStrategy
+  pickupStrategy: PickupStrategy
   splitBatchByWarehouse: SplitBatchByWarehouse
   splitBatchByDistributor: SplitBatchByDistributor
   splitBatchByExpiryDate: SplitBatchByExpiryDate
@@ -106,11 +106,11 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
-  get inventoryStrategyFix() {
-    if (this.inventoryStrategy === InventoryStrategy.Inherit) {
-      return MeService.getProductSetting(this).inventoryStrategy
+  get pickupStrategyFix() {
+    if (this.pickupStrategy === PickupStrategy.Inherit) {
+      return MeService.getProductSetting(this).pickupStrategy
     }
-    return this.inventoryStrategy
+    return this.pickupStrategy
   }
 
   public getUnitNameByRate(rate: number) {
@@ -130,7 +130,7 @@ export class Product {
     ins.warehouseIds = JSON.stringify([0])
     ins.warehouseIdList = [0]
 
-    ins.inventoryStrategy = InventoryStrategy.Inherit
+    ins.pickupStrategy = PickupStrategy.Inherit
     ins.splitBatchByWarehouse = SplitBatchByWarehouse.Inherit
     ins.splitBatchByDistributor = SplitBatchByDistributor.Inherit
     ins.splitBatchByExpiryDate = SplitBatchByExpiryDate.Inherit
@@ -205,7 +205,7 @@ export class Product {
     if (a.retailPrice != b.retailPrice) return false
 
     if (a.warehouseIds != b.warehouseIds) return false
-    if (a.inventoryStrategy != b.inventoryStrategy) return false
+    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.isActive != b.isActive) return false
     if (a.updatedAt != b.updatedAt) return false
     return true

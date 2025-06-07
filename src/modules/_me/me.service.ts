@@ -1,14 +1,15 @@
 import { ref } from 'vue'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
 import {
-  InventoryStrategy,
-  SplitBatchByCostPrice,
-  SplitBatchByDistributor,
-  SplitBatchByExpiryDate,
-  SplitBatchByWarehouse,
+    PickupStrategy,
+    SplitBatchByCostPrice,
+    SplitBatchByDistributor,
+    SplitBatchByExpiryDate,
+    SplitBatchByWarehouse,
 } from '../enum'
 import type { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
+import type { Product } from '../product'
 import { SettingApi } from '../setting/setting.api'
 import type { User } from '../user'
 import { MeApi } from './me.api'
@@ -16,8 +17,6 @@ import { useMeStore } from './me.store'
 import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
-import type { Product } from '../product'
-import { PrintHtml, PrintHtmlService } from '../print-html'
 
 export class MeService {
   static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
@@ -118,7 +117,7 @@ export class MeService {
   static getProductSetting(product: Product) {
     const splitRule: typeof MeService.settingMap.value.PRODUCT_SETTING = {
       allowNegativeQuantity: false,
-      inventoryStrategy: product.inventoryStrategy,
+      pickupStrategy: product.pickupStrategy,
       splitBatchByWarehouse: product.splitBatchByWarehouse,
       splitBatchByDistributor: product.splitBatchByDistributor,
       splitBatchByExpiryDate: product.splitBatchByExpiryDate,
@@ -129,8 +128,8 @@ export class MeService {
 
     splitRule.allowNegativeQuantity = productSettingCommon.allowNegativeQuantity
 
-    if (splitRule.inventoryStrategy === InventoryStrategy.Inherit) {
-      splitRule.inventoryStrategy = productSettingCommon.inventoryStrategy
+    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
+      splitRule.pickupStrategy = productSettingCommon.pickupStrategy
     }
 
     if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
@@ -156,8 +155,8 @@ export class MeService {
 
     const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
 
-    if (splitRule.inventoryStrategy === InventoryStrategy.Inherit) {
-      splitRule.inventoryStrategy = productSettingRoot.inventoryStrategy
+    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
+      splitRule.pickupStrategy = productSettingRoot.pickupStrategy
     }
 
     if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {

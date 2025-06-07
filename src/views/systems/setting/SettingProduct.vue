@@ -7,7 +7,7 @@ import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import {
-  InventoryStrategy,
+  PickupStrategy,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
@@ -28,15 +28,15 @@ const unsubscribe = settingStore.$subscribe((mutation, state) => {
 
 onUnmounted(() => unsubscribe())
 
-const inventoryStrategyOptions = [
-  { value: InventoryStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  { value: InventoryStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
-  { value: InventoryStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
-  { value: InventoryStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
-  { value: InventoryStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+const pickupStrategyOptions = [
+  { value: PickupStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
 ]
-inventoryStrategyOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.inventoryStrategy) {
+pickupStrategyOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.pickupStrategy) {
     i.label = '(Hệ thống) - ' + i.label
   }
 })
@@ -131,12 +131,12 @@ const saveBatchSetting = async () => {
                 </td>
               </tr>
               <tr>
-                <td style="width: 200px">Chiến lược trừ kho</td>
+                <td style="width: 200px">Chiến lược lấy hàng</td>
                 <td>
                   <div>
                     <InputSelect
-                      v-model:value="productSetting.inventoryStrategy"
-                      :options="inventoryStrategyOptions"
+                      v-model:value="productSetting.pickupStrategy"
+                      :options="pickupStrategyOptions"
                     />
                   </div>
                 </td>

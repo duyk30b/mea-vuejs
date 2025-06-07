@@ -21,7 +21,7 @@ import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Commission, CommissionCalculatorType, InteractType } from '../../../modules/commission'
 import {
-  InventoryStrategy,
+  PickupStrategy,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
@@ -110,15 +110,15 @@ onMounted(async () => {
   }
 })
 
-const inventoryStrategyOptions = [
-  { value: InventoryStrategy.Inherit, label: '-' },
-  { value: InventoryStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
-  { value: InventoryStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
-  { value: InventoryStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
-  { value: InventoryStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+const pickupStrategyOptions = [
+  { value: PickupStrategy.Inherit, label: '-' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
 ]
-inventoryStrategyOptions.forEach((i) => {
-  if (i.value === productSettingCommon.inventoryStrategy) {
+pickupStrategyOptions.forEach((i) => {
+  if (i.value === productSettingCommon.pickupStrategy) {
     i.label = '(Mặc định) - ' + i.label
   }
 })
@@ -541,7 +541,7 @@ defineExpose({ openModal })
                   <div class="">
                     <span>Giá nhập</span>
                     <span
-                      v-if="product.inventoryStrategy != InventoryStrategy.NoImpact"
+                      v-if="product.pickupStrategy != PickupStrategy.NoImpact"
                       style="margin-left: 0.5rem"
                     >
                       (tự động cập nhật mỗi khi nhập hàng)
@@ -588,10 +588,7 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div
-                  v-if="settingStore.SYSTEM_SETTING.retailPrice"
-                  style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
-                >
+                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
                   <div class="">
                     <span>Giá bán lẻ</span>
                     <span v-if="unit.find((i) => i.default)?.rate != 1" class="italic">
@@ -662,11 +659,11 @@ defineExpose({ openModal })
                 </div>
 
                 <div class="mt-4" style="flex-basis: 90%; flex-grow: 1">
-                  <div class="italic font-bold">* Chiến lược trừ kho</div>
+                  <div class="italic font-bold">* Chiến lược lấy hàng</div>
                   <div>
                     <InputSelect
-                      v-model:value="product.inventoryStrategy"
-                      :options="inventoryStrategyOptions"
+                      v-model:value="product.pickupStrategy"
+                      :options="pickupStrategyOptions"
                     />
                   </div>
                 </div>

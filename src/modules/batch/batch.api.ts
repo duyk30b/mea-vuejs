@@ -69,12 +69,12 @@ export class BatchApi {
 
   static async mergeBatch(options: {
     productId: number
-    batchIdSource: number
+    batchIdSourceList: number[]
     batchIdTarget: number
   }) {
     const response = await AxiosInstance.patch(`/batch/merge-batch`, {
       productId: options.productId,
-      batchIdSource: options.batchIdSource,
+      batchIdSourceList: options.batchIdSourceList,
       batchIdTarget: options.batchIdTarget,
     })
     const { data } = response.data as BaseResponse<boolean>

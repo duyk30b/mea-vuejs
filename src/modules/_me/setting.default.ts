@@ -1,5 +1,5 @@
 import {
-  InventoryStrategy,
+  PickupStrategy,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
@@ -13,7 +13,6 @@ export const SETTING_DEFAULT = {
   GOOGLE_DRIVER: { email: '' },
   SYSTEM_SETTING: {
     moneyDivisionFormat: 1,
-    retailPrice: true,
     wholesalePrice: false,
   },
   PRINT_SETTING: {
@@ -23,7 +22,7 @@ export const SETTING_DEFAULT = {
     invoice: {
       printHtmlId: 0,
       customVariables: '',
-      customStyles: '', 
+      customStyles: '',
     },
     prescription: {
       printHtmlId: 0,
@@ -48,7 +47,7 @@ export const SETTING_DEFAULT = {
   },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,
-    inventoryStrategy: InventoryStrategy.Inherit,
+    pickupStrategy: PickupStrategy.Inherit,
     splitBatchByWarehouse: SplitBatchByWarehouse.Inherit,
     splitBatchByDistributor: SplitBatchByDistributor.Inherit,
     splitBatchByExpiryDate: SplitBatchByExpiryDate.Inherit,
@@ -88,11 +87,12 @@ export const SETTING_DEFAULT = {
 
   SCREEN_PRODUCT_LIST: {
     detail: true,
-    substance: true,
+    substance: false,
     group: true,
-    batchCode: false,
+    warehouse: false,
+    distributor: false,
     expiryDate: true,
-    unit: true,
+    unit: false,
     costPrice: true,
     action: true,
   },
@@ -247,13 +247,14 @@ export const SETTING_DEFAULT = {
   SCREEN_INVOICE_UPSERT: {
     invoiceItemInput: {
       warehouseIdList: [0],
-      customAfterSearch: true,
+      searchIncludeZeroQuantity: false,
       hintUsage: false,
       expectedPrice: true,
       costPrice: true,
       quantity: true,
       discount: true,
       actualPrice: true,
+      buttonSubmit: true,
     },
     invoiceItemsTable: {
       allowOverQuantity: false,

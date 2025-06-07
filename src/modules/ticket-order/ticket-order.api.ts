@@ -30,7 +30,7 @@ export class TicketOrderApi {
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
         priority: index + 1,
-        inventoryStrategy: i.inventoryStrategy,
+        pickupStrategy: i.pickupStrategy,
         warehouseIds: i.warehouseIds,
         productId: i.productId,
         batchId: i.batchId,
@@ -95,7 +95,7 @@ export class TicketOrderApi {
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
         priority: index + 1,
-        inventoryStrategy: i.inventoryStrategy,
+        pickupStrategy: i.pickupStrategy,
         warehouseIds: i.warehouseIds,
         productId: i.productId,
         batchId: i.batchId,
@@ -161,7 +161,7 @@ export class TicketOrderApi {
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
         priority: index + 1,
-        inventoryStrategy: i.inventoryStrategy,
+        pickupStrategy: i.pickupStrategy,
         warehouseIds: i.warehouseIds,
         productId: i.productId,
         batchId: i.batchId,
@@ -228,7 +228,7 @@ export class TicketOrderApi {
       },
       ticketOrderProductDraftList: (ticket.ticketProductList || []).map((i, index) => ({
         priority: index + 1,
-        inventoryStrategy: i.inventoryStrategy,
+        pickupStrategy: i.pickupStrategy,
         warehouseIds: i.warehouseIds,
         productId: i.productId,
         batchId: i.batchId,

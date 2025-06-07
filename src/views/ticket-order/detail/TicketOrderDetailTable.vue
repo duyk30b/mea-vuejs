@@ -298,7 +298,7 @@ const colspan = computed(() => {
                 {{ ticketProduct.hintUsage }}
               </div>
               <div v-if="CONFIG.MODE === 'development'">
-                InventoryStrategy - {{ ticketProduct.inventoryStrategy }}
+                PickupStrategy - {{ ticketProduct.pickupStrategy }}
               </div>
             </td>
             <td

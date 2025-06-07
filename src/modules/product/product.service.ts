@@ -1,12 +1,22 @@
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
+import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
+import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
+import { ESArray } from '../../utils'
 import { useMeStore } from '../_me/me.store'
 import { AuthService } from '../auth/auth.service'
 import { CommissionService } from '../commission'
 import { ProductApi } from './product.api'
-import type { ProductDetailQuery, ProductListQuery, ProductPaginationQuery } from './product.dto'
+import type {
+  ProductDetailQuery,
+  ProductGetQuery,
+  ProductListQuery,
+  ProductPaginationQuery,
+} from './product.dto'
 import { Product } from './product.model'
+
+const ProductDBQuery = new IndexedDBQuery<Product>()
 
 export class ProductService {
   static async refreshDB() {
@@ -45,29 +55,49 @@ export class ProductService {
     }
   }
 
-  static async pagination(params: ProductPaginationQuery) {
-    const { page, limit, relation, filter, sort } = params
-    const productPagination = await ProductDB.pagination({
-      page: page || 1,
-      limit: limit || 10,
-      condition: {
-        isActive: filter?.isActive,
-        productGroupId: filter?.productGroupId,
-        quantity: filter?.quantity,
-        warehouseIds: filter?.warehouseIds,
-        $OR: filter?.$OR,
-      },
-      sort: sort || { id: 'DESC' },
+  private static async executeQuery(all: Product[], query: ProductGetQuery) {
+    let data = all
+
+    if (query.relation) {
+      if (query.relation.batchList) {
+        const batchAll = await BatchDB.findManyBy({ quantity: { NOT: 0 } })
+        const batchMap = ESArray.arrayToKeyArray(batchAll, 'productId')
+        data.forEach((i) => (i.batchList = batchMap[i.id]))
+      }
+    }
+    if (query.filter) {
+      const filter = query.filter
+      data = data.filter((i) => {
+        return ProductDBQuery.executeFilter(i, filter)
+      })
+    }
+
+    if (query.sort) {
+      data = ProductDBQuery.executeSort(data, query.sort)
+    }
+    return data
+  }
+
+  static async pagination(query: ProductPaginationQuery) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    const productAll = await ProductDB.findAll()
+
+    const dataTotal = await ProductService.executeQuery(productAll, query)
+    const data = dataTotal.slice((page - 1) * limit, page * limit)
+
+    const productList = Product.fromList(data)
+    productList.forEach((product) => {
+      product.batchList?.forEach((batch) => {
+        batch.product = Product.basic(product)
+      })
     })
-    const productList = Product.fromList(productPagination.data)
 
     return {
-      data: productList,
-      meta: {
-        page,
-        limit,
-        total: productPagination.total,
-      },
+      page,
+      limit,
+      total: dataTotal.length,
+      productList,
     }
   }
 

@@ -13,7 +13,7 @@ import {
 import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
-import { DeliveryStatus, DiscountType, InventoryStrategy } from '../../../modules/enum'
+import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product, ProductService } from '../../../modules/product'
 import { TicketProduct } from '../../../modules/ticket-product'
@@ -42,14 +42,13 @@ const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
 
 const warehouseMap = ref<Record<string, Warehouse>>({})
-const warehouseIdOptions = ref<number[]>([0])
 
 onMounted(async () => {
   warehouseMap.value = await WarehouseService.getMap()
 })
 
 const handleFocusFirstSearchProduct = async () => {
-  await Promise.all([ProductService.refreshDB()])
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
 }
 
 const searchingProduct = async (text: string) => {
@@ -70,11 +69,12 @@ const searchingProduct = async (text: string) => {
           {
             $OR: [
               {
-                quantity: settingStore.TICKET_CLINIC_DETAIL.consumable.searchIncludeZeroQuantity
+                quantity: settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput
+                  .searchIncludeZeroQuantity
                   ? undefined
                   : { NOT: 0 },
               },
-              { inventoryStrategy: InventoryStrategy.NoImpact },
+              { pickupStrategy: PickupStrategy.NoImpact },
             ],
           },
         ],
@@ -116,7 +116,7 @@ const selectProduct = async (productProp?: Product) => {
   const tp = TicketProduct.blank()
   tp.productId = productProp.id
   tp.product = Product.from(productProp)
-  tp.inventoryStrategy = productProp.inventoryStrategyFix // set chiến lược lấy lô hàng ở đây
+  tp.pickupStrategy = productProp.pickupStrategyFix // set chiến lược lấy lô hàng ở đây
 
   tp.deliveryStatus = DeliveryStatus.Pending
   tp.unitRate = productProp.unitDefaultRate
@@ -140,8 +140,13 @@ const selectProduct = async (productProp?: Product) => {
   productOutSellType.value = 'retailPrice'
   ticketProduct.value = tp
 
+  if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit) {
+    addTicketProduct()
+    return // Vào chế độ này rồi thì không thể chọn lô
+  }
+
   // Tính toán cho batchID // lằng nhằng nhé
-  if (tp.inventoryStrategy === InventoryStrategy.RequireBatchSelection) {
+  if (tp.pickupStrategy === PickupStrategy.RequireBatchSelection) {
     const warehouseIdAcceptList: number[] =
       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
     let canGetAllWarehouse = false
@@ -274,14 +279,14 @@ const addTicketProduct = () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.inventoryStrategyFix !== InventoryStrategy.NoImpact) {
+  if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
     if (ticketProduct.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProduct.value.quantity
         }`,
       )
-    } else if (product?.inventoryStrategyFix == InventoryStrategy.RequireBatchSelection) {
+    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
       if (ticketProduct.value.quantity > batch!.quantity) {
         AlertStore.addWarning(
           `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
@@ -330,7 +335,7 @@ defineExpose({ focus })
         <span
           v-if="
             ticketProduct.productId &&
-            ticketProduct.product?.inventoryStrategyFix !== InventoryStrategy.NoImpact
+            ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact
           "
           :class="
             ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
@@ -359,14 +364,15 @@ defineExpose({ focus })
           required
           @selectItem="({ data }) => selectProduct(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
-          @update:text="searchingProduct"
+          @searching="searchingProduct"
+          :clearAfterSelected="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
         >
           <template #option="{ item: { data } }">
             <div>
               <span>{{ data.productCode }}</span>
               <span class="mx-1">-</span>
               <b>{{ data.brandName }}</b>
-              <span v-if="data.inventoryStrategyFix !== InventoryStrategy.NoImpact">
+              <span v-if="data.pickupStrategyFix !== PickupStrategy.NoImpact">
                 - Tồn
                 <span
                   style="font-weight: 700"
@@ -386,7 +392,7 @@ defineExpose({ focus })
 
     <div
       style="flex-grow: 1; flex-basis: 80%"
-      v-if="ticketProduct.inventoryStrategy === InventoryStrategy.RequireBatchSelection"
+      v-if="ticketProduct.pickupStrategy === PickupStrategy.RequireBatchSelection"
     >
       <div>
         Lô hàng
@@ -471,9 +477,7 @@ defineExpose({ focus })
               ...(settingStore.SYSTEM_SETTING.wholesalePrice
                 ? [{ value: 'wholesalePrice', text: 'Giá bán sỉ' }]
                 : []),
-              ...(settingStore.SYSTEM_SETTING.retailPrice
-                ? [{ value: 'retailPrice', text: 'Giá bán lẻ' }]
-                : []),
+              { value: 'retailPrice', text: 'Giá bán lẻ' },
             ]"
             @selectItem="({ value }) => handleChangeInvoiceProductSellType(value)"
           ></VueSelect>
@@ -585,7 +589,11 @@ defineExpose({ focus })
       </div>
     </div>
 
-    <div style="flex-grow: 1; flex-basis: 80%" class="flex justify-center">
+    <div
+      v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
+      style="flex-grow: 1; flex-basis: 80%"
+      class="flex justify-center"
+    >
       <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>

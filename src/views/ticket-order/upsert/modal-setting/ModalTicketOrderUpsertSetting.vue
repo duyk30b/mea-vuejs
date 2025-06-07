@@ -155,58 +155,70 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <div>
-                          <InputCheckbox
-                            v-model:checked="settingDisplay.invoiceItemInput.customAfterSearch"
-                          >
-                            Lựa chọn thêm sau khi tìm kiếm
-                          </InputCheckbox>
-                        </div>
-                        <div class="pl-7">
-                          <div class="pt-3">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                            >
-                              Hiển thị giá bán niêm yết
-                            </InputCheckbox>
-                          </div>
-                          <div class="pt-3">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.costPrice"
-                              :disabled="
-                                !settingDisplay.invoiceItemInput.customAfterSearch ||
-                                !settingDisplay.invoiceItemInput.expectedPrice
-                              "
-                            >
-                              Thêm lựa chọn giá bán = giá nhập
-                            </InputCheckbox>
-                          </div>
-                          <div class="pt-3">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.discount"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                            >
-                              Chỉnh sửa chiết khấu
-                            </InputCheckbox>
-                          </div>
-                          <div class="pt-3">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                            >
-                              Chỉnh sửa giá bán thực tế
-                            </InputCheckbox>
-                          </div>
-                          <div class="pt-2">
-                            <InputCheckbox
-                              v-model:checked="settingDisplay.invoiceItemInput.hintUsage"
-                              :disabled="!settingDisplay.invoiceItemInput.customAfterSearch"
-                            >
-                              Hiển thị hướng dẫn sử dụng
-                            </InputCheckbox>
-                          </div>
-                        </div>
+                        <InputCheckbox
+                          v-model:checked="
+                            settingDisplay.invoiceItemInput.searchIncludeZeroQuantity
+                          "
+                        >
+                          Kết quả tìm kiếm có chứa những sản phẩm số lượng = 0
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
+                        >
+                          Hiển thị giá bán niêm yết
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.costPrice">
+                          Thêm lựa chọn giá bán = giá nhập
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.discount">
+                          Chỉnh sửa chiết khấu
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.invoiceItemInput.quantity"
+                        >
+                          Chỉnh sửa chọn số lượng
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
+                        >
+                          Chỉnh sửa giá bán
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.hintUsage">
+                          Hiển thị hướng dẫn sử dụng
+                        </InputCheckbox>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <InputCheckbox
+                          v-model:checked="settingDisplay.invoiceItemInput.buttonSubmit"
+                        >
+                          Hiển thị nút "Thêm vào giỏ hàng"
+                        </InputCheckbox>
                       </td>
                     </tr>
                   </tbody>

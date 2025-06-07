@@ -66,7 +66,7 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       isActive: product.isActive,
 
-      inventoryStrategy: product.inventoryStrategy,
+      pickupStrategy: product.pickupStrategy,
       splitBatchByWarehouse: product.splitBatchByWarehouse,
       splitBatchByDistributor: product.splitBatchByDistributor,
       splitBatchByExpiryDate: product.splitBatchByExpiryDate,
@@ -103,7 +103,7 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       isActive: product.isActive,
 
-      inventoryStrategy: product.inventoryStrategy,
+      pickupStrategy: product.pickupStrategy,
       splitBatchByWarehouse: product.splitBatchByWarehouse,
       splitBatchByDistributor: product.splitBatchByDistributor,
       splitBatchByExpiryDate: product.splitBatchByExpiryDate,
@@ -138,5 +138,14 @@ export class ProductApi {
     result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
     result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
     return result
+  }
+
+  static async mergeProduct(options: { productIdSourceList: number[]; productIdTarget: number }) {
+    const response = await AxiosInstance.patch(`/product/merge-product`, {
+      productIdSourceList: options.productIdSourceList,
+      productIdTarget: options.productIdTarget,
+    })
+    const { data } = response.data as BaseResponse<boolean>
+    return data
   }
 }

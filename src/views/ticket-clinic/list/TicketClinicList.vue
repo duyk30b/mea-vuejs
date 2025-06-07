@@ -95,12 +95,7 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  Promise.all([
-    RoleService.getMap(),
-    UserService.getMap(),
-    CustomerService.refreshDB(),
-    startFetchData(),
-  ])
+  Promise.all([RoleService.getMap(), UserService.getMap(), startFetchData()])
     .then((result) => {
       roleMap.value = result[0]
       userMap.value = result[1]
@@ -441,12 +436,15 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                         ticket.dailyIndex?.toString().padStart(2, '0')
                       }}
                     </span>
-                    <IconRead style="width: 16px; height: 16px;"/>
+                    <IconRead style="width: 16px; height: 16px" />
                   </div>
                 </router-link>
               </div>
             </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">
+            <td
+              v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
+              style="font-size: 1em; color: #555"
+            >
               {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
             </td>
             <td><TicketStatusTag :ticket="ticket" /></td>
