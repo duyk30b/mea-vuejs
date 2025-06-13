@@ -60,7 +60,7 @@ export class ProcedureApi {
       consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
 
-      commissionList: (procedure.commissionList || [])
+      positionList: (procedure.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {
@@ -87,7 +87,7 @@ export class ProcedureApi {
       consumablesHint: procedure.consumablesHint,
       isActive: procedure.isActive,
 
-      commissionList: (procedure.commissionList || [])
+      positionList: (procedure.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {

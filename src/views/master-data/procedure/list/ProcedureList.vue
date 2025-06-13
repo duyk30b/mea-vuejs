@@ -3,28 +3,21 @@ import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import {
-  IconFileSearch,
-  IconHome,
-  IconReconciliation,
-  IconRight,
-  IconSetting,
-} from '../../../../common/icon-antd'
+import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
 import { arrayToKeyValue } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
-import { useRouter } from 'vue-router'
-import Breadcrumb from '../../../component/Breadcrumb.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
@@ -32,8 +25,7 @@ const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const procedureList = ref<Procedure[]>([])
 const procedureGroupAll = ref<ProcedureGroup[]>([])
@@ -133,7 +125,7 @@ const handleModalProcedureUpsertSuccess = async () => {
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
+        v-if="userPermission[PermissionId.PROCEDURE_CREATE]"
         color="blue"
         icon="plus"
         @click="modalProcedureUpsert?.openModal()"
@@ -150,7 +142,7 @@ const handleModalProcedureUpsertSuccess = async () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalProcedureListSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
@@ -264,7 +256,7 @@ const handleModalProcedureUpsertSuccess = async () => {
         </div>
       </div>
     </div>
-    <div v-else class="page-main-table table-wrapper">
+    <div v-if="!isMobile" class="page-main-table table-wrapper">
       <table>
         <thead>
           <tr>
@@ -314,7 +306,7 @@ const handleModalProcedureUpsertSuccess = async () => {
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
             <th
               v-if="
-                permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
+                userPermission[PermissionId.PROCEDURE_UPDATE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
               "
             >
@@ -350,7 +342,7 @@ const handleModalProcedureUpsertSuccess = async () => {
             </td>
             <td
               v-if="
-                permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] &&
+                userPermission[PermissionId.PRODUCT_UPDATE] &&
                 settingStore.SCREEN_PROCEDURE_LIST.table.action
               "
               class="text-center"

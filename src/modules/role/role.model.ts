@@ -13,6 +13,7 @@ export class Role {
 
   static init(): Role {
     const ins = new Role()
+    ins.permissionIds = JSON.stringify([])
     ins.isActive = 1
     return ins
   }

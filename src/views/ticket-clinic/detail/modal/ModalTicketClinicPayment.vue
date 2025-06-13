@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputSelect, InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../../modules/enum'
 import { PaymentMethodService, type PaymentMethod } from '../../../../modules/payment-method'
+import { PaymentApi } from '../../../../modules/payment/payment.api'
+import { VoucherType } from '../../../../modules/payment/payment.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { ESArray } from '../../../../utils'
 import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
-import { PaymentApi } from '../../../../modules/payment/payment.api'
-import { onMounted } from 'vue'
-import { VoucherType } from '../../../../modules/payment/payment.model'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputNumber>>()
 
@@ -24,8 +23,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -215,7 +213,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_CLINIC_PAYMENT] &&
+              userPermission[PermissionId.TICKET_CLINIC_PAYMENT] &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketClone.status,
               )
@@ -294,7 +292,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] &&
+              userPermission[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.status)
             "
           >
@@ -360,7 +358,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_CLINIC_PAYMENT] &&
+              userPermission[PermissionId.TICKET_CLINIC_PAYMENT] &&
               [TicketStatus.Debt].includes(ticketClone.status)
             "
           >

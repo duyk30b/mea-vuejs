@@ -14,3 +14,5 @@ export { default as InputSelect } from './InputSelect.vue'
 export { default as InputText } from './InputText.vue'
 export { default as VueSelect } from './VueSelect.vue'
 export { default as VueSwitch } from './VueSwitch.vue'
+
+export type * from './InputSelect.vue'

@@ -1,28 +1,30 @@
-<script setup lang="ts">
-import { nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch } from 'vue'
+<script lang="ts" setup>
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import VueTag from '../../../common/VueTag.vue'
-import { IconFileSearch, IconGroup, IconRight, IconSetting } from '../../../common/icon-antd'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Distributor, DistributorApi, DistributorService } from '../../../modules/distributor'
-import { DiscountType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
-import { ReceiptItem } from '../../../modules/receipt-item/receipt-item.model'
+import VueButton from '@/common/VueButton.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconFileSearch, IconRight, IconSetting } from '@/common/icon-antd'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import VuePopConfirm from '@/common/popover/VuePopConfirm.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputDate, InputMoney, InputNumber, InputOptions } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor, DistributorApi, DistributorService } from '@/modules/distributor'
+import { DiscountType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Receipt, ReceiptApi, ReceiptStatus } from '@/modules/receipt'
+import { ReceiptItem } from '@/modules/receipt-item'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../../distributor/upsert/ModalDistributorUpsert.vue'
 import ModalReceiptUpsertSettingScreen from './ModalReceiptUpsertSettingScreen.vue'
 import ModalUploadReceipt from './ModalUploadReceipt.vue'
 import ReceiptItemCreate from './ReceiptItemCreate.vue'
 import ReceiptItemTable from './ReceiptItemTable.vue'
-import { EReceiptSave, EReceiptUpsertMode, receipt } from './receipt-upsert.store'
-import Breadcrumb from '../../component/Breadcrumb.vue'
+import { EReceiptSave, EReceiptUpsertMode, receipt, warehouseId } from './receipt-upsert.store'
+import { ProductService } from '@/modules/product'
+import { ESArray } from '@/utils'
 
 const modalUploadReceipt = ref<InstanceType<typeof ModalUploadReceipt>>()
 const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>()
@@ -43,8 +45,7 @@ const router = useRouter()
 const route = useRoute()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 const { formatMoney, isMobile } = settingStore
 
 const mode = ref<EReceiptUpsertMode>(EReceiptUpsertMode.CREATE)
@@ -88,7 +89,7 @@ watch(
     } else if (mode.value === EReceiptUpsertMode.UPDATE) {
       receipt.value.startedAt ||= Date.now()
     }
-    nextTick(() => {
+    await nextTick(() => {
       inputOptionsDistributor.value?.setItem({
         text: distributorDefault.fullName,
         data: distributorDefault,
@@ -178,17 +179,17 @@ const saveReceipt = async (type: EReceiptSave) => {
     switch (type) {
       case EReceiptSave.CREATE_DRAFT: {
         const response = await ReceiptApi.createDraft(receipt.value)
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        await router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.UPDATE_DRAFT: {
         const response = await ReceiptApi.updateDraft(receipt.value.id, receipt.value)
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        await router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       case EReceiptSave.UPDATE_PREPAYMENT: {
         const response = await ReceiptApi.depositedUpdate(receipt.value.id, receipt.value)
-        router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
+        await router.push({ name: 'ReceiptDetail', params: { id: response!.receiptId } })
         break
       }
       default:
@@ -209,12 +210,25 @@ const handleAddReceiptItem = (ri: ReceiptItem) => {
 const openModalDistributorDetail = (data?: Distributor) => {
   if (data) modalDistributorDetail.value?.openModal(data.id)
 }
+
+const handleModalUploadReceiptSuccess = async (receiptItemInsertList: ReceiptItem[]) => {
+  const productIdList = receiptItemInsertList.map((ri) => ri.productId)
+  const productList = await ProductService.list({
+    filter: { id: { IN: productIdList } },
+  })
+  const productMap = ESArray.arrayToKeyValue(productList, 'id')
+  receiptItemInsertList.forEach((ri) => {
+    ri.product = productMap[ri.productId]
+    ri.warehouseId = warehouseId.value
+  })
+  receipt.value.receiptItemList!.push(...receiptItemInsertList)
+}
 </script>
 
 <template>
   <ModalDistributorUpsert ref="modalDistributorUpsert" @success="handleUpsertDistributorSuccess" />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <ModalUploadReceipt ref="modalUploadReceipt" />
+  <ModalUploadReceipt ref="modalUploadReceipt" @success="handleModalUploadReceiptSuccess" />
   <ModalReceiptUpsertSettingScreen ref="modalReceiptUpsertSettingScreen" />
   <div class="mx-4 mt-4 gap-2 flex items-center justify-between">
     <div class="hidden md:flex gap-2 items-center text-lg font-medium">
@@ -223,15 +237,6 @@ const openModalDistributorDetail = (data?: Distributor) => {
       <span v-if="mode == EReceiptUpsertMode.CREATE">Tạo phiếu nhập hàng mới</span>
       <span v-if="mode == EReceiptUpsertMode.UPDATE">Cập nhật phiếu nhập hàng</span>
       <span v-if="mode == EReceiptUpsertMode.COPY">Copy phiếu nhập hàng</span>
-      <div>
-        <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_RECEIPT_UPLOAD_EXCEL]"
-          icon="upload"
-          @click="modalUploadReceipt?.openModal()"
-        >
-          Thêm sản phẩm nhập hàng bằng Excel
-        </VueButton>
-      </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
       <VueDropdown>
@@ -242,7 +247,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalReceiptUpsertSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
@@ -259,6 +264,19 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <ReceiptItemCreate @addReceiptItem="handleAddReceiptItem" />
         </div>
         <div class="mt-4 bg-white p-4">
+          <div class="flex flex-wrap justify-between items-baseline">
+            <span>Giỏ hàng ({{ receipt.receiptItemList?.length || 0 }})</span>
+            <div>
+              <VueButton
+                v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_RECEIPT]"
+                icon="upload"
+                size="small"
+                @click="modalUploadReceipt?.openModal()"
+              >
+                Thêm sản phẩm bằng Excel
+              </VueButton>
+            </div>
+          </div>
           <ReceiptItemTable />
         </div>
       </div>
@@ -275,14 +293,14 @@ const openModalDistributorDetail = (data?: Distributor) => {
               )
             </span>
             <a
-              v-if="permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] && distributor.id"
+              v-if="userPermission[PermissionId.DISTRIBUTOR_UPDATE] && distributor.id"
               @click="modalDistributorUpsert?.openModal(distributor.id)"
             >
               Sửa thông tin NCC
             </a>
             <div style="margin-left: auto">
               <a
-                v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE] && !distributor.id"
+                v-if="userPermission[PermissionId.DISTRIBUTOR_CREATE] && !distributor.id"
                 @click="modalDistributorUpsert?.openModal()"
               >
                 Thêm NCC mới
@@ -293,13 +311,13 @@ const openModalDistributorDetail = (data?: Distributor) => {
           <div style="height: 40px">
             <InputOptions
               ref="inputOptionsDistributor"
-              :options="distributorOptions"
-              :max-height="260"
-              placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               :disabled="receipt.status === ReceiptStatus.Deposited"
+              :max-height="260"
+              :options="distributorOptions"
+              placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
               required
-              @onFocusinFirst="handleFocusFirstSearchDistributor"
               @onFocusin="handleFocusSearchDistributor"
+              @onFocusinFirst="handleFocusFirstSearchDistributor"
               @selectItem="({ data }) => selectDistributor(data)"
               @update:text="searchingDistributor"
             >
@@ -315,7 +333,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
           <div class="mt-3">Thời gian tạo đơn</div>
           <div>
-            <InputDate v-model:value="receipt.startedAt" typeParser="number" show-time />
+            <InputDate v-model:value="receipt.startedAt" show-time typeParser="number" />
           </div>
         </div>
 
@@ -387,7 +405,7 @@ const openModalDistributorDetail = (data?: Distributor) => {
                   <td></td>
                 </tr>
                 <tr>
-                  <td style="white-space: nowrap; padding-right: 10px" class="font-bold">
+                  <td class="font-bold" style="white-space: nowrap; padding-right: 10px">
                     Tổng tiền
                   </td>
                   <td class="text-right font-bold" style="padding-right: 11px; font-size: 16px">
@@ -418,16 +436,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.CREATE, EReceiptUpsertMode.COPY].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
+              userPermission[PermissionId.RECEIPT_DRAFT_CRUD] &&
               settingStore.SCREEN_RECEIPT_UPSERT.save.createDraft
             "
             class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              color="blue"
               :loading="saveLoading"
-              size="large"
+              color="blue"
               icon="save"
+              size="large"
               type="button"
               @click="saveReceipt(EReceiptSave.CREATE_DRAFT)"
             >
@@ -439,16 +457,16 @@ const openModalDistributorDetail = (data?: Distributor) => {
         <template v-if="[EReceiptUpsertMode.UPDATE].includes(mode)">
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
+              userPermission[PermissionId.RECEIPT_DRAFT_CRUD] &&
               [ReceiptStatus.Draft].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              color="blue"
               :loading="saveLoading"
-              size="large"
+              color="blue"
               icon="save"
+              size="large"
               type="button"
               @click="saveReceipt(EReceiptSave.UPDATE_DRAFT)"
             >
@@ -458,17 +476,17 @@ const openModalDistributorDetail = (data?: Distributor) => {
 
           <div
             v-if="
-              permissionIdMap[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
+              userPermission[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
               [ReceiptStatus.Deposited].includes(receipt.status)
             "
             class="mt-4 w-full flex flex-col px-1"
           >
             <VueButton
-              color="blue"
               :loading="saveLoading"
+              color="blue"
+              icon="save"
               size="large"
               type="button"
-              icon="save"
               @click="saveReceipt(EReceiptSave.UPDATE_PREPAYMENT)"
             >
               Cập nhật phiếu tạm ứng

@@ -14,7 +14,6 @@ import {
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
@@ -22,6 +21,7 @@ import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
@@ -31,8 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const customer = ref<Customer>(Customer.blank())
@@ -157,7 +156,7 @@ defineExpose({ openModal })
           {{ customer.id ? 'Cập nhật thông tin khách hàng' : 'Tạo khách hàng mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalCustomerUpsertSettingScreen?.openModal()"
@@ -346,7 +345,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.CUSTOMER_DELETE] && customer.id"
+            v-if="userPermission[PermissionId.CUSTOMER_DELETE] && customer.id"
             color="red"
             @click="clickDelete"
           >
@@ -361,7 +360,7 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalCustomerUpsertSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerUpsertSettingScreen"
   />
 </template>

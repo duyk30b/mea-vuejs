@@ -206,6 +206,8 @@ const handleSave = async () => {
       scItem.productId = batch.productId
       scItem.systemQuantity = batch.quantity
       scItem.actualQuantity = batch.quantity
+      scItem.systemCostAmount = batch.costAmount
+      scItem.actualCostAmount = batch.costAmount
       scItem.product = Product.from(productMapSelect.value[batch.productId] as Product)
       scItem.batch = Batch.from(batch)
       return scItem

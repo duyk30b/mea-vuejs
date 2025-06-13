@@ -4,9 +4,9 @@ import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { ESArray } from '../../utils'
-import { useMeStore } from '../_me/me.store'
+import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
-import { CommissionService } from '../commission'
+import { PositionService } from '../position'
 import { ProductApi } from './product.api'
 import type {
   ProductDetailQuery,
@@ -25,7 +25,7 @@ export class ProductService {
       if (!refreshTime) {
         refreshTime = { code: 'PRODUCT', dataVersion: 0, time: new Date(0).toISOString() }
       }
-      const dataVersion = useMeStore().organization.dataVersionParse.product
+      const dataVersion = MeService.organization.value.dataVersionParse.product
 
       let apiResponse: { time: Date; data: Product[] }
 
@@ -60,7 +60,10 @@ export class ProductService {
 
     if (query.relation) {
       if (query.relation.batchList) {
-        const batchAll = await BatchDB.findManyBy({ quantity: { NOT: 0 } })
+        const batchAll = await BatchDB.findMany({
+          condition: { quantity: { NOT: 0 } },
+          sort: { id: 'ASC' },
+        })
         const batchMap = ESArray.arrayToKeyArray(batchAll, 'productId')
         data.forEach((i) => (i.batchList = batchMap[i.id]))
       }
@@ -156,7 +159,7 @@ export class ProductService {
   static async createOne(instance: Product) {
     const response = await ProductApi.createOne(instance)
     await ProductDB.upsertOne(response)
-    CommissionService.loadedAll = false
+    PositionService.loadedAll = false
     return response
   }
 
@@ -164,7 +167,7 @@ export class ProductService {
     const response = await ProductApi.updateOne(id, instance)
     if (response.success) {
       await ProductDB.replaceOne(id, response.data.product)
-      CommissionService.loadedAll = false
+      PositionService.loadedAll = false
     }
     return response
   }
@@ -173,7 +176,7 @@ export class ProductService {
     const response = await ProductApi.destroyOne(id)
     if (response.success) {
       await ProductDB.deleteOneByKey(id)
-      CommissionService.loadedAll = false
+      PositionService.loadedAll = false
     }
     return response
   }

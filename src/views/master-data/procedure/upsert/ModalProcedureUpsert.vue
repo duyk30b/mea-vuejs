@@ -12,8 +12,8 @@ import {
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
+import { MeService } from '../../../../modules/_me/me.service'
+import { Position, CommissionCalculatorType, PositionType } from '../../../../modules/position'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService, ProcedureType } from '../../../../modules/procedure'
 import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
@@ -22,13 +22,12 @@ import { Role, RoleService } from '../../../../modules/role'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
-  ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
+  ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const procedureOrigin = ref<Procedure>(Procedure.blank())
 const procedure = ref(Procedure.blank())
@@ -49,9 +48,9 @@ const hasChangeData = computed(() => {
     return true
   }
   if (
-    !Commission.equalList(
-      (procedure.value.commissionList || []).filter((i) => !!i.roleId),
-      procedureOrigin.value.commissionList || [],
+    !Position.equalList(
+      (procedure.value.positionList || []).filter((i) => !!i.roleId),
+      procedureOrigin.value.positionList || [],
     )
   ) {
     return true
@@ -59,15 +58,15 @@ const hasChangeData = computed(() => {
   return false
 })
 
-const handleAddCommission = () => {
-  const commissionBlank = Commission.blank()
-  commissionBlank.interactType = InteractType.Procedure
-  commissionBlank.interactId = procedure.value.id
+const handleAddPosition = () => {
+  const commissionBlank = Position.blank()
+  commissionBlank.positionType = PositionType.Procedure
+  commissionBlank.positionInteractId = procedure.value.id
 
-  if (!procedure.value.commissionList) {
-    procedure.value.commissionList = []
+  if (!procedure.value.positionList) {
+    procedure.value.positionList = []
   }
-  procedure.value.commissionList!.push(commissionBlank)
+  procedure.value.positionList!.push(commissionBlank)
 }
 
 const openModal = async (procedureId?: number) => {
@@ -75,7 +74,7 @@ const openModal = async (procedureId?: number) => {
 
   if (procedureId) {
     const procedureResponse = await ProcedureService.detail(procedureId, {
-      relation: { commissionList: true },
+      relation: { positionList: true },
     })
     procedureOrigin.value = Procedure.from(procedureResponse)
     procedure.value = Procedure.from(procedureResponse)
@@ -104,8 +103,8 @@ const openModal = async (procedureId?: number) => {
       // }
     }
   }
-  if (procedure.value.commissionList?.length == 0) {
-    handleAddCommission()
+  if (procedure.value.positionList?.length == 0) {
+    handleAddPosition()
   }
 
   ProcedureGroupService.list({})
@@ -233,7 +232,7 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_POSITION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
             <VueTabPanel :tabKey="TABS_KEY.BASIC">
@@ -383,7 +382,7 @@ defineExpose({ openModal })
                 </div> -->
               </div>
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_COMMISSION">
+            <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
                 <!-- <div class="font-bold" style="flex-grow: 1; flex-basis: 90%">
                   <DoubleRightOutlined />
@@ -453,7 +452,7 @@ defineExpose({ openModal })
                 </div> -->
 
                 <div
-                  v-for="(commission, index) in procedure.commissionList"
+                  v-for="(position, index) in procedure.positionList"
                   :key="index"
                   class="mt-4 flex flex-wrap gap-2"
                 >
@@ -461,7 +460,7 @@ defineExpose({ openModal })
                     <div>Vai trò</div>
                     <div>
                       <InputFilter
-                        v-model:value="procedure.commissionList![index].roleId"
+                        v-model:value="procedure.positionList![index].roleId"
                         :options="roleOptions"
                         :maxHeight="120"
                       >
@@ -473,9 +472,9 @@ defineExpose({ openModal })
                     <div>Hoa hồng</div>
                     <div>
                       <InputNumber
-                        :value="commission.commissionValue"
+                        :value="position.commissionValue"
                         @update:value="
-                          (v: number) => (procedure.commissionList![index].commissionValue = v)
+                          (v: number) => (procedure.positionList![index].commissionValue = v)
                         "
                       />
                     </div>
@@ -484,7 +483,7 @@ defineExpose({ openModal })
                     <div>Công thức</div>
                     <div>
                       <VueSelect
-                        :value="commission.commissionCalculatorType"
+                        :value="position.commissionCalculatorType"
                         :options="[
                           { value: CommissionCalculatorType.VND, text: 'VNĐ' },
                           {
@@ -498,7 +497,7 @@ defineExpose({ openModal })
                         ]"
                         @update:value="
                           (v: number) =>
-                            (procedure.commissionList![index].commissionCalculatorType = v)
+                            (procedure.positionList![index].commissionCalculatorType = v)
                         "
                       />
                     </div>
@@ -508,7 +507,7 @@ defineExpose({ openModal })
                     <div class="pt-2 flex justify-center">
                       <a
                         style="color: var(--text-red)"
-                        @click="procedure.commissionList!.splice(index, 1)"
+                        @click="procedure.positionList!.splice(index, 1)"
                       >
                         <IconDelete width="18" height="18" />
                       </a>
@@ -517,7 +516,7 @@ defineExpose({ openModal })
                 </div>
 
                 <div class="mt-2">
-                  <a @click="handleAddCommission">✚ Thêm vai trò</a>
+                  <a @click="handleAddPosition">✚ Thêm vai trò</a>
                 </div>
               </div>
             </VueTabPanel>
@@ -527,7 +526,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE] && procedure.id"
+            v-if="userPermission[PermissionId.PROCEDURE_DELETE] && procedure.id"
             color="red"
             icon="trash"
             @click="clickDestroy"

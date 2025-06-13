@@ -4,9 +4,9 @@ import VueButton from '../../../../common/VueButton.vue'
 import { IconFileSearch } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
@@ -27,8 +27,7 @@ const emit = defineEmits<{
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -82,19 +81,19 @@ const refreshTicketUserList = async () => {
   ticketUserList.value = []
   const ticketUserListOrigin: TicketUser[] = []
   // const ticketUserListOrigin =
-  //   ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[
+  //   ticketClinicRef.value.ticketUserGroup?.[PositionType.Procedure]?.[
   //     ticketProcedure.value.id
   //   ] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Procedure,
-      interactId: ticketProcedure.value.procedureId,
+      positionType: PositionType.Procedure,
+      positionInteractId: ticketProcedure.value.procedureId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserList.value.push(TicketUser.from(findExist))
@@ -175,9 +174,7 @@ const addTicketProcedure = async () => {
           :options="procedureOptions"
           :maxHeight="320"
           placeholder="Tìm kiếm tên dịch vụ"
-          :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
-          "
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
           @selectItem="({ data }) => selectProcedure(data)"
         >
           <template #option="{ item: { data } }">
@@ -230,7 +227,7 @@ const addTicketProcedure = async () => {
         icon="plus"
         :disabled="
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status) ||
-          !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+          !userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"
         type="submit"

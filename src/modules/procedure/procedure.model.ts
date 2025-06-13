@@ -1,4 +1,4 @@
-import { Commission } from '../commission'
+import { Position } from '../position'
 import { ProcedureGroup } from '../procedure-group'
 
 export enum ProcedureType {
@@ -23,7 +23,7 @@ export class Procedure {
 
   procedureGroup?: ProcedureGroup
 
-  commissionList?: Commission[]
+  positionList?: Position[]
 
   static init() {
     const ins = new Procedure()
@@ -42,7 +42,7 @@ export class Procedure {
 
   static blank() {
     const ins = Procedure.init()
-    ins.commissionList = []
+    ins.positionList = []
     return ins
   }
 
@@ -68,8 +68,8 @@ export class Procedure {
         : target.procedureGroup
     }
 
-    if (target.commissionList) {
-      target.commissionList = Commission.basicList(target.commissionList)
+    if (target.positionList) {
+      target.positionList = Position.basicList(target.positionList)
     }
     return target
   }

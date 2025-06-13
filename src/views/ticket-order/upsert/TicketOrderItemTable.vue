@@ -29,7 +29,7 @@ const handleChangeHintUsage = (data: string, index: number) => {
 }
 
 const overQuantityTicketProduct = (ticketProduct: TicketProduct): boolean => {
-  if (ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+  if (ticketProduct.product?.warehouseIds !== '[]') {
     return ticketProduct.quantity >= ticketProduct.product!.quantity
   }
   return false

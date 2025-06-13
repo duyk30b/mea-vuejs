@@ -61,7 +61,7 @@ export class RadiologyApi {
       customVariables: radiology.customVariables,
       customStyles: radiology.customStyles,
 
-      commissionList: (radiology.commissionList || [])
+      positionList: (radiology.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {
@@ -89,7 +89,7 @@ export class RadiologyApi {
       customVariables: radiology.customVariables,
       customStyles: radiology.customStyles,
 
-      commissionList: (radiology.commissionList || [])
+      positionList: (radiology.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {

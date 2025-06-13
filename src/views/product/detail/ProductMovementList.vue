@@ -4,18 +4,21 @@ import { useRouter } from 'vue-router'
 import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { InputCheckbox, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { CONFIG } from '../../../config'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { MovementType } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import { ProductMovementApi } from '../../../modules/product-movement/product-movement.api'
-import type { ProductMovement } from '../../../modules/product-movement/product-movement.model'
-import { timeToText } from '../../../utils'
+import {
+  MovementType,
+  MovementTypeText,
+  type ProductMovement,
+} from '../../../modules/product-movement/product-movement.model'
+import { ESTypescript, timeToText } from '../../../utils'
 import ReceiptStatusTag from '../../receipt/ReceiptStatusTag.vue'
 import StockCheckStatusTag from '../../stock-check/StockCheckStatusTag.vue'
 import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
-import { CONFIG } from '../../../config'
+import type { VueSelectOption } from '@/common/vue-form/VueSelect.vue'
 
 const props = withDefaults(defineProps<{ product: Product }>(), { product: () => Product.blank() })
 
@@ -24,13 +27,18 @@ const router = useRouter()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showAllInformation = ref(CONFIG.MODE === 'development')
 const productMovementList = ref<ProductMovement[]>([])
 
-const movementType = ref<MovementType>()
+const movementType = ref<MovementType>(MovementType.Unknown)
+const movementTypeOptions: VueSelectOption<MovementType>[] = ESTypescript.keysEnum(
+  MovementType,
+).map((key) => ({
+  value: MovementType[key],
+  text: MovementTypeText[MovementType[key]],
+}))
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('PRODUCT_MOVEMENT_PAGINATION_LIMIT')) || 10)
@@ -42,7 +50,7 @@ const startFetchData = async () => {
       page: page.value,
       limit: limit.value,
       filter: {
-        movementType: movementType.value != null ? movementType.value : undefined,
+        movementType: movementType.value ? movementType.value : undefined,
         productId: props.product.id,
       },
       relation: {
@@ -109,13 +117,7 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
         <VueSelect
           v-model:value="movementType"
           placeholder="Tất cả"
-          :options="[
-            { value: null, text: 'Tất cả' },
-            { value: MovementType.Receipt, text: 'Nhập hàng' },
-            { value: MovementType.Ticket, text: 'Bán hàng' },
-            { value: MovementType.UserChange, text: 'Người dùng sửa' },
-            { value: MovementType.StockCheck, text: 'Kiểm hàng' },
-          ]"
+          :options="movementTypeOptions"
           @selectItem="startFetchData"
         />
       </div>
@@ -165,6 +167,24 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
                 <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
               </div>
               <div style="font-size: 0.8rem; font-style: italic">Sửa số lượng</div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </div>
+            <div v-if="productMovement.movementType === MovementType.StockCheck">
+              <div>
+                <VueTag bg-color="violet">{{ productMovement.user?.fullName }}</VueTag>
+              </div>
+              <div style="font-size: 0.8rem; font-style: italic">Kiểm hàng</div>
+              <div style="font-size: 0.8rem; white-space: nowrap">
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
+            </div>
+            <div v-if="productMovement.movementType === MovementType.Excel">
+              <div>
+                <VueTag bg-color="#1890ff">{{ productMovement.user?.fullName }}</VueTag>
+              </div>
+              <div style="font-size: 0.8rem; font-style: italic">Excel</div>
               <div style="font-size: 0.8rem; white-space: nowrap">
                 {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
               </div>
@@ -287,6 +307,17 @@ const openBlankStockCheckDetail = async (voucherId: number) => {
                 </span>
               </div>
               <div>{{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
+            </td>
+          </template>
+          <template v-if="productMovement.movementType === MovementType.Excel">
+            <td>Excel</td>
+            <td>
+              <VueTag bg-color="#1890ff">{{ productMovement.user?.fullName }}</VueTag>
+            </td>
+            <td>
+              <div>
+                {{ timeToText(productMovement.createdAt, 'hh:mm DD/MM/YYYY') }}
+              </div>
             </td>
           </template>
           <td class="text-center">B{{ productMovement.batchId }}</td>

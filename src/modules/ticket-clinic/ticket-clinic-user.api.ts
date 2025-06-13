@@ -32,8 +32,8 @@ export class TicketClinicUserApi {
 
   static async chooseUserId(body: {
     ticketId: number
-    interactId: number
-    interactType: number
+    positionInteractId: number
+    positionType: number
     ticketItemId: number
     quantity: number
     ticketUserList: TicketUser[]
@@ -42,8 +42,8 @@ export class TicketClinicUserApi {
     const response = await AxiosInstance.post(
       `/ticket-clinic/${ticketId}/ticket-user/choose-user-id`,
       {
-        interactType: body.interactType,
-        interactId: body.interactId,
+        positionType: body.positionType,
+        positionInteractId: body.positionInteractId,
         ticketItemId: body.ticketItemId,
         quantity: body.quantity,
         ticketUserList: body.ticketUserList.map((i) => ({

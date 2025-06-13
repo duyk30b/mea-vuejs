@@ -1,6 +1,6 @@
 import type { Laboratory } from '../laboratory/laboratory.model'
 
-export class LaboratoryKit {
+export class LaboratorySample {
   id: number
   priority: number
 
@@ -9,21 +9,21 @@ export class LaboratoryKit {
 
   laboratoryList?: Laboratory[] // chỉ có ở front-end
 
-  static init(): LaboratoryKit {
-    const ins = new LaboratoryKit()
+  static init(): LaboratorySample {
+    const ins = new LaboratorySample()
     ins.id = 0
     ins.priority = 1
     ins.laboratoryIds = JSON.stringify([])
     return ins
   }
 
-  static blank(): LaboratoryKit {
-    const ins = LaboratoryKit.init()
+  static blank(): LaboratorySample {
+    const ins = LaboratorySample.init()
     return ins
   }
 
-  static basic(source: LaboratoryKit) {
-    const target = new LaboratoryKit()
+  static basic(source: LaboratorySample) {
+    const target = new LaboratorySample()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
@@ -32,20 +32,20 @@ export class LaboratoryKit {
     return target
   }
 
-  static basicList(sources: LaboratoryKit[]): LaboratoryKit[] {
-    return sources.map((i) => LaboratoryKit.basic(i))
+  static basicList(sources: LaboratorySample[]): LaboratorySample[] {
+    return sources.map((i) => LaboratorySample.basic(i))
   }
 
-  static from(source: LaboratoryKit) {
-    const target = LaboratoryKit.basic(source)
+  static from(source: LaboratorySample) {
+    const target = LaboratorySample.basic(source)
     return target
   }
 
-  static fromList(sourceList: LaboratoryKit[]) {
-    return sourceList.map((i) => LaboratoryKit.from(i))
+  static fromList(sourceList: LaboratorySample[]) {
+    return sourceList.map((i) => LaboratorySample.from(i))
   }
 
-  static equal(a: LaboratoryKit, b: LaboratoryKit) {
+  static equal(a: LaboratorySample, b: LaboratorySample) {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
     if (a.name != b.name) return false

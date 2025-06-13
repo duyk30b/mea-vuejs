@@ -7,9 +7,8 @@ import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
@@ -42,6 +41,7 @@ import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
 import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescriptionSample.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -54,8 +54,7 @@ const modalSelectItemFromPrescriptionSample =
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalSavePrescriptionSample = ref<InstanceType<typeof ModalSavePrescriptionSample>>()
 
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organizationPermission, organization } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -82,19 +81,22 @@ onMounted(async () => {
 })
 
 const refreshTicketUserList = async () => {
+  if (!organizationPermission.value[PermissionId.POSITION]) {
+    return
+  }
   const tuListOrigin: TicketUser[] = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.PrescriptionList]?.[0] || []
+    ticketClinicRef.value.ticketUserGroup?.[PositionType.PrescriptionList]?.[0] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.PrescriptionList,
-      interactId: 0,
+      positionType: PositionType.PrescriptionList,
+      positionInteractId: 0,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i, index) => {
+  positionList.forEach((i, index) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       tuListOrigin.push(TicketUser.from(findExist))
@@ -235,13 +237,13 @@ const startPrint = async () => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       printHtml: printHtmlHeader,
     })
 
     const compiledContent = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       masterData: {},
       printHtml: printHtmlPrescription,
@@ -295,8 +297,8 @@ const saveTicketUserList = async () => {
   try {
     await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      interactType: InteractType.PrescriptionList,
-      interactId: 0,
+      positionType: PositionType.PrescriptionList,
+      positionInteractId: 0,
       ticketItemId: 0,
       quantity: 1,
       ticketUserList: Object.values(ticketUserList.value),
@@ -387,7 +389,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       temp.quantity = medicine.quantity // lấy theo mẫu
       temp.costAmount = medicine.quantity * (product.costPrice || 0)
       temp.quantityPrescription = medicine.quantity // lấy theo mẫu
-      if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+      if (product?.warehouseIds !== '[]') {
         if (temp.quantity > product!.quantity) {
           AlertStore.addWarning(
             `Cảnh báo: ${product.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
@@ -431,7 +433,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     @success="handleSelectMedicineList"
   />
   <div class="mt-4">
-    <div class="flex justify-between items-baseline">
+    <div class="flex flex-wrap justify-between items-baseline">
       <div>Đơn thuốc</div>
       <div style="width: 500px; max-width: 90%">
         <InputOptions
@@ -545,7 +547,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
               </a>
               <a
                 v-else-if="
-                  permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]
+                  userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]
                 "
                 class="text-orange-500"
                 @click="modalTicketClinicPrescriptionUpdate?.openModal(tpItem)"
@@ -623,7 +625,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
     <VueButton color="blue" icon="print" @click="startPrint">In đơn thuốc</VueButton>
     <VueButton @click="clickOpenModalSavePrescriptionSample">Lưu vào đơn mẫu</VueButton>
     <VueButton
-      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]"
+      v-if="userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]"
       color="blue"
       style="margin-left: auto"
       :disabled="disabledButton"

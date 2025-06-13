@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputNumber, InputOptions, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -18,8 +18,7 @@ const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 let procedureAll: Procedure[] = []
 const procedureOptions = ref<{ value: number; text: string; data: Procedure }[]>([])
@@ -141,7 +140,7 @@ defineExpose({ focus })
         <span>Tên dịch vụ</span>
         <span>
           <a
-            v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
+            v-if="userPermission[PermissionId.PROCEDURE_CREATE]"
             @click="modalProcedureUpsert?.openModal()"
           >
             Thêm dịch vụ mới

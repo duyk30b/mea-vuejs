@@ -16,10 +16,9 @@ import {
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { InteractType } from '../../../modules/commission'
+import { PositionType } from '../../../modules/position'
 import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
@@ -38,6 +37,7 @@ import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const inputFilterCustomer = ref<InstanceType<typeof InputFilter>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -52,8 +52,7 @@ const emit = defineEmits<{
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const customerSourceAll = ref<CustomerSource[]>([])
 const customerOptions = ref<{ value: number; text: string; data: Customer }[]>([])
@@ -328,8 +327,8 @@ const refreshTicketUserList = () => {
   ticketUserList.value = screenRoleIdList.map((roleId) => {
     const findExist = (ticket.value.ticketUserList || []).find((i) => {
       if (i.roleId !== roleId) return false
-      if (i.interactType !== InteractType.Ticket) return false
-      if (i.interactId !== 0) return false
+      if (i.positionType !== PositionType.Ticket) return false
+      if (i.positionInteractId !== 0) return false
       return true
     })
     let temp: TicketUser
@@ -439,7 +438,7 @@ defineExpose({ openModal })
           <span v-if="!!ticket.customerId">Sửa thông tin tiếp đón</span>
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalTicketClinicCreateSetting?.openModal()"
@@ -466,7 +465,7 @@ defineExpose({ openModal })
               </span>
             </div>
             <a
-              v-if="customer?.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="customer?.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(customer)"
             >
               Sửa thông tin khách hàng
@@ -975,7 +974,7 @@ defineExpose({ openModal })
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleModalCustomerUpsertSuccess" />
   <ModalTicketClinicCreateSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketClinicCreateSetting"
     @success="handleModalTicketClinicCreateSettingSuccess"
   />

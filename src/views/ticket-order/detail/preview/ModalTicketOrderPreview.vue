@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Ticket } from '../../../../modules/ticket'
 import { DString, timeToText } from '../../../../utils'
@@ -11,8 +11,9 @@ import TicketOrderModalPreviewSetting from './ModalTicketOrderPreviewSetting.vue
 
 const ticketOrderModalPreviewSetting = ref<InstanceType<typeof TicketOrderModalPreviewSetting>>()
 
+const { organization } = MeService
+
 const settingStore = useSettingStore()
-const meStore = useMeStore()
 const { formatMoney } = settingStore
 
 const showModal = ref(false)
@@ -55,8 +56,8 @@ defineExpose({ openModal })
       <div class="p-4">
         <div class="flex justify-between">
           <div class="flex flex-col items-center">
-            <div>{{ meStore.organization.name }}</div>
-            <div>{{ meStore.organization.phone }}</div>
+            <div>{{ organization.name }}</div>
+            <div>{{ organization.phone }}</div>
           </div>
           <div class="flex flex-col items-center">
             <div>Mã KH: C{{ ticket.customerId }}</div>

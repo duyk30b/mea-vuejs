@@ -4,7 +4,7 @@ import { Product } from '../product'
 import { Radiology } from '../radiology'
 import { Role } from '../role/role.model'
 
-export enum InteractType {
+export enum PositionType {
   Ticket = 1,
   Product = 2, // chỉ tương tác với sản phẩm
   Procedure = 3, // chỉ tương tác với thủ thuật
@@ -14,14 +14,14 @@ export enum InteractType {
   PrescriptionList = 7, // tương tác với tất cả sản phẩm trong cả toa thuốc
 }
 
-export const InteractTypeText = {
-  [InteractType.Ticket]: 'Lượt tiếp đón',
-  [InteractType.Procedure]: 'Dịch vụ',
-  [InteractType.Product]: 'Sản phẩm',
-  [InteractType.Radiology]: 'Phiếu CĐHA',
-  [InteractType.Laboratory]: 'Xét nghiệm',
-  [InteractType.ConsumableList]: 'Phiếu Vật tư',
-  [InteractType.PrescriptionList]: 'Đơn thuốc',
+export const PositionTypeText = {
+  [PositionType.Ticket]: 'Lượt tiếp đón',
+  [PositionType.Procedure]: 'Dịch vụ',
+  [PositionType.Product]: 'Sản phẩm',
+  [PositionType.Radiology]: 'Phiếu CĐHA',
+  [PositionType.Laboratory]: 'Xét nghiệm',
+  [PositionType.ConsumableList]: 'Phiếu Vật tư',
+  [PositionType.PrescriptionList]: 'Đơn thuốc',
 }
 
 export enum CommissionCalculatorType {
@@ -36,11 +36,11 @@ export const CommissionCalculatorTypeText = {
   [CommissionCalculatorType.PercentActual]: '% Thực tế',
 }
 
-export class Commission {
+export class Position {
   id: number
   roleId: number
-  interactType: InteractType
-  interactId: number
+  positionType: PositionType
+  positionInteractId: number
   commissionCalculatorType: CommissionCalculatorType
   commissionValue: number
 
@@ -50,24 +50,24 @@ export class Commission {
   radiology?: Radiology
   laboratory?: Laboratory
 
-  static init(): Commission {
-    const ins = new Commission()
+  static init(): Position {
+    const ins = new Position()
     ins.id = 0
     ins.roleId = 0
-    ins.interactType = InteractType.Ticket
-    ins.interactId = 0
+    ins.positionType = PositionType.Ticket
+    ins.positionInteractId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0
     return ins
   }
 
-  static blank(): Commission {
-    const ins = Commission.init()
+  static blank(): Position {
+    const ins = Position.init()
     return ins
   }
 
-  static basic(source: Commission) {
-    const target = new Commission()
+  static basic(source: Position) {
+    const target = new Position()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
@@ -76,12 +76,12 @@ export class Commission {
     return target
   }
 
-  static basicList(sources: Commission[]): Commission[] {
-    return sources.map((i) => Commission.basic(i))
+  static basicList(sources: Position[]): Position[] {
+    return sources.map((i) => Position.basic(i))
   }
 
-  static from(source: Commission) {
-    const target = Commission.basic(source)
+  static from(source: Position) {
+    const target = Position.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'role')) {
       target.role = target.role ? Role.basic(target.role) : target.role
     }
@@ -102,24 +102,24 @@ export class Commission {
     return target
   }
 
-  static fromList(sourceList: Commission[]) {
-    return sourceList.map((i) => Commission.from(i))
+  static fromList(sourceList: Position[]) {
+    return sourceList.map((i) => Position.from(i))
   }
 
-  static equal(a: Commission, b: Commission) {
+  static equal(a: Position, b: Position) {
     if (a.id != b.id) return false
     if (a.roleId != b.roleId) return false
-    if (a.interactType != b.interactType) return false
-    if (a.interactId != b.interactId) return false
+    if (a.positionType != b.positionType) return false
+    if (a.positionInteractId != b.positionInteractId) return false
     if (a.commissionCalculatorType != b.commissionCalculatorType) return false
     if (a.commissionValue != b.commissionValue) return false
     return true
   }
 
-  static equalList(a: Commission[], b: Commission[]) {
+  static equalList(a: Position[], b: Position[]) {
     if (a.length != b.length) return false
     for (let i = 0; i < a.length; i++) {
-      if (!Commission.equal(a[i], b[i])) {
+      if (!Position.equal(a[i], b[i])) {
         return false
       }
     }

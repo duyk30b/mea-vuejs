@@ -2,16 +2,15 @@
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconMergeCells } from '../../../common/icon-antd'
-import { InputNumber, InputText } from '../../../common/vue-form'
+import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductApi } from '../../../modules/product'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 let productId: number = 0
 const productIdSource = ref('')
@@ -114,7 +113,7 @@ defineExpose({ openModal })
             color="blue"
             type="submit"
             :loading="saveLoading"
-            :disabled="!permissionIdMap[PermissionId.PRODUCT_MERGE]"
+            :disabled="!userPermission[PermissionId.PRODUCT_MERGE]"
           >
             <IconMergeCells />
             Gộp sản phẩm

@@ -5,7 +5,7 @@ import { IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -17,8 +17,7 @@ import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.v
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -159,9 +158,8 @@ const savePriorityTicketProcedure = async () => {
               </a>
               <a
                 v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.status,
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
+                  userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
                 @click="modalTicketProcedureUpdate?.openModal(tpItem)"
@@ -195,8 +193,7 @@ const savePriorityTicketProcedure = async () => {
     <div></div>
     <VueButton
       v-if="
-        permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] &&
-        hasChangePriority
+        userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] && hasChangePriority
       "
       color="blue"
       icon="save"

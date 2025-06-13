@@ -1,4 +1,5 @@
 import { ESArray } from '../../utils'
+import { MeService } from '../_me/me.service'
 import { Appointment } from '../appointment'
 import { Batch } from '../batch'
 import { Customer } from '../customer'
@@ -8,6 +9,7 @@ import { Image } from '../image/image.model'
 import { LaboratoryService, LaboratoryValueType } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { Payment } from '../payment/payment.model'
+import { PermissionId } from '../permission/permission.enum'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
 import { RadiologyService } from '../radiology'
@@ -189,6 +191,9 @@ export class Ticket {
   }
 
   async refreshProcedure() {
+    if (!MeService.organizationPermission.value[PermissionId.PROCEDURE]) {
+      return
+    }
     if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
       return
     }
@@ -199,6 +204,9 @@ export class Ticket {
   }
 
   async refreshRadiology() {
+    if (!MeService.organizationPermission.value[PermissionId.RADIOLOGY]) {
+      return
+    }
     if (!this.ticketRadiologyList || !this.ticketRadiologyList.length) {
       return
     }
@@ -209,6 +217,9 @@ export class Ticket {
   }
 
   async refreshUserAndRole() {
+    if (!MeService.organizationPermission.value[PermissionId.POSITION]) {
+      return
+    }
     if (!this.ticketUserList || !this.ticketUserList.length) {
       return
     }
@@ -220,6 +231,9 @@ export class Ticket {
   }
 
   async refreshLaboratory() {
+    if (!MeService.organizationPermission.value[PermissionId.LABORATORY]) {
+      return
+    }
     if (!this.ticketLaboratoryList || !this.ticketLaboratoryList.length) {
       return
     }
@@ -309,13 +323,13 @@ export class Ticket {
   refreshTicketUserGroup() {
     this.ticketUserGroup = {}
     ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.interactType]) {
-        this.ticketUserGroup[i.interactType] = {}
+      if (!this.ticketUserGroup[i.positionType]) {
+        this.ticketUserGroup[i.positionType] = {}
       }
-      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
-        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
+      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
+        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
       }
-      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
+      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
     })
   }
 

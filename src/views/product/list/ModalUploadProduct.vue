@@ -62,22 +62,22 @@ const handleUpload = async () => {
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalUploadProduct.vue:43 ~ handleUpload ~ error:', error)
+    removeFile()
   } finally {
     saveLoading.value = false
   }
 }
 
-const downloadFileUploadExcelExample = async () => {
+const downloadExcelFileExample = async () => {
   try {
-    await FileProductApi.downloadFileUploadExcelExample()
+    await FileProductApi.downloadExcelFileExample()
   } catch (error) {
-    console.log('🚀 ~ ModalUploadProduct.vue:73 ~ downloadFileUploadExcelExample ~ error:', error)
+    console.log('🚀 ~ ModalUploadProduct.vue:73 ~ downloadExcelFileExample ~ error:', error)
   }
 }
 
 const closeModal = () => {
-  inputFileRef.value!.value = ''
-  fileSelect.value = undefined
+  removeFile()
   dragover.value = false
   showModal.value = false
 }
@@ -167,7 +167,7 @@ defineExpose({ openModal })
         </div>
         <div class="mt-2 flex justify-between text-xs" style="color: #666">
           <div class="flex gap-1">
-            <a @click="downloadFileUploadExcelExample" class="flex items-center gap-1">
+            <a @click="downloadExcelFileExample" class="flex items-center gap-1">
               <IconDownload />
               Tải file mẫu tại đây
             </a>
@@ -180,10 +180,12 @@ defineExpose({ openModal })
               <div>
                 1.
                 <strong>Mã sản phẩm</strong>
-                là duy nhất và không thể trùng lặp
+                là duy nhất trên hệ thống và không thể trùng lặp
               </div>
-              <div>2. Mã sản phẩm đã có trong hệ thống sẽ bị ghi đè bởi thông tin trong excel</div>
-              <div>3. Chưa hỗ trợ cập nhật số lượng bằng excel</div>
+              <div>2. Mã sản phẩm đã có trên hệ thống sẽ bị ghi đè bởi thông tin trong excel: bao gồm <strong>số lượng</strong>, tên sản phẩm, giá ...</div>
+              <div>3. Mã sản phẩm chưa có trên hệ thống sẽ được tạo mới</div>
+              <div>4. Với loại sản phẩm có lô: có thể dùng thêm cột ID lô hàng để chỉ định chính xác lô cần cập nhật</div>
+              <div>5. Tổng vốn nếu để trống sẽ được tự tính = giá nhập x số lượng</div>
             </div>
           </div>
         </div>

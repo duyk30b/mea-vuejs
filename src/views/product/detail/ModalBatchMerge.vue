@@ -4,14 +4,13 @@ import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconMergeCells } from '../../../common/icon-antd'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { BatchApi } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 let productId: number = 0
 const batchIdSource = ref('')
@@ -115,7 +114,7 @@ defineExpose({ openModal })
             color="blue"
             type="submit"
             :loading="saveLoading"
-            :disabled="!permissionIdMap[PermissionId.PRODUCT_MERGE]"
+            :disabled="!userPermission[PermissionId.PRODUCT_MERGE]"
           >
             <IconMergeCells />
             Gộp lô

@@ -18,7 +18,7 @@ import 'tinymce/skins/content/default/content.js'
 import 'tinymce/skins/ui/oxide/content.js'
 import 'tinymce/skins/ui/oxide/skin.js'
 import 'tinymce/themes/silver/theme.min.js'
-import { defineEmits, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: string

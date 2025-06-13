@@ -51,12 +51,12 @@ export const socketInit = () => {
     SocketService.listenDistributorUpsert(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.PRODUCT_UPSERT, (data) => {
-    SocketService.listenProductUpsert(data)
+  SocketBase.on(SOCKET_EVENT.BATCH_LIST_CHANGE, (data) => {
+    SocketService.listenBatchListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.PRODUCT_LIST_UPDATE, (data) => {
-    SocketService.listenProductListUpdate(data)
+  SocketBase.on(SOCKET_EVENT.PRODUCT_LIST_CHANGE, (data) => {
+    SocketService.listenProductListChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE, (data) => {

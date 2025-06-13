@@ -2,7 +2,7 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { throttleAsync } from '../../utils'
-import { useMeStore } from '../_me/me.store'
+import { MeService } from '../_me/me.service'
 import { useSettingStore } from '../_me/setting.store'
 import { AuthService } from '../auth/auth.service'
 import { PaymentApi } from '../payment/payment.api'
@@ -21,7 +21,7 @@ export class CustomerService {
         if (!refreshTime) {
           refreshTime = { code: 'CUSTOMER', dataVersion: 0, time: new Date(0).toISOString() }
         }
-        const dataVersion = useMeStore().organization.dataVersionParse.customer
+        const dataVersion = MeService.organization.value.dataVersionParse.customer
 
         let apiResponse: { time: Date; data: Customer[] }
 

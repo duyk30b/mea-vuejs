@@ -1,26 +1,24 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import VueTag from '../../../../common/VueTag.vue'
 import { IconCheckSquare, IconClockCircle } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
-import VueTag from '../../../../common/VueTag.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
-import { onMounted } from 'vue'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 onMounted(async () => {
   await ticketClinicRef.value.refreshLaboratory()
@@ -107,7 +105,7 @@ const laboratoryCostAmount = computed(() => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
               @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)"

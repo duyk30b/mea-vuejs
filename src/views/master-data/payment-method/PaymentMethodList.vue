@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconEditSquare } from '../../../common/icon-google'
-import { InputSelect } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { IconEditSquare } from '../../../common/icon-google'
+import { InputSelect } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { PaymentMethodService, type PaymentMethod } from '../../../modules/payment-method'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import Breadcrumb from '../../component/Breadcrumb.vue'
@@ -12,9 +12,7 @@ import ModalPaymentMethodUpsert from './ModalPaymentMethodUpsert.vue'
 
 const modalPaymentMethodUpsert = ref<InstanceType<typeof ModalPaymentMethodUpsert>>()
 
-const meStore = useMeStore()
-
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const paymentMethodList = ref<PaymentMethod[]>([])
 
@@ -75,7 +73,7 @@ const handleModalPaymentMethodUpsertSuccess = async (
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
         @click="modalPaymentMethodUpsert?.openModal()"
@@ -118,7 +116,7 @@ const handleModalPaymentMethodUpsertSuccess = async (
             <td class="text-center" style="width: 100px">{{ paymentMethod.priority }}</td>
             <td>{{ paymentMethod.name }}</td>
             <td
-              v-if="permissionIdMap[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+              v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
               class="text-center"
               style="width: 100px"
             >

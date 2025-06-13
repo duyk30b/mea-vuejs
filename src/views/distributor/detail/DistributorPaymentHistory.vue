@@ -2,13 +2,13 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentApi } from '../../../modules/payment/payment.api'
 import { PersonType, type Payment } from '../../../modules/payment/payment.model'
 import { ESTimer } from '../../../utils'
 import PaymentTimingTag from '../../payment/PaymentTimingTag.vue'
 import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const props = withDefaults(defineProps<{ distributorId: number }>(), {
   distributorId: 0,
@@ -18,8 +18,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const paymentList = ref<Payment[]>([])
 const page = ref(1)

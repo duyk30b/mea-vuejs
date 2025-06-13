@@ -1,17 +1,19 @@
 import { OmitClass, PickClass } from '../../utils'
 
-export class LaboratoryKitGetQuery {
+export class LaboratorySampleGetQuery {
   page?: number
   limit?: number
-  relation?: {}
-  filter?: {}
+  relation?: object
+  filter?: {
+    id?: number
+  }
 
   sort?: {
     id?: 'ASC' | 'DESC'
     priority?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<LaboratoryKitGetQuery>) {
+  static toQuery(instance: Partial<LaboratorySampleGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -22,6 +24,8 @@ export class LaboratoryKitGetQuery {
   }
 }
 
-export class LaboratoryKitPaginationQuery extends LaboratoryKitGetQuery {}
-export class LaboratoryKitListQuery extends OmitClass(LaboratoryKitGetQuery, ['page']) {}
-export class LaboratoryKitDetailQuery extends PickClass(LaboratoryKitGetQuery, ['relation']) {}
+export class LaboratorySamplePaginationQuery extends LaboratorySampleGetQuery {}
+export class LaboratorySampleListQuery extends OmitClass(LaboratorySampleGetQuery, ['page']) {}
+export class LaboratorySampleDetailQuery extends PickClass(LaboratorySampleGetQuery, [
+  'relation',
+]) {}

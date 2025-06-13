@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconSetting } from '../../../../common/icon-antd'
-import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import ModalLaboratoryKitUpsert from '../upsert/ModalLaboratoryKitUpsert.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
+import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputSelect } from '../../../../common/vue-form'
+import { MeService } from '../../../../modules/_me/me.service'
+import { LaboratorySample, LaboratorySampleService } from '../../../../modules/laboratory-sample'
+import { PermissionId } from '../../../../modules/permission/permission.enum'
+import ModalLaboratorySampleUpsert from '../upsert/ModalLaboratorySampleUpsert.vue'
+import { Breadcrumb } from '../../../component'
 
-const modalLaboratoryKitUpsert = ref<InstanceType<typeof ModalLaboratoryKitUpsert>>()
+const modalLaboratorySampleUpsert = ref<InstanceType<typeof ModalLaboratorySampleUpsert>>()
 
-const meStore = useMeStore()
+const { userPermission } = MeService
 
-const { permissionIdMap } = meStore
-
-const laboratoryKitList = ref<LaboratoryKit[]>([])
+const laboratorySampleList = ref<LaboratorySample[]>([])
 
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('LABORATORY_KIT_PAGINATION_LIMIT')) || 10)
@@ -28,7 +26,7 @@ const startFetchData = async () => {
   dataLoading.value = true
 
   try {
-    const { data, meta } = await LaboratoryKitService.pagination({
+    const { data, meta } = await LaboratorySampleService.pagination({
       page: page.value,
       limit: limit.value,
       relation: {},
@@ -36,11 +34,11 @@ const startFetchData = async () => {
       sort: { priority: 'ASC' },
     })
 
-    laboratoryKitList.value = data
+    laboratorySampleList.value = data
     total.value = meta.total
     dataLoading.value = true
   } catch (error) {
-    console.log('🚀 ~ file: LaboratoryKitList.vue:41 ~ startFetchData ~ error:', error)
+    console.log('🚀 ~ file: LaboratorySampleList.vue:41 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -59,37 +57,35 @@ onBeforeMount(async () => {
   try {
     await startFetchData()
   } catch (error) {
-    console.log('🚀 ~ file: LaboratoryKitList.vue:60 ~ onBeforeMount ~ error:', error)
+    console.log('🚀 ~ file: LaboratorySampleList.vue:60 ~ onBeforeMount ~ error:', error)
   }
 })
 
-const handleModalLaboratoryKitUpsertSuccess = async () => {
+const handleModalLaboratorySampleUpsertSuccess = async () => {
   await startFetchData()
 }
 </script>
 
 <template>
-  <ModalLaboratoryKitUpsert
-    ref="modalLaboratoryKitUpsert"
-    @success="handleModalLaboratoryKitUpsertSuccess"
+  <ModalLaboratorySampleUpsert
+    ref="modalLaboratorySampleUpsert"
+    @success="handleModalLaboratorySampleUpsertSuccess"
   />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconLabPanel style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách bộ xét nghiệm</span>
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]"
         color="blue"
         icon="plus"
-        @click="modalLaboratoryKitUpsert?.openModal()"
+        @click="modalLaboratorySampleUpsert?.openModal()"
       >
         Thêm mới
       </VueButton>
     </div>
-    <div>
-    </div>
+    <div></div>
   </div>
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <div class="mt-4 table-wrapper">
@@ -98,7 +94,7 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
           <tr>
             <th style="width: 100px">STT</th>
             <th>Tên</th>
-            <th v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" style="width: 100px">
+            <th v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]" style="width: 100px">
               Action
             </th>
           </tr>
@@ -118,20 +114,20 @@ const handleModalLaboratoryKitUpsertSuccess = async () => {
           </tr>
         </tbody>
         <tbody v-if="!dataLoading">
-          <tr v-if="laboratoryKitList.length === 0">
+          <tr v-if="laboratorySampleList.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="laboratoryKit in laboratoryKitList" :key="laboratoryKit.id">
-            <td class="text-center">{{ laboratoryKit.priority }}</td>
+          <tr v-for="laboratorySample in laboratorySampleList" :key="laboratorySample.id">
+            <td class="text-center">{{ laboratorySample.priority }}</td>
             <td>
               <div class="flex items-center gap-1">
-                <span>{{ laboratoryKit.name }}</span>
+                <span>{{ laboratorySample.name }}</span>
               </div>
             </td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
+            <td v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]" class="text-center">
               <a
                 style="color: var(--text-orange)"
-                @click="modalLaboratoryKitUpsert?.openModal(laboratoryKit.id)"
+                @click="modalLaboratorySampleUpsert?.openModal(laboratorySample.id)"
               >
                 <IconEditSquare width="24px" height="24px" />
               </a>

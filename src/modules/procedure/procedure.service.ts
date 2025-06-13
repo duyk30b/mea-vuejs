@@ -1,5 +1,5 @@
 import { arrayToKeyValue, DString } from '../../utils'
-import { CommissionService } from '../commission'
+import { PositionService } from '../position'
 import { ProcedureApi } from './procedure.api'
 import type {
   ProcedureDetailQuery,
@@ -110,7 +110,7 @@ export class ProcedureService {
 
   static async detail(id: number, options: ProcedureDetailQuery = {}) {
     const procedure = await ProcedureApi.detail(id, options)
-    if (procedure && procedure.commissionList) {
+    if (procedure && procedure.positionList) {
       const findIndex = ProcedureService.procedureAll.findIndex((i) => i.id === id)
       if (findIndex !== -1) {
         ProcedureService.procedureAll[findIndex] = procedure
@@ -121,14 +121,14 @@ export class ProcedureService {
 
   static async createOne(procedure: Procedure) {
     const result = await ProcedureApi.createOne(procedure)
-    CommissionService.loadedAll = false
+    PositionService.loadedAll = false
     ProcedureService.loadedAll = false
     return result
   }
 
   static async updateOne(id: number, procedure: Procedure) {
     const result = await ProcedureApi.updateOne(id, procedure)
-    CommissionService.loadedAll = false
+    PositionService.loadedAll = false
     ProcedureService.loadedAll = false
     return result
   }
@@ -137,7 +137,7 @@ export class ProcedureService {
     const result = await ProcedureApi.destroyOne(id)
     if (result.success) {
       ProcedureService.loadedAll = false
-      CommissionService.loadedAll = false
+      PositionService.loadedAll = false
     }
     return result
   }

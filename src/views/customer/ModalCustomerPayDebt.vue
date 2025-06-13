@@ -12,7 +12,7 @@ import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { ESTimer } from '../../utils'
 import { PaymentMethodService } from '../../modules/payment-method'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -23,8 +23,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, user } = meStore
+const { userPermission, user } = MeService
 
 const money = ref(0)
 const note = ref('')
@@ -92,7 +91,7 @@ const handleSave = async () => {
       customerId: customer.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
-      cashierId: user?.id || 0,
+      cashierId: user.value?.id || 0,
       money: money.value,
       ticketPaymentList: ticketPaymentList.value
         .map((i) => ({ ticketId: i.ticket.id, money: i.money }))

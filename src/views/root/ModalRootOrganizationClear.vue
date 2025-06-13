@@ -33,7 +33,7 @@ const tableNameDeleteMapDefault = {
   Image: 0,
   Laboratory: 0,
   LaboratoryGroup: 0,
-  LaboratoryKit: 0,
+  LaboratorySample: 0,
   Payment: 1,
   PaymentMethod: 0,
   PrescriptionSample: 0,

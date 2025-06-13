@@ -1,18 +1,18 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { IconCloudUpload, IconDownload, IconUpload } from '../../../common/icon-google'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { FileReceiptApi } from '../../../modules/file-excel/file-receipt.api'
-import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { IconCloudUpload, IconDownload, IconUpload } from '@/common/icon-google'
+import { AlertStore } from '@/common/vue-alert'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { FileReceiptApi } from '@/modules/file-excel/file-receipt.api.ts'
+import { ReceiptItem } from '@/modules/receipt-item'
 
 const elementUploadRef = ref<HTMLElement | null>(null)
 const inputFileRef = ref<HTMLInputElement | null>(null)
 
-const emit = defineEmits<{ (e: 'success'): void }>()
+const emit = defineEmits<{ (e: 'success', receiptItemInsertList: ReceiptItem[]): void }>()
 
 const router = useRouter()
 
@@ -60,34 +60,30 @@ const handleUpload = async () => {
   if (!fileSelect.value) return
 
   try {
-    const response = await FileReceiptApi.uploadExcelForCreateDraft(fileSelect.value)
-    console.log('🚀 ~ ModalUploadReceipt.vue:61 ~ handleUpload ~ response:', response)
+    const { receiptItemInsertList } = await FileReceiptApi.uploadExcelForGenerateReceiptItemList(
+      fileSelect.value,
+    )
     AlertStore.addSuccess('Upload file excel thành công')
-    emit('success')
+    emit('success', receiptItemInsertList)
     closeModal()
-    router.push({
-      name: 'ReceiptUpsert',
-      params: { id: response.receiptId },
-      query: { mode: EReceiptUpsertMode.UPDATE },
-    })
   } catch (error) {
     console.log('🚀 ~ ModalUploadProduct.vue:43 ~ handleUpload ~ error:', error)
   } finally {
     saveLoading.value = false
+    removeFile()
   }
 }
 
-const downloadFileUploadExcelExample = async () => {
+const downloadFileExampleReceiptItem = async () => {
   try {
-    await FileReceiptApi.downloadFileUploadExcelExample()
+    await FileReceiptApi.downloadFileExampleReceiptItem()
   } catch (error) {
-    console.log('🚀 ~ ModalUploadReceipt.vue:75 ~ downloadFileUploadExcelExample ~ error:', error)
+    console.log('🚀 ~ ModalUploadReceipt.vue:75 ~ downloadFileExampleReceiptItem ~ error:', error)
   }
 }
 
 const closeModal = () => {
-  inputFileRef.value!.value = ''
-  fileSelect.value = undefined
+  removeFile()
   dragover.value = false
   showModal.value = false
 }
@@ -110,26 +106,26 @@ defineExpose({ openModal })
   <VueModal v-model:show="showModal" style="margin-top: 100px">
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer; opacity-0">
+        <div class="px-4 cursor-pointer; opacity-0" style="font-size: 1.2rem">
           <IconClose />
         </div>
         <div class="flex-1 font-medium" style="font-size: 16px; text-align: center">
           Upload danh sách sản phẩm nhập hàng từ Excel
         </div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+        <div class="px-4 cursor-pointer" style="font-size: 1.2rem" @click="closeModal">
           <IconClose />
         </div>
       </div>
 
       <div class="px-4 mt-4">
         <div
-          class="drop-area p-4 pb-8"
+          ref="elementUploadRef"
           :class="dragover ? 'dragover' : ''"
+          class="drop-area p-4 pb-8"
           style="border: 2px dashed #3b82f6; border-radius: 10px"
           @dragover.prevent="dragover = true"
           @dragleave.prevent="dragover = false"
           @drop.prevent="handleDrop"
-          ref="elementUploadRef"
         >
           <div class="flex justify-center" style="font-size: 80px; color: #3b6fba">
             <IconCloudUpload />
@@ -150,20 +146,20 @@ defineExpose({ openModal })
             </div>
           </div>
           <div class="mt-4 flex justify-center">
-            <label for="fileElem" class="btn custom-file-upload">Browse Files</label>
+            <label class="btn custom-file-upload" for="fileElem">Browse Files</label>
           </div>
           <input
+            id="fileElem"
             ref="inputFileRef"
+            accept=".xlsx,.xls"
             style="display: none"
             type="file"
-            id="fileElem"
             @change="handleChangeInputFile"
-            accept=".xlsx,.xls"
           />
-          <div class="progress-bar" id="progressBar">
-            <div class="progress-fill" id="progressFill"></div>
+          <div id="progressBar" class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
           </div>
-          <div class="file-info" id="fileInfo"></div>
+          <div id="fileInfo" class="file-info"></div>
         </div>
         <div class="mt-2 flex justify-between text-xs" style="color: #666; font-style: italic">
           <div class="flex gap-1">
@@ -177,7 +173,7 @@ defineExpose({ openModal })
         </div>
         <div class="mt-2 flex justify-between text-xs" style="color: #666">
           <div class="flex gap-1">
-            <a @click="downloadFileUploadExcelExample" class="flex items-center gap-1">
+            <a class="flex items-center gap-1" @click="downloadFileExampleReceiptItem">
               <IconDownload />
               Tải file mẫu tại đây
             </a>
@@ -190,10 +186,17 @@ defineExpose({ openModal })
               <div>
                 1.
                 <strong>Mã sản phẩm</strong>
-                là bắt buộc, duy nhất và không thể trùng lặp
+                là duy nhất trên hệ thống và không thể trùng lặp
               </div>
-              <div>2. Mã sản phẩm đã có trong hệ thống sẽ bị ghi đè bởi thông tin trong excel</div>
-              <div>3. Mã sản phẩm chưa có trong hệ thống sẽ được tạo mới</div>
+              <div>
+                2. Mã sản phẩm đã có trên hệ thống sẽ bị ghi đè bởi thông tin trong excel: bao gồm ,
+                tên sản phẩm, giá, hoạt chất ...
+              </div>
+              <div>3. Mã sản phẩm chưa có trên hệ thống sẽ được tạo mới</div>
+              <div>
+                4. Với loại sản phẩm có lô: có thể dùng thêm cột ID lô hàng để chỉ định chính xác lô
+                cần nhập hàng
+              </div>
             </div>
           </div>
         </div>
@@ -203,11 +206,11 @@ defineExpose({ openModal })
         <div class="flex gap-4 justify-center">
           <VueButton icon="close" style="" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton
-            :icon="IconUpload"
-            color="blue"
-            :loading="saveLoading"
-            @click="handleUpload"
             :disabled="!fileSelect"
+            :icon="IconUpload"
+            :loading="saveLoading"
+            color="blue"
+            @click="handleUpload"
           >
             Start Upload
           </VueButton>

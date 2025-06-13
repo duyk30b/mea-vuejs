@@ -3,13 +3,13 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { VueSwitch, InputHint, InputText } from '../../../common/vue-form'
+import { InputHint, InputText, VueSwitch } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { DistributorApi, DistributorService } from '../../../modules/distributor'
+import { DistributorService } from '../../../modules/distributor'
 import { Distributor } from '../../../modules/distributor/distributor.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
@@ -22,8 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const distributor = ref(Distributor.blank())
@@ -145,7 +144,7 @@ defineExpose({ openModal })
           {{ distributor.id ? 'Cập nhật thông tin NCC' : 'Tạo NCC mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalDistributorUpsertSetting?.openModal()"
@@ -239,7 +238,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
+            v-if="userPermission[PermissionId.DISTRIBUTOR_DELETE] && distributor.id"
             color="red"
             type="button"
             @click="clickDelete"
@@ -257,7 +256,7 @@ defineExpose({ openModal })
     </form>
   </VueModal>
   <ModalDistributorUpsertSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalDistributorUpsertSetting"
   />
 </template>

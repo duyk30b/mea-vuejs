@@ -2,13 +2,13 @@
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { IconDelete, IconFileSearch, IconSchedule, IconSetting } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { CustomerService, type Customer } from '../../../modules/customer'
@@ -29,9 +29,8 @@ const modalAppointmentListSetting = ref<InstanceType<typeof ModalAppointmentList
 const router = useRouter()
 const route = useRoute()
 
-const meStore = useMeStore()
 const settingStore = useSettingStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const appointmentList = ref<Appointment[]>([])
 
@@ -169,7 +168,7 @@ const handleFocusFirstSearchCustomer = async () => {
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalAppointmentListSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalAppointmentListSetting"
   />
   <div class="page-header">
@@ -180,7 +179,7 @@ const handleFocusFirstSearchCustomer = async () => {
       </div>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.APPOINTMENT_CREATE]"
+          v-if="userPermission[PermissionId.APPOINTMENT_CREATE]"
           icon="plus"
           color="blue"
           @click="modalAppointmentUpsert?.openModalForCreate()"
@@ -190,7 +189,7 @@ const handleFocusFirstSearchCustomer = async () => {
       </div>
     </div>
     <div class="mr-2 flex gap-8">
-      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+      <VueDropdown v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]">
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
             <IconSetting />
@@ -321,7 +320,7 @@ const handleFocusFirstSearchCustomer = async () => {
             <td>
               <div class="flex justify-between items-center gap-4">
                 <div>HK{{ appointment.id }}</div>
-                <div v-if="permissionIdMap[PermissionId.APPOINTMENT_UPDATE]">
+                <div v-if="userPermission[PermissionId.APPOINTMENT_UPDATE]">
                   <a
                     style="color: #eca52b"
                     class="text-xl"
@@ -355,6 +354,9 @@ const handleFocusFirstSearchCustomer = async () => {
                 <a @click="openBlankTicketClinicDetail(appointment.toTicketId)">
                   KB{{ appointment.toTicketId }}
                 </a>
+              </div>
+              <div v-if="[AppointmentStatus.Cancelled].includes(appointment.appointmentStatus)">
+                {{ appointment.cancelReason }}
               </div>
             </td>
             <td class="text-center">

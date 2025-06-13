@@ -6,18 +6,17 @@ import ImageUploadSingle from '../../common/image-upload/ImageUploadSingle.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputHint, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization, OrganizationService } from '../../modules/organization'
 import { OrganizationApi } from '../../modules/organization/organization.api'
-import { customFilter, DImage } from '../../utils'
+import { DImage, customFilter } from '../../utils'
 import ModalChangeOrganizationEmail from './modal/ModalChangeOrganizationEmail.vue'
 
 const imageUploadSingleRef = ref<InstanceType<typeof ImageUploadSingle>>()
 const modalChangeOrganizationEmail = ref<InstanceType<typeof ModalChangeOrganizationEmail>>()
 
 const orgStore = useSettingStore()
-const meStore = useMeStore()
 const { isMobile } = orgStore
 
 const provinceList = ref<string[]>([])
@@ -25,7 +24,7 @@ const districtList = ref<string[]>([])
 const wardList = ref<string[]>([])
 
 const organization = ref<Organization>(
-  Organization.from(meStore.organization || Organization.blank()),
+  Organization.from(MeService.organization.value || Organization.blank()),
 )
 const hasChangeImage = ref(false)
 const saveLoading = ref(false)
@@ -94,7 +93,7 @@ const saveOrganization = async () => {
 
 const disableButtonSave = computed(() => {
   return (
-    JSON.stringify(organization.value) === JSON.stringify(meStore.organization) &&
+    JSON.stringify(organization.value) === JSON.stringify(MeService.organization.value) &&
     !hasChangeImage.value
   )
 })

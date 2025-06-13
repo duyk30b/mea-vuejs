@@ -2,45 +2,35 @@
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
-import {
-  InputFilter,
-  InputMoney,
-  InputSelect,
-  InputText,
-  VueSelect,
-} from '../../../../common/vue-form'
+import { InputFilter, InputMoney, InputSelect, InputText } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import {
-  Commission,
+  Position,
   CommissionCalculatorType,
   CommissionCalculatorTypeText,
-  CommissionService,
-  InteractType,
-  InteractTypeText,
-} from '../../../../modules/commission'
+  PositionService,
+  PositionType,
+  PositionTypeText,
+} from '../../../../modules/position'
 import { RoleService, type Role } from '../../../../modules/role'
 import { keysEnum } from '../../../../utils'
 
 const emit = defineEmits<{
-  (e: 'success', value: Commission, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
+  (e: 'success', value: Position, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
-
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
-const interactTypeOptions = keysEnum(InteractType).map((key) => ({
-  value: InteractType[key],
-  label: InteractTypeText[InteractType[key]],
+const positionTypeOptions = keysEnum(PositionType).map((key) => ({
+  value: PositionType[key],
+  label: PositionTypeText[PositionType[key]],
 }))
 const commissionCalculatorTypeOptions = keysEnum(CommissionCalculatorType).map((key) => ({
   value: CommissionCalculatorType[key],
   label: CommissionCalculatorTypeText[CommissionCalculatorType[key]],
 }))
 
-const commission = ref(Commission.blank())
+const position = ref(Position.blank())
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -59,9 +49,9 @@ onBeforeMount(async () => {
 const openModal = async (commissionId?: number) => {
   showModal.value = true
   if (!commissionId) {
-    commission.value = Commission.blank()
+    position.value = Position.blank()
   } else {
-    commission.value = await CommissionService.detail(commissionId, {
+    position.value = await PositionService.detail(commissionId, {
       relation: {
         role: true,
         procedure: true,
@@ -75,17 +65,17 @@ const openModal = async (commissionId?: number) => {
 
 const closeModal = () => {
   showModal.value = false
-  commission.value = Commission.blank()
+  position.value = Position.blank()
 }
 
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (!commission.value.id) {
-      const response = await CommissionService.createOne(commission.value)
+    if (!position.value.id) {
+      const response = await PositionService.createOne(position.value)
       emit('success', response, 'UPDATE')
     } else {
-      const response = await CommissionService.updateOne(commission.value.id, commission.value)
+      const response = await PositionService.updateOne(position.value.id, position.value)
       emit('success', response, 'UPDATE')
     }
     closeModal()
@@ -102,9 +92,9 @@ const clickDelete = () => {
     content: 'Tiền hoa hồng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
-        const response = await CommissionService.destroyOne(commission.value.id)
+        const response = await PositionService.destroyOne(position.value.id)
         if (response.success) {
-          emit('success', commission.value, 'DESTROY')
+          emit('success', position.value, 'DESTROY')
           closeModal()
         }
       } catch (error) {
@@ -122,7 +112,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ commission.id ? 'Cập nhật thông tin vị trí' : 'Tạo vị trí mới' }}
+          {{ position.id ? 'Cập nhật thông tin vị trí' : 'Tạo vị trí mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -134,9 +124,9 @@ defineExpose({ openModal })
           <div class="">Vai trò</div>
           <div>
             <InputFilter
-              v-model:value="commission.roleId"
+              v-model:value="position.roleId"
               :options="roleOptions"
-              :disabled="!!commission.id"
+              :disabled="!!position.id"
               :maxHeight="120"
             >
               <template #option="{ item: { data } }">{{ data.name }}</template>
@@ -148,55 +138,55 @@ defineExpose({ openModal })
           <div>Loại tương tác</div>
           <div>
             <InputSelect
-              v-model:value="commission.interactType"
+              v-model:value="position.positionType"
               :options="[
-                { value: InteractType.Ticket, label: InteractTypeText[InteractType.Ticket] },
+                { value: PositionType.Ticket, label: PositionTypeText[PositionType.Ticket] },
                 {
-                  value: InteractType.ConsumableList,
-                  label: InteractTypeText[InteractType.ConsumableList],
+                  value: PositionType.ConsumableList,
+                  label: PositionTypeText[PositionType.ConsumableList],
                 },
                 {
-                  value: InteractType.PrescriptionList,
-                  label: InteractTypeText[InteractType.PrescriptionList],
+                  value: PositionType.PrescriptionList,
+                  label: PositionTypeText[PositionType.PrescriptionList],
                 },
               ]"
-              :disabled="!!commission.id"
+              :disabled="!!position.id"
             ></InputSelect>
           </div>
         </div>
 
         <div style="flex-basis: 45%; flex-grow: 1; min-width: 200px">
-          <template v-if="commission.interactType === InteractType.Product">
+          <template v-if="position.positionType === PositionType.Product">
             <div class="">Sản phẩm</div>
             <div>
-              <InputText :value="commission.product?.brandName || ''" disabled />
+              <InputText :value="position.product?.brandName || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="commission.interactType === InteractType.Procedure">
+          <template v-else-if="position.positionType === PositionType.Procedure">
             <div class="">Dịch vụ</div>
             <div>
-              <InputText :value="commission.procedure?.name || ''" disabled />
+              <InputText :value="position.procedure?.name || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="commission.interactType === InteractType.Radiology">
+          <template v-else-if="position.positionType === PositionType.Radiology">
             <div class="">Phiếu CĐHA</div>
             <div>
-              <InputText :value="commission.radiology?.name || ''" disabled />
+              <InputText :value="position.radiology?.name || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="commission.interactType === InteractType.Laboratory">
+          <template v-else-if="position.positionType === PositionType.Laboratory">
             <div class="">Xét nghiệm</div>
             <div>
-              <InputText :value="commission.laboratory?.name || ''" disabled />
+              <InputText :value="position.laboratory?.name || ''" disabled />
             </div>
           </template>
           <template v-else>
             <div class="">&nbsp;</div>
             <div>
-              <InputText :value="commission.laboratory?.name || ''" disabled />
+              <InputText :value="position.laboratory?.name || ''" disabled />
             </div>
           </template>
         </div>
@@ -205,12 +195,12 @@ defineExpose({ openModal })
           <div>Công thức tính hoa hồng</div>
           <div class="flex">
             <InputSelect
-              v-model:value="commission.commissionCalculatorType"
+              v-model:value="position.commissionCalculatorType"
               style="width: 200px"
               :options="commissionCalculatorTypeOptions"
             />
             <div style="width: calc(100% - 200px)">
-              <InputMoney v-model:value="commission.commissionValue" />
+              <InputMoney v-model:value="position.commissionValue" />
             </div>
           </div>
         </div>

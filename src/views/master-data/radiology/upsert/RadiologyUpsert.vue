@@ -7,22 +7,22 @@ import { IconDelete, IconPrint, IconRight } from '../../../../common/icon-antd'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
-  InputFilter,
-  InputMoney,
-  InputNumber,
-  InputText,
-  VueSelect,
+InputFilter,
+InputMoney,
+InputNumber,
+InputText,
+VueSelect,
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { Commission, CommissionCalculatorType, InteractType } from '../../../../modules/commission'
+import { MeService } from '../../../../modules/_me/me.service'
+import { Position, CommissionCalculatorType, PositionType } from '../../../../modules/position'
 import { Customer } from '../../../../modules/customer'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
-  PrintHtml,
-  PrintHtmlService,
-  compiledTemplatePrintHtml,
+PrintHtml,
+PrintHtmlService,
+compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
@@ -36,7 +36,7 @@ import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
 const TABS_KEY = {
   BASIC: 'BASIC',
   DATA_AND_PRINT: 'DATA_AND_PRINT',
-  ROLE_AND_COMMISSION: 'ROLE_AND_COMMISSION',
+  ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
 
 const modalSelectRadiologyExample = ref<InstanceType<typeof ModalSelectRadiologyExample>>()
@@ -45,8 +45,7 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 
-const meStore = useMeStore()
-const { organization } = meStore
+const { organization } = MeService
 
 const radiologyRoot = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
@@ -91,7 +90,7 @@ onMounted(async () => {
   const radiologyId = Number(route.params.id)
   if (radiologyId) {
     const radiologyResponse = await RadiologyApi.detail(radiologyId, {
-      relation: { printHtml: true, commissionList: true },
+      relation: { printHtml: true, positionList: true },
     })
     radiologyRoot.value = radiologyResponse
     radiology.value = Radiology.from(radiologyResponse)
@@ -100,8 +99,8 @@ onMounted(async () => {
     const radiologyAll = await RadiologyService.list({})
     radiology.value.priority = radiologyAll.length + 1
   }
-  if (!radiology.value.commissionList?.length) {
-    handleAddCommission()
+  if (!radiology.value.positionList?.length) {
+    handleAddPosition()
   }
   await handleSelectPrintHtml()
 })
@@ -111,9 +110,9 @@ const hasChangeData = computed(() => {
     return true
   }
   if (
-    !Commission.equalList(
-      (radiology.value.commissionList || []).filter((i) => !!i.roleId),
-      radiologyRoot.value.commissionList || [],
+    !Position.equalList(
+      (radiology.value.positionList || []).filter((i) => !!i.roleId),
+      radiologyRoot.value.positionList || [],
     )
   ) {
     return true
@@ -122,8 +121,8 @@ const hasChangeData = computed(() => {
 })
 
 const handleSave = async () => {
-  for (let i = 0; i < (radiology.value.commissionList?.length || 0); i++) {
-    const element = radiology.value.commissionList![i]
+  for (let i = 0; i < (radiology.value.positionList?.length || 0); i++) {
+    const element = radiology.value.positionList![i]
     if (
       element.commissionCalculatorType === CommissionCalculatorType.PercentActual ||
       element.commissionCalculatorType === CommissionCalculatorType.PercentExpected
@@ -194,7 +193,7 @@ const updatePreview = async () => {
   })
 
   const compiledHeader = compiledTemplatePrintHtml({
-    organization,
+    organization: organization.value,
     ticket: ticketDemo,
     data,
     printHtml: printHtmlHeader.value,
@@ -203,7 +202,7 @@ const updatePreview = async () => {
   const _LAYOUT_HEADER = compiledHeader.html
 
   const compiledResult = compiledTemplatePrintHtml({
-    organization,
+    organization: organization.value,
     ticket: ticketDemo,
     data,
     masterData: {},
@@ -281,7 +280,7 @@ const startTestPrint = async () => {
     })
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketDemo,
       data,
       printHtml: printHtmlHeader.value,
@@ -290,7 +289,7 @@ const startTestPrint = async () => {
     const _LAYOUT_HEADER = compiledHeader.html
 
     const compiledResult = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketDemo,
       data,
       masterData: {},
@@ -314,15 +313,15 @@ const startTestPrint = async () => {
   }
 }
 
-const handleAddCommission = () => {
-  const commissionBlank = Commission.blank()
-  commissionBlank.interactType = InteractType.Radiology
-  commissionBlank.interactId = radiology.value.id
+const handleAddPosition = () => {
+  const positionBlank = Position.blank()
+  positionBlank.positionType = PositionType.Radiology
+  positionBlank.positionInteractId = radiology.value.id
 
-  if (!radiology.value.commissionList) {
-    radiology.value.commissionList = []
+  if (!radiology.value.positionList) {
+    radiology.value.positionList = []
   }
-  radiology.value.commissionList!.push(commissionBlank)
+  radiology.value.positionList!.push(positionBlank)
 }
 
 const showDataSystemPrint = () => {
@@ -352,7 +351,7 @@ const showDataSystemPrint = () => {
           <IconPrint />
           Dữ liệu và In
         </VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_COMMISSION">Vai trò và hoa hồng</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_POSITION">Vai trò và hoa hồng</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.BASIC">
@@ -498,10 +497,10 @@ const showDataSystemPrint = () => {
             </div>
           </div>
         </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_COMMISSION">
+        <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
           <div class="mt-4">
             <div
-              v-for="(commission, index) in radiology.commissionList"
+              v-for="(position, index) in radiology.positionList"
               :key="index"
               class="mt-4 flex flex-wrap gap-2"
             >
@@ -509,7 +508,7 @@ const showDataSystemPrint = () => {
                 <div>Vai trò</div>
                 <div>
                   <InputFilter
-                    v-model:value="radiology.commissionList![index].roleId"
+                    v-model:value="radiology.positionList![index].roleId"
                     :options="roleOptions"
                     :maxHeight="120"
                   >
@@ -521,9 +520,9 @@ const showDataSystemPrint = () => {
                 <div>Hoa hồng</div>
                 <div>
                   <InputNumber
-                    :value="commission.commissionValue"
+                    :value="position.commissionValue"
                     @update:value="
-                      (v: number) => (radiology.commissionList![index].commissionValue = v)
+                      (v: number) => (radiology.positionList![index].commissionValue = v)
                     "
                   />
                 </div>
@@ -532,7 +531,7 @@ const showDataSystemPrint = () => {
                 <div>Công thức</div>
                 <div>
                   <VueSelect
-                    :value="commission.commissionCalculatorType"
+                    :value="position.commissionCalculatorType"
                     :options="[
                       { value: CommissionCalculatorType.VND, text: 'VNĐ' },
                       {
@@ -545,7 +544,7 @@ const showDataSystemPrint = () => {
                       },
                     ]"
                     @update:value="
-                      (v: number) => (radiology.commissionList![index].commissionCalculatorType = v)
+                      (v: number) => (radiology.positionList![index].commissionCalculatorType = v)
                     "
                   />
                 </div>
@@ -555,7 +554,7 @@ const showDataSystemPrint = () => {
                 <div class="pt-2 flex justify-center">
                   <a
                     style="color: var(--text-red)"
-                    @click="radiology.commissionList!.splice(index, 1)"
+                    @click="radiology.positionList!.splice(index, 1)"
                   >
                     <IconDelete width="18" height="18" />
                   </a>
@@ -564,7 +563,7 @@ const showDataSystemPrint = () => {
             </div>
 
             <div class="mt-2">
-              <a @click="handleAddCommission">✚ Thêm vai trò</a>
+              <a @click="handleAddPosition">✚ Thêm vai trò</a>
             </div>
           </div>
         </VueTabPanel>

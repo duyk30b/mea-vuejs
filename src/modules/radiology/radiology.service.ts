@@ -1,5 +1,5 @@
 import { arrayToKeyValue, customFilter } from '../../utils'
-import { CommissionService } from '../commission'
+import { PositionService } from '../position'
 import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyApi } from './radiology.api'
 import type {
@@ -104,14 +104,14 @@ export class RadiologyService {
   static async createOne(radiology: Radiology) {
     const result = await RadiologyApi.createOne(radiology)
     RadiologyService.loadedAll = false
-    CommissionService.loadedAll = false
+    PositionService.loadedAll = false
     return result
   }
 
   static async updateOne(id: number, radiology: Radiology) {
     const result = await RadiologyApi.updateOne(id, radiology)
     RadiologyService.loadedAll = false
-    CommissionService.loadedAll = false
+    PositionService.loadedAll = false
     return result
   }
 
@@ -119,7 +119,7 @@ export class RadiologyService {
     const result = await RadiologyApi.destroyOne(id)
     if (result.success) {
       RadiologyService.loadedAll = false
-      CommissionService.loadedAll = false
+      PositionService.loadedAll = false
     }
     return result
   }

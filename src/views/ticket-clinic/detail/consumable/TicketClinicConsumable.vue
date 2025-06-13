@@ -5,9 +5,9 @@ import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { InputFilter } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
@@ -32,8 +32,7 @@ const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -46,19 +45,22 @@ let ticketUserListOrigin: TicketUser[] = []
 const ticketUserList = ref<TicketUser[]>([])
 
 const refreshTicketUserList = async () => {
+  if (!organizationPermission.value[PermissionId.POSITION]) {
+    return
+  }
   const tuListOrigin: TicketUser[] = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.ConsumableList]?.[0] || []
+    ticketClinicRef.value.ticketUserGroup?.[PositionType.ConsumableList]?.[0] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.ConsumableList,
-      interactId: 0,
+      positionType: PositionType.ConsumableList,
+      positionInteractId: 0,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i, index) => {
+  positionList.forEach((i, index) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       tuListOrigin.push(TicketUser.from(findExist))
@@ -163,8 +165,8 @@ const saveTicketUserList = async () => {
   try {
     await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      interactType: InteractType.ConsumableList,
-      interactId: 0,
+      positionType: PositionType.ConsumableList,
+      positionInteractId: 0,
       ticketItemId: 0,
       quantity: 1,
       ticketUserList: Object.values(ticketUserList.value),
@@ -298,7 +300,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               </a>
               <a
                 v-else-if="
-                  permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+                  userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
                 @click="modalTicketClinicConsumableUpdate?.openModal(tpItem)"
@@ -328,7 +330,10 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
       </table>
     </div>
   </div>
-  <div class="mt-4 flex flex-wrap items-center gap-4">
+  <div
+    v-if="organizationPermission[PermissionId.POSITION]"
+    class="mt-4 flex flex-wrap items-center gap-4"
+  >
     <template v-if="ticketUserList.length">
       <div
         v-for="(ticketUser, index) in ticketUserList"
@@ -367,7 +372,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
 
   <div class="mt-4 flex gap-4">
     <VueButton
-      v-if="permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]"
+      v-if="userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]"
       :disabled="disabledButton"
       color="blue"
       style="margin-left: auto"

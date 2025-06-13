@@ -24,7 +24,7 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { CONFIG } from '../../../config'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
@@ -53,9 +53,8 @@ const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinic
 
 const route = useRoute()
 const router = useRouter()
-const meStore = useMeStore()
 const settingStore = useSettingStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 const childComponent = ref<any>(null)
 
@@ -92,13 +91,17 @@ const startFetchData = async (ticketId?: number) => {
         ticketProductConsumableList: {},
         ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
-        ticketProcedureList: {},
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
-        ticketLaboratoryResultList: true,
-        ticketRadiologyList: {},
-        ticketUserList: {},
-        toAppointment: true,
+        ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE] ? {} : false,
+        ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY] ? {} : false,
+        ticketLaboratoryGroupList: organizationPermission.value[PermissionId.LABORATORY]
+          ? {}
+          : false,
+        ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
+          ? true
+          : false,
+        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : false,
+        ticketUserList: organizationPermission.value[PermissionId.POSITION] ? {} : false,
+        toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
       },
     })
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
@@ -238,7 +241,7 @@ const clickCloseVisit = () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalTicketClinicDetailSetting?.openModal()"
           >
             Cài đặt dữ liệu
@@ -307,6 +310,7 @@ const clickCloseVisit = () => {
               Đo thị lực
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.PROCEDURE]"
               :tabKey="TicketClinicProcedure.__name!"
               style="padding: 6px 12px"
               @active="router.push({ name: TicketClinicProcedure.__name })"
@@ -323,6 +327,7 @@ const clickCloseVisit = () => {
               Vật tư
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.LABORATORY]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicLaboratory.__name!"
               @active="router.push({ name: TicketClinicLaboratory.__name })"
@@ -331,6 +336,7 @@ const clickCloseVisit = () => {
               Xét nghiệm
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.RADIOLOGY]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicRadiology.__name!"
               @active="router.push({ name: TicketClinicRadiology.__name })"
@@ -347,6 +353,7 @@ const clickCloseVisit = () => {
               Đơn thuốc
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.POSITION]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicUser.__name!"
               @active="router.push({ name: TicketClinicUser.__name })"
@@ -387,14 +394,14 @@ const clickCloseVisit = () => {
     </div>
     <div style="flex-basis: 260px; flex-grow: 1" class="">
       <TicketClinicInformation />
-      <TicketClinicUserList />
+      <TicketClinicUserList v-if="organizationPermission[PermissionId.POSITION]" />
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
               ticketClinicRef.status,
             ) &&
-            permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
+            userPermission[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
             !!ticketClinicRef.id
           "
           color="blue"
@@ -406,7 +413,7 @@ const clickCloseVisit = () => {
           VÀO KHÁM
         </VueButton>
         <VueButton
-          v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]"
+          v-if="!ticketClinicRef.id && userPermission[PermissionId.TICKET_CLINIC_START_CHECKUP]"
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
@@ -416,7 +423,7 @@ const clickCloseVisit = () => {
           ĐĂNG KÝ KHÁM
         </VueButton>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CLOSE]"
+          v-if="userPermission[PermissionId.TICKET_CLINIC_CLOSE]"
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"

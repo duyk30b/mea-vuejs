@@ -13,15 +13,11 @@ import { IconEditSquare } from '../../../../common/icon-google'
 import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import {
-  compiledTemplatePrintHtml,
-  PrintHtml,
-  PrintHtmlService,
-} from '../../../../modules/print-html'
+import { PrintHtmlService, compiledTemplatePrintHtml } from '../../../../modules/print-html'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { TicketStatus } from '../../../../modules/ticket'
 import { ticketClinicRef } from '../../../../modules/ticket-clinic'
@@ -33,8 +29,7 @@ import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
 
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 const radiologyOptions = ref<{ value: number; text: string; data: Radiology }[]>([])
 
@@ -130,14 +125,14 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       printHtml: printHtmlHeader,
       customVariables: radiologyData.customVariables || '',
     })
     const compiledContent = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       masterData: {
@@ -285,7 +280,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  userPermission[PermissionId.RADIOLOGY_RESULT]
                 "
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
@@ -295,7 +290,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                  permissionIdMap[PermissionId.TICKET_RADIOLOGY_RESULT]
+                  userPermission[PermissionId.RADIOLOGY_RESULT]
                 "
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
               >
@@ -326,7 +321,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     <div></div>
     <VueButton
       v-if="
-        permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST] &&
+        userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST] &&
         ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
         hasChangePriority
       "

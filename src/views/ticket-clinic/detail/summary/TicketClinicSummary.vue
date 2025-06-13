@@ -1,25 +1,19 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconFileSearch, IconFileSync, IconMore } from '../../../../common/icon-antd'
+import { IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, PickupStrategy, PaymentViewType } from '../../../../modules/enum'
+import { DeliveryStatus, PaymentViewType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import {
-  PrintHtml,
-  PrintHtmlService,
-  compiledTemplatePrintHtml,
-} from '../../../../modules/print-html'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
+import { PrintHtmlService, compiledTemplatePrintHtml } from '../../../../modules/print-html'
 import { TicketStatus } from '../../../../modules/ticket'
 import {
   TicketClinicApi,
@@ -28,17 +22,13 @@ import {
 } from '../../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
-import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicPayment from '../modal/ModalTicketClinicPayment.vue'
-import ModalTicketProcedureUpdate from '../procedure/ModalTicketProcedureUpdate.vue'
 import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
 import TicketClinicSummaryLaboratory from './TicketClinicSummaryLaboratory.vue'
+import TicketClinicSummaryProcedure from './TicketClinicSummaryProcedure.vue'
 import TicketClinicSummaryProduct from './TicketClinicSummaryProduct.vue'
 import TicketClinicSummaryRadiology from './TicketClinicSummaryRadiology.vue'
-
-const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
-const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -49,25 +39,9 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
-
-const procedureMap = ref<Record<string, Procedure>>({})
-const radiologyMap = ref<Record<string, Radiology>>({})
+const { userPermission, organizationPermission, organization } = MeService
 
 const sendProductLoading = ref(false)
-
-onMounted(async () => {
-  const fetchData = await Promise.all([ProcedureService.getMap(), RadiologyService.getMap()])
-  procedureMap.value = fetchData[0]
-  radiologyMap.value = fetchData[1]
-})
-
-const procedureDiscount = computed(() => {
-  return ticketClinicRef.value.ticketProcedureList?.reduce((acc, item) => {
-    return acc + item.discountMoney * item.quantity
-  }, 0)
-})
 
 const disableSendProduct = computed(() => {
   // chỉ được phép khi ở trạng thái đang khám (Executing)
@@ -98,7 +72,7 @@ const validateQuantity = () => {
     const ticketProductUnsent = ticketProductUnsentList[i]
     const { product, batch } = ticketProductUnsent
 
-    if (product?.pickupStrategyFix === PickupStrategy.NoImpact) continue
+    if (product?.warehouseIds === '[]') continue
 
     if (ticketProductUnsent.quantity > (product?.quantity || 0)) {
       AlertStore.addError(
@@ -106,14 +80,16 @@ const validateQuantity = () => {
           `(tồn ${product?.quantity || 0} - lấy ${ticketProductUnsent.quantity})`,
       )
       return false
-    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
-      if (batch && ticketProductUnsent.quantity > batch!.quantity) {
-        AlertStore.addError(
-          `Lô hàng: ${product!.brandName} không đủ, còn ${batch!.quantity} lấy ${
-            ticketProductUnsent.quantity
-          }`,
-        )
-      }
+    } else if (
+      batch &&
+      ticketProductUnsent.batchId &&
+      ticketProductUnsent.quantity > batch!.quantity
+    ) {
+      AlertStore.addError(
+        `Lô hàng: ${product!.brandName} không đủ, còn ${batch!.quantity} lấy ${
+          ticketProductUnsent.quantity
+        }`,
+      )
     }
   }
   return true
@@ -217,28 +193,6 @@ const clickReturnProduct = () => {
   }
 }
 
-const handleMenuActionClick = (menu: { key: string }) => {
-  if (menu.key === 'RETURN_PRODUCT_LIST') {
-    if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
-      return ModalStore.alert({
-        title: 'Trạng thái hồ sơ không hợp lệ ?',
-        content: 'Cần mở lại hồ sơ trước khi hoàn trả',
-      })
-    } else {
-      modalTicketReturnProduct.value?.openModal(ticketClinicRef.value)
-    }
-  }
-  if (menu.key === 'REFUND_OVERPAID') {
-    modalTicketClinicPayment.value?.openModal(PaymentViewType.RefundOverpaid)
-  }
-  if (menu.key === 'REOPEN_TICKET') {
-    clickReopenTicket()
-  }
-  if (menu.key === 'DESTROY_TICKET') {
-    clickDestroyTicket()
-  }
-}
-
 const startPrint = async () => {
   try {
     const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
@@ -248,12 +202,12 @@ const startPrint = async () => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       masterData: {},
       printHtml: printHtmlInvoice,
@@ -275,8 +229,6 @@ const startPrint = async () => {
 }
 </script>
 <template>
-  <ModalProcedureDetail ref="modalProcedureDetail" />
-  <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <ModalTicketClinicChangeDiscount ref="modalTicketClinicChangeDiscount" />
   <ModalTicketClinicPayment ref="modalTicketClinicPayment" />
   <ModalTicketReturnProduct ref="modalTicketReturnProduct" />
@@ -337,93 +289,9 @@ const startPrint = async () => {
   <div class="mt-4 table-wrapper">
     <table>
       <TicketClinicSummaryProduct />
-      <template v-if="ticketClinicRef.ticketProcedureList?.length">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th></th>
-            <th colspan="3">DỊCH VỤ - THỦ THUẬT</th>
-            <th>SL</th>
-            <th>Giá</th>
-            <th>Chiết khấu</th>
-            <th>Tổng tiền</th>
-            <th></th>
-            <th v-if="CONFIG.MODE === 'development'" class="text-right italic">Vốn</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(ticketProcedure, index) in ticketClinicRef.ticketProcedureList" :key="index">
-            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-              {{ index + 1 }}
-            </td>
-            <td></td>
-            <td colspan="3">
-              <div class="flex items-center gap-1">
-                <span>{{ procedureMap[ticketProcedure.procedureId]?.name }}</span>
-                <a
-                  style="line-height: 0"
-                  @click="
-                    modalProcedureDetail?.openModal(procedureMap[ticketProcedure.procedureId])
-                  "
-                >
-                  <IconFileSearch />
-                </a>
-              </div>
-            </td>
-            <td class="text-center">{{ ticketProcedure.quantity }}</td>
-            <td class="text-right whitespace-nowrap">
-              <div v-if="ticketProcedure.discountMoney" class="text-xs italic text-red-500">
-                <del>{{ formatMoney(ticketProcedure.expectedPrice) }}</del>
-              </div>
-              <div>{{ formatMoney(ticketProcedure.actualPrice) }}</div>
-            </td>
-
-            <td class="text-center">
-              <div v-if="ticketProcedure.discountMoney">
-                <VueTag v-if="ticketProcedure.discountType === 'VNĐ'" color="green">
-                  {{ formatMoney(ticketProcedure.discountMoney) }}
-                </VueTag>
-                <VueTag v-if="ticketProcedure.discountType === '%'" color="green">
-                  {{ ticketProcedure.discountPercent || 0 }}%
-                </VueTag>
-              </div>
-            </td>
-            <td class="text-right whitespace-nowrap">
-              {{ formatMoney(ticketProcedure.actualPrice * ticketProcedure.quantity) }}
-            </td>
-            <td class="text-center">
-              <a
-                v-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                  permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
-                "
-                class="text-orange-500"
-                @click="modalTicketProcedureUpdate?.openModal(ticketProcedure)"
-              >
-                <IconEditSquare width="20" height="20" />
-              </a>
-            </td>
-            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
-          </tr>
-          <tr>
-            <td class="text-right" colspan="8">
-              <div class="flex items-center justify-end gap-2">
-                <span class="uppercase">Tiền dịch vụ</span>
-                <span v-if="procedureDiscount" class="italic" style="font-size: 13px">
-                  (CK: {{ formatMoney(procedureDiscount) }})
-                </span>
-              </div>
-            </td>
-            <td class="font-bold text-right whitespace-nowrap" colspan="1">
-              {{ formatMoney(ticketClinicRef.procedureMoney) }}
-            </td>
-            <td></td>
-            <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
-          </tr>
-        </tbody>
-      </template>
-      <TicketClinicSummaryLaboratory />
-      <TicketClinicSummaryRadiology />
+      <TicketClinicSummaryProcedure v-if="organizationPermission[PermissionId.PROCEDURE]" />
+      <TicketClinicSummaryLaboratory v-if="organizationPermission[PermissionId.LABORATORY]" />
+      <TicketClinicSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
       <tbody>
         <tr>
           <td class="text-right" colspan="8">
@@ -456,7 +324,7 @@ const startPrint = async () => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                permissionIdMap[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
+                userPermission[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
               "
               class="text-orange-500"
               @click="modalTicketClinicChangeDiscount?.openModal()"

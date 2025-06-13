@@ -5,18 +5,17 @@ import { IconSetting } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputRadio, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
-import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
+import { MeService } from '../../modules/_me/me.service'
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
 
 const settingStore = useSettingStore()
 const { isMobile } = settingStore
 
-const meStore = useMeStore()
-const user = ref<User>(User.from(meStore.user || User.blank()))
+const user = ref<User>(User.from(MeService.user.value || User.blank()))
 const saveLoading = ref(false)
 
 onBeforeMount(async () => {
@@ -29,7 +28,7 @@ const saveUser = async () => {
     saveLoading.value = true
     const userData = await MeApi.updateInfo(user.value)
     user.value = userData
-    meStore.user = User.from(userData)
+    MeService.user.value = User.from(userData)
     AlertStore.addSuccess('Cập nhật thông tin cá nhân thành công')
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -39,7 +38,7 @@ const saveUser = async () => {
 }
 
 const disableButtonSave = computed(() => {
-  return JSON.stringify(user.value) === JSON.stringify(meStore.user)
+  return JSON.stringify(user.value) === JSON.stringify(MeService.user.value)
 })
 </script>
 

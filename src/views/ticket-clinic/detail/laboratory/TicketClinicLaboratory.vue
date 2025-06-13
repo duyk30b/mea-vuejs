@@ -7,12 +7,11 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import { LaboratoryKit, LaboratoryKitService } from '../../../../modules/laboratory-kit'
+import { LaboratorySample, LaboratorySampleService } from '../../../../modules/laboratory-sample'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
   compiledTemplatePrintHtml,
@@ -32,23 +31,22 @@ const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
 const modalTicketLaboratoryResult = ref<InstanceType<typeof ModalTicketLaboratoryResult>>()
 
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
 let laboratoryAll: Laboratory[] = []
-let laboratoryKitAll: LaboratoryKit[] = []
+let laboratorySampleAll: LaboratorySample[] = []
 const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
 
 const laboratoryOptions = ref<{ laboratoryGroup: LaboratoryGroup; laboratoryList: Laboratory[] }[]>(
   [],
 )
 const laboratorySelects = ref<Record<string, Laboratory[]>>({})
-const laboratoryKitOptions = ref<LaboratoryKit[]>([])
+const laboratorySampleOptions = ref<LaboratorySample[]>([])
 
 const laboratoryIdCheckbox = ref<Record<string, boolean>>({})
-const laboratoryKitIdCheckbox = ref<Record<string, { checked: boolean; indeterminate: boolean }>>(
+const laboratorySampleIdCheckbox = ref<Record<string, { checked: boolean; indeterminate: boolean }>>(
   {},
 )
 const registeredAt = ref<number | null>(null)
@@ -84,7 +82,7 @@ const startFilterLaboratory = (text: string) => {
     }
   })
 
-  laboratoryKitOptions.value = laboratoryKitAll.filter((l) => {
+  laboratorySampleOptions.value = laboratorySampleAll.filter((l) => {
     return DString.customFilter(l.name, text, 2)
   })
 }
@@ -94,7 +92,7 @@ onMounted(async () => {
     const promiseResult = await Promise.all([
       LaboratoryService.list({ sort: { priority: 'ASC' } }),
       LaboratoryGroupService.list({}),
-      LaboratoryKitService.list({}),
+      LaboratorySampleService.list({}),
     ])
     await ticketClinicRef.value.refreshLaboratory()
     laboratoryAll = promiseResult[0]
@@ -108,8 +106,8 @@ onMounted(async () => {
 
     laboratoryMap.value = await LaboratoryService.getFlatMap()
 
-    laboratoryKitAll = promiseResult[2]
-    laboratoryKitAll.forEach((i) => {
+    laboratorySampleAll = promiseResult[2]
+    laboratorySampleAll.forEach((i) => {
       try {
         const laboratoryIdList: number[] = JSON.parse(i.laboratoryIds)
         i.laboratoryList = laboratoryIdList
@@ -140,7 +138,7 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       data: {
         ticketLaboratoryGroup,
@@ -148,7 +146,7 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       data: {
         ticketLaboratoryGroup,
@@ -158,7 +156,7 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
         HEADER: compiledHeader.html,
       },
     })
-    
+
     if (!compiledContent.html) {
       AlertStore.addError('Mẫu in không hợp lệ')
       return
@@ -174,32 +172,32 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
 }
 
 const reloadIndeterminateCheckbox = () => {
-  laboratoryKitOptions.value.forEach((laboratoryKit) => {
-    if (!laboratoryKit.laboratoryList) {
-      laboratoryKit.laboratoryList = []
+  laboratorySampleOptions.value.forEach((laboratorySample) => {
+    if (!laboratorySample.laboratoryList) {
+      laboratorySample.laboratoryList = []
     }
-    if (!laboratoryKitIdCheckbox.value[laboratoryKit.id]) {
-      laboratoryKitIdCheckbox.value[laboratoryKit.id] = {
+    if (!laboratorySampleIdCheckbox.value[laboratorySample.id]) {
+      laboratorySampleIdCheckbox.value[laboratorySample.id] = {
         checked: false,
         indeterminate: false,
       }
     }
 
-    const checkedAll = laboratoryKit.laboratoryList.every((i) => {
+    const checkedAll = laboratorySample.laboratoryList.every((i) => {
       return laboratoryIdCheckbox.value[i.id]
     })
-    const noCheckedAll = laboratoryKit.laboratoryList.every((i) => {
+    const noCheckedAll = laboratorySample.laboratoryList.every((i) => {
       return !laboratoryIdCheckbox.value[i.id]
     })
     if (checkedAll) {
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].checked = true
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].indeterminate = false
+      laboratorySampleIdCheckbox.value[laboratorySample.id].checked = true
+      laboratorySampleIdCheckbox.value[laboratorySample.id].indeterminate = false
     } else if (noCheckedAll) {
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].checked = false
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].indeterminate = false
+      laboratorySampleIdCheckbox.value[laboratorySample.id].checked = false
+      laboratorySampleIdCheckbox.value[laboratorySample.id].indeterminate = false
     } else {
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].checked = false
-      laboratoryKitIdCheckbox.value[laboratoryKit.id].indeterminate = true
+      laboratorySampleIdCheckbox.value[laboratorySample.id].checked = false
+      laboratorySampleIdCheckbox.value[laboratorySample.id].indeterminate = true
     }
   })
 }
@@ -231,23 +229,23 @@ const handleChangeCheckboxLaboratory = async (checked: boolean, laboratory: Labo
   reloadIndeterminateCheckbox()
 }
 
-const handleChangeCheckboxLaboratoryKit = async (
+const handleChangeCheckboxLaboratorySample = async (
   checked: boolean,
-  laboratoryKit: LaboratoryKit,
+  laboratorySample: LaboratorySample,
 ) => {
   registeredAt.value = Date.now()
-  laboratoryKit.laboratoryList?.forEach((laboratory) => {
+  laboratorySample.laboratoryList?.forEach((laboratory) => {
     handleChangeCheckboxLaboratory(checked, laboratory)
   })
 
-  if (!laboratoryKitIdCheckbox.value[laboratoryKit.id]) {
-    laboratoryKitIdCheckbox.value[laboratoryKit.id] = {
+  if (!laboratorySampleIdCheckbox.value[laboratorySample.id]) {
+    laboratorySampleIdCheckbox.value[laboratorySample.id] = {
       checked: false,
       indeterminate: false,
     }
   }
-  laboratoryKitIdCheckbox.value[laboratoryKit.id].checked = checked
-  laboratoryKitIdCheckbox.value[laboratoryKit.id].indeterminate = false
+  laboratorySampleIdCheckbox.value[laboratorySample.id].checked = checked
+  laboratorySampleIdCheckbox.value[laboratorySample.id].indeterminate = false
 }
 
 const disabledButtonSaveLaboratorySelect = computed(() => {
@@ -268,7 +266,7 @@ const clear = () => {
   tlgEdit.value = TicketLaboratoryGroup.blank()
   laboratorySelects.value = {}
   laboratoryIdCheckbox.value = {}
-  laboratoryKitIdCheckbox.value = {}
+  laboratorySampleIdCheckbox.value = {}
   registeredAt.value = null
 }
 
@@ -347,7 +345,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
   laboratorySelects.value = { [tlgFind.laboratoryGroupId]: ticketLaboratoryList }
 
   laboratoryIdCheckbox.value = {}
-  laboratoryKitIdCheckbox.value = {}
+  laboratorySampleIdCheckbox.value = {}
   ticketLaboratoryList.forEach((i) => {
     laboratoryIdCheckbox.value[i.id] = true
   })
@@ -379,19 +377,19 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
       <div class="table-wrapper flex-1" style="overflow-y: scroll">
         <table>
           <tbody>
-            <template v-for="laboratoryKit in laboratoryKitOptions" :key="laboratoryKit.id">
+            <template v-for="laboratorySample in laboratorySampleOptions" :key="laboratorySample.id">
               <tr>
                 <td>
                   <input
                     type="checkbox"
-                    :checked="!!laboratoryKitIdCheckbox[laboratoryKit.id]?.checked"
-                    :indeterminate="!!laboratoryKitIdCheckbox[laboratoryKit.id]?.indeterminate"
+                    :checked="!!laboratorySampleIdCheckbox[laboratorySample.id]?.checked"
+                    :indeterminate="!!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate"
                     style="cursor: pointer"
                     @change="
                       (e) =>
-                        handleChangeCheckboxLaboratoryKit(
+                        handleChangeCheckboxLaboratorySample(
                           (e.target as HTMLInputElement).checked,
-                          laboratoryKit,
+                          laboratorySample,
                         )
                     "
                   />
@@ -401,17 +399,17 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   style="user-select: none; cursor: pointer"
                   class="font-bold"
                   @click="
-                    handleChangeCheckboxLaboratoryKit(
-                      !laboratoryKitIdCheckbox[laboratoryKit.id]?.checked,
-                      laboratoryKit,
+                    handleChangeCheckboxLaboratorySample(
+                      !laboratorySampleIdCheckbox[laboratorySample.id]?.checked,
+                      laboratorySample,
                     )
                   "
                 >
-                  {{ laboratoryKit.name }}
+                  {{ laboratorySample.name }}
                 </td>
               </tr>
               <tr
-                v-for="laboratory in laboratoryKit.laboratoryList || []"
+                v-for="laboratory in laboratorySample.laboratoryList || []"
                 :key="laboratory.id"
                 style=""
               >
@@ -582,7 +580,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(
                         ticketClinicRef.status,
-                      ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                      ) && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     size="small"
                     @click="clickChangeLaboratoryGroup(tlg.id)"
@@ -590,7 +588,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                     Sửa chỉ định
                   </VueButton>
                   <VueButton
-                    v-if="permissionIdMap[PermissionId.TICKET_LABORATORY_RESULT]"
+                    v-if="userPermission[PermissionId.LABORATORY_RESULT]"
                     size="small"
                     @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
                   >
@@ -651,7 +649,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   </a>
                   <a
                     v-else-if="
-                      permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                      userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     class="text-orange-500"
                     @click="modalTicketLaboratoryUpdateMoney?.openModal(tlItem)"

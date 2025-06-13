@@ -10,7 +10,6 @@ import {
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -19,6 +18,7 @@ import DistributorInfo from './DistributorInfo.vue'
 import DistributorPaymentHistory from './DistributorPaymentHistory.vue'
 import DistributorProductHistory from './DistributorProductHistory.vue'
 import DistributorReceiptHistory from './DistributorReceiptHistory.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const TABS_KEY = {
   INFO: 'INFO',
@@ -34,8 +34,7 @@ const distributorPaymentHistory = ref<InstanceType<typeof DistributorPaymentHist
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -95,7 +94,7 @@ defineExpose({ openModal })
               Thông tin cá nhân
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.PAYMENT_READ]"
+              v-if="organizationPermission[PermissionId.PAYMENT]"
               :tabKey="TABS_KEY.PAYMENT_HISTORY"
             >
               <IconDollar />
@@ -125,7 +124,7 @@ defineExpose({ openModal })
                 <div>
                   <VueButton
                     v-if="
-                      permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
+                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                       distributor.debt != 0
                     "
                     color="blue"

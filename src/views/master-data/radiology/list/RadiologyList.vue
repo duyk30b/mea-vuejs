@@ -6,7 +6,6 @@ import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -16,16 +15,19 @@ import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
+import { MeService } from '../../../../modules/_me/me.service'
+import { RouterView, useRouter } from 'vue-router'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologySystem = ref<InstanceType<typeof ModalCopyRadiologySystem>>()
 
-const meStore = useMeStore()
+const router = useRouter()
+
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const radiologyList = ref<Radiology[]>([])
 const searchText = ref('')
@@ -96,7 +98,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
 
 <template>
   <ModalRadiologyListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalRadiologyListSettingScreen"
   />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
@@ -110,10 +112,10 @@ const handleModalCopyRadiologySystemSuccess = async () => {
     </div>
     <div class="">
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
+        v-if="userPermission[PermissionId.RADIOLOGY_CREATE]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'RadiologyUpsert' })"
+        @click="router.push({ name: 'RadiologyUpsert' })"
       >
         Thêm mới
       </VueButton>
@@ -127,13 +129,13 @@ const handleModalCopyRadiologySystemSuccess = async () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalRadiologyListSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
           </a>
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalCopyRadiologySystem?.openModal()"
           >
             Copy dữ liệu từ hệ thống
@@ -176,7 +178,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
             <th>Giá vốn</th>
             <th>Giá tiền</th>
-            <th>Action</th>
+            <th v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -217,7 +219,7 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             </td>
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
+            <td v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]" class="text-center">
               <router-link :to="{ name: 'RadiologyUpsert', params: { id: radiology.id } }">
                 <IconEditSquare width="20px" height="20px" />
               </router-link>

@@ -1,11 +1,28 @@
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
-import type { MovementType } from '../enum'
 import { Product } from '../product'
 import { Receipt } from '../receipt'
 import { StockCheck } from '../stock-check'
 import { Ticket } from '../ticket'
 import { User } from '../user'
+
+export enum MovementType {
+  Unknown = 0,
+  Receipt = 1,
+  Ticket = 2,
+  UserChange = 3,
+  StockCheck = 4,
+  Excel = 5,
+}
+
+export const MovementTypeText = {
+  [MovementType.Unknown]: 'Tất cả',
+  [MovementType.Receipt]: 'Phiếu nhập',
+  [MovementType.Ticket]: 'Phiếu xuất',
+  [MovementType.UserChange]: 'NV sửa',
+  [MovementType.StockCheck]: 'Kiểm hàng',
+  [MovementType.Excel]: 'Excel',
+}
 
 export class ProductMovement {
   id: number

@@ -2,18 +2,17 @@
 import { onMounted, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import {
-IconClockCircle,
-IconDollar,
-IconFileSearch,
-IconPhone,
-IconSend,
-IconWarning,
+  IconClockCircle,
+  IconDollar,
+  IconFileSearch,
+  IconPhone,
+  IconSend,
+  IconWarning,
 } from '../../../common/icon-antd'
 import { InputOptions } from '../../../common/vue-form'
 import type { ItemOption } from '../../../common/vue-form/InputOptions.vue'
 import { VueDivider } from '../../../common/vue-layout'
 import { CONFIG } from '../../../config'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment } from '../../../modules/appointment'
 import { Customer, CustomerService } from '../../../modules/customer'
@@ -28,6 +27,7 @@ import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -42,8 +42,7 @@ const customerOptions = ref<ItemOption[]>([])
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const updateCustomer = () => {}
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 onMounted(() => {
   inputOptionsCustomer.value?.setItem({
@@ -120,7 +119,7 @@ const handleClickModalRegisterAppointment = () => {
           </span>
         </div>
         <a
-          v-if="ticketClinicRef.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+          v-if="ticketClinicRef.customer!.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
           @click="modalCustomerUpsert?.openModal(ticketClinicRef.customer!)"
         >
           Sửa thông tin KH
@@ -204,11 +203,7 @@ const handleClickModalRegisterAppointment = () => {
             <span class="font-bold">TRẢ NỢ</span>
           </VueButton>
           <VueButton
-            v-if="
-              [TicketStatus.Completed, TicketStatus.Cancelled].includes(
-                ticketClinicRef.status,
-              )
-            "
+            v-if="[TicketStatus.Completed, TicketStatus.Cancelled].includes(ticketClinicRef.status)"
             size="small"
             color="green"
             icon="dollar"

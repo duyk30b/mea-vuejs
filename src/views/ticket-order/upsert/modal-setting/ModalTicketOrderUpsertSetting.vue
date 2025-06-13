@@ -6,7 +6,6 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox, InputOptions, InputRadio } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { Customer, CustomerService } from '../../../../modules/customer'
@@ -25,7 +24,6 @@ const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
-const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT)),

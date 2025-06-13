@@ -13,7 +13,6 @@ import {
 } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { AddressInstance } from '../../../core/address.instance'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
 import { Customer, CustomerService } from '../../../modules/customer'
@@ -23,6 +22,7 @@ import { DString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const modalAppointmentUpsertSetting = ref<InstanceType<typeof HTMLFormElement>>()
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
@@ -38,8 +38,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -207,7 +206,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           {{ appointment.id ? 'Cập nhật lịch hẹn' : 'Tạo lịch hẹn mới' }}
         </div>
         <div
-          v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+          v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
           style="font-size: 1.2rem"
           class="px-4 cursor-pointer"
           @click="modalAppointmentUpsertSetting?.openModal()"
@@ -235,7 +234,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
               )
             </span>
             <a
-              v-if="appointment.customer!.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="appointment.customer!.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(appointment.customer!)"
             >
               Sửa thông tin KH
@@ -508,7 +507,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
   <ModalAppointmentUpsertSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalAppointmentUpsertSetting"
   />
 </template>

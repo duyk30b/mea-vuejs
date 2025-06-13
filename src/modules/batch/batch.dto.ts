@@ -1,15 +1,17 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
+import type { ConditionDate, ConditionNumber, ConditionString } from '../_base/base-condition'
 
 export class BatchFilterQuery {
   id?: number | ConditionNumber
+  lotNumber?: string | ConditionString
   warehouseId?: number | ConditionNumber
   productId?: number | ConditionNumber
   distributorId?: number | ConditionNumber
   expiryDate?: ConditionNumber
   quantity?: ConditionNumber
-  updatedAt?: ConditionDate
-  registeredAt?: ConditionDate
+  updatedAt?: ConditionDate | ConditionNumber
+  registeredAt?: ConditionDate | ConditionNumber
+  isActive?: number
 }
 
 export class BatchGetQuery {
@@ -23,6 +25,8 @@ export class BatchGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    lotNumber?: 'ASC' | 'DESC'
+    quantity?: 'ASC' | 'DESC'
     productId?: 'ASC' | 'DESC'
     expiryDate?: 'ASC' | 'DESC'
     registeredAt?: 'ASC' | 'DESC'

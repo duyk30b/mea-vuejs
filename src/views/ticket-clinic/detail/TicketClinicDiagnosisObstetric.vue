@@ -1,22 +1,21 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
-import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import VueTinyMCE from '../../../common/VueTinyMCE.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
+import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
-  TicketAttributeKeyObstetricList,
-  type TicketAttributeKeyObstetricType,
+TicketAttributeKeyObstetricList,
+type TicketAttributeKeyObstetricType,
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
@@ -402,7 +401,7 @@ defineExpose({ getDataTicketDiagnosis })
       <div></div>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketClinicRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

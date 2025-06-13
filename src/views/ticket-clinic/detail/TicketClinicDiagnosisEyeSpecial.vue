@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { compiledTemplatePrintHtml, PrintHtml, PrintHtmlService } from '../../../modules/print-html'
@@ -14,9 +13,7 @@ import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic
 import { ESDom } from '../../../utils'
 import { MeService } from '../../../modules/_me/me.service'
 
-const meStore = useMeStore()
-const settingStore = useSettingStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyOptometryType]?: any } = {}
 const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>({})
@@ -95,12 +92,12 @@ const startPrint = async () => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket: ticketClinicRef.value,
       masterData: {},
       printHtml: printHtmlOptometry,
@@ -538,7 +535,7 @@ const startPrint = async () => {
       <VueButton color="blue" icon="print" @click="startPrint">In phiếu</VueButton>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketClinicRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

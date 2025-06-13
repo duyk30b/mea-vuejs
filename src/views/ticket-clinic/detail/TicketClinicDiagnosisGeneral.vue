@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputText } from '../../../common/vue-form'
-import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -13,10 +14,8 @@ import {
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
 import { DImage } from '../../../utils'
-import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
@@ -31,8 +30,7 @@ const ticketAttributeMap = ref<
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
-onMounted(async () => {
-})
+onMounted(async () => {})
 
 watch(
   () => ticketClinicRef.value.note,
@@ -249,7 +247,7 @@ defineExpose({ getDataTicketDiagnosis })
       <div></div>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketClinicRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

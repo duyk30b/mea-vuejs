@@ -5,7 +5,7 @@ import VuePagination from '../../../common/VuePagination.vue'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
@@ -19,9 +19,7 @@ import { Breadcrumb } from '../../component'
 import StockCheckStatusTag from '../StockCheckStatusTag.vue'
 
 const settingStore = useSettingStore()
-const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const stockCheckList = ref<StockCheck[]>([])
 
@@ -120,7 +118,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.STOCK_CHECK_DRAFT_CRUD]"
+        v-if="userPermission[PermissionId.STOCK_CHECK_DRAFT_CRUD]"
         color="blue"
         icon="plus"
         @click="$router.push({ name: 'StockCheckUpsert' })"

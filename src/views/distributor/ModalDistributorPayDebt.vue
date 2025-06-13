@@ -6,13 +6,13 @@ import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../modules/_me/me.store'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { PaymentMethodService } from '../../modules/payment-method'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { ESTimer } from '../../utils'
 import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
+import { MeService } from '../../modules/_me/me.service'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -23,8 +23,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, user } = meStore
+const { userPermission, user } = MeService
 
 const money = ref<number>(0)
 const note = ref('')
@@ -91,7 +90,7 @@ const handleSave = async () => {
       distributorId: distributor.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
-      cashierId: user?.id || 0,
+      cashierId: user.value?.id || 0,
       money: money.value,
       receiptPaymentList: receiptPaymentList.value
         .map((i) => ({ receiptId: i.receipt.id, money: i.money }))

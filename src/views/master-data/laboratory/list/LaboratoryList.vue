@@ -7,7 +7,6 @@ import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
 import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
@@ -18,16 +17,16 @@ import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
+import { MeService } from '../../../../modules/_me/me.service'
 
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
 const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
 const modalLaboratoryDetail = ref<InstanceType<typeof ModalLaboratoryDetail>>()
-const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const laboratoryList = ref<Laboratory[]>([])
 const searchText = ref('')
@@ -124,7 +123,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
     </div>
     <div class="">
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        v-if="userPermission[PermissionId.LABORATORY_CREATE]"
         color="blue"
         icon="plus"
         @click="modalLaboratoryUpsert?.openModal()"
@@ -142,7 +141,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
         <div class="vue-menu">
           <a @click="modalLaboratoryGroupManager?.openModal()">Quản lý phiếu xét nghiệm</a>
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalCopyLaboratoryExample?.openModal()"
           >
             Copy dữ liệu từ hệ thống
@@ -186,7 +185,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <th>Đơn vị</th>
             <th>Giá vốn</th>
             <th>Giá bán</th>
-            <th v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]">Action</th>
+            <th v-if="userPermission[PermissionId.LABORATORY_UPDATE]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -246,7 +245,7 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             </td>
             <td class="text-right">{{ formatMoney(laboratory.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
+            <td v-if="userPermission[PermissionId.LABORATORY_UPDATE]" class="text-center">
               <a
                 style="color: var(--text-orange)"
                 @click="modalLaboratoryUpsert?.openModal(laboratory.id)"

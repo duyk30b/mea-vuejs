@@ -9,10 +9,10 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import {
-  LaboratoryKit,
-  LaboratoryKitApi,
-  LaboratoryKitService,
-} from '../../../../modules/laboratory-kit'
+  LaboratorySample,
+  LaboratorySampleApi,
+  LaboratorySampleService,
+} from '../../../../modules/laboratory-sample'
 import { arrayToKeyValue, DString } from '../../../../utils'
 import { IconDelete } from '../../../../common/icon-google'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
@@ -24,9 +24,9 @@ const emit = defineEmits<{
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
-const laboratoryKitRoot = ref<LaboratoryKit>(LaboratoryKit.blank())
-const laboratoryKit = ref<LaboratoryKit>(LaboratoryKit.blank())
-const laboratoryKitItem = ref<Laboratory[]>([])
+const laboratorySampleRoot = ref<LaboratorySample>(LaboratorySample.blank())
+const laboratorySample = ref<LaboratorySample>(LaboratorySample.blank())
+const laboratorySampleItem = ref<Laboratory[]>([])
 const laboratoryAll = ref<Laboratory[]>([])
 const laboratoryOptions = ref<{ value: number; text: string; data: Laboratory }[]>([])
 
@@ -37,43 +37,43 @@ const laboratoryMap = computed(() => {
   return arrayToKeyValue(laboratoryAll.value, 'id')
 })
 
-const openModal = async (laboratoryKitId?: number) => {
+const openModal = async (laboratorySampleId?: number) => {
   showModal.value = true
 
-  if (!laboratoryKitId) {
-    laboratoryKit.value = LaboratoryKit.blank()
-    laboratoryKitRoot.value = LaboratoryKit.blank()
-    const laboratoryKitAll = await LaboratoryKitService.list({})
-    laboratoryKit.value.priority = laboratoryKitAll.length + 1
+  if (!laboratorySampleId) {
+    laboratorySample.value = LaboratorySample.blank()
+    laboratorySampleRoot.value = LaboratorySample.blank()
+    const laboratorySampleAll = await LaboratorySampleService.list({})
+    laboratorySample.value.priority = laboratorySampleAll.length + 1
     laboratoryAll.value = await LaboratoryService.list({})
   } else {
-    const laboratoryKitResponse = await LaboratoryKitApi.detail(laboratoryKitId, {})
-    laboratoryKitRoot.value = laboratoryKitResponse
-    laboratoryKit.value = LaboratoryKit.from(laboratoryKitResponse)
+    const laboratorySampleResponse = await LaboratorySampleApi.detail(laboratorySampleId, {})
+    laboratorySampleRoot.value = laboratorySampleResponse
+    laboratorySample.value = LaboratorySample.from(laboratorySampleResponse)
     laboratoryAll.value = await LaboratoryService.list({})
     searchingLaboratory('')
     try {
-      const laboratoryIdList: number[] = JSON.parse(laboratoryKitResponse.laboratoryIds)
+      const laboratoryIdList: number[] = JSON.parse(laboratorySampleResponse.laboratoryIds)
       if (!Array.isArray(laboratoryIdList)) return
-      laboratoryKitItem.value = laboratoryIdList
+      laboratorySampleItem.value = laboratoryIdList
         .map((id) => laboratoryMap.value[id])
         .filter((i) => !!i)
     } catch (error) {
-      console.log('🚀 ~ file: ModalLaboratoryKitUpsert.vue:61 ~ openModal ~ error:', error)
+      console.log('🚀 ~ file: ModalLaboratorySampleUpsert.vue:61 ~ openModal ~ error:', error)
     }
   }
 }
 
 const closeModal = () => {
   showModal.value = false
-  laboratoryKitRoot.value = LaboratoryKit.blank()
-  laboratoryKit.value = LaboratoryKit.blank()
-  laboratoryKitItem.value = []
+  laboratorySampleRoot.value = LaboratorySample.blank()
+  laboratorySample.value = LaboratorySample.blank()
+  laboratorySampleItem.value = []
   laboratoryOptions.value = []
 }
 
 const disabledButtonSave = computed(() => {
-  return LaboratoryKit.equal(laboratoryKit.value, laboratoryKitRoot.value)
+  return LaboratorySample.equal(laboratorySample.value, laboratorySampleRoot.value)
 })
 
 const searchingLaboratory = async (text: string) => {
@@ -83,25 +83,25 @@ const searchingLaboratory = async (text: string) => {
 
 const selectLaboratory = (laboratorySelected?: Laboratory) => {
   if (laboratorySelected) {
-    laboratoryKitItem.value.push(Laboratory.from(laboratorySelected))
+    laboratorySampleItem.value.push(Laboratory.from(laboratorySelected))
   }
-  laboratoryKit.value.laboratoryIds = JSON.stringify(laboratoryKitItem.value.map((i) => i.id))
+  laboratorySample.value.laboratoryIds = JSON.stringify(laboratorySampleItem.value.map((i) => i.id))
 }
 
 const removeLaboratory = (index: number) => {
-  laboratoryKitItem.value.splice(index, 1)
-  laboratoryKit.value.laboratoryIds = JSON.stringify(laboratoryKitItem.value.map((i) => i.id))
+  laboratorySampleItem.value.splice(index, 1)
+  laboratorySample.value.laboratoryIds = JSON.stringify(laboratorySampleItem.value.map((i) => i.id))
 }
 
 const handleSave = async () => {
   saveLoading.value = true
 
   try {
-    if (!laboratoryKit.value.id) {
-      await LaboratoryKitService.createOne(laboratoryKit.value)
+    if (!laboratorySample.value.id) {
+      await LaboratorySampleService.createOne(laboratorySample.value)
       AlertStore.addSuccess('Tạo mới thành công', 1000)
     } else {
-      await LaboratoryKitService.updateOne(laboratoryKit.value.id, laboratoryKit.value)
+      await LaboratorySampleService.updateOne(laboratorySample.value.id, laboratorySample.value)
       AlertStore.addSuccess('Cập nhật thành công', 1000)
     }
     emit('success')
@@ -119,7 +119,7 @@ const clickDelete = () => {
     content: ['Bộ xét nghiệm đã xóa không thể khôi phục lại được.', 'Bạn chắc chắn vẫn muốn xóa ?'],
     async onOk() {
       try {
-        await LaboratoryKitService.destroyOne(laboratoryKit.value.id)
+        await LaboratorySampleService.destroyOne(laboratorySample.value.id)
         emit('success')
         closeModal()
       } catch (error) {
@@ -137,7 +137,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ laboratoryKit.id ? 'Cập nhật bộ xét nghiệm' : 'Tạo bộ xét nghiệm mới' }}
+          {{ laboratorySample.id ? 'Cập nhật bộ xét nghiệm' : 'Tạo bộ xét nghiệm mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -150,14 +150,14 @@ defineExpose({ openModal })
               <span>Tên bộ xét nghiệm</span>
             </div>
             <div>
-              <InputText v-model:value="laboratoryKit.name" required />
+              <InputText v-model:value="laboratorySample.name" required />
             </div>
           </div>
 
           <div style="flex-basis: 200px; flex-grow: 1">
             <div class="">STT</div>
             <div>
-              <InputNumber v-model:value="laboratoryKit.priority" />
+              <InputNumber v-model:value="laboratorySample.priority" />
             </div>
           </div>
         </div>
@@ -195,11 +195,11 @@ defineExpose({ openModal })
                 </tr>
               </thead>
               <tbody>
-                <tr v-if="laboratoryKitItem!.length === 0">
+                <tr v-if="laboratorySampleItem!.length === 0">
                   <td colspan="20" class="text-center">Không có dữ liệu</td>
                 </tr>
 
-                <tr v-for="(item, index) in laboratoryKitItem" :key="index">
+                <tr v-for="(item, index) in laboratorySampleItem" :key="index">
                   <td class="text-center">{{ index + 1 }}</td>
                   <td>{{ item.name }}</td>
                   <td class="text-right">{{ formatMoney(item.price) }}</td>
@@ -214,7 +214,7 @@ defineExpose({ openModal })
                     <b>Tổng tiền</b>
                   </td>
                   <td class="text-right font-bold">
-                    {{ formatMoney(laboratoryKitItem.reduce((acc, item) => acc + item.price, 0)) }}
+                    {{ formatMoney(laboratorySampleItem.reduce((acc, item) => acc + item.price, 0)) }}
                   </td>
                   <td></td>
                 </tr>
@@ -226,7 +226,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton v-if="laboratoryKit.id" color="red" icon="trash" @click="clickDelete">
+          <VueButton v-if="laboratorySample.id" color="red" icon="trash" @click="clickDelete">
             Xóa
           </VueButton>
           <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
@@ -238,7 +238,7 @@ defineExpose({ openModal })
             :loading="saveLoading"
             icon="save"
             :disabled="disabledButtonSave">
-            {{ laboratoryKit.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
+            {{ laboratorySample.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
           </VueButton>
         </div>
       </div>

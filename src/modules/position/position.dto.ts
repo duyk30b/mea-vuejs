@@ -1,8 +1,8 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionEnum } from '../_base/base-condition'
-import type { InteractType } from './commission.model'
+import type { PositionType } from './position.model'
 
-export class CommissionGetQuery {
+export class PositionGetQuery {
   page?: number
   limit?: number
   relation?: {
@@ -15,17 +15,17 @@ export class CommissionGetQuery {
 
   filter?: {
     roleId?: number
-    interactType?: InteractType | ConditionEnum<InteractType>
-    interactId?: number
+    positionType?: PositionType | ConditionEnum<PositionType>
+    positionInteractId?: number
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
-    interactType?: 'ASC' | 'DESC'
+    positionType?: 'ASC' | 'DESC'
     roleId?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<CommissionGetQuery>) {
+  static toQuery(instance: Partial<PositionGetQuery>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -36,6 +36,6 @@ export class CommissionGetQuery {
   }
 }
 
-export class CommissionPaginationQuery extends CommissionGetQuery {}
-export class CommissionListQuery extends OmitClass(CommissionGetQuery, ['page']) {}
-export class CommissionDetailQuery extends PickClass(CommissionGetQuery, ['relation']) {}
+export class PositionPaginationQuery extends PositionGetQuery {}
+export class PositionListQuery extends OmitClass(PositionGetQuery, ['page']) {}
+export class PositionDetailQuery extends PickClass(PositionGetQuery, ['relation']) {}

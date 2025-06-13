@@ -15,6 +15,7 @@ const formState = reactive({
   username: '',
   password: '',
   oid: 1,
+  uid: 0,
 })
 
 const loading = ref(false)
@@ -40,6 +41,7 @@ const startLogin = async () => {
       username: formState.username,
       password: formState.password,
       oid: formState.oid,
+      uid: formState.uid,
     })
     if (result) {
       router.push({ name: 'AppHome' })
@@ -92,6 +94,13 @@ const startLoginDemo = async () => {
           <div>Oid</div>
           <div>
             <InputNumber v-model:value="formState.oid" />
+          </div>
+        </div>
+
+        <div v-if="isRootLogin" class="mt-4">
+          <div>Uid</div>
+          <div>
+            <InputNumber v-model:value="formState.uid" />
           </div>
         </div>
 

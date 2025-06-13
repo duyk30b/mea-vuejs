@@ -1,8 +1,8 @@
 import { DImage, DString, ESTimer } from '../../utils'
-import { InteractType } from '../commission/commission.model'
 import { LaboratoryValueType, type Laboratory } from '../laboratory'
 import type { LaboratoryGroup } from '../laboratory-group'
 import type { Organization } from '../organization'
+import { PositionType } from '../position'
 import type { Radiology } from '../radiology'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
@@ -37,7 +37,7 @@ export const compiledTemplatePrintHtml = (options: {
       HEADER: options?._LAYOUT?.HEADER || '',
     },
     _UTILS: {
-      InteractType,
+      PositionType,
       LaboratoryValueType,
       ESTimer,
       DImage,

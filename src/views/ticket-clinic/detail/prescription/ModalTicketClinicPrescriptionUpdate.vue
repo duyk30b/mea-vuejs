@@ -13,7 +13,7 @@ import {
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -45,17 +45,17 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Product]?.[ticketProduct.value.id] || []
+    ticketClinicRef.value.ticketUserGroup?.[PositionType.Product]?.[ticketProduct.value.id] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Product,
-      interactId: ticketProduct.value.productId,
+      positionType: PositionType.Product,
+      positionInteractId: ticketProduct.value.productId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))
@@ -131,7 +131,16 @@ const hasChangeData = computed(() => {
 })
 
 const handleChangeUnitQuantityPrescription = (data: number) => {
-  if (ticketProduct.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
+    const { product, unitRate } = ticketProduct.value
+    ticketProduct.value.unitQuantityPrescription = data
+    ticketProduct.value.unitQuantity = data
+    ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
+  }
+}
+
+const handleChangeUnitQuantity = (data: number) => {
+  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
     ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
@@ -222,7 +231,7 @@ const updateTicketProduct = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
 
-    await TicketClinicProductApi.updateTicketProductPrescription({
+        await TicketClinicProductApi.updateTicketProductPrescription({
       ticketId: ticketClinicRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
@@ -280,7 +289,7 @@ defineExpose({ openModal })
             <div class="flex-1">
               <InputNumber
                 :value="ticketProduct.unitQuantityPrescription"
-                :validate="{ gt: 0 }"
+                :validate="{ gte: 0 }"
                 @update:value="handleChangeUnitQuantityPrescription"
               />
             </div>
@@ -318,7 +327,8 @@ defineExpose({ openModal })
             </div>
             <div class="flex-1">
               <InputNumber
-                v-model:value="ticketProduct.unitQuantity"
+                :value="ticketProduct.unitQuantity"
+                @update:value="handleChangeUnitQuantity"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 :validate="{ gte: 0 }"
               />

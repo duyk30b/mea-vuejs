@@ -10,25 +10,20 @@ import {
   IconUser,
 } from '../../common/icon-antd'
 import { IconLabPanel, IconPulmonology, IconWarehouse } from '../../common/icon-google'
-import { useMeStore } from '../../modules/_me/me.store'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import Breadcrumb from '../component/Breadcrumb.vue'
 import ModalProcedureGroupManager from './modal/ModalProcedureGroupManager.vue'
 import ModalProductGroupManager from './modal/ModalProductGroupManager.vue'
 import ModalRadiologyGroupManager from './modal/ModalRadiologyGroupManager.vue'
+import { MeService } from '../../modules/_me/me.service'
 
 const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
 const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const router = useRouter()
-const meStore = useMeStore()
 
-const matchedRouter = computed(() => {
-  return router.currentRoute.value.matched
-})
-
-const { permissionIdMap } = meStore
+const { organizationPermission, userPermission } = MeService
 </script>
 
 <template>
@@ -49,7 +44,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Procedure' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
+        v-if="userPermission[PermissionId.PROCEDURE_MENU]"
       >
         <div class="card-icon">
           <IconReconciliation />
@@ -63,7 +58,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Laboratory' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        v-if="userPermission[PermissionId.LABORATORY_MENU]"
       >
         <div class="card-icon">
           <IconLabPanel />
@@ -77,7 +72,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Radiology' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
+        v-if="userPermission[PermissionId.RADIOLOGY_MENU]"
       >
         <div class="card-icon">
           <IconPulmonology />
@@ -93,7 +88,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'PrintHtml' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"
       >
         <div class="card-icon">
           <IconPrint />
@@ -109,7 +104,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Warehouse' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
       >
         <div class="card-icon">
           <IconWarehouse />
@@ -123,7 +118,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'PaymentMethod' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
       >
         <div class="card-icon">
           <IconDollar />
@@ -146,7 +141,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'CustomerSource' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_CUSTOMER_SOURCE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_CUSTOMER_SOURCE]"
       >
         <div class="card-icon">
           <IconUser />
@@ -160,7 +155,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'PrescriptionSample' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
       >
         <div class="card-icon">
           <IconTool />
@@ -173,8 +168,8 @@ const { permissionIdMap } = meStore
 
       <div
         class="card"
-        @click="router.push({ name: 'LaboratoryKit' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        @click="router.push({ name: 'LaboratorySample' })"
+        v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]"
       >
         <div class="card-icon">
           <IconTool />
@@ -187,7 +182,11 @@ const { permissionIdMap } = meStore
         </div>
       </div>
 
-      <div class="card" @click="modalProductGroupManager?.openModal()">
+      <div
+        class="card"
+        @click="modalProductGroupManager?.openModal()"
+        v-if="userPermission[PermissionId.PRODUCT_GROUP_CRUD]"
+      >
         <div class="card-icon">
           <IconTool />
         </div>
@@ -196,7 +195,11 @@ const { permissionIdMap } = meStore
           <div class="card-description">Quản lý danh sách nhóm sản phẩm</div>
         </div>
       </div>
-      <div class="card" @click="modalProcedureGroupManager?.openModal()">
+      <div
+        class="card"
+        @click="modalProcedureGroupManager?.openModal()"
+        v-if="userPermission[PermissionId.PROCEDURE_GROUP_CRUD]"
+      >
         <div class="card-icon">
           <IconTool />
         </div>
@@ -205,7 +208,11 @@ const { permissionIdMap } = meStore
           <div class="card-description">Quản lý danh sách nhóm dịch vụ</div>
         </div>
       </div>
-      <div class="card" @click="modalRadiologyGroupManager?.openModal()">
+      <div
+        class="card"
+        @click="modalRadiologyGroupManager?.openModal()"
+        v-if="userPermission[PermissionId.RADIOLOGY_GROUP_CRUD]"
+      >
         <div class="card-icon">
           <IconTool />
         </div>

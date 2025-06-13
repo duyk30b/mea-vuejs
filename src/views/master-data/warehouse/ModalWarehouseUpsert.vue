@@ -5,17 +5,16 @@ import { IconClose } from '../../../common/icon-antd'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import { MeService } from '../../../modules/_me/me.service'
 
 const emit = defineEmits<{
   (e: 'success', value: Warehouse, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const warehouse = ref(Warehouse.blank())
@@ -106,7 +105,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] && warehouse.id"
+            v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE] && warehouse.id"
             color="red"
             @click="clickDelete"
           >

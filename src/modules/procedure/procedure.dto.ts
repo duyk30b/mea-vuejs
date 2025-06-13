@@ -6,7 +6,7 @@ export class ProcedureGetQuery {
   limit?: number
   relation?: {
     procedureGroup?: boolean
-    commissionList?: boolean
+    positionList?: boolean
   }
 
   filter?: {

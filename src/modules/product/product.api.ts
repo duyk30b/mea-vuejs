@@ -50,8 +50,8 @@ export class ProductApi {
 
   static async createOne(product: Product) {
     const response = await AxiosInstance.post('/product/create', {
+      productCode: product.productCode,
       brandName: product.brandName,
-      productCode: product.productCode || '',
       quantity: product.quantity,
       substance: product.substance,
       costPrice: product.costPrice,
@@ -66,13 +66,13 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       isActive: product.isActive,
 
-      pickupStrategy: product.pickupStrategy,
+      productType: product.productType,
       splitBatchByWarehouse: product.splitBatchByWarehouse,
       splitBatchByDistributor: product.splitBatchByDistributor,
       splitBatchByExpiryDate: product.splitBatchByExpiryDate,
       splitBatchByCostPrice: product.splitBatchByCostPrice,
 
-      commissionList: (product.commissionList || [])
+      positionList: (product.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {
@@ -88,8 +88,8 @@ export class ProductApi {
 
   static async updateOne(id: number, product: Product) {
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
-      brandName: product.brandName,
       productCode: product.productCode,
+      brandName: product.brandName,
       substance: product.substance,
       costPrice: product.costPrice,
       wholesalePrice: product.wholesalePrice,
@@ -103,13 +103,13 @@ export class ProductApi {
       warehouseIds: product.warehouseIds,
       isActive: product.isActive,
 
-      pickupStrategy: product.pickupStrategy,
+      productType: product.productType,
       splitBatchByWarehouse: product.splitBatchByWarehouse,
       splitBatchByDistributor: product.splitBatchByDistributor,
       splitBatchByExpiryDate: product.splitBatchByExpiryDate,
       splitBatchByCostPrice: product.splitBatchByCostPrice,
 
-      commissionList: (product.commissionList || [])
+      positionList: (product.positionList || [])
         .filter((i) => !!i.roleId)
         .map((i) => {
           return {

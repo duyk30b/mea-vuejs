@@ -1,9 +1,9 @@
+import { Batch } from '@/modules/batch'
 import { MeService } from '../../modules/_me/me.service'
-import { useMeStore } from '../../modules/_me/me.store'
-import type { InteractType } from '../../modules/commission'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
+import type { PositionType } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
@@ -16,6 +16,7 @@ import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
+import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
 
@@ -26,7 +27,7 @@ export class SocketService {
 
   static async listenOrganizationUpdate(data: { organization: Organization }) {
     const organization = Organization.from(data.organization)
-    useMeStore().organization = organization
+    MeService.organization.value = organization
   }
 
   static async listenSettingReload(data: any) {
@@ -54,14 +55,32 @@ export class SocketService {
     }
   }
 
-  static async listenProductUpsert(data: { product: any }) {
-    const product = Product.from(data.product)
-    await ProductDB.upsertOne(product)
+  static async listenProductListChange(data: {
+    productDestroyedList?: Product[]
+    productUpsertedList?: Product[]
+  }) {
+    if (data.productUpsertedList?.length) {
+      const productUpsertedList = Product.fromList(data.productUpsertedList)
+      await ProductDB.upsertMany(productUpsertedList)
+    }
+    if (data.productDestroyedList?.length) {
+      const productIdDestroyList = data.productDestroyedList.map((i) => i.id)
+      await ProductDB.deleteMany(productIdDestroyList)
+    }
   }
 
-  static async listenProductListUpdate(data: { productList: any[] }) {
-    const productList = Product.fromList(data.productList)
-    await ProductDB.upsertMany(productList)
+  static async listenBatchListChange(data: {
+    batchDestroyedList?: any[]
+    batchUpsertedList?: any[]
+  }) {
+    if (data.batchUpsertedList?.length) {
+      const batchUpsertedList = Batch.fromList(data.batchUpsertedList)
+      await BatchDB.upsertMany(batchUpsertedList)
+    }
+    if (data.batchDestroyedList?.length) {
+      const batchIdDestroyList = data.batchDestroyedList.map((i) => i.id)
+      await BatchDB.deleteMany(batchIdDestroyList)
+    }
   }
 
   static getTicketAction(ticketId: number) {
@@ -116,8 +135,8 @@ export class SocketService {
     ticketUserDestroyList?: TicketUser[]
     ticketUserUpsertList?: TicketUser[]
     replace?: {
-      interactType: InteractType
-      ticketItemId: number // ticketItemId = 0 là thay thế toàn bộ interactType đó
+      positionType: PositionType
+      ticketItemId: number // ticketItemId = 0 là thay thế toàn bộ positionType đó
       ticketUserList: TicketUser[]
     }
     replaceAll: {
@@ -130,15 +149,15 @@ export class SocketService {
 
       if (data.replace) {
         const ticketUserOtherList = ticket.ticketUserList.filter((i) => {
-          if (i.interactType !== data.replace!.interactType) return true
+          if (i.positionType !== data.replace!.positionType) return true
           if (data.replace?.ticketItemId) {
-            // ticketItemId = 0 là thay thế toàn bộ interactType đó nên ko filter
+            // ticketItemId = 0 là thay thế toàn bộ positionType đó nên ko filter
             if (i.ticketItemId !== data.replace!.ticketItemId) return true
           }
           return false
         })
         // let ticketUserActionList = ticket.ticketUserList.filter((i) => {
-        //   if (i.interactType !== data.replace!.interactType) return false
+        //   if (i.positionType !== data.replace!.positionType) return false
         //   if (i.ticketItemId !== data.replace!.ticketItemId) return false
         //   return true
         // })

@@ -3,15 +3,13 @@ import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, VueSelect } from '../../../../common/vue-form'
+import { InputCheckbox } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
 import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
-import { TicketType } from '../../../../modules/ticket'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
@@ -22,7 +20,6 @@ const TABS_KEY = {
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
 
 const settingDisplay = ref<typeof settingStore.TICKET_CLINIC_DETAIL>(
   JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL)),

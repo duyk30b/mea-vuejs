@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
@@ -17,8 +17,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const ticketList = ref<Ticket[]>([])
 const page = ref(1)
@@ -73,7 +72,7 @@ const openBlankTicketOrderUpsert = (customerId: number) => {
     <div class="flex flex-wrap items-center gap-2">
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD]"
+          v-if="userPermission[PermissionId.TICKET_ORDER_DRAFT_CRUD]"
           color="blue"
           icon="plus"
           @click="openBlankTicketOrderUpsert(customerId!)"

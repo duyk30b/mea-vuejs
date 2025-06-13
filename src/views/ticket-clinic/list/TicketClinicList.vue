@@ -1,23 +1,24 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconDownload, IconFileSearch, IconRead, IconSetting } from '@/common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { CustomerService, type Customer } from '@/modules/customer'
+import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PositionType } from '@/modules/position'
+import { Role, RoleService } from '@/modules/role'
+import { TicketApi, TicketStatus, TicketType } from '@/modules/ticket'
+import { ticketClinicPagination } from '@/modules/ticket-clinic'
+import { User, UserService } from '@/modules/user'
 import { onBeforeMount, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { IconDownload, IconFileSearch, IconRead, IconSetting } from '../../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../common/icon-google'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { InteractType } from '../../../modules/commission'
-import { CustomerService, type Customer } from '../../../modules/customer'
-import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Role, RoleService } from '../../../modules/role'
-import { TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
-import { ticketClinicPagination } from '../../../modules/ticket-clinic'
-import { User, UserService } from '../../../modules/user'
+import { useRouter } from 'vue-router'
 import { DString, ESTimer, formatPhone } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -30,10 +31,11 @@ const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalTicketClinicListSetting>>()
 
+const router = useRouter()
+
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const customerList = ref<Customer[]>([])
 const dataLoading = ref(false)
@@ -95,7 +97,12 @@ const startFetchData = async () => {
 }
 
 onBeforeMount(async () => {
-  Promise.all([RoleService.getMap(), UserService.getMap(), startFetchData()])
+  Promise.all([
+    RoleService.getMap(),
+    UserService.getMap(),
+    startFetchData(),
+    CustomerService.refreshDB(),
+  ])
     .then((result) => {
       roleMap.value = result[0]
       userMap.value = result[1]
@@ -201,7 +208,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalTicketClinicListSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketClinicListSetting"
     @success="handleModalTicketClinicListSettingSuccess"
   />
@@ -214,7 +221,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
       <div>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_CLINIC_CREATE] &&
+            userPermission[PermissionId.TICKET_CLINIC_CREATE] &&
             settingStore.TICKET_CLINIC_LIST.buttonShowModalCreate
           "
           color="blue"
@@ -227,12 +234,12 @@ const downloadTicketClinicList = (menu: { key: string }) => {
       <div>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_CLINIC_CREATE] &&
+            userPermission[PermissionId.TICKET_CLINIC_CREATE] &&
             settingStore.TICKET_CLINIC_LIST.buttonShowTicketDetailBlank
           "
           color="blue"
           icon="plus"
-          @click="$router.push({ name: 'TicketClinicDetailContainer', params: { id: 0 } })"
+          @click="router.push({ name: 'TicketClinicDetailContainer', params: { id: 0 } })"
         >
           KHÁM MỚI
         </VueButton>
@@ -241,7 +248,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
     <div class="mr-2 flex items-center gap-4 flex-wrap">
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_TICKET_CLINIC_DOWNLOAD_EXCEL]"
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_TICKET_CLINIC]"
           :icon="IconDownload"
           @click="downloadTicketClinicList"
         >
@@ -393,7 +400,6 @@ const downloadTicketClinicList = (menu: { key: string }) => {
             <th style="min-width: 150px">Khách hàng</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.birthday">Ngày sinh</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.address" style="min-width: 120px">Địa chỉ</th>
             <th style="white-space: nowrap">Chẩn đoán</th>
             <th v-for="(roleId, i) in settingStore.TICKET_CLINIC_LIST.roleIdList" :key="i">
               {{ roleMap[roleId]?.name || '' }}
@@ -461,6 +467,9 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               <div v-if="ticket.customer?.note" class="text-xs italic">
                 {{ ticket.customer?.note }}
               </div>
+              <div class="text-xs italic">
+                {{ DString.formatAddress(ticket.customer!) }}
+              </div>
             </td>
 
             <td v-if="settingStore.TICKET_CLINIC_LIST.birthday" class="text-center">
@@ -472,11 +481,6 @@ const downloadTicketClinicList = (menu: { key: string }) => {
             </td>
             <td v-if="settingStore.TICKET_CLINIC_LIST.phone" class="text-center">
               {{ formatPhone(ticket.customer?.phone) }}
-            </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.address">
-              <div class="max-line-2">
-                {{ DString.formatAddress(ticket.customer!) }}
-              </div>
             </td>
             <td>
               <div class="max-line-2">
@@ -491,7 +495,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               {{
                 userMap[
                   ticket.ticketUserList?.find((i) => {
-                    return i.interactType === InteractType.Ticket && i.roleId === roleId
+                    return i.positionType === PositionType.Ticket && i.roleId === roleId
                   })?.userId || 0
                 ]?.fullName
               }}

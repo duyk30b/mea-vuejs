@@ -112,15 +112,15 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'laboratory-kit',
-      name: 'LaboratoryKit',
-      redirect: () => ({ name: 'LaboratoryKitList' }),
+      path: 'laboratory-sample',
+      name: 'LaboratorySample',
+      redirect: () => ({ name: 'LaboratorySampleList' }),
+      meta: { title: 'Bộ xét nghiệm' },
       children: [
         {
           path: 'list',
-          name: 'LaboratoryKitList',
-          component: () => import('../views/master-data/laboratory-kit/list/LaboratoryKitList.vue'),
-          meta: { title: 'Bộ xét nghiệm' },
+          name: 'LaboratorySampleList',
+          component: () => import('../views/master-data/laboratory-sample/list/LaboratorySampleList.vue'),
         },
       ],
     },
@@ -128,13 +128,13 @@ export const masterDataRouter: RouteRecordRaw = {
       path: 'prescription-sample',
       name: 'PrescriptionSample',
       redirect: () => ({ name: 'PrescriptionSampleList' }),
+      meta: { title: 'Đơn thuốc mẫu' },
       children: [
         {
           path: 'list',
           name: 'PrescriptionSampleList',
           component: () =>
             import('../views/master-data/prescription-sample/list/PrescriptionSampleList.vue'),
-          meta: { title: 'Bộ xét nghiệm' },
         },
       ],
     },
@@ -142,12 +142,12 @@ export const masterDataRouter: RouteRecordRaw = {
       path: 'customer-source',
       name: 'CustomerSource',
       redirect: () => ({ name: 'CustomerSourceList' }),
+      meta: { title: 'Nguồn khách hàng' },
       children: [
         {
           path: 'list',
           name: 'CustomerSourceList',
           component: () => import('../views/master-data/customer-source/CustomerSourceList.vue'),
-          meta: { title: 'Dịch vụ' },
         },
       ],
     },

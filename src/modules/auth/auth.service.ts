@@ -3,7 +3,7 @@ import { MeaDatabase } from '../../core/indexed-db/database'
 import { LocalStorageService } from '../../core/local-storage.service'
 import { reconnectSocket } from '../../core/socket/socket.base'
 import { Router } from '../../router/router'
-import { useMeStore } from '../_me/me.store'
+import { MeService } from '../_me/me.service'
 import { AuthApi } from './auth.api'
 import type { LoginDto, LoginRootDto, RegisterDto } from './auth.dto'
 
@@ -13,7 +13,7 @@ export class AuthService {
       const data = await AuthApi.register(body)
       LocalStorageService.setToken(data)
       LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
-      useMeStore().user = data.user
+      MeService.user.value = data.user
       reconnectSocket()
       return true
     } catch (error: any) {
@@ -28,7 +28,7 @@ export class AuthService {
       const data = await AuthApi.login(body)
       LocalStorageService.setToken(data)
       LocalStorageService.setOrgPhone(body.orgPhone)
-      useMeStore().user = data.user
+      MeService.user.value = data.user
       reconnectSocket()
       return true
     } catch (error: any) {
@@ -43,7 +43,7 @@ export class AuthService {
       const data = await AuthApi.loginRoot(body)
       LocalStorageService.setToken(data)
       LocalStorageService.setOrgPhone(body.orgPhone)
-      useMeStore().user = data.user
+      MeService.user.value = data.user
       reconnectSocket()
       return true
     } catch (error: any) {
@@ -57,7 +57,7 @@ export class AuthService {
     try {
       const data = await AuthApi.loginDemo()
       LocalStorageService.setToken(data)
-      useMeStore().user = data.user
+      MeService.user.value = data.user
       reconnectSocket()
       return true
     } catch (error: any) {
@@ -71,7 +71,7 @@ export class AuthService {
     const start = async () => {
       const refreshToken = LocalStorageService.getRefreshToken() // khai báo trước removeToken
       LocalStorageService.removeToken()
-      useMeStore().user = null // khai báo trước Router push Login
+      MeService.user.value = null // khai báo trước Router push Login
       Router.push({ name: 'Login' })
       AlertStore.addError('Phiên đăng nhập đã kết thúc !', 2000)
       try {

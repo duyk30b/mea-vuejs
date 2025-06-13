@@ -66,6 +66,20 @@ defineExpose({ openModal })
           <tbody>
             <tr>
               <td>
+                <InputCheckbox v-model:checked="settingDisplay.zeroQuantity">
+                  Hiển thị lô hàng đã hết (số lượng = 0)
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <InputCheckbox v-model:checked="settingDisplay.id">
+                  Hiển thị ID sản phẩm
+                </InputCheckbox>
+              </td>
+            </tr>
+            <tr>
+              <td>
                 <InputCheckbox v-model:checked="settingDisplay.detail">
                   Hiển thị nút xem chi tiết (
                   <IconFileSearch />
@@ -87,12 +101,16 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.warehouse">Hiển thị kho</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.warehouse">
+                  Hiển thị kho
+                </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td>
-                <InputCheckbox v-model:checked="settingDisplay.distributor">Hiển thị nhà cung cấp</InputCheckbox>
+                <InputCheckbox v-model:checked="settingDisplay.distributor">
+                  Hiển thị nhà cung cấp
+                </InputCheckbox>
               </td>
             </tr>
             <tr>

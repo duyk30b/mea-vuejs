@@ -1,25 +1,19 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import {
-  InputHint,
-  InputMoney,
-  InputNumber,
-  InputOptions,
-  VueSelect,
-} from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, BatchService } from '../../../modules/batch'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, ProductService } from '../../../modules/product'
-import { TicketProduct } from '../../../modules/ticket-product'
-import type { Warehouse } from '../../../modules/warehouse'
-import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { customFilter, ESTimer } from '../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert'
+import { InputHint, InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service.ts'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Batch, BatchService } from '@/modules/batch'
+import { DeliveryStatus, DiscountType, PickupStrategy, ProductType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Product, ProductService } from '@/modules/product'
+import { TicketProduct } from '@/modules/ticket-product'
+import type { Warehouse } from '@/modules/warehouse'
+import { WarehouseService } from '@/modules/warehouse/warehouse.service'
+import { customFilter, ESTimer } from '@/utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
@@ -30,8 +24,7 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const product = ref(Product.blank())
 const productList = ref<Product[]>([])
@@ -74,7 +67,7 @@ const searchingProduct = async (text: string) => {
                   ? undefined
                   : { NOT: 0 },
               },
-              { pickupStrategy: PickupStrategy.NoImpact },
+              { warehouseIds: '[]' },
             ],
           },
         ],
@@ -116,7 +109,7 @@ const selectProduct = async (productProp?: Product) => {
   const tp = TicketProduct.blank()
   tp.productId = productProp.id
   tp.product = Product.from(productProp)
-  tp.pickupStrategy = productProp.pickupStrategyFix // set chiến lược lấy lô hàng ở đây
+  tp.pickupStrategy = PickupStrategy.AutoWithFIFO
 
   tp.deliveryStatus = DeliveryStatus.Pending
   tp.unitRate = productProp.unitDefaultRate
@@ -146,7 +139,7 @@ const selectProduct = async (productProp?: Product) => {
   }
 
   // Tính toán cho batchID // lằng nhằng nhé
-  if (tp.pickupStrategy === PickupStrategy.RequireBatchSelection) {
+  if (productProp.productType === ProductType.SplitBatch) {
     const warehouseIdAcceptList: number[] =
       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
     let canGetAllWarehouse = false
@@ -279,21 +272,20 @@ const addTicketProduct = () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+  if (product?.warehouseIds !== '[]') {
     if (ticketProduct.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProduct.value.quantity
         }`,
       )
-    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
-      if (ticketProduct.value.quantity > batch!.quantity) {
-        AlertStore.addWarning(
-          `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
-            ticketProduct.value.quantity
-          }`,
-        )
-      }
+    }
+    if (ticketProduct.value.batchId && ticketProduct.value.quantity > batch!.quantity) {
+      AlertStore.addWarning(
+        `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
+          ticketProduct.value.quantity
+        }`,
+      )
     }
   }
 
@@ -333,10 +325,7 @@ defineExpose({ focus })
           <IconFileSearch />
         </a>
         <span
-          v-if="
-            ticketProduct.productId &&
-            ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact
-          "
+          v-if="ticketProduct.productId && ticketProduct.product?.warehouseIds !== '[]'"
           :class="
             ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
           "
@@ -348,7 +337,7 @@ defineExpose({ focus })
           )
         </span>
         <a
-          v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && product.id"
+          v-if="userPermission[PermissionId.PRODUCT_UPDATE] && product.id"
           @click="modalProductUpsert?.openModal(product.id)"
         >
           Sửa thông tin sản phẩm
@@ -357,15 +346,15 @@ defineExpose({ focus })
       <div style="height: 40px">
         <InputOptions
           ref="inputOptionsProduct"
-          :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
+          :clearAfterSelected="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
           :maxHeight="320"
+          :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
           :prepend="ticketProduct?.product?.productCode"
           placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
           required
-          @selectItem="({ data }) => selectProduct(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
           @searching="searchingProduct"
-          :clearAfterSelected="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
+          @selectItem="({ data }) => selectProduct(data)"
         >
           <template #option="{ item: { data } }">
             <div>
@@ -375,8 +364,8 @@ defineExpose({ focus })
               <span v-if="data.pickupStrategyFix !== PickupStrategy.NoImpact">
                 - Tồn
                 <span
-                  style="font-weight: 700"
                   :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
+                  style="font-weight: 700"
                 >
                   {{ data.unitQuantity }}
                 </span>
@@ -391,8 +380,8 @@ defineExpose({ focus })
     </div>
 
     <div
+      v-if="ticketProduct.product?.productType === ProductType.SplitBatch"
       style="flex-grow: 1; flex-basis: 80%"
-      v-if="ticketProduct.pickupStrategy === PickupStrategy.RequireBatchSelection"
     >
       <div>
         Lô hàng
@@ -408,15 +397,15 @@ defineExpose({ focus })
       </div>
       <div>
         <VueSelect
-          :value="ticketProduct.batch!.id"
-          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
           :disabled="batchList.length == 0"
+          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
+          :value="ticketProduct.batch!.id"
           @selectItem="({ data }) => selectBatch(data)"
         >
           <template #option="{ item: { data } }">
             <div v-if="!data.id">Chưa chọn lô</div>
             <div v-if="data.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
               <b>{{ data.unitQuantity }}</b>
               {{ ticketProduct.product!.unitDefaultName }}
             </div>
@@ -424,7 +413,7 @@ defineExpose({ focus })
           <template #text="{ content: { data } }">
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
               <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>
@@ -444,11 +433,11 @@ defineExpose({ focus })
       <div>
         <InputHint
           v-model:value="ticketProduct.hintUsage"
+          :logic-filter="(item: string, text: string) => customFilter(item, text)"
           :options="[
             ...(ticketProduct.product?.hintUsage ? [ticketProduct.product?.hintUsage] : []),
             ...settingStore.PRODUCT_HINT_USAGE,
           ]"
-          :logic-filter="(item: string, text: string) => customFilter(item, text)"
         />
       </div>
     </div>
@@ -470,7 +459,7 @@ defineExpose({ focus })
           <VueSelect
             v-model:value="productOutSellType"
             :options="[
-              ...(permissionIdMap[PermissionId.READ_COST_PRICE] &&
+              ...(userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
               settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
                 ? [{ value: 'costPrice', text: 'Giá nhập' }]
                 : []),
@@ -545,24 +534,24 @@ defineExpose({ focus })
       <div class="flex">
         <VueSelect
           v-model:value="ticketProduct.discountType"
-          style="width: 120px"
           :options="[
             { value: DiscountType.Percent, text: '%' },
             { value: DiscountType.VND, text: 'VNĐ' },
           ]"
+          style="width: 120px"
         />
         <div style="width: calc(100% - 120px)">
           <InputMoney
             v-if="ticketProduct.discountType === DiscountType.VND"
+            :validate="{ gte: 0 }"
             :value="ticketProduct.unitDiscountMoney"
             @update:value="handleChangeUnitDiscountMoney"
-            :validate="{ gte: 0 }"
           />
           <InputNumber
             v-else
+            :validate="{ gte: 0, lte: 100 }"
             :value="ticketProduct.discountPercent"
             @update:value="handleChangeDiscountPercent"
-            :validate="{ gte: 0, lte: 100 }"
           />
         </div>
       </div>
@@ -582,8 +571,8 @@ defineExpose({ focus })
       </div>
       <div style="width: 100%">
         <InputMoney
-          :value="ticketProduct.unitActualPrice"
           :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
+          :value="ticketProduct.unitActualPrice"
           @update:value="handleChangeUnitActualPrice"
         />
       </div>
@@ -591,10 +580,10 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
-      style="flex-grow: 1; flex-basis: 80%"
       class="flex justify-center"
+      style="flex-grow: 1; flex-basis: 80%"
     >
-      <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
+      <VueButton color="blue" icon="plus" type="submit">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>
 </template>

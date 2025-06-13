@@ -54,11 +54,12 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        batchCode: i.batchCode || '',
+        lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
-        costPrice: i.costPrice,
         quantity: i.quantity,
+        costPrice: i.costPrice,
+        listPrice: i.listPrice,
       })),
     })
     const { data } = response.data as BaseResponse<{ receiptId: number }>
@@ -82,11 +83,12 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        batchCode: i.batchCode || '',
+        lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
-        costPrice: i.costPrice,
         quantity: i.quantity,
+        costPrice: i.costPrice,
+        listPrice: i.listPrice,
       })),
     })
     const { data } = response.data as BaseResponse<{ receiptId: number }>
@@ -110,11 +112,12 @@ export class ReceiptApi {
         productId: i.productId,
         batchId: i.batchId,
         warehouseId: i.warehouseId,
-        batchCode: i.batchCode || '',
+        lotNumber: i.lotNumber || '',
         expiryDate: i.expiryDate,
         unitRate: i.unitRate,
-        costPrice: i.costPrice,
         quantity: i.quantity,
+        costPrice: i.costPrice,
+        listPrice: i.listPrice,
       })),
     })
     const { data } = response.data as BaseResponse<{ receiptId: number }>

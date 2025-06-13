@@ -7,7 +7,7 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
@@ -40,18 +40,18 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[ticketProcedure.value.id] ||
+    ticketClinicRef.value.ticketUserGroup?.[PositionType.Procedure]?.[ticketProcedure.value.id] ||
     []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Procedure,
-      interactId: ticketProcedure.value.procedureId,
+      positionType: PositionType.Procedure,
+      positionInteractId: ticketProcedure.value.procedureId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))

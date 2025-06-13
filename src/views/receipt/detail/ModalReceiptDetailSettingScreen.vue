@@ -13,7 +13,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_DETAIL>(
-  JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_DETAIL))
+  JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_DETAIL)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -82,8 +82,7 @@ defineExpose({ openModal })
             </tr>
             <tr>
               <td>
-                <InputCheckbox
-                  v-model:checked="settingDisplay.receiptItemsTable.warehouse">
+                <InputCheckbox v-model:checked="settingDisplay.receiptItemsTable.warehouse">
                   Hiển thị kho
                 </InputCheckbox>
               </td>
@@ -91,7 +90,8 @@ defineExpose({ openModal })
             <tr>
               <td>
                 <InputCheckbox
-                  v-model:checked="settingDisplay.receiptItemsTable.batchCodeAndExpiryDate">
+                  v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate"
+                >
                   Hiển thị số lô và HSD
                 </InputCheckbox>
               </td>
@@ -157,7 +157,7 @@ defineExpose({ openModal })
       </div>
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

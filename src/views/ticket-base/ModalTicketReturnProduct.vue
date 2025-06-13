@@ -182,8 +182,8 @@ defineExpose({ openModal })
                   <div style="font-weight: 500">{{ tbReturn.tbRoot.product?.brandName }}</div>
                   <div class="text-xs italic">{{ tbReturn.tbRoot.product?.substance || '' }}</div>
                   <div v-if="tbReturn.tbRoot.batchId" class="text-xs italic">
-                    <span v-if="tbReturn.tbRoot.batch?.batchCode">
-                      Lô {{ tbReturn.tbRoot.batch?.batchCode }}
+                    <span v-if="tbReturn.tbRoot.batch?.lotNumber">
+                      Lô {{ tbReturn.tbRoot.batch?.lotNumber }}
                     </span>
                     <span v-if="tbReturn.tbRoot.batch?.expiryDate">
                       - HSD {{ ESTimer.timeToText(tbReturn.tbRoot.batch?.expiryDate) }}

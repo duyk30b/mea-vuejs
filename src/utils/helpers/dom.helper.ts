@@ -25,12 +25,21 @@ export class ESDom {
     doc.close()
   }
 
-  static async startPrint(id: string, options: { html: string; cssList?: string[]; jsList?: string[] }) {
-    const iframePrint = document.getElementById(id) as HTMLIFrameElement
-    if (!iframePrint) {
-      alert(`Lỗi: Không tìm thấy iframe với id = "${id}"`)
+  static async startPrint(
+    id: string,
+    options: { html: string; cssList?: string[]; jsList?: string[] },
+  ) {
+    let w: Window
+
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      w = window.open('', '_blank') as Window
+    } else {
+      const iframePrint = document.getElementById(id) as HTMLIFrameElement
+      if (!iframePrint) {
+        alert(`Lỗi: Không tìm thấy iframe với id = "${id}"`)
+      }
+      w = iframePrint.contentWindow as Window
     }
-    const w = iframePrint.contentWindow as Window
 
     ESDom.writeWindow(w.document, options)
 

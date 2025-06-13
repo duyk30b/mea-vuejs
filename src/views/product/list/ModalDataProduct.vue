@@ -1,17 +1,18 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import { AlertStore } from '@/common/vue-alert'
 import { InputText } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
+import { useSettingStore } from '@/modules/_me/setting.store.ts'
+import { SettingKey } from '@/modules/_me/store.variable.ts'
+import { OrganizationService } from '@/modules/organization'
 
 const TABS_KEY = {
   ROUTE: 'ROUTE',
+
   UNIT: 'UNIT',
   HINT_USAGE: 'HINT_USAGE',
 }
@@ -22,7 +23,7 @@ const store = useSettingStore()
 const UNIT = ref<typeof store.PRODUCT_UNIT>(JSON.parse(JSON.stringify(store.PRODUCT_UNIT)))
 const ROUTE = ref<typeof store.PRODUCT_ROUTE>(JSON.parse(JSON.stringify(store.PRODUCT_ROUTE)))
 const HINT_USAGE = ref<typeof store.PRODUCT_HINT_USAGE>(
-  JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE))
+  JSON.parse(JSON.stringify(store.PRODUCT_HINT_USAGE)),
 )
 
 const showModal = ref(false)
@@ -79,7 +80,7 @@ defineExpose({ openModal })
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">Cài đặt dữ liệu</div>
-        <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
+        <div class="px-4 cursor-pointer" style="font-size: 1.2rem" @click="closeModal">
           <IconClose />
         </div>
       </div>
@@ -103,7 +104,7 @@ defineExpose({ openModal })
                 </div>
               </div>
               <div class="py-2 flex">
-                <VueButton icon="plus" color="blue" @click="UNIT.push('')"></VueButton>
+                <VueButton color="blue" icon="plus" @click="UNIT.push('')"></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.ROUTE">
@@ -117,7 +118,7 @@ defineExpose({ openModal })
                 </div>
               </div>
               <div class="py-2 flex">
-                <VueButton icon="plus" color="blue" @click="ROUTE.push('')"></VueButton>
+                <VueButton color="blue" icon="plus" @click="ROUTE.push('')"></VueButton>
               </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.HINT_USAGE">
@@ -128,13 +129,14 @@ defineExpose({ openModal })
                     <InputText
                       v-model:value="HINT_USAGE[i]"
                       :prepend="i.toString()"
-                      style="flex: 1" />
+                      style="flex: 1"
+                    />
                     <a style="color: var(--text-red)" @click="HINT_USAGE.splice(i, 1)">Xóa</a>
                   </div>
                 </div>
               </div>
               <div class="py-2 flex">
-                <VueButton icon="plus" color="blue" @click="HINT_USAGE.push('')"></VueButton>
+                <VueButton color="blue" icon="plus" @click="HINT_USAGE.push('')"></VueButton>
               </div>
             </VueTabPanel>
           </template>
@@ -143,8 +145,8 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
-          <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton :loading="saveLoading" color="blue" icon="save" @click="handleSave">
             Lưu lại
           </VueButton>
         </div>

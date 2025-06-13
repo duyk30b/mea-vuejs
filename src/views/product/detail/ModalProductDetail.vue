@@ -4,19 +4,20 @@ import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconDiff, IconInfoCircle } from '../../../common/icon-antd'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
 import ProductAndBatchMovement from './ProductMovementList.vue'
+
+const emit = defineEmits<{ (e: 'close'): void }>()
 
 const TABS_KEY = {
   INFO: 'INFO',
   MOVEMENT: 'MOVEMENT',
 }
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const tabShow = ref(TABS_KEY.INFO)
@@ -33,6 +34,7 @@ const openModal = async (productProp?: Product) => {
 const closeModal = () => {
   showModal.value = false
   product.value = Product.blank()
+  emit('close')
 }
 
 const handleChangeProduct = (p: Product) => {
@@ -65,7 +67,7 @@ defineExpose({ openModal })
               Thông tin
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.READ_MOVEMENT]"
+              v-if="userPermission[PermissionId.PRODUCT_READ_MOVEMENT]"
               :tabKey="TABS_KEY.MOVEMENT"
             >
               <IconDiff />

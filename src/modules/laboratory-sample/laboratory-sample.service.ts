@@ -1,24 +1,24 @@
-import { LaboratoryKitApi } from './laboratory-kit.api'
-import type { LaboratoryKitListQuery, LaboratoryKitPaginationQuery } from './laboratory-kit.dto'
-import { LaboratoryKit } from './laboratory-kit.model'
+import { LaboratorySampleApi } from './laboratory-sample.api'
+import type { LaboratorySampleListQuery, LaboratorySamplePaginationQuery } from './laboratory-sample.dto'
+import { LaboratorySample } from './laboratory-sample.model'
 
-export class LaboratoryKitService {
+export class LaboratorySampleService {
   static loadedAll: boolean = false
 
-  static laboratoryKitAll: LaboratoryKit[] = []
+  static laboratorySampleAll: LaboratorySample[] = []
 
   private static async getAll() {
-    if (LaboratoryKitService.loadedAll) return
-    const { data } = await LaboratoryKitApi.list({})
-    LaboratoryKitService.laboratoryKitAll = data
-    LaboratoryKitService.loadedAll = true
+    if (LaboratorySampleService.loadedAll) return
+    const { data } = await LaboratorySampleApi.list({})
+    LaboratorySampleService.laboratorySampleAll = data
+    LaboratorySampleService.loadedAll = true
   }
 
-  static async pagination(options: LaboratoryKitPaginationQuery) {
+  static async pagination(options: LaboratorySamplePaginationQuery) {
     const page = options.page || 1
     const limit = options.limit || 10
-    await LaboratoryKitService.getAll()
-    let data = LaboratoryKitService.laboratoryKitAll
+    await LaboratorySampleService.getAll()
+    let data = LaboratorySampleService.laboratorySampleAll
     if (options.sort) {
       if (options.sort?.id) {
         data.sort((a, b) => {
@@ -38,14 +38,14 @@ export class LaboratoryKitService {
     data = data.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: LaboratoryKitService.laboratoryKitAll.length },
+      meta: { total: LaboratorySampleService.laboratorySampleAll.length },
     }
   }
 
-  static async list(options: LaboratoryKitListQuery) {
+  static async list(options: LaboratorySampleListQuery) {
     const filter = options.filter || {}
-    await LaboratoryKitService.getAll()
-    let data = LaboratoryKitService.laboratoryKitAll
+    await LaboratorySampleService.getAll()
+    let data = LaboratorySampleService.laboratorySampleAll
     if (options.filter) {
       data = data.filter((i) => {
         return true
@@ -67,24 +67,24 @@ export class LaboratoryKitService {
         })
       }
     }
-    return LaboratoryKit.fromList(data)
+    return LaboratorySample.fromList(data)
   }
 
-  static async createOne(laboratoryKit: LaboratoryKit) {
-    const result = await LaboratoryKitApi.createOne(laboratoryKit)
-    LaboratoryKitService.loadedAll = false
+  static async createOne(laboratorySample: LaboratorySample) {
+    const result = await LaboratorySampleApi.createOne(laboratorySample)
+    LaboratorySampleService.loadedAll = false
     return result
   }
 
-  static async updateOne(id: number, laboratoryKit: LaboratoryKit) {
-    const result = await LaboratoryKitApi.updateOne(id, laboratoryKit)
-    LaboratoryKitService.loadedAll = false
+  static async updateOne(id: number, laboratorySample: LaboratorySample) {
+    const result = await LaboratorySampleApi.updateOne(id, laboratorySample)
+    LaboratorySampleService.loadedAll = false
     return result
   }
 
   static async destroyOne(id: number) {
-    const result = await LaboratoryKitApi.destroyOne(id)
-    LaboratoryKitService.loadedAll = false
+    const result = await LaboratorySampleApi.destroyOne(id)
+    LaboratorySampleService.loadedAll = false
     return result
   }
 }

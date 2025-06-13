@@ -2,21 +2,20 @@
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
-import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
+import { IconEditSquare } from '../../../../common/icon-google'
 import { InputSelect } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
   PrescriptionSample,
   PrescriptionSampleService,
 } from '../../../../modules/prescription-sample'
+import { Breadcrumb } from '../../../component'
 import ModalPrescriptionSampleUpsert from '../upsert/ModalPrescriptionSampleUpsert.vue'
 
 const modalPrescriptionSampleUpsert = ref<InstanceType<typeof ModalPrescriptionSampleUpsert>>()
 
-const meStore = useMeStore()
-
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const prescriptionSampleList = ref<PrescriptionSample[]>([])
 
@@ -76,12 +75,11 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
   />
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconLabPanel style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách đơn thuốc mẫu</span>
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
         color="blue"
         icon="plus"
         @click="modalPrescriptionSampleUpsert?.openModal()"
@@ -98,7 +96,7 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
             <th style="width: 100px">STT</th>
             <th>Tên</th>
             <th
-              v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+              v-if="userPermission[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
               style="width: 100px"
             >
               Action
@@ -132,7 +130,7 @@ const handleModalPrescriptionSampleUpsertSuccess = async () => {
               </div>
             </td>
             <td
-              v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+              v-if="userPermission[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
               class="text-center"
             >
               <a

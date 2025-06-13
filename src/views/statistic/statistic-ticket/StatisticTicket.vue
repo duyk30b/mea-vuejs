@@ -7,13 +7,13 @@ import VueButton from '../../../common/VueButton.vue'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { IconBarChart, IconSetting } from '../../../common/icon-antd'
 import { VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { StatisticService } from '../../../modules/statistics'
 import { TicketStatus, TicketType } from '../../../modules/ticket'
 import { ESTimer } from '../../../utils'
 import ModalStatisticTicketSetting from './ModalStatisticTicketSetting.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 type DataResponseType = {
   timeLabel: string
@@ -41,8 +41,7 @@ const modalStatisticTicketSetting = ref<InstanceType<typeof ModalStatisticTicket
 const settingStore = useSettingStore()
 const moneyDivision = settingStore.SYSTEM_SETTING.moneyDivisionFormat
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 
 const now = new Date()
 const endMonth = ESTimer.endOfMonth(now)
@@ -138,7 +137,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
 
 <template>
   <ModalStatisticTicketSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalStatisticTicketSetting"
   />
   <div class="page-header">
@@ -158,7 +157,7 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalStatisticTicketSetting?.openModal()"
           >
             Cài đặt hiển thị
@@ -177,10 +176,10 @@ const handleChangeOptionBar = async (option: { text?: string; value?: any }) => 
             v-model:value="ticketTypeFilter"
             :options="[
               { value: null, text: 'Tất cả' },
-              ...(permissionIdMap[PermissionId.TICKET_ORDER_READ]
+              ...(organizationPermission[PermissionId.TICKET_ORDER]
                 ? [{ value: TicketType.Order, text: 'Bán hàng' }]
                 : []),
-              ...(permissionIdMap[PermissionId.TICKET_CLINIC_READ]
+              ...(organizationPermission[PermissionId.TICKET_CLINIC]
                 ? [{ value: { NOT: TicketType.Order }, text: 'Phiếu khám' }]
                 : []),
             ]"

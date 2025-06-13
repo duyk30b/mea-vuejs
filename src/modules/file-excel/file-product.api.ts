@@ -3,8 +3,18 @@ import { ESDom } from '../../utils'
 import type { BaseResponse } from '../_base/base-dto'
 
 export class FileProductApi {
-  static async downloadExcelProductList() {
+  static async downloadExcel() {
     const response = await AxiosInstance.get(`/file-product/download-excel`)
+    const { data } = response.data as BaseResponse<{
+      buffer: { type: 'Buffer'; data: any[] }
+      mimeType: string
+      filename: string
+    }>
+    ESDom.downloadFile(data)
+  }
+
+  static async downloadExcelFileExample() {
+    const response = await AxiosInstance.get(`/file-product/download-excel/file-example`)
     const { data } = response.data as BaseResponse<{
       buffer: { type: 'Buffer'; data: any[] }
       mimeType: string
@@ -29,15 +39,5 @@ export class FileProductApi {
     })
     const { data } = response.data as BaseResponse<boolean>
     return data
-  }
-
-  static async downloadFileUploadExcelExample() {
-    const response = await AxiosInstance.get(`/file-product/upload-excel/file-example`)
-    const { data } = response.data as BaseResponse<{
-      buffer: { type: 'Buffer'; data: any[] }
-      mimeType: string
-      filename: string
-    }>
-    ESDom.downloadFile(data)
   }
 }

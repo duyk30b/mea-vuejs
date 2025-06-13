@@ -1,4 +1,4 @@
-import { customFilter } from '../../../utils'
+import { customFilter, ESObject } from '../../../utils'
 
 export type BaseCondition<T> = {
   [P in keyof T]?:
@@ -44,51 +44,51 @@ export class IndexedDBQuery<T> {
       if (column === '$AND') {
         return target.every((t: any) => this.executeFilter(record, t))
       }
+
+      const recordValue = ESObject.getNestedValue(record, column) // để xử lý trường hợp "batch.product.brandName"
       if (['number', 'string', 'boolean', null].includes(typeof target)) {
-        return record[column] === target
+        return recordValue === target
       }
       if (typeof target === 'function') {
-        return target(record[column], record)
+        return target(recordValue, record)
       }
       if (typeof target === 'object') {
         if (Object.keys(target).length === 0) return true
-        return Object.entries(target).every(([rule, value]: [string, any]) => {
-          if (value === undefined) return true
-          if (rule === '>' || rule === 'GT') {
-            return record[column] > value
-          }
-          if (rule === '>=' || rule === 'GTE') {
-            return record[column] >= value
-          }
-          if (rule === '<=' || rule === 'LTE') {
-            return record[column] <= value
-          }
-          if (rule === '<' || rule === 'LT') {
-            return record[column] < value
-          }
-          if (rule === '==' || rule === 'EQUAL') {
-            return record[column] === value
-          }
-          if (rule === '!=' || rule === 'NOT') {
-            return record[column] != value
-          }
-          if (rule === 'IS_NULL') {
-            if (value === true) return record[column] == null
-            if (value === false) return record[column] != null
-          }
-          if (rule === 'NOT_NULL') {
-            if (value === true) return record[column] != null
-            if (value === false) return record[column] == null
-          }
-          if (rule === 'BETWEEN') {
-            return value[0] <= record[column] && record[column] <= record[1]
-          }
-          if (rule === 'IN') {
-            if (value.length === 0) return record[column] == null
-            return value.includes(record[column])
-          }
-          if (rule === 'LIKE') {
-            return customFilter(record[column] || '', value, 2)
+        return Object.entries(target).every(([operator, expected]: [string, any]) => {
+          if (expected === undefined) return true
+
+          switch (operator) {
+            case '>':
+            case 'GT':
+              return recordValue > expected
+            case '>=':
+            case 'GTE':
+              return recordValue >= expected
+            case '<=':
+            case 'LTE':
+              return recordValue <= expected
+            case '<':
+            case 'LT':
+              return recordValue < expected
+            case '==':
+            case 'EQUAL':
+              return recordValue === expected
+            case '!=':
+            case 'NOT':
+              return recordValue != expected
+            case 'IS_NULL':
+              return expected ? recordValue == null : recordValue != null
+            case 'NOT_NULL':
+              return expected ? recordValue != null : recordValue == null
+            case 'BETWEEN':
+              return expected[0] <= recordValue && recordValue <= expected[1]
+            case 'IN':
+              if (!expected || expected.length === 0) return recordValue == null
+              return expected.includes(recordValue)
+            case 'LIKE':
+              return customFilter(recordValue || '', expected, 2)
+            default:
+              return false
           }
         })
       }
@@ -101,23 +101,26 @@ export class IndexedDBQuery<T> {
     Object.entries(sort).forEach(([key, value]) => {
       if (!key || !value) return
       recordResult.sort((a: any, b: any) => {
+        const aValue = ESObject.getNestedValue(a, key)
+        const bValue = ESObject.getNestedValue(b, key)
+
         if (value === 'ASC') {
-          if (b[key] == null)
+          if (bValue == null)
             return -1 // tăng hay giảm thì cũng để NULL ở cuối
-          else if (a[key] == null) return 1
-          else return a[key] < b[key] ? -1 : 1
+          else if (aValue == null) return 1
+          else return aValue < bValue ? -1 : 1
         }
         if (value === 'DESC') {
-          if (b[key] == null)
+          if (bValue == null)
             return -1 // tăng hay giảm thì cũng để NULL ở cuối
-          else if (a[key] == null) return 1
-          else return a[key] > b[key] ? -1 : 1
+          else if (aValue == null) return 1
+          else return aValue > bValue ? -1 : 1
         }
         if (typeof value === 'function') {
           return value(a, b)
         }
-        // if (value === 'ASC') return a[key] < b[key] ? -1 : 1
-        // if (value === 'DESC') return a[key] > b[key] ? -1 : 1
+        // if (value === 'ASC') return aValue < bValue ? -1 : 1
+        // if (value === 'DESC') return aValue > bValue ? -1 : 1
         return a.id > b.id ? -1 : 1
       })
     })

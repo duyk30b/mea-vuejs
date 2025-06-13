@@ -7,7 +7,7 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
@@ -42,18 +42,18 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Radiology]?.[ticketRadiology.value.id] ||
+    ticketClinicRef.value.ticketUserGroup?.[PositionType.Radiology]?.[ticketRadiology.value.id] ||
     []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Radiology,
-      interactId: ticketRadiology.value.radiologyId,
+      positionType: PositionType.Radiology,
+      positionInteractId: ticketRadiology.value.radiologyId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))

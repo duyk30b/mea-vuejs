@@ -3,7 +3,6 @@ import { onBeforeMount, ref } from 'vue'
 import { IconBarChart, IconRead } from '../../../common/icon-antd'
 import { InputDate } from '../../../common/vue-form'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { RadiologyStatisticService } from '../../../modules/statistics'
@@ -15,7 +14,6 @@ const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
 
 const dataLoading = ref(false)
 

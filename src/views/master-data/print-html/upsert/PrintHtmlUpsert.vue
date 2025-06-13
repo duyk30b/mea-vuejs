@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VueButton from '../../../../common/VueButton.vue'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputText } from '../../../../common/vue-form'
-import VueButton from '../../../../common/VueButton.vue'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
+import { MeService } from '../../../../modules/_me/me.service'
+import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
 import { compiledTemplatePrintHtml } from '../../../../modules/print-html/print-html.compiled'
 import { Ticket, TicketService } from '../../../../modules/ticket'
 import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
-import { MeService } from '../../../../modules/_me/me.service'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -25,8 +24,7 @@ const iframe = ref<HTMLIFrameElement>()
 
 const route = useRoute()
 const router = useRouter()
-const meStore = useMeStore()
-const { organization, user } = meStore
+const { organization, user } = MeService
 
 const printHtml = ref(PrintHtml.blank())
 const printHtmlHeader = ref(PrintHtml.blank())
@@ -70,13 +68,13 @@ const updatePreview = () => {
   if (!doc) return
 
   const compiledHeader = compiledTemplatePrintHtml({
-    organization,
+    organization: organization.value,
     ticket,
     data,
     printHtml: printHtmlHeader.value,
   })
   const compiledResult = compiledTemplatePrintHtml({
-    organization,
+    organization: organization.value,
     ticket,
     data,
     printHtml: printHtml.value,
@@ -153,7 +151,7 @@ const startTestPrint = async () => {
     }
 
     const compiledHeader = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket,
       data,
       printHtml: printHtmlHeader.value,
@@ -161,7 +159,7 @@ const startTestPrint = async () => {
     const _LAYOUT_HEADER = compiledHeader.html
 
     const compiledResult = compiledTemplatePrintHtml({
-      organization,
+      organization: organization.value,
       ticket,
       data,
       printHtml: printHtml.value,

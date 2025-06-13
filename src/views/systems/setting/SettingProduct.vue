@@ -131,6 +131,13 @@ const saveBatchSetting = async () => {
                 </td>
               </tr>
               <tr>
+                <td colspan="2">
+                  <div class="mt-1 font-medium">
+                    2. Cài đặt đối với sản phẩm chia nhiều lô hàng, HSD
+                  </div>
+                </td>
+              </tr>
+              <tr>
                 <td style="width: 200px">Chiến lược lấy hàng</td>
                 <td>
                   <div>
@@ -139,11 +146,6 @@ const saveBatchSetting = async () => {
                       :options="pickupStrategyOptions"
                     />
                   </div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2">
-                  <div class="mt-1 font-medium">2. Quản lý logic tách lô hàng</div>
                 </td>
               </tr>
               <tr>
