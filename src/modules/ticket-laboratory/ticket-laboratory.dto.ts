@@ -7,6 +7,7 @@ export class TicketLaboratoryGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
+    laboratory?: boolean
     imageList?: boolean
   }
 

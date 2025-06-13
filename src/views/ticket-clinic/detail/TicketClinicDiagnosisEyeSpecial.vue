@@ -1,22 +1,17 @@
 <script lang="ts" setup>
+import { ticketRoomRef } from '@/modules/room'
 import { computed, onMounted, ref, watch } from 'vue'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { compiledTemplatePrintHtml, PrintHtml, PrintHtmlService } from '../../../modules/print-html'
+import { PrintHtmlAction } from '../../../modules/print-html'
 import {
   TicketAttributeKeyOptometryList,
   type TicketAttributeKeyOptometryType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { ESDom } from '../../../utils'
-import { MeService } from '../../../modules/_me/me.service'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
 
-const meStore = useMeStore()
-const settingStore = useSettingStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyOptometryType]?: any } = {}
 const ticketAttributeMap = ref<{ [P in TicketAttributeKeyOptometryType]?: any }>({})
@@ -26,7 +21,7 @@ const saveLoading = ref(false)
 onMounted(async () => {})
 
 watch(
-  () => ticketClinicRef.value.ticketAttributeList,
+  () => ticketRoomRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) {
       return (ticketAttributeMap.value = {})
@@ -46,7 +41,7 @@ const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
     const k = key as unknown as TicketAttributeKeyOptometryType
-    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
     }
@@ -72,8 +67,8 @@ const saveTicketDiagnosis = async () => {
     }
 
     await TicketClinicApi.updateDiagnosis({
-      note: ticketClinicRef.value.note,
-      ticketId: ticketClinicRef.value.id,
+      note: ticketRoomRef.value.note,
+      ticketId: ticketRoomRef.value.id,
       files: [],
       ticketAttributeChangeList,
       ticketAttributeKeyList: TicketAttributeKeyOptometryList as any,
@@ -86,41 +81,11 @@ const saveTicketDiagnosis = async () => {
 }
 
 const startPrint = async () => {
-  try {
-    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
-    const printHtmlOptometry = await PrintHtmlService.getPrintHtmlOptometry()
-
-    if (!printHtmlHeader || !printHtmlOptometry || !printHtmlOptometry.html) {
-      return AlertStore.addError('Cài đặt in thất bại')
-    }
-
-    const compiledHeader = compiledTemplatePrintHtml({
-      organization,
-      ticket: ticketClinicRef.value,
-      printHtml: printHtmlHeader,
-    })
-    const compiledContent = compiledTemplatePrintHtml({
-      organization,
-      ticket: ticketClinicRef.value,
-      masterData: {},
-      printHtml: printHtmlOptometry,
-      _LAYOUT: {
-        HEADER: compiledHeader.html,
-      },
-    })
-
-    if (!compiledContent.html) {
-      AlertStore.addError('Mẫu in không hợp lệ')
-      return
-    }
-
-    await ESDom.startPrint('iframe-print', {
-      html: compiledContent.html,
-      cssList: [compiledHeader.css, compiledContent.css],
-    })
-  } catch (error) {
-    console.log('🚀 ~ file: TicketEyePrescription.vue:191 ~ startPrint ~ error:', error)
-  }
+  await PrintHtmlAction.startPrintRequestOptometry({
+    organization: organization.value,
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
 }
 </script>
 <template>
@@ -538,7 +503,7 @@ const startPrint = async () => {
       <VueButton color="blue" icon="print" @click="startPrint">In phiếu</VueButton>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketRoomRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

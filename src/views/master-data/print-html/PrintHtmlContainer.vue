@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
+import { VueButton } from '../../../common'
 import { AlertStore } from '../../../common/vue-alert'
+import { VueSelect } from '../../../common/vue-form'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../modules/organization'
+import { PrintHtml, PrintHtmlService } from '../../../modules/print-html'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import PrintHtmlList from './PrintHtmlList.vue'
-import { VueSelect } from '../../../common/vue-form'
-import { PrintHtml, PrintHtmlService } from '../../../modules/print-html'
-import { VueButton } from '../../../common'
+import { useRoute, useRouter } from 'vue-router'
 
 const TABS_KEY = {
-  PRINT_HTML_SELECT: 'PRINT_HTML_SELECT',
-  PRINT_HTML_LIST: 'PRINT_HTML_LIST',
+  SETTING_COMMON: 'SETTING_COMMON',
+  LIST: 'LIST',
 }
 
-const activeTab = ref(TABS_KEY.PRINT_HTML_SELECT)
+const router = useRouter()
+const route = useRoute()
+
+onMounted(() => {})
+
+const activeTab = ref<any>(route.query.tab || TABS_KEY.LIST)
 
 const store = useSettingStore()
 
@@ -28,7 +33,7 @@ const settingDisplay = ref<typeof store.PRINT_SETTING>(
 const printHtmlOptions = ref<{ value: number; text: string; data: PrintHtml }[]>([])
 
 const fetchData = async () => {
-  const printHtmlAll = await PrintHtmlService.list({ sort: { id: 'DESC' } })
+  const printHtmlAll = await PrintHtmlService.list({ sort: { priority: 'ASC' } })
   printHtmlOptions.value = [
     { value: 0, text: ' -- Mặc định -- ', data: PrintHtml.blank() },
     ...printHtmlAll.map((i) => ({ value: i.id, text: i.name, data: i })),
@@ -63,11 +68,14 @@ const handleSaveSetting = async () => {
   <div class="mt-4 md:mx-4 p-4 bg-white">
     <VueTabs v-model:tabShow="activeTab">
       <template #menu>
-        <VueTabMenu :tabKey="TABS_KEY.PRINT_HTML_SELECT">Cài đặt chung</VueTabMenu>
-        <VueTabMenu :tabKey="TABS_KEY.PRINT_HTML_LIST">Danh sách mẫu in</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.LIST">Danh sách mẫu in</VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.SETTING_COMMON">Cài đặt chung</VueTabMenu>
       </template>
       <template #panel>
-        <VueTabPanel :tabKey="TABS_KEY.PRINT_HTML_SELECT">
+        <VueTabPanel :tabKey="TABS_KEY.LIST">
+          <PrintHtmlList />
+        </VueTabPanel>
+        <VueTabPanel :tabKey="TABS_KEY.SETTING_COMMON">
           <div class="mt-4">
             <table>
               <tbody>
@@ -108,19 +116,46 @@ const handleSaveSetting = async () => {
                   </td>
                 </tr>
                 <tr>
-                  <td>Mẫu in Xét nghiệm mặc định</td>
+                  <td>Mẫu in chỉ định dịch vụ mặc định</td>
                   <td style="min-width: 500px">
                     <VueSelect
-                      v-model:value="settingDisplay.laboratory.printHtmlId"
+                      v-model:value="settingDisplay.procedureRequest.printHtmlId"
                       :options="printHtmlOptions"
                     />
                   </td>
                 </tr>
                 <tr>
-                  <td>Mẫu in CĐHA mặc định</td>
+                  <td>Mẫu in chỉ định xét nghiệm mặc định</td>
                   <td style="min-width: 500px">
                     <VueSelect
-                      v-model:value="settingDisplay.radiology.printHtmlId"
+                      v-model:value="settingDisplay.laboratoryRequest.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in kết quả xét nghiệm mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.laboratoryResult.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in chỉ định CĐHA mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.radiologyRequest.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in kết quả CĐHA mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.radiologyResult.printHtmlId"
                       :options="printHtmlOptions"
                     />
                   </td>
@@ -131,9 +166,6 @@ const handleSaveSetting = async () => {
           <div class="mt-4">
             <VueButton color="blue" @click="handleSaveSetting()">Lưu lại</VueButton>
           </div>
-        </VueTabPanel>
-        <VueTabPanel :tabKey="TABS_KEY.PRINT_HTML_LIST">
-          <PrintHtmlList />
         </VueTabPanel>
       </template>
     </VueTabs>

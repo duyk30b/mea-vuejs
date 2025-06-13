@@ -128,23 +128,23 @@ export class TicketClinicProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-              quantity: ticketProduct.quantity,
-              quantityPrescription: ticketProduct.quantityPrescription,
-              expectedPrice: ticketProduct.expectedPrice,
-              discountType: ticketProduct.discountType,
-              discountMoney: ticketProduct.discountMoney,
-              discountPercent: ticketProduct.discountPercent,
-              costAmount: ticketProduct.costAmount,
-              actualPrice: ticketProduct.actualPrice,
-              hintUsage: ticketProduct.hintUsage,
-            }
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
+            expectedPrice: ticketProduct.expectedPrice,
+            discountType: ticketProduct.discountType,
+            discountMoney: ticketProduct.discountMoney,
+            discountPercent: ticketProduct.discountPercent,
+            costAmount: ticketProduct.costAmount,
+            actualPrice: ticketProduct.actualPrice,
+            hintUsage: ticketProduct.hintUsage,
+          }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            }))
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
           : undefined,
       },
     )
@@ -163,32 +163,49 @@ export class TicketClinicProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-              quantity: ticketProduct.quantity,
-              quantityPrescription: ticketProduct.quantityPrescription,
-              expectedPrice: ticketProduct.expectedPrice,
-              discountType: ticketProduct.discountType,
-              discountMoney: ticketProduct.discountMoney,
-              discountPercent: ticketProduct.discountPercent,
-              costAmount: ticketProduct.costAmount,
-              actualPrice: ticketProduct.actualPrice,
-              hintUsage: ticketProduct.hintUsage,
-            }
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
+            expectedPrice: ticketProduct.expectedPrice,
+            discountType: ticketProduct.discountType,
+            discountMoney: ticketProduct.discountMoney,
+            discountPercent: ticketProduct.discountPercent,
+            costAmount: ticketProduct.costAmount,
+            actualPrice: ticketProduct.actualPrice,
+            hintUsage: ticketProduct.hintUsage,
+          }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            }))
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
           : undefined,
       },
     )
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async sendProduct(body: { ticketId: number }) {
-    const { ticketId } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/send-product`)
+  static async sendProduct(body: { ticketId: number; ticketProductIdList: number[] }) {
+    const { ticketId, ticketProductIdList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/send-product`, {
+      ticketProductIdList,
+    })
     const { data } = response.data as BaseResponse
+  }
+
+  static async returnProduct(body: {
+    ticketId: number
+    returnList: {
+      ticketBatchId: number
+      quantityReturn: number
+    }[]
+  }) {
+    const { ticketId, returnList } = body
+    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/return-product`, {
+      returnList,
+    })
+    const { data } = response.data as BaseResponse
+    return data
   }
 }

@@ -3,7 +3,6 @@ import { onBeforeMount, ref } from 'vue'
 import { IconBarChart, IconRead } from '../../../common/icon-antd'
 import { InputDate } from '../../../common/vue-form'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Radiology, RadiologyService } from '../../../modules/radiology'
 import { RadiologyStatisticService } from '../../../modules/statistics'
@@ -15,7 +14,6 @@ const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
 
 const dataLoading = ref(false)
 
@@ -191,7 +189,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
                 <router-link
                   :to="{
                     name: 'TicketClinicDetailContainer',
-                    params: { id: ticketRadiology.ticketId },
+                    params: { roomId: 0, ticketId: ticketRadiology.ticketId },
                   }"
                 >
                   <div class="flex justify-center items-center gap-2">

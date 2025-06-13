@@ -1,6 +1,6 @@
 import { ImageHost } from '../../modules/image/image.model'
 
-export class DImage {
+export class ESImage {
   static getImageLink = (
     data?: { hostId: string; hostType: ImageHost },
     options?: { size: number }

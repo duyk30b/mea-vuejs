@@ -1,25 +1,19 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import {
-  InputHint,
-  InputMoney,
-  InputNumber,
-  InputOptions,
-  VueSelect,
-} from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, BatchService } from '../../../modules/batch'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, ProductService } from '../../../modules/product'
-import { TicketProduct } from '../../../modules/ticket-product'
-import type { Warehouse } from '../../../modules/warehouse'
-import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import { customFilter, ESTimer } from '../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert'
+import { InputHint, InputMoney, InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service.ts'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Batch, BatchService } from '@/modules/batch'
+import { DeliveryStatus, DiscountType, PickupStrategy, ProductType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Product, ProductService } from '@/modules/product'
+import { TicketProduct } from '@/modules/ticket-product'
+import type { Warehouse } from '@/modules/warehouse'
+import { WarehouseService } from '@/modules/warehouse/warehouse.service'
+import { customFilter, ESTimer } from '@/utils'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
@@ -30,8 +24,7 @@ const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const product = ref(Product.blank())
 const productList = ref<Product[]>([])
@@ -40,6 +33,7 @@ const batchList = ref<Batch[]>([])
 
 const ticketProduct = ref<TicketProduct>(TicketProduct.blank())
 const productOutSellType = ref<'retailPrice' | 'wholesalePrice' | 'costPrice'>('retailPrice')
+const pickupStrategy = ref(MeService.getPickupStrategy().order)
 
 const warehouseMap = ref<Record<string, Warehouse>>({})
 
@@ -74,7 +68,7 @@ const searchingProduct = async (text: string) => {
                   ? undefined
                   : { NOT: 0 },
               },
-              { pickupStrategy: PickupStrategy.NoImpact },
+              { warehouseIds: '[]' },
             ],
           },
         ],
@@ -113,32 +107,50 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
 const selectProduct = async (productProp?: Product) => {
   if (!productProp) return clear()
 
-  const tp = TicketProduct.blank()
-  tp.productId = productProp.id
-  tp.product = Product.from(productProp)
-  tp.pickupStrategy = productProp.pickupStrategyFix // set chiến lược lấy lô hàng ở đây
+  const tpItem = TicketProduct.blank()
+  tpItem.productId = productProp.id
+  tpItem.product = Product.from(productProp)
+  tpItem.pickupStrategy = MeService.getPickupStrategy().order
 
-  tp.deliveryStatus = DeliveryStatus.Pending
-  tp.unitRate = productProp.unitDefaultRate
-  tp.quantity = 0
+  tpItem.deliveryStatus = DeliveryStatus.Pending
+  tpItem.unitRate = productProp.unitDefaultRate
+  tpItem.quantity = 0
 
-  tp.expectedPrice = productProp.retailPrice
-  tp.discountType = DiscountType.Percent
-  tp.discountPercent = 0
-  tp.discountMoney = 0
-  tp.actualPrice = productProp.retailPrice
-  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
-    tp.hintUsage = productProp?.hintUsage || ''
+  tpItem.expectedPrice = productProp.retailPrice
+  tpItem.discountType = DiscountType.Percent
+  tpItem.discountPercent = 0
+  tpItem.discountMoney = 0
+  tpItem.actualPrice = productProp.retailPrice
+
+  await ProductService.executeRelation([productProp], { discountList: true })
+  const discountApply = productProp?.discountApply
+  if (discountApply) {
+    let { discountType, discountPercent, discountMoney } = discountApply
+    const expectedPrice = tpItem.expectedPrice || 0
+    if (discountType === DiscountType.Percent) {
+      discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+    }
+    if (discountType === DiscountType.VND) {
+      discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+    }
+    tpItem.discountType = discountType
+    tpItem.discountPercent = discountPercent
+    tpItem.discountMoney = discountMoney
+    tpItem.actualPrice = expectedPrice - discountMoney
   }
 
-  tp.warehouseIds = JSON.stringify(
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
+    tpItem.hintUsage = productProp?.hintUsage || ''
+  }
+
+  tpItem.warehouseIds = JSON.stringify(
     settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList,
   )
-  tp.costAmount = tp.quantity * (tp.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
+  tpItem.costAmount = tpItem.quantity * (tpItem.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
 
   product.value = Product.from(productProp)
   productOutSellType.value = 'retailPrice'
-  ticketProduct.value = tp
+  ticketProduct.value = tpItem
 
   if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit) {
     addTicketProduct()
@@ -146,7 +158,7 @@ const selectProduct = async (productProp?: Product) => {
   }
 
   // Tính toán cho batchID // lằng nhằng nhé
-  if (tp.pickupStrategy === PickupStrategy.RequireBatchSelection) {
+  if (productProp.productType === ProductType.SplitBatch) {
     const warehouseIdAcceptList: number[] =
       settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList
     let canGetAllWarehouse = false
@@ -279,21 +291,20 @@ const addTicketProduct = () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+  if (product?.warehouseIds !== '[]' && pickupStrategy.value !== PickupStrategy.NoImpact) {
     if (ticketProduct.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProduct.value.quantity
         }`,
       )
-    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
-      if (ticketProduct.value.quantity > batch!.quantity) {
-        AlertStore.addWarning(
-          `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
-            ticketProduct.value.quantity
-          }`,
-        )
-      }
+    }
+    if (ticketProduct.value.batchId && ticketProduct.value.quantity > batch!.quantity) {
+      AlertStore.addWarning(
+        `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
+          ticketProduct.value.quantity
+        }`,
+      )
     }
   }
 
@@ -333,10 +344,7 @@ defineExpose({ focus })
           <IconFileSearch />
         </a>
         <span
-          v-if="
-            ticketProduct.productId &&
-            ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact
-          "
+          v-if="ticketProduct.productId && ticketProduct.product?.warehouseIds !== '[]'"
           :class="
             ticketProduct.quantity > ticketProduct.product!.quantity ? 'text-red-500 font-bold' : ''
           "
@@ -348,7 +356,7 @@ defineExpose({ focus })
           )
         </span>
         <a
-          v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && product.id"
+          v-if="userPermission[PermissionId.PRODUCT_UPDATE] && product.id"
           @click="modalProductUpsert?.openModal(product.id)"
         >
           Sửa thông tin sản phẩm
@@ -357,26 +365,28 @@ defineExpose({ focus })
       <div style="height: 40px">
         <InputOptions
           ref="inputOptionsProduct"
-          :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
+          :clearAfterSelected="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
           :maxHeight="320"
+          :options="productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))"
           :prepend="ticketProduct?.product?.productCode"
           placeholder="(F3) Tìm kiếm bằng mã, tên hoặc hoạt chất của sản phẩm"
           required
-          @selectItem="({ data }) => selectProduct(data)"
           @onFocusinFirst="handleFocusFirstSearchProduct"
           @searching="searchingProduct"
-          :clearAfterSelected="!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
+          @selectItem="({ data }) => selectProduct(data)"
         >
           <template #option="{ item: { data } }">
             <div>
               <span>{{ data.productCode }}</span>
               <span class="mx-1">-</span>
               <b>{{ data.brandName }}</b>
-              <span v-if="data.pickupStrategyFix !== PickupStrategy.NoImpact">
+              <span
+                v-if="data?.warehouseIds !== '[]' && pickupStrategy !== PickupStrategy.NoImpact"
+              >
                 - Tồn
                 <span
-                  style="font-weight: 700"
                   :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
+                  style="font-weight: 700"
                 >
                   {{ data.unitQuantity }}
                 </span>
@@ -391,8 +401,8 @@ defineExpose({ focus })
     </div>
 
     <div
+      v-if="ticketProduct.product?.productType === ProductType.SplitBatch"
       style="flex-grow: 1; flex-basis: 80%"
-      v-if="ticketProduct.pickupStrategy === PickupStrategy.RequireBatchSelection"
     >
       <div>
         Lô hàng
@@ -408,15 +418,15 @@ defineExpose({ focus })
       </div>
       <div>
         <VueSelect
-          :value="ticketProduct.batch!.id"
-          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
           :disabled="batchList.length == 0"
+          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
+          :value="ticketProduct.batch!.id"
           @selectItem="({ data }) => selectBatch(data)"
         >
           <template #option="{ item: { data } }">
             <div v-if="!data.id">Chưa chọn lô</div>
             <div v-if="data.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
               <b>{{ data.unitQuantity }}</b>
               {{ ticketProduct.product!.unitDefaultName }}
             </div>
@@ -424,7 +434,7 @@ defineExpose({ focus })
           <template #text="{ content: { data } }">
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
               <span :class="ticketProduct.quantity > data.quantity ? 'text-red-500 font-bold' : ''">
                 - Tồn
                 <b>{{ data.unitQuantity }}</b>
@@ -444,11 +454,11 @@ defineExpose({ focus })
       <div>
         <InputHint
           v-model:value="ticketProduct.hintUsage"
+          :logic-filter="(item: string, text: string) => customFilter(item, text)"
           :options="[
             ...(ticketProduct.product?.hintUsage ? [ticketProduct.product?.hintUsage] : []),
             ...settingStore.PRODUCT_HINT_USAGE,
           ]"
-          :logic-filter="(item: string, text: string) => customFilter(item, text)"
         />
       </div>
     </div>
@@ -470,7 +480,7 @@ defineExpose({ focus })
           <VueSelect
             v-model:value="productOutSellType"
             :options="[
-              ...(permissionIdMap[PermissionId.READ_COST_PRICE] &&
+              ...(userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
               settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.costPrice
                 ? [{ value: 'costPrice', text: 'Giá nhập' }]
                 : []),
@@ -545,24 +555,24 @@ defineExpose({ focus })
       <div class="flex">
         <VueSelect
           v-model:value="ticketProduct.discountType"
-          style="width: 120px"
           :options="[
             { value: DiscountType.Percent, text: '%' },
             { value: DiscountType.VND, text: 'VNĐ' },
           ]"
+          style="width: 120px"
         />
         <div style="width: calc(100% - 120px)">
           <InputMoney
             v-if="ticketProduct.discountType === DiscountType.VND"
+            :validate="{ gte: 0 }"
             :value="ticketProduct.unitDiscountMoney"
             @update:value="handleChangeUnitDiscountMoney"
-            :validate="{ gte: 0 }"
           />
           <InputNumber
             v-else
+            :validate="{ gte: 0, lte: 100 }"
             :value="ticketProduct.discountPercent"
             @update:value="handleChangeDiscountPercent"
-            :validate="{ gte: 0, lte: 100 }"
           />
         </div>
       </div>
@@ -582,8 +592,8 @@ defineExpose({ focus })
       </div>
       <div style="width: 100%">
         <InputMoney
-          :value="ticketProduct.unitActualPrice"
           :prepend="ticketProduct.unitRate !== 1 ? ticketProduct.unitName : ''"
+          :value="ticketProduct.unitActualPrice"
           @update:value="handleChangeUnitActualPrice"
         />
       </div>
@@ -591,10 +601,10 @@ defineExpose({ focus })
 
     <div
       v-if="settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit"
-      style="flex-grow: 1; flex-basis: 80%"
       class="flex justify-center"
+      style="flex-grow: 1; flex-basis: 80%"
     >
-      <VueButton color="blue" type="submit" icon="plus">Thêm vào giỏ hàng</VueButton>
+      <VueButton color="blue" icon="plus" type="submit">Thêm vào giỏ hàng</VueButton>
     </div>
   </form>
 </template>

@@ -1,14 +1,26 @@
+import { Batch } from '@/modules/batch'
+import { DiscountService, type Discount } from '@/modules/discount'
+import { LaboratoryService, type Laboratory } from '@/modules/laboratory'
+import { LaboratoryGroupService } from '@/modules/laboratory-group'
+import { ProcedureService, type Procedure } from '@/modules/procedure'
+import { RadiologyService, type Radiology } from '@/modules/radiology'
+import { RoomService } from '@/modules/room'
+import {
+  roomLaboratory,
+  roomRadiology,
+  roomReceptionPagination,
+  roomTicketPagination,
+  ticketRoomRef,
+} from '@/modules/room/room.ref'
 import { MeService } from '../../modules/_me/me.service'
-import { useMeStore } from '../../modules/_me/me.store'
-import type { InteractType } from '../../modules/commission'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
+import { Position, PositionService, type PositionInteractType } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
 import { TicketBatch } from '../../modules/ticket-batch'
-import { ticketClinicPagination, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketLaboratory } from '../../modules/ticket-laboratory'
 import { TicketLaboratoryGroup } from '../../modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '../../modules/ticket-laboratory-result'
@@ -16,6 +28,7 @@ import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
 import { TicketRadiology } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
+import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
 import { ProductDB } from '../indexed-db/repository/product.repository'
 
@@ -26,20 +39,11 @@ export class SocketService {
 
   static async listenOrganizationUpdate(data: { organization: Organization }) {
     const organization = Organization.from(data.organization)
-    useMeStore().organization = organization
+    MeService.organization.value = organization
   }
 
   static async listenSettingReload(data: any) {
     await MeService.reloadSetting()
-  }
-
-  static async listenCustomerUpsert(data: { customer: any }) {
-    const customer = Customer.from(data.customer)
-    await CustomerDB.upsertOne(customer)
-
-    if (ticketClinicRef.value.customerId === customer.id) {
-      ticketClinicRef.value.customer = customer
-    }
   }
 
   static async listenDistributorUpsert(data: { distributor: any }) {
@@ -54,91 +58,214 @@ export class SocketService {
     }
   }
 
-  static async listenProductUpsert(data: { product: any }) {
-    const product = Product.from(data.product)
-    await ProductDB.upsertOne(product)
+  static async listenCustomerUpsert(data: { customer: any }) {
+    const customer = Customer.from(data.customer)
+    await CustomerDB.upsertOne(customer)
+
+    if (ticketRoomRef.value.customerId === customer.id) {
+      ticketRoomRef.value.customer = customer
+    }
   }
 
-  static async listenProductListUpdate(data: { productList: any[] }) {
-    const productList = Product.fromList(data.productList)
-    await ProductDB.upsertMany(productList)
+  static async listenProductListChange(data: {
+    productDestroyedList?: Product[]
+    productUpsertedList?: Product[]
+  }) {
+    if (data.productUpsertedList?.length) {
+      const productUpsertedList = Product.fromList(data.productUpsertedList)
+      await ProductDB.upsertMany(productUpsertedList)
+    }
+    if (data.productDestroyedList?.length) {
+      const productIdDestroyList = data.productDestroyedList.map((i) => i.id)
+      await ProductDB.deleteMany(productIdDestroyList)
+    }
   }
 
-  static getTicketAction(ticketId: number) {
+  static async listenBatchListChange(data: {
+    batchDestroyedList?: any[]
+    batchUpsertedList?: any[]
+  }) {
+    if (data.batchUpsertedList?.length) {
+      const batchUpsertedList = Batch.fromList(data.batchUpsertedList)
+      await BatchDB.upsertMany(batchUpsertedList)
+    }
+    if (data.batchDestroyedList?.length) {
+      const batchIdDestroyList = data.batchDestroyedList.map((i) => i.id)
+      await BatchDB.deleteMany(batchIdDestroyList)
+    }
+  }
+
+  static async listenProcedureListChange(data: {
+    procedureDestroyedList?: Procedure[]
+    procedureUpsertedList?: Procedure[]
+  }) {
+    if (data.procedureUpsertedList?.length) {
+      ProcedureService.loadedAll = false
+    }
+    if (data.procedureDestroyedList?.length) {
+      ProcedureService.loadedAll = false
+    }
+  }
+
+  static async listenLaboratoryListChange(data: {
+    laboratoryDestroyedList?: Laboratory[]
+    laboratoryUpsertedList?: Laboratory[]
+  }) {
+    if (data.laboratoryUpsertedList?.length) {
+      LaboratoryService.loadedAll = false
+    }
+    if (data.laboratoryDestroyedList?.length) {
+      LaboratoryService.loadedAll = false
+    }
+  }
+
+  static async listenRadiologyListChange(data: {
+    radiologyDestroyedList?: Radiology[]
+    radiologyUpsertedList?: Radiology[]
+  }) {
+    if (data.radiologyUpsertedList?.length) {
+      RadiologyService.loadedAll = false
+    }
+    if (data.radiologyDestroyedList?.length) {
+      RadiologyService.loadedAll = false
+    }
+  }
+
+  static async listenPositionListChange(data: {
+    positionDestroyedList?: Position[]
+    positionUpsertedList?: Position[]
+  }) {
+    if (data.positionUpsertedList?.length) {
+      PositionService.loadedAll = false
+    }
+    if (data.positionDestroyedList?.length) {
+      PositionService.loadedAll = false
+    }
+  }
+
+  static async listenDiscountListChange(data: {
+    discountDestroyedList?: Discount[]
+    discountUpsertedList?: Discount[]
+  }) {
+    if (data.discountUpsertedList?.length) {
+      DiscountService.loadedAll = false
+    }
+    if (data.discountDestroyedList?.length) {
+      DiscountService.loadedAll = false
+    }
+  }
+
+  static getTicketAction(options: { ticketId: number }) {
+    const { ticketId } = options
+
     const ticketAction: Ticket[] = []
-    const ticketFind = ticketClinicPagination.value.find((i) => i.id === ticketId)
-    if (ticketFind) {
-      ticketAction.push(ticketFind)
+    if (ticketRoomRef.value.id === ticketId) {
+      ticketAction.push(ticketRoomRef.value)
     }
-    if (ticketClinicRef.value.id === ticketId) {
-      ticketAction.push(ticketClinicRef.value)
-    }
+
     return ticketAction
   }
 
-  static async listenTicketClinicChange(data: {
+  static async listenSocketTicketChange(data: {
     type: 'CREATE' | 'UPDATE' | 'DESTROY'
     ticket: any
   }) {
     const ticket = Ticket.from(data.ticket)
-    if (ticketClinicRef.value.id === ticket.id) {
-      Object.assign(ticketClinicRef.value, ticket)
+
+    if (ticketRoomRef.value.id === ticket.id) {
+      Object.assign(ticketRoomRef.value, ticket)
     }
 
-    const findIndex = ticketClinicPagination.value.findIndex((i) => i.id === ticket.id)
-    if (data.type === 'CREATE' || data.type === 'UPDATE') {
-      if (findIndex !== -1) {
-        Object.assign(ticketClinicPagination.value[findIndex], ticket)
+    const roomTicketPaginationReception = roomReceptionPagination.value
+
+    if (roomTicketPaginationReception) {
+      const findIndex = roomTicketPaginationReception.findIndex((i) => i.id === ticket.id)
+      if (data.type === 'CREATE' || data.type === 'UPDATE') {
+        if (findIndex !== -1) {
+          Object.assign(roomTicketPaginationReception[findIndex], ticket)
+        } else {
+          roomTicketPaginationReception.unshift(ticket)
+        }
+      }
+      if (data.type === 'DESTROY') {
+        if (findIndex !== -1) {
+          roomTicketPaginationReception.splice(findIndex, 1)
+        }
+      }
+    }
+
+    Object.entries(roomTicketPagination.value).forEach((entries) => {
+      const roomId = Number(entries[0])
+      const ticketPagination = entries[1]
+
+      if (ticket.roomId === roomId || RoomService.roomMap.value[roomId]?.isCommon) {
+        const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
+        if (data.type === 'CREATE' || data.type === 'UPDATE') {
+          if (findIndex !== -1) {
+            Object.assign(ticketPagination[findIndex], ticket)
+          } else {
+            ticketPagination.unshift(ticket)
+          }
+        }
+        if (data.type === 'DESTROY') {
+          if (findIndex !== -1) {
+            ticketPagination.splice(findIndex, 1)
+          }
+        }
       } else {
-        ticketClinicPagination.value.unshift(ticket)
+        // Để xử lý trường hợp chuyển phòng
+        const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
+        if (findIndex !== -1) {
+          ticketPagination.splice(findIndex, 1)
+        } else {
+        }
       }
-    }
-    if (data.type === 'DESTROY') {
-      if (findIndex !== -1) {
-        ticketClinicPagination.value.splice(findIndex, 1)
-      }
-    }
+    })
   }
 
-  static async listenTicketClinicUpdateTicketAttributeList(data: {
+  static async listenSocketTicketAttributeChange(data: {
     ticketId: number
     ticketAttributeList: any[]
   }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
     ticketAction.forEach((ticket) => {
       ticket.ticketAttributeList = TicketAttribute.fromList(data.ticketAttributeList)
       ticket.ticketAttributeMap = TicketAttribute.basicMap(data.ticketAttributeList)
     })
   }
 
-  static async listenTicketClinicChangeTicketUserList(data: {
+  static async listenSocketTicketUserListChange(data: {
     ticketId: number
     ticketUserDestroyList?: TicketUser[]
     ticketUserUpsertList?: TicketUser[]
     replace?: {
-      interactType: InteractType
-      ticketItemId: number // ticketItemId = 0 là thay thế toàn bộ interactType đó
+      positionType: PositionInteractType
+      ticketItemId: number // ticketItemId = 0 là thay thế toàn bộ positionType đó
       ticketUserList: TicketUser[]
     }
     replaceAll: {
       ticketUserList: TicketUser[]
     }
   }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketUserList) return
 
       if (data.replace) {
         const ticketUserOtherList = ticket.ticketUserList.filter((i) => {
-          if (i.interactType !== data.replace!.interactType) return true
+          if (i.positionType !== data.replace!.positionType) return true
           if (data.replace?.ticketItemId) {
-            // ticketItemId = 0 là thay thế toàn bộ interactType đó nên ko filter
+            // ticketItemId = 0 là thay thế toàn bộ positionType đó nên ko filter
             if (i.ticketItemId !== data.replace!.ticketItemId) return true
           }
           return false
         })
         // let ticketUserActionList = ticket.ticketUserList.filter((i) => {
-        //   if (i.interactType !== data.replace!.interactType) return false
+        //   if (i.positionType !== data.replace!.positionType) return false
         //   if (i.ticketItemId !== data.replace!.ticketItemId) return false
         //   return true
         // })
@@ -174,14 +301,16 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeTicketProcedureList(data: {
+  static async listenSocketTicketProcedureListChange(data: {
     ticketId: number
     ticketProcedureInsert?: TicketProcedure
     ticketProcedureUpdate?: TicketProcedure
     ticketProcedureDestroy?: TicketProcedure
     ticketProcedureList?: TicketProcedure[]
   }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketProcedureList) return
 
@@ -223,14 +352,16 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeTicketRadiologyList(data: {
+  static async listenSocketTicketRadiologyListChange(data: {
     ticketId: number
     ticketRadiologyInsert?: TicketRadiology
     ticketRadiologyUpdate?: TicketRadiology
     ticketRadiologyDestroy?: TicketRadiology
     ticketRadiologyList?: TicketRadiology[]
   }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketRadiologyList) return
       if (data.ticketRadiologyInsert) {
@@ -266,9 +397,18 @@ export class SocketService {
 
       await ticket.refreshRadiology()
     })
+    const ticketRadiologyActionList = [
+      ...(data.ticketRadiologyInsert ? [data.ticketRadiologyInsert] : []),
+      ...(data.ticketRadiologyUpdate ? [data.ticketRadiologyUpdate] : []),
+      ...(data.ticketRadiologyDestroy ? [data.ticketRadiologyDestroy] : []),
+      ...(data.ticketRadiologyList ? data.ticketRadiologyList : []),
+    ]
+    ticketRadiologyActionList.forEach((tr) => {
+      roomRadiology.value[tr.roomId] = new Date().toISOString()
+    })
   }
 
-  static async listenTicketClinicChangeLaboratory(data: {
+  static async listenSocketTicketLaboratoryListChange(data: {
     ticketId: number
     ticketLaboratoryInsertList?: TicketLaboratory[]
     ticketLaboratoryUpdateList?: TicketLaboratory[]
@@ -280,7 +420,9 @@ export class SocketService {
     ticketLaboratoryResultUpdateList?: TicketLaboratoryResult[]
     ticketLaboratoryResultDestroyList?: TicketLaboratoryResult[]
   }) {
-    const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketLaboratoryList) ticket.ticketLaboratoryList = []
       if (!ticket.ticketLaboratoryGroupList) ticket.ticketLaboratoryGroupList = []
@@ -372,24 +514,40 @@ export class SocketService {
         })
       }
 
-      if (data.ticketLaboratoryResultUpdateList) {
-        const tlrDestroyIdList = data.ticketLaboratoryResultUpdateList.map((i) => i.id)
+      if (data.ticketLaboratoryResultDestroyList) {
+        const tlrDestroyIdList = data.ticketLaboratoryResultDestroyList.map((i) => i.id)
         ticket.ticketLaboratoryResultList = ticket.ticketLaboratoryResultList.filter((i) => {
           return !tlrDestroyIdList.includes(i.id)
         })
       }
+
       await ticket.refreshLaboratory()
+    })
+
+    const roomIdAction = [
+      ...(data.ticketLaboratoryInsertList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryUpdateList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryDestroyList || []).map((i) => i.roomId),
+      ...(data.ticketLaboratoryGroupInsertList || []).map((i) => i.roomId),
+      data.ticketLaboratoryGroupUpdate ? data.ticketLaboratoryGroupUpdate.roomId : 0,
+      data.ticketLaboratoryGroupDestroy ? data.ticketLaboratoryGroupDestroy.roomId : 0,
+    ]
+    await LaboratoryGroupService.getMap()
+    roomIdAction.forEach((roomId) => {
+      roomLaboratory.value[roomId] = new Date().toISOString()
     })
   }
 
-  static async listenTicketClinicChangeConsumable(data: {
+  static async listenSocketTicketConsumableChange(data: {
     ticketId: number
     ticketProductDestroyList?: TicketProduct[]
     ticketProductUpsertList?: TicketProduct[]
     ticketProductReplaceList?: TicketProduct[]
   }) {
     const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction(ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
 
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketProductConsumableList) return
@@ -422,14 +580,16 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangePrescription(data: {
+  static async listenSocketTicketPrescriptionChange(data: {
     ticketId: number
     ticketProductDestroyList?: TicketProduct[]
     ticketProductUpsertList?: TicketProduct[]
     ticketProductReplaceList?: TicketProduct[]
   }) {
     const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction(ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
 
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketProductPrescriptionList) return
@@ -462,14 +622,17 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeBatch(data: {
+  static async listenTicketBatchListChange(data: {
     ticketId: number
+    roomId: number
     ticketBatchDestroyList?: TicketBatch[]
     ticketBatchUpsertList?: TicketBatch[]
     ticketBatchReplaceList?: TicketBatch[]
   }) {
     const { ticketId } = data
-    const ticketAction: Ticket[] = SocketService.getTicketAction(ticketId)
+    const ticketAction: Ticket[] = SocketService.getTicketAction({
+      ticketId: data.ticketId,
+    })
 
     ticketAction.forEach(async (ticket) => {
       ticket.ticketBatchList ||= []

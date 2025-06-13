@@ -7,16 +7,17 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import { Role, RoleService } from '../../../../modules/role'
-import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
+import { TicketClinicLaboratoryApi } from '../../../../modules/ticket-clinic'
+import { TicketLaboratory, TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
+import { ESString } from '../../../../utils'
+import { ticketRoomRef } from '@/modules/room'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketLaboratory, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -42,18 +43,18 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Laboratory]?.[ticketLaboratory.value.id] ||
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Laboratory]?.[ticketLaboratory.value.id] ||
     []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Laboratory,
-      interactId: ticketLaboratory.value.laboratoryId,
+      positionType: PositionInteractType.Laboratory,
+      positionInteractId: ticketLaboratory.value.laboratoryId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))
@@ -176,7 +177,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketClinicLaboratoryApi.destroyTicketLaboratory({
-          ticketId: ticketClinicRef.value.id,
+          ticketId: ticketRoomRef.value.id,
           ticketLaboratoryId: ticketLaboratory.value.id,
         })
         emit('success', ticketLaboratory.value, 'DESTROY')
@@ -194,7 +195,7 @@ const updateTicketLaboratory = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
     await TicketClinicLaboratoryApi.updateTicketLaboratory({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketLaboratoryId: ticketLaboratory.value.id,
       ticketLaboratory: hasChangeTicketLaboratory.value ? ticketLaboratory.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
@@ -298,7 +299,7 @@ defineExpose({ openModal })
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
-                    - {{ DString.formatPhone(data.phone) }} -
+                    - {{ ESString.formatPhone(data.phone) }} -
                   </div>
                 </template>
               </InputFilter>
@@ -307,7 +308,14 @@ defineExpose({ openModal })
         </template>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
-          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
+          <VueButton
+            color="red"
+            icon="trash"
+            @click="clickDestroy"
+            v-if="ticketLaboratory.status === TicketLaboratoryStatus.Pending"
+          >
+            Xóa
+          </VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>

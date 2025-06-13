@@ -1,11 +1,11 @@
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import type { Ticket } from '../../../../modules/ticket'
-import { DString, ESTimer } from '../../../../utils'
+import { ESString, ESTimer } from '../../../../utils'
 
 export const ticketOrderHtmlContent = (ticket: Ticket) => {
   const settingStore = useSettingStore()
-  const meStore = useMeStore()
+  const { organization } = MeService
   const { formatMoney } = settingStore
   const showSubstance = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.substance
   const showUnit = settingStore.SCREEN_INVOICE_PREVIEW.invoiceItemsTable.unit
@@ -172,8 +172,8 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
       <table>
         <tr>
           <td style="width: 50%">
-            <p>${meStore.organization.name} </p>
-            <p>${meStore.organization.phone} </p>
+            <p>${organization.value?.name} </p>
+            <p>${organization.value?.phone} </p>
           </td>
           <td style="width: 50%; text-align:right">
             <p>Mã KH: C${ticket.customerId}  </p>
@@ -189,7 +189,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
         </tr>
         <tr>
           <td>Địa chỉ: </td>
-          <td>  ${DString.formatAddress(ticket.customer)} </td>
+          <td>  ${ESString.formatAddress(ticket.customer)} </td>
         </tr>
       </table>
       <table class="data">
@@ -211,9 +211,7 @@ export const ticketOrderHtmlContent = (ticket: Ticket) => {
           ${surcharge}
           <tr>
             <td colspan="${showUnit ? 4 : 3}" style="text-align: right"><b>Tổng tiền</b></td>
-            <td colspan="2" style="text-align: right"><b>${formatMoney(
-              ticket.totalMoney
-            )}</b></td>
+            <td colspan="2" style="text-align: right"><b>${formatMoney(ticket.totalMoney)}</b></td>
           </tr>
           ${paid}
           ${debt}

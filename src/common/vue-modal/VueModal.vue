@@ -5,23 +5,28 @@ const props = withDefaults(
   defineProps<{
     show: boolean
     style?: StyleValue
+    modalMaskStyle?: StyleValue
   }>(),
   {
     show: false,
     style: () => ({ width: '800px' }),
-  }
+  },
 )
-const emit = defineEmits<{ (e: 'update:show', value: boolean): void }>()
+const emit = defineEmits<{
+  (e: 'update:show', value: boolean): void
+  (e: 'close'): void
+}>()
 
 const closeModal = () => {
   emit('update:show', false)
+  emit('close')
 }
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-mask" @mousedown.self="closeModal">
+      <div v-if="show" class="modal-mask" :style="modalMaskStyle" @mousedown.self="closeModal">
         <div class="modal-container" :style="style">
           <slot>
             <div style="padding: 20px; background-color: #fff">

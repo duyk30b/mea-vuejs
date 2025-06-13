@@ -36,7 +36,6 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
 <template>
   <ModalProductDetail ref="modalProductDetail" />
   <ModalReceiptItemUpdate ref="modalReceiptItemUpdate" />
-  <div>Giỏ hàng ({{ receipt.receiptItemList?.length || 0 }})</div>
   <div v-if="isMobile" class="table-wrapper mt-2">
     <table>
       <thead>
@@ -107,10 +106,10 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
               {{ receiptItem?.product?.substance }}
             </div>
             <div
-              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batchCodeAndExpiryDate"
+              v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
               style="font-size: 0.8rem"
             >
-              <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
+              <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
               <div v-if="receiptItem.expiryDate">
                 - HSD {{ ESTimer.timeToText(receiptItem.expiryDate) }}
               </div>
@@ -252,10 +251,10 @@ const handleChangeReceiptItemUnitQuantity = (unitQuantity: number, index: number
                 {{ receiptItem?.product?.substance }}
               </div>
               <div
-                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.batchCodeAndExpiryDate"
+                v-if="settingStore.SCREEN_RECEIPT_UPSERT.receiptItemsTable.lotNumberAndExpiryDate"
                 style="font-size: 0.8rem"
               >
-                <div v-if="receiptItem.batchCode">S.Lô {{ receiptItem.batchCode }}</div>
+                <div v-if="receiptItem.lotNumber">S.Lô {{ receiptItem.lotNumber }}</div>
                 <div v-if="receiptItem.expiryDate">
                   - HSD {{ ESTimer.timeToText(receiptItem.expiryDate) }}
                 </div>

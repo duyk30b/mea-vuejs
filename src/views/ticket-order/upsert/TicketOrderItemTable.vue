@@ -15,6 +15,7 @@ import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalTicketOrderUpdateProcedure from './ModalTicketOrderUpdateProcedure.vue'
 import ModalTicketOrderUpdateProduct from './ModalTicketOrderUpdateProduct.vue'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
+import { MeService } from '@/modules/_me/me.service'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
@@ -24,12 +25,17 @@ const modalTicketOrderUpdateProduct = ref<InstanceType<typeof ModalTicketOrderUp
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
+const pickupStrategy = ref(MeService.getPickupStrategy().order)
+
 const handleChangeHintUsage = (data: string, index: number) => {
   ticketOrderUpsertRef.value.ticketProductList![index].hintUsage = data
 }
 
 const overQuantityTicketProduct = (ticketProduct: TicketProduct): boolean => {
-  if (ticketProduct.product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+  if (
+    ticketProduct.product?.warehouseIds !== '[]' &&
+    pickupStrategy.value !== PickupStrategy.NoImpact
+  ) {
     return ticketProduct.quantity >= ticketProduct.product!.quantity
   }
   return false
@@ -101,7 +107,7 @@ const openModalProductDetail = (product?: Product) => {
 }
 
 const openModalProcedureDetail = (procedure?: Procedure) => {
-  if (procedure) modalProcedureDetail.value?.openModal(procedure)
+  if (procedure) modalProcedureDetail.value?.openModal(procedure.id)
 }
 
 const changeTicketProductPosition = (index: number, count: number) => {

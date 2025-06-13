@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
-import { InputDate, InputSelect } from '../../../common/vue-form'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { IconBarChart, IconRead, IconSetting } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import { InputDate, InputSelect } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '../../../modules/laboratory'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -17,8 +17,7 @@ const toTime = ref<number>(ESTimer.endOfMonth(new Date()).getTime())
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const dataLoading = ref(false)
 
@@ -117,7 +116,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </span>
         </template>
         <div class="vue-menu">
-          <a v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">Cài đặt hiển thị</a>
+          <a v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]">Cài đặt hiển thị</a>
         </div>
       </VueDropdown>
     </div>
@@ -207,7 +206,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
                 <router-link
                   :to="{
                     name: 'TicketClinicDetailContainer',
-                    params: { id: ticketLaboratory.ticketId },
+                    params: { roomId: 0, ticketId: ticketLaboratory.ticketId },
                   }"
                 >
                   <div class="flex justify-center items-center gap-2">

@@ -1,6 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Batch } from '../batch'
+import type { Discount } from '../discount'
+import type { Position } from '../position'
 import { ReceiptItem } from '../receipt-item'
 import { TicketProduct } from '../ticket-product'
 import {
@@ -48,32 +50,40 @@ export class ProductApi {
     return Product.from(data.product)
   }
 
-  static async createOne(product: Product) {
+  static async createOne(body: {
+    product: Product
+    positionList?: Position[]
+    discountList?: Discount[]
+  }) {
+    const { product, positionList, discountList } = body
+
     const response = await AxiosInstance.post('/product/create', {
-      brandName: product.brandName,
-      productCode: product.productCode || '',
-      quantity: product.quantity,
-      substance: product.substance,
-      costPrice: product.costPrice,
-      wholesalePrice: product.wholesalePrice,
-      retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId || 0,
-      unit: product.unit,
-      route: product.route,
-      source: product.source,
-      image: product.image,
-      hintUsage: product.hintUsage,
-      warehouseIds: product.warehouseIds,
-      isActive: product.isActive,
+      product: {
+        productCode: product.productCode,
+        brandName: product.brandName,
+        quantity: product.quantity,
+        substance: product.substance,
+        costPrice: product.costPrice,
+        wholesalePrice: product.wholesalePrice,
+        retailPrice: product.retailPrice,
+        productGroupId: product.productGroupId || 0,
+        unit: product.unit,
+        route: product.route,
+        source: product.source,
+        image: product.image,
+        hintUsage: product.hintUsage,
+        warehouseIds: product.warehouseIds,
+        isActive: product.isActive,
 
-      pickupStrategy: product.pickupStrategy,
-      splitBatchByWarehouse: product.splitBatchByWarehouse,
-      splitBatchByDistributor: product.splitBatchByDistributor,
-      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
-      splitBatchByCostPrice: product.splitBatchByCostPrice,
+        productType: product.productType,
+        splitBatchByWarehouse: product.splitBatchByWarehouse,
+        splitBatchByDistributor: product.splitBatchByDistributor,
+        splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+        splitBatchByCostPrice: product.splitBatchByCostPrice,
+      },
 
-      commissionList: (product.commissionList || [])
-        .filter((i) => !!i.roleId)
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -81,36 +91,60 @@ export class ProductApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ product: any }>
     return Product.from(data.product)
   }
 
-  static async updateOne(id: number, product: Product) {
+  static async updateOne(
+    id: number,
+    body: {
+      product: Product
+      positionList?: Position[]
+      discountList?: Discount[]
+    },
+  ) {
+    const { product, discountList, positionList } = body
     const response = await AxiosInstance.patch(`/product/update/${id}`, {
-      brandName: product.brandName,
-      productCode: product.productCode,
-      substance: product.substance,
-      costPrice: product.costPrice,
-      wholesalePrice: product.wholesalePrice,
-      retailPrice: product.retailPrice,
-      productGroupId: product.productGroupId || 0,
-      unit: product.unit,
-      route: product.route,
-      source: product.source,
-      image: product.image,
-      hintUsage: product.hintUsage,
-      warehouseIds: product.warehouseIds,
-      isActive: product.isActive,
+      product: {
+        productCode: product.productCode,
+        brandName: product.brandName,
+        substance: product.substance,
+        costPrice: product.costPrice,
+        wholesalePrice: product.wholesalePrice,
+        retailPrice: product.retailPrice,
+        productGroupId: product.productGroupId || 0,
+        unit: product.unit,
+        route: product.route,
+        source: product.source,
+        image: product.image,
+        hintUsage: product.hintUsage,
+        warehouseIds: product.warehouseIds,
+        isActive: product.isActive,
 
-      pickupStrategy: product.pickupStrategy,
-      splitBatchByWarehouse: product.splitBatchByWarehouse,
-      splitBatchByDistributor: product.splitBatchByDistributor,
-      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
-      splitBatchByCostPrice: product.splitBatchByCostPrice,
+        productType: product.productType,
+        splitBatchByWarehouse: product.splitBatchByWarehouse,
+        splitBatchByDistributor: product.splitBatchByDistributor,
+        splitBatchByExpiryDate: product.splitBatchByExpiryDate,
+        splitBatchByCostPrice: product.splitBatchByCostPrice,
+      },
 
-      commissionList: (product.commissionList || [])
-        .filter((i) => !!i.roleId)
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -118,6 +152,20 @@ export class ProductApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const result = response.data as BaseResponse<{ product: any; batchError: any[] }>
     if (result.success) {

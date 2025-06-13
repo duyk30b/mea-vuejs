@@ -6,7 +6,8 @@ export class ProcedureGetQuery {
   limit?: number
   relation?: {
     procedureGroup?: boolean
-    commissionList?: boolean
+    positionList?: boolean
+    discountList?: boolean
   }
 
   filter?: {
@@ -18,6 +19,7 @@ export class ProcedureGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    procedureCode?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
     price?: 'ASC' | 'DESC'
   }

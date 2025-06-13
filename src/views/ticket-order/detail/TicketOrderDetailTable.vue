@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconExclamationCircle, IconFileSearch } from '../../../common/icon-antd'
 import { CONFIG } from '../../../config'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { TicketStatus } from '../../../modules/ticket'
@@ -17,8 +16,6 @@ const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
 
 const emit = defineEmits<{ (e: 'showInvoicePayment', value: PaymentViewType): void }>()
 
@@ -65,7 +62,7 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
                 >
                   <IconFileSearch />
                 </a>
@@ -231,7 +228,7 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
                 >
                   <IconFileSearch />
                 </a>

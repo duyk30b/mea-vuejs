@@ -14,7 +14,6 @@ export class OrganizationApi {
     const response = await AxiosInstance.patch('/organization/update-info', {
       name: organization.name,
       addressProvince: organization.addressProvince,
-      addressDistrict: organization.addressDistrict,
       addressWard: organization.addressWard,
       addressStreet: organization.addressStreet,
     })
@@ -28,7 +27,6 @@ export class OrganizationApi {
     formData.append('file', file)
     formData.append('name', organization.name)
     formData.append('addressProvince', organization.addressProvince)
-    formData.append('addressDistrict', organization.addressDistrict)
     formData.append('addressWard', organization.addressWard)
     formData.append('addressStreet', organization.addressStreet)
 

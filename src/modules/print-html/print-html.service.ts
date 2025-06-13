@@ -1,25 +1,35 @@
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { ref } from 'vue'
 import { ESArray } from '../../utils'
-import { MeService } from '../_me/me.service'
 import { PrintHtmlApi } from './print-html.api'
-import type { PrintHtmlGetListQuery } from './print-html.dto'
+import type {
+    PrintHtmlGetListQuery,
+    PrintHtmlGetQuery,
+    PrintHtmlPaginationQuery,
+} from './print-html.dto'
 import { PrintHtml } from './print-html.model'
+
+const PrintHtmlDBQuery = new IndexedDBQuery<PrintHtml>()
 
 export class PrintHtmlService {
   static loadedAll: boolean = false
   static printHtmlAll: PrintHtml[] = []
+  static printHtmlMap = ref<Record<string, PrintHtml>>({})
 
   static fetchAll = (() => {
     const start = async () => {
       try {
-        const { data } = await PrintHtmlApi.getList({})
-        PrintHtmlService.printHtmlAll = data
+        const { data } = await PrintHtmlApi.getList({ sort: { id: 'DESC' } })
+        const printHtmlAll = data
+        PrintHtmlService.printHtmlAll = printHtmlAll
+        PrintHtmlService.printHtmlMap.value = ESArray.arrayToKeyValue(printHtmlAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: warehouse.service.ts:20 ~ PrintHtmlService ~ start ~ error:', error)
+        console.log('🚀 ~ print-html.service.ts:27 ~ PrintHtmlService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !PrintHtmlService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !PrintHtmlService.loadedAll || options.refetch) {
         PrintHtmlService.loadedAll = true
         fetching = start()
       }
@@ -27,15 +37,64 @@ export class PrintHtmlService {
     }
   })()
 
-  static async list(options: PrintHtmlGetListQuery) {
-    await PrintHtmlService.fetchAll()
-    return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
+  private static executeQuery(all: PrintHtml[], query: PrintHtmlGetQuery) {
+    let data = all
+    if (query.filter) {
+      const filter = query.filter
+      data = data.filter((i) => {
+        return PrintHtmlDBQuery.executeFilter(i, filter as any)
+      })
+    }
+    if (query.sort) {
+      data = PrintHtmlDBQuery.executeSort(data, query.sort)
+    }
+    return data
   }
 
-  static async getMap() {
-    await PrintHtmlService.fetchAll()
-    const printHtmlMap = ESArray.arrayToKeyValue(PrintHtmlService.printHtmlAll, 'id')
-    return printHtmlMap
+  static async executeRelation(
+    printHtmlList: PrintHtml[],
+    relation: PrintHtmlGetQuery['relation'],
+  ) {
+    try {
+      const printHtmlIdList = printHtmlList.map((i) => i.id)
+    } catch (error) {
+      console.log('🚀 ~ printHtml.service.ts:78 ~ PrintHtmlService ~ error:', error)
+    }
+  }
+
+  static async getMap(options?: { refetch: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+    return PrintHtmlService.printHtmlMap.value
+  }
+
+  static async getAll(options?: { refetch?: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+    return PrintHtmlService.printHtmlAll
+  }
+
+  static async pagination(query: PrintHtmlPaginationQuery, options?: { refetch: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+
+    const dataQuery = PrintHtmlService.executeQuery(PrintHtmlService.printHtmlAll, query)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
+
+    if (query.relation) {
+      await PrintHtmlService.executeRelation(data, query.relation)
+    }
+
+    return {
+      data: PrintHtml.fromList(data),
+      meta: { total: dataQuery.length },
+    }
+  }
+
+  static async list(query: PrintHtmlGetListQuery, options?: { refetch: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+    const data = PrintHtmlService.executeQuery(PrintHtmlService.printHtmlAll, query)
+
+    return PrintHtml.fromList(data)
   }
 
   static async detail(id: number) {
@@ -61,125 +120,5 @@ export class PrintHtmlService {
     const result = await PrintHtmlApi.destroyOne(id)
     PrintHtmlService.loadedAll = false
     return result
-  }
-
-  static async getPrintHtmlHeader() {
-    let printHtml: PrintHtml | undefined
-
-    let printHtmlId = MeService.settingMap.value.PRINT_SETTING._LAYOUT_HEADER.printHtmlId
-    if (printHtmlId != 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING._LAYOUT_HEADER.printHtmlId
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
-  }
-
-  static async getPrintHtmlOptometry() {
-    let printHtml: PrintHtml | undefined
-
-    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.optometry.printHtmlId
-    if (printHtmlId != 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.optometry.printHtmlId
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
-  }
-
-  static async getPrintHtmlLaboratory(printHtmlId: number) {
-    let printHtmlTemp: PrintHtml | undefined
-    if (printHtmlId != 0) {
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtmlTemp || !printHtmlTemp.html) {
-        printHtmlId = 0
-      }
-    }
-
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMap.value.PRINT_SETTING.laboratory.printHtmlId
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtmlTemp || !printHtmlTemp.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.laboratory.printHtmlId
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtmlTemp ? PrintHtml.from(printHtmlTemp) : PrintHtml.blank()
-  }
-
-  static async getPrintHtmlRadiology(printHtmlId: number) {
-    let printHtmlTemp: PrintHtml | undefined
-    if (printHtmlId != 0) {
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtmlTemp || !printHtmlTemp.html) {
-        printHtmlId = 0
-      }
-    }
-
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMap.value.PRINT_SETTING.radiology.printHtmlId
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtmlTemp || !printHtmlTemp.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.radiology.printHtmlId
-      printHtmlTemp = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtmlTemp ? PrintHtml.from(printHtmlTemp) : PrintHtml.blank()
-  }
-
-  static async getPrintHtmlInvoice() {
-    let printHtml: PrintHtml | undefined
-
-    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.invoice.printHtmlId
-    if (printHtmlId != 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.invoice.printHtmlId
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
-  }
-
-  static async getPrintHtmlPrescription() {
-    let printHtml: PrintHtml | undefined
-
-    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.prescription.printHtmlId
-    if (printHtmlId != 0) {
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-      if (!printHtml || !printHtml.html) {
-        printHtmlId = 0
-      }
-    }
-    if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.prescription.printHtmlId
-      printHtml = await PrintHtmlService.detail(printHtmlId)
-    }
-
-    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 }

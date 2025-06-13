@@ -7,7 +7,8 @@ export class RadiologyGetQuery {
   relation?: {
     radiologyGroup?: boolean
     printHtml?: boolean
-    commissionList?: boolean
+    positionList?: boolean
+    discountList?: boolean
   }
 
   filter?: {
@@ -19,7 +20,7 @@ export class RadiologyGetQuery {
   sort?: {
     id?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
-    priority?: 'ASC' | 'DESC'
+    radiologyCode?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<RadiologyGetQuery>) {
@@ -33,6 +34,6 @@ export class RadiologyGetQuery {
   }
 }
 
-export class RadiologyPaginationQuery extends RadiologyGetQuery {}
-export class RadiologyListQuery extends OmitClass(RadiologyGetQuery, ['page']) {}
-export class RadiologyDetailQuery extends PickClass(RadiologyGetQuery, ['relation']) {}
+export class RadiologyPaginationQuery extends RadiologyGetQuery { }
+export class RadiologyListQuery extends OmitClass(RadiologyGetQuery, ['page']) { }
+export class RadiologyDetailQuery extends PickClass(RadiologyGetQuery, ['relation']) { }

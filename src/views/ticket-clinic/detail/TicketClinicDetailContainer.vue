@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserRoleService } from '@/modules/user-role'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
@@ -24,13 +25,13 @@ import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import VueTabMenu from '../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabs from '../../../common/vue-tabs/VueTabs.vue'
 import { CONFIG } from '../../../config'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
@@ -47,37 +48,38 @@ import TicketClinicProcedure from './procedure/TicketClinicProcedure.vue'
 import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
+import { ticketRoomRef } from '@/modules/room'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
 
 const route = useRoute()
 const router = useRouter()
-const meStore = useMeStore()
 const settingStore = useSettingStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 const childComponent = ref<any>(null)
 
 const ticketLoaded = ref(false)
 
 onBeforeMount(async () => {
-  const ticketId = Number(route.params.id)
+  const ticketId = Number(route.params.ticketId)
   await startFetchData(ticketId)
 
   ticketLoaded.value = true
+  await Promise.all([UserRoleService.getMapList(), ticketRoomRef.value.refreshUserAndRole()])
 })
 
 onUnmounted(async () => {
-  ticketClinicRef.value = Ticket.blank()
+  ticketRoomRef.value = Ticket.blank()
   ticketLoaded.value = false
 })
 
 const startFetchData = async (ticketId?: number) => {
   if (!ticketId) {
-    ticketClinicRef.value = Ticket.blank()
-    ticketClinicRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
-    ticketClinicRef.value.customer = Customer.init()
+    ticketRoomRef.value = Ticket.blank()
+    ticketRoomRef.value.ticketType = settingStore.TICKET_CLINIC_LIST.ticketType
+    ticketRoomRef.value.customer = Customer.init()
     return
   }
 
@@ -92,13 +94,17 @@ const startFetchData = async (ticketId?: number) => {
         ticketProductConsumableList: {},
         ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
-        ticketProcedureList: {},
-        ticketLaboratoryList: {},
-        ticketLaboratoryGroupList: {},
-        ticketLaboratoryResultList: true,
-        ticketRadiologyList: {},
-        ticketUserList: {},
-        toAppointment: true,
+        ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE] ? {} : false,
+        ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY] ? {} : false,
+        ticketLaboratoryGroupList: organizationPermission.value[PermissionId.LABORATORY]
+          ? {}
+          : false,
+        ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
+          ? true
+          : false,
+        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : false,
+        ticketUserList: organizationPermission.value[PermissionId.POSITION] ? {} : false,
+        toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
       },
     })
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
@@ -118,7 +124,7 @@ const startFetchData = async (ticketId?: number) => {
       ]
       ticketData.ticketAttributeMap = { healthHistory }
     }
-    ticketClinicRef.value = ticketData
+    ticketRoomRef.value = ticketData
   } catch (error) {
     console.log('🚀 ~ file: InvoiceDetails.vue:51 ~ error:', error)
   }
@@ -127,7 +133,7 @@ const startFetchData = async (ticketId?: number) => {
 const handleChangeTabs = (activeKey: any) => {}
 
 const startCheckup = async () => {
-  await TicketClinicApi.startCheckup({ ticketId: ticketClinicRef.value.id })
+  await TicketClinicApi.startCheckup({ ticketId: ticketRoomRef.value.id })
 }
 
 const startRegisterExecuting = async () => {
@@ -136,9 +142,9 @@ const startRegisterExecuting = async () => {
   //   ticketDiagnosis = data.ticketDiagnosis || TicketDiagnosis.blank()
   // }
 
-  // ticketClinicRef.value = await TicketClinicApi.registerExecuting({
-  //   customerId: ticketClinicRef.value.customerId,
-  //   ticketType: ticketClinicRef.value.ticketType,
+  // ticketRoomRef.value = await TicketClinicApi.registerExecuting({
+  //   customerId: ticketRoomRef.value.customerId,
+  //   ticketType: ticketRoomRef.value.ticketType,
   //   registeredAt: Date.now(),
   //   diagnosisBasic: {
   //     reason: ticketDiagnosis?.reason || '',
@@ -150,16 +156,16 @@ const startRegisterExecuting = async () => {
   //   },
   // })
   router.replace({
-    path: route.path.replace(/\/detail\/\d+/, `/detail/${ticketClinicRef.value.id}`),
+    path: route.path.replace(/\/detail\/\d+/, `/detail/${ticketRoomRef.value.id}`),
   })
 }
 
-const startCloseVisit = async () => {
-  await TicketClinicApi.close(ticketClinicRef.value.id)
+const startCloseTicket = async () => {
+  await TicketClinicApi.close(ticketRoomRef.value.id)
 }
 
-const clickCloseVisit = () => {
-  if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Pending) {
+const clickCloseTicket = () => {
+  if (ticketRoomRef.value.deliveryStatus === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
       content: [
@@ -169,7 +175,7 @@ const clickCloseVisit = () => {
     })
   }
   if (
-    (ticketClinicRef.value.ticketRadiologyList || []).find(
+    (ticketRoomRef.value.ticketRadiologyList || []).find(
       (i) => i.status == TicketRadiologyStatus.Pending,
     )
   ) {
@@ -179,7 +185,7 @@ const clickCloseVisit = () => {
     })
   }
   // if (
-  //   (ticketClinicRef.value.ticketLaboratoryList || []).find(
+  //   (ticketRoomRef.value.ticketLaboratoryList || []).find(
   //     (i) => i.status === TicketLaboratoryStatus.Pending
   //   )
   // ) {
@@ -188,28 +194,28 @@ const clickCloseVisit = () => {
   //     content: 'Cần trả kết quả xét nghiệm trước khi đóng phiếu khám',
   //   })
   // }
-  if (ticketClinicRef.value.paid > ticketClinicRef.value.totalMoney) {
+  if (ticketRoomRef.value.paid > ticketRoomRef.value.totalMoney) {
     return ModalStore.alert({
       title: 'Khách hàng còn thừa tiền tạm ứng',
       content: 'Cần hoàn trả tiền thừa trước khi đóng hồ sơ',
     })
   }
 
-  if (ticketClinicRef.value.debt) {
+  if (ticketRoomRef.value.debt) {
     return ModalStore.confirm({
       title: 'Đóng phiếu khám khi khách hàng chưa thanh toán đủ ?',
       content: [
         '- Vẫn đóng phiếu khám.',
-        `- Ghi nợ khách hàng: ${formatMoney(ticketClinicRef.value?.debt || 0)}.`,
+        `- Ghi nợ khách hàng: ${formatMoney(ticketRoomRef.value?.debt || 0)}.`,
       ],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
-        await startCloseVisit()
+        await startCloseTicket()
       },
     })
   }
 
-  startCloseVisit()
+  startCloseTicket()
 }
 </script>
 
@@ -220,10 +226,10 @@ const clickCloseVisit = () => {
     <div class="page-header-content">
       <div class="flex items-center gap-2 flex-wrap">
         <IconContacts />
-        {{ ticketClinicRef.customer?.fullName }}
+        {{ ticketRoomRef.customer?.fullName }}
         <VueButton
           size="small"
-          @click="modalTicketClinicHistory?.openModal(ticketClinicRef.customer!)"
+          @click="modalTicketClinicHistory?.openModal(ticketRoomRef.customer!)"
         >
           Lịch sử khám
         </VueButton>
@@ -238,7 +244,7 @@ const clickCloseVisit = () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalTicketClinicDetailSetting?.openModal()"
           >
             Cài đặt dữ liệu
@@ -264,7 +270,7 @@ const clickCloseVisit = () => {
       <VueTabs :tabShow="String(route.name)" @update:tabShow="handleChangeTabs">
         <template #menu>
           <VueTabMenu
-            v-if="ticketClinicRef.ticketType === TicketType.Clinic"
+            v-if="ticketRoomRef.ticketType === TicketType.Clinic"
             :tabKey="TicketClinicDiagnosisGeneral.__name!"
             style="padding: 6px 12px"
             @active="router.push({ name: TicketClinicDiagnosisGeneral.__name })"
@@ -273,7 +279,7 @@ const clickCloseVisit = () => {
             Khám
           </VueTabMenu>
           <VueTabMenu
-            v-if="ticketClinicRef.ticketType === TicketType.Obstetric"
+            v-if="ticketRoomRef.ticketType === TicketType.Obstetric"
             style="padding: 6px 12px"
             :tabKey="TicketClinicDiagnosisObstetric.__name!"
             @active="router.push({ name: TicketClinicDiagnosisObstetric.__name })"
@@ -282,7 +288,7 @@ const clickCloseVisit = () => {
             Khám
           </VueTabMenu>
           <VueTabMenu
-            v-if="ticketClinicRef.ticketType === TicketType.Eye"
+            v-if="ticketRoomRef.ticketType === TicketType.Eye"
             style="padding: 6px 12px"
             :tabKey="TicketClinicDiagnosisEyeBasic.__name!"
             @active="router.push({ name: TicketClinicDiagnosisEyeBasic.__name })"
@@ -293,12 +299,12 @@ const clickCloseVisit = () => {
           <template
             v-if="
               [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketClinicRef.status,
+                ticketRoomRef.status,
               )
             "
           >
             <VueTabMenu
-              v-if="ticketClinicRef.ticketType === TicketType.Eye"
+              v-if="ticketRoomRef.ticketType === TicketType.Eye"
               style="padding: 6px 12px"
               :tabKey="TicketClinicDiagnosisEyeSpecial.__name!"
               @active="router.push({ name: TicketClinicDiagnosisEyeSpecial.__name })"
@@ -307,6 +313,7 @@ const clickCloseVisit = () => {
               Đo thị lực
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.PROCEDURE]"
               :tabKey="TicketClinicProcedure.__name!"
               style="padding: 6px 12px"
               @active="router.push({ name: TicketClinicProcedure.__name })"
@@ -323,6 +330,7 @@ const clickCloseVisit = () => {
               Vật tư
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.LABORATORY]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicLaboratory.__name!"
               @active="router.push({ name: TicketClinicLaboratory.__name })"
@@ -331,6 +339,7 @@ const clickCloseVisit = () => {
               Xét nghiệm
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.RADIOLOGY]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicRadiology.__name!"
               @active="router.push({ name: TicketClinicRadiology.__name })"
@@ -347,6 +356,7 @@ const clickCloseVisit = () => {
               Đơn thuốc
             </VueTabMenu>
             <VueTabMenu
+              v-if="organizationPermission[PermissionId.POSITION]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicUser.__name!"
               @active="router.push({ name: TicketClinicUser.__name })"
@@ -387,15 +397,15 @@ const clickCloseVisit = () => {
     </div>
     <div style="flex-basis: 260px; flex-grow: 1" class="">
       <TicketClinicInformation />
-      <TicketClinicUserList />
+      <TicketClinicUserList v-if="organizationPermission[PermissionId.POSITION]" />
       <div class="mt-4 w-full flex flex-col px-1 gap-4">
         <VueButton
           v-if="
             [TicketStatus.Schedule, TicketStatus.Draft, TicketStatus.Deposited].includes(
-              ticketClinicRef.status,
+              ticketRoomRef.status,
             ) &&
-            permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
-            !!ticketClinicRef.id
+            userPermission[PermissionId.TICKET_CLINIC_START_CHECKUP] &&
+            !!ticketRoomRef.id
           "
           color="blue"
           size="default"
@@ -406,7 +416,7 @@ const clickCloseVisit = () => {
           VÀO KHÁM
         </VueButton>
         <VueButton
-          v-if="!ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_START_CHECKUP]"
+          v-if="!ticketRoomRef.id && userPermission[PermissionId.TICKET_CLINIC_START_CHECKUP]"
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
@@ -416,12 +426,12 @@ const clickCloseVisit = () => {
           ĐĂNG KÝ KHÁM
         </VueButton>
         <VueButton
-          v-if="permissionIdMap[PermissionId.TICKET_CLINIC_CLOSE]"
+          v-if="userPermission[PermissionId.TICKET_CLINIC_CLOSE]"
           color="blue"
           size="default"
           style="margin-left: -4px; margin-right: -4px"
-          :disabled="![TicketStatus.Executing].includes(ticketClinicRef.status)"
-          @click="clickCloseVisit"
+          :disabled="![TicketStatus.Executing].includes(ticketRoomRef.status)"
+          @click="clickCloseTicket"
         >
           <IconSave />
           ĐÓNG PHIẾU KHÁM

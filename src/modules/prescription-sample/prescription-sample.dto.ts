@@ -1,13 +1,17 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionNumber } from '../_base/base-condition'
 
 export class PrescriptionSampleGetQuery {
   page?: number
   limit?: number
   relation?: {
-    medicineList?: boolean
+    medicineList?: { product?: boolean }
+    user?: boolean
   }
 
-  filter?: {}
+  filter?: {
+    userId?: number | ConditionNumber
+  }
 
   sort?: {
     id?: 'ASC' | 'DESC'
@@ -25,8 +29,8 @@ export class PrescriptionSampleGetQuery {
   }
 }
 
-export class PrescriptionSamplePaginationQuery extends PrescriptionSampleGetQuery {}
-export class PrescriptionSampleListQuery extends OmitClass(PrescriptionSampleGetQuery, ['page']) {}
+export class PrescriptionSamplePaginationQuery extends PrescriptionSampleGetQuery { }
+export class PrescriptionSampleListQuery extends OmitClass(PrescriptionSampleGetQuery, ['page']) { }
 export class PrescriptionSampleDetailQuery extends PickClass(PrescriptionSampleGetQuery, [
   'relation',
-]) {}
+]) { }

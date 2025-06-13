@@ -1,14 +1,15 @@
-import { Commission } from '../commission'
+import { Discount } from '../discount'
+import { Position } from '../position'
 import { PrintHtml } from '../print-html'
 import { RadiologyGroup } from '../radiology-group'
 
 export class Radiology {
   id: number
+  radiologyCode: string
   name: string
 
   radiologyGroupId: number
   printHtmlId: number
-  priority: number
 
   costPrice: number
   price: number
@@ -23,16 +24,31 @@ export class Radiology {
 
   radiologyGroup?: RadiologyGroup
   printHtml?: PrintHtml
-  commissionList?: Commission[]
+  positionList?: Position[]
+
+  discountList?: Discount[]
+  discountListExtra?: Discount[]
+
+  get discountApply() {
+    const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
+    const discountFilter = discountList.filter((i) => Discount.canApplyNow(i))
+    discountFilter.sort((a, b) => {
+      if (a.priority > b.priority) return -1
+      if (a.priority < b.priority) return 1
+      if (a.priority == b.priority) return a.discountInteractId == 0 ? 1 : -1
+      return -1
+    })
+    return discountFilter[0]
+  }
 
   static init() {
     const ins = new Radiology()
     ins.id = 0
     ins.name = ''
+    ins.radiologyCode = ''
 
     ins.radiologyGroupId = 0
     ins.printHtmlId = 0
-    ins.priority = 1
 
     ins.costPrice = 0
     ins.price = 0
@@ -47,7 +63,9 @@ export class Radiology {
   static blank() {
     const ins = Radiology.init()
     ins.printHtml = PrintHtml.init()
-    ins.commissionList = []
+    ins.positionList = []
+    ins.discountList = []
+    ins.discountListExtra = []
     return ins
   }
 
@@ -75,8 +93,14 @@ export class Radiology {
     if (Object.prototype.hasOwnProperty.call(source, 'printHtml')) {
       target.printHtml = target.printHtml ? PrintHtml.basic(target.printHtml) : target.printHtml
     }
-    if (target.commissionList) {
-      target.commissionList = Commission.basicList(target.commissionList)
+    if (target.positionList) {
+      target.positionList = Position.basicList(target.positionList)
+    }
+    if (target.discountList) {
+      target.discountList = Discount.basicList(target.discountList)
+    }
+    if (target.discountListExtra) {
+      target.discountListExtra = Discount.basicList(target.discountListExtra)
     }
     return target
   }
@@ -87,10 +111,10 @@ export class Radiology {
 
   static equal(a: Radiology, b: Radiology) {
     if (a.id != b.id) return false
+    if (a.radiologyCode != b.radiologyCode) return false
     if (a.name != b.name) return false
     if (a.radiologyGroupId != b.radiologyGroupId) return false
     if (a.printHtmlId != b.printHtmlId) return false
-    if (a.priority != b.priority) return false
     if (a.costPrice != b.costPrice) return false
     if (a.price != b.price) return false
     if (a.requestNoteDefault != b.requestNoteDefault) return false

@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { IconEditSquare, IconWarehouse } from '../../../common/icon-google'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
+import VuePagination from '../../../common/VuePagination.vue'
+import { IconEditSquare } from '../../../common/icon-google'
+import { InputSelect } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import type { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
-import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { InputSelect } from '../../../common/vue-form'
 import Breadcrumb from '../../component/Breadcrumb.vue'
+import ModalWarehouseUpsert from './ModalWarehouseUpsert.vue'
 
 const modalWarehouseUpsert = ref<InstanceType<typeof ModalWarehouseUpsert>>()
 
-const meStore = useMeStore()
-const settingStore = useSettingStore()
-const { formatMoney } = settingStore
-
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const warehouseList = ref<Warehouse[]>([])
 
@@ -81,7 +76,7 @@ const handleModalWarehouseUpsertSuccess = async (
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
         @click="modalWarehouseUpsert?.openModal()"
@@ -124,7 +119,7 @@ const handleModalWarehouseUpsertSuccess = async (
             <td class="text-center" style="width: 100px">W{{ warehouse.id }}</td>
             <td>{{ warehouse.name }}</td>
             <td
-              v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+              v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
               class="text-center"
               style="width: 100px"
             >

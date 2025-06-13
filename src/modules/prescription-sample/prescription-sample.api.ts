@@ -44,6 +44,7 @@ export class PrescriptionSampleApi {
   static async createOne(prescriptionSample: PrescriptionSample) {
     const response = await AxiosInstance.post('/prescription-sample/create', {
       priority: prescriptionSample.priority,
+      userId: prescriptionSample.userId,
       name: prescriptionSample.name,
       medicines: prescriptionSample.medicines,
     })
@@ -54,6 +55,7 @@ export class PrescriptionSampleApi {
   static async updateOne(id: number, ins: Partial<PrescriptionSample>) {
     const response = await AxiosInstance.patch(`/prescription-sample/update/${id}`, {
       priority: ins.priority,
+      userId: ins.userId,
       name: ins.name,
       medicines: ins.medicines,
     })

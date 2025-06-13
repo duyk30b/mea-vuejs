@@ -49,6 +49,7 @@ export class PrintHtmlApi {
 
   static async createOne(printHtml: PrintHtml) {
     const response = await AxiosInstance.post('/print-html/create', {
+      priority: printHtml.priority || 0,
       name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
@@ -61,7 +62,8 @@ export class PrintHtmlApi {
 
   static async updateOne(id: number, printHtml: PrintHtml) {
     const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
-      name: printHtml.name,
+      priority: printHtml.priority || 0,
+      name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
       initVariable: printHtml.initVariable || '',

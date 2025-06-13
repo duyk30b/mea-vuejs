@@ -1,5 +1,7 @@
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
+import { MeService } from '../_me/me.service'
 import { Customer } from '../customer'
+import { PermissionId } from '../permission/permission.enum'
 import { TicketApi } from '../ticket/ticket.api'
 import type { TicketDetailQuery } from '../ticket/ticket.dto'
 import { Ticket } from '../ticket/ticket.model'
@@ -29,14 +31,26 @@ export class TicketClinicService {
           ticketAttributeList: true,
           ticketProductConsumableList: {},
           ticketProductPrescriptionList: {},
-          ticketProcedureList: {},
-          ticketRadiologyList: {},
-          ticketLaboratoryList: {},
-          ticketLaboratoryGroupList: {},
-          ticketLaboratoryResultList: true,
+          ticketProcedureList: MeService.organizationPermission.value[PermissionId.PROCEDURE]
+            ? {}
+            : false,
+          ticketRadiologyList: MeService.organizationPermission.value[PermissionId.RADIOLOGY]
+            ? {}
+            : false,
+          ticketLaboratoryList: MeService.organizationPermission.value[PermissionId.LABORATORY]
+            ? {}
+            : false,
+          ticketLaboratoryGroupList: MeService.organizationPermission.value[PermissionId.LABORATORY]
+            ? {}
+            : false,
+          ticketLaboratoryResultList: MeService.organizationPermission.value[
+            PermissionId.LABORATORY
+          ]
+            ? true
+            : false,
         },
       })
-      ticketResponse.refreshAllData()
+      await ticketResponse.refreshAllData()
 
       TicketClinicService.ticketMap[ticket.id] = ticketResponse
     }

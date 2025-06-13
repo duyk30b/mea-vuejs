@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
-import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
 import VueTinyMCE from '../../../common/VueTinyMCE.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
+import { InputText } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -12,11 +12,11 @@ import {
   TicketAttributeKeyEyeList,
   type TicketAttributeKeyEyeType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { DImage } from '../../../utils'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { ESImage } from '../../../utils'
+import { ticketRoomRef } from '@/modules/room'
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
@@ -31,11 +31,10 @@ const ticketAttributeMap = ref<
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
-onMounted(async () => {
-})
+onMounted(async () => {})
 
 watch(
-  () => ticketClinicRef.value.note,
+  () => ticketRoomRef.value.note,
   (newValue, oldValue) => {
     note.value = newValue
   },
@@ -43,7 +42,7 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value.ticketAttributeList,
+  () => ticketRoomRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) {
       return (ticketAttributeMap.value = { healthHistory: '', body: '' })
@@ -60,13 +59,13 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value.imageIds,
+  () => ticketRoomRef.value.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
   { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
-  const customerHealthHistory = ticketClinicRef.value.customer?.healthHistory || ''
+  const customerHealthHistory = ticketRoomRef.value.customer?.healthHistory || ''
   return customerHealthHistory != ticketAttributeMap.value.healthHistory
 })
 
@@ -74,7 +73,7 @@ const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
     const k = key as unknown as TicketAttributeKeyEyeType
-    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
     }
@@ -83,7 +82,7 @@ const hasChangeAttribute = computed(() => {
 })
 
 const hasChangeData = computed(() => {
-  if (note.value != ticketClinicRef.value.note) return true
+  if (note.value != ticketRoomRef.value.note) return true
   if (hasChangeImage.value) return true
   if (hasChangeAttribute.value) return true
   if (hasChangeCustomer.value) return true
@@ -109,7 +108,7 @@ const saveTicketDiagnosis = async () => {
 
     await Promise.all([
       TicketClinicApi.updateDiagnosis({
-        ticketId: ticketClinicRef.value.id,
+        ticketId: ticketRoomRef.value.id,
         note: note.value,
         files,
         imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
@@ -117,7 +116,7 @@ const saveTicketDiagnosis = async () => {
         ticketAttributeKeyList: TicketAttributeKeyEyeList as any,
       }),
       hasChangeCustomer.value
-        ? CustomerService.updateOne(ticketClinicRef.value.customerId, {
+        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
             healthHistory: ticketAttributeMap.value.healthHistory,
           })
         : undefined,
@@ -215,11 +214,11 @@ defineExpose({ getDataTicketDiagnosis })
         ref="imageUploadMultipleRef"
         :height="100"
         :rootImageList="
-          (ticketClinicRef?.imageList || [])
+          (ticketRoomRef?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
-              thumbnail: DImage.getImageLink(i, { size: 200 }),
-              enlarged: DImage.getImageLink(i, { size: 1000 }),
+              thumbnail: ESImage.getImageLink(i, { size: 200 }),
+              enlarged: ESImage.getImageLink(i, { size: 1000 }),
               id: i.id,
             }))
         "
@@ -236,7 +235,7 @@ defineExpose({ getDataTicketDiagnosis })
       <div></div>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketRoomRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

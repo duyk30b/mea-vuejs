@@ -8,6 +8,7 @@ export class PrintHtmlGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    priority?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<PrintHtmlGetQuery>) {
@@ -21,7 +22,7 @@ export class PrintHtmlGetQuery {
   }
 }
 
-export class PrintHtmlPaginationQuery extends PrintHtmlGetQuery {}
-export class PrintHtmlGetListQuery extends OmitClass(PrintHtmlGetQuery, ['page']) {}
-export class PrintHtmlGetOneQuery extends OmitClass(PrintHtmlGetQuery, ['page', 'limit']) {}
-export class PrintHtmlDetailQuery extends PickClass(PrintHtmlGetQuery, ['relation']) {}
+export class PrintHtmlPaginationQuery extends PrintHtmlGetQuery { }
+export class PrintHtmlGetListQuery extends OmitClass(PrintHtmlGetQuery, ['page']) { }
+export class PrintHtmlGetOneQuery extends OmitClass(PrintHtmlGetQuery, ['page', 'limit']) { }
+export class PrintHtmlDetailQuery extends PickClass(PrintHtmlGetQuery, ['relation']) { }

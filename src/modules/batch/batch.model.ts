@@ -6,13 +6,14 @@ export class Batch {
   warehouseId: number
   productId: number
 
-  batchCode: string // Lô sản phẩm
+  lotNumber: string // Lô sản phẩm
   expiryDate?: number
 
   quantity: number
 
   costPrice: number // Giá nhập // Vẫn rất cần thiết giữ lại giá nhập này, vì khi thay đổi costAmount gây ra số lượng âm thì có costPrice để fix lại
   costAmount: number // Tổng vốn
+  isActive: 0 | 1
 
   updatedAt: number
   registeredAt: number
@@ -20,15 +21,15 @@ export class Batch {
   product?: Product
 
   get unitQuantity() {
-    return Number(((this.quantity || 0) / this.product!.unitDefaultRate).toFixed(3))
+    return Number(((this.quantity || 0) / (this.product?.unitDefaultRate || 1)).toFixed(3))
   }
 
   get unitCostPrice() {
-    return this.costPrice * this.product!.unitDefaultRate
+    return this.costPrice * (this.product?.unitDefaultRate || 1)
   }
 
   set unitCostPrice(data) {
-    this.costPrice = data / this.product!.unitDefaultRate
+    this.costPrice = data / (this.product?.unitDefaultRate || 1)
   }
 
   static init() {
@@ -38,7 +39,7 @@ export class Batch {
     ins.warehouseId = 0
     ins.distributorId = 0
 
-    ins.batchCode = ''
+    ins.lotNumber = ''
     ins.costPrice = 0
     ins.quantity = 0
     return ins
@@ -82,7 +83,7 @@ export class Batch {
     if (a.productId != b.productId) return false
     if (a.distributorId != b.distributorId) return false
 
-    if (a.batchCode != b.batchCode) return false
+    if (a.lotNumber != b.lotNumber) return false
     if (a.expiryDate != b.expiryDate) return false
 
     if (a.costPrice != b.costPrice) return false

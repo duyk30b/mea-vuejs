@@ -1,30 +1,32 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconFileSearch, IconGroup, IconPlus, IconSetting } from '../../../common/icon-antd'
+import { IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputDate, InputSelect, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Receipt, ReceiptApi, ReceiptStatus } from '../../../modules/receipt'
 import { timeToText } from '../../../utils'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalDistributorDetail from '../../distributor/detail/ModalDistributorDetail.vue'
 import ReceiptStatusTag from '../ReceiptStatusTag.vue'
 import { EReceiptUpsertMode } from '../upsert/receipt-upsert.store'
 import ModalReceiptListSetting from './ModalReceiptListSetting.vue'
-import Breadcrumb from '../../component/Breadcrumb.vue'
 
 const modalReceiptListSetting = ref<InstanceType<typeof ModalReceiptListSetting>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 
+const router = useRouter()
+
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const receipts = ref<Receipt[]>([])
 
@@ -115,7 +117,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 <template>
   <ModalReceiptListSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalReceiptListSetting"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
@@ -126,10 +128,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD]"
+        v-if="userPermission[PermissionId.RECEIPT_DRAFT_CRUD]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
+        @click="router.push({ name: 'ReceiptUpsert', query: { mode: EReceiptUpsertMode.CREATE } })"
       >
         Tạo phiếu nhập hàng mới
       </VueButton>
@@ -143,7 +145,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalReceiptListSetting?.openModal()"
           >
             Cài đặt hiển thị
@@ -229,7 +231,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <tr
               v-for="(receipt, index) in receipts"
               :key="index"
-              @dblclick="$router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
+              @dblclick="router.push({ name: 'ReceiptDetail', params: { id: receipt.id } })"
             >
               <td>
                 <div class="font-medium text-justify">
@@ -334,7 +336,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               </div>
             </td>
             <td v-if="settingStore.SCREEN_RECEIPT_LIST.receiptItems">
-              <div>
+              <div class="max-line-2">
                 {{ (receipt.receiptItemList || []).map((i) => i.product?.brandName).join(', ') }}
               </div>
             </td>

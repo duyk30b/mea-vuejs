@@ -1,26 +1,32 @@
 import { ref } from 'vue'
+import { LocalStorageService } from '../../core/local-storage.service'
 import { arrayToKeyValue, objectUpdatePropertyByObject } from '../../utils'
 import {
-    PickupStrategy,
-    SplitBatchByCostPrice,
-    SplitBatchByDistributor,
-    SplitBatchByExpiryDate,
-    SplitBatchByWarehouse,
+  PickupStrategy,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
 } from '../enum'
-import type { Organization } from '../organization'
+import { Organization } from '../organization'
 import type { Permission } from '../permission/permission.model'
-import type { Product } from '../product'
 import { SettingApi } from '../setting/setting.api'
-import type { User } from '../user'
+import { User } from '../user'
 import { MeApi } from './me.api'
-import { useMeStore } from './me.store'
 import { SETTING_DEFAULT } from './setting.default'
 import { useSettingStore } from './setting.store'
 import { SettingKey } from './store.variable'
 
 export class MeService {
+  static user = ref(LocalStorageService.getRefreshToken() ? User.blank() : null)
+  static organization = ref(Organization.blank())
+
   static settingMapRoot = ref<typeof SETTING_DEFAULT>({} as any)
   static settingMap = ref<typeof SETTING_DEFAULT>({} as any)
+
+  static permissionMap = ref<Record<string, Permission>>({})
+  static userPermission = ref<Record<string, boolean>>({})
+  static organizationPermission = ref<Record<string, boolean>>({})
 
   static reCalculatorSetting(settingStore: any, settingMap: Record<string, any>) {
     Object.keys(SETTING_DEFAULT).forEach((key) => {
@@ -55,21 +61,27 @@ export class MeService {
     organization: Organization
   }) {
     const { permissionAll, permissionIds, user, organization } = options
-    const meStore = useMeStore()
-    meStore.user = user
-    meStore.organization = organization
-
-    const organizationPermissionIds: number[] = JSON.parse(organization.permissionIds)
+    MeService.user.value = user
+    MeService.organization.value = organization
 
     const permissionMap = arrayToKeyValue(permissionAll, 'id')
-    meStore.permissionMap = permissionMap
+    MeService.permissionMap.value = permissionMap
 
-    const permissionIdMap: Record<string, boolean> = {}
+    const organizationPermission: Record<string, boolean> = {}
+    const userPermission: Record<string, boolean> = {}
+
+    const organizationPermissionIds: number[] = JSON.parse(organization.permissionIds)
+    organizationPermissionIds.forEach((i) => {
+      organizationPermission[i] = true
+    })
+    MeService.organizationPermission.value = organizationPermission
+
     permissionAll.forEach((permission) => {
       // ROOT thì auto pass dù API inActive
-      // if (user.oid === 1) {
-      //   return (permissionIdMap[permission.id] = true)
-      // }
+      if (user.oid === 1) {
+        userPermission[permission.id] = true
+        return
+      }
 
       const pathIdArr = permission.pathId.split('.').map((i) => Number(i))
       // Kiểm tra API có bị inActive
@@ -86,10 +98,10 @@ export class MeService {
       }
 
       if (pathIdArr.some((pid) => permissionIds.includes(pid))) {
-        permissionIdMap[permission.id] = true
+        userPermission[permission.id] = true
       }
     })
-    meStore.permissionIdMap = permissionIdMap
+    MeService.userPermission.value = userPermission
   }
 
   static async initData() {
@@ -114,50 +126,10 @@ export class MeService {
     MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
   }
 
-  static getProductSetting(product: Product) {
-    const splitRule: typeof MeService.settingMap.value.PRODUCT_SETTING = {
-      allowNegativeQuantity: false,
-      pickupStrategy: product.pickupStrategy,
-      splitBatchByWarehouse: product.splitBatchByWarehouse,
-      splitBatchByDistributor: product.splitBatchByDistributor,
-      splitBatchByExpiryDate: product.splitBatchByExpiryDate,
-      splitBatchByCostPrice: product.splitBatchByCostPrice,
-    }
-
-    const productSettingCommon = MeService.getProductSettingCommon()
-
-    splitRule.allowNegativeQuantity = productSettingCommon.allowNegativeQuantity
-
-    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
-      splitRule.pickupStrategy = productSettingCommon.pickupStrategy
-    }
-
-    if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
-      splitRule.splitBatchByWarehouse = productSettingCommon.splitBatchByWarehouse
-    }
-
-    if (splitRule.splitBatchByDistributor === SplitBatchByDistributor.Inherit) {
-      splitRule.splitBatchByDistributor = productSettingCommon.splitBatchByDistributor
-    }
-
-    if (splitRule.splitBatchByExpiryDate === SplitBatchByExpiryDate.Inherit) {
-      splitRule.splitBatchByExpiryDate = productSettingCommon.splitBatchByExpiryDate
-    }
-
-    if (splitRule.splitBatchByCostPrice === SplitBatchByCostPrice.Inherit) {
-      splitRule.splitBatchByCostPrice = productSettingCommon.splitBatchByCostPrice
-    }
-    return splitRule
-  }
-
   static getProductSettingCommon() {
     const splitRule = { ...MeService.settingMap.value.PRODUCT_SETTING }
 
     const productSettingRoot = MeService.settingMapRoot.value.PRODUCT_SETTING
-
-    if (splitRule.pickupStrategy === PickupStrategy.Inherit) {
-      splitRule.pickupStrategy = productSettingRoot.pickupStrategy
-    }
 
     if (splitRule.splitBatchByWarehouse === SplitBatchByWarehouse.Inherit) {
       splitRule.splitBatchByWarehouse = productSettingRoot.splitBatchByWarehouse
@@ -177,31 +149,34 @@ export class MeService {
     return splitRule
   }
 
-  static getPrintSetting() {
-    const printSettingCommon = {
-      ...MeService.settingMap.value.PRINT_SETTING,
+  static getPickupStrategy() {
+    const pickupStrategyMap = {
+      order: MeService.settingMap.value.SCREEN_INVOICE_UPSERT.pickupStrategy,
+      consumable: MeService.settingMap.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy,
+      prescription: MeService.settingMap.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy,
     }
-    const printSettingRoot = MeService.settingMapRoot.value.PRINT_SETTING
-    if (printSettingCommon._LAYOUT_HEADER.printHtmlId === 0) {
-      printSettingCommon._LAYOUT_HEADER.printHtmlId = printSettingRoot._LAYOUT_HEADER.printHtmlId
+
+    if (pickupStrategyMap.order === PickupStrategy.Inherit) {
+      pickupStrategyMap.order = MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy
+      if (pickupStrategyMap.order === PickupStrategy.Inherit) {
+        pickupStrategyMap.order = PickupStrategy.AutoWithFIFO
+      }
     }
-    if (printSettingCommon.invoice.printHtmlId === 0) {
-      printSettingCommon.invoice.printHtmlId = printSettingRoot.invoice.printHtmlId
+    if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
+      pickupStrategyMap.consumable =
+        MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy
+      if (pickupStrategyMap.consumable === PickupStrategy.Inherit) {
+        pickupStrategyMap.consumable = PickupStrategy.AutoWithFIFO
+      }
     }
-    if (printSettingCommon.prescription.printHtmlId === 0) {
-      printSettingCommon.prescription.printHtmlId = printSettingRoot.prescription.printHtmlId
+    if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
+      pickupStrategyMap.prescription =
+        MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.prescriptions.pickupStrategy
+      if (pickupStrategyMap.prescription === PickupStrategy.Inherit) {
+        pickupStrategyMap.prescription = PickupStrategy.AutoWithFIFO
+      }
     }
-    if (printSettingCommon.optometry.printHtmlId === 0) {
-      printSettingCommon.optometry.printHtmlId = printSettingRoot.optometry.printHtmlId
-    }
-    if (printSettingCommon.laboratory.printHtmlId === 0) {
-      printSettingCommon.laboratory.printHtmlId = printSettingRoot.laboratory.printHtmlId
-    }
-    if (printSettingCommon.radiology.printHtmlId === 0) {
-      printSettingCommon.radiology.printHtmlId = printSettingRoot.radiology.printHtmlId
-    }
-    return printSettingCommon
+
+    return pickupStrategyMap
   }
-
-
 }

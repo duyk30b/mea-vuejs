@@ -1,19 +1,16 @@
 <script setup lang="ts">
+import { VueButton } from '@/common'
+import { IconEye } from '@/common/icon-antd'
+import { IconDelete, IconEditSquare } from '@/common/icon-google'
+import { InputSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import VuePagination from '@/common/VuePagination.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '@/modules/print-html'
 import { onBeforeMount, ref } from 'vue'
-import { IconEye } from '../../../common/icon-antd'
-import { IconDelete, IconEditSquare } from '../../../common/icon-google'
-import { InputSelect } from '../../../common/vue-form'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../modules/print-html'
-import { VueButton } from '../../../common'
 
-const meStore = useMeStore()
-const { user } = meStore
-
-const { permissionIdMap } = meStore
+const { userPermission, user } = MeService
 
 const printHtmlList = ref<PrintHtml[]>([])
 
@@ -32,7 +29,7 @@ const startFetchData = async () => {
       limit: limit.value,
       relation: {},
       filter: {},
-      sort: { id: 'ASC' },
+      sort: { priority: 'ASC' },
     })
 
     printHtmlList.value = data
@@ -74,7 +71,7 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
 <template>
   <div class="mt-4 flex justify-end">
     <VueButton
-      v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
+      v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"
       color="blue"
       icon="plus"
       @click="$router.push({ name: 'PrintHtmlUpsert' })"
@@ -87,7 +84,8 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
     <table>
       <thead>
         <tr>
-          <th style="width: 100px">ID</th>
+          <th style="width: 100px; text-align: center">ID</th>
+          <th style="width: 100px">Priority</th>
           <th>Tên</th>
           <th style="width: 100px"></th>
         </tr>
@@ -111,10 +109,14 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-          <td class="text-center">P{{ printHtml.id }}</td>
+          <td class="text-center" style="color: violet">P{{ printHtml.id }}</td>
+          <td class="text-center">{{ printHtml.priority }}</td>
           <td>{{ printHtml.name }}</td>
-          <td v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]">
-            <div class="flex justify-between">
+          <td>
+            <div
+              v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"
+              class="flex justify-between"
+            >
               <router-link :to="{ name: 'PrintHtmlUpsert', params: { id: printHtml.id } }">
                 <IconEditSquare
                   v-if="printHtml.oid !== 1 || user?.id === 1"

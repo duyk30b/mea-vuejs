@@ -33,7 +33,7 @@ export class RadiologyGroupApi {
 
   static async detail(
     id: number,
-    options: RadiologyGroupDetailQuery = {}
+    options: RadiologyGroupDetailQuery = {},
   ): Promise<RadiologyGroup> {
     const params = RadiologyGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/radiology-group/detail/${id}`, { params })
@@ -44,6 +44,7 @@ export class RadiologyGroupApi {
   static async createOne(radiologyGroup: RadiologyGroup) {
     const response = await AxiosInstance.post('/radiology-group/create', {
       name: radiologyGroup.name,
+      roomId: radiologyGroup.roomId,
     })
     const { data } = response.data as BaseResponse<{ radiologyGroup: any }>
     return RadiologyGroup.from(data.radiologyGroup)
@@ -52,6 +53,7 @@ export class RadiologyGroupApi {
   static async updateOne(id: number, radiologyGroup: RadiologyGroup) {
     const response = await AxiosInstance.patch(`/radiology-group/update/${id}`, {
       name: radiologyGroup.name,
+      roomId: radiologyGroup.roomId,
     })
     const { data } = response.data as BaseResponse<{ radiologyGroup: any }>
     return RadiologyGroup.from(data.radiologyGroup)
@@ -69,6 +71,7 @@ export class RadiologyGroupApi {
         return {
           id: i.id || 0,
           name: i.name,
+          roomId: i.roomId,
         }
       }),
     })

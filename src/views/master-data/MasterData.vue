@@ -1,40 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IconDollar,
-  IconGift,
   IconPrint,
   IconReconciliation,
   IconTool,
   IconUser,
 } from '../../common/icon-antd'
 import { IconLabPanel, IconPulmonology, IconWarehouse } from '../../common/icon-google'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import Breadcrumb from '../component/Breadcrumb.vue'
-import ModalProcedureGroupManager from './modal/ModalProcedureGroupManager.vue'
-import ModalProductGroupManager from './modal/ModalProductGroupManager.vue'
-import ModalRadiologyGroupManager from './modal/ModalRadiologyGroupManager.vue'
-
-const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
-const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
-const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const router = useRouter()
-const meStore = useMeStore()
 
-const matchedRouter = computed(() => {
-  return router.currentRoute.value.matched
-})
-
-const { permissionIdMap } = meStore
+const { organizationPermission, userPermission } = MeService
 </script>
 
 <template>
-  <ModalProductGroupManager ref="modalProductGroupManager" />
-  <ModalProcedureGroupManager ref="modalProcedureGroupManager" />
-  <ModalRadiologyGroupManager ref="modalRadiologyGroupManager" />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
@@ -49,7 +32,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Procedure' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
+        v-if="userPermission[PermissionId.PROCEDURE_MENU]"
       >
         <div class="card-icon">
           <IconReconciliation />
@@ -63,7 +46,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Laboratory' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        v-if="userPermission[PermissionId.LABORATORY_MENU]"
       >
         <div class="card-icon">
           <IconLabPanel />
@@ -77,7 +60,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'Radiology' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
+        v-if="userPermission[PermissionId.RADIOLOGY_MENU]"
       >
         <div class="card-icon">
           <IconPulmonology />
@@ -93,7 +76,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'PrintHtml' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRINT_HTML]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"
       >
         <div class="card-icon">
           <IconPrint />
@@ -108,8 +91,22 @@ const { permissionIdMap } = meStore
 
       <div
         class="card"
+        @click="router.push({ name: 'MasterDataRoom' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_ROOM]"
+      >
+        <div class="card-icon">
+          <IconWarehouse />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Danh sách phòng</div>
+          <div class="card-description">Quản lý danh sách khoa, phòng</div>
+        </div>
+      </div>
+
+      <div
+        class="card"
         @click="router.push({ name: 'Warehouse' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
       >
         <div class="card-icon">
           <IconWarehouse />
@@ -122,16 +119,16 @@ const { permissionIdMap } = meStore
 
       <div
         class="card"
-        @click="router.push({ name: 'PaymentMethod' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+        @click="router.push({ name: 'Discount' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
       >
         <div class="card-icon">
           <IconDollar />
         </div>
         <div class="card-content">
-          <div class="card-title">Phương thức thanh toán</div>
+          <div class="card-title">Chương trình khuyến mại</div>
           <div class="card-description">
-            Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
+            Cài đặt số tiền khuyến mại cho mỗi loại mặt hàng, thời gian khuyến mại ...
           </div>
         </div>
       </div>
@@ -145,8 +142,24 @@ const { permissionIdMap } = meStore
     <div class="p-4 flex flex-wrap gap-4">
       <div
         class="card"
+        @click="router.push({ name: 'PaymentMethod' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+      >
+        <div class="card-icon">
+          <IconDollar />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Phương thức thanh toán</div>
+          <div class="card-description">
+            Các phương thức thanh toán như: Tiền mặt, chuyển khoản, ...
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="card"
         @click="router.push({ name: 'CustomerSource' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_CUSTOMER_SOURCE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_CUSTOMER_SOURCE]"
       >
         <div class="card-icon">
           <IconUser />
@@ -160,7 +173,7 @@ const { permissionIdMap } = meStore
       <div
         class="card"
         @click="router.push({ name: 'PrescriptionSample' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_PRESCRIPTION_SAMPLE]"
       >
         <div class="card-icon">
           <IconTool />
@@ -173,45 +186,33 @@ const { permissionIdMap } = meStore
 
       <div
         class="card"
-        @click="router.push({ name: 'LaboratoryKit' })"
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        @click="router.push({ name: 'LaboratorySample' })"
+        v-if="userPermission[PermissionId.LABORATORY_SAMPLE_CRUD]"
       >
         <div class="card-icon">
-          <IconTool />
+          <IconLabPanel />
         </div>
         <div class="card-content">
-          <div class="card-title">Bộ xét nghiệm</div>
+          <div class="card-title">Bộ chỉ định xét nghiệm mẫu</div>
           <div class="card-description">
             Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
           </div>
         </div>
       </div>
 
-      <div class="card" @click="modalProductGroupManager?.openModal()">
+      <div
+        class="card"
+        @click="router.push({ name: 'RadiologySample' })"
+        v-if="userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD]"
+      >
         <div class="card-icon">
-          <IconTool />
+          <IconPulmonology />
         </div>
         <div class="card-content">
-          <div class="card-title">Nhóm sản phẩm</div>
-          <div class="card-description">Quản lý danh sách nhóm sản phẩm</div>
-        </div>
-      </div>
-      <div class="card" @click="modalProcedureGroupManager?.openModal()">
-        <div class="card-icon">
-          <IconTool />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Nhóm dịch vụ</div>
-          <div class="card-description">Quản lý danh sách nhóm dịch vụ</div>
-        </div>
-      </div>
-      <div class="card" @click="modalRadiologyGroupManager?.openModal()">
-        <div class="card-icon">
-          <IconTool />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Nhóm phiếu CĐHA</div>
-          <div class="card-description">Quản lý nhóm các phiếu CĐHA</div>
+          <div class="card-title">Mẫu kết quả phiếu CĐHA</div>
+          <div class="card-description">
+            Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
+          </div>
         </div>
       </div>
     </div>

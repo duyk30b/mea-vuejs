@@ -2,7 +2,7 @@ import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { CustomerDB } from '../../core/indexed-db/repository/customer.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
 import { throttleAsync } from '../../utils'
-import { useMeStore } from '../_me/me.store'
+import { MeService } from '../_me/me.service'
 import { useSettingStore } from '../_me/setting.store'
 import { AuthService } from '../auth/auth.service'
 import { PaymentApi } from '../payment/payment.api'
@@ -21,7 +21,7 @@ export class CustomerService {
         if (!refreshTime) {
           refreshTime = { code: 'CUSTOMER', dataVersion: 0, time: new Date(0).toISOString() }
         }
-        const dataVersion = useMeStore().organization.dataVersionParse.customer
+        const dataVersion = MeService.organization.value.dataVersionParse?.customer || -1
 
         let apiResponse: { time: Date; data: Customer[] }
 
@@ -46,16 +46,17 @@ export class CustomerService {
       } catch (error: any) {
         console.log('🚀 ~ file: customer.service.ts:45 ~  ~ refreshDB ~ error:', error)
         AlertStore.add({ type: 'error', message: error.message })
-        AuthService.logout()
+        await AuthService.logout()
+        location.reload()
         return
       }
     },
-    60 * 1000, // 1p sau mới refreshDB 1 lần
+    10 * 1000, // 10 sau mới refreshDB 1 lần
   )
 
-  static async pagination(params: CustomerPaginationQuery, options?: { refresh: boolean }) {
+  static async pagination(params: CustomerPaginationQuery, options?: { refetch?: boolean }) {
     const { filter, page, limit, sort } = params
-    if (options?.refresh) {
+    if (options?.refetch) {
       await CustomerService.refreshDB()
     }
     const result = await CustomerDB.pagination({

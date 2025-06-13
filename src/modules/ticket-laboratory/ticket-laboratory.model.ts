@@ -16,6 +16,7 @@ export class TicketLaboratory {
   ticketId: number
   customerId: number
   laboratoryId: number
+  roomId: number
   laboratoryGroupId: number
   ticketLaboratoryGroupId: number
 
@@ -33,10 +34,6 @@ export class TicketLaboratory {
   ticket?: Ticket
   ticketUserList: TicketUser[]
   laboratory?: Laboratory
-  laboratoryList?: Laboratory[]
-  ticketLaboratoryResult?: TicketLaboratoryResult
-
-  children: { laboratory?: Laboratory; ticketLaboratoryResult?: TicketLaboratoryResult }[]
 
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
@@ -76,16 +73,9 @@ export class TicketLaboratory {
         ? Laboratory.basic(source.laboratory)
         : source.laboratory
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticketLaboratoryResult')) {
-      target.ticketLaboratoryResult = source.ticketLaboratoryResult
-        ? TicketLaboratoryResult.basic(source.ticketLaboratoryResult)
-        : source.ticketLaboratoryResult
-    }
+
     if (target.ticketUserList) {
       target.ticketUserList = TicketUser.basicList(target.ticketUserList)
-    }
-    if (target.laboratoryList) {
-      target.laboratoryList = Laboratory.basicList(target.laboratoryList)
     }
     return target
   }

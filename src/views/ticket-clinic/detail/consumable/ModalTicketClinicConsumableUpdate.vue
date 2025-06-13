@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { ticketRoomRef } from '@/modules/room'
 import { computed, onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
@@ -7,16 +8,16 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
 import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
+import { PositionInteractType, PositionService } from '../../../../modules/position'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicProductApi } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
+import { ESString } from '../../../../utils'
 import TicketClinicDeliveryStatusTag from '../../TicketClinicDeliveryStatusTag.vue'
 
 const settingStore = useSettingStore()
@@ -39,17 +40,18 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Product]?.[ticketProduct.value.id] || []
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] ||
+    []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Product,
-      interactId: ticketProduct.value.productId,
+      positionType: PositionInteractType.Product,
+      positionInteractId: ticketProduct.value.productId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))
@@ -133,7 +135,7 @@ const disabledButtonSave = computed(() => {
 })
 
 const handleChangeUnitQuantity = (data: number) => {
-  if (ticketProduct.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
     ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
@@ -186,7 +188,7 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa vật tư ?',
       content: [
@@ -204,7 +206,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketClinicProductApi.destroyTicketProductConsumable({
-          ticketId: ticketClinicRef.value.id,
+          ticketId: ticketRoomRef.value.id,
           ticketProductId: ticketProductOrigin.id,
         })
         closeModal()
@@ -222,7 +224,7 @@ const updateTicketProduct = async () => {
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
 
     await TicketClinicProductApi.updateTicketProductConsumable({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
@@ -391,7 +393,7 @@ defineExpose({ openModal })
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
-                    - {{ DString.formatPhone(data.phone) }} -
+                    - {{ ESString.formatPhone(data.phone) }} -
                   </div>
                 </template>
               </InputFilter>

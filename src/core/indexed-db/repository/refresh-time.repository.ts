@@ -2,7 +2,7 @@ import type { BaseIndexedDB } from '../_base/_base.indexed-db'
 import { BaseRepository } from '../_base/_base.repository'
 import { MeaDatabase } from '../database'
 
-export type RefreshTimeCode = 'PRODUCT' | 'BATCH' | 'CUSTOMER'
+export type RefreshTimeCode = 'ADDRESS' | 'ICD' | 'PRODUCT' | 'BATCH' | 'CUSTOMER'
 
 export type RefreshTime = {
   code: RefreshTimeCode

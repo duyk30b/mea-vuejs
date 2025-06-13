@@ -1,4 +1,5 @@
 import { Product } from '../product'
+import { User } from '../user'
 
 export type MedicineType = {
   productId: number
@@ -9,16 +10,19 @@ export type MedicineType = {
 
 export class PrescriptionSample {
   id: number
+  userId: number
   priority: number
 
   name: string
   medicines: string
 
   medicineList: MedicineType[] // chỉ có ở front-end
+  user: User
 
   static init(): PrescriptionSample {
     const ins = new PrescriptionSample()
     ins.id = 0
+    ins.userId = 0
     ins.priority = 1
     ins.medicines = JSON.stringify([])
     ins.medicineList = []
@@ -55,6 +59,9 @@ export class PrescriptionSample {
         }
       })
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'user')) {
+      target.user = target.user ? User.basic(target.user) : target.user
+    }
     return target
   }
 
@@ -64,6 +71,7 @@ export class PrescriptionSample {
 
   static equal(a: PrescriptionSample, b: PrescriptionSample) {
     if (a.id != b.id) return false
+    if (a.userId != b.userId) return false
     if (a.priority != b.priority) return false
     if (a.name != b.name) return false
     if (a.medicines != b.medicines) return false

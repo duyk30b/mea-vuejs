@@ -1,18 +1,21 @@
 <script setup lang="ts">
+import { DiscountInteractType } from '@/modules/discount'
 import { onMounted, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
-import { IconAudit, IconClose, IconInfoCircle } from '../../../../common/icon-antd'
+import { IconAudit, IconClose, IconDollar, IconInfoCircle } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueTabMenu from '../../../../common/vue-tabs/VueTabMenu.vue'
 import VueTabPanel from '../../../../common/vue-tabs/VueTabPanel.vue'
 import VueTabs from '../../../../common/vue-tabs/VueTabs.vue'
-import { Laboratory } from '../../../../modules/laboratory'
+import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
+import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
 import LaboratoryHistory from './LaboratoryHistory.vue'
 import LaboratoryInfo from './LaboratoryInfo.vue'
 
 const TABS_KEY = {
   INFO: 'INFO',
-  LABORATORY_HISTORY: 'LABORATORY_HISTORY',
+  DISCOUNT: 'DISCOUNT',
+  HISTORY: 'HISTORY',
 }
 
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -23,17 +26,21 @@ const tabShow = ref(TABS_KEY.INFO)
 
 const laboratory = ref<Laboratory>(Laboratory.blank())
 
-const openModal = async (laboratoryProp: Laboratory) => {
+const openModal = async (laboratoryId: number) => {
   showModal.value = true
-  laboratory.value = Laboratory.from(laboratoryProp)
+  laboratory.value = await LaboratoryService.detail(
+    laboratoryId,
+    { relation: { laboratoryGroup: true, discountList: true, positionList: true } },
+    { query: true },
+  )
 }
 
 const closeModal = () => {
   showModal.value = false
+  laboratory.value = Laboratory.blank()
 }
 
-onMounted(() => {
-})
+onMounted(() => {})
 
 defineExpose({ openModal })
 </script>
@@ -42,6 +49,7 @@ defineExpose({ openModal })
   <VueModal
     v-model:show="showModal"
     style="width: 900px; margin-top: 50px; max-height: calc(100vh - 100px)"
+    @close="closeModal"
   >
     <div class="bg-white">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
@@ -58,7 +66,11 @@ defineExpose({ openModal })
               <IconInfoCircle />
               Thông tin
             </VueTabMenu>
-            <VueTabMenu :tabKey="TABS_KEY.LABORATORY_HISTORY">
+            <VueTabMenu :tabKey="TABS_KEY.DISCOUNT">
+              <IconDollar />
+              Khuyến mãi
+            </VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.HISTORY">
               <IconAudit />
               Lịch sử hóa đơn
             </VueTabMenu>
@@ -69,7 +81,18 @@ defineExpose({ openModal })
                 <LaboratoryInfo :laboratoryId="laboratory.id" />
               </div>
             </VueTabPanel>
-            <VueTabPanel :tabKey="TABS_KEY.LABORATORY_HISTORY">
+            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+              <div class="mt-4">
+                <DiscountTableAction
+                  v-model:discountList="laboratory.discountList!"
+                  :discountInteractId="laboratory.id"
+                  :discountInteractType="DiscountInteractType.Laboratory"
+                  :discountListExtra="laboratory.discountListExtra || []"
+                  :editable="false"
+                />
+              </div>
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.HISTORY">
               <div class="mt-4">
                 <LaboratoryHistory :laboratory="laboratory" />
               </div>

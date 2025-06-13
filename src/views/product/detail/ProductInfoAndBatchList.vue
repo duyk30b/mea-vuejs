@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
 import { IconMergeCells, IconRead } from '../../../common/icon-antd'
 import { IconEditSquare } from '../../../common/icon-google'
-import { InputCheckbox } from '../../../common/vue-form'
-import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
@@ -26,8 +25,7 @@ const props = withDefaults(defineProps<{ productId: number }>(), { productId: 0 
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const hasZeroQuantity = ref<boolean>(true)
 const warehouseMap = ref<Record<string, Warehouse>>({})
@@ -109,12 +107,12 @@ const closeExpiryDate = computed(() => {
 
 <template>
   <ModalBatchUpdate
-    v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
+    v-if="userPermission[PermissionId.PRODUCT_UPDATE_BATCH]"
     ref="modalBatchUpdate"
     @success="handleModalBatchUpdateSuccess"
   />
   <ModalBatchMerge
-    v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
+    v-if="userPermission[PermissionId.PRODUCT_MERGE_BATCH]"
     ref="modalBatchMerge"
     @success="handleModalBatchMergeSuccess"
   />
@@ -127,12 +125,6 @@ const closeExpiryDate = computed(() => {
         </div>
       </div>
       <div class="my-2 flex gap-4">
-        <div style="width: 100px; flex-shrink: 0">Mã sản phẩm</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
-          {{ product.productCode }}
-        </div>
-      </div>
-      <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Tên sản phẩm</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0" class="font-medium">
           {{ product.brandName }}
@@ -141,7 +133,7 @@ const closeExpiryDate = computed(() => {
       <div class="my-2 flex gap-4 items-center">
         <div style="width: 100px; flex-shrink: 0">Số lượng</div>
         <div
-          v-if="product.pickupStrategyFix !== PickupStrategy.NoImpact"
+          v-if="product.warehouseIds !== '[]'"
           style="flex-shrink: 1; flex-grow: 1; flex-basis: 0"
         >
           <b style="font-size: 1.2em; color: var(--text-red)">{{ product.unitQuantity }}</b>
@@ -154,13 +146,6 @@ const closeExpiryDate = computed(() => {
         </div>
         <div v-else style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
           <span style="font-size: 1.2em; color: var(--text-red)">Không quản lý tồn kho</span>
-        </div>
-      </div>
-      <div v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="my-2 flex gap-4">
-        <div style="width: 100px; flex-shrink: 0">Giá nhập</div>
-        <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-          <b>{{ formatMoney(product.unitCostPrice) }}</b>
-          / {{ product.unitDefaultName }}
         </div>
       </div>
       <div v-if="settingStore.SYSTEM_SETTING.wholesalePrice" class="my-2 flex gap-4">
@@ -248,9 +233,9 @@ const closeExpiryDate = computed(() => {
                 <span>ID:</span>
                 <span>{{ batch.id }}</span>
               </div>
-              <div v-if="batch.batchCode" class="flex justify-between">
-                <div>Mã lô:</div>
-                <div>{{ batch.batchCode }}</div>
+              <div v-if="batch.lotNumber" class="flex justify-between">
+                <div>Số lô:</div>
+                <div>{{ batch.lotNumber }}</div>
               </div>
               <div
                 v-if="batch.expiryDate"
@@ -274,7 +259,7 @@ const closeExpiryDate = computed(() => {
             </td>
             <td class="">
               <div
-                v-if="permissionIdMap[PermissionId.READ_COST_PRICE]"
+                v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]"
                 class="flex justify-between"
               >
                 <span>G.Vốn:</span>
@@ -285,7 +270,7 @@ const closeExpiryDate = computed(() => {
             <td class="text-right whitespace-nowrap">{{ batch.quantity }}</td>
             <td>
               <div
-                v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
+                v-if="userPermission[PermissionId.PRODUCT_UPDATE_BATCH]"
                 style="color: #eca52b"
                 class="mx-1 text-xl flex items-center cursor-pointer justify-center"
                 @click="modalBatchUpdate?.openModal(batch)"
@@ -301,12 +286,13 @@ const closeExpiryDate = computed(() => {
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th style="width: 50px">ID</th>
             <th>Thông tin</th>
             <th>SL</th>
-            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">G.Vốn</th>
-            <th v-if="permissionIdMap[PermissionId.READ_COST_PRICE]">T.Vốn</th>
-            <th v-if="permissionIdMap[PermissionId.BATCH_UPDATE]">Sửa</th>
+            <th v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]">G.Nhập</th>
+            <th v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]">G.Vốn</th>
+            <th v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]">T.Vốn</th>
+            <th v-if="userPermission[PermissionId.PRODUCT_UPDATE_BATCH]">Sửa</th>
           </tr>
         </thead>
         <tbody>
@@ -316,12 +302,14 @@ const closeExpiryDate = computed(() => {
           <tr v-for="(batch, index) in batchList || []" :key="index">
             <td class="text-center">{{ batch.id }}</td>
             <td class="">
-              <div>{{ batch.batchCode }}</div>
-              <div
-                v-if="batch.expiryDate"
-                :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
-              >
-                HSD: {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+              <div class="flex flex-wrap justify-between items-center">
+                <div v-if="batch.lotNumber">S.Lô: {{ batch.lotNumber }}</div>
+                <div
+                  v-if="batch.expiryDate"
+                  :style="batch.expiryDate < closeExpiryDate ? 'color:red; font-weight:500' : ''"
+                >
+                  HSD: {{ ESTimer.timeToText(batch.expiryDate, 'DD/MM/YYYY') }}
+                </div>
               </div>
               <div v-if="warehouseMap[batch.warehouseId]?.name">
                 Kho: {{ warehouseMap[batch.warehouseId]?.name }}
@@ -331,16 +319,18 @@ const closeExpiryDate = computed(() => {
               </div>
             </td>
             <td class="text-center">{{ batch.quantity }}</td>
-            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
+            <td v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]" class="text-right">
+              <span>{{ formatMoney(batch.costPrice) }}</span>
+            </td>
+            <td v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]" class="text-right">
               <span v-if="batch.quantity === 0">{{ formatMoney(batch.costPrice) }}</span>
               <span v-else>{{ formatMoney(Math.round(batch.costAmount / batch.quantity)) }}</span>
             </td>
-            <td v-if="permissionIdMap[PermissionId.READ_COST_PRICE]" class="text-right">
+            <td v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]" class="text-right">
               <span>{{ formatMoney(batch.costAmount) }}</span>
             </td>
-            <td>
+            <td v-if="userPermission[PermissionId.PRODUCT_UPDATE_BATCH]">
               <div
-                v-if="permissionIdMap[PermissionId.BATCH_UPDATE]"
                 style="color: #eca52b"
                 class="mx-1 text-xl flex items-center cursor-pointer justify-center"
                 @click="modalBatchUpdate?.openModal(batch)"

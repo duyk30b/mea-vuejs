@@ -27,6 +27,11 @@ export enum DiscountType {
 
 export type UnitType = { name: string; rate: number; default?: boolean }
 
+export enum ProductType {
+  Basic = 1,
+  SplitBatch = 2,
+}
+
 export enum PickupStrategy {
   Inherit = -1, // Dùng theo cấu hình mặc định hệ thống
   NoImpact = 0, // Không tác động đến kho
@@ -57,13 +62,6 @@ export enum SplitBatchByCostPrice {
   Inherit = 0,
   OverrideAndMAC = 1,
   SplitOnDifferent = 2,
-}
-
-export enum MovementType {
-  Receipt = 1,
-  Ticket = 2,
-  UserChange = 3,
-  StockCheck = 4,
 }
 
 export enum DeliveryStatus {

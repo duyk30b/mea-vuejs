@@ -11,7 +11,7 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
         <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
           <div
             class="bg-[#ff6f61] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'TicketClinic' })"
+            @click="$router.push({ name: 'Room' })"
           >
             <div>
               <div class="text-xl uppercase" style="font-weight: 500">PHÒNG KHÁM</div>
@@ -26,7 +26,7 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
         <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
           <div
             class="bg-[#0094ff] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'TicketOrder' })"
+            @click="$router.push({ name: 'RoomList' })"
           >
             <div>
               <div class="text-xl uppercase" style="font-weight: 500">BÁN HÀNG</div>

@@ -3,11 +3,11 @@ import { onMounted, ref, watch } from 'vue'
 import { IconDoubleRight } from '../../../../common/icon-antd'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import {
-  Commission,
+  Position,
   CommissionCalculatorType,
-  CommissionService,
-  InteractType,
-} from '../../../../modules/commission'
+  PositionService,
+  PositionInteractType,
+} from '../../../../modules/position'
 import { Procedure, ProcedureApi } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
 
@@ -19,7 +19,7 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
 const procedure = ref<Procedure>(Procedure.blank())
-const commissionList = ref<Commission[]>([])
+const positionList = ref<Position[]>([])
 const roleMap = ref<Record<string, Role>>({})
 
 const startFetchData = async () => {
@@ -30,13 +30,13 @@ const startFetchData = async () => {
       ProcedureApi.detail(props.procedureId, {
         relation: { procedureGroup: true },
       }),
-      CommissionService.list({
-        filter: { interactType: InteractType.Procedure, interactId: props.procedureId },
+      PositionService.list({
+        filter: { positionType: PositionInteractType.Procedure, positionInteractId: props.procedureId },
       }),
       RoleService.getMap(),
     ])
     procedure.value = fetchPromise[0]
-    commissionList.value = fetchPromise[1]
+    positionList.value = fetchPromise[1]
     roleMap.value = fetchPromise[2]
   } catch (error) {
     console.log('🚀 ~ file: ProcedureInfo.vue:23 ~ startFetchData ~ error:', error)
@@ -91,24 +91,24 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="commission in commissionList" :key="commission.id">
-            <td>{{ roleMap[commission.roleId]?.name || '' }}</td>
+          <tr v-for="position in positionList" :key="position.id">
+            <td>{{ roleMap[position.roleId]?.name || '' }}</td>
             <template
               v-if="
-                commission.commissionCalculatorType === CommissionCalculatorType.PercentExpected
+                position.commissionCalculatorType === CommissionCalculatorType.PercentExpected
               "
             >
-              <td class="text-right">{{ commission.commissionValue }}%</td>
+              <td class="text-right">{{ position.commissionValue }}%</td>
               <td>Giá niêm yết</td>
             </template>
             <template
-              v-if="commission.commissionCalculatorType === CommissionCalculatorType.PercentActual"
+              v-if="position.commissionCalculatorType === CommissionCalculatorType.PercentActual"
             >
-              <td class="text-right">{{ commission.commissionValue }}%</td>
+              <td class="text-right">{{ position.commissionValue }}%</td>
               <td>Giá sau chiết khấu</td>
             </template>
-            <template v-if="commission.commissionCalculatorType === CommissionCalculatorType.VND">
-              <td class="text-right">{{ formatMoney(commission.commissionValue) }}</td>
+            <template v-if="position.commissionCalculatorType === CommissionCalculatorType.VND">
+              <td class="text-right">{{ formatMoney(position.commissionValue) }}</td>
               <td>VNĐ</td>
             </template>
           </tr>

@@ -108,7 +108,7 @@ export const customFilter = (str = '', filter = '', skip = 2): boolean => {
   return regex.test(stringConvert)
 }
 
-export class DString {
+export class ESString {
   static formatPhone = (phone?: string) => {
     if (!phone) return ''
     return phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1.$2.$3')
@@ -140,30 +140,26 @@ export class DString {
   }
 
   static formatMoney = (money: number) => {
-    return DString.formatNumber({ number: money, fixed: 0 })
+    return ESString.formatNumber({ number: money, fixed: 0 })
   }
 
   static formatAddress = (address?: {
     addressProvince?: string
-    addressDistrict?: string
     addressWard?: string
     addressStreet?: string
   }) => {
     if (!address) return ''
     const addressStreet = address.addressStreet || ''
     const addressWard = address.addressWard || ''
-    const addressDistrict = address.addressDistrict || ''
     const addressProvince = address.addressProvince || ''
 
-    return [addressStreet, addressWard, addressDistrict, addressProvince]
+    return [addressStreet, addressWard, addressProvince]
       .filter((i) => !!i)
       .join(' - ')
-      .replace('Tỉnh', '')
-      .replace('Thành phố', '')
-      .replace('Quận ', '')
-      .replace('Huyện ', '')
       .replace('Phường ', '')
       .replace('Xã ', '')
+      .replace('Tỉnh', '')
+      .replace('Thành phố', '')
   }
 
   static customFilter = (str = '', filter = '', skip = 2): boolean => {

@@ -5,6 +5,7 @@ export class LaboratoryGroup {
   id: number
   name: string
   printHtmlId: number
+  roomId: number
 
   printHtml?: PrintHtml
   laboratoryList?: Laboratory[]
@@ -14,6 +15,7 @@ export class LaboratoryGroup {
     ins.id = 0
     ins.printHtmlId = 0
     ins.name = ''
+    ins.roomId = 0
     return ins
   }
 

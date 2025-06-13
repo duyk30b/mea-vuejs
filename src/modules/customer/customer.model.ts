@@ -2,6 +2,7 @@ import type { EGender } from '../enum'
 
 export class Customer {
   id: number
+  customerCode: string
   fullName: string
   customerSourceId: number
   phone?: string
@@ -11,7 +12,6 @@ export class Customer {
   yearOfBirth?: number
   gender?: EGender
   addressProvince: string
-  addressDistrict: string
   addressWard: string
   addressStreet: string
   relative?: string // người thân
@@ -29,9 +29,10 @@ export class Customer {
     ins.debt = 0
     return ins
   }
-
+  
   static blank(): Customer {
     const ins = Customer.init()
+    ins.customerCode = ''
     return ins
   }
 
@@ -42,7 +43,6 @@ export class Customer {
     customer.birthday = new Date('1990-09-04').getTime()
     customer.gender = 1
     customer.addressProvince = 'Hà Nội'
-    customer.addressDistrict = 'Long Biên'
     customer.addressWard = 'Thạch Bàn'
     return customer
   }

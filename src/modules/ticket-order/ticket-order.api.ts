@@ -294,6 +294,7 @@ export class TicketOrderApi {
     money: number
     paymentMethodId: number
     note: string
+    ticketProductIdList: number[]
   }) {
     const { ticketId } = options
     const response = await AxiosInstance.post(
@@ -302,6 +303,7 @@ export class TicketOrderApi {
         money: options.money,
         paymentMethodId: options.paymentMethodId,
         note: options.note,
+        ticketProductIdList: options.ticketProductIdList,
       },
     )
     const { data } = response.data as BaseResponse<{
@@ -335,9 +337,11 @@ export class TicketOrderApi {
     }
   }
 
-  static async sendProduct(options: { ticketId: number }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/send-product`)
+  static async sendProduct(options: { ticketId: number; ticketProductIdList: number[] }) {
+    const { ticketId, ticketProductIdList } = options
+    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/send-product`, {
+      ticketProductIdList,
+    })
     const { data } = response.data as BaseResponse<{
       ticket: any
       ticketProductList: any[]

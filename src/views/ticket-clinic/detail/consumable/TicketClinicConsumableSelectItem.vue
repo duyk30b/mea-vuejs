@@ -1,21 +1,22 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconFileSearch } from '../../../../common/icon-antd'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputNumber, InputOptions, VueSelect } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Batch, BatchService } from '../../../../modules/batch'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Product, ProductService } from '../../../../modules/product'
-import { TicketStatus } from '../../../../modules/ticket'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketProduct, TicketProductType } from '../../../../modules/ticket-product'
-import { ESTimer } from '../../../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputNumber, InputOptions, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Batch, BatchService } from '@/modules/batch'
+import { DeliveryStatus, DiscountType, PickupStrategy, ProductType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Product, ProductService } from '@/modules/product'
+import { TicketStatus } from '@/modules/ticket'
+import { TicketProduct, TicketProductType } from '@/modules/ticket-product'
+import { ESTimer } from '@/utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../../product/upsert/ModalProductUpsert.vue'
+import type { Discount } from '@/modules/discount'
+import { ticketRoomRef } from '@/modules/room'
 
 const emit = defineEmits<{ (e: 'success', value: TicketProduct[]): void }>()
 
@@ -23,8 +24,7 @@ const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -32,6 +32,8 @@ const productOptions = ref<{ value: number; text: string; data: Product }[]>([])
 const batchList = ref<Batch[]>([])
 
 const ticketProductConsumable = ref<TicketProduct>(TicketProduct.blank())
+
+const pickupStrategy = ref(MeService.getPickupStrategy().consumable)
 
 const handleFocusFirstSearchProduct = async () => {
   await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
@@ -61,7 +63,7 @@ const searchingProduct = async (text: string) => {
                   ? undefined
                   : { NOT: 0 },
               },
-              { pickupStrategy: PickupStrategy.NoImpact },
+              { warehouseIds: '[]' },
             ],
           },
         ],
@@ -97,7 +99,7 @@ const clear = () => {
 
 const selectProduct = async (productSelect?: Product) => {
   if (productSelect) {
-    const priorityList = (ticketClinicRef.value.ticketProductConsumableList || []).map((i) => {
+    const priorityList = (ticketRoomRef.value.ticketProductConsumableList || []).map((i) => {
       return i.priority
     })
     priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
@@ -105,8 +107,8 @@ const selectProduct = async (productSelect?: Product) => {
 
     const temp = TicketProduct.blank()
     temp.priority = priorityMax + 1
-    temp.pickupStrategy = productSelect.pickupStrategyFix
-    temp.customerId = ticketClinicRef.value.customerId
+    temp.pickupStrategy = pickupStrategy.value
+    temp.customerId = ticketRoomRef.value.customerId
     temp.product = Product.from(productSelect)
     temp.productId = productSelect.id
     temp.batchId = 0
@@ -122,10 +124,27 @@ const selectProduct = async (productSelect?: Product) => {
     temp.actualPrice = productSelect.retailPrice
     temp.warehouseIds = JSON.stringify(settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList) // set tạm trước thôi, tí nữa tính toán lại
 
+    await ProductService.executeRelation([productSelect], { discountList: true })
+    const discountApply = productSelect?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
+
     ticketProductConsumable.value = temp
 
     // Tính toán cho batchID // lằng nhằng nhé
-    if (temp.pickupStrategy === PickupStrategy.RequireBatchSelection) {
+    if (productSelect.productType === ProductType.SplitBatch) {
       const warehouseIdAcceptList: number[] =
         settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList
       let canGetAllWarehouse = false
@@ -195,21 +214,22 @@ const addConsumableItem = async () => {
     return inputOptionsProduct.value?.focus()
   }
 
-  if (product?.pickupStrategyFix !== PickupStrategy.NoImpact) {
+  if (product?.warehouseIds !== '[]' && pickupStrategy.value !== PickupStrategy.NoImpact) {
     if (ticketProductConsumable.value.quantity > product!.quantity) {
       AlertStore.addWarning(
         `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${product!.quantity} lấy ${
           ticketProductConsumable.value.quantity
         }`,
       )
-    } else if (product?.pickupStrategyFix == PickupStrategy.RequireBatchSelection) {
-      if (ticketProductConsumable.value.quantity > batch!.quantity) {
-        AlertStore.addWarning(
-          `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
-            ticketProductConsumable.value.quantity
-          }`,
-        )
-      }
+    } else if (
+      ticketProductConsumable.value.batchId &&
+      ticketProductConsumable.value.quantity > batch!.quantity
+    ) {
+      AlertStore.addWarning(
+        `Cảnh báo: ${product!.brandName} không đủ tồn kho, còn ${batch!.quantity} lấy ${
+          ticketProductConsumable.value.quantity
+        }`,
+      )
     }
   }
 
@@ -255,7 +275,10 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <div v-if="ticketProductConsumable.productId">
           (
           <span
-            v-if="ticketProductConsumable.product?.pickupStrategyFix !== PickupStrategy.NoImpact"
+            v-if="
+              ticketProductConsumable.product?.warehouseIds !== '[]' &&
+              pickupStrategy !== PickupStrategy.NoImpact
+            "
             :class="
               ticketProductConsumable.quantity > ticketProductConsumable.product!.quantity
                 ? 'text-red-500 font-bold'
@@ -276,7 +299,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         </div>
 
         <a
-          v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && ticketProductConsumable.product?.id"
+          v-if="userPermission[PermissionId.PRODUCT_UPDATE] && ticketProductConsumable.product?.id"
           @click="modalProductUpsert?.openModal(ticketProductConsumable.product.id)"
         >
           Sửa thông tin sản phẩm
@@ -285,12 +308,12 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       <div style="height: 40px">
         <InputOptions
           ref="inputOptionsProduct"
-          required
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
+          :maxHeight="320"
           :options="productOptions"
           :prepend="ticketProductConsumable.product?.productCode"
-          :maxHeight="320"
           placeholder="Tìm kiếm sản phẩm bằng tên hoặc hoạt chất của sản phẩm"
-          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)"
+          required
           @onFocusinFirst="handleFocusFirstSearchProduct"
           @selectItem="({ data }) => selectProduct(data)"
           @update:text="searchingProduct"
@@ -300,11 +323,15 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
               <span>{{ data.productCode }}</span>
               -
               <b>{{ data.brandName }}</b>
-              -
-              <span style="font-weight: 700" :class="data.unitQuantity <= 0 ? 'text-red-500' : ''">
+              <span
+                v-if="data?.warehouseIds !== '[]' && pickupStrategy !== PickupStrategy.NoImpact"
+                :class="data.unitQuantity <= 0 ? 'text-red-500' : ''"
+                style="font-weight: 700"
+              >
+                -
                 {{ data.unitQuantity }}
+                {{ data.unitDefaultName }}
               </span>
-              {{ data.unitDefaultName }}
               - Giá
               <span style="font-weight: 600">{{ formatMoney(data.unitRetailPrice) }}</span>
               /{{ data.unitDefaultName }}
@@ -316,8 +343,8 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
     </div>
 
     <div
+      v-if="ticketProductConsumable.product?.productType === ProductType.SplitBatch"
       style="flex-grow: 1; flex-basis: 80%"
-      v-if="ticketProductConsumable.pickupStrategy === PickupStrategy.RequireBatchSelection"
     >
       <div>
         Lô hàng
@@ -339,15 +366,15 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
       </div>
       <div>
         <VueSelect
-          :value="ticketProductConsumable.batch!.id"
-          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
           :disabled="batchList.length == 0"
+          :options="batchList.map((i: Batch) => ({ value: i.id, data: i }))"
+          :value="ticketProductConsumable.batch!.id"
           @selectItem="({ data }) => selectBatch(data)"
         >
           <template #option="{ item: { data } }">
             <div v-if="!data.id">Chưa chọn lô</div>
             <div v-if="data.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} - Tồn
               <b>{{ data.unitQuantity }}</b>
               {{ ticketProductConsumable.product!.unitDefaultName }}
             </div>
@@ -355,7 +382,7 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
           <template #text="{ content: { data } }">
             <div v-if="!data?.id">Chưa chọn lô</div>
             <div v-if="data?.id">
-              Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+              Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
               <span
                 :class="
                   ticketProductConsumable.quantity > data.quantity ? 'text-red-500 font-bold' : ''
@@ -398,8 +425,8 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <div class="flex-1">
           <InputNumber
             v-model:value="ticketProductConsumable.unitQuantity"
-            required
             :validate="{ gt: 0 }"
+            required
           />
         </div>
       </div>
@@ -418,19 +445,19 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
         <div class="flex-1">
           <InputNumber
             v-model:value="ticketProductConsumable.unitActualPrice"
-            required
             :validate="{ gte: 0 }"
+            required
             @update:value="handleUpdateUnitActualPrice"
           />
         </div>
       </div>
     </div>
 
-    <div style="flex-grow: 1; flex-basis: 80%" class="mt-2 flex justify-center">
+    <div class="mt-2 flex justify-center" style="flex-grow: 1; flex-basis: 80%">
       <VueButton
         :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status) ||
-          !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
+          !userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"
         icon="plus"

@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputOptions, InputSelect, InputText } from '../../common/vue-form'
 import type { ItemOption } from '../../common/vue-form/InputOptions.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
+import { PaymentMethodService } from '../../modules/payment-method'
 import { PermissionId } from '../../modules/permission/permission.enum'
-import { TicketApi, type Ticket, TicketStatus } from '../../modules/ticket'
-import { DString, ESTimer } from '../../utils'
+import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { ESString, ESTimer } from '../../utils'
 import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
-import { onMounted } from 'vue'
-import { PaymentMethodService } from '../../modules/payment-method'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
@@ -26,12 +24,10 @@ const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const emit = defineEmits<{
   (e: 'success', value: { customer: Customer }): void
 }>()
-const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, user } = meStore
+const { userPermission, user } = MeService
 
 const customerOptions = ref<ItemOption[]>([])
 const customer = ref<Customer>(Customer.blank())
@@ -112,7 +108,7 @@ const handleSave = async () => {
       customerId: customer.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
-      cashierId: user?.id || 0,
+      cashierId: user.value?.id || 0,
       money: money.value,
       ticketPaymentList: ticketPaymentList.value
         .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
@@ -172,7 +168,7 @@ defineExpose({ openModal })
               )
             </span>
             <a
-              v-if="permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(customer)"
             >
               Sửa thông tin KH
@@ -180,7 +176,7 @@ defineExpose({ openModal })
           </template>
           <div style="margin-left: auto">
             <a
-              v-if="!customer.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+              v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CREATE]"
               @click="modalCustomerUpsert?.openModal()"
             >
               Thêm KH mới
@@ -201,7 +197,7 @@ defineExpose({ openModal })
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
-                - {{ DString.formatPhone(data.phone) }} -
+                - {{ ESString.formatPhone(data.phone) }} -
                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 <span v-if="data.debt > 0">
                   Nợ:
@@ -212,7 +208,7 @@ defineExpose({ openModal })
                   <strong style="color: var(--text-green)">{{ formatMoney(-data.debt) }}</strong>
                 </span>
               </div>
-              <div>{{ DString.formatAddress(data) }}</div>
+              <div>{{ ESString.formatAddress(data) }}</div>
             </template>
           </InputOptions>
         </div>

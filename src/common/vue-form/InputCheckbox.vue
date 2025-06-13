@@ -55,8 +55,11 @@ defineExpose({ focus })
         @change="(e) => handleChangeCheckbox(e)"
       />
       <span
-        class="input-checkbox-fake"
-        :class="Boolean(value) || checked ? 'input-checkbox-fake-checked' : ''"
+        :class="{
+          'input-checkbox-fake': true,
+          'input-checkbox-fake-checked': Boolean(value) || checked,
+          disabled,
+        }"
       ></span>
       <span v-if="label">{{ label }}</span>
       <slot></slot>
@@ -92,6 +95,7 @@ defineExpose({ focus })
       min-width: 16px;
       height: 16px;
       direction: ltr;
+
       background-color: #fff;
       border: 1px solid #d9d9d9;
       border-radius: 2px;
@@ -105,14 +109,18 @@ defineExpose({ focus })
         width: 5px;
         height: 9px;
         border: 2px solid #fff;
-        border-top: 0;
-        border-left: 0;
+        border-top: 0 !important;
+        border-left: 0 !important;
         transform: rotate(45deg) scale(0) translate(-50%, -50%);
         opacity: 0;
         transition:
           all 0.1s cubic-bezier(0.71, -0.46, 0.88, 0.6),
           opacity 0.1s;
         content: ' ';
+      }
+      &.disabled {
+        background-color: #eeeeee !important;
+        cursor: not-allowed;
       }
       &.input-checkbox-fake-checked {
         background-color: #1890ff;
@@ -121,6 +129,13 @@ defineExpose({ focus })
           transform: rotate(45deg) scale(1) translate(-50%, -50%);
           opacity: 1;
           transition: all 0.2s cubic-bezier(0.12, 0.4, 0.29, 1.46) 0.1s;
+        }
+        &.disabled {
+          background-color: #eeeeee !important;
+          border-color: #eeeeee !important;
+          &::after {
+            border: 2px solid #555;
+          }
         }
       }
     }

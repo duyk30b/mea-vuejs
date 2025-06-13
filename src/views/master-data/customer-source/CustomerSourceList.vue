@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
+import VueButton from '../../../common/VueButton.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import { IconSetting } from '../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../common/icon-google'
+import { InputSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import {
   CustomerSource,
   CustomerSourceApi,
@@ -12,14 +14,11 @@ import {
 } from '../../../modules/customer-source'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import ModalCustomerSourceUpsert from './ModalCustomerSourceUpsert.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { InputSelect } from '../../../common/vue-form'
+import { Breadcrumb } from '../../component'
 
 const modalCustomerSourceUpsert = ref<InstanceType<typeof ModalCustomerSourceUpsert>>()
 
-const meStore = useMeStore()
-
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const customerSourceList = ref<CustomerSource[]>([])
 
@@ -97,12 +96,11 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
 
   <div class="mx-4 mt-4 flex justify-between items-center">
     <div class="flex items-center gap-4">
-      <div class="hidden md:flex items-center gap-2">
-        <IconSetting style="font-size: 1.5rem" />
-        <span class="font-medium" style="font-size: 1.25rem">Danh sách nguồn khách hàng</span>
+      <div class="hidden md:block">
+        <Breadcrumb />
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]"
+        v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
         color="blue"
         icon="plus"
         @click="modalCustomerSourceUpsert?.openModal()"
@@ -143,7 +141,7 @@ const handleClickDeleteCustomerSource = async (id: number, name: string) => {
           <tr v-for="customerSource in customerSourceList" :key="customerSource.id">
             <td class="text-center">TS{{ customerSource.id }}</td>
             <td>{{ customerSource.name }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE]">
+            <td v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]">
               <div class="flex justify-between">
                 <a
                   style="color: var(--text-orange)"

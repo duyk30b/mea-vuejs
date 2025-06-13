@@ -1,18 +1,19 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox, InputOptions, InputRadio, InputSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { Customer, CustomerService } from '@/modules/customer'
+import { PickupStrategy } from '@/modules/enum'
+import { OrganizationService } from '@/modules/organization'
+import { WarehouseService } from '@/modules/warehouse/warehouse.service'
+import { ESTimer } from '@/utils'
 import { ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../../../common/icon-antd'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputOptions, InputRadio } from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { SettingKey } from '../../../../modules/_me/store.variable'
-import { Customer, CustomerService } from '../../../../modules/customer'
-import { OrganizationService } from '../../../../modules/organization'
-import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
-import { ESTimer } from '../../../../utils'
 
 const TABS_KEY = {
   SELECT_ITEM: 'SELECT_ITEM',
@@ -25,7 +26,6 @@ const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
-const meStore = useMeStore()
 
 const settingDisplay = ref<typeof store.SCREEN_INVOICE_UPSERT>(
   JSON.parse(JSON.stringify(store.SCREEN_INVOICE_UPSERT)),
@@ -68,6 +68,19 @@ const openModal = async () => {
     ...warehouseAll.map((i) => ({ value: i.id, label: i.name })),
   ]
 }
+
+const pickupStrategyOptions = [
+  { value: PickupStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+]
+pickupStrategyOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.SCREEN_INVOICE_UPSERT.pickupStrategy) {
+    i.label = '(Hệ thống) - ' + i.label
+  }
+})
 
 const closeModal = () => {
   showModal.value = false
@@ -133,28 +146,40 @@ defineExpose({ openModal })
                 <table class="">
                   <thead>
                     <tr>
-                      <th>Chọn sản phẩm</th>
+                      <th colspan="2">Chọn sản phẩm</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
+                      <td style="width: 200px">Chiến lược lấy hàng</td>
                       <td>
-                        <div class="flex gap-4 items-center">
-                          <div>Kho bán hàng</div>
-                          <div style="flex: 1">
-                            <a-select
-                              v-model:value="settingDisplay.invoiceItemInput.warehouseIdList"
-                              mode="multiple"
-                              style="width: 100%"
-                              placeholder="Please select"
-                              :options="warehouseOptions"
-                            ></a-select>
-                          </div>
+                        <div>
+                          <InputSelect
+                            v-model:value="settingDisplay.pickupStrategy"
+                            :options="pickupStrategyOptions"
+                          />
                         </div>
                       </td>
                     </tr>
                     <tr>
                       <td>
+                        <div>Kho bán hàng</div>
+                      </td>
+                      <td>
+                        <div>
+                          <a-select
+                            v-model:value="settingDisplay.invoiceItemInput.warehouseIdList"
+                            mode="multiple"
+                            style="width: 100%"
+                            placeholder="Please select"
+                            :options="warehouseOptions"
+                          ></a-select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2">
                         <InputCheckbox
                           v-model:checked="
                             settingDisplay.invoiceItemInput.searchIncludeZeroQuantity
@@ -165,7 +190,7 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox
                           v-model:checked="settingDisplay.invoiceItemInput.expectedPrice"
                         >
@@ -174,30 +199,28 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.costPrice">
                           Thêm lựa chọn giá bán = giá nhập
                         </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.discount">
                           Chỉnh sửa chiết khấu
                         </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
-                      <td>
-                        <InputCheckbox
-                          v-model:checked="settingDisplay.invoiceItemInput.quantity"
-                        >
+                      <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.quantity">
                           Chỉnh sửa chọn số lượng
                         </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox
                           v-model:checked="settingDisplay.invoiceItemInput.actualPrice"
                         >
@@ -206,14 +229,14 @@ defineExpose({ openModal })
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.hintUsage">
                           Hiển thị hướng dẫn sử dụng
                         </InputCheckbox>
                       </td>
                     </tr>
                     <tr>
-                      <td>
+                      <td colspan="2">
                         <InputCheckbox
                           v-model:checked="settingDisplay.invoiceItemInput.buttonSubmit"
                         >
@@ -329,7 +352,7 @@ defineExpose({ openModal })
                                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
-                                {{ data.addressWard }} - {{ data.addressDistrict }} -
+                                {{ data.addressStreet }} - {{ data.addressWard }} -
                                 {{ data.addressProvince }}
                               </div>
                             </template>

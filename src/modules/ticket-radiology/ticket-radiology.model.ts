@@ -10,12 +10,20 @@ export enum TicketRadiologyStatus {
   Pending = 2,
   Completed = 3,
 }
+
 export class TicketRadiology {
   id: number
   priority: number
   ticketId: number
   customerId: number
+  roomId: number
   radiologyId: number
+
+  printHtmlId: number
+  customVariables: string // Dạng Javascript
+  customStyles: string // Dạng Style
+  description: string
+  result: string
 
   costPrice: number
   expectedPrice: number
@@ -24,9 +32,7 @@ export class TicketRadiology {
   discountType: DiscountType
   actualPrice: number
 
-  description: string
-  result: string
-
+  registeredAt: number
   startedAt: number
   status: TicketRadiologyStatus
   imageIds: string
@@ -40,14 +46,19 @@ export class TicketRadiology {
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
     ins.id = 0
+    ins.printHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''
+    ins.result = ''
+    ins.customVariables = ''
+    ins.customStyles = ''
     return ins
   }
 
   static blank(): TicketRadiology {
     const ins = TicketRadiology.init()
     ins.imageList = []
+    ins.radiologyId = 0
     return ins
   }
 
@@ -107,6 +118,12 @@ export class TicketRadiology {
     if (a.customerId != b.customerId) return false
     if (a.radiologyId != b.radiologyId) return false
 
+    if (a.printHtmlId != b.printHtmlId) return false
+    if (a.customVariables != b.customVariables) return false
+    if (a.customStyles != b.customStyles) return false
+    if (a.description != b.description) return false
+    if (a.result != b.result) return false
+
     if (a.costPrice != b.costPrice) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false
@@ -114,10 +131,9 @@ export class TicketRadiology {
     if (a.discountType != b.discountType) return false
     if (a.actualPrice != b.actualPrice) return false
 
-    if (a.description != b.description) return false
-    if (a.result != b.result) return false
-
+    if (a.registeredAt != b.registeredAt) return false
     if (a.startedAt != b.startedAt) return false
+    if (a.status != b.status) return false
     if (a.imageIds != b.imageIds) return false
     return true
   }

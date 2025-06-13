@@ -1,4 +1,4 @@
-import { CommissionCalculatorType, InteractType } from '../commission'
+import { CommissionCalculatorType, PositionInteractType } from '../position'
 import type { Role } from '../role'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
@@ -9,8 +9,8 @@ export class TicketUser {
   roleId: number
   userId: number
 
-  interactType: InteractType
-  interactId: number // procedureId hoặc productId hoặc radiologyId
+  positionType: PositionInteractType
+  positionInteractId: number // procedureId hoặc productId hoặc radiologyId
 
   ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
   ticketItemExpectedPrice: number
@@ -36,8 +36,8 @@ export class TicketUser {
     ins.userId = 0
     ins.roleId = 0
 
-    ins.interactType = InteractType.Ticket
-    ins.interactId = 0
+    ins.positionType = PositionInteractType.Ticket
+    ins.positionInteractId = 0
     ins.ticketItemId = 0
 
     ins.commissionCalculatorType = CommissionCalculatorType.VND
@@ -87,8 +87,8 @@ export class TicketUser {
     if (a.roleId != b.roleId) return false
     if (a.userId != b.userId) return false
 
-    if (a.interactType != b.interactType) return false
-    if (a.interactId != b.interactId) return false
+    if (a.positionType != b.positionType) return false
+    if (a.positionInteractId != b.positionInteractId) return false
     if (a.ticketItemId != b.ticketItemId) return false
 
     if (a.quantity != b.quantity) return false

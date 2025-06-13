@@ -17,7 +17,11 @@ import {
   PrescriptionSampleService,
 } from '../../../../modules/prescription-sample'
 import { Product, ProductService } from '../../../../modules/product'
-import { arrayToKeyValue, DString } from '../../../../utils'
+import { arrayToKeyValue, ESString } from '../../../../utils'
+import { useRouter } from 'vue-router'
+import { MeService } from '@/modules/_me/me.service'
+
+const router = useRouter()
 
 const inputSearchProduct = ref<InstanceType<typeof InputOptions>>()
 
@@ -51,8 +55,11 @@ const openModal = async (prescriptionSampleId?: number) => {
   showModal.value = true
 
   if (!prescriptionSampleId) {
-    prescriptionSample.value = PrescriptionSample.blank()
     prescriptionSampleRoot.value = PrescriptionSample.blank()
+    prescriptionSampleRoot.value.userId =  MeService.user.value?.id || 0
+
+    prescriptionSample.value = PrescriptionSample.from(prescriptionSampleRoot.value)
+
 
     const [prescriptionSampleAll] = await Promise.all([
       PrescriptionSampleService.list({}),
@@ -106,7 +113,7 @@ const disabledButtonSave = computed(() => {
 
 const searchingProduct = async (text: string) => {
   const productList = productAll.value.filter((i) => {
-    return DString.customFilter(i.brandName, text) || DString.customFilter(i.substance, text)
+    return ESString.customFilter(i.brandName, text) || ESString.customFilter(i.substance, text)
   })
   productOptions.value = productList.map((i) => ({ value: i.id, text: i.brandName, data: i }))
   medicineItem.value = { hintUsage: '', productId: 0, quantity: 0, product: undefined }
@@ -131,7 +138,7 @@ const reCalculatorMedicines = () => {
         quantity: i.quantity,
         hintUsage: i.hintUsage,
       }
-    })
+    }),
   )
 }
 
@@ -169,7 +176,7 @@ const handleSave = async () => {
     } else {
       await PrescriptionSampleService.updateOne(
         prescriptionSample.value.id,
-        prescriptionSample.value
+        prescriptionSample.value,
       )
       AlertStore.addSuccess('Cập nhật thành công', 1000)
     }
@@ -233,7 +240,8 @@ defineExpose({ openModal })
 
         <form
           class="mt-4 flex flex-wrap gap-4"
-          @submit.prevent="(e) => addPrescriptionSampleItem()">
+          @submit.prevent="(e) => addPrescriptionSampleItem()"
+        >
           <div class="" style="flex-basis: 60%; min-width: 400px; flex-grow: 3">
             <div>Chọn thuốc</div>
             <div>
@@ -244,14 +252,16 @@ defineExpose({ openModal })
                 placeholder="Tìm kiếm bằng tên hoặc hoạt chất của thuốc"
                 required
                 @selectItem="({ data }: any) => selectProduct(data)"
-                @update:text="searchingProduct">
+                @update:text="searchingProduct"
+              >
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.brandName }}</b>
                     - Tồn
                     <span
                       style="font-weight: 700"
-                      :class="data.quantity <= 0 ? 'text-red-500' : ''">
+                      :class="data.quantity <= 0 ? 'text-red-500' : ''"
+                    >
                       {{ data.quantity }}
                     </span>
                     - Giá
@@ -270,7 +280,8 @@ defineExpose({ openModal })
               <InputNumber
                 v-model:value="medicineItem.quantity"
                 :prepend="medicineItem.product?.unitBasicName"
-                :validate="{ gte: 0 }" />
+                :validate="{ gte: 0 }"
+              />
             </div>
           </div>
 
@@ -286,9 +297,10 @@ defineExpose({ openModal })
                 :maxHeight="220"
                 :logic-filter="
                   (item: any, text: string) => {
-                    return DString.customFilter(item, text)
+                    return ESString.customFilter(item, text)
                   }
-                "></InputHint>
+                "
+              ></InputHint>
             </div>
           </div>
 
@@ -335,13 +347,15 @@ defineExpose({ openModal })
                         class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
                         :disabled="item.quantity <= 0"
                         type="button"
-                        @click="changeQuantityTable(index, item.quantity - 1)">
+                        @click="changeQuantityTable(index, item.quantity - 1)"
+                      >
                         <IconMinus />
                       </button>
                       <div style="width: calc(100% - 60px); min-width: 50px">
                         <InputNumber
                           :value="item.quantity"
-                          @update:value="(value) => changeQuantityTable(index, value)" />
+                          @update:value="(value) => changeQuantityTable(index, value)"
+                        />
                       </div>
                       <button
                         style="
@@ -352,7 +366,8 @@ defineExpose({ openModal })
                         "
                         type="button"
                         class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                        @click="changeQuantityTable(index, item.quantity + 1)">
+                        @click="changeQuantityTable(index, item.quantity + 1)"
+                      >
                         <IconPlus />
                       </button>
                     </div>
@@ -373,7 +388,7 @@ defineExpose({ openModal })
                       formatMoney(
                         prescriptionSample.medicineList.reduce((acc, i) => {
                           return acc + (i.product?.retailPrice || 0) * i.quantity
-                        }, 0)
+                        }, 0),
                       )
                     }}
                   </td>
@@ -390,7 +405,7 @@ defineExpose({ openModal })
           <VueButton v-if="prescriptionSample.id" color="red" icon="trash" @click="clickDelete">
             Xóa
           </VueButton>
-          <VueButton type="reset" style="margin-left:auto" icon="close" @click="closeModal">
+          <VueButton type="reset" style="margin-left: auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
           <VueButton
@@ -398,7 +413,8 @@ defineExpose({ openModal })
             type="submit"
             :loading="saveLoading"
             icon="save"
-            :disabled="disabledButtonSave">
+            :disabled="disabledButtonSave"
+          >
             {{ prescriptionSample.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
           </VueButton>
         </div>

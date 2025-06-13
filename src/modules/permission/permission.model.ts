@@ -16,6 +16,8 @@ export class Permission {
   pathId: string
   isActive: 0 | 1
 
+  children: Permission[]
+
   static basic(source: Permission) {
     const target = new Permission()
     Object.keys(target).forEach((key) => {

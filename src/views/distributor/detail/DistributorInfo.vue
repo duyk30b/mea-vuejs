@@ -35,9 +35,8 @@ const { formatMoney } = settingStore
       <tr>
         <td class="px-2 py-1 whitespace-nowrap align-top">Địa chỉ</td>
         <td class="px-2 text-justify">
-          {{ distributor.addressProvince }}
-          - {{ distributor.addressDistrict }} - {{ distributor.addressWard }} -
           {{ distributor.addressStreet }}
+          - {{ distributor.addressWard }} - {{ distributor.addressProvince }}
         </td>
       </tr>
       <tr v-if="distributor.debt >= 0">

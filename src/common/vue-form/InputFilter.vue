@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, nextTick, onUpdated, ref, watch } from 'vue'
-import { DString } from '../../utils'
+import { ESString } from '../../utils'
 import { IconSearch } from '../icon-antd'
 
 const props = withDefaults(
@@ -28,7 +28,7 @@ const props = withDefaults(
       item: { value: number | string; text: string; data: Record<string, any> },
       text: string,
     ) => {
-      return DString.customFilter(item.text, text)
+      return ESString.customFilter(item.text, text)
     },
     messageNoResult: 'Không tìm thấy kết quả phù hợp',
     noClearTextWhenNotSelected: false,

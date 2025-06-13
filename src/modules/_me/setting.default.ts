@@ -11,6 +11,7 @@ export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
   // isMobile: window.innerWidth <= 768,
   GOOGLE_DRIVER: { email: '' },
+  dataVersionParse: { address: 1, icd: 1 },
   SYSTEM_SETTING: {
     moneyDivisionFormat: 1,
     wholesalePrice: false,
@@ -34,12 +35,27 @@ export const SETTING_DEFAULT = {
       customVariables: '',
       customStyles: '',
     },
-    radiology: {
+    procedureRequest: {
       printHtmlId: 0,
       customVariables: '',
       customStyles: '',
     },
-    laboratory: {
+    laboratoryRequest: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    laboratoryResult: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    radiologyRequest: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    radiologyResult: {
       printHtmlId: 0,
       customVariables: '',
       customStyles: '',
@@ -47,7 +63,6 @@ export const SETTING_DEFAULT = {
   },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,
-    pickupStrategy: PickupStrategy.Inherit,
     splitBatchByWarehouse: SplitBatchByWarehouse.Inherit,
     splitBatchByDistributor: SplitBatchByDistributor.Inherit,
     splitBatchByExpiryDate: SplitBatchByExpiryDate.Inherit,
@@ -86,6 +101,7 @@ export const SETTING_DEFAULT = {
   },
 
   SCREEN_PRODUCT_LIST: {
+    zeroQuantity: false,
     detail: true,
     substance: false,
     group: true,
@@ -148,8 +164,7 @@ export const SETTING_DEFAULT = {
     zalo: false,
     birthday: true,
     gender: true,
-    addressFull: false,
-    addressBasic: true,
+    address: true,
     relative: false,
     note: false,
     customerSource: false,
@@ -162,7 +177,7 @@ export const SETTING_DEFAULT = {
     receiptItemsTable: {
       substance: true,
       detail: true,
-      batchCodeAndExpiryDate: true,
+      lotNumberAndExpiryDate: true,
       unit: true,
       warehouse: true,
     },
@@ -177,12 +192,12 @@ export const SETTING_DEFAULT = {
   SCREEN_RECEIPT_UPSERT: {
     receiptItemsSelect: {
       warehouse: false,
-      batchCodeAndExpiryDate: true,
+      lotNumberAndExpiryDate: true,
     },
     receiptItemsTable: {
       detail: true,
       substance: true,
-      batchCodeAndExpiryDate: true,
+      lotNumberAndExpiryDate: true,
       unit: true,
       warehouse: false,
     },
@@ -245,9 +260,10 @@ export const SETTING_DEFAULT = {
     },
   },
   SCREEN_INVOICE_UPSERT: {
+    pickupStrategy: PickupStrategy.Inherit,
     invoiceItemInput: {
       warehouseIdList: [0],
-      searchIncludeZeroQuantity: false,
+      searchIncludeZeroQuantity: true,
       hintUsage: false,
       expectedPrice: true,
       costPrice: true,
@@ -292,11 +308,33 @@ export const SETTING_DEFAULT = {
   APPOINTMENT_UPSERT: {
     birthday: true,
     gender: true,
-    addressFull: false,
-    addressBasic: true,
+    address: true,
     relative: false,
     note: false,
     customerSource: false,
+  },
+
+  RECEPTION_TICKET_LIST: {
+    roleIdList: [],
+    birthday: false,
+    phone: false,
+    address: true,
+  },
+
+  TICKET_CLINIC_CREATE: {
+    facebook: false,
+    zalo: false,
+    birthday: true,
+    gender: true,
+    address: true,
+    relative: false,
+    note: false,
+    customerSource: false,
+    roleIdList: [],
+    SCREEN: {
+      modalStyle: 'margin-top: 100px; width: 800px',
+      itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
+    },
   },
 
   TICKET_CLINIC_LIST: {
@@ -311,33 +349,20 @@ export const SETTING_DEFAULT = {
     address: false,
   },
   TICKET_CLINIC_DETAIL: {
+    diagnosis: { icd10: 0 },
+    procedure: {},
     consumable: {
       warehouseIdList: [0],
       searchIncludeZeroQuantity: 1,
+      pickupStrategy: PickupStrategy.Inherit,
     },
-    procedure: {},
     prescriptions: {
       warehouseIdList: [0],
       searchIncludeZeroQuantity: 1,
+      pickupStrategy: PickupStrategy.Inherit,
     },
   },
-  TICKET_CLINIC_CREATE: {
-    status: TicketStatus.Executing,
-    facebook: false,
-    zalo: false,
-    birthday: true,
-    gender: true,
-    addressFull: false,
-    addressBasic: true,
-    relative: false,
-    note: false,
-    customerSource: false,
-    roleIdList: [],
-    SCREEN: {
-      modalStyle: 'margin-top: 100px; width: 800px',
-      itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
-    },
-  },
+
   TICKET_STATISTIC: {
     countTicket: true,
     sumTotalMoney: true,

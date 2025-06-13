@@ -33,13 +33,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 
-export type InputSelectOption = {
+export type InputSelectOption<T> = {
   value: string | number | null
   label: string
+  data?: T
+  disabled?: boolean
 }
 
 const props = defineProps<{
-  options: InputSelectOption[]
+  options: InputSelectOption<any>[]
   value: string | number | null | undefined
   height?: string
   disabled?: boolean
@@ -92,7 +94,7 @@ function updateDropdownPosition() {
   }
 }
 
-function selectOption(option: InputSelectOption) {
+function selectOption(option: InputSelectOption<any>) {
   emit('update:value', option.value)
   isOpen.value = false
 }

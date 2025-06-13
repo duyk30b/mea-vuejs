@@ -59,11 +59,14 @@ export class CustomerSourceService {
     const page = options.page || 1
     const limit = options.limit || 10
     await CustomerSourceService.getAll()
-    let data = CustomerSourceService.executeQuery(CustomerSourceService.customerSourceAll, options)
-    data = data.slice((page - 1) * limit, page * limit)
+    const dataQuery = CustomerSourceService.executeQuery(
+      CustomerSourceService.customerSourceAll,
+      options,
+    )
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: CustomerSourceService.customerSourceAll.length },
+      meta: { total: dataQuery.length },
     }
   }
 
@@ -71,7 +74,7 @@ export class CustomerSourceService {
     await CustomerSourceService.getAll()
     const data = CustomerSourceService.executeQuery(
       CustomerSourceService.customerSourceAll,
-      options
+      options,
     )
     return CustomerSource.fromList(data)
   }

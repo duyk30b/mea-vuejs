@@ -6,17 +6,16 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputMoney, InputNumber, InputText, VueSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { Batch, BatchService } from '../../../modules/batch'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Product } from '../../../modules/product'
 import { Warehouse } from '../../../modules/warehouse'
 import { WarehouseService } from '../../../modules/warehouse/warehouse.service'
+import { MeService } from '../../../modules/_me/me.service'
 
 const emit = defineEmits<{ (e: 'success', value: Batch, type: 'UPDATE' | 'DESTROY'): void }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const batchOrigin = ref(Batch.blank())
 const batch = ref(Batch.blank())
@@ -48,11 +47,10 @@ const openModal = async (batchProp: Batch) => {
 
   if (batch.value.quantity === 0) {
     primeCostOrigin.value = batch.value.costPrice
-    primeCost.value = primeCostOrigin.value
   } else {
     primeCostOrigin.value = Math.round(batch.value.costAmount / batch.value.quantity)
-    primeCost.value = primeCostOrigin.value
   }
+  primeCost.value = primeCostOrigin.value
 }
 
 const handleSave = async () => {
@@ -164,7 +162,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
           <div>Số lô</div>
           <div>
-            <InputText v-model:value="batch.batchCode" />
+            <InputText v-model:value="batch.lotNumber" />
           </div>
         </div>
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 250px">
@@ -178,7 +176,7 @@ defineExpose({ openModal })
           <div>
             <InputNumber
               v-model:value="batch.quantity"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]"
+              :disabled="!userPermission[PermissionId.PRODUCT_CHANGE_QUANTITY_AND_COST_PRICE]"
             />
           </div>
         </div>
@@ -187,7 +185,7 @@ defineExpose({ openModal })
           <div>
             <InputMoney
               v-model:value="primeCost"
-              :disabled="!permissionIdMap[PermissionId.BATCH_CHANGE_QUANTITY_AND_COST_PRICE]"
+              :disabled="!userPermission[PermissionId.PRODUCT_CHANGE_QUANTITY_AND_COST_PRICE]"
             />
           </div>
         </div>
@@ -202,7 +200,7 @@ defineExpose({ openModal })
       <div class="pb-6 pt-10 px-4">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.BATCH_DELETE] && batch.id"
+            v-if="userPermission[PermissionId.PRODUCT_DELETE_BATCH] && batch.id"
             color="red"
             type="button"
             @click="clickDelete"

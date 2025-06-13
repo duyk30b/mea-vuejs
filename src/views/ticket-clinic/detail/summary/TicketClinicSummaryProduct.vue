@@ -4,17 +4,16 @@ import VueTag from '../../../../common/VueTag.vue'
 import { IconFileSearch } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { ESTimer } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
-import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
+import { ticketRoomRef } from '@/modules/room'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -24,45 +23,44 @@ const modalTicketClinicPrescriptionUpdate =
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 onMounted(async () => {
-  await ticketClinicRef.value.refreshProduct()
+  await ticketRoomRef.value.refreshProduct()
 })
 
 const consumableDiscount = computed(() => {
-  return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductConsumableList?.reduce((acc, item) => {
     return acc + item.discountMoney * item.quantity
   }, 0)
 })
 
 const consumableMoney = computed(() => {
-  return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductConsumableList?.reduce((acc, item) => {
     return acc + item.actualPrice * item.quantity
   }, 0)
 })
 
 const consumableCostAmount = computed(() => {
-  return ticketClinicRef.value.ticketProductConsumableList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductConsumableList?.reduce((acc, item) => {
     return acc + item.costAmount
   }, 0)
 })
 
 const prescriptionDiscount = computed(() => {
-  return ticketClinicRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
     return acc + item.discountMoney * item.quantity
   }, 0)
 })
 
 const prescriptionMoney = computed(() => {
-  return ticketClinicRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
     return acc + item.actualPrice * item.quantity
   }, 0)
 })
 
 const prescriptionCostAmount = computed(() => {
-  return ticketClinicRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketProductPrescriptionList?.reduce((acc, item) => {
     return acc + item.costAmount
   }, 0)
 })
@@ -70,10 +68,9 @@ const prescriptionCostAmount = computed(() => {
 
 <template>
   <ModalProductDetail ref="modalProductDetail" />
-  <ModalTicketLaboratoryUpdateMoney ref="modalTicketLaboratoryUpdateMoney" />
   <ModalTicketClinicConsumableUpdate ref="modalTicketClinicConsumableUpdate" />
   <ModalTicketClinicPrescriptionUpdate ref="modalTicketClinicPrescriptionUpdate" />
-  <template v-if="ticketClinicRef.ticketProductPrescriptionList?.length">
+  <template v-if="ticketRoomRef.ticketProductPrescriptionList?.length">
     <thead>
       <tr>
         <th>#</th>
@@ -93,7 +90,7 @@ const prescriptionCostAmount = computed(() => {
       <tr
         v-for="(
           tpPrescription, tpPrescriptionIndex
-        ) in ticketClinicRef.ticketProductPrescriptionList"
+        ) in ticketRoomRef.ticketProductPrescriptionList"
         :key="tpPrescription.id + '_' + tpPrescriptionIndex"
       >
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
@@ -117,10 +114,10 @@ const prescriptionCostAmount = computed(() => {
           </div>
           <div v-for="tb in tpPrescription.ticketBatchList || []" :key="tb.id">
             <div
-              v-if="tb.batchId && tb.batch?.batchCode && tb.batch?.expiryDate"
+              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
               class="text-xs italic"
             >
-              Lô {{ tb.batch?.batchCode }} - HSD
+              Lô {{ tb.batch?.lotNumber }} - HSD
               {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
             </div>
           </div>
@@ -157,8 +154,8 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-              permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
             @click="modalTicketClinicPrescriptionUpdate?.openModal(tpPrescription)"
@@ -189,7 +186,7 @@ const prescriptionCostAmount = computed(() => {
       </tr>
     </tbody>
   </template>
-  <template v-if="ticketClinicRef.ticketProductConsumableList?.length">
+  <template v-if="ticketRoomRef.ticketProductConsumableList?.length">
     <thead>
       <tr>
         <th>#</th>
@@ -206,7 +203,7 @@ const prescriptionCostAmount = computed(() => {
     </thead>
     <tbody>
       <tr
-        v-for="(tpConsumable, tpConsumableIndex) in ticketClinicRef.ticketProductConsumableList"
+        v-for="(tpConsumable, tpConsumableIndex) in ticketRoomRef.ticketProductConsumableList"
         :key="tpConsumable.id + '_' + tpConsumableIndex"
       >
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
@@ -227,10 +224,10 @@ const prescriptionCostAmount = computed(() => {
           </div>
           <div v-for="tb in tpConsumable.ticketBatchList || []" :key="tb.id">
             <div
-              v-if="tb.batchId && tb.batch?.batchCode && tb.batch?.expiryDate"
+              v-if="tb.batchId && tb.batch?.lotNumber && tb.batch?.expiryDate"
               class="text-xs italic"
             >
-              Lô {{ tb.batch?.batchCode }} - HSD
+              Lô {{ tb.batch?.lotNumber }} - HSD
               {{ ESTimer.timeToText(tb.batch?.expiryDate) }}
             </div>
           </div>
@@ -264,8 +261,8 @@ const prescriptionCostAmount = computed(() => {
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-              permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
             "
             class="text-orange-500"
             @click="modalTicketClinicConsumableUpdate?.openModal(tpConsumable)"

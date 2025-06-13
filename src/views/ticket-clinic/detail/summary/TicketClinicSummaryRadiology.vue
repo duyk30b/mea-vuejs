@@ -1,40 +1,40 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import VueTag from '../../../../common/VueTag.vue'
 import { IconCheckSquare, IconClockCircle, IconFileSearch } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
-import VueTag from '../../../../common/VueTag.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
-import { onMounted } from 'vue'
+import { Discount } from '@/modules/discount'
+import { DiscountType } from '@/modules/enum'
+import { ticketRoomRef } from '@/modules/room'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission } = MeService
 
 onMounted(async () => {
-  await ticketClinicRef.value.refreshRadiology()
+  await ticketRoomRef.value.refreshRadiology()
 })
 
 const radiologyDiscount = computed(() => {
-  return ticketClinicRef.value.ticketRadiologyList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketRadiologyList?.reduce((acc, item) => {
     return acc + item.discountMoney
   }, 0)
 })
 
 const radiologyCostAmount = computed(() => {
-  return ticketClinicRef.value.ticketRadiologyList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketRadiologyList?.reduce((acc, item) => {
     return acc + item.costPrice
   }, 0)
 })
@@ -43,7 +43,7 @@ const radiologyCostAmount = computed(() => {
 <template>
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
   <ModalTicketRadiologyUpdateMoney ref="modalTicketRadiologyUpdateMoney" />
-  <template v-if="ticketClinicRef.ticketRadiologyList?.length">
+  <template v-if="ticketRoomRef.ticketRadiologyList?.length">
     <thead>
       <tr>
         <th>#</th>
@@ -57,7 +57,7 @@ const radiologyCostAmount = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(ticketRadiology, index) in ticketClinicRef.ticketRadiologyList" :key="index">
+      <tr v-for="(ticketRadiology, index) in ticketRoomRef.ticketRadiologyList" :key="index">
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
         </td>
@@ -81,7 +81,7 @@ const radiologyCostAmount = computed(() => {
             <span>{{ ticketRadiology.radiology?.name }}</span>
             <a
               style="line-height: 0"
-              @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)"
+              @click="modalRadiologyDetail?.openModal(ticketRadiology.radiologyId)"
             >
               <IconFileSearch />
             </a>
@@ -98,22 +98,27 @@ const radiologyCostAmount = computed(() => {
         </td>
         <td class="text-center">
           <div v-if="ticketRadiology.discountMoney">
-            <VueTag v-if="ticketRadiology.discountType === 'VNĐ'" color="green">
+            <VueTag v-if="ticketRadiology.discountType === DiscountType.VND" color="green">
               {{ formatMoney(ticketRadiology.discountMoney) }}
             </VueTag>
-            <VueTag v-if="ticketRadiology.discountType === '%'" color="green">
+            <VueTag v-if="ticketRadiology.discountType === DiscountType.Percent" color="green">
               {{ ticketRadiology.discountPercent || 0 }}%
             </VueTag>
           </div>
         </td>
         <td class="text-right whitespace-nowrap">
+          <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
+            <del>
+              {{ formatMoney(ticketRadiology.expectedPrice) }}
+            </del>
+          </div>
           {{ formatMoney(ticketRadiology.actualPrice) }}
         </td>
         <td class="text-center">
           <a
             v-if="
-              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-              permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
+              ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+              userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
             "
             class="text-orange-500"
             @click="modalTicketRadiologyUpdateMoney?.openModal(ticketRadiology)"
@@ -132,7 +137,7 @@ const radiologyCostAmount = computed(() => {
           </div>
         </td>
         <td class="font-bold text-right whitespace-nowrap">
-          {{ formatMoney(ticketClinicRef.radiologyMoney) }}
+          {{ formatMoney(ticketRoomRef.radiologyMoney) }}
         </td>
         <td></td>
         <td v-if="CONFIG.MODE === 'development'" class="text-right italic">

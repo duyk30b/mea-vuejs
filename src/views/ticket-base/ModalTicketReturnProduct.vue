@@ -7,7 +7,7 @@ import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Ticket, TicketType } from '../../modules/ticket'
 import { TicketBatch, TicketBatchApi } from '../../modules/ticket-batch'
-import { TicketClinicApi } from '../../modules/ticket-clinic'
+import { TicketClinicApi, TicketClinicProductApi } from '../../modules/ticket-clinic'
 import { TicketOrderApi } from '../../modules/ticket-order'
 import { ESTimer } from '../../utils'
 
@@ -107,7 +107,7 @@ const startReturnProduct = async () => {
         returnList: tbReturnListConvert,
       })
     } else {
-      await TicketClinicApi.returnProduct({
+      await TicketClinicProductApi.returnProduct({
         ticketId: ticket.value.id,
         returnList: tbReturnListConvert,
       })
@@ -182,8 +182,8 @@ defineExpose({ openModal })
                   <div style="font-weight: 500">{{ tbReturn.tbRoot.product?.brandName }}</div>
                   <div class="text-xs italic">{{ tbReturn.tbRoot.product?.substance || '' }}</div>
                   <div v-if="tbReturn.tbRoot.batchId" class="text-xs italic">
-                    <span v-if="tbReturn.tbRoot.batch?.batchCode">
-                      Lô {{ tbReturn.tbRoot.batch?.batchCode }}
+                    <span v-if="tbReturn.tbRoot.batch?.lotNumber">
+                      Lô {{ tbReturn.tbRoot.batch?.lotNumber }}
                     </span>
                     <span v-if="tbReturn.tbRoot.batch?.expiryDate">
                       - HSD {{ ESTimer.timeToText(tbReturn.tbRoot.batch?.expiryDate) }}

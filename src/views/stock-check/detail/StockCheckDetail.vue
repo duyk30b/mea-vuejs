@@ -4,39 +4,33 @@ import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import {
   IconCloseCircle,
-  IconCopy,
   IconDelete,
-  IconDollar,
   IconEdit,
   IconFileDone,
   IconFileSearch,
-  IconGroup,
   IconMore,
   IconQuestionCircle,
   IconSend,
-  IconSetting,
 } from '../../../common/icon-antd'
-
-import { StockCheckStatus, StockCheck, StockCheckApi } from '../../../modules/stock-check'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { Breadcrumb } from '../../component'
-import { ESTimer } from '../../../utils'
-import StockCheckStatusTag from '../StockCheckStatusTag.vue'
-import { AlertStore } from '../../../common/vue-alert'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
 import VueTooltip from '../../../common/popover/VueTooltip.vue'
+import { AlertStore } from '../../../common/vue-alert'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { MeService } from '../../../modules/_me/me.service'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PermissionId } from '../../../modules/permission/permission.enum'
+import { StockCheck, StockCheckApi, StockCheckStatus } from '../../../modules/stock-check'
+import { ESTimer } from '../../../utils'
+import { Breadcrumb } from '../../component'
+import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
+import StockCheckStatusTag from '../StockCheckStatusTag.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
 const router = useRouter()
 const route = useRoute()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 
@@ -195,10 +189,10 @@ const clickCancelledDestroy = () => {
     </div>
     <div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.STOCK_CHECK_DRAFT_CRUD]"
+        v-if="userPermission[PermissionId.STOCK_CHECK_DRAFT_CRUD]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'StockCheckUpsert' })"
+        @click="router.push({ name: 'StockCheckUpsert' })"
       >
         Tạo phiếu kiểm hàng mới
       </VueButton>
@@ -246,7 +240,7 @@ const clickCancelledDestroy = () => {
       <div>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.STOCK_CHECK_DRAFT_SUBMIT] &&
+            userPermission[PermissionId.STOCK_CHECK_DRAFT_SUBMIT] &&
             [StockCheckStatus.Draft].includes(stockCheck.status)
           "
           color="green"
@@ -261,7 +255,7 @@ const clickCancelledDestroy = () => {
 
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.STOCK_CHECK_PENDING_APPROVE] &&
+            userPermission[PermissionId.STOCK_CHECK_PENDING_APPROVE] &&
             [StockCheckStatus.Pending].includes(stockCheck.status)
           "
           color="blue"
@@ -277,7 +271,7 @@ const clickCancelledDestroy = () => {
       <div class="flex gap-2">
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.STOCK_CHECK_DRAFT_CRUD] &&
+            userPermission[PermissionId.STOCK_CHECK_DRAFT_CRUD] &&
             [StockCheckStatus.Draft].includes(stockCheck.status)
           "
           color="blue"
@@ -296,7 +290,7 @@ const clickCancelledDestroy = () => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.STOCK_CHECK_VOID] &&
+                userPermission[PermissionId.STOCK_CHECK_TERMINATE] &&
                 [StockCheckStatus.Pending, StockCheckStatus.Confirmed].includes(stockCheck.status)
               "
               @click="clickCancel()"
@@ -307,7 +301,7 @@ const clickCancelledDestroy = () => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.STOCK_CHECK_DRAFT_CRUD] &&
+                userPermission[PermissionId.STOCK_CHECK_DRAFT_CRUD] &&
                 stockCheck.status === StockCheckStatus.Draft
               "
               @click="clickDraftDestroy()"
@@ -318,7 +312,7 @@ const clickCancelledDestroy = () => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.STOCK_CHECK_CANCELLED_DESTROY] &&
+                userPermission[PermissionId.STOCK_CHECK_CANCELLED_DESTROY] &&
                 stockCheck.status === StockCheckStatus.Cancelled
               "
               @click="clickCancelledDestroy()"
@@ -364,7 +358,7 @@ const clickCancelledDestroy = () => {
                   <div v-if="scItem.systemQuantity !== scItem.product?.quantity">
                     ID {{ scItem.batchId }} -&nbsp;
                   </div>
-                  <div v-if="scItem.batch?.batchCode">Lô {{ scItem.batch?.batchCode }}</div>
+                  <div v-if="scItem.batch?.lotNumber">Lô {{ scItem.batch?.lotNumber }}</div>
                   <div v-if="scItem.batch?.expiryDate">
                     - HSD {{ ESTimer.timeToText(scItem.batch?.expiryDate) }}
                   </div>
@@ -423,7 +417,7 @@ const clickCancelledDestroy = () => {
     <div class="flex justify-center gap-4 my-4">
       <VueButton
         v-if="
-          permissionIdMap[PermissionId.STOCK_CHECK_CONFIRMED_RECONCILE] &&
+          userPermission[PermissionId.STOCK_CHECK_CONFIRMED_RECONCILE] &&
           [StockCheckStatus.Confirmed].includes(stockCheck.status)
         "
         color="blue"

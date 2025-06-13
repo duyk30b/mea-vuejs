@@ -1,42 +1,56 @@
 <script setup lang="ts">
+import { DiscountInteractType } from '@/modules/discount'
+import DiscountTableAction from '@/views/master-data/discount/common/DiscountTableAction.vue'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconDiff, IconInfoCircle } from '../../../common/icon-antd'
+import { IconClose, IconDiff, IconDollar, IconInfoCircle } from '../../../common/icon-antd'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product } from '../../../modules/product'
+import { Product, ProductService } from '../../../modules/product'
 import ProductInfoAndBatchList from './ProductInfoAndBatchList.vue'
 import ProductAndBatchMovement from './ProductMovementList.vue'
 
+const emit = defineEmits<{ (e: 'close'): void }>()
+
 const TABS_KEY = {
   INFO: 'INFO',
+  DISCOUNT: 'DISCOUNT',
   MOVEMENT: 'MOVEMENT',
 }
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const tabShow = ref(TABS_KEY.INFO)
 
 const product = ref<Product>(Product.blank())
 
-const openModal = async (productProp?: Product) => {
+const openModal = async (productProp: Product) => {
   showModal.value = true
-  if (productProp) {
-    product.value = Product.from(productProp)
-  }
+  product.value = Product.from(productProp)
 }
 
 const closeModal = () => {
   showModal.value = false
   product.value = Product.blank()
+  emit('close')
 }
 
 const handleChangeProduct = (p: Product) => {
   product.value = Product.from(p)
+}
+
+const selectTabDiscount = async () => {
+  try {
+    const productData = await ProductService.detail(
+      product.value.id,
+      { relation: { discountList: true } },
+      { query: true },
+    )
+    product.value = productData
+  } catch (error) {}
 }
 
 defineExpose({ openModal })
@@ -64,8 +78,12 @@ defineExpose({ openModal })
               <IconInfoCircle />
               Thông tin
             </VueTabMenu>
+            <VueTabMenu @active="selectTabDiscount" :tabKey="TABS_KEY.DISCOUNT">
+              <IconDollar />
+              Khuyến mãi
+            </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.READ_MOVEMENT]"
+              v-if="userPermission[PermissionId.PRODUCT_READ_MOVEMENT]"
               :tabKey="TABS_KEY.MOVEMENT"
             >
               <IconDiff />
@@ -78,6 +96,17 @@ defineExpose({ openModal })
                 :productId="product.id"
                 @change-product="handleChangeProduct"
               />
+            </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+              <div class="mt-4">
+                <DiscountTableAction
+                  v-model:discountList="product.discountList!"
+                  :discountInteractId="product.id"
+                  :discountInteractType="DiscountInteractType.Product"
+                  :discountListExtra="product.discountListExtra || []"
+                  :editable="false"
+                />
+              </div>
             </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.MOVEMENT">
               <ProductAndBatchMovement :product="product" />

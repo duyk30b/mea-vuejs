@@ -7,32 +7,35 @@ import {
   IconDownload,
   IconFileSearch,
   IconForm,
-  IconSetting
+  IconSetting,
+  IconUpload,
 } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../../modules/customer'
 import { FileCustomerApi } from '../../../modules/file-excel/file-customer.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString, ESTimer } from '../../../utils'
+import { ESString, ESTimer } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import ModalCustomerDetail from '../detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../upsert/ModalCustomerUpsert.vue'
 import ModalCustomerListSettingScreen from './ModalCustomerListSettingScreen.vue'
+import ModalUploadCustomer from './ModalUploadCustomer.vue'
+import { CONFIG } from '@/config'
 
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 const modalCustomerListSettingScreen = ref<InstanceType<typeof ModalCustomerListSettingScreen>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
+const modalUploadCustomer = ref<InstanceType<typeof ModalUploadCustomer>>()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 const { formatMoney, isMobile } = settingStore
 
 const customerList = ref<Customer[]>([])
@@ -46,26 +49,29 @@ const total = ref(0)
 const searchText = ref('')
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'fullName' | 'debt' | 'id' | ''>('')
+const sortColumn = ref<'id' | 'customerCode' | 'fullName' | 'debt' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
-    const response = await CustomerService.pagination({
-      page: page.value,
-      limit: limit.value,
-      filter: {
-        isActive: isActive.value !== '' ? isActive.value : undefined,
-        searchText: searchText.value ? searchText.value : undefined,
+    const response = await CustomerService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        filter: {
+          isActive: isActive.value !== '' ? isActive.value : undefined,
+          searchText: searchText.value ? searchText.value : undefined,
+        },
+        sort: sortValue.value
+          ? {
+              fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
+            }
+          : { customerCode: 'ASC' },
       },
-      sort: sortValue.value
-        ? {
-            fullName: sortColumn.value === 'fullName' ? sortValue.value : undefined,
-            id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            debt: sortColumn.value === 'debt' ? sortValue.value : undefined,
-          }
-        : { id: 'DESC' },
-    })
+      { refetch: options?.refetch },
+    )
 
     customerList.value = response.data
     total.value = response.total
@@ -98,7 +104,7 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'fullName' | 'debt' | 'id') => {
+const changeSort = async (column: 'id' | 'customerCode' | 'fullName' | 'debt') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -142,9 +148,13 @@ const downloadExcelCustomerList = async () => {
     title: 'Xác nhận tải file báo cáo',
     content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
     onOk: async () => {
-      await FileCustomerApi.downloadExcelCustomerList()
+      await FileCustomerApi.downloadExcel()
     },
   })
+}
+
+const handleModalUploadCustomerSuccess = async () => {
+  await startFetchData({ refetch: true })
 }
 </script>
 
@@ -153,9 +163,10 @@ const downloadExcelCustomerList = async () => {
   <ModalCustomerDetail ref="modalCustomerDetail" @update_customer="updateCustomer" />
   <ModalCustomerPayDebt ref="modalCustomerPayDebt" @success="handleModalCustomerPayDebtSuccess" />
   <ModalCustomerListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalCustomerListSettingScreen"
   />
+  <ModalUploadCustomer ref="modalUploadCustomer" @success="handleModalUploadCustomerSuccess" />
 
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
@@ -164,7 +175,7 @@ const downloadExcelCustomerList = async () => {
       </div>
       <div class="">
         <VueButton
-          v-if="permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+          v-if="userPermission[PermissionId.CUSTOMER_CREATE]"
           color="blue"
           icon="plus"
           @click="modalCustomerUpsert?.openModal()"
@@ -174,16 +185,25 @@ const downloadExcelCustomerList = async () => {
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
-      <div>
+      <div v-if="!isMobile">
         <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_CUSTOMER_DOWNLOAD_EXCEL]"
+          v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_CUSTOMER]"
+          :icon="IconUpload"
+          @click="modalUploadCustomer?.openModal()"
+        >
+          Upload
+        </VueButton>
+      </div>
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_CUSTOMER]"
           :icon="IconDownload"
           @click="downloadExcelCustomerList"
         >
           Download
         </VueButton>
       </div>
-      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+      <VueDropdown v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]">
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
             <IconSetting />
@@ -265,7 +285,7 @@ const downloadExcelCustomerList = async () => {
             v-for="(customer, index) in customerList"
             :key="index"
             @dblclick="
-              permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+              userPermission[PermissionId.CUSTOMER_UPDATE] &&
               modalCustomerUpsert?.openModal(customer)
             "
           >
@@ -281,7 +301,7 @@ const downloadExcelCustomerList = async () => {
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_CUSTOMER_LIST.address" class="text-xs text-justify">
-                {{ DString.formatAddress(customer) }}
+                {{ ESString.formatAddress(customer) }}
               </div>
               <div class="flex gap-4 text-xs">
                 <div v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday" class="text-center">
@@ -305,11 +325,13 @@ const downloadExcelCustomerList = async () => {
               v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none"
             >
-              <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
+              <a :href="'tel:' + customer.phone">{{ ESString.formatPhone(customer.phone || '') }}</a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
-              <div v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0">
+              <div
+                v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0"
+              >
                 <VueButton
                   color="default"
                   size="small"
@@ -328,9 +350,13 @@ const downloadExcelCustomerList = async () => {
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
               <div class="flex items-center gap-1 justify-center">
-                <span>Mã KH</span>
+                <span>ID</span>
                 <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'id' && sortValue === 'ASC'"
@@ -338,6 +364,20 @@ const downloadExcelCustomerList = async () => {
                 />
                 <IconSortDown
                   v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  style="opacity: 0.4"
+                />
+              </div>
+            </th>
+            <th class="cursor-pointer" @click="changeSort('customerCode')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Mã KH</span>
+                <IconSort v-if="sortColumn !== 'customerCode'" style="opacity: 0.4" />
+                <IconSortUp
+                  v-if="sortColumn === 'customerCode' && sortValue === 'ASC'"
+                  style="opacity: 0.4"
+                />
+                <IconSortDown
+                  v-if="sortColumn === 'customerCode' && sortValue === 'DESC'"
                   style="opacity: 0.4"
                 />
               </div>
@@ -359,7 +399,6 @@ const downloadExcelCustomerList = async () => {
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.phone">SĐT</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.gender">Giới tính</th>
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.birthday">Ngày sinh</th>
-            <th v-if="settingStore.SCREEN_CUSTOMER_LIST.address">Địa Chỉ</th>
             <th class="cursor-pointer" @click="changeSort('debt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Nợ</span>
@@ -377,7 +416,7 @@ const downloadExcelCustomerList = async () => {
             <th v-if="settingStore.SCREEN_CUSTOMER_LIST.isActive">Trạng thái</th>
             <th
               v-if="
-                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+                userPermission[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
             >
@@ -404,7 +443,8 @@ const downloadExcelCustomerList = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(customer, index) in customerList" :key="index">
-            <td class="text-center">KH{{ customer.id }}</td>
+            <td v-if="CONFIG.MODE === 'development'" class="text-center">{{ customer.id }}</td>
+            <td class="text-center">{{ customer.customerCode }}</td>
             <td>
               <div>
                 {{ customer.fullName }}
@@ -422,6 +462,9 @@ const downloadExcelCustomerList = async () => {
               >
                 {{ customer.note }}
               </div>
+              <div v-if="settingStore.SCREEN_CUSTOMER_LIST.address" class="text-xs italic">
+                {{ ESString.formatAddress(customer) }}
+              </div>
             </td>
             <td v-if="settingStore.SCREEN_CUSTOMER_LIST.phone" class="text-center">
               <a :href="'tel:' + customer.phone">{{ customer.phone }}</a>
@@ -434,15 +477,13 @@ const downloadExcelCustomerList = async () => {
                 ESTimer.timeToText(customer.birthday, 'DD/MM/YYYY') || customer.yearOfBirth || ''
               }}
             </td>
-
-            <td v-if="settingStore.SCREEN_CUSTOMER_LIST.address">
-              {{ DString.formatAddress(customer) }}
-            </td>
             <td class="text-right">
               <div class="flex justify-between gap-1 items-center">
                 <div>
                   <VueButton
-                    v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0"
+                    v-if="
+                      userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0
+                    "
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id)"
                   >
@@ -460,7 +501,7 @@ const downloadExcelCustomerList = async () => {
             </td>
             <td
               v-if="
-                permissionIdMap[PermissionId.CUSTOMER_UPDATE] &&
+                userPermission[PermissionId.CUSTOMER_UPDATE] &&
                 settingStore.SCREEN_CUSTOMER_LIST.action
               "
               class="text-center"

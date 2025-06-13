@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { type Customer } from '../../../modules/customer'
 import { PaymentApi } from '../../../modules/payment/payment.api'
@@ -11,8 +11,8 @@ import { Payment, PersonType } from '../../../modules/payment/payment.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ESTimer } from '../../../utils'
 import PaymentTimingTag from '../../payment/PaymentTimingTag.vue'
-import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
+import ModalCustomerPayDebt from '../ModalCustomerPayDebt.vue'
 
 const modalCustomerPayDebt = ref<InstanceType<typeof ModalCustomerPayDebt>>()
 
@@ -26,8 +26,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const paymentList = ref<Payment[]>([])
 const page = ref(1)
@@ -84,7 +83,7 @@ defineExpose({ startFetchData })
     <div class="flex flex-wrap items-center gap-2">
       <div style="margin-left: auto">
         <VueButton
-          v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN]"
+          v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN]"
           color="blue"
           icon="dollar"
           @click="modalCustomerPayDebt?.openModal(customerId)"

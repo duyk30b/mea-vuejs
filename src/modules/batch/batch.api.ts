@@ -3,6 +3,7 @@ import type { BaseResponse } from '../_base/base-dto'
 import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
 import { TicketBatch } from '../ticket-batch'
+import { TicketProduct } from '../ticket-product'
 import { BatchDetailQuery, BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
 
@@ -39,9 +40,10 @@ export class BatchApi {
 
   static async updateInfo(id: number, batch: Batch) {
     const response = await AxiosInstance.patch(`/batch/update-info/${id}`, {
-      batchCode: batch.batchCode,
+      lotNumber: batch.lotNumber,
       expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
       warehouseId: batch.warehouseId,
+      isActive: batch.isActive,
     })
     const { data } = response.data as BaseResponse<{ batch: any }>
     return Batch.from(data.batch)
@@ -51,13 +53,14 @@ export class BatchApi {
     const response = await AxiosInstance.patch(
       `/batch/update-info-and-quantity-and-cost-price/${id}`,
       {
-        batchCode: batch.batchCode,
+        lotNumber: batch.lotNumber,
         expiryDate: batch.expiryDate != null ? batch.expiryDate : null,
         warehouseId: batch.warehouseId,
         distributorId: batch.distributorId,
         quantity: batch.quantity,
         costAmount: batch.costAmount,
         costPrice: batch.costPrice,
+        isActive: batch.isActive,
       },
     )
     const { data } = response.data as BaseResponse<{ batch: any; product?: any }>
@@ -87,9 +90,11 @@ export class BatchApi {
       batchId: number
       receiptItemList: ReceiptItem[]
       ticketBatchList: TicketBatch[]
+      ticketProductList: TicketProduct[]
     }>
     result.data.receiptItemList = ReceiptItem.fromList(result.data.receiptItemList)
     result.data.ticketBatchList = TicketBatch.fromList(result.data.ticketBatchList)
+    result.data.ticketProductList = TicketProduct.fromList(result.data.ticketProductList)
     return result
   }
 }

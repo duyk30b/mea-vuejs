@@ -270,7 +270,7 @@ const handleClickClear = () => {
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div style="opacity: 0.5">⧸</div>
+        <div style="opacity: 0.5">/</div>
         <div
           ref="inputMonth"
           class="input-item input-month"
@@ -280,7 +280,7 @@ const handleClickClear = () => {
           @focus="handleFocus"
           @blur="(e) => handleBlur(e, 2)"
         ></div>
-        <div style="opacity: 0.5">⧸</div>
+        <div style="opacity: 0.5">/</div>
         <div
           ref="inputYear"
           class="input-item input-year"
@@ -327,15 +327,15 @@ const handleClickClear = () => {
     </div>
     <div class="icon-append" @click="handleClickClear">
       <div v-if="!disabled" class="icon-clear-blur">
-        <IconClose />
+        <IconClose width="11" height="11" />
       </div>
       <div v-if="!disabled" class="icon-clear-hover">
-        <IconCloseCircle />
+        <IconCloseCircle width="12" height="12" />
       </div>
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">
       <DatePicker
-        :value=" value ? new Date(value).getTime() : Date.now()"
+        :value="value ? new Date(value).getTime() : Date.now()"
         :defaultType="defaultType"
         @update:value="handleValueDatePicker"
       />
@@ -347,6 +347,7 @@ const handleClickClear = () => {
 .wrapper-date-time {
   padding: 4px 6px;
   display: flex;
+  align-items: center;
   .input-item {
     outline: none;
     padding: 0 6px;

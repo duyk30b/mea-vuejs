@@ -1,35 +1,36 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
-import { IconAudit, IconDownload, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import { IconDownload, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconVisibility } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
-import { InputOptions, InputSelect, VueSelect, InputDate } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { InputDate, InputOptions, InputSelect, VueSelect } from '../../../common/vue-form'
+import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../../modules/customer'
+import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { DString, ESTimer } from '../../../utils'
+import { ESString, ESTimer } from '../../../utils'
+import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderListSetting from './ModalTicketOrderListSetting.vue'
-import Breadcrumb from '../../component/Breadcrumb.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { TicketOrderApi } from '../../../modules/ticket-order'
-import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
 
 const modalTicketOrderListSetting = ref<InstanceType<typeof ModalTicketOrderListSetting>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 
+const router = useRouter()
+
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const ticketList = ref<Ticket[]>([])
 const customerList = ref<Customer[]>([])
@@ -177,7 +178,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
 
 <template>
   <ModalTicketOrderListSetting
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalTicketOrderListSetting"
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />
@@ -192,7 +193,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
           color="blue"
           icon="plus"
           @click="
-            $router.push({
+            router.push({
               name: 'TicketOrderUpsert',
               query: { mode: ETicketOrderUpsertMode.CREATE },
             })
@@ -205,7 +206,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
     <div class="mr-2 flex items-center gap-4 flex-wrap">
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_TICKET_ORDER_DOWNLOAD_EXCEL]"
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_TICKET_ORDER]"
           :icon="IconDownload"
           @click="downloadTicketOrderList"
         >
@@ -220,7 +221,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalTicketOrderListSetting?.openModal()"
           >
             Cài đặt hiển thị
@@ -247,10 +248,10 @@ const downloadTicketOrderList = (menu: { key: string }) => {
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
-                - {{ DString.formatPhone(data.phone) }} -
+                - {{ ESString.formatPhone(data.phone) }} -
                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
-              <div>{{ DString.formatAddress(data) }}</div>
+              <div>{{ ESString.formatAddress(data) }}</div>
             </template>
           </InputOptions>
         </div>
@@ -330,7 +331,7 @@ const downloadTicketOrderList = (menu: { key: string }) => {
           <tr
             v-for="(ticket, index) in ticketList"
             :key="index"
-            @dblclick="$router.push({ name: 'TicketOrderDetail', params: { id: ticket.id } })"
+            @dblclick="router.push({ name: 'TicketOrderDetail', params: { id: ticket.id } })"
           >
             <td>
               <div class="font-medium text-justify">

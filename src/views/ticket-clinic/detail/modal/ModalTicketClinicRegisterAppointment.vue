@@ -5,8 +5,8 @@ import { IconClose } from '../../../../common/icon-antd'
 import { InputDate, InputHint } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { Appointment, AppointmentApi } from '../../../../modules/appointment'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { customFilter } from '../../../../utils'
+import { ticketRoomRef } from '@/modules/room'
 
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -34,9 +34,9 @@ const handleRegisterVisit = async () => {
   appointment.value.customerSourceId = 0
   try {
     if (!appointment.value.id) {
-      ticketClinicRef.value.toAppointment = await AppointmentApi.createOne(appointment.value)
+      ticketRoomRef.value.toAppointment = await AppointmentApi.createOne(appointment.value)
     } else {
-      ticketClinicRef.value.toAppointment = await AppointmentApi.updateOne(
+      ticketRoomRef.value.toAppointment = await AppointmentApi.updateOne(
         appointment.value.id,
         appointment.value
       )

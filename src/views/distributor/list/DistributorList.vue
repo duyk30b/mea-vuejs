@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconContainer, IconFileSearch, IconSetting } from '../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../common/icon-google'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../../modules/distributor'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString } from '../../../utils'
+import { ESString } from '../../../utils'
 import ModalDistributorPayDebt from '../ModalDistributorPayDebt.vue'
 import ModalDistributorDetail from '../detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../upsert/ModalDistributorUpsert.vue'
@@ -26,8 +26,7 @@ const modalDistributorListSettingScreen =
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const distributorList = ref<Distributor[]>([])
 
@@ -140,7 +139,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
         Danh sách nhà cung cấp
       </div>
       <VueButton
-        v-if="permissionIdMap[PermissionId.DISTRIBUTOR_CREATE]"
+        v-if="userPermission[PermissionId.DISTRIBUTOR_CREATE]"
         color="blue"
         icon="plus"
         @click="modalDistributorUpsert?.openModal()"
@@ -149,7 +148,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
       </VueButton>
     </div>
     <div class="mr-2 flex gap-8">
-      <VueDropdown v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]">
+      <VueDropdown v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]">
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
             <IconSetting />
@@ -217,7 +216,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
             v-for="(distributor, index) in distributorList"
             :key="index"
             @dblclick="
-              permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE] &&
+              userPermission[PermissionId.DISTRIBUTOR_UPDATE] &&
               modalDistributorUpsert?.openModal(distributor.id)
             "
           >
@@ -233,7 +232,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
                 </a>
               </div>
               <div v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address" class="text-xs text-justify">
-                {{ DString.formatAddress(distributor) }}
+                {{ ESString.formatAddress(distributor) }}
               </div>
               <div
                 v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.note && distributor.note"
@@ -247,14 +246,14 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
               style="white-space: nowrap; border-left: none; border-right: none"
             >
               <a :href="'tel:' + distributor.phone">
-                {{ DString.formatPhone(distributor.phone || '') }}
+                {{ ESString.formatPhone(distributor.phone || '') }}
               </a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(distributor.debt) }}</div>
               <div
                 v-if="
-                  permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
+                  userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                   distributor.debt != 0
                 "
                 class="flex justify-end"
@@ -321,7 +320,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
             <th
               v-if="
                 settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
-                permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
+                userPermission[PermissionId.DISTRIBUTOR_UPDATE]
               "
             >
               Sửa
@@ -367,17 +366,17 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
               </div>
             </td>
             <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.phone" class="text-center">
-              {{ DString.formatPhone(distributor.phone) }}
+              {{ ESString.formatPhone(distributor.phone) }}
             </td>
             <td v-if="settingStore.SCREEN_DISTRIBUTOR_LIST.address">
-              {{ DString.formatAddress(distributor) }}
+              {{ ESString.formatAddress(distributor) }}
             </td>
             <td class="text-right">
               <div v-if="distributor.debt > 0" class="flex justify-between gap-2">
                 <div>
                   <VueButton
                     v-if="
-                      permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
+                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
                       distributor.debt != 0
                     "
                     size="small"
@@ -404,7 +403,7 @@ const handleModalDistributorPayDebtSuccess = async (data: { distributor: Distrib
             <td
               v-if="
                 settingStore.SCREEN_DISTRIBUTOR_LIST.action &&
-                permissionIdMap[PermissionId.DISTRIBUTOR_UPDATE]
+                userPermission[PermissionId.DISTRIBUTOR_UPDATE]
               "
               class="text-center"
             >

@@ -4,21 +4,21 @@ import VueButton from '../../../../common/VueButton.vue'
 import { IconFileSearch } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
+import { ESString } from '../../../../utils'
 import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
+import { ticketRoomRef } from '@/modules/room'
 
 const emit = defineEmits<{
   (e: 'success', value: { ticketProcedure: TicketProcedure; ticketUserList: TicketUser[] }): void
@@ -27,8 +27,7 @@ const emit = defineEmits<{
 const inputSearchProcedure = ref<InstanceType<typeof InputOptions>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -82,19 +81,19 @@ const refreshTicketUserList = async () => {
   ticketUserList.value = []
   const ticketUserListOrigin: TicketUser[] = []
   // const ticketUserListOrigin =
-  //   ticketClinicRef.value.ticketUserGroup?.[InteractType.Procedure]?.[
+  //   ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Procedure]?.[
   //     ticketProcedure.value.id
   //   ] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Procedure,
-      interactId: ticketProcedure.value.procedureId,
+      positionType: PositionInteractType.Procedure,
+      positionInteractId: ticketProcedure.value.procedureId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListOrigin.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserList.value.push(TicketUser.from(findExist))
@@ -116,28 +115,45 @@ const refreshTicketUserList = async () => {
   })
 }
 
-const selectProcedure = async (instance?: Procedure) => {
-  if (instance) {
-    const priorityList = (ticketClinicRef.value.ticketProcedureList || []).map((i) => i.priority)
+const selectProcedure = async (procedureProp?: Procedure) => {
+  if (procedureProp) {
+    const priorityList = (ticketRoomRef.value.ticketProcedureList || []).map((i) => i.priority)
     priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
     const priorityMax = Math.max(...priorityList)
 
     const temp = TicketProcedure.blank()
 
-    temp.ticketId = ticketClinicRef.value.id
+    temp.ticketId = ticketRoomRef.value.id
     temp.priority = priorityMax + 1
-    temp.customerId = ticketClinicRef.value.customerId
-    temp.procedureId = instance.id
-    temp.procedure = instance
+    temp.customerId = ticketRoomRef.value.customerId
+    temp.procedureId = procedureProp.id
+    temp.procedure = procedureProp
 
-    temp.expectedPrice = instance.price
+    temp.expectedPrice = procedureProp.price
     temp.discountMoney = 0
     temp.discountPercent = 0
     temp.discountType = DiscountType.VND
-    temp.expectedPrice = instance.price
-    temp.actualPrice = instance.price
+    temp.expectedPrice = procedureProp.price
+    temp.actualPrice = procedureProp.price
     temp.quantity = 1
     temp.startedAt = Date.now()
+
+    await ProcedureService.executeRelation([procedureProp], { discountList: true })
+    const discountApply = procedureProp?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
 
     ticketProcedure.value = temp
 
@@ -163,7 +179,7 @@ const addTicketProcedure = async () => {
         <span>Chỉ định dịch vụ</span>
         <a
           v-if="ticketProcedure.procedureId && ticketProcedure.procedure"
-          @click="modalProcedureDetail?.openModal(ticketProcedure.procedure)"
+          @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
         >
           <IconFileSearch />
         </a>
@@ -175,9 +191,7 @@ const addTicketProcedure = async () => {
           :options="procedureOptions"
           :maxHeight="320"
           placeholder="Tìm kiếm tên dịch vụ"
-          :disabled="
-            [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status)
-          "
+          :disabled="[TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status)"
           @selectItem="({ data }) => selectProcedure(data)"
         >
           <template #option="{ item: { data } }">
@@ -217,7 +231,7 @@ const addTicketProcedure = async () => {
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
-                - {{ DString.formatPhone(data.phone) }} -
+                - {{ ESString.formatPhone(data.phone) }} -
               </div>
             </template>
           </InputFilter>
@@ -229,8 +243,8 @@ const addTicketProcedure = async () => {
       <VueButton
         icon="plus"
         :disabled="
-          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketClinicRef.status) ||
-          !permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+          [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
+          !userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
         "
         color="blue"
         type="submit"

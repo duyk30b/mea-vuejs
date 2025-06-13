@@ -13,17 +13,18 @@ import {
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProductApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicProductApi } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
+import { ESString } from '../../../../utils'
 import TicketClinicDeliveryStatusTag from '../../TicketClinicDeliveryStatusTag.vue'
+import { ticketRoomRef } from '@/modules/room'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -45,17 +46,17 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Product]?.[ticketProduct.value.id] || []
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] || []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Product,
-      interactId: ticketProduct.value.productId,
+      positionType: PositionInteractType.Product,
+      positionInteractId: ticketProduct.value.productId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))
@@ -131,7 +132,16 @@ const hasChangeData = computed(() => {
 })
 
 const handleChangeUnitQuantityPrescription = (data: number) => {
-  if (ticketProduct.value.deliveryStatus === DeliveryStatus.Pending) {
+  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
+    const { product, unitRate } = ticketProduct.value
+    ticketProduct.value.unitQuantityPrescription = data
+    ticketProduct.value.unitQuantity = data
+    ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
+  }
+}
+
+const handleChangeUnitQuantity = (data: number) => {
+  if (ticketProduct.value.deliveryStatus !== DeliveryStatus.Delivered) {
     const { product, unitRate } = ticketProduct.value
     ticketProduct.value.unitQuantity = data
     ticketProduct.value.costAmount = data * unitRate * (product?.costPrice || 0)
@@ -184,7 +194,7 @@ const clickDestroy = async () => {
       ],
     })
   }
-  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.value.status)) {
+  if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
     return ModalStore.alert({
       title: 'Không thể xóa thuốc ?',
       content: [
@@ -202,7 +212,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketClinicProductApi.destroyTicketProductPrescription({
-          ticketId: ticketClinicRef.value.id,
+          ticketId: ticketRoomRef.value.id,
           ticketProductId: ticketProductOrigin.id,
         })
         closeModal()
@@ -222,8 +232,8 @@ const updateTicketProduct = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
 
-    await TicketClinicProductApi.updateTicketProductPrescription({
-      ticketId: ticketClinicRef.value.id,
+        await TicketClinicProductApi.updateTicketProductPrescription({
+      ticketId: ticketRoomRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
@@ -280,7 +290,7 @@ defineExpose({ openModal })
             <div class="flex-1">
               <InputNumber
                 :value="ticketProduct.unitQuantityPrescription"
-                :validate="{ gt: 0 }"
+                :validate="{ gte: 0 }"
                 @update:value="handleChangeUnitQuantityPrescription"
               />
             </div>
@@ -318,7 +328,8 @@ defineExpose({ openModal })
             </div>
             <div class="flex-1">
               <InputNumber
-                v-model:value="ticketProduct.unitQuantity"
+                :value="ticketProduct.unitQuantity"
+                @update:value="handleChangeUnitQuantity"
                 :disabled="ticketProduct.deliveryStatus === DeliveryStatus.Delivered"
                 :validate="{ gte: 0 }"
               />
@@ -417,7 +428,7 @@ defineExpose({ openModal })
                 ...settingStore.PRODUCT_HINT_USAGE,
               ]"
               :maxHeight="320"
-              :logic-filter="(item: any, text: string) => DString.customFilter(item, text)"
+              :logic-filter="(item: any, text: string) => ESString.customFilter(item, text)"
             ></InputHint>
           </div>
         </div>
@@ -441,7 +452,7 @@ defineExpose({ openModal })
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
-                    - {{ DString.formatPhone(data.phone) }} -
+                    - {{ ESString.formatPhone(data.phone) }} -
                   </div>
                 </template>
               </InputFilter>

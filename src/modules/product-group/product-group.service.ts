@@ -1,4 +1,5 @@
-import { arrayToKeyValue } from '../../utils'
+import { ref } from 'vue'
+import { ESArray } from '../../utils'
 import { ProductGroupApi } from './product-group.api'
 import type { ProductGroupListQuery, ProductGroupPaginationQuery } from './product-group.dto'
 import { ProductGroup } from './product-group.model'
@@ -7,24 +8,37 @@ export class ProductGroupService {
   static loadedAll: boolean = false
 
   static productGroupAll: ProductGroup[] = []
-  static productGroupMap: Record<string, ProductGroup> = {}
+  static productGroupMap = ref<Record<string, ProductGroup>>({})
 
-  private static async getAll() {
-    if (!ProductGroupService.loadedAll) {
-      const { data } = await ProductGroupApi.list({ sort: { id: 'ASC' } })
-      const productGroupList = data
-      ProductGroupService.productGroupAll = productGroupList
-
-      ProductGroupService.productGroupMap = arrayToKeyValue(productGroupList, 'id')
-      ProductGroupService.loadedAll = true
+  private static fetchAll = (() => {
+    const start = async () => {
+      try {
+        const { data } = await ProductGroupApi.list({ sort: { id: 'ASC' } })
+        const radiologyAll = data
+        ProductGroupService.productGroupAll = radiologyAll
+        ProductGroupService.productGroupMap.value = ESArray.arrayToKeyValue(radiologyAll, 'id')
+      } catch (error: any) {
+        console.log('🚀 ~ product-group.service.ts:21  ~ fetchAll ~ error:', error)
+      }
     }
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !ProductGroupService.loadedAll || options.refetch) {
+        ProductGroupService.loadedAll = true
+        fetchPromise = start()
+      }
+      await fetchPromise
+    }
+  })()
 
+  static async getAll(options?: { refetch: boolean }) {
+    await ProductGroupService.fetchAll({ refetch: !!options?.refetch })
     return ProductGroupService.productGroupAll
   }
 
-  static async getMap() {
-    await ProductGroupService.getAll()
-    return ProductGroupService.productGroupMap
+  static async getMap(options?: { refetch: boolean }) {
+    await ProductGroupService.fetchAll({ refetch: !!options?.refetch })
+    return ProductGroupService.productGroupMap.value
   }
 
   static async pagination(options: ProductGroupPaginationQuery) {

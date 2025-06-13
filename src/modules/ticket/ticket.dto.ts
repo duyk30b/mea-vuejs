@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
+import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
 import type { TicketStatus, TicketType } from './ticket.model'
 
 export class TicketGetQuery {
@@ -25,6 +25,7 @@ export class TicketGetQuery {
   }
 
   filter?: {
+    roomId?: number | ConditionNumber
     customerId?: number
     status?: TicketStatus | ConditionEnum<TicketStatus>
     ticketType?: TicketType | ConditionEnum<TicketType>
@@ -50,7 +51,7 @@ export class TicketGetQuery {
   }
 }
 
-export class TicketPaginationQuery extends TicketGetQuery {}
-export class TicketListQuery extends OmitClass(TicketGetQuery, ['page']) {}
-export class TicketDetailQuery extends PickClass(TicketGetQuery, ['relation']) {}
-export class TicketFilterQuery extends PickClass(TicketGetQuery, ['filter']) {}
+export class TicketPaginationQuery extends TicketGetQuery { }
+export class TicketListQuery extends OmitClass(TicketGetQuery, ['page']) { }
+export class TicketDetailQuery extends PickClass(TicketGetQuery, ['relation']) { }
+export class TicketFilterQuery extends PickClass(TicketGetQuery, ['filter']) { }

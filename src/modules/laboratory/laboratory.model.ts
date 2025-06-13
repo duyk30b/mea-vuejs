@@ -1,4 +1,6 @@
+import { Discount } from '../discount'
 import { LaboratoryGroup } from '../laboratory-group'
+import { Position } from '../position'
 
 export enum LaboratoryValueType {
   Number = 1,
@@ -9,6 +11,7 @@ export enum LaboratoryValueType {
 
 export class Laboratory {
   id: number
+  laboratoryCode: string
   priority: number
 
   name: string
@@ -30,10 +33,15 @@ export class Laboratory {
   laboratoryGroup?: LaboratoryGroup
   children?: Laboratory[]
 
+  positionList: Position[]
+  discountList: Discount[]
+  discountListExtra: Discount[]
+
   static init() {
     const ins = new Laboratory()
     ins.id = 0
-    ins.priority = 1
+    ins.laboratoryCode = ''
+    ins.priority = 0
     ins.name = ''
     ins.laboratoryGroupId = 0
     ins.price = 0
@@ -51,8 +59,23 @@ export class Laboratory {
     return ins
   }
 
+  get discountApply() {
+    const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
+    const discountFilter = discountList.filter((i) => Discount.canApplyNow(i))
+    discountFilter.sort((a, b) => {
+      if (a.priority > b.priority) return -1
+      if (a.priority < b.priority) return 1
+      if (a.priority == b.priority) return a.discountInteractId == 0 ? 1 : -1
+      return -1
+    })
+    return discountFilter[0]
+  }
+
   static blank() {
     const ins = Laboratory.init()
+    ins.positionList = []
+    ins.discountList = []
+    ins.discountListExtra = []
     return ins
   }
 
@@ -80,6 +103,15 @@ export class Laboratory {
     if (target.children) {
       target.children = Laboratory.basicList(target.children)
     }
+    if (target.positionList) {
+      target.positionList = Position.basicList(target.positionList)
+    }
+    if (target.discountList) {
+      target.discountList = Discount.basicList(target.discountList)
+    }
+    if (target.discountListExtra) {
+      target.discountListExtra = Discount.basicList(target.discountListExtra)
+    }
     return target
   }
 
@@ -89,6 +121,7 @@ export class Laboratory {
 
   static equal(a: Laboratory, b: Laboratory, options?: { children?: boolean }) {
     if (a.id != b.id) return false
+    if (a.laboratoryCode != b.laboratoryCode) return false
     if (a.priority != b.priority) return false
     if (a.name != b.name) return false
     if (a.laboratoryGroupId != b.laboratoryGroupId) return false

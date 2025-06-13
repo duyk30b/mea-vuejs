@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
-import { InputText } from '../../../common/vue-form'
 import VueButton from '../../../common/VueButton.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import VueTinyMCE from '../../../common/VueTinyMCE.vue'
+import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
+import { InputHint, InputOptions, InputOptionsText, InputText } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -11,12 +12,17 @@ import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { DImage } from '../../../utils'
-import VueTinyMCE from '../../../common/VueTinyMCE.vue'
+import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { ESImage, ESString } from '../../../utils'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { ICD, ICDService } from '@/modules/icd'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+import { ticketRoomRef } from '@/modules/room'
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
+
+const { userPermission } = MeService
+const settingStore = useSettingStore()
 
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
@@ -28,14 +34,20 @@ const ticketAttributeMap = ref<
   healthHistory: '',
   summary: '',
 })
+
+const icdOptions = ref<ItemOption[]>([])
+
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
 onMounted(async () => {
+  if (settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10) {
+    await ICDService.fetchAll()
+  }
 })
 
 watch(
-  () => ticketClinicRef.value.note,
+  () => ticketRoomRef.value.note,
   (newValue, oldValue) => {
     note.value = newValue
   },
@@ -43,7 +55,7 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value.ticketAttributeList,
+  () => ticketRoomRef.value.ticketAttributeList,
   (newValue, oldValue) => {
     if (!newValue) {
       return (ticketAttributeMap.value = { healthHistory: '', summary: '' })
@@ -60,13 +72,13 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value!.imageIds,
+  () => ticketRoomRef.value!.imageIds,
   (newValue, oldValue) => (hasChangeImage.value = false),
   { immediate: true },
 )
 
 const hasChangeCustomer = computed(() => {
-  const customerHealthHistory = ticketClinicRef.value.customer?.healthHistory || ''
+  const customerHealthHistory = ticketRoomRef.value.customer?.healthHistory || ''
   return customerHealthHistory != ticketAttributeMap.value.healthHistory
 })
 
@@ -74,7 +86,7 @@ const hasChangeAttribute = computed(() => {
   let hasChange = false
   Object.entries(ticketAttributeMap.value).forEach(([key, value]) => {
     const k = key as unknown as TicketAttributeKeyGeneralType
-    const rootValue = ticketClinicRef.value.ticketAttributeMap[k] || ''
+    const rootValue = ticketRoomRef.value.ticketAttributeMap[k] || ''
     if (rootValue != value) {
       hasChange = true
     }
@@ -83,7 +95,7 @@ const hasChangeAttribute = computed(() => {
 })
 
 const hasChangeData = computed(() => {
-  if (note.value != ticketClinicRef.value.note) return true
+  if (note.value != ticketRoomRef.value.note) return true
   if (hasChangeImage.value) return true
   if (hasChangeAttribute.value) return true
   if (hasChangeCustomer.value) return true
@@ -109,7 +121,7 @@ const saveTicketDiagnosis = async () => {
 
     await Promise.all([
       TicketClinicApi.updateDiagnosis({
-        ticketId: ticketClinicRef.value.id,
+        ticketId: ticketRoomRef.value.id,
         note: note.value,
         files,
         imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
@@ -117,7 +129,7 @@ const saveTicketDiagnosis = async () => {
         ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
       }),
       hasChangeCustomer.value
-        ? CustomerService.updateOne(ticketClinicRef.value.customerId, {
+        ? CustomerService.updateOne(ticketRoomRef.value.customerId, {
             healthHistory: ticketAttributeMap.value.healthHistory,
           })
         : undefined,
@@ -131,6 +143,29 @@ const saveTicketDiagnosis = async () => {
 
 const getDataTicketDiagnosis = () => {
   return { ticketAttributeMap: ticketAttributeMap.value }
+}
+
+const searchingICD = async (text: string) => {
+  if (!text) {
+    icdOptions.value = []
+  } else {
+    const icdList = await ICDService.search(text, { limit: 20 })
+    icdOptions.value = (icdList || []).map((i) => {
+      return { value: i.id, text: `${i.code} - ${i.name}`, data: i }
+    })
+  }
+}
+
+const selectICD = async (options: { data: ICD; text: string }) => {
+  note.value = options.data.name || ''
+  ticketAttributeMap.value.icd10Name = options.data.name || ''
+  ticketAttributeMap.value.icd10Code = options.data.code || ''
+}
+
+const updateTextICD = (text: string) => {
+  if (!text) {
+    ticketAttributeMap.value.icd10Code = ''
+  }
 }
 
 defineExpose({ getDataTicketDiagnosis })
@@ -225,19 +260,34 @@ defineExpose({ getDataTicketDiagnosis })
       <div>Hình ảnh</div>
       <ImageUploadMultiple
         ref="imageUploadMultipleRef"
-        :editable="!!ticketClinicRef.id"
+        :editable="!!ticketRoomRef.id"
         :height="100"
         :rootImageList="
-          (ticketClinicRef?.imageList || [])
+          (ticketRoomRef?.imageList || [])
             .filter((i) => i.hostType === ImageHost.GoogleDriver)
             .map((i) => ({
-              thumbnail: DImage.getImageLink(i, { size: 200 }),
-              enlarged: DImage.getImageLink(i, { size: 1000 }),
+              thumbnail: ESImage.getImageLink(i, { size: 200 }),
+              enlarged: ESImage.getImageLink(i, { size: 1000 }),
               id: i.id,
             }))
         "
         @changeImage="hasChangeImage = true"
       />
+    </div>
+    <div class="mt-4" v-if="settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10">
+      <div>Chẩn đoán theo ICD10</div>
+      <div>
+        <InputOptionsText
+          ref="inputOptionsICD"
+          :prepend="ticketAttributeMap.icd10Code || '&nbsp;&nbsp;&nbsp;&nbsp;'"
+          v-model:text="ticketAttributeMap.icd10Name"
+          :max-height="260"
+          :options="icdOptions"
+          @selectItem="({ data, text }) => selectICD({ data, text })"
+          @update:text="updateTextICD"
+          @searching="searchingICD"
+        />
+      </div>
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>
@@ -249,7 +299,7 @@ defineExpose({ getDataTicketDiagnosis })
       <div></div>
       <VueButton
         v-if="
-          ticketClinicRef.id && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
+          ticketRoomRef.id && userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_ATTRIBUTE]
         "
         color="blue"
         :disabled="!hasChangeData"

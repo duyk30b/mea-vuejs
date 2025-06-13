@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import InputArea from '@/common/vue-form/InputArea.vue'
+import { AddressApi } from '@/modules/address'
 import { onMounted, ref } from 'vue'
 import { IconApartment, IconCloudUpload, IconLogout } from '../../common/icon-antd'
 import { InputText } from '../../common/vue-form'
@@ -7,6 +9,9 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionApi } from '../../modules/permission/permission.api'
 import { RootDataApi } from '../../modules/root-data/root-data.api'
 import { SettingApi } from '../../modules/setting/setting.api'
+import ModalUploadICD from './ModalUploadICD.vue'
+
+const modalUploadICD = ref<InstanceType<typeof ModalUploadICD>>()
 
 const settingStore = useSettingStore()
 
@@ -51,9 +56,20 @@ const startMigration = async () => {
     console.log('🚀 ~ file: RootData.vue:51 ~ startMigration ~ error:', error)
   }
 }
+
+const addressString = ref('[]')
+const startReplaceAddressAll = async () => {
+  try {
+    const addressAll = JSON.parse(addressString.value)
+    await AddressApi.replaceList({ addressAll })
+  } catch (error) {
+    console.log('🚀 ~ RootData.vue:63 ~ startReplaceAddressAll ~ error:', error)
+  }
+}
 </script>
 
 <template>
+  <ModalUploadICD ref="modalUploadICD" />
   <div class="mx-4 mt-4">
     <div class="flex items-center gap-4">
       <div class="hidden md:flex items-center gap-2 font-medium text-xl">
@@ -136,8 +152,32 @@ const startMigration = async () => {
               <td>
                 <VueButton color="blue" @click="uploadPostgresToGoogleDriver">
                   <IconCloudUpload />
-                  Start Upload
+                  Start Upload Postgres
                 </VueButton>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-center">4</td>
+              <td>Upload ICD10 from Excel</td>
+              <td>
+                <VueButton color="blue" @click="modalUploadICD?.openModal()">
+                  <IconCloudUpload />
+                  Upload ICD10
+                </VueButton>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-center">5</td>
+              <td colspan="2">
+                <div>AddressData</div>
+                <div>
+                  <InputArea v-model:value="addressString" />
+                </div>
+                <div class="mt-2 flex justify-end">
+                  <VueButton color="blue" icon="save" @click="startReplaceAddressAll">
+                    Cập nhật
+                  </VueButton>
+                </div>
               </td>
             </tr>
           </tbody>

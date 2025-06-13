@@ -85,6 +85,20 @@ export const masterDataRouter: RouteRecordRaw = {
         },
       ],
     },
+
+    {
+      path: 'master-data-room',
+      name: 'MasterDataRoom',
+      meta: { title: 'Danh sách phòng' },
+      redirect: () => ({ name: 'MasterDataRoomList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'MasterDataRoomList',
+          component: () => import('../views/master-data/room/RoomList.vue'),
+        },
+      ],
+    },
     {
       path: 'warehouse',
       name: 'Warehouse',
@@ -95,6 +109,19 @@ export const masterDataRouter: RouteRecordRaw = {
           path: 'list',
           name: 'WarehouseList',
           component: () => import('../views/master-data/warehouse/WarehouseList.vue'),
+        },
+      ],
+    },
+    {
+      path: 'discount',
+      name: 'Discount',
+      meta: { title: 'Khuyến mại' },
+      redirect: () => ({ name: 'DiscountList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'DiscountList',
+          component: () => import('../views/master-data/discount/list/DiscountList.vue'),
         },
       ],
     },
@@ -112,42 +139,72 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
-      path: 'laboratory-kit',
-      name: 'LaboratoryKit',
-      redirect: () => ({ name: 'LaboratoryKitList' }),
+      path: 'customer-source',
+      name: 'CustomerSource',
+      redirect: () => ({ name: 'CustomerSourceList' }),
+      meta: { title: 'Nguồn khách hàng' },
       children: [
         {
           path: 'list',
-          name: 'LaboratoryKitList',
-          component: () => import('../views/master-data/laboratory-kit/list/LaboratoryKitList.vue'),
-          meta: { title: 'Bộ xét nghiệm' },
+          name: 'CustomerSourceList',
+          component: () => import('../views/master-data/customer-source/CustomerSourceList.vue'),
         },
       ],
     },
+
     {
       path: 'prescription-sample',
       name: 'PrescriptionSample',
       redirect: () => ({ name: 'PrescriptionSampleList' }),
+      meta: { title: 'Đơn thuốc mẫu' },
       children: [
         {
           path: 'list',
           name: 'PrescriptionSampleList',
           component: () =>
             import('../views/master-data/prescription-sample/list/PrescriptionSampleList.vue'),
-          meta: { title: 'Bộ xét nghiệm' },
         },
       ],
     },
+
     {
-      path: 'customer-source',
-      name: 'CustomerSource',
-      redirect: () => ({ name: 'CustomerSourceList' }),
+      path: 'laboratory-sample',
+      name: 'LaboratorySample',
+      redirect: () => ({ name: 'LaboratorySampleList' }),
+      meta: { title: 'Bộ xét nghiệm' },
       children: [
         {
           path: 'list',
-          name: 'CustomerSourceList',
-          component: () => import('../views/master-data/customer-source/CustomerSourceList.vue'),
-          meta: { title: 'Dịch vụ' },
+          name: 'LaboratorySampleList',
+          component: () =>
+            import('../views/master-data/laboratory-sample/list/LaboratorySampleList.vue'),
+        },
+      ],
+    },
+
+    {
+      path: 'radiology-sample',
+      name: 'RadiologySample',
+      redirect: () => ({ name: 'RadiologySampleList' }),
+      meta: { title: 'Mẫu phiếu KQ CĐHA' },
+      children: [
+        {
+          path: 'list',
+          name: 'RadiologySampleList',
+          component: () =>
+            import('../views/master-data/radiology-sample/list/RadiologySampleList.vue'),
+        },
+        {
+          path: 'upsert/:id?',
+          name: 'RadiologySampleUpsert',
+          component: () =>
+            import('../views/master-data/radiology-sample/upsert/RadiologySampleUpsert.vue'),
+          meta: {
+            title: (route: RouteLocationNormalizedLoaded) => {
+              if (route.params.id) return 'Cập nhật mẫu kết quả'
+              return 'Tạo mới mẫu kết quả'
+            },
+          },
         },
       ],
     },

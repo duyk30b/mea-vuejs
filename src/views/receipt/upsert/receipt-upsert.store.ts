@@ -1,8 +1,10 @@
 import { ref, watchEffect } from 'vue'
 import { DiscountType } from '../../../modules/enum'
-import { Receipt } from '../../../modules/receipt'
+import { Receipt } from '@/modules/receipt'
 
 const receipt = ref<Receipt>(Receipt.blank())
+
+export const warehouseId = ref<number>(0)
 
 watchEffect(() => {
   const itemsActualMoney = receipt.value.receiptItemList!.reduce((acc, item) => {

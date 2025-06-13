@@ -4,28 +4,28 @@ import VueButton from '../../common/VueButton.vue'
 import { IconSetting } from '../../common/icon-antd'
 import ImageUploadSingle from '../../common/image-upload/ImageUploadSingle.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputHint, InputText } from '../../common/vue-form'
+import { InputHint, InputOptions, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization, OrganizationService } from '../../modules/organization'
 import { OrganizationApi } from '../../modules/organization/organization.api'
-import { customFilter, DImage } from '../../utils'
+import { ESImage, customFilter } from '../../utils'
 import ModalChangeOrganizationEmail from './modal/ModalChangeOrganizationEmail.vue'
+import { Address, AddressService } from '@/modules/address'
 
 const imageUploadSingleRef = ref<InstanceType<typeof ImageUploadSingle>>()
 const modalChangeOrganizationEmail = ref<InstanceType<typeof ModalChangeOrganizationEmail>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const orgStore = useSettingStore()
-const meStore = useMeStore()
 const { isMobile } = orgStore
 
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const organization = ref<Organization>(
-  Organization.from(meStore.organization || Organization.blank()),
+  Organization.from(MeService.organization.value || Organization.blank()),
 )
 const hasChangeImage = ref(false)
 const saveLoading = ref(false)
@@ -34,44 +34,44 @@ const sendEmailVerifyLoading = ref(false)
 onBeforeMount(async () => {
   try {
     organization.value = await OrganizationService.info()
+
+    await AddressService.fetchAll()
+    const findAddress = await AddressService.findBy({
+      province: organization.value?.addressProvince || '',
+      ward: organization.value?.addressWard || '',
+    })
+
+    currentAddress.value.province = findAddress.province || organization.value.addressProvince || ''
+    currentAddress.value.ward = findAddress.ward || organization.value?.addressWard || ''
+
+    inputOptionsAddress.value?.setItem({
+      text: [currentAddress.value.ward || '', currentAddress.value.province || '']
+        .filter((i) => !!i)
+        .join(' - '),
+      data: currentAddress.value,
+      value: currentAddress.value.id,
+    })
   } catch (error) {
     console.log('🚀 ~ file: OrganizationInfo.vue:36 ~ onBeforeMount ~ error:', error)
   }
 })
 
-onMounted(async () => {
-  provinceList.value = await AddressInstance.getAllProvinces()
-  if (organization.value.addressProvince) {
-    districtList.value = await AddressInstance.getDistrictsByProvince(
-      organization.value.addressProvince,
-    )
-    if (organization.value.addressDistrict) {
-      wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-        organization.value.addressProvince,
-        organization.value.addressDistrict,
-      )
-    }
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
   }
-})
-
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
-  }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    organization.value.addressProvince,
-    district,
-  )
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  organization.value.addressProvince = currentAddress.value.province
+  organization.value.addressWard = currentAddress.value.ward
 }
 
 const saveOrganization = async () => {
@@ -80,9 +80,14 @@ const saveOrganization = async () => {
 
     const file = imageUploadSingleRef.value?.imageData.file
     if (!file) {
-      organization.value = await OrganizationService.updateInfo(organization.value)
+      const organizationUpdate = await OrganizationService.updateInfo(organization.value)
+      Object.assign(organization.value, organizationUpdate)
     } else {
-      organization.value = await OrganizationService.updateInfoAndLogo(organization.value, file)
+      const organizationUpdate = await OrganizationService.updateInfoAndLogo(
+        organization.value,
+        file,
+      )
+      Object.assign(organization.value, organizationUpdate)
     }
     AlertStore.addSuccess('Cập nhật thông tin cơ sở thành công')
   } catch (error) {
@@ -92,11 +97,20 @@ const saveOrganization = async () => {
   }
 }
 
+const hasChangeData = computed(() => {
+  if (hasChangeImage.value) return true
+  if (!Organization.equal(organization.value, MeService.organization.value)) return true
+  if (organization.value.addressProvince !== currentAddress.value.province) {
+    return true
+  }
+  if (organization.value.addressWard !== currentAddress.value.ward) {
+    return true
+  }
+  return false
+})
+
 const disableButtonSave = computed(() => {
-  return (
-    JSON.stringify(organization.value) === JSON.stringify(meStore.organization) &&
-    !hasChangeImage.value
-  )
+  return !hasChangeData.value
 })
 
 const sendEmailVerify = async () => {
@@ -158,45 +172,19 @@ const sendEmailVerify = async () => {
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Địa chỉ</div>
-        <div class="flex-auto flex gap-4 flex-wrap">
-          <div style="flex: 1; flex-basis: 200px">
-            <InputHint
-              v-model:value="organization.addressProvince"
-              :options="provinceList"
-              placeholder="Thành Phố / Tỉnh"
-              :maxHeight="180"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              @update:value="handleChangeProvince"
-            />
-          </div>
-          <div style="flex: 1; flex-basis: 200px">
-            <InputHint
-              v-model:value="organization.addressDistrict"
-              :options="districtList"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              placeholder="Quận / Huyện"
-              :maxHeight="180"
-              @update:value="handleChangeDistrict"
-            />
-          </div>
-          <div style="flex: 1; flex-basis: 200px">
-            <InputHint
-              v-model:value="organization.addressWard"
-              :options="wardList"
-              placeholder="Phường / Xã"
-              :maxHeight="180"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-            />
-          </div>
-        </div>
+        <InputOptions
+          ref="inputOptionsAddress"
+          :max-height="260"
+          :options="addressOptions"
+          @selectItem="({ data }) => selectAddress(data)"
+          @searching="searchingAddress"
+          noClearTextWhenNotSelected
+        />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
-        <div style="width: 120px; flex: none"></div>
-        <InputText
-          v-model:value="organization.addressStreet"
-          placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-        />
+        <div style="width: 120px; flex: none">Số nhà, ngõ ...</div>
+        <InputText v-model:value="organization.addressStreet" placeholder="Số nhà, ngõ ..." />
       </div>
 
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
@@ -207,7 +195,7 @@ const sendEmailVerify = async () => {
             :height="150"
             :rootImage="{
               id: organization.logoImage?.id || 0,
-              src: DImage.getImageLink(organization.logoImage, { size: 400 }),
+              src: ESImage.getImageLink(organization.logoImage, { size: 400 }),
             }"
             @changeImage="hasChangeImage = true"
           />

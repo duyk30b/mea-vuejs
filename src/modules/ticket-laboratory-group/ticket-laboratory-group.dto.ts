@@ -1,5 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate } from '../_base/base-condition'
+import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { TicketLaboratoryStatus } from '../ticket-laboratory/ticket-laboratory.model'
 
 export class TicketLaboratoryGroupGetQuery {
   page: number
@@ -7,18 +8,25 @@ export class TicketLaboratoryGroupGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
+    ticketUserList?: boolean
+    ticketLaboratoryList?: boolean
+    ticketLaboratoryResultMap?: boolean
     imageList?: boolean
   }
 
   filter?: {
     laboratoryGroupId?: number
+    status?: TicketLaboratoryStatus | ConditionEnum<TicketLaboratoryStatus>
     customerId?: number
+    roomId?: number | ConditionNumber
     ticketId?: number
+    registeredAt?: ConditionDate
     startedAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    registeredAt?: 'ASC' | 'DESC'
     startedAt?: 'ASC' | 'DESC'
   }
 
@@ -33,8 +41,10 @@ export class TicketLaboratoryGroupGetQuery {
   }
 }
 
-export class TicketLaboratoryGroupPaginationQuery extends TicketLaboratoryGroupGetQuery {}
-export class TicketLaboratoryGroupListQuery extends OmitClass(TicketLaboratoryGroupGetQuery, ['page']) {}
+export class TicketLaboratoryGroupPaginationQuery extends TicketLaboratoryGroupGetQuery { }
+export class TicketLaboratoryGroupListQuery extends OmitClass(TicketLaboratoryGroupGetQuery, [
+  'page',
+]) { }
 export class TicketLaboratoryGroupDetailQuery extends PickClass(TicketLaboratoryGroupGetQuery, [
   'relation',
-]) {}
+]) { }

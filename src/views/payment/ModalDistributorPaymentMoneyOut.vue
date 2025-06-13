@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose, IconFileSearch } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputOptions, InputSelect, InputText } from '../../common/vue-form'
 import type { ItemOption } from '../../common/vue-form/InputOptions.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { PaymentMethodService } from '../../modules/payment-method'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { DString, ESTimer } from '../../utils'
+import { ESString, ESTimer } from '../../utils'
 import ModalDistributorDetail from '../distributor/detail/ModalDistributorDetail.vue'
 import ModalDistributorUpsert from '../distributor/upsert/ModalDistributorUpsert.vue'
 import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
@@ -25,12 +24,10 @@ const modalDistributorUpsert = ref<InstanceType<typeof ModalDistributorUpsert>>(
 const emit = defineEmits<{
   (e: 'success', value: { distributor: Distributor }): void
 }>()
-const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, user } = meStore
+const { userPermission, user } = MeService
 
 const distributorOptions = ref<ItemOption[]>([])
 const distributor = ref<Distributor>(Distributor.blank())
@@ -111,7 +108,7 @@ const handleSave = async () => {
       distributorId: distributor.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
-      cashierId: user?.id || 0,
+      cashierId: user.value?.id || 0,
       money: money.value,
       receiptPaymentList: receiptPaymentList.value
         .map((i) => ({ receiptId: i.receipt.id, money: i.money }))
@@ -171,7 +168,7 @@ defineExpose({ openModal })
               )
             </span>
             <a
-              v-if="permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalDistributorUpsert?.openModal(distributor.id)"
             >
               Sửa thông tin NCC
@@ -179,7 +176,7 @@ defineExpose({ openModal })
           </template>
           <div style="margin-left: auto">
             <a
-              v-if="!distributor.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+              v-if="!distributor.id && userPermission[PermissionId.CUSTOMER_CREATE]"
               @click="modalDistributorUpsert?.openModal()"
             >
               Thêm NCC mới
@@ -200,7 +197,7 @@ defineExpose({ openModal })
             <template #option="{ item: { data } }">
               <div>
                 <b>{{ data.fullName }}</b>
-                - {{ DString.formatPhone(data.phone) }} -
+                - {{ ESString.formatPhone(data.phone) }} -
                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 <span v-if="data.debt > 0">
                   Nợ:
@@ -211,7 +208,7 @@ defineExpose({ openModal })
                   <strong style="color: var(--text-green)">{{ formatMoney(-data.debt) }}</strong>
                 </span>
               </div>
-              <div>{{ DString.formatAddress(data) }}</div>
+              <div>{{ ESString.formatAddress(data) }}</div>
             </template>
           </InputOptions>
         </div>

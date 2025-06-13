@@ -25,22 +25,22 @@ export class ProcedureGroupService {
     const page = options.page || 1
     const limit = options.limit || 10
     await ProcedureGroupService.getAll()
-    let data = ProcedureGroupService.procedureGroupAll
+    let dataQuery = ProcedureGroupService.procedureGroupAll
     if (options.filter) {
-      data = data.filter((i) => {
+      dataQuery = dataQuery.filter((i) => {
         return true
       })
     }
     if (options.sort) {
       if (options.sort?.id) {
-        data.sort((a, b) => {
+        dataQuery.sort((a, b) => {
           if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
           if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
           return a.id > b.id ? -1 : 1
         })
       }
     }
-    data = data.slice((page - 1) * limit, page * limit)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
       meta: { total: ProcedureGroupService.procedureGroupAll.length },

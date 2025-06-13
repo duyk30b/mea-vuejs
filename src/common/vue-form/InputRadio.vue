@@ -33,7 +33,7 @@ defineExpose({ focus })
 <template>
   <div class="vue-input-radio" :style="customStyle?.wrap || ''">
     <label
-      class="vue-input-radio-item"
+      :class="{ 'vue-input-radio-item': true, disabled }"
       v-for="(option, index) in options"
       :key="index"
       :style="customStyle?.item || ''"
@@ -45,8 +45,11 @@ defineExpose({ focus })
         @change="(e) => handleChange(e, option.key)"
       />
       <span
-        class="input-radio-fake"
-        :class="value === option.key ? 'input-radio-fake-checked' : ''"
+        :class="{
+          'input-radio-fake': true,
+          'input-radio-fake-checked': value === option.key,
+          disabled,
+        }"
       ></span>
       <span>{{ option.label }}</span>
     </label>
@@ -65,6 +68,9 @@ defineExpose({ focus })
     gap: 0.5em;
     cursor: pointer;
     user-select: none;
+    &.disabled {
+      cursor: not-allowed;
+    }
     &:hover {
       opacity: 1;
     }
@@ -102,8 +108,14 @@ defineExpose({ focus })
         transition: all 0.2s cubic-bezier(0.78, 0.14, 0.15, 0.86);
         content: ' ';
       }
+      &.disabled::after {
+        background-color: #8b8b8b !important;
+      }
       &.input-radio-fake-checked {
         border-color: #1890ff;
+        &.disabled {
+          border-color: #8b8b8b;
+        }
         &::after {
           opacity: 1;
           transform: scale(0.5);

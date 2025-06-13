@@ -33,7 +33,7 @@ export class LaboratoryGroupApi {
 
   static async detail(
     id: number,
-    options: LaboratoryGroupDetailQuery = {}
+    options: LaboratoryGroupDetailQuery = {},
   ): Promise<LaboratoryGroup> {
     const params = LaboratoryGroupGetQuery.toQuery(options)
     const response = await AxiosInstance.get(`/laboratory-group/detail/${id}`, { params })
@@ -45,6 +45,7 @@ export class LaboratoryGroupApi {
     const response = await AxiosInstance.post('/laboratory-group/create', {
       name: laboratoryGroup.name,
       printHtmlId: laboratoryGroup.printHtmlId,
+      roomId: laboratoryGroup.roomId,
     })
     const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
     return LaboratoryGroup.from(data.laboratoryGroup)
@@ -54,6 +55,7 @@ export class LaboratoryGroupApi {
     const response = await AxiosInstance.patch(`/laboratory-group/update/${id}`, {
       name: laboratoryGroup.name,
       printHtmlId: laboratoryGroup.printHtmlId,
+      roomId: laboratoryGroup.roomId,
     })
     const { data } = response.data as BaseResponse<{ laboratoryGroup: any }>
     return LaboratoryGroup.from(data.laboratoryGroup)
@@ -72,6 +74,7 @@ export class LaboratoryGroupApi {
           id: i.id || 0,
           name: i.name,
           printHtmlId: i.printHtmlId || 0,
+          roomId: i.roomId,
         }
       }),
     })

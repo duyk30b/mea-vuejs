@@ -1,19 +1,19 @@
-import { MeService } from '../_me/me.service'
 import { Batch } from '../batch/batch.model'
-import { Commission } from '../commission'
+import { Discount } from '../discount'
 import {
-    PickupStrategy,
-    SplitBatchByCostPrice,
-    SplitBatchByDistributor,
-    SplitBatchByExpiryDate,
-    SplitBatchByWarehouse,
-    type UnitType,
+  ProductType,
+  SplitBatchByCostPrice,
+  SplitBatchByDistributor,
+  SplitBatchByExpiryDate,
+  SplitBatchByWarehouse,
+  type UnitType,
 } from '../enum'
+import { Position } from '../position'
 import { ProductGroup } from '../product-group'
 
 export class Product {
   id: number
-  productCode: string
+  productCode: string // Tên biệt dược
   brandName: string // Tên biệt dược
   substance: string // Hoạt chất
 
@@ -32,7 +32,7 @@ export class Product {
   warehouseIds: string
   warehouseIdList: number[] // [] là không quản lý kho, [0] là tất cả kho
 
-  pickupStrategy: PickupStrategy
+  productType: ProductType
   splitBatchByWarehouse: SplitBatchByWarehouse
   splitBatchByDistributor: SplitBatchByDistributor
   splitBatchByExpiryDate: SplitBatchByExpiryDate
@@ -43,10 +43,17 @@ export class Product {
 
   batchList?: Batch[]
   productGroup?: ProductGroup
-  commissionList?: Commission[]
+  positionList?: Position[]
+
+  discountList?: Discount[]
+  discountListExtra?: Discount[]
 
   get unitObject(): UnitType[] {
-    return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
+    try {
+      return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
+    } catch (error) {
+      return []
+    }
   }
 
   set unitObject(data) {
@@ -106,11 +113,16 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
-  get pickupStrategyFix() {
-    if (this.pickupStrategy === PickupStrategy.Inherit) {
-      return MeService.getProductSetting(this).pickupStrategy
-    }
-    return this.pickupStrategy
+  get discountApply() {
+    const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
+    const discountFilter = discountList.filter((i) => Discount.canApplyNow(i))
+    discountFilter.sort((a, b) => {
+      if (a.priority > b.priority) return -1
+      if (a.priority < b.priority) return 1
+      if (a.priority == b.priority) return a.discountInteractId == 0 ? 1 : -1
+      return -1
+    })
+    return discountFilter[0]
   }
 
   public getUnitNameByRate(rate: number) {
@@ -120,6 +132,7 @@ export class Product {
   static init(): Product {
     const ins = new Product()
     ins.id = 0
+    ins.productCode = ''
     ins.quantity = 0
     ins.costPrice = 0
     ins.wholesalePrice = 0
@@ -130,7 +143,8 @@ export class Product {
     ins.warehouseIds = JSON.stringify([0])
     ins.warehouseIdList = [0]
 
-    ins.pickupStrategy = PickupStrategy.Inherit
+    ins.productType = ProductType.Basic
+
     ins.splitBatchByWarehouse = SplitBatchByWarehouse.Inherit
     ins.splitBatchByDistributor = SplitBatchByDistributor.Inherit
     ins.splitBatchByExpiryDate = SplitBatchByExpiryDate.Inherit
@@ -142,7 +156,9 @@ export class Product {
   static blank(): Product {
     const ins = Product.init()
     ins.batchList = []
-    ins.commissionList = []
+    ins.positionList = []
+    ins.discountList = []
+    ins.discountListExtra = []
 
     return ins
   }
@@ -171,8 +187,14 @@ export class Product {
     if (target.batchList) {
       target.batchList = Batch.basicList(target.batchList)
     }
-    if (target.commissionList) {
-      target.commissionList = Commission.basicList(target.commissionList)
+    if (target.positionList) {
+      target.positionList = Position.basicList(target.positionList)
+    }
+    if (target.discountList) {
+      target.discountList = Discount.basicList(target.discountList)
+    }
+    if (target.discountListExtra) {
+      target.discountListExtra = Discount.basicList(target.discountListExtra)
     }
 
     try {
@@ -189,6 +211,7 @@ export class Product {
 
   static equal(a: Product, b: Product) {
     if (a.id != b.id) return false
+    if (a.productCode != b.productCode) return false
     if (a.brandName != b.brandName) return false
     if (a.substance != b.substance) return false
 
@@ -205,7 +228,6 @@ export class Product {
     if (a.retailPrice != b.retailPrice) return false
 
     if (a.warehouseIds != b.warehouseIds) return false
-    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.isActive != b.isActive) return false
     if (a.updatedAt != b.updatedAt) return false
     return true

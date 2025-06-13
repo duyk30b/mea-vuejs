@@ -1,5 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate } from '../_base/base-condition'
+import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { TicketRadiologyStatus } from './ticket-radiology.model'
 
 export class TicketRadiologyGetQuery {
   page: number
@@ -7,20 +8,25 @@ export class TicketRadiologyGetQuery {
   relation?: {
     ticket?: boolean
     customer?: boolean
+    ticketUserList?: boolean
     radiology?: { radiologyGroup?: boolean; printHtml?: boolean } | false
     imageList?: boolean
   }
 
   filter?: {
+    status?: TicketRadiologyStatus | ConditionEnum<TicketRadiologyStatus>
     radiologyId?: number
+    roomId?: number | ConditionNumber
     customerId?: number
     ticketId?: number
     startedAt?: ConditionDate
+    registeredAt?: ConditionDate
   }
 
   sort?: {
     id?: 'ASC' | 'DESC'
     startedAt?: 'ASC' | 'DESC'
+    registeredAt?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<TicketRadiologyGetQuery>) {
@@ -34,6 +40,6 @@ export class TicketRadiologyGetQuery {
   }
 }
 
-export class TicketRadiologyPaginationQuery extends TicketRadiologyGetQuery {}
-export class TicketRadiologyListQuery extends OmitClass(TicketRadiologyGetQuery, ['page']) {}
-export class TicketRadiologyDetailQuery extends PickClass(TicketRadiologyGetQuery, ['relation']) {}
+export class TicketRadiologyPaginationQuery extends TicketRadiologyGetQuery { }
+export class TicketRadiologyListQuery extends OmitClass(TicketRadiologyGetQuery, ['page']) { }
+export class TicketRadiologyDetailQuery extends PickClass(TicketRadiologyGetQuery, ['relation']) { }

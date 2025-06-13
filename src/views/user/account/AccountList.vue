@@ -3,16 +3,12 @@ import { onBeforeMount, ref } from 'vue'
 import { IconApartment, IconForm } from '../../../common/icon-antd'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { UserApi, type User } from '../../../modules/user'
 import ModalAccountUpsert from './ModalAccountUpsert.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { InputSelect } from '../../../common/vue-form'
 
 const modalAccountUpsert = ref<InstanceType<typeof ModalAccountUpsert>>()
-
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
 
 const userList = ref<User[]>([])
 

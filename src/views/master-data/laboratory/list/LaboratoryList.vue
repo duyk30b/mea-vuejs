@@ -1,33 +1,38 @@
 <script setup lang="ts">
+import { VueTag } from '@/common'
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import { IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { IconDownload, IconEditSquare, IconUpload } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { FileLaboratoryApi } from '@/modules/file-excel/file-laboratory.api'
+import { Laboratory, LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
+import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { arrayToKeyValue } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
-import VuePagination from '../../../../common/VuePagination.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
-import { IconEditSquare, IconLabPanel } from '../../../../common/icon-google'
-import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
-import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
-import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { arrayToKeyValue } from '../../../../utils'
+import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalLaboratoryDetail from '../detail/ModalLaboratoryDetail.vue'
 import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
-import Breadcrumb from '../../../component/Breadcrumb.vue'
+import ModalUploadLaboratory from './ModalUploadLaboratory.vue'
 
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
 const modalLaboratoryUpsert = ref<InstanceType<typeof ModalLaboratoryUpsert>>()
 const modalLaboratoryDetail = ref<InstanceType<typeof ModalLaboratoryDetail>>()
-const meStore = useMeStore()
-const settingStore = useSettingStore()
-const { formatMoney } = settingStore
+const modalUploadLaboratory = ref<InstanceType<typeof ModalUploadLaboratory>>()
 
-const { permissionIdMap } = meStore
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
+
+const { userPermission } = MeService
 
 const laboratoryList = ref<Laboratory[]>([])
 const searchText = ref('')
@@ -42,21 +47,24 @@ const dataLoading = ref(false)
 const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
 const laboratoryGroupMap = computed(() => arrayToKeyValue(laboratoryGroupAll.value, 'id'))
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   dataLoading.value = true
 
   try {
-    const { data, meta } = await LaboratoryService.pagination({
-      page: page.value,
-      limit: limit.value,
-      relation: { laboratoryGroup: false },
-      filter: {
-        level: 1,
-        laboratoryGroupId: laboratoryGroupId.value ? laboratoryGroupId.value : undefined,
-        name: searchText.value ? { LIKE: searchText.value } : undefined,
+    const { data, meta } = await LaboratoryService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        relation: { laboratoryGroup: false, discountList: true },
+        filter: {
+          level: 1,
+          laboratoryGroupId: laboratoryGroupId.value ? laboratoryGroupId.value : undefined,
+          name: searchText.value ? { LIKE: searchText.value } : undefined,
+        },
+        sort: { laboratoryCode: 'ASC' },
       },
-      sort: { priority: 'ASC' },
-    })
+      { refetch: !!options?.refetch },
+    )
 
     laboratoryList.value = data
     total.value = meta.total
@@ -92,7 +100,8 @@ onBeforeMount(async () => {
 })
 
 const handleModalCopyLaboratorySystemSuccess = async () => {
-  await startFetchData()
+  startFetchData({ refetch: true })
+  laboratoryGroupAll.value = await LaboratoryGroupService.list({}, { refetch: true })
 }
 
 const handleModalLaboratoryGroupManagerSuccess = async () => {
@@ -101,6 +110,21 @@ const handleModalLaboratoryGroupManagerSuccess = async () => {
 
 const handleModalLaboratoryUpsertSuccess = async () => {
   await startFetchData()
+}
+
+const downloadExcelLaboratoryList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileLaboratoryApi.downloadExcel()
+    },
+  })
+}
+
+const handleModalUploadLaboratorySuccess = async () => {
+  startFetchData({ refetch: true })
+  laboratoryGroupAll.value = await LaboratoryGroupService.list({}, { refetch: true })
 }
 </script>
 
@@ -118,13 +142,18 @@ const handleModalLaboratoryUpsertSuccess = async () => {
     @success="handleModalLaboratoryGroupManagerSuccess"
   />
   <ModalLaboratoryDetail ref="modalLaboratoryDetail" />
+  <ModalUploadLaboratory
+    ref="modalUploadLaboratory"
+    @success="handleModalUploadLaboratorySuccess"
+  />
+
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
     </div>
     <div class="">
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]"
+        v-if="userPermission[PermissionId.LABORATORY_CREATE]"
         color="blue"
         icon="plus"
         @click="modalLaboratoryUpsert?.openModal()"
@@ -133,6 +162,32 @@ const handleModalLaboratoryUpsertSuccess = async () => {
       </VueButton>
     </div>
     <div class="ml-auto flex items-center gap-8">
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_LABORATORY]"
+          :icon="IconUpload"
+          @click="modalUploadLaboratory?.openModal()"
+        >
+          Upload
+        </VueButton>
+      </div>
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_LABORATORY]"
+          :icon="IconDownload"
+          @click="downloadExcelLaboratoryList"
+        >
+          Download
+        </VueButton>
+      </div>
+      <VueButton
+        v-if="userPermission[PermissionId.LABORATORY_GROUP_CRUD]"
+        icon="send"
+        color="green"
+        @click="modalLaboratoryGroupManager?.openModal()"
+      >
+        Nhóm xét nghiệm
+      </VueButton>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -140,9 +195,8 @@ const handleModalLaboratoryUpsertSuccess = async () => {
           </span>
         </template>
         <div class="vue-menu">
-          <a @click="modalLaboratoryGroupManager?.openModal()">Quản lý phiếu xét nghiệm</a>
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalCopyLaboratoryExample?.openModal()"
           >
             Copy dữ liệu từ hệ thống
@@ -178,15 +232,16 @@ const handleModalLaboratoryUpsertSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th>STT</th>
             <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th>Mã</th>
             <th>Tên</th>
-            <th>Phiếu</th>
+            <th>Nhóm</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá vốn</th>
             <th>Giá bán</th>
-            <th v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]">Action</th>
+            <th>Khuyến mại</th>
+            <th v-if="userPermission[PermissionId.LABORATORY_UPDATE]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -208,16 +263,14 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
-            <td class="text-center">
-              <span>{{ laboratory.priority }}</span>
-            </td>
             <td v-if="CONFIG.MODE === 'development'" class="text-center">
               {{ laboratory.id }}
             </td>
+            <td class="text-center">{{ laboratory.laboratoryCode }}</td>
             <td>
               <div class="flex items-center">
                 {{ laboratory.name }}
-                <a class="ml-1" @click="modalLaboratoryDetail?.openModal(laboratory)">
+                <a class="ml-1" @click="modalLaboratoryDetail?.openModal(laboratory.id)">
                   <IconFileSearch />
                 </a>
               </div>
@@ -246,7 +299,12 @@ const handleModalLaboratoryUpsertSuccess = async () => {
             </td>
             <td class="text-right">{{ formatMoney(laboratory.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_LABORATORY]" class="text-center">
+            <td class="text-center">
+              <VueTag v-if="laboratory.discountApply" color="blue">
+                {{ laboratory.discountApply?.valueText }}
+              </VueTag>
+            </td>
+            <td v-if="userPermission[PermissionId.LABORATORY_UPDATE]" class="text-center">
               <a
                 style="color: var(--text-orange)"
                 @click="modalLaboratoryUpsert?.openModal(laboratory.id)"

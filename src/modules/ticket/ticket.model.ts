@@ -1,16 +1,19 @@
 import { ESArray } from '../../utils'
+import { MeService } from '../_me/me.service'
 import { Appointment } from '../appointment'
 import { Batch } from '../batch'
 import { Customer } from '../customer'
 import { CustomerSource } from '../customer-source'
 import { DeliveryStatus, DiscountType } from '../enum'
 import { Image } from '../image/image.model'
-import { LaboratoryService, LaboratoryValueType } from '../laboratory'
+import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
 import { Payment } from '../payment/payment.model'
+import { PermissionId } from '../permission/permission.enum'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
 import { RadiologyService } from '../radiology'
+import { RadiologyGroupService } from '../radiology-group'
 import { RoleService } from '../role'
 import { TicketAttribute, type TicketAttributeMap } from '../ticket-attribute'
 import { TicketBatch } from '../ticket-batch'
@@ -46,6 +49,7 @@ export enum TicketType {
 export class Ticket {
   id: number
   customerId: number
+  roomId: number
   customerSourceId: number
   ticketType: TicketType
   customType: number
@@ -114,6 +118,7 @@ export class Ticket {
   static init(): Ticket {
     const ins = new Ticket()
     ins.id = 0
+    ins.roomId = 0
     ins.customType = 0
     ins.status = TicketStatus.Draft
     ins.itemsCostAmount = 0
@@ -189,6 +194,9 @@ export class Ticket {
   }
 
   async refreshProcedure() {
+    if (!MeService.organizationPermission.value[PermissionId.PROCEDURE]) {
+      return
+    }
     if (!this.ticketProcedureList || !this.ticketProcedureList.length) {
       return
     }
@@ -199,16 +207,26 @@ export class Ticket {
   }
 
   async refreshRadiology() {
+    if (!MeService.organizationPermission.value[PermissionId.RADIOLOGY]) {
+      return
+    }
     if (!this.ticketRadiologyList || !this.ticketRadiologyList.length) {
       return
     }
     const radiologyMap = await RadiologyService.getMap()
+    const radiologyGroupMap = await RadiologyGroupService.getMap()
     this.ticketRadiologyList.forEach((i) => {
       i.radiology = radiologyMap![i.radiologyId]
+      if (i.radiology) {
+        i.radiology.radiologyGroup = radiologyGroupMap[i.radiology.radiologyGroupId]
+      }
     })
   }
 
   async refreshUserAndRole() {
+    if (!MeService.organizationPermission.value[PermissionId.POSITION]) {
+      return
+    }
     if (!this.ticketUserList || !this.ticketUserList.length) {
       return
     }
@@ -219,7 +237,23 @@ export class Ticket {
     })
   }
 
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    this.ticketUserList?.forEach((i) => {
+      if (!this.ticketUserGroup[i.positionType]) {
+        this.ticketUserGroup[i.positionType] = {}
+      }
+      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
+        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
+    })
+  }
+
   async refreshLaboratory() {
+    if (!MeService.organizationPermission.value[PermissionId.LABORATORY]) {
+      return
+    }
     if (!this.ticketLaboratoryList || !this.ticketLaboratoryList.length) {
       return
     }
@@ -233,29 +267,6 @@ export class Ticket {
 
     this.ticketLaboratoryList.forEach((tl) => {
       tl.laboratory = laboratoryMap[tl.laboratoryId]
-
-      tl.ticketLaboratoryResult = this.ticketLaboratoryResultList!.find((tlr) => {
-        return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
-      })
-
-      if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
-        tl.children =
-          tl.laboratory?.children?.map((laboratoryChild) => {
-            let currentTlr = this.ticketLaboratoryResultList!.find((tlr) => {
-              return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
-            })
-            if (!currentTlr) {
-              currentTlr = TicketLaboratoryResult.blank()
-              currentTlr.laboratoryId = tl.laboratoryId
-              currentTlr.ticketLaboratoryId = tl.id
-              currentTlr.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
-            }
-            return {
-              laboratory: laboratoryChild,
-              ticketLaboratoryResult: currentTlr,
-            }
-          }) || []
-      }
     })
 
     this.ticketLaboratoryGroupList.forEach((tlg) => {
@@ -290,6 +301,14 @@ export class Ticket {
     } else {
       this.ticketLaboratoryGroupList = this.ticketLaboratoryGroupList.filter((i) => !!i.id)
     }
+
+    // resultMap
+    this.ticketLaboratoryGroupList.forEach((tlg) => {
+      const tlrList = this.ticketLaboratoryResultList!.filter((tlr) => {
+        return tlr.ticketLaboratoryGroupId === tlg.id
+      })
+      tlg.ticketLaboratoryResultMap = ESArray.arrayToKeyValue(tlrList, 'laboratoryId')
+    })
   }
 
   refreshTicketProductHasTicketBatchList() {
@@ -303,19 +322,6 @@ export class Ticket {
       tp.ticketBatchList = this.ticketBatchList!.filter((tb) => {
         return tp.id === tb.ticketProductId
       })
-    })
-  }
-
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
-    ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.interactType]) {
-        this.ticketUserGroup[i.interactType] = {}
-      }
-      if (!this.ticketUserGroup[i.interactType][i.ticketItemId]) {
-        this.ticketUserGroup[i.interactType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.interactType][i.ticketItemId].push(i)
     })
   }
 
@@ -431,6 +437,7 @@ export class Ticket {
   static equal(a: Ticket, b: Ticket) {
     if (a.id != b.id) return false
     if (a.customerId != b.customerId) return false
+    if (a.roomId != b.roomId) return false
     if (a.customType != b.customType) return false
     if (a.customerSourceId != b.customerSourceId) return false
     if (a.ticketType != b.ticketType) return false

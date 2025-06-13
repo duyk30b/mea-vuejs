@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { DString, ESTimer, formatPhone } from '../../../utils'
+import { ESString, ESTimer, formatPhone } from '../../../utils'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 
 const props = withDefaults(defineProps<{ customer: Customer }>(), {
@@ -60,7 +60,7 @@ onMounted(async () => {
       <div class="my-2 flex gap-4">
         <div style="width: 100px; flex-shrink: 0">Địa chỉ</div>
         <div style="flex-shrink: 1; flex-grow: 1; flex-basis: 0">
-          {{ DString.formatAddress(customer) }}
+          {{ ESString.formatAddress(customer) }}
         </div>
       </div>
       <div class="my-2 flex gap-4">

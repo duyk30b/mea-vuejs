@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate } from '../_base/base-condition'
+import type { ConditionDate, ConditionString } from '../_base/base-condition'
 
 export class RoleGetQuery {
   page?: number
@@ -10,6 +10,7 @@ export class RoleGetQuery {
 
   filter?: {
     isActive?: 1 | 0
+    name?: ConditionString
     updatedAt?: ConditionDate
   }
 
@@ -29,6 +30,6 @@ export class RoleGetQuery {
   }
 }
 
-export class RolePaginationQuery extends RoleGetQuery {}
-export class RoleListQuery extends OmitClass(RoleGetQuery, ['page']) {}
-export class RoleDetailQuery extends PickClass(RoleGetQuery, ['relation']) {}
+export class RolePaginationQuery extends RoleGetQuery { }
+export class RoleListQuery extends OmitClass(RoleGetQuery, ['page']) { }
+export class RoleDetailQuery extends PickClass(RoleGetQuery, ['relation']) { }

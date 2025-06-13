@@ -8,13 +8,11 @@ import { IconEditSquare } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { BatchService } from '../../../modules/batch'
 import { Distributor, DistributorService } from '../../../modules/distributor'
-import {
-  PickupStrategy
-} from '../../../modules/enum'
+import { PickupStrategy } from '../../../modules/enum'
 import { FileProductApi } from '../../../modules/file-excel/file-product.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { ProductService, type Product } from '../../../modules/product'
@@ -29,23 +27,28 @@ import ModalDataProduct from './ModalDataProduct.vue'
 import ModalProductListSettingScreen from './ModalProductListSettingScreen.vue'
 import ModalProductMerge from './ModalProductMerge.vue'
 import ModalUploadProduct from './ModalUploadProduct.vue'
+import { VueTag } from '@/common'
+import ModalProductGroupManager from './ModalProductGroupManager.vue'
+import { CONFIG } from '@/config'
 
 const modalProductUpsert = ref<InstanceType<typeof ModalProductUpsert>>()
 const modalProductMerge = ref<InstanceType<typeof ModalProductMerge>>()
 const modalUploadProduct = ref<InstanceType<typeof ModalUploadProduct>>()
 const modalProductListSettingScreen = ref<InstanceType<typeof ModalProductListSettingScreen>>()
+const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
 const modalDataProduct = ref<InstanceType<typeof ModalDataProduct>>()
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const productList = ref<Product[]>([])
 
 const productGroupOptions = ref<{ text: string; value: number; data: ProductGroup }[]>([])
-const productGroupMap = ref<Record<string, ProductGroup>>({})
+
+const productGroupAll = ref<ProductGroup[]>([])
+const productGroupMap = computed(() => arrayToKeyValue(productGroupAll.value, 'id'))
 
 const warehouseOptions = ref<{ value: number; text: string; data: Warehouse }[]>([])
 const warehouseMap = ref<Record<string, Warehouse>>({})
@@ -64,17 +67,21 @@ const warehouseId = ref<number>(0)
 const distributorId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'expiryDate' | 'productCode' | 'brandName' | 'quantity' | ''>('')
+const sortColumn = ref<'id' | 'expiryDate' | 'productCode' | 'brandName' | 'quantity' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const startFetchData = async () => {
   const paginationResponse = await ProductService.pagination({
-    relation: { batchList: true },
+    relation: { batchList: true, discountList: true },
     page: page.value,
     limit: limit.value,
     filter: {
       $OR: searchText.value
-        ? [{ brandName: { LIKE: searchText.value } }, { substance: { LIKE: searchText.value } }]
+        ? [
+            { productCode: { LIKE: searchText.value } },
+            { brandName: { LIKE: searchText.value } },
+            { substance: { LIKE: searchText.value } },
+          ]
         : undefined,
       productGroupId: productGroupId.value ? productGroupId.value : undefined,
       warehouseIds: warehouseId.value
@@ -98,6 +105,7 @@ const startFetchData = async () => {
     },
     sort: sortValue.value
       ? {
+          id: sortColumn.value === 'id' ? sortValue.value : undefined,
           productCode: sortColumn.value === 'productCode' ? sortValue.value : undefined,
           brandName: sortColumn.value === 'brandName' ? sortValue.value : undefined,
           quantity: sortColumn.value === 'quantity' ? sortValue.value : undefined,
@@ -150,7 +158,7 @@ const startFetchData = async () => {
                 }
               : undefined,
         }
-      : undefined,
+      : { id: 'DESC' },
   })
   productList.value = paginationResponse.productList
   total.value = paginationResponse.total
@@ -158,11 +166,10 @@ const startFetchData = async () => {
 
 const startFetchDataGroup = async () => {
   try {
-    const productGroupAll = await ProductGroupService.list({})
-    productGroupMap.value = arrayToKeyValue(productGroupAll, 'id')
+    productGroupAll.value = await ProductGroupService.list({})
     productGroupOptions.value = [
       { value: 0, text: 'Tất cả', data: ProductGroup.blank() },
-      ...productGroupAll.map((i) => ({ value: i.id, text: i.name, data: i })),
+      ...productGroupAll.value.map((i) => ({ value: i.id, text: i.name, data: i })),
     ]
   } catch (error) {
     console.log('🚀 ~ file: ProductList.vue:107 ~ onBeforeMount ~ error:', error)
@@ -213,7 +220,9 @@ const startFilter = async () => {
   await startFetchData()
 }
 
-const changeSort = async (value: 'expiryDate' | 'productCode' | 'brandName' | 'quantity') => {
+const changeSort = async (
+  value: 'id' | 'expiryDate' | 'productCode' | 'brandName' | 'quantity',
+) => {
   page.value = 1
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
@@ -237,6 +246,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   await startFetchData()
 }
 
+const handleModalProductGroupManagerSuccess = async () => {
+  productGroupAll.value = await ProductGroupService.list({})
+}
+
 const handleModalProductUpsertSuccess = async (
   data: Product,
   type: 'CREATE' | 'UPDATE' | 'DESTROY',
@@ -249,7 +262,7 @@ const downloadExcelProductList = async () => {
     title: 'Xác nhận tải file báo cáo',
     content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
     onOk: async () => {
-      await FileProductApi.downloadExcelProductList()
+      await FileProductApi.downloadExcel()
     },
   })
 }
@@ -259,7 +272,7 @@ const closeExpiryDate = computed(() => {
 })
 
 const handleModalUploadProductSuccess = async () => {
-  await ProductService.refreshDB()
+  await Promise.all([ProductService.refreshDB(), BatchService.refreshDB()])
   await startFetchData()
 }
 </script>
@@ -268,12 +281,16 @@ const handleModalUploadProductSuccess = async () => {
   <ModalProductUpsert ref="modalProductUpsert" @success="handleModalProductUpsertSuccess" />
   <ModalUploadProduct ref="modalUploadProduct" @success="handleModalUploadProductSuccess" />
   <ModalProductListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalProductListSettingScreen"
+  />
+  <ModalProductGroupManager
+    ref="modalProductGroupManager"
+    @success="handleModalProductGroupManagerSuccess"
   />
   <ModalDataProduct ref="modalDataProduct" />
   <ModalProductMerge ref="modalProductMerge" />
-  <ModalProductDetail ref="modalProductDetail" />
+  <ModalProductDetail ref="modalProductDetail" @close="startFetchData" />
   <div class="mx-4 mt-4 gap-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
       <div class="hidden md:block">
@@ -281,34 +298,42 @@ const handleModalUploadProductSuccess = async () => {
       </div>
       <div class="">
         <VueButton
-          v-if="permissionIdMap[PermissionId.PRODUCT_CREATE]"
+          v-if="userPermission[PermissionId.PRODUCT_CREATE]"
           color="blue"
           icon="plus"
-          @click="modalProductUpsert?.openModal()"
+          @click="modalProductUpsert?.openModal(0, { hasInitQuantity: true })"
         >
           Thêm Sản Phẩm
         </VueButton>
       </div>
     </div>
     <div class="mr-2 flex items-center gap-4 flex-wrap">
-      <div>
+      <div v-if="!isMobile">
         <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_PRODUCT_UPLOAD_EXCEL]"
+          v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_PRODUCT]"
           :icon="IconUpload"
           @click="modalUploadProduct?.openModal()"
         >
           Upload
         </VueButton>
       </div>
-      <div>
+      <div v-if="!isMobile">
         <VueButton
-          v-if="permissionIdMap[PermissionId.FILE_PRODUCT_DOWNLOAD_EXCEL]"
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_PRODUCT]"
           :icon="IconDownload"
           @click="downloadExcelProductList"
         >
           Download
         </VueButton>
       </div>
+      <VueButton
+        v-if="userPermission[PermissionId.PRODUCT_GROUP_CRUD]"
+        icon="send"
+        color="green"
+        @click="modalProductGroupManager?.openModal()"
+      >
+        Nhóm sản phẩm
+      </VueButton>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -317,12 +342,14 @@ const handleModalUploadProductSuccess = async () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalProductListSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
           </a>
           <a @click="modalDataProduct?.openModal()">Cài đặt dữ liệu</a>
+          <a v-if="isMobile" @click="modalUploadProduct?.openModal()">Upload</a>
+          <a v-if="isMobile" @click="downloadExcelProductList">Download</a>
           <a @click="modalProductMerge?.openModal()">*** Gộp sản phẩm</a>
         </div>
       </VueDropdown>
@@ -336,7 +363,7 @@ const handleModalUploadProductSuccess = async () => {
         <div>
           <InputText
             v-model:value="searchText"
-            placeholder="Tìm kiếm bằng tên hoặc hoạt chất"
+            placeholder="Tìm kiếm bằng mã sản phẩm, tên hoặc hoạt chất"
             @update:value="startFetchData"
           />
         </div>
@@ -450,8 +477,7 @@ const handleModalUploadProductSuccess = async () => {
             opacity: product.isActive ? '' : '0.4',
           }"
           @dblclick="
-            permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
-            modalProductUpsert?.openModal(product.id)
+            userPermission[PermissionId.PRODUCT_UPDATE] && modalProductUpsert?.openModal(product.id)
           "
         >
           <div class="flex items-center">
@@ -478,7 +504,7 @@ const handleModalUploadProductSuccess = async () => {
                     <tr>
                       <td
                         v-if="
-                          permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                          userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
                           settingStore.SCREEN_PRODUCT_LIST.costPrice
                         "
                       >
@@ -508,7 +534,7 @@ const handleModalUploadProductSuccess = async () => {
                       </td>
                       <td
                         v-if="
-                          permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                          userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
                           settingStore.SCREEN_PRODUCT_LIST.costPrice
                         "
                       >
@@ -547,6 +573,16 @@ const handleModalUploadProductSuccess = async () => {
       <table>
         <thead>
           <tr>
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
+              <div class="flex items-center justify-center gap-1">
+                <span>ID</span>
+                <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
+              </div>
+            </th>
             <th style="width: 100px" class="cursor-pointer" @click="changeSort('productCode')">
               <div class="flex items-center justify-center">
                 Mã SP &nbsp;
@@ -581,7 +617,7 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th
               v-if="
-                permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
                 settingStore.SCREEN_PRODUCT_LIST.costPrice
               "
             >
@@ -589,9 +625,10 @@ const handleModalUploadProductSuccess = async () => {
             </th>
             <th v-if="settingStore.SYSTEM_SETTING.wholesalePrice">G.Sỉ</th>
             <th>G.Lẻ</th>
+            <th>Khuyến mại</th>
             <th
               v-if="
-                permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                userPermission[PermissionId.PRODUCT_UPDATE] &&
                 settingStore.SCREEN_PRODUCT_LIST.action
               "
             >
@@ -620,6 +657,9 @@ const handleModalUploadProductSuccess = async () => {
           <template v-for="(product, productIndex) in productList" :key="productIndex">
             <template v-if="!product.batchList || product.batchList.length === 0">
               <tr :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'">
+                <td v-if="CONFIG.MODE === 'development'" class="text-center">
+                  {{ product.id }}
+                </td>
                 <td class="text-center">{{ product.productCode }}</td>
                 <td>
                   <div>
@@ -654,15 +694,11 @@ const handleModalUploadProductSuccess = async () => {
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.distributor"></td>
                 <td v-if="settingStore.SCREEN_PRODUCT_LIST.expiryDate"></td>
                 <td class="text-center" :class="(product.quantity || 0) <= 0 ? 'text-red-500' : ''">
-                  {{
-                    product.pickupStrategyFix !== PickupStrategy.NoImpact
-                      ? product.unitQuantity || 0
-                      : ''
-                  }}
+                  {{ product.warehouseIds !== '[]' ? product.unitQuantity || 0 : '' }}
                 </td>
                 <td
                   v-if="
-                    permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                    userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
                     settingStore.SCREEN_PRODUCT_LIST.costPrice
                   "
                   class="text-right"
@@ -675,9 +711,14 @@ const handleModalUploadProductSuccess = async () => {
                 <td class="text-right">
                   {{ formatMoney(product.unitRetailPrice) }}
                 </td>
+                <td class="text-center">
+                  <VueTag v-if="product.discountApply" color="blue">
+                    {{ product.discountApply?.valueText }}
+                  </VueTag>
+                </td>
                 <td
                   v-if="
-                    permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                    userPermission[PermissionId.PRODUCT_UPDATE] &&
                     settingStore.SCREEN_PRODUCT_LIST.action
                   "
                   class="text-center"
@@ -698,6 +739,13 @@ const handleModalUploadProductSuccess = async () => {
                 :key="batchIndex"
                 :style="product.isActive ? '' : 'background-color: #eeeeee; opacity: 0.4'"
               >
+                <td
+                  v-if="CONFIG.MODE === 'development' && batchIndex === 0"
+                  class="text-center"
+                  :rowspan="product.batchList.length"
+                >
+                  {{ product.id }}
+                </td>
                 <td v-if="batchIndex === 0" class="text-center" :rowspan="product.batchList.length">
                   {{ product.productCode }}
                 </td>
@@ -755,7 +803,7 @@ const handleModalUploadProductSuccess = async () => {
                 </td>
                 <td
                   v-if="
-                    permissionIdMap[PermissionId.READ_COST_PRICE] &&
+                    userPermission[PermissionId.PRODUCT_READ_COST_PRICE] &&
                     settingStore.SCREEN_PRODUCT_LIST.costPrice
                   "
                   class="text-right"
@@ -765,9 +813,14 @@ const handleModalUploadProductSuccess = async () => {
                 <td v-if="batchIndex == 0" :rowspan="product.batchList.length" class="text-right">
                   {{ formatMoney(product.unitRetailPrice) }}
                 </td>
+                <td v-if="batchIndex == 0" :rowspan="product.batchList.length" class="text-center">
+                  <VueTag v-if="product.discountApply" color="blue">
+                    {{ product.discountApply?.valueText }}
+                  </VueTag>
+                </td>
                 <td
                   v-if="
-                    permissionIdMap[PermissionId.PRODUCT_UPDATE] &&
+                    userPermission[PermissionId.PRODUCT_UPDATE] &&
                     settingStore.SCREEN_PRODUCT_LIST.action &&
                     batchIndex == 0
                   "

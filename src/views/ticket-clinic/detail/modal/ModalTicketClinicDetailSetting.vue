@@ -1,20 +1,20 @@
 <script setup lang="ts">
+import { MeService } from '@/modules/_me/me.service'
+import { PickupStrategy } from '@/modules/enum'
 import { ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, VueSelect } from '../../../../common/vue-form'
+import { InputCheckbox, InputSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { useMeStore } from '../../../../modules/_me/me.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { SettingKey } from '../../../../modules/_me/store.variable'
 import { OrganizationService } from '../../../../modules/organization'
-import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
-import { TicketType } from '../../../../modules/ticket'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
+  DIAGNOSIS: 'DIAGNOSIS',
   CONSUMABLE: 'CONSUMABLE',
   PRESCRIPTION: 'PRESCRIPTION',
 }
@@ -22,34 +22,21 @@ const TABS_KEY = {
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
 
 const settingDisplay = ref<typeof settingStore.TICKET_CLINIC_DETAIL>(
   JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL)),
 )
 
 const warehouseOptions = ref<{ value: number; label: string }[]>([])
-const printHtmlOptions = ref<{ value: number; text: string; data: PrintHtml }[]>([])
 
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref(TABS_KEY.PRESCRIPTION)
+const activeTab = ref(TABS_KEY.DIAGNOSIS)
 
 const openModal = async () => {
   showModal.value = true
   settingDisplay.value = JSON.parse(JSON.stringify(settingStore.TICKET_CLINIC_DETAIL))
-
-  PrintHtmlService.list({})
-    .then((result) => {
-      printHtmlOptions.value = [
-        { value: 0, text: 'Mặc định', data: PrintHtml.blank() },
-        ...result.map((i) => ({ value: i.id, text: i.name, data: i })),
-      ]
-    })
-    .catch((e) => {
-      console.log('🚀: ModalTicketClinicDetailSetting.vue:64 ~ PrintHtmlService.list ~ e:', e)
-    })
 
   WarehouseService.list({})
     .then((result) => {
@@ -62,6 +49,32 @@ const openModal = async () => {
       console.log('🚀: ModalTicketClinicDetailSetting.vue:78 ~ WarehouseService.list ~ e:', e)
     })
 }
+
+const pickupStrategyConsumableOptions = [
+  { value: PickupStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+]
+pickupStrategyConsumableOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy) {
+    i.label = '(Hệ thống) - ' + i.label
+  }
+})
+
+const pickupStrategyPrescriptionOptions = [
+  { value: PickupStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
+  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
+  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
+  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
+  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
+]
+pickupStrategyPrescriptionOptions.forEach((i) => {
+  if (i.value === MeService.settingMapRoot.value.TICKET_CLINIC_DETAIL.consumable.pickupStrategy) {
+    i.label = '(Hệ thống) - ' + i.label
+  }
+})
 
 const closeModal = () => {
   showModal.value = false
@@ -115,10 +128,33 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.DIAGNOSIS">Khám & Chẩn đoán</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.CONSUMABLE">Vật tư</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRESCRIPTION">Đơn thuốc</VueTabMenu>
           </template>
           <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS">
+              <div class="mt-4 pb-20 table-wrapper">
+                <table class="">
+                  <thead>
+                    <tr>
+                      <th colspan="2">Cài đặt thông tin khám & chẩn đoán</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.diagnosis.icd10"
+                          type-parser="number"
+                          label="Hiển thị điền gợi ý chẩn đoán theo ICD10"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.CONSUMABLE">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">
@@ -149,6 +185,17 @@ defineExpose({ openModal })
                           type-parser="number"
                           label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0"
                         />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width: 200px">Chiến lược lấy hàng</td>
+                      <td>
+                        <div>
+                          <InputSelect
+                            v-model:value="settingDisplay.consumable.pickupStrategy"
+                            :options="pickupStrategyConsumableOptions"
+                          />
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -185,6 +232,17 @@ defineExpose({ openModal })
                           type-parser="number"
                           label="Khi tìm kiếm: hiển thị cả những sản phẩm có số lượng = 0"
                         />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width: 200px">Chiến lược lấy hàng</td>
+                      <td>
+                        <div>
+                          <InputSelect
+                            v-model:value="settingDisplay.prescriptions.pickupStrategy"
+                            :options="pickupStrategyPrescriptionOptions"
+                          />
+                        </div>
                       </td>
                     </tr>
                   </tbody>

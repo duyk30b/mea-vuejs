@@ -17,6 +17,7 @@ export class CustomerGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    customerCode?: 'ASC' | 'DESC'
     debt?: 'ASC' | 'DESC'
     fullName?: 'ASC' | 'DESC'
   }

@@ -1,6 +1,6 @@
 import { Batch } from '../batch'
 import { Product } from '../product'
-import { Receipt } from '../receipt/receipt.model'
+import { Receipt } from '@/modules/receipt'
 
 export class ReceiptItem {
   id: number
@@ -10,12 +10,13 @@ export class ReceiptItem {
   productId: number
   batchId: number
 
-  batchCode: string // Lô sản phẩm
+  lotNumber: string // Lô sản phẩm
   expiryDate?: number
-  
-  costPrice: number
+
   quantity: number = 0
   unitRate: number
+  costPrice: number
+  listPrice: number // Giá niêm yết
 
   receipt?: Receipt
   batch?: Batch
@@ -33,6 +34,10 @@ export class ReceiptItem {
     return this.costPrice * this.unitRate
   }
 
+  get unitListPrice() {
+    return this.listPrice * this.unitRate
+  }
+
   set unitQuantity(data: number) {
     this.quantity = data * this.unitRate
   }
@@ -45,6 +50,10 @@ export class ReceiptItem {
     this.costPrice = data / this.unitRate
   }
 
+  set unitListPrice(data: number) {
+    this.listPrice = data / this.unitRate
+  }
+
   static init() {
     const ins = new ReceiptItem()
     ins.id = 0
@@ -55,6 +64,7 @@ export class ReceiptItem {
 
     ins.quantity = 0
     ins.costPrice = 0
+    ins.listPrice = 0
     ins.unitRate = 1
     return ins
   }

@@ -4,6 +4,7 @@ import VueHeader from './VueHeader.vue'
 import VueSider from './VueSider.vue'
 import { CONFIG } from '../../config'
 import { ESTimer } from '../../utils'
+import { VueSwitch } from '@/common/vue-form'
 
 const openSideDrawer = ref<boolean>(false)
 
@@ -11,6 +12,15 @@ const firstCollapsed = localStorage.getItem('SIDE_COLLAPSED') === 'true' || wind
 
 const defaultCollapsed = ref<boolean>(firstCollapsed)
 const collapsed = ref<boolean>(firstCollapsed)
+
+const modeDevelopment = ref(CONFIG.MODE === 'development')
+const handleChangeMode = (value: number | boolean) => {
+  if (value) {
+    CONFIG.MODE = 'development'
+  } else {
+    CONFIG.MODE = 'production'
+  }
+}
 
 const setSideCollapsed = (value: boolean) => {
   localStorage.setItem('SIDE_COLLAPSED', String(value))
@@ -58,14 +68,23 @@ const setSideCollapsed = (value: boolean) => {
           <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <span style="color: #333">
-            <strong>MEA-v8.0</strong>
-            <span>©{{ ESTimer.timeToText(CONFIG.BUILD_TIME, 'YY.MM.DD.hh.mm.ss', 7) }}</span>
-            <span>
-              - Hotline:
-              <b>0376.899.866</b>
+          <div></div>
+          <div class="flex items-center gap-2">
+            <span style="color: #333">
+              <strong>MEA-v8.0</strong>
+              <span>©{{ ESTimer.timeToText(CONFIG.BUILD_TIME, 'DD/MM/YY-hh:mm:ss', 7) }}</span>
+              <span>
+                - Hotline:
+                <b>0376.899.866</b>
+              </span>
             </span>
-          </span>
+            <VueSwitch
+              checkedColor="violet"
+              :size="'14px'"
+              v-model:modelValue="modeDevelopment"
+              @change="handleChangeMode"
+            />
+          </div>
         </a-layout-footer>
       </a-layout>
     </a-layout>
@@ -91,7 +110,8 @@ const setSideCollapsed = (value: boolean) => {
     margin-top: 12px;
     padding: 12px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     background-color: white;
   }
 

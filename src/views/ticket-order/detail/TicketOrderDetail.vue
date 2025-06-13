@@ -18,6 +18,7 @@ import { IconDelete } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -28,7 +29,6 @@ import { Breadcrumb } from '../../component'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalTicketReturnProduct from '../../ticket-base/ModalTicketReturnProduct.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
-import { useMeStore } from '.././../../modules/_me/me.store'
 import { ETicketOrderUpsertMode } from '../upsert/ticket-order-upsert.ref'
 import ModalTicketOrderDetailSetting from './ModalTicketOrderDetailSetting.vue'
 import ModalTicketOrderPayment from './ModalTicketOrderPayment.vue'
@@ -47,8 +47,7 @@ const route = useRoute()
 const router = useRouter()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 const { formatMoney, isMobile } = settingStore
 
 const loadingProcess = ref(false)
@@ -126,6 +125,7 @@ const sendProduct = async () => {
     loadingProcess.value = true
     const response = await TicketOrderApi.sendProduct({
       ticketId: ticketOrderDetailRef.value.id!,
+      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
@@ -285,7 +285,7 @@ const openModalTicketOrderPreview = () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalTicketOrderDetailSetting?.openModal()"
           >
             Cài đặt hiển thị
@@ -358,7 +358,7 @@ const openModalTicketOrderPreview = () => {
         <VueButton icon="print" @click="startPrint">In</VueButton>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
+            userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
             [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
               ticketOrderDetailRef.status,
             )
@@ -396,7 +396,7 @@ const openModalTicketOrderPreview = () => {
           <div class="vue-menu">
             <a
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_RETURN_PRODUCT] &&
+                userPermission[PermissionId.TICKET_ORDER_RETURN_PRODUCT] &&
                 [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
                   ticketOrderDetailRef.status,
                 )
@@ -410,7 +410,7 @@ const openModalTicketOrderPreview = () => {
             </a>
             <a
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_TERMINATE] &&
+                userPermission[PermissionId.TICKET_ORDER_TERMINATE] &&
                 [
                   TicketStatus.Deposited,
                   TicketStatus.Executing,
@@ -427,7 +427,7 @@ const openModalTicketOrderPreview = () => {
             </a>
             <a
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD] &&
+                userPermission[PermissionId.TICKET_ORDER_DRAFT_CRUD] &&
                 ticketOrderDetailRef.status === TicketStatus.Draft
               "
               @click="clickDestroy()"
@@ -439,7 +439,7 @@ const openModalTicketOrderPreview = () => {
             </a>
             <a
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_DEPOSITED_DESTROY] &&
+                userPermission[PermissionId.TICKET_ORDER_DEPOSITED_DESTROY] &&
                 ticketOrderDetailRef.status === TicketStatus.Deposited &&
                 ticketOrderDetailRef.paid === 0
               "
@@ -452,7 +452,7 @@ const openModalTicketOrderPreview = () => {
             </a>
             <a
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_CANCELLED_DESTROY] &&
+                userPermission[PermissionId.TICKET_ORDER_CANCELLED_DESTROY] &&
                 ticketOrderDetailRef.status === TicketStatus.Cancelled
               "
               @click="clickDestroy()"
@@ -477,9 +477,9 @@ const openModalTicketOrderPreview = () => {
       <template v-if="ticketOrderDetailRef.status === TicketStatus.Draft">
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
-            permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-            permissionIdMap[PermissionId.TICKET_ORDER_CLOSE]
+            userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
+            userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
+            userPermission[PermissionId.TICKET_ORDER_CLOSE]
           "
           color="blue"
           icon="send"
@@ -497,7 +497,7 @@ const openModalTicketOrderPreview = () => {
         <VueButton
           v-if="
             ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
-            permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT]
+            userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"
@@ -510,7 +510,7 @@ const openModalTicketOrderPreview = () => {
         <VueButton
           v-if="
             ticketOrderDetailRef.paid > ticketOrderDetailRef.totalMoney &&
-            permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID]
+            userPermission[PermissionId.TICKET_ORDER_REFUND_OVERPAID]
           "
           color="green"
           icon="dollar"
@@ -521,7 +521,7 @@ const openModalTicketOrderPreview = () => {
 
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.TICKET_ORDER_CLOSE] &&
+            userPermission[PermissionId.TICKET_ORDER_CLOSE] &&
             ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Delivered &&
             ticketOrderDetailRef.paid <= ticketOrderDetailRef.totalMoney
           "
@@ -537,7 +537,7 @@ const openModalTicketOrderPreview = () => {
 
       <template v-if="ticketOrderDetailRef.status === TicketStatus.Debt">
         <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_PAYMENT]"
+          v-if="userPermission[PermissionId.RECEIPT_PAYMENT]"
           color="blue"
           :loading="loadingProcess"
           @click="modalTicketOrderPayment?.openModal(PaymentViewType.PayDebt)"

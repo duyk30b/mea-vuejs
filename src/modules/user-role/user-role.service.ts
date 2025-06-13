@@ -4,22 +4,32 @@ import { UserRole } from './user-role.model'
 
 export class UserRoleService {
   static loadedAll: boolean = false
-  static userRoleAll: UserRole[] = []
 
+  static userRoleAll: UserRole[] = []
   static userRoleMapList = ref<Record<string, UserRole[]>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   static fetchAll = (() => {
     const start = async () => {
       try {
-        UserRoleService.userRoleAll = await UserRoleApi.list()
+        const userRoleAll = await UserRoleApi.list()
+
+        const userRoleMapList: Record<string, UserRole[]> = {}
+        UserRoleService.userRoleAll.forEach((i) => {
+          const key = i.roleId
+          if (!userRoleMapList[key]) userRoleMapList[key] = []
+          userRoleMapList[key].push(i)
+        })
+
+        UserRoleService.userRoleAll = userRoleAll
+        UserRoleService.userRoleMapList.value = userRoleMapList
       } catch (error: any) {
-        console.log('🚀 ~ file: user-role.service.ts:16 ~ UserRoleService ~ start ~ error:', error)
+        console.log('🚀 ~ user-role.service.ts:27 ~ UserRoleService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !UserRoleService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !UserRoleService.loadedAll || options.refetch) {
         fetching = start()
         UserRoleService.loadedAll = true
       }
@@ -27,20 +37,18 @@ export class UserRoleService {
     }
   })()
 
-  static async reloadMap() {
-    await UserRoleService.fetchAll()
-    let result: Record<string, UserRole[]> = {}
-    UserRoleService.userRoleAll.forEach((i) => {
-      const key = i.roleId
-      if (!result[key]) result[key] = []
-      result[key].push(i)
-    })
-
-    UserRoleService.userRoleMapList.value = result
+  static async getMapList(options?: { refetch: boolean }) {
+    await UserRoleService.fetchAll({ refetch: !!options?.refetch })
+    return UserRoleService.userRoleMapList.value
   }
 
-  static async list() {
-    await UserRoleService.fetchAll()
+  static async list(options?: { refetch: boolean }) {
+    await UserRoleService.fetchAll({ refetch: !!options?.refetch })
     return UserRole.fromList(UserRoleService.userRoleAll)
+  }
+
+  static async getAll(options?: { refetch: boolean }) {
+    await UserRoleService.fetchAll({ refetch: !!options?.refetch })
+    return UserRoleService.userRoleAll
   }
 }

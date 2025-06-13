@@ -9,6 +9,8 @@ import {
   type RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
+import type { Discount } from '../discount'
+import type { Position } from '../position'
 
 export class RadiologyApi {
   static async pagination(options: RadiologyPaginationQuery) {
@@ -47,22 +49,29 @@ export class RadiologyApi {
     return Radiology.from(data.radiology)
   }
 
-  static async createOne(radiology: Radiology) {
-    const response = await AxiosInstance.post('/radiology/create', {
-      name: radiology.name,
-      radiologyGroupId: radiology.radiologyGroupId,
-      printHtmlId: radiology.printHtmlId,
-      priority: radiology.priority,
-      costPrice: radiology.costPrice,
-      price: radiology.price,
-      requestNoteDefault: radiology.requestNoteDefault,
-      descriptionDefault: radiology.descriptionDefault,
-      resultDefault: radiology.resultDefault,
-      customVariables: radiology.customVariables,
-      customStyles: radiology.customStyles,
+  static async createOne(body: {
+    radiology: Radiology
+    positionList?: Position[]
+    discountList?: Discount[]
+  }) {
+    const { radiology, discountList, positionList } = body
 
-      commissionList: (radiology.commissionList || [])
-        .filter((i) => !!i.roleId)
+    const response = await AxiosInstance.post('/radiology/create', {
+      radiology: {
+        radiologyCode: radiology.radiologyCode,
+        name: radiology.name,
+        radiologyGroupId: radiology.radiologyGroupId,
+        printHtmlId: radiology.printHtmlId,
+        costPrice: radiology.costPrice,
+        price: radiology.price,
+        requestNoteDefault: radiology.requestNoteDefault,
+        descriptionDefault: radiology.descriptionDefault,
+        resultDefault: radiology.resultDefault,
+        customVariables: radiology.customVariables,
+        customStyles: radiology.customStyles,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -70,27 +79,50 @@ export class RadiologyApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)
   }
 
-  static async updateOne(id: number, radiology: Radiology) {
+  static async updateOne(
+    id: number,
+    body: {
+      radiology: Radiology
+      positionList?: Position[]
+      discountList?: Discount[]
+    },
+  ) {
+    const { radiology, discountList, positionList } = body
     const response = await AxiosInstance.patch(`/radiology/update/${id}`, {
-      name: radiology.name,
-      radiologyGroupId: radiology.radiologyGroupId,
-      printHtmlId: radiology.printHtmlId,
-      priority: radiology.priority,
-      costPrice: radiology.costPrice,
-      price: radiology.price,
-      requestNoteDefault: radiology.requestNoteDefault,
-      descriptionDefault: radiology.descriptionDefault,
-      resultDefault: radiology.resultDefault,
-      customVariables: radiology.customVariables,
-      customStyles: radiology.customStyles,
-
-      commissionList: (radiology.commissionList || [])
-        .filter((i) => !!i.roleId)
+      radiology: {
+        radiologyCode: radiology.radiologyCode,
+        name: radiology.name,
+        radiologyGroupId: radiology.radiologyGroupId,
+        printHtmlId: radiology.printHtmlId,
+        costPrice: radiology.costPrice,
+        price: radiology.price,
+        requestNoteDefault: radiology.requestNoteDefault,
+        descriptionDefault: radiology.descriptionDefault,
+        resultDefault: radiology.resultDefault,
+        customVariables: radiology.customVariables,
+        customStyles: radiology.customStyles,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -98,6 +130,20 @@ export class RadiologyApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ radiology: any }>
     return Radiology.from(data.radiology)

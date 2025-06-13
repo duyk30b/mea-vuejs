@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded } from 'vue-router'
-import { useMeStore } from '../modules/_me/me.store'
+import { MeService } from '../modules/_me/me.service'
 import { AuthService } from '../modules/auth/auth.service'
 import { inventoryRouter } from './inventory.router'
 import { masterDataRouter } from './master-data.router'
+import { receptionRouter } from './reception.router'
 import { statisticRouter } from './statistic.router'
 import { ticketRouter } from './ticket.router'
+import { roomRouter } from './room.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -27,6 +29,8 @@ const Router = createRouter({
           component: () => import('../views/AppHome.vue'),
           meta: { title: 'Trang chủ' },
         },
+        receptionRouter,
+        roomRouter,
         ...ticketRouter,
         inventoryRouter,
         masterDataRouter,
@@ -68,10 +72,10 @@ const Router = createRouter({
                 {
                   path: 'upsert/:id?',
                   name: 'RoleUpsert',
-                  component: () => import('../views/user/role/RoleUpsert.vue'),
+                  component: () => import('../views/user/role/upsert/RoleUpsertContainer.vue'),
                   meta: {
                     title: (route: RouteLocationNormalizedLoaded) => {
-                      if (route.query?.mode === 'UPDATE') return 'Cập nhật vai trò'
+                      if (route.params.id) return 'Cập nhật vai trò'
                       return 'Tạo mới vai trò'
                     },
                   },
@@ -79,10 +83,10 @@ const Router = createRouter({
               ],
             },
             {
-              path: 'commission',
+              path: 'position',
               meta: { title: 'Vị trí' },
-              name: 'Commission',
-              component: () => import('../views/user/commission/list/CommissionList.vue'),
+              name: 'Position',
+              component: () => import('../views/user/position/list/PositionList.vue'),
             },
           ],
         },
@@ -197,19 +201,19 @@ const Router = createRouter({
 })
 
 Router.beforeEach((to, from, next) => {
-  const meStore = useMeStore()
+  const { user } = MeService
 
   // if (to.meta.auth === AuthLevel.ROOT && meStore.user?.oid !== 0) {
   //   AuthService.logout()
   //   return next({ name: 'Login' })
   // }
 
-  if (to.meta.auth === AuthLevel.USER && !meStore.user) {
+  if (to.meta.auth === AuthLevel.USER && !user.value) {
     AuthService.logout()
     return next({ name: 'Login' })
   }
 
-  if (to.meta.auth === AuthLevel.GUEST && meStore.user) {
+  if (to.meta.auth === AuthLevel.GUEST && user.value) {
     return next({ name: 'AppHome' })
   }
 

@@ -28,19 +28,6 @@ const unsubscribe = settingStore.$subscribe((mutation, state) => {
 
 onUnmounted(() => unsubscribe())
 
-const pickupStrategyOptions = [
-  { value: PickupStrategy.Inherit, label: '--- Mặc định theo hệ thống ---' },
-  { value: PickupStrategy.NoImpact, label: 'Không trừ kho (không quản lý số lượng trong kho)' },
-  { value: PickupStrategy.RequireBatchSelection, label: 'Bắt buộc chọn lô hàng' },
-  { value: PickupStrategy.AutoWithFIFO, label: 'Tự động chọn lô theo FIFO' },
-  { value: PickupStrategy.AutoWithExpiryDate, label: 'Tự động chọn lô theo HSD gần nhất' },
-]
-pickupStrategyOptions.forEach((i) => {
-  if (i.value === MeService.settingMapRoot.value.PRODUCT_SETTING.pickupStrategy) {
-    i.label = '(Hệ thống) - ' + i.label
-  }
-})
-
 const splitBatchByWarehouseOptions = [
   { value: SplitBatchByWarehouse.Inherit, label: '--- Mặc định theo hệ thống ---' },
   { value: SplitBatchByWarehouse.Override, label: 'Không phân biệt giữa các lô' },
@@ -131,19 +118,10 @@ const saveBatchSetting = async () => {
                 </td>
               </tr>
               <tr>
-                <td style="width: 200px">Chiến lược lấy hàng</td>
-                <td>
-                  <div>
-                    <InputSelect
-                      v-model:value="productSetting.pickupStrategy"
-                      :options="pickupStrategyOptions"
-                    />
-                  </div>
-                </td>
-              </tr>
-              <tr>
                 <td colspan="2">
-                  <div class="mt-1 font-medium">2. Quản lý logic tách lô hàng</div>
+                  <div class="mt-1 font-medium">
+                    2. Cài đặt đối với sản phẩm chia nhiều lô hàng, HSD
+                  </div>
                 </td>
               </tr>
               <tr>

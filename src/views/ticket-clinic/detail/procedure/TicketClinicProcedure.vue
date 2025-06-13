@@ -1,15 +1,17 @@
 <script lang="ts" setup>
+import { PrintHtmlAction } from '@/modules/print-html'
+import { ticketRoomRef } from '@/modules/room'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicProcedureApi } from '../../../../modules/ticket-clinic'
 import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import type { TicketUser } from '../../../../modules/ticket-user'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
@@ -17,8 +19,7 @@ import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.v
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission, organization } = MeService
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -26,7 +27,7 @@ const { formatMoney, isMobile } = settingStore
 const ticketProcedureList = ref<TicketProcedure[]>([])
 
 watch(
-  () => ticketClinicRef.value.ticketProcedureList!,
+  () => ticketRoomRef.value.ticketProcedureList!,
   (newValue: TicketProcedure[]) => {
     ticketProcedureList.value = TicketProcedure.fromList(newValue || [])
   },
@@ -34,8 +35,8 @@ watch(
 )
 
 const hasChangePriority = computed(() => {
-  for (let index = 0; index < (ticketClinicRef.value.ticketProcedureList || []).length; index++) {
-    const tpRoot = ticketClinicRef.value.ticketProcedureList![index]
+  for (let index = 0; index < (ticketRoomRef.value.ticketProcedureList || []).length; index++) {
+    const tpRoot = ticketRoomRef.value.ticketProcedureList![index]
     if (tpRoot.priority !== ticketProcedureList.value[index].priority) {
       return true
     }
@@ -45,7 +46,7 @@ const hasChangePriority = computed(() => {
 
 onMounted(async () => {
   try {
-    await ticketClinicRef.value.refreshProcedure()
+    await ticketRoomRef.value.refreshProcedure()
   } catch (error: any) {
     console.log('🚀 ~ file: TicketClinicProcedure.vue:52 ~ ProcedureService.list ~ error:', error)
     AlertStore.add({ type: 'error', message: error.message })
@@ -65,7 +66,7 @@ const handleAddTicketProcedure = async (data: {
   try {
     ticketProcedureList.value = [...ticketProcedureList.value, data.ticketProcedure]
     await TicketClinicProcedureApi.addTicketProcedure({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketProcedure: data.ticketProcedure,
       ticketUserList: data.ticketUserList,
     })
@@ -77,20 +78,35 @@ const handleAddTicketProcedure = async (data: {
 const savePriorityTicketProcedure = async () => {
   try {
     await TicketClinicProcedureApi.updatePriorityTicketProcedure({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketProcedureList: ticketProcedureList.value,
     })
   } catch (error) {
     console.log('🚀  TicketClinicProcedure.vue:71 ~ savePriorityTicketProcedure ~ error:', error)
   }
 }
+
+const startPrintRequest = async () => {
+  await PrintHtmlAction.startPrintRequestProcedure({
+    organization: organization.value,
+    ticket: ticketRoomRef.value,
+    customer: ticketRoomRef.value.customer!,
+  })
+}
 </script>
 <template>
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <TicketClinicProcedureSelectItem @success="handleAddTicketProcedure" />
   <div class="mt-4">
-    <div>Danh sách các dịch vụ, thủ thuật</div>
-    <div class="table-wrapper">
+    <div class="flex flex-wrap items-baseline justify-between">
+      <div class="italic">Danh sách các dịch vụ, thủ thuật</div>
+      <div>
+        <VueButton icon="print" size="small" @click="startPrintRequest">
+          In chỉ định dịch vụ
+        </VueButton>
+      </div>
+    </div>
+    <div class="table-wrapper mt-2">
       <table>
         <thead>
           <tr>
@@ -159,9 +175,8 @@ const savePriorityTicketProcedure = async () => {
               </a>
               <a
                 v-else-if="
-                  ![TicketStatus.Debt, TicketStatus.Completed].includes(
-                    ticketClinicRef.status,
-                  ) && permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
+                  ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                  userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST]
                 "
                 class="text-orange-500"
                 @click="modalTicketProcedureUpdate?.openModal(tpItem)"
@@ -195,8 +210,7 @@ const savePriorityTicketProcedure = async () => {
     <div></div>
     <VueButton
       v-if="
-        permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] &&
-        hasChangePriority
+        userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PROCEDURE_LIST] && hasChangePriority
       "
       color="blue"
       icon="save"

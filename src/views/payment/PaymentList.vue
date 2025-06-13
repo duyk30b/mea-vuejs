@@ -6,17 +6,17 @@ import { IconFileSearch } from '../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../common/icon-font-awesome'
 import { IconVisibility } from '../../common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '../../common/vue-form'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PaymentMethodService } from '../../modules/payment-method'
 import { PaymentApi } from '../../modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '../../modules/payment/payment.dto'
 import {
-  MoneyDirection,
-  Payment,
-  PaymentTiming,
-  PersonType,
-  VoucherType,
+MoneyDirection,
+Payment,
+PaymentTiming,
+PersonType,
+VoucherType,
 } from '../../modules/payment/payment.model'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { ESTimer } from '../../utils'
@@ -38,8 +38,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const paymentList = ref<Payment[]>([])
 
@@ -187,7 +186,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <div class="flex gap-2">
           <div style="width: 220px">
             <VueButton
-              v-if="permissionIdMap[PermissionId.PAYMENT_CUSTOMER_MONEY_IN]"
+              v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN]"
               color="green"
               icon="plus"
               @click="modalCustomerPaymentMoneyIn?.openModal()"
@@ -197,7 +196,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </div>
           <div>
             <VueButton
-              v-if="permissionIdMap[PermissionId.PAYMENT_OTHER_MONEY_IN]"
+              v-if="userPermission[PermissionId.PAYMENT_OTHER_MONEY_IN]"
               color="green"
               icon="plus"
               @click="modalOtherPaymentMoney?.openModal(MoneyDirection.In)"
@@ -209,7 +208,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
         <div class="mt-2 flex gap-2">
           <div style="width: 220px">
             <VueButton
-              v-if="permissionIdMap[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT]"
+              v-if="userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT]"
               color="blue"
               icon="plus"
               @click="modalDistributorPaymentMoneyOut?.openModal()"
@@ -219,7 +218,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           </div>
           <div>
             <VueButton
-              v-if="permissionIdMap[PermissionId.PAYMENT_OTHER_MONEY_OUT]"
+              v-if="userPermission[PermissionId.PAYMENT_OTHER_MONEY_OUT]"
               color="blue"
               icon="plus"
               @click="modalOtherPaymentMoney?.openModal(MoneyDirection.Out)"

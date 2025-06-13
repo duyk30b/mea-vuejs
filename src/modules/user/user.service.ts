@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { arrayToKeyValue } from '../../utils'
+import { ESArray } from '../../utils'
 import { UserRoleService } from '../user-role'
 import { UserApi } from './user.api'
 import type { UserDetailQuery, UserGetQuery, UserListQuery, UserPaginationQuery } from './user.dto'
@@ -11,12 +11,14 @@ export class UserService {
   static userMap = ref<Record<string, User>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
-  static getAll = (() => {
+  static fetchAll = (() => {
     const start = async () => {
       try {
-        UserService.userAll = await UserApi.list({})
+        const userAll = await UserApi.list({})
+        UserService.userAll = userAll
+        UserService.userMap.value = ESArray.arrayToKeyValue(UserService.userAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: user.service.ts:20 ~ getAll ~ error:', error)
+        console.log('🚀 ~ file: user.service.ts:20 ~ fetchAll ~ error:', error)
       }
     }
     let fetching: any = null
@@ -49,31 +51,30 @@ export class UserService {
     return data
   }
 
-  static async reloadMap() {
-    await UserService.getAll()
-    UserService.userMap.value = arrayToKeyValue(UserService.userAll, 'id')
+  static async getAll(options?: { refetch: boolean }) {
+    await UserService.fetchAll({ refetch: !!options?.refetch })
+    return UserService.userAll
   }
 
-  static async getMap() {
-    await UserService.getAll()
-    const userMap = arrayToKeyValue(UserService.userAll, 'id')
-    return userMap
+  static async getMap(options?: { refetch: boolean }) {
+    await UserService.fetchAll({ refetch: !!options?.refetch })
+    return UserService.userMap.value
   }
 
   static async pagination(query: UserPaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await UserService.getAll({ refetch: !!options?.refetch })
-    let data = UserService.executeQuery(UserService.userAll, query)
-    data = data.slice((page - 1) * limit, page * limit)
+    await UserService.fetchAll({ refetch: !!options?.refetch })
+    const dataQuery = UserService.executeQuery(UserService.userAll, query)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: UserService.userAll.length },
+      meta: { total: dataQuery.length },
     }
   }
 
   static async list(query: UserListQuery) {
-    await UserService.getAll()
+    await UserService.fetchAll()
     const data = UserService.executeQuery(UserService.userAll, query)
     return User.fromList(data)
   }

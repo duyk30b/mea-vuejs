@@ -1,25 +1,24 @@
 <script setup lang="ts">
+import VuePagination from '@/common/VuePagination.vue'
+import { IconDelete } from '@/common/icon-antd'
+import { InputSelect } from '@/common/vue-form'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
+import { ESTimer } from '@/utils'
+import AppointmentStatusTag from '@/views/reception/appointment/AppointmentStatusTag.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { IconDelete } from '../../../common/icon-antd'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { ESTimer } from '../../../utils'
-import AppointmentStatusTag from '../../appointment/AppointmentStatusTag.vue'
-import VuePagination from '../../../common/VuePagination.vue'
-import { InputSelect } from '../../../common/vue-form'
 
 const props = withDefaults(defineProps<{ customerId: number }>(), {
   customerId: 0,
 })
 const router = useRouter()
 
-const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const appointmentList = ref<Appointment[]>([])
 const page = ref(1)

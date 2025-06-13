@@ -1,9 +1,9 @@
-import { DString } from '../../utils'
+import { ESString } from '../../utils'
 import { PaymentMethodApi } from './payment-method.api'
 import type {
-  PaymentMethodDetailQuery,
-  PaymentMethodListQuery,
-  PaymentMethodPaginationQuery,
+    PaymentMethodDetailQuery,
+    PaymentMethodListQuery,
+    PaymentMethodPaginationQuery,
 } from './payment-method.dto'
 import { PaymentMethod } from './payment-method.model'
 
@@ -64,11 +64,11 @@ export class PaymentMethodService {
     const page = query.page || 1
     const limit = query.limit || 10
     await PaymentMethodService.fetchAll()
-    let data = PaymentMethodService.executeQuery(PaymentMethodService.paymentMethodAll, query)
-    data = data.slice((page - 1) * limit, page * limit)
+    const dataQuery = PaymentMethodService.executeQuery(PaymentMethodService.paymentMethodAll, query)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: PaymentMethodService.paymentMethodAll.length },
+      meta: { total: dataQuery.length },
     }
   }
 
@@ -137,7 +137,7 @@ export class PaymentMethodService {
   static async search(text: string) {
     if (!text) text = ''
     return PaymentMethodService.paymentMethodAll.filter((i) => {
-      return DString.customFilter(i.name, text)
+      return ESString.customFilter(i.name, text)
     })
   }
 }

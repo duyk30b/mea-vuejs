@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
+import VuePagination from '../../../common/VuePagination.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconApartment, IconForm } from '../../../common/icon-antd'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { RoleApi, type Role } from '../../../modules/role'
-import VuePagination from '../../../common/VuePagination.vue'
 import { InputSelect } from '../../../common/vue-form'
+import { MeService } from '../../../modules/_me/me.service'
+import { RoleApi, type Role } from '../../../modules/role'
 
 const roleList = ref<Role[]>([])
 
@@ -15,8 +15,7 @@ const dataLoading = ref(false)
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const startFetchData = async () => {
   try {
@@ -98,13 +97,13 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <VueTag v-else icon="minus" color="orange">Active</VueTag>
             </td>
             <td class="text-center">
-              <a
-                style="color: #eca52b"
-                class="text-xl"
-                @click="$router.push({ name: 'RoleUpsert', params: { id: role.id } })"
-              >
-                <IconForm />
-              </a>
+              <router-link :to="{ name: 'RoleUpsert', params: { id: role.id } }">
+                <IconForm
+                  width="20px"
+                  height="20px"
+                  style="color: var(--text-orange)"
+                />
+              </router-link>
             </td>
           </tr>
         </tbody>

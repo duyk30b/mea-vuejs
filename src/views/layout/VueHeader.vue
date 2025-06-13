@@ -2,19 +2,20 @@
 import { IconHospitalUser } from '@/common/icon-font-awesome'
 import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { IconLogout, IconMenuUnfold, IconUser } from '../../common/icon-antd'
 import VueButton from '../../common/VueButton.vue'
+import { IconLogout, IconMenuUnfold, IconUser } from '../../common/icon-antd'
 import VueDropdown from '../../common/popover/VueDropdown.vue'
 import { AxiosLoading } from '../../core/axios.instance'
-import { useMeStore } from '../../modules/_me/me.store'
+import { MeService } from '../../modules/_me/me.service'
 import { AuthService } from '../../modules/auth/auth.service'
-import { DImage } from '../../utils'
+import { ESImage } from '../../utils'
 
 const emit = defineEmits(['handleShowDrawer'])
 const emitShowDrawer = () => emit('handleShowDrawer', true)
 
-const meStore = useMeStore()
 const route = useRoute()
+
+const { organization, user } = MeService
 
 const routeTitle = ref<string>('')
 watchEffect(() => {
@@ -33,16 +34,16 @@ watchEffect(() => {
     <router-link :to="{ name: 'AppHome' }" class="header-logo hidden md:flex">
       <div class="logo-icon">
         <img
-          v-if="meStore?.organization?.logoImage"
-          :src="DImage.getImageLink(meStore?.organization?.logoImage, { size: 500 })"
+          v-if="organization?.logoImage"
+          :src="ESImage.getImageLink(organization?.logoImage, { size: 500 })"
           style="background-color: white; height: 50px"
         />
         <IconHospitalUser v-else />
       </div>
       <div class="logo-text">
-        <template v-if="meStore?.organization?.name">
+        <template v-if="organization?.name">
           <div class="logo-title">
-            {{ meStore?.organization?.name }}
+            {{ organization?.name }}
           </div>
         </template>
         <template v-else>
@@ -60,7 +61,7 @@ watchEffect(() => {
         <template #trigger>
           <VueButton>
             <IconUser />
-            {{ meStore?.user?.fullName }}
+            {{ user?.fullName }}
           </VueButton>
         </template>
         <div class="vue-menu">

@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconVisibility } from '../../../common/icon-google'
+import VuePagination from '../../../common/VuePagination.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { TicketRadiology, TicketRadiologyApi } from '../../../modules/ticket-radiology'
 import { ESTimer } from '../../../utils'
-import ModalTicketRadiologyResult from '../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
-import VuePagination from '../../../common/VuePagination.vue'
 import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()

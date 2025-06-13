@@ -16,7 +16,6 @@ export class Organization {
   level: number
   name: string
   addressProvince: string
-  addressDistrict: string
   addressWard: string
   addressStreet: string
   permissionIds: string
@@ -77,5 +76,28 @@ export class Organization {
 
   static fromList(sourceList: Organization[]) {
     return sourceList.map((i) => Organization.from(i))
+  }
+
+  static equal(a: Organization, b: Organization) {
+    if (a.id != b.id) return false
+    if (a.phone != b.phone) return false
+    if (a.email != b.email) return false
+    if (a.emailVerify != b.emailVerify) return false
+    if (a.facebook != b.facebook) return false
+    if (a.level != b.level) return false
+    if (a.name != b.name) return false
+    if (a.addressProvince != b.addressProvince) return false
+    if (a.addressWard != b.addressWard) return false
+    if (a.addressStreet != b.addressStreet) return false
+    if (a.permissionIds != b.permissionIds) return false
+    if (a.status != b.status) return false
+
+    if (a.note != b.note) return false
+    if (a.expiryDate != b.expiryDate) return false
+    if (a.dataVersion != b.dataVersion) return false
+    if (a.createdAt != b.createdAt) return false
+    if (a.updatedAt != b.updatedAt) return false
+    if (a.deletedAt != b.deletedAt) return false
+    return true
   }
 }

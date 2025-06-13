@@ -7,7 +7,7 @@ import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { TicketProduct } from '../../../modules/ticket-product'
-import { DString } from '../../../utils'
+import { ESString } from '../../../utils'
 import { ticketOrderUpsertRef } from './ticket-order-upsert.ref'
 
 const settingStore = useSettingStore()
@@ -224,7 +224,7 @@ defineExpose({ openModal })
                 ...settingStore.PRODUCT_HINT_USAGE,
               ]"
               :maxHeight="320"
-              :logic-filter="(item: any, text: string) => DString.customFilter(item, text)"
+              :logic-filter="(item: any, text: string) => ESString.customFilter(item, text)"
             ></InputHint>
           </div>
         </div>

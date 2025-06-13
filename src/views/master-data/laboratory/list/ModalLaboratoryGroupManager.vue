@@ -6,6 +6,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { PrintHtmlService } from '../../../../modules/print-html'
+import { RoomInteractType, RoomService } from '@/modules/room'
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -14,16 +15,32 @@ const emit = defineEmits<{
 const showModal = ref(false)
 const laboratoryGroupList = ref<LaboratoryGroup[]>([])
 const printHtmlOptions = ref<{ value: number; text: string }[]>([])
+const roomOptions = ref<{ value: number; text: string }[]>([])
 const saveLoading = ref(false)
+
+const startFetchPrintHtml = async () => {
+  const printHtmlAll = await PrintHtmlService.list({ sort: { priority: 'ASC' } })
+  printHtmlOptions.value = [
+    { value: 0, text: 'Mặc định' },
+    ...printHtmlAll.map((i) => ({ value: i.id, text: i.name })),
+  ]
+}
+
+const startFetchRoom = async () => {
+  const romList = await RoomService.list({
+    filter: { roomInteractType: RoomInteractType.Laboratory },
+    sort: { id: 'ASC' },
+  })
+  roomOptions.value = [
+    { value: 0, text: '--' },
+    ...romList.map((i) => ({ value: i.id, text: i.name })),
+  ]
+}
 
 const startFetchData = async () => {
   try {
-    laboratoryGroupList.value = await LaboratoryGroupService.list({})
-    const printHtmlAll = await PrintHtmlService.list({})
-    printHtmlOptions.value = [
-      { value: 0, text: 'Mặc định' },
-      ...printHtmlAll.map((i) => ({ value: i.id, text: i.name })),
-    ]
+    laboratoryGroupList.value = await LaboratoryGroupService.list({ sort: { id: 'ASC' } })
+    await Promise.all([startFetchPrintHtml(), startFetchRoom()])
   } catch (error) {
     console.log('🚀 ~ file: ModalLaboratoryGroupManager.vue:30 ~ startFetchData ~ error:', error)
   }
@@ -59,10 +76,10 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 100px">
+  <VueModal v-model:show="showModal" style="margin-top: 100px; width: 1000px">
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
-        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý phiếu xét nghiệm</div>
+        <div class="flex-1 font-medium" style="font-size: 16px">Quản lý nhóm xét nghiệm</div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
         </div>
@@ -75,6 +92,7 @@ defineExpose({ openModal })
               <tr>
                 <th>ID</th>
                 <th>Tên Phiếu</th>
+                <th>Phòng thực hiện</th>
                 <th style="width: 300px">Mẫu In</th>
                 <th>#</th>
               </tr>
@@ -92,12 +110,20 @@ defineExpose({ openModal })
                   <InputText
                     v-model:value="laboratoryGroup.name"
                     required
-                    placeholder="Điền tên phiếu xét nghiệm ở đây" />
+                    placeholder="Điền tên nhóm xét nghiệm ở đây"
+                  />
+                </td>
+                <td>
+                  <VueSelect
+                    v-model:value="laboratoryGroupList[index].roomId"
+                    :options="roomOptions"
+                  />
                 </td>
                 <td>
                   <VueSelect
                     v-model:value="laboratoryGroupList[index].printHtmlId"
-                    :options="printHtmlOptions" />
+                    :options="printHtmlOptions"
+                  />
                 </td>
                 <td class="text-center">
                   <a style="color: var(--text-red)" @click="laboratoryGroupList.splice(index, 1)">
@@ -115,7 +141,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" type="submit" color="blue" :loading="saveLoading">
             Lưu lại
           </VueButton>

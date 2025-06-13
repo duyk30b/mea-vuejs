@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { VueTag } from '@/common'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { FileRadiologyApi } from '@/modules/file-excel/file-radiology.api'
 import { computed, onBeforeMount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
+import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
@@ -15,17 +20,22 @@ import { arrayToKeyValue } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalRadiologyDetail from '../detail/ModalRadiologyDetail.vue'
 import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
+import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
+import ModalUploadRadiology from './ModalUploadRadiology.vue'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
+const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalCopyRadiologySystem = ref<InstanceType<typeof ModalCopyRadiologySystem>>()
+const modalUploadRadiology = ref<InstanceType<typeof ModalUploadRadiology>>()
 
-const meStore = useMeStore()
+const router = useRouter()
+
 const settingStore = useSettingStore()
-const { formatMoney } = settingStore
+const { formatMoney, isMobile } = settingStore
 
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const radiologyList = ref<Radiology[]>([])
 const searchText = ref('')
@@ -40,22 +50,26 @@ const dataLoading = ref(false)
 const radiologyGroupAll = ref<RadiologyGroup[]>([])
 const radiologyGroupMap = computed(() => arrayToKeyValue(radiologyGroupAll.value, 'id'))
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   dataLoading.value = true
   try {
-    const { data, meta } = await RadiologyService.pagination({
-      page: page.value,
-      limit: limit.value,
-      relation: {
-        radiologyGroup: false,
-        printHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml,
+    const { data, meta } = await RadiologyService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        relation: {
+          radiologyGroup: false,
+          discountList: true,
+          printHtml: settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml,
+        },
+        filter: {
+          radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
+          name: searchText.value ? { LIKE: searchText.value } : undefined,
+        },
+        sort: { radiologyCode: 'ASC' },
       },
-      filter: {
-        radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
-        name: searchText.value ? { LIKE: searchText.value } : undefined,
-      },
-      sort: { priority: 'ASC' },
-    })
+      { refetch: !!options?.refetch },
+    )
 
     radiologyList.value = data
     total.value = meta.total
@@ -90,13 +104,33 @@ onBeforeMount(async () => {
 })
 
 const handleModalCopyRadiologySystemSuccess = async () => {
-  await startFetchData()
+  startFetchData({ refetch: true })
+  radiologyGroupAll.value = await RadiologyGroupService.list({}, { refetch: true })
+}
+
+const handleModalRadiologyGroupManagerSuccess = async () => {
+  radiologyGroupAll.value = await RadiologyGroupService.list({})
+}
+
+const downloadExcelRadiologyList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileRadiologyApi.downloadExcel()
+    },
+  })
+}
+
+const handleModalUploadRadiologySuccess = async () => {
+  startFetchData({ refetch: true })
+  radiologyGroupAll.value = await RadiologyGroupService.list({}, { refetch: true })
 }
 </script>
 
 <template>
   <ModalRadiologyListSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalRadiologyListSettingScreen"
   />
   <ModalRadiologyDetail ref="modalRadiologyDetail" />
@@ -104,21 +138,52 @@ const handleModalCopyRadiologySystemSuccess = async () => {
     ref="modalCopyRadiologySystem"
     @success="handleModalCopyRadiologySystemSuccess"
   />
+  <ModalRadiologyGroupManager
+    ref="modalRadiologyGroupManager"
+    @success="handleModalRadiologyGroupManagerSuccess"
+  />
+  <ModalUploadRadiology ref="modalUploadRadiology" @success="handleModalUploadRadiologySuccess" />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
     </div>
     <div class="">
       <VueButton
-        v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]"
+        v-if="userPermission[PermissionId.RADIOLOGY_CREATE]"
         color="blue"
         icon="plus"
-        @click="$router.push({ name: 'RadiologyUpsert' })"
+        @click="router.push({ name: 'RadiologyUpsert' })"
       >
         Thêm mới
       </VueButton>
     </div>
     <div class="ml-auto mr-2 flex items-center gap-8">
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_RADIOLOGY]"
+          :icon="IconUpload"
+          @click="modalUploadRadiology?.openModal()"
+        >
+          Upload
+        </VueButton>
+      </div>
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_RADIOLOGY]"
+          :icon="IconDownload"
+          @click="downloadExcelRadiologyList"
+        >
+          Download
+        </VueButton>
+      </div>
+      <VueButton
+        v-if="userPermission[PermissionId.RADIOLOGY_GROUP_CRUD]"
+        icon="send"
+        color="green"
+        @click="modalRadiologyGroupManager?.openModal()"
+      >
+        Nhóm CĐHA
+      </VueButton>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -127,13 +192,13 @@ const handleModalCopyRadiologySystemSuccess = async () => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalRadiologyListSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
           </a>
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalCopyRadiologySystem?.openModal()"
           >
             Copy dữ liệu từ hệ thống
@@ -170,13 +235,15 @@ const handleModalCopyRadiologySystemSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th>STT</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th>Mã</th>
             <th>Tên</th>
             <th>Nhóm</th>
             <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
             <th>Giá vốn</th>
             <th>Giá tiền</th>
-            <th>Action</th>
+            <th>Khuyến mại</th>
+            <th v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]">Action</th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -198,14 +265,17 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="radiology in radiologyList" :key="radiology.id">
-            <td class="text-center">{{ radiology.priority }}</td>
+            <td class="text-center" v-if="CONFIG.MODE === 'development'" style="color: violet">
+              {{ radiology.id }}
+            </td>
+            <td class="text-center">{{ radiology.radiologyCode }}</td>
             <td>
               <div class="flex items-center gap-1">
                 <span>{{ radiology.name }}</span>
                 <a
                   style="line-height: 0"
                   class="text-base"
-                  @click="modalRadiologyDetail?.openModal(radiology)"
+                  @click="modalRadiologyDetail?.openModal(radiology.id)"
                 >
                   <IconFileSearch />
                 </a>
@@ -217,7 +287,12 @@ const handleModalCopyRadiologySystemSuccess = async () => {
             </td>
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
-            <td v-if="permissionIdMap[PermissionId.MASTER_DATA_RADIOLOGY]" class="text-center">
+            <td class="text-center">
+              <VueTag v-if="radiology.discountApply" color="blue">
+                {{ radiology.discountApply?.valueText }}
+              </VueTag>
+            </td>
+            <td v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]" class="text-center">
               <router-link :to="{ name: 'RadiologyUpsert', params: { id: radiology.id } }">
                 <IconEditSquare width="20px" height="20px" />
               </router-link>

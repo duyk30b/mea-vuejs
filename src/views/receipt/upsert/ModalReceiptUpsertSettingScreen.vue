@@ -6,7 +6,6 @@ import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputCheckbox, InputOptions } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { SettingKey } from '../../../modules/_me/store.variable'
 import { Distributor, DistributorService } from '../../../modules/distributor'
@@ -23,9 +22,8 @@ const inputOptionsDistributor = ref<InstanceType<typeof InputOptions>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
-const meStore = useMeStore()
 const settingDisplay = ref<typeof store.SCREEN_RECEIPT_UPSERT>(
-  JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT))
+  JSON.parse(JSON.stringify(store.SCREEN_RECEIPT_UPSERT)),
 )
 const showModal = ref(false)
 const saveLoading = ref(false)
@@ -120,7 +118,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.receiptItemsSelect.warehouse">
+                          v-model:checked="settingDisplay.receiptItemsSelect.warehouse"
+                        >
                           Hiển thị chọn kho
                         </InputCheckbox>
                       </td>
@@ -128,9 +127,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="
-                            settingDisplay.receiptItemsSelect.batchCodeAndExpiryDate
-                          ">
+                          v-model:checked="settingDisplay.receiptItemsSelect.lotNumberAndExpiryDate"
+                        >
                           Hiển thị số lô và HSD
                         </InputCheckbox>
                       </td>
@@ -162,7 +160,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.receiptItemsTable.batchCodeAndExpiryDate">
+                          v-model:checked="settingDisplay.receiptItemsTable.lotNumberAndExpiryDate"
+                        >
                           Hiển thị số lô và HSD
                         </InputCheckbox>
                       </td>
@@ -210,7 +209,8 @@ defineExpose({ openModal })
                             :max-height="180"
                             placeholder="Tìm kiếm bằng Tên hoặc Số Điện Thoại"
                             @selectItem="({ data }) => selectDistributor(data)"
-                            @update:text="searchingDistributor">
+                            @update:text="searchingDistributor"
+                          >
                             <template #option="{ item: { data } }">
                               <div>
                                 <b>{{ data.fullName }}</b>
@@ -218,7 +218,7 @@ defineExpose({ openModal })
                                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
-                                {{ data.addressWard }} - {{ data.addressDistrict }} -
+                                {{ data.addressStreet }} - {{ data.addressWard }} -
                                 {{ data.addressProvince }}
                               </div>
                             </template>
@@ -229,7 +229,8 @@ defineExpose({ openModal })
                     <tr>
                       <td>
                         <InputCheckbox
-                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney">
+                          v-model:checked="settingDisplay.paymentInfo.itemsActualMoney"
+                        >
                           Hiển thị tiền hàng
                         </InputCheckbox>
                       </td>

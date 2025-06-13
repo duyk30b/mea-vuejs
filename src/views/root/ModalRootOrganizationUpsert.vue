@@ -1,37 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { Address, AddressService } from '@/modules/address'
+import { nextTick, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import {
   InputCheckboxList,
   InputDate,
-  InputHint,
   InputNumber,
+  InputOptions,
   InputText,
   VueSelect,
   VueSwitch,
 } from '../../common/vue-form'
 import type { CheckboxOptionType } from '../../common/vue-form/InputCheckboxList.vue'
 import VueModal from '../../common/vue-modal/VueModal.vue'
-import { AddressInstance } from '../../core/address.instance'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Organization, OrganizationStatus } from '../../modules/organization'
 import { PermissionApi } from '../../modules/permission/permission.api'
 import { RootOrganizationApi } from '../../modules/root-organization/root-organization.api'
-import { customFilter } from '../../utils'
 import ModalRootOrganizationClear from './ModalRootOrganizationClear.vue'
 
 const modalRootOrganizationClear = ref<InstanceType<typeof ModalRootOrganizationClear>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
 const { isMobile } = settingStore
-
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
 
 const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
@@ -42,6 +38,9 @@ const checkboxPermissionId = ref<Record<string, boolean>>({})
 
 let firstLoad = true
 
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
+
 const openModal = async (instance?: Organization) => {
   showModal.value = true
   if (firstLoad === true) {
@@ -51,7 +50,7 @@ const openModal = async (instance?: Organization) => {
     } catch (error) {
       console.log('🚀 ~ ModalRootOrganizationUpsert.vue:63 ~ openModal ~ error:', error)
     }
-    provinceList.value = await AddressInstance.getAllProvinces()
+    await AddressService.fetchAll()
     firstLoad = false
   }
 
@@ -59,25 +58,25 @@ const openModal = async (instance?: Organization) => {
     organization.value = instance ? Organization.from(instance) : Organization.blank()
     const permissionIds: number[] = JSON.parse(instance?.permissionIds || '[]')
     permissionIds.forEach((id) => (checkboxPermissionId.value[id] = true))
-
-    if (instance.addressProvince) {
-      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
-      if (instance.addressDistrict) {
-        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-          instance.addressProvince,
-          instance.addressDistrict,
-        )
-      }
-    }
   }
+
+  currentAddress.value = await AddressService.findBy({
+    province: instance?.addressProvince || '',
+    ward: instance?.addressWard || '',
+  })
+
+  inputOptionsAddress.value?.setItem({
+    text: `${currentAddress.value.ward} - ${currentAddress.value.province}`,
+    data: currentAddress.value,
+    value: currentAddress.value.id,
+  })
 }
 
 const closeModal = () => {
-  organization.value = Organization.blank()
-  districtList.value = []
-  wardList.value = []
   showModal.value = false
+  organization.value = Organization.blank()
   checkboxPermissionId.value = {}
+  currentAddress.value = Address.blank()
 }
 
 const handleSave = async () => {
@@ -107,29 +106,27 @@ const handleSave = async () => {
   }
 }
 
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
-  }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
-}
-
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    organization.value.addressProvince,
-    district,
-  )
-}
-
 const handleModalRootOrganizationClearSuccess = async () => {
   emit('success')
   closeModal()
+}
+
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
+  }
+}
+
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  organization.value.addressProvince = currentAddress.value.province
+  organization.value.addressWard = currentAddress.value.ward
 }
 
 defineExpose({ openModal })
@@ -181,52 +178,25 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 200px; flex-grow: 1">
+        <div style="flex-basis: 40%; flex-grow: 1">
           <div>Địa chỉ</div>
           <div>
-            <InputHint
-              v-model:value="organization.addressProvince"
-              :options="provinceList"
-              :maxHeight="180"
-              placeholder="Thành Phố / Tỉnh"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              @update:value="handleChangeProvince"
+            <InputOptions
+              ref="inputOptionsAddress"
+              :max-height="260"
+              :options="addressOptions"
+              @selectItem="({ data }) => selectAddress(data)"
+              @searching="searchingAddress"
+              noClearTextWhenNotSelected
             />
           </div>
         </div>
 
-        <div style="flex-basis: 200px; flex-grow: 1">
-          <div>&nbsp;</div>
+        <div style="flex-basis: 40%; flex-grow: 1">
+          <div>Số nhà, ngõ ...</div>
           <div>
-            <InputHint
-              v-model:value="organization.addressDistrict"
-              :maxHeight="180"
-              :options="districtList"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              placeholder="Quận / Huyện"
-              @update:value="handleChangeDistrict"
-            />
+            <InputText v-model:value="organization.addressStreet" placeholder="Số nhà, ngõ ..." />
           </div>
-        </div>
-
-        <div style="flex-basis: 200px; flex-grow: 1">
-          <div>&nbsp;</div>
-          <div>
-            <InputHint
-              v-model:value="organization.addressWard"
-              :maxHeight="180"
-              :options="wardList"
-              placeholder="Phường / Xã"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)"
-            />
-          </div>
-        </div>
-
-        <div style="flex-basis: 90%; flex-grow: 1">
-          <InputText
-            v-model:value="organization.addressStreet"
-            placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
-          />
         </div>
 
         <div style="flex-basis: 200px; flex-grow: 1">

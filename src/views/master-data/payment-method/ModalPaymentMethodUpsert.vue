@@ -5,7 +5,7 @@ import { IconClose } from '../../../common/icon-antd'
 import { InputNumber, InputText, VueSwitch } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { PaymentMethod, PaymentMethodService } from '../../../modules/payment-method'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 
@@ -13,8 +13,7 @@ const emit = defineEmits<{
   (e: 'success', value: PaymentMethod, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
 
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentMethod = ref(PaymentMethod.blank())
@@ -122,7 +121,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.MASTER_DATA_WAREHOUSE] && paymentMethod.id"
+            v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE] && paymentMethod.id"
             color="red"
             @click="clickDelete"
           >

@@ -6,7 +6,8 @@ import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
-import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicApi } from '../../../../modules/ticket-clinic'
+import { ticketRoomRef } from '@/modules/room'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -24,43 +25,43 @@ const saveLoading = ref(false)
 const openModal = async () => {
   showModal.value = true
 
-  money.discountType = ticketClinicRef.value.discountType
-  money.discountMoney = ticketClinicRef.value.discountMoney
-  money.discountPercent = ticketClinicRef.value.discountPercent
-  money.totalMoney = ticketClinicRef.value.totalMoney
+  money.discountType = ticketRoomRef.value.discountType
+  money.discountMoney = ticketRoomRef.value.discountMoney
+  money.discountPercent = ticketRoomRef.value.discountPercent
+  money.totalMoney = ticketRoomRef.value.totalMoney
 }
 
 const hasChangeData = computed(() => {
-  if (money.discountType !== ticketClinicRef.value.discountType) {
+  if (money.discountType !== ticketRoomRef.value.discountType) {
     return true
   }
-  if (money.discountMoney !== ticketClinicRef.value.discountMoney) {
+  if (money.discountMoney !== ticketRoomRef.value.discountMoney) {
     return true
   }
-  if (money.discountPercent !== ticketClinicRef.value.discountPercent) {
+  if (money.discountPercent !== ticketRoomRef.value.discountPercent) {
     return true
   }
-  if (money.totalMoney !== ticketClinicRef.value.totalMoney) {
+  if (money.totalMoney !== ticketRoomRef.value.totalMoney) {
     return true
   }
   return false
 })
 
 const handleChangeDiscountMoney = (discountMoney: number) => {
-  const itemsActualMoney = ticketClinicRef.value.itemsActualMoney
+  const itemsActualMoney = ticketRoomRef.value.itemsActualMoney
   money.discountPercent =
     itemsActualMoney == 0 ? 0 : Math.round((discountMoney * 100) / itemsActualMoney)
   money.totalMoney = itemsActualMoney - discountMoney
 }
 
 const handleChangeDiscountPercent = (data: number) => {
-  const itemsActualMoney = ticketClinicRef.value.itemsActualMoney
+  const itemsActualMoney = ticketRoomRef.value.itemsActualMoney
   money.discountMoney = Math.round((itemsActualMoney * (data || 0)) / 100)
   money.totalMoney = itemsActualMoney - money.discountMoney
 }
 
 const handleChangeTotalMoney = (totalMoney: number) => {
-  const itemsActualMoney = ticketClinicRef.value.itemsActualMoney
+  const itemsActualMoney = ticketRoomRef.value.itemsActualMoney
   money.discountType = DiscountType.VND
   money.discountMoney = itemsActualMoney - totalMoney
   money.discountPercent =
@@ -74,7 +75,7 @@ const closeModal = () => {
 const changeDiscount = async () => {
   saveLoading.value = true
   try {
-    await TicketClinicApi.changeDiscount(ticketClinicRef.value.id, {
+    await TicketClinicApi.changeDiscount(ticketRoomRef.value.id, {
       discountType: money.discountType,
       discountPercent: money.discountPercent,
       discountMoney: money.discountMoney,
@@ -102,7 +103,7 @@ defineExpose({ openModal })
         <div style="flex-basis: 90%; flex-grow: 1; min-width: 300px">
           <div>Tổng thành phần</div>
           <div>
-            <InputMoney :value="ticketClinicRef.itemsActualMoney" disabled />
+            <InputMoney :value="ticketRoomRef.itemsActualMoney" disabled />
           </div>
         </div>
 

@@ -1,38 +1,36 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import VueTag from '../../../../common/VueTag.vue'
 import { IconCheckSquare, IconClockCircle } from '../../../../common/icon-antd'
 import { IconEditSquare } from '../../../../common/icon-google'
-import VueTag from '../../../../common/VueTag.vue'
+import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { CONFIG } from '../../../../config'
-import { useMeStore } from '../../../../modules/_me/me.store'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../../modules/ticket'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
-import { onMounted } from 'vue'
+import { ticketRoomRef } from '@/modules/room'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap, organization } = meStore
+const { userPermission, organization } = MeService
 
 onMounted(async () => {
-  await ticketClinicRef.value.refreshLaboratory()
+  await ticketRoomRef.value.refreshLaboratory()
 })
 
 const laboratoryDiscount = computed(() => {
-  return ticketClinicRef.value.ticketLaboratoryList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketLaboratoryList?.reduce((acc, item) => {
     return acc + item.discountMoney
   }, 0)
 })
 const laboratoryCostAmount = computed(() => {
-  return ticketClinicRef.value.ticketLaboratoryList?.reduce((acc, item) => {
+  return ticketRoomRef.value.ticketLaboratoryList?.reduce((acc, item) => {
     return acc + item.costPrice
   }, 0)
 })
@@ -40,7 +38,7 @@ const laboratoryCostAmount = computed(() => {
 
 <template>
   <ModalTicketLaboratoryUpdateMoney ref="modalTicketLaboratoryUpdateMoney" />
-  <template v-if="ticketClinicRef.ticketLaboratoryGroupList?.length">
+  <template v-if="ticketRoomRef.ticketLaboratoryGroupList?.length">
     <thead>
       <tr>
         <th>#</th>
@@ -54,7 +52,7 @@ const laboratoryCostAmount = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <template v-for="tlg in ticketClinicRef.ticketLaboratoryGroupList || []" :key="tlg.id">
+      <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList || []" :key="tlg.id">
         <tr>
           <td colspan="11" class="font-bold">{{ tlg.laboratoryGroup?.name }}</td>
         </tr>
@@ -106,8 +104,8 @@ const laboratoryCostAmount = computed(() => {
           <td class="text-center">
             <a
               v-if="
-                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                permissionIdMap[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
               "
               class="text-orange-500"
               @click="modalTicketLaboratoryUpdateMoney?.openModal(tl)"
@@ -130,7 +128,7 @@ const laboratoryCostAmount = computed(() => {
           </div>
         </td>
         <td class="font-bold text-right whitespace-nowrap">
-          {{ formatMoney(ticketClinicRef.laboratoryMoney) }}
+          {{ formatMoney(ticketRoomRef.laboratoryMoney) }}
         </td>
         <td></td>
         <td v-if="CONFIG.MODE === 'development'" class="text-right italic">

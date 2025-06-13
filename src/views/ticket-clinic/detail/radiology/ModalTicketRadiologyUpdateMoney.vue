@@ -7,16 +7,17 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionService, InteractType } from '../../../../modules/commission'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { Radiology, RadiologyService } from '../../../../modules/radiology'
 import { Role, RoleService } from '../../../../modules/role'
-import { TicketClinicRadiologyApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic'
 import { TicketRadiology } from '../../../../modules/ticket-radiology'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
+import { ESString } from '../../../../utils'
+import { ticketRoomRef } from '@/modules/room'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketRadiology, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -42,18 +43,18 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[InteractType.Radiology]?.[ticketRadiology.value.id] ||
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Radiology]?.[ticketRadiology.value.id] ||
     []
 
-  const commissionList = await CommissionService.list({
+  const positionList = await PositionService.list({
     filter: {
-      interactType: InteractType.Radiology,
-      interactId: ticketRadiology.value.radiologyId,
+      positionType: PositionInteractType.Radiology,
+      positionInteractId: ticketRadiology.value.radiologyId,
     },
   })
 
   // lấy tất cả role có trong commission trước
-  commissionList.forEach((i) => {
+  positionList.forEach((i) => {
     const findExist = ticketUserListRef.find((j) => j.roleId === i.roleId)
     if (findExist) {
       ticketUserListOrigin.push(TicketUser.from(findExist))
@@ -176,7 +177,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketClinicRadiologyApi.destroyTicketRadiology({
-          ticketId: ticketClinicRef.value.id,
+          ticketId: ticketRoomRef.value.id,
           ticketRadiologyId: ticketRadiology.value.id,
         })
         emit('success', ticketRadiology.value, 'DESTROY')
@@ -194,7 +195,7 @@ const updateMoneyTicketRadiology = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
     await TicketClinicRadiologyApi.updateMoneyTicketRadiology({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: hasChangeTicketRadiology.value ? ticketRadiology.value : undefined,
       ticketUserList: hasUpdateTicketUser ? ticketUserList.value : undefined,
@@ -296,7 +297,7 @@ defineExpose({ openModal })
                 <template #option="{ item: { data } }">
                   <div>
                     <b>{{ data.fullName }}</b>
-                    - {{ DString.formatPhone(data.phone) }} -
+                    - {{ ESString.formatPhone(data.phone) }} -
                   </div>
                 </template>
               </InputFilter>

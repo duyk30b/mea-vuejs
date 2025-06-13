@@ -21,19 +21,18 @@ export class RootOrganizationApi {
   static async createOne(organization: Organization) {
     const response = await AxiosInstance.post('/root/organization/create', {
       phone: organization.phone,
-      facebook: organization.facebook,
       email: organization.email,
       emailVerify: organization.emailVerify,
-      level: organization.level,
       name: organization.name,
+      facebook: organization.facebook || '',
+      level: organization.level,
       dataVersion: organization.dataVersion,
       addressProvince: organization.addressProvince || '',
-      addressDistrict: organization.addressDistrict || '',
       addressWard: organization.addressWard || '',
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,
       status: organization.status,
-      note: organization.note,
+      note: organization.note || '',
       expiryDate: organization.expiryDate,
     })
     const { data } = response.data as BaseResponse<{ organization: any }>
@@ -51,7 +50,6 @@ export class RootOrganizationApi {
       name: organization.name,
       dataVersion: organization.dataVersion,
       addressProvince: organization.addressProvince || '',
-      addressDistrict: organization.addressDistrict || '',
       addressWard: organization.addressWard || '',
       addressStreet: organization.addressStreet || '',
       permissionIds: organization.permissionIds,

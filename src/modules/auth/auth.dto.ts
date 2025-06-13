@@ -3,7 +3,7 @@ export type LoginDto = {
   username: string
   password: string
 }
-export type LoginRootDto = LoginDto & { oid: number }
+export type LoginRootDto = LoginDto & { oid: number; uid: number }
 
 export type RegisterDto = {
   phone: string

@@ -5,7 +5,7 @@ import { IconClose } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert'
 import { InputMoney, InputSelect } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PaymentViewType } from '../../../modules/enum'
 import { PaymentMethodService } from '../../../modules/payment-method'
@@ -21,8 +21,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -263,7 +262,7 @@ defineExpose({ openModal })
 
         <div class="mt-4 pb-6 flex justify-center gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.RECEIPT_REFUND_OVERPAID]"
+            v-if="userPermission[PermissionId.RECEIPT_REFUND_OVERPAID]"
             type="submit"
             color="blue"
             icon="save"
@@ -339,7 +338,7 @@ defineExpose({ openModal })
 
         <div class="mt-4 pb-6 flex justify-center gap-4">
           <VueButton
-            v-if="permissionIdMap[PermissionId.RECEIPT_PAYMENT]"
+            v-if="userPermission[PermissionId.RECEIPT_PAYMENT]"
             type="submit"
             color="blue"
             icon="save"

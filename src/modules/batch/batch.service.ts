@@ -1,12 +1,16 @@
 import { AlertStore } from '../../common/vue-alert'
+import { IndexedDBQuery } from '../../core/indexed-db/_base/indexed-db.query'
 import { BatchDB } from '../../core/indexed-db/repository/batch.repository'
 import { ProductDB } from '../../core/indexed-db/repository/product.repository'
 import { RefreshTimeDB } from '../../core/indexed-db/repository/refresh-time.repository'
-import { useMeStore } from '../_me/me.store'
+import { ESArray, ESObject } from '../../utils'
+import { MeService } from '../_me/me.service'
 import { AuthService } from '../auth/auth.service'
 import { BatchApi } from './batch.api'
-import type { BatchListQuery, BatchPaginationQuery } from './batch.dto'
+import type { BatchGetQuery, BatchListQuery, BatchPaginationQuery } from './batch.dto'
 import { Batch } from './batch.model'
+
+const BatchDBQuery = new IndexedDBQuery<Batch>()
 
 export class BatchService {
   static async refreshDB() {
@@ -15,7 +19,7 @@ export class BatchService {
       if (!refreshTime) {
         refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
       }
-      const dataVersion = useMeStore().organization.dataVersionParse.batch
+      const dataVersion = MeService.organization.value.dataVersionParse?.batch || 0
 
       let apiResponse: { time: Date; batchList: Batch[] }
 
@@ -40,13 +44,51 @@ export class BatchService {
     } catch (error: any) {
       console.log('🚀 ~ file: product.service.ts:43 ~ BatchService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      AuthService.logout()
+      await AuthService.logout()
+      location.reload()
       return
     }
   }
 
-  static async pagination(params: BatchPaginationQuery) {
-    return await BatchApi.pagination(params)
+  private static async executeQuery(all: Batch[], query: BatchGetQuery) {
+    let data = all
+
+    if (query.relation) {
+      if (query.relation.product) {
+        const productAll = await ProductDB.findManyBy({})
+        const productMap = ESArray.arrayToKeyValue(productAll, 'id')
+        data.forEach((i) => (i.product = productMap[i.productId]))
+      }
+    }
+    if (query.filter) {
+      const filter = query.filter
+      data = data.filter((i) => {
+        return BatchDBQuery.executeFilter(i, filter as any)
+      })
+    }
+
+    if (query.sort) {
+      data = BatchDBQuery.executeSort(data, query.sort)
+    }
+    return data
+  }
+
+  static async pagination(query: BatchPaginationQuery, options?: { refresh: boolean }) {
+    if (options?.refresh) {
+      await BatchService.refreshDB()
+    }
+    const page = query.page || 1
+    const limit = query.limit || 10
+    const batchAll = await BatchDB.findAll()
+    const dataTotal = await BatchService.executeQuery(batchAll, query)
+    const data = dataTotal.slice((page - 1) * limit, page * limit)
+    const batchList = Batch.fromList(data)
+    return {
+      page,
+      limit,
+      total: dataTotal.length,
+      batchList,
+    }
   }
 
   static async list(query: BatchListQuery, options?: { refresh: boolean }) {
@@ -78,11 +120,17 @@ export class BatchService {
     if (response.product) {
       await ProductDB.replaceOne(response.product.id, response.product)
     }
+    if (response.batch) {
+      await BatchDB.replaceOne(response.batch.id, response.batch)
+    }
     return response
   }
 
   static async destroyOne(id: number) {
     const response = await BatchApi.destroyOne(id)
+    if (response.success) {
+      await BatchDB.deleteOneByKey(id)
+    }
     return response
   }
 }

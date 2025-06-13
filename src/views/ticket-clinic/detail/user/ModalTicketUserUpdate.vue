@@ -1,26 +1,24 @@
 <script lang="ts" setup>
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputNumber, InputText, VueSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Laboratory, LaboratoryService } from '@/modules/laboratory'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { CommissionCalculatorType, PositionInteractType } from '@/modules/position'
+import { Procedure, ProcedureService } from '@/modules/procedure'
+import { Product, ProductService } from '@/modules/product'
+import { Radiology, RadiologyService } from '@/modules/radiology'
+import { Role, RoleService } from '@/modules/role'
+import { ticketRoomRef } from '@/modules/room'
+import {  TicketClinicUserApi } from '@/modules/ticket-clinic'
+import { TicketUser } from '@/modules/ticket-user'
+import { User, UserService } from '@/modules/user'
 import { computed, onMounted, ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon-antd'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputNumber, InputText, VueSelect } from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { CommissionCalculatorType, InteractType } from '../../../../modules/commission'
-import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Role, RoleService } from '../../../../modules/role'
-import {
-  TicketClinicProcedureApi,
-  ticketClinicRef,
-  TicketClinicUserApi,
-} from '../../../../modules/ticket-clinic'
-import { TicketProcedure } from '../../../../modules/ticket-procedure'
-import { TicketUser } from '../../../../modules/ticket-user'
-import { User, UserService } from '../../../../modules/user'
-import { Product, ProductService } from '../../../../modules/product'
 
 const emit = defineEmits<{
   (e: 'success', value: TicketUser, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -28,6 +26,8 @@ const emit = defineEmits<{
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
+
+const { userPermission, organizationPermission } = MeService
 
 const ticketUserOrigin = ref<TicketUser>(TicketUser.blank())
 const ticketUser = ref<TicketUser>(TicketUser.blank())
@@ -48,9 +48,9 @@ onMounted(async () => {
     const fetchData = await Promise.all([
       UserService.getMap(),
       RoleService.getMap(),
-      ProcedureService.getMap(),
-      LaboratoryService.getMap(),
-      RadiologyService.getMap(),
+      organizationPermission.value[PermissionId.PROCEDURE] ? ProcedureService.getMap() : {},
+      organizationPermission.value[PermissionId.LABORATORY] ? LaboratoryService.getMap() : {},
+      organizationPermission.value[PermissionId.PROCEDURE] ? RadiologyService.getMap() : {},
     ])
     userMap.value = fetchData[0]
     roleMap.value = fetchData[1]
@@ -68,8 +68,8 @@ const openModal = async (ticketUserProp: TicketUser) => {
   ticketUserOrigin.value = TicketUser.from(ticketUserProp)
   ticketUser.value = TicketUser.from(ticketUserProp)
 
-  if (ticketUserProp.interactType === InteractType.Product) {
-    const productLocal = await ProductService.getOne(ticketUser.value.interactId)
+  if (ticketUserProp.positionType === PositionInteractType.Product) {
+    const productLocal = await ProductService.getOne(ticketUser.value.positionInteractId)
     if (productLocal) {
       product.value = productLocal
     }
@@ -144,7 +144,7 @@ const clickDestroy = async () => {
     onOk: async () => {
       try {
         await TicketClinicUserApi.destroyTicketUser({
-          ticketId: ticketClinicRef.value.id,
+          ticketId: ticketRoomRef.value.id,
           ticketUserId: ticketUser.value.id,
         })
         emit('success', ticketUser.value, 'DESTROY')
@@ -160,7 +160,7 @@ const updateTicketUser = async () => {
   saveLoading.value = true
   try {
     await TicketClinicUserApi.updateTicketUser({
-      ticketId: ticketClinicRef.value.id,
+      ticketId: ticketRoomRef.value.id,
       ticketUserId: ticketUser.value.id,
       ticketUser: ticketUser.value,
     })
@@ -193,35 +193,35 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <template v-if="ticketUser.interactType === InteractType.Ticket">
+          <template v-if="ticketUser.positionType === PositionInteractType.Ticket">
             <div>Phiếu</div>
             <div>
               <InputText :value="'Phiếu khám'" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.interactType === InteractType.Product">
+          <template v-if="ticketUser.positionType === PositionInteractType.Product">
             <div>Sản phẩm</div>
             <div>
               <InputText :value="product?.brandName" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.interactType === InteractType.Procedure">
+          <template v-if="ticketUser.positionType === PositionInteractType.Procedure">
             <div>Dịch vụ</div>
             <div>
-              <InputText :value="procedureMap[ticketUser.interactId]?.name" disabled />
+              <InputText :value="procedureMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.interactType === InteractType.Laboratory">
+          <template v-if="ticketUser.positionType === PositionInteractType.Laboratory">
             <div>Xét nghiệm</div>
             <div>
-              <InputText :value="laboratoryMap[ticketUser.interactId]?.name" disabled />
+              <InputText :value="laboratoryMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
-            {{ laboratoryMap[ticketUser.interactId]?.name }}
+            {{ laboratoryMap[ticketUser.positionInteractId]?.name }}
           </template>
-          <template v-if="ticketUser.interactType === InteractType.Radiology">
+          <template v-if="ticketUser.positionType === PositionInteractType.Radiology">
             <div>Phiếu CĐHA</div>
             <div>
-              <InputText :value="radiologyMap[ticketUser.interactId]?.name" disabled />
+              <InputText :value="radiologyMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
           </template>
         </div>

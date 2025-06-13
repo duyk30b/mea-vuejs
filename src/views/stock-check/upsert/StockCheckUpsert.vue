@@ -1,35 +1,23 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconDelete, IconFileSearch, IconQuestionCircle, IconRight } from '@/common/icon-antd'
+import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import VueTooltip from '@/common/popover/VueTooltip.vue'
+import { AlertStore } from '@/common/vue-alert'
+import { InputDate, InputNumber, InputOptions, InputText, VueSelect } from '@/common/vue-form'
+import InputHint from '@/common/vue-form/InputHint.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Batch, BatchService } from '@/modules/batch'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Product, ProductService } from '@/modules/product'
+import { StockCheck, StockCheckApi } from '@/modules/stock-check'
+import { StockCheckItem } from '@/modules/stock-check-item'
+import { User } from '@/modules/user'
+import { ESString, ESTimer } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import {
-  IconDelete,
-  IconFileSearch,
-  IconQuestionCircle,
-  IconRight,
-} from '../../../common/icon-antd'
-import { IconMinus, IconPlus, IconSortDown, IconSortUp } from '../../../common/icon-font-awesome'
-import VueTooltip from '../../../common/popover/VueTooltip.vue'
-import { AlertStore } from '../../../common/vue-alert'
-import {
-  InputDate,
-  InputNumber,
-  InputOptions,
-  InputText,
-  VueSelect,
-} from '../../../common/vue-form'
-import InputHint from '../../../common/vue-form/InputHint.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Batch, BatchService } from '../../../modules/batch'
-import { PickupStrategy } from '../../../modules/enum'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Product, ProductService } from '../../../modules/product'
-import { StockCheck, StockCheckApi } from '../../../modules/stock-check'
-import { StockCheckItem } from '../../../modules/stock-check-item'
-import { User } from '../../../modules/user'
-import { DString, ESTimer } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalProductDetail from '../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../product/upsert/ModalProductUpsert.vue'
@@ -44,10 +32,9 @@ const inputOptionsProduct = ref<InstanceType<typeof InputOptions>>()
 const router = useRouter()
 const route = useRoute()
 
-const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const { permissionIdMap } = meStore
+const { userPermission, user } = MeService
 
 const stockCheck = ref(StockCheck.blank())
 const stockCheckItem = ref(StockCheckItem.blank())
@@ -66,8 +53,8 @@ onMounted(async () => {
       relation: { stockCheckItemList: { batch: true, product: true } },
     })
   }
-  stockCheck.value.createdByUserId = meStore.user?.id || 0
-  stockCheck.value.createdByUser = User.from(meStore.user || User.blank())
+  stockCheck.value.createdByUserId = user.value?.id || 0
+  stockCheck.value.createdByUser = User.from(user.value || User.blank())
 })
 
 const searchingProduct = async (text: string) => {
@@ -84,7 +71,7 @@ const searchingProduct = async (text: string) => {
 
 const selectProduct = async (productData?: Product) => {
   if (productData) {
-    if (productData.pickupStrategy === PickupStrategy.NoImpact) {
+    if (productData.warehouseIds === '[]') {
       return ModalStore.alert({
         title: 'Không thể kiểm kê cho sản phẩm này',
         content: ['Sản phẩm này đang ở chế độ không quản lý số lượng tồn kho'],
@@ -250,20 +237,41 @@ const handleFocusFirstSearchProduct = async () => {
     <div class="mr-2 flex items-center gap-4 flex-wrap"></div>
   </div>
 
-  <div class="mt-4 md:mx-4 flex flex-wrap gap-4">
-    <div style="flex-basis: 600px; flex-grow: 2">
-      <form class="bg-white p-4" @submit.prevent="submitAddStockCheckItem">
+  <div class="flex flex-wrap mt-4 md:mx-4 gap-4 flex-row-reverse">
+    <div class="bg-white p-4 flex-1">
+      <div>
+        <div class="">Thời gian tạo phiếu</div>
+        <div>
+          <InputDate v-model:value="stockCheck.createdAt" typeParser="number" show-time />
+        </div>
+      </div>
+      <div class="mt-4">
+        <div>Nhân viên tạo phiếu</div>
+        <div>
+          <InputText :value="stockCheck.createdByUser?.fullName" disabled />
+        </div>
+      </div>
+      <div class="mt-4">
+        <div>Ghi chú</div>
+        <div>
+          <InputText v-model:value="stockCheck.note" />
+        </div>
+      </div>
+    </div>
+
+    <div style="" class="flex-2">
+      <form class="p-4 bg-white" @submit.prevent="submitAddStockCheckItem">
         <div>
           <div class="flex gap-1 flex-wrap">
             <span>Tên sản phẩm</span>
             <a
               v-if="stockCheckItem.productId"
-              @click="modalProductDetail?.openModal(stockCheckItem.product)"
+              @click="modalProductDetail?.openModal(stockCheckItem.product!)"
             >
               <IconFileSearch />
             </a>
             <span
-              v-if="stockCheckItem.product?.pickupStrategy === PickupStrategy.NoImpact"
+              v-if="stockCheckItem.product?.warehouseIds === '[]'"
               style="font-weight: 500; color: var(--text-red)"
             >
               (Sản phẩm không quản lý tồn kho)
@@ -271,7 +279,7 @@ const handleFocusFirstSearchProduct = async () => {
             <div v-if="stockCheckItem.productId">
               (
               <span
-                v-if="stockCheckItem.product?.pickupStrategy !== PickupStrategy.NoImpact"
+                v-if="stockCheckItem.product?.warehouseIds !== '[]'"
                 :class="
                   (stockCheckItem.product?.quantity || 0) <= 0 ? 'text-red-500 font-bold' : ''
                 "
@@ -287,7 +295,7 @@ const handleFocusFirstSearchProduct = async () => {
               )
             </div>
             <a
-              v-if="permissionIdMap[PermissionId.PRODUCT_UPDATE] && stockCheckItem.productId"
+              v-if="userPermission[PermissionId.PRODUCT_UPDATE] && stockCheckItem.productId"
               @click="modalProductUpsert?.openModal(stockCheckItem.productId)"
             >
               Sửa thông tin sản phẩm
@@ -353,7 +361,7 @@ const handleFocusFirstSearchProduct = async () => {
               <template #option="{ item: { data } }">
                 <div v-if="!data.id">Chưa chọn lô</div>
                 <div v-if="data.id">
-                  Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} -
+                  Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }} -
                   Tồn
                   <b>{{ data.quantity }}</b>
                   {{ stockCheckItem.product!.unitBasicName }}
@@ -362,7 +370,7 @@ const handleFocusFirstSearchProduct = async () => {
               <template #text="{ content: { data } }">
                 <div v-if="!data?.id">Chưa chọn lô</div>
                 <div v-if="data?.id">
-                  Lô {{ data.batchCode }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
+                  Lô {{ data.lotNumber }} {{ ESTimer.timeToText(data.expiryDate, 'DD/MM/YYYY') }}
                   <span>
                     - Tồn
                     <b>{{ data.quantity }}</b>
@@ -374,218 +382,190 @@ const handleFocusFirstSearchProduct = async () => {
           </div>
         </div>
 
-        <div class="mt-6 flex justify-center">
+        <div class="mt-10 flex justify-center">
           <VueButton type="submit" color="blue" icon="plus" :disabled="!stockCheckItem.batchId">
             Thêm vào danh sách
           </VueButton>
         </div>
       </form>
-      <div class="mt-4 bg-white p-4">
-        <div class="flex items-baseline justify-between">
-          <div>Danh sách sản phẩm</div>
-          <div>
-            <VueButton
-              icon="plus"
-              size="small"
-              @click="modalStockCheckAddMultipleProduct?.openModal()"
-            >
-              Thêm danh sách sản phẩm
-            </VueButton>
-          </div>
-        </div>
-        <div class="table-wrapper mt-2">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Mã SP</th>
-                <th>Tên Sản phẩm</th>
-                <th>Đơn vị</th>
-                <th>Tồn</th>
-                <th>Tồn thực tế</th>
-                <th>Lệch</th>
-                <th style="min-width: 120px">Ghi chú</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="!stockCheck.stockCheckItemList.length">
-                <td colspan="100" class="text-center">No data</td>
-              </tr>
-              <tr v-for="(scItem, index) in stockCheck.stockCheckItemList" :key="index">
-                <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
-                  <div class="flex flex-col items-center">
-                    <button
-                      type="button"
-                      style="
-                        border: none;
-                        font-size: 1.2rem;
-                        line-height: 0.5;
-                        background: none;
-                        margin-bottom: -0.5rem;
-                      "
-                      class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                      :disabled="index === 0"
-                      @click="changeItemPosition(index, -1)"
-                    >
-                      <IconSortUp style="opacity: 0.6" />
-                    </button>
-                    <span>{{ index + 1 }}</span>
-                    <button
-                      type="button"
-                      style="
-                        border: none;
-                        font-size: 1.2rem;
-                        line-height: 0.5;
-                        background: none;
-                        margin-top: -0.5rem;
-                      "
-                      class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
-                      :disabled="index === (stockCheck.stockCheckItemList?.length || 0) - 1"
-                      @click="changeItemPosition(index, 1)"
-                    >
-                      <IconSortDown style="opacity: 0.6" />
-                    </button>
-                  </div>
-                </td>
-                <td class="text-center whitespace-nowrap">{{ scItem.product?.productCode }}</td>
-                <td style="min-width: 150px">
-                  <div>
-                    <div class="font-medium">
-                      {{ scItem?.product?.brandName }}
-                      <a class="ml-1" @click="modalProductDetail?.openModal(scItem?.product!)">
-                        <IconFileSearch />
-                      </a>
-                    </div>
-                    <div style="font-size: 0.8rem">
-                      {{ scItem?.product?.substance }}
-                    </div>
-                    <div style="font-size: 0.8rem" class="flex flex-wrap">
-                      <div v-if="scItem.systemQuantity !== scItem.product?.quantity">
-                        ID {{ scItem.batchId }} -&nbsp;
-                      </div>
-                      <div v-if="scItem.batch?.batchCode">Lô {{ scItem.batch?.batchCode }}</div>
-                      <div v-if="scItem.batch?.expiryDate">
-                        - HSD {{ ESTimer.timeToText(scItem.batch?.expiryDate) }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="text-center">{{ scItem.product?.unitBasicName || '' }}</td>
-                <td class="text-center">
-                  <div class="flex flex-wrap items-center gap-2 justify-center">
-                    <span>{{ scItem.systemQuantity }}</span>
-                    <span v-if="scItem.systemQuantity !== scItem.product?.quantity">
-                      / {{ scItem.product?.quantity }}
-                    </span>
-                    <VueTooltip
-                      v-if="scItem.systemQuantity !== scItem.product?.quantity"
-                      class="flex"
-                    >
-                      <template #trigger>
-                        <IconQuestionCircle style="font-size: 16px; color: orange" />
-                      </template>
-                      <div>
-                        Sản phẩm này có nhiều lô hàng khác nhau, với tổng số lượng là:
-                        {{ scItem.product?.quantity }}
-                      </div>
-                      <div>Lô hàng này có số lượng là: {{ scItem.systemQuantity }}</div>
-                    </VueTooltip>
-                  </div>
-                </td>
-                <td style="width: 150px">
-                  <div class="flex items-center justify-between">
-                    <button
-                      style="
-                        width: 20px;
-                        height: 20px;
-                        border-radius: 50%;
-                        border: 1px solid #cdcdcd;
-                      "
-                      class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                      @click="handleChangeActualQuantity(index, scItem.actualQuantity - 1)"
-                    >
-                      <IconMinus />
-                    </button>
-                    <div style="width: calc(100% - 60px); min-width: 50px">
-                      <InputNumber
-                        :value="scItem.actualQuantity"
-                        @update:value="(v) => handleChangeActualQuantity(index, v)"
-                        textAlign="right"
-                      />
-                    </div>
-                    <button
-                      style="
-                        width: 20px;
-                        height: 20px;
-                        border-radius: 50%;
-                        border: 1px solid #cdcdcd;
-                      "
-                      class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
-                      @click="handleChangeActualQuantity(index, scItem.actualQuantity + 1)"
-                    >
-                      <IconPlus />
-                    </button>
-                  </div>
-                </td>
-                <td class="text-center">{{ scItem.actualQuantity - scItem.systemQuantity }}</td>
-                <td>
-                  <div>
-                    <InputHint
-                      v-model:value="stockCheck.stockCheckItemList[index].note"
-                      :options="['Hư hỏng', 'Mất', 'Khác']"
-                      :logic-filter="
-                        (item: string, text: string) => DString.customFilter(item, text)
-                      "
-                    />
-                  </div>
-                </td>
-                <td>
-                  <div
-                    class="flex items-center justify-center"
-                    style="color: red; cursor: pointer"
-                    @click="stockCheck.stockCheckItemList.splice(index, 1)"
-                  >
-                    <IconDelete style="font-size: 18px" />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="100">Tổng số sản phẩm: {{ stockCheck.stockCheckItemList.length }}</td>
-              </tr>
-              <tr>
-                <td colspan="100">
-                  <span>Tổng vốn bị lệch:</span>
-                  <span class="ml-4 font-medium">{{ formatMoney(sumCostAmountDifferent) }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    </div>
+  </div>
+
+  <div class="mt-4 md:mx-4 gap-4">
+    <div class="mt-4 bg-white p-4">
+      <div class="flex flex-wrap items-baseline justify-between">
+        <div>Danh sách sản phẩm</div>
+        <div>
+          <VueButton
+            icon="plus"
+            size="small"
+            @click="modalStockCheckAddMultipleProduct?.openModal()"
+          >
+            Thêm danh sách sản phẩm
+          </VueButton>
         </div>
       </div>
+      <div class="table-wrapper mt-2">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Mã SP</th>
+              <th style="min-width: 200px">Tên Sản phẩm</th>
+              <th>Đơn vị</th>
+              <th>SL tồn</th>
+              <th>SL thực tế</th>
+              <th>SL lệch</th>
+              <th style="min-width: 120px">Ghi chú</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!stockCheck.stockCheckItemList.length">
+              <td colspan="100" class="text-center">No data</td>
+            </tr>
+            <tr v-for="(scItem, index) in stockCheck.stockCheckItemList" :key="index">
+              <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+                <div class="flex flex-col items-center">
+                  <button
+                    type="button"
+                    style="
+                      border: none;
+                      font-size: 1.2rem;
+                      line-height: 0.5;
+                      background: none;
+                      margin-bottom: -0.5rem;
+                    "
+                    class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                    :disabled="index === 0"
+                    @click="changeItemPosition(index, -1)"
+                  >
+                    <IconSortUp style="opacity: 0.6" />
+                  </button>
+                  <span>{{ index + 1 }}</span>
+                  <button
+                    type="button"
+                    style="
+                      border: none;
+                      font-size: 1.2rem;
+                      line-height: 0.5;
+                      background: none;
+                      margin-top: -0.5rem;
+                    "
+                    class="cursor-pointer disabled:cursor-not-allowed opacity-25 disabled:opacity-25 hover:opacity-100"
+                    :disabled="index === (stockCheck.stockCheckItemList?.length || 0) - 1"
+                    @click="changeItemPosition(index, 1)"
+                  >
+                    <IconSortDown style="opacity: 0.6" />
+                  </button>
+                </div>
+              </td>
+              <td class="text-center whitespace-nowrap">{{ scItem.product?.productCode }}</td>
+              <td style="min-width: 150px">
+                <div>
+                  <div class="font-medium">
+                    {{ scItem?.product?.brandName }}
+                    <a class="ml-1" @click="modalProductDetail?.openModal(scItem?.product!)">
+                      <IconFileSearch />
+                    </a>
+                  </div>
+                  <div style="font-size: 0.8rem">
+                    {{ scItem?.product?.substance }}
+                  </div>
+                  <div style="font-size: 0.8rem" class="flex flex-wrap">
+                    <div v-if="scItem.systemQuantity !== scItem.product?.quantity">
+                      ID {{ scItem.batchId }} -&nbsp;
+                    </div>
+                    <div v-if="scItem.batch?.lotNumber">Lô {{ scItem.batch?.lotNumber }}</div>
+                    <div v-if="scItem.batch?.expiryDate">
+                      - HSD {{ ESTimer.timeToText(scItem.batch?.expiryDate) }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">{{ scItem.product?.unitBasicName || '' }}</td>
+              <td class="text-center">
+                <div class="flex flex-wrap items-center gap-2 justify-center">
+                  <span>{{ scItem.systemQuantity }}</span>
+                  <span v-if="scItem.systemQuantity !== scItem.product?.quantity">
+                    / {{ scItem.product?.quantity }}
+                  </span>
+                  <VueTooltip
+                    v-if="scItem.systemQuantity !== scItem.product?.quantity"
+                    class="flex"
+                  >
+                    <template #trigger>
+                      <IconQuestionCircle style="font-size: 16px; color: orange" />
+                    </template>
+                    <div>
+                      Sản phẩm này có nhiều lô hàng khác nhau, với tổng số lượng là:
+                      {{ scItem.product?.quantity }}
+                    </div>
+                    <div>Lô hàng này có số lượng là: {{ scItem.systemQuantity }}</div>
+                  </VueTooltip>
+                </div>
+              </td>
+              <td style="width: 150px">
+                <div class="flex items-center justify-between">
+                  <button
+                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                    @click="handleChangeActualQuantity(index, scItem.actualQuantity - 1)"
+                  >
+                    <IconMinus />
+                  </button>
+                  <div style="width: calc(100% - 60px); min-width: 50px">
+                    <InputNumber
+                      :value="scItem.actualQuantity"
+                      @update:value="(v) => handleChangeActualQuantity(index, v)"
+                      textAlign="right"
+                    />
+                  </div>
+                  <button
+                    style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cdcdcd"
+                    class="flex items-center justify-center cursor-pointer hover:bg-[#dedede] disabled:opacity-[30%] disabled:cursor-not-allowed"
+                    @click="handleChangeActualQuantity(index, scItem.actualQuantity + 1)"
+                  >
+                    <IconPlus />
+                  </button>
+                </div>
+              </td>
+              <td class="text-center">{{ scItem.actualQuantity - scItem.systemQuantity }}</td>
+              <td>
+                <div>
+                  <InputHint
+                    v-model:value="stockCheck.stockCheckItemList[index].note"
+                    :options="['Hư hỏng', 'Mất', 'Khác']"
+                    :logic-filter="(item: string, text: string) => ESString.customFilter(item, text)"
+                  />
+                </div>
+              </td>
+              <td>
+                <div
+                  class="flex items-center justify-center"
+                  style="color: red; cursor: pointer"
+                  @click="stockCheck.stockCheckItemList.splice(index, 1)"
+                >
+                  <IconDelete style="font-size: 18px" />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="100">Tổng số sản phẩm: {{ stockCheck.stockCheckItemList.length }}</td>
+            </tr>
+            <tr>
+              <td colspan="100">
+                <span>Tổng vốn bị lệch:</span>
+                <span class="ml-4 font-medium">{{ formatMoney(sumCostAmountDifferent) }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div style="flex-basis: 300px; flex-grow: 1">
-      <div class="bg-white p-4">
-        <div>
-          <div class="">Thời gian tạo phiếu</div>
-          <div>
-            <InputDate v-model:value="stockCheck.createdAt" typeParser="number" show-time />
-          </div>
-        </div>
-        <div class="mt-4">
-          <div>Nhân viên tạo phiếu</div>
-          <div>
-            <InputText :value="stockCheck.createdByUser?.fullName" disabled />
-          </div>
-        </div>
-        <div class="mt-4">
-          <div>Ghi chú</div>
-          <div>
-            <InputText v-model:value="stockCheck.note" />
-          </div>
-        </div>
-
-        <div class="mt-4 w-full flex flex-col">
+    <div class="mt-4">
+      <div class="bg-white p-4 flex justify-center">
+        <div class="">
           <VueButton
             color="blue"
             :loading="saveLoading"

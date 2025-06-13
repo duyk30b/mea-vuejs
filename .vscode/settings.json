@@ -13,7 +13,7 @@
     "editorInlayHint.foreground": "#ffffffcc"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "vscode.typescript-language-features",
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     }
@@ -25,11 +25,9 @@
   "javascript.preferences.quoteStyle": "single",
   "javascript.format.semicolons": "remove",
   "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.preferences.importModuleSpecifier": "relative",
   "typescript.preferences.quoteStyle": "single",
   "typescript.format.semicolons": "remove",
   "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.inlayHints.parameterNames.enabled": "literals",
   "git.allowForcePush": true,
   "cSpell.language": "en,vi",
@@ -41,11 +39,13 @@
     "chartjs",
     "colspan",
     "contenteditable",
+    "ICDDB",
     "Medihome",
     "oneline",
     "pinia",
     "tailwindcss",
     "tinymce",
+    "Upserted",
     "viettelpost",
     "vuejs",
     "zalo"

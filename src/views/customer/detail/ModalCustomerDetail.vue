@@ -13,11 +13,10 @@ import {
 import { IconRadiology } from '../../../common/icon-google'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../../modules/customer'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString } from '../../../utils'
+import { ESString } from '../../../utils'
 import CustomerAppointmentHistory from './CustomerAppointmentHistory.vue'
 import CustomerInfo from './CustomerInfo.vue'
 import CustomerPaymentHistory from './CustomerPaymentHistory.vue'
@@ -25,6 +24,7 @@ import CustomerProcedureHistory from './CustomerProcedureHistory.vue'
 import CustomerProductHistory from './CustomerProductHistory.vue'
 import CustomerRadiologyHistory from './CustomerRadiologyHistory.vue'
 import CustomerTicketHistory from './CustomerTicketHistory.vue'
+import { MeService } from '../../../modules/_me/me.service'
 
 const TABS_KEY = {
   INFO: 'CUSTOMER_INFO',
@@ -40,10 +40,9 @@ const customerPaymentHistory = ref<InstanceType<typeof CustomerPaymentHistory>>(
 
 const emit = defineEmits<{ (e: 'update_customer', value: Customer): void }>()
 
-const meStore = useMeStore()
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 
 const showModal = ref(false)
 const activeTab = ref(localStorage.getItem('MODAL_CUSTOMER_DETAIL_TAB_SHOW') || TABS_KEY.INFO)
@@ -76,7 +75,7 @@ defineExpose({ openModal })
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium flex flex-wrap gap-1" style="font-size: 16px">
           <div>{{ customer.fullName }} -</div>
-          <a :href="'tel:' + customer.phone">{{ DString.formatPhone(customer.phone || '') }}</a>
+          <a :href="'tel:' + customer.phone">{{ ESString.formatPhone(customer.phone || '') }}</a>
           <div>
             <span v-if="customer.debt > 0">
               - Nợ:
@@ -101,7 +100,7 @@ defineExpose({ openModal })
               Thông tin
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.APPOINTMENT_READ]"
+              v-if="organizationPermission[PermissionId.APPOINTMENT]"
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.APPOINTMENT_HISTORY"
             >
@@ -110,33 +109,41 @@ defineExpose({ openModal })
             </VueTabMenu>
             <VueTabMenu
               v-if="
-                permissionIdMap[PermissionId.TICKET_ORDER_READ] ||
-                permissionIdMap[PermissionId.TICKET_CLINIC_READ]
+                organizationPermission[PermissionId.TICKET_ORDER] ||
+                organizationPermission[PermissionId.TICKET_CLINIC]
               "
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.TICKET_HISTORY"
             >
               <IconAudit />
-              Phiếu thu
+              Tiếp đón
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.PAYMENT_READ]"
+              v-if="organizationPermission[PermissionId.PAYMENT]"
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.PAYMENT_HISTORY"
             >
               <IconDollar />
               Thanh toán
             </VueTabMenu>
-            <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PRODUCT_HISTORY">
+            <VueTabMenu
+              v-if="organizationPermission[PermissionId.PRODUCT]"
+              style="padding: 6px 6px"
+              :tabKey="TABS_KEY.PRODUCT_HISTORY"
+            >
               <IconOneToOne />
               Sản phẩm
             </VueTabMenu>
-            <VueTabMenu style="padding: 6px 6px" :tabKey="TABS_KEY.PROCEDURE_HISTORY">
+            <VueTabMenu
+              v-if="organizationPermission[PermissionId.PROCEDURE]"
+              style="padding: 6px 6px"
+              :tabKey="TABS_KEY.PROCEDURE_HISTORY"
+            >
               <IconReconciliation />
               Dịch vụ
             </VueTabMenu>
             <VueTabMenu
-              v-if="permissionIdMap[PermissionId.TICKET_CLINIC_READ]"
+              v-if="organizationPermission[PermissionId.RADIOLOGY]"
               style="padding: 6px 6px"
               :tabKey="TABS_KEY.RADIOLOGY_HISTORY"
             >

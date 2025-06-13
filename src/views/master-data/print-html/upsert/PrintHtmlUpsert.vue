@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import VueButton from '@/common/VueButton.vue'
+import MonacoEditor from '@/common/monaco-editor/MonacoEditor.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputNumber, InputText } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { PrintHtml, PrintHtmlCompile, PrintHtmlService } from '@/modules/print-html'
+import { Ticket, TicketService } from '@/modules/ticket'
+import type { TicketRadiology } from '@/modules/ticket-radiology'
+import { ESDom } from '@/utils'
+import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputText } from '../../../../common/vue-form'
-import VueButton from '../../../../common/VueButton.vue'
-import { useMeStore } from '../../../../modules/_me/me.store'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '../../../../modules/print-html'
-import { compiledTemplatePrintHtml } from '../../../../modules/print-html/print-html.compiled'
-import { Ticket, TicketService } from '../../../../modules/ticket'
-import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectPrintHtmlExample from './ModalSelectPrintHtmlExample.vue'
 import ModalSelectTicketExample from './ModalSelectTicketExample.vue'
-import { MeService } from '../../../../modules/_me/me.service'
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 
 const modalSelectTicketExample = ref<InstanceType<typeof ModalSelectTicketExample>>()
 const modalSelectPrintHtmlExample = ref<InstanceType<typeof ModalSelectPrintHtmlExample>>()
@@ -25,9 +25,9 @@ const iframe = ref<HTMLIFrameElement>()
 
 const route = useRoute()
 const router = useRouter()
-const meStore = useMeStore()
-const { organization, user } = meStore
+const { organization, user } = MeService
 
+const printHtmlOrigin = ref(PrintHtml.blank())
 const printHtml = ref(PrintHtml.blank())
 const printHtmlHeader = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
@@ -35,65 +35,78 @@ const ticketDemo = ref(Ticket.blank())
 const saveLoading = ref(false)
 
 const ticketMap: Record<string, Ticket> = {}
-const dataStringExample = ref<string>('')
 
 let systemVarLog = {}
 
 onBeforeMount(async () => {
   const printHtmlId = Number(route.params.id)
   if (printHtmlId) {
-    const result = await PrintHtmlService.detail(printHtmlId)
-    printHtml.value = result || PrintHtml.blank()
+    const printHtmlResponse = await PrintHtmlService.detail(printHtmlId)
+    printHtmlOrigin.value = printHtmlResponse || PrintHtml.blank()
+    printHtml.value = PrintHtml.from(printHtmlOrigin.value)
   } else {
     printHtml.value = PrintHtml.blank()
   }
 
-  printHtmlHeader.value = await PrintHtmlService.getPrintHtmlHeader()
+  const printHtmlHeaderCurrent = await PrintHtmlAction.getPrintHtmlHeader()
+  if (printHtmlHeaderCurrent.id !== printHtmlId) {
+    printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlHeader()
+  }
+})
+
+const hasChangeData = computed(() => {
+  return !PrintHtml.equal(printHtmlOrigin.value, printHtml.value)
 })
 
 const updatePreview = () => {
   if (!ticketDemo.value.id) return
   if (!iframe.value) return
-  let data = {}
+  let data: Record<string, any> = {}
   const ticket = ticketDemo.value
   try {
     eval(printHtml.value.dataExample)
     if (!data || typeof data !== 'object') {
       data = {}
     }
-    dataStringExample.value = JSON.stringify(data, null, 2)
   } catch (error) {
     data = {}
+    console.log('🚀 ~ PrintHtmlUpsert.vue:72 ~ updatePreview ~ error:', error)
   }
+
+  let ticketRadiology: TicketRadiology = data.ticketRadiology || {}
 
   const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
   if (!doc) return
 
-  const compiledHeader = compiledTemplatePrintHtml({
-    organization,
-    ticket,
-    data,
-    printHtml: printHtmlHeader.value,
-  })
-  const compiledResult = compiledTemplatePrintHtml({
-    organization,
-    ticket,
-    data,
-    printHtml: printHtml.value,
-    _LAYOUT: {
-      HEADER: compiledHeader.html,
+  const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+    data: {
+      organization: organization.value,
+      ticket,
+      customer: ticket.customer!,
+      ...data,
     },
+    template: {
+      _header: printHtmlHeader.value.html,
+      _content: ticketRadiology.description || '',
+      _html: printHtml.value.html,
+    },
+    variablesString: [
+      printHtmlHeader.value.initVariable,
+      printHtml.value.initVariable,
+      // ticketRadiology.customVariables, // không cho ghi đè để tránh nhầm lẫn
+    ],
   })
-  systemVarLog = compiledResult.systemVar || {}
-
-  if (!compiledResult.html) {
-    return
-  }
+  systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
 
   ESDom.writeWindow(doc, {
-    html: compiledResult.html,
-    cssList: [compiledHeader.css, compiledResult.css],
+    html: printHtmlCompiled?.htmlString || '',
+    cssList: [
+      printHtmlHeader.value.css,
+      printHtml.value.css,
+      // ticketRadiology.customStyles || '' // không cho ghi đè để tránh nhầm lẫn
+    ],
   })
+  console.log('Compile HTML success !!!')
 }
 
 const handleModalSelectTicketDemoSuccess = async (ticketDemoId: number) => {
@@ -140,7 +153,7 @@ const handleModalSelectPrintHtmlExampleSuccess = (printHtmlProp: PrintHtml) => {
 
 const startTestPrint = async () => {
   try {
-    let data = {}
+    let data: Record<string, any> = {}
     const ticket = ticketDemo.value
     try {
       eval(printHtml.value.dataExample)
@@ -152,31 +165,37 @@ const startTestPrint = async () => {
       console.log('🚀 ~ PrintHtmlUpsert.vue:163 ~ startTestPrint ~ error:', error)
     }
 
-    const compiledHeader = compiledTemplatePrintHtml({
-      organization,
-      ticket,
-      data,
-      printHtml: printHtmlHeader.value,
-    })
-    const _LAYOUT_HEADER = compiledHeader.html
+    let ticketRadiology: TicketRadiology = data.ticketRadiology || {}
 
-    const compiledResult = compiledTemplatePrintHtml({
-      organization,
-      ticket,
-      data,
-      printHtml: printHtml.value,
-      _LAYOUT: {
-        HEADER: _LAYOUT_HEADER,
+    const doc = iframe.value?.contentDocument || iframe.value?.contentWindow?.document
+    if (!doc) return
+
+    const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+      data: {
+        organization: organization.value,
+        ticket,
+        customer: ticket.customer!,
+        ...data,
       },
+      template: {
+        _header: printHtmlHeader.value.html,
+        _content: ticketRadiology.description || '',
+        _html: printHtml.value.html,
+      },
+      variablesString: [
+        printHtmlHeader.value.initVariable,
+        printHtml.value.initVariable,
+        ticketRadiology.customVariables,
+      ],
     })
-    systemVarLog = compiledResult.systemVar || {}
-
-    if (!compiledResult.html) {
-      return AlertStore.addError('Cài đặt in thất bại')
-    }
+    systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
+    ESDom.writeWindow(doc, {
+      html: printHtmlCompiled?.htmlString || '',
+      cssList: [printHtmlHeader.value.css, printHtml.value.css, ticketRadiology.customStyles || ''],
+    })
     await ESDom.startPrint('iframe-print', {
-      html: compiledResult.html,
-      cssList: [compiledHeader.css, compiledResult.css],
+      html: printHtmlCompiled?.htmlString || '',
+      cssList: [printHtmlHeader.value.css, printHtml.value.css, ticketRadiology.customStyles || ''],
     })
   } catch (error) {
     console.log('🚀 ~ PrintHtmlUpsert.vue:182 ~ startTestPrint ~ error:', error)
@@ -192,12 +211,17 @@ const handleSave = async () => {
   try {
     if (!printHtml.value.id) {
       const response = await PrintHtmlService.createOne(printHtml.value)
+      printHtmlOrigin.value = response
+      printHtml.value = PrintHtml.from(response)
       emit('success', response, 'CREATE')
     } else {
       const response = await PrintHtmlService.updateOne(printHtml.value.id, printHtml.value)
+      printHtmlOrigin.value = response
+      printHtml.value = PrintHtml.from(response)
       emit('success', response, 'UPDATE')
     }
-    router.push({ name: 'PrintHtml' })
+    // router.push({ name: 'PrintHtml' })
+    AlertStore.addSuccess('Cập nhật thành công', 500)
   } catch (error) {
     console.log('🚀 ~ file: PrintHtmlUpsert.vue:46 ~ handleSave ~ error:', error)
   } finally {
@@ -223,12 +247,22 @@ const handleSave = async () => {
   </div>
 
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
-    <div>
-      <div class="flex gap-4 justify-start">
-        <span>Tên mẫu in</span>
+    <div class="flex flex-wrap gap-4">
+      <div style="width: 100px">
+        <div class="flex gap-4 justify-start">
+          <span>STT</span>
+        </div>
+        <div>
+          <InputNumber v-model:value="printHtml.priority" required />
+        </div>
       </div>
-      <div>
-        <InputText v-model:value="printHtml.name" required />
+      <div style="flex: 1">
+        <div class="flex gap-4 justify-start">
+          <span>Tên mẫu in</span>
+        </div>
+        <div>
+          <InputText v-model:value="printHtml.name" required />
+        </div>
       </div>
     </div>
 
@@ -236,9 +270,9 @@ const handleSave = async () => {
       class="mt-4"
       style="
         display: grid;
-        grid-template-areas: 'html viewer' 'css viewer' 'getDataExample dataText' 'initVariable  dataText';
+        grid-template-areas: 'html viewer' 'css viewer' 'initVariableHeader viewer' 'initVariable getDataExample';
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: 500px 300px 100px 200px;
+        grid-template-rows: 500px 300px 200px 200px;
         gap: 16px;
       "
     >
@@ -272,7 +306,7 @@ const handleSave = async () => {
           <a @click="modalSelectTicketExample?.openModal()">Xem thử</a>
           <a @click="startTestPrint">In thử</a>
         </div>
-        <div style="flex-grow: 3">
+        <div style="flex-grow: 3; box-shadow: 4px 4px 8px 4px rgba(0, 0, 0, 0.2)">
           <iframe ref="iframe" class="preview-iframe" style="width: 100%; height: 100%"></iframe>
         </div>
       </div>
@@ -281,9 +315,24 @@ const handleSave = async () => {
         <div>Giả định cách lấy "data" mẫu từ "ticket"</div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor
-            v-model:value="printHtml!.dataExample"
+            v-model:value="printHtml.dataExample"
             language="javascript"
             @update:value="updatePreview"
+          />
+        </div>
+      </div>
+
+      <div style="grid-area: initVariableHeader" class="flex flex-col">
+        <div class="flex justify-between">
+          <span>Khởi tạo biến header</span>
+          <span></span>
+        </div>
+        <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
+          <MonacoEditor
+            v-model:value="printHtmlHeader.initVariable"
+            language="javascript"
+            @update:value="updatePreview"
+            readOnly
           />
         </div>
       </div>
@@ -295,19 +344,19 @@ const handleSave = async () => {
         </div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor
-            v-model:value="printHtml!.initVariable"
+            v-model:value="printHtml.initVariable"
             language="javascript"
             @update:value="updatePreview"
           />
         </div>
       </div>
 
-      <div style="grid-area: dataText; overflow: scroll" class="flex flex-col">
+      <!-- <div style="grid-area: dataText; overflow: scroll" class="flex flex-col">
         <div>Kết quả "data" mẫu</div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor read-only :value="dataStringExample" language="json" />
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="mt-4 flex justify-between">
@@ -318,6 +367,7 @@ const handleSave = async () => {
         type="submit"
         :loading="saveLoading"
         icon="save"
+        :disabled="!hasChangeData"
       >
         Lưu lại
       </VueButton>

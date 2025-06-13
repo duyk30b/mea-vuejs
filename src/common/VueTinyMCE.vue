@@ -18,7 +18,7 @@ import 'tinymce/skins/content/default/content.js'
 import 'tinymce/skins/ui/oxide/content.js'
 import 'tinymce/skins/ui/oxide/skin.js'
 import 'tinymce/themes/silver/theme.min.js'
-import { defineEmits, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: string
@@ -50,6 +50,16 @@ onMounted(async () => {
         font-family: 'Times New Roman', Times, serif;
         font-size: 16px;
         margin: 0 0.5rem 0 0.5rem;
+      }
+      body * {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      table {
+        width: 100%;
+      }
+      table td {
+        padding: 0 6px !important;
       }
     `,
     toolbar:

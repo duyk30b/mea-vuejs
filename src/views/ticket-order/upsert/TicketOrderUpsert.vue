@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import dayjs, { Dayjs } from 'dayjs'
 import { nextTick, onBeforeMount, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
-import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import VueTag from '../../../common/VueTag.vue'
 import { IconFileAdd, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import VueDropdown from '../../../common/popover/VueDropdown.vue'
+import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputMoney, InputNumber, InputOptions } from '../../../common/vue-form'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
 import { DeliveryStatus, DiscountType } from '../../../modules/enum'
@@ -20,7 +20,7 @@ import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.mo
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
 import { TicketApi } from '../../../modules/ticket/ticket.api'
-import { DString, ESTimer } from '../../../utils'
+import { ESString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketOrderExpenseList from './TicketOrderExpenseList.vue'
@@ -35,7 +35,6 @@ import {
   ETicketOrderUpsertMode,
   ticketOrderUpsertRef,
 } from './ticket-order-upsert.ref'
-import VuePopConfirm from '../../../common/popover/VuePopConfirm.vue'
 
 const TABS_KEY = {
   PRODUCT: 'PRODUCT',
@@ -55,8 +54,7 @@ const router = useRouter()
 const route = useRoute()
 
 const settingStore = useSettingStore()
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission, organizationPermission } = MeService
 const { formatMoney } = settingStore
 
 let defaultTabStart = localStorage.getItem('TICKET_ORDER_UPSERT_TAB_START') || TABS_KEY.PRODUCT
@@ -397,7 +395,7 @@ const handleChangeTabs = (activeKey: any) => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalTicketOrderUpsertSetting?.openModal()"
           >
             Cài đặt bán hàng
@@ -415,13 +413,13 @@ const handleChangeTabs = (activeKey: any) => {
           <VueTabs :tabShow="tabStart" @update:tabShow="handleChangeTabs">
             <template #menu>
               <VueTabMenu
-                v-if="permissionIdMap[PermissionId.PRODUCT_READ]"
+                v-if="organizationPermission[PermissionId.PRODUCT]"
                 :tabKey="TABS_KEY.PRODUCT"
               >
                 Hàng hóa ({{ ticketOrderUpsertRef.ticketProductList!.length }})
               </VueTabMenu>
               <VueTabMenu
-                v-if="permissionIdMap[PermissionId.MASTER_DATA_PROCEDURE]"
+                v-if="organizationPermission[PermissionId.PROCEDURE]"
                 :tabKey="TABS_KEY.PROCEDURE"
               >
                 Dịch vụ ({{ ticketOrderUpsertRef.ticketProcedureList!.length }})
@@ -461,14 +459,14 @@ const handleChangeTabs = (activeKey: any) => {
               )
             </span>
             <a
-              v-if="customer.id && permissionIdMap[PermissionId.CUSTOMER_UPDATE]"
+              v-if="customer.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(customer)"
             >
               Sửa thông tin KH
             </a>
             <div style="margin-left: auto">
               <a
-                v-if="!customer.id && permissionIdMap[PermissionId.CUSTOMER_CREATE]"
+                v-if="!customer.id && userPermission[PermissionId.CUSTOMER_CREATE]"
                 @click="modalCustomerUpsert?.openModal()"
               >
                 Thêm KH mới
@@ -490,10 +488,10 @@ const handleChangeTabs = (activeKey: any) => {
               <template #option="{ item: { data } }">
                 <div>
                   <b>{{ data.fullName }}</b>
-                  - {{ DString.formatPhone(data.phone) }} -
+                  - {{ ESString.formatPhone(data.phone) }} -
                   {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                 </div>
-                <div>{{ DString.formatAddress(data) }}</div>
+                <div>{{ ESString.formatAddress(data) }}</div>
               </template>
             </InputOptions>
           </div>
@@ -660,7 +658,7 @@ const handleChangeTabs = (activeKey: any) => {
 
         <template
           v-if="
-            permissionIdMap[PermissionId.TICKET_ORDER_DRAFT_CRUD] &&
+            userPermission[PermissionId.TICKET_ORDER_DRAFT_CRUD] &&
             [TicketStatus.Draft].includes(ticketOrderUpsertRef.status)
           "
         >
@@ -700,7 +698,7 @@ const handleChangeTabs = (activeKey: any) => {
           <div
             v-if="
               settingStore.SCREEN_INVOICE_UPSERT.save.createBasicAndNew &&
-              permissionIdMap[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
+              userPermission[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
             "
             class="mt-4 w-full flex flex-col px-1"
           >
@@ -721,7 +719,7 @@ const handleChangeTabs = (activeKey: any) => {
           <div
             v-if="
               [TicketStatus.Deposited].includes(ticketOrderUpsertRef.status) &&
-              permissionIdMap[PermissionId.TICKET_ORDER_DEPOSITED_UPDATE]
+              userPermission[PermissionId.TICKET_ORDER_DEPOSITED_UPDATE]
             "
             class="mt-4 w-full flex flex-col px-1"
           >
@@ -738,9 +736,8 @@ const handleChangeTabs = (activeKey: any) => {
           </div>
           <div
             v-if="
-              [TicketStatus.Debt, TicketStatus.Completed].includes(
-                ticketOrderUpsertRef.status,
-              ) && permissionIdMap[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
+              [TicketStatus.Debt, TicketStatus.Completed].includes(ticketOrderUpsertRef.status) &&
+              userPermission[PermissionId.TICKET_ORDER_DEBT_SUCCESS_CRUD]
             "
             class="mt-4 w-full flex flex-col px-1"
           >

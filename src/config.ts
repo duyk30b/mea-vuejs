@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 export const CONFIG = {
   CLIENT_ID: '',
   MODE: import.meta.env.MODE,
@@ -7,7 +9,7 @@ export const CONFIG = {
       : `http://${location.hostname}:20000`,
   BUILD_TIME: '',
 }
-;(window as any)._MEA_CONFIG = CONFIG
+  ; (window as any)._MEA_CONFIG = CONFIG
 // CONFIG.API_URL = 'https://api.medihome.vn'
 
 const loadConfig = async () => {

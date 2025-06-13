@@ -11,10 +11,9 @@ import {
   PrescriptionSample,
   PrescriptionSampleService,
 } from '../../../../modules/prescription-sample'
+import { MeService } from '@/modules/_me/me.service'
 
 const psList = ref<PrescriptionSample[]>([])
-
-const emit = defineEmits<{ (e: 'hasChangeData', hasChangeData: boolean): void }>()
 
 const showModal = ref(false)
 const psInsert = ref(PrescriptionSample.blank())
@@ -24,11 +23,10 @@ const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
-const hasChangeData = ref(false)
-
 const startFetchData = async () => {
   try {
     const { data, meta } = await PrescriptionSampleService.pagination({
+      filter: { userId: { IN: [0, MeService.user.value?.id || 0] } },
       page: page.value,
       limit: limit.value,
       sort: { priority: 'ASC' },
@@ -42,10 +40,10 @@ const startFetchData = async () => {
 
 const openModal = async (psProp: PrescriptionSample) => {
   showModal.value = true
-  hasChangeData.value = false
   await startFetchData()
   psInsert.value = PrescriptionSample.from(psProp)
   psInsert.value.priority = total.value + 1
+  psInsert.value.userId = MeService.user.value?.id || 0
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -63,7 +61,6 @@ const clear = () => {
 const closeModal = () => {
   showModal.value = false
   clear()
-  emit('hasChangeData', hasChangeData.value)
 }
 
 const clickDestroyPrescriptionSample = async (prescriptionSampleId: number) => {
@@ -83,7 +80,6 @@ const clickDestroyPrescriptionSample = async (prescriptionSampleId: number) => {
         }
         await PrescriptionSampleService.destroyOne(prescriptionSampleId)
         await startFetchData()
-        hasChangeData.value = true
       } catch (error) {
         console.log('🚀 ~ clickDestroyPrescriptionSample: ~ error:', error)
       }
@@ -98,8 +94,8 @@ const clickEditPrescriptionSample = (psProp: PrescriptionSample) => {
 const startCreatePrescriptionSample = async () => {
   try {
     await PrescriptionSampleService.createOne(psInsert.value)
-    hasChangeData.value = true
     closeModal()
+    await PrescriptionSampleService.getAll()
   } catch (error) {
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
@@ -114,8 +110,8 @@ const startReplaceMedicines = async (psId: number) => {
     if (findIndex !== -1) {
       psList.value[findIndex] = result
     }
-    hasChangeData.value = true
     closeModal()
+    await PrescriptionSampleService.getAll()
   } catch (error) {
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
@@ -128,8 +124,8 @@ const startUpdatePrescriptionSample = async () => {
     if (findIndex !== -1) {
       psList.value[findIndex] = result
     }
-    hasChangeData.value = true
     psUpdate.value = PrescriptionSample.blank()
+    await PrescriptionSampleService.getAll()
   } catch (error) {
     console.log('🚀 TicketClinicPrescription.vue:90 ~ error:', error)
   }
@@ -170,7 +166,8 @@ defineExpose({ openModal })
                       <div v-if="!psUpdate.id">
                         <VueButton
                           size="small"
-                          @click="startReplaceMedicines(psList[index - 1].id)">
+                          @click="startReplaceMedicines(psList[index - 1].id)"
+                        >
                           Ghi đè
                         </VueButton>
                       </div>
@@ -182,7 +179,8 @@ defineExpose({ openModal })
                     <td class="text-center">
                       <a
                         class="text-orange-600"
-                        @click="clickEditPrescriptionSample(psList[index - 1])">
+                        @click="clickEditPrescriptionSample(psList[index - 1])"
+                      >
                         <IconEditSquare width="20" height="20" />
                       </a>
                     </td>
@@ -190,7 +188,8 @@ defineExpose({ openModal })
                       <a
                         v-if="!psUpdate.id"
                         class="text-red-500"
-                        @click="clickDestroyPrescriptionSample(psList[index - 1].id)">
+                        @click="clickDestroyPrescriptionSample(psList[index - 1].id)"
+                      >
                         <IconDelete width="20" height="20" />
                       </a>
                     </td>
@@ -237,7 +236,8 @@ defineExpose({ openModal })
               v-model:page="page"
               :delta="1"
               :total="total"
-              @change="changePagination" />
+              @change="changePagination"
+            />
           </div>
         </div>
 
@@ -249,7 +249,8 @@ defineExpose({ openModal })
                 <InputText
                   v-model:value="psInsert.name"
                   required
-                  placeholder="Điền tên đơn mẫu tại đây" />
+                  placeholder="Điền tên đơn mẫu tại đây"
+                />
               </div>
             </div>
             <div style="width: 150px">

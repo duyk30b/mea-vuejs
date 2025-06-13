@@ -1,4 +1,4 @@
-import { arrayToKeyValue, DString } from '../../utils'
+import { arrayToKeyValue, ESString } from '../../utils'
 import { useSettingStore } from '../_me/setting.store'
 import { PaymentApi } from '../payment/payment.api'
 import type { DistributorPaymentBody } from '../payment/payment.dto'
@@ -53,8 +53,8 @@ export class DistributorService {
         }
         if (filter.$OR && filter.$OR.length === 2) {
           if (
-            !DString.customFilter(i.fullName || '', filter.$OR[0].fullName.LIKE, 2) &&
-            !DString.customFilter(i.phone || '', filter.$OR[1].phone.LIKE, 2)
+            !ESString.customFilter(i.fullName || '', filter.$OR[0].fullName.LIKE, 2) &&
+            !ESString.customFilter(i.phone || '', filter.$OR[1].phone.LIKE, 2)
           ) {
             return false
           }
@@ -92,11 +92,11 @@ export class DistributorService {
     const page = options.page || 1
     const limit = options.limit || 10
     await DistributorService.getAll()
-    let data = DistributorService.executeQuery(DistributorService.distributorAll, options)
-    data = data.slice((page - 1) * limit, page * limit)
+    const dataQuery = DistributorService.executeQuery(DistributorService.distributorAll, options)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data,
-      meta: { total: DistributorService.distributorAll.length },
+      meta: { total: dataQuery.length },
     }
   }
 
@@ -110,10 +110,10 @@ export class DistributorService {
     await DistributorService.getAll()
     if (!text) text = ''
     const data = DistributorService.distributorAll.filter((i) => {
-      if (DString.customFilter(i.fullName || '', text, 2)) {
+      if (ESString.customFilter(i.fullName || '', text, 2)) {
         return true
       }
-      if (DString.customFilter(i.phone || '', text, 2)) {
+      if (ESString.customFilter(i.phone || '', text, 2)) {
         return true
       }
       return false

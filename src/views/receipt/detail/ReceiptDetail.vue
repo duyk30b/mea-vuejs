@@ -17,7 +17,6 @@ import { IconDelete } from '../../../common/icon-google'
 import VueDropdown from '../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { useMeStore } from '../../../modules/_me/me.store'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { DeliveryStatus, DeliveryStatusText, PaymentViewType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
@@ -30,6 +29,7 @@ import ModalReceiptDetailSettingScreen from './ModalReceiptDetailSettingScreen.v
 import ModalReceiptPayment from './ModalReceiptPayment.vue'
 import ReceiptDetailTable from './ReceiptDetailTable.vue'
 import { receipt } from './receipt-detail.ref'
+import { MeService } from '../../../modules/_me/me.service'
 
 const modalReceiptDetailSettingScreen = ref<InstanceType<typeof ModalReceiptDetailSettingScreen>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -40,8 +40,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const saveLoading = ref(false)
 
@@ -182,7 +181,7 @@ const openModalDistributorDetail = (distributorId: number) => {
 
 <template>
   <ModalReceiptDetailSettingScreen
-    v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+    v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalReceiptDetailSettingScreen"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
@@ -199,7 +198,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       </div>
       <div>
         <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD]"
+          v-if="userPermission[PermissionId.RECEIPT_DRAFT_CRUD]"
           color="blue"
           icon="plus"
           @click="
@@ -220,7 +219,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         </template>
         <div class="vue-menu">
           <a
-            v-if="permissionIdMap[PermissionId.ORGANIZATION_SETTING_UPSERT]"
+            v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
             @click="modalReceiptDetailSettingScreen?.openModal()"
           >
             Cài đặt hiển thị
@@ -285,7 +284,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       <div class="flex items-center gap-2">
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.RECEIPT_PAYMENT] &&
+            userPermission[PermissionId.RECEIPT_PAYMENT] &&
             [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Executing].includes(
               receipt.status,
             )
@@ -298,13 +297,13 @@ const openModalDistributorDetail = (distributorId: number) => {
         </VueButton>
       </div>
       <div class="flex items-center gap-2">
-        <VueButton v-if="permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD]" @click="startCopy">
+        <VueButton v-if="userPermission[PermissionId.RECEIPT_DRAFT_CRUD]" @click="startCopy">
           <IconCopy />
           Copy phiếu
         </VueButton>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
+            userPermission[PermissionId.RECEIPT_DRAFT_CRUD] &&
             [ReceiptStatus.Draft].includes(receipt.status)
           "
           color="blue"
@@ -315,7 +314,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         </VueButton>
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
+            userPermission[PermissionId.RECEIPT_DEPOSITED_UPDATE] &&
             [ReceiptStatus.Deposited].includes(receipt.status)
           "
           color="blue"
@@ -334,7 +333,7 @@ const openModalDistributorDetail = (distributorId: number) => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_TERMINATE] &&
+                userPermission[PermissionId.RECEIPT_TERMINATE] &&
                 [
                   ReceiptStatus.Deposited,
                   ReceiptStatus.Executing,
@@ -350,7 +349,7 @@ const openModalDistributorDetail = (distributorId: number) => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_DRAFT_CRUD] &&
+                userPermission[PermissionId.RECEIPT_DRAFT_CRUD] &&
                 receipt.status === ReceiptStatus.Draft
               "
               @click="clickDestroy()"
@@ -361,7 +360,7 @@ const openModalDistributorDetail = (distributorId: number) => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_DEPOSITED_DESTROY] &&
+                userPermission[PermissionId.RECEIPT_DEPOSITED_DESTROY] &&
                 receipt.status === ReceiptStatus.Deposited &&
                 receipt.paid === 0
               "
@@ -374,7 +373,7 @@ const openModalDistributorDetail = (distributorId: number) => {
             <a
               style="color: red"
               v-if="
-                permissionIdMap[PermissionId.RECEIPT_CANCELLED_DESTROY] &&
+                userPermission[PermissionId.RECEIPT_CANCELLED_DESTROY] &&
                 receipt.status === ReceiptStatus.Cancelled
               "
               @click="clickDestroy()"
@@ -395,8 +394,8 @@ const openModalDistributorDetail = (distributorId: number) => {
       <template v-if="receipt.status === ReceiptStatus.Draft">
         <VueButton
           v-if="
-            permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT] &&
-            permissionIdMap[PermissionId.RECEIPT_PAYMENT]
+            userPermission[PermissionId.RECEIPT_SEND_PRODUCT] &&
+            userPermission[PermissionId.RECEIPT_PAYMENT]
           "
           color="blue"
           icon="send"
@@ -410,7 +409,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         <VueButton
           v-if="
             receipt.deliveryStatus === DeliveryStatus.Pending &&
-            permissionIdMap[PermissionId.RECEIPT_SEND_PRODUCT]
+            userPermission[PermissionId.RECEIPT_SEND_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"
@@ -423,7 +422,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         <VueButton
           v-if="
             receipt.paid > receipt.totalMoney &&
-            permissionIdMap[PermissionId.RECEIPT_REFUND_OVERPAID]
+            userPermission[PermissionId.RECEIPT_REFUND_OVERPAID]
           "
           color="green"
           icon="dollar"
@@ -436,7 +435,7 @@ const openModalDistributorDetail = (distributorId: number) => {
           v-if="
             receipt.deliveryStatus === DeliveryStatus.Delivered &&
             receipt.paid <= receipt.totalMoney &&
-            permissionIdMap[PermissionId.RECEIPT_CLOSE]
+            userPermission[PermissionId.RECEIPT_CLOSE]
           "
           color="blue"
           :loading="loadingProcess"
@@ -450,7 +449,7 @@ const openModalDistributorDetail = (distributorId: number) => {
 
       <template v-if="receipt.status === ReceiptStatus.Debt">
         <VueButton
-          v-if="permissionIdMap[PermissionId.RECEIPT_PAYMENT]"
+          v-if="userPermission[PermissionId.RECEIPT_PAYMENT]"
           color="blue"
           :loading="loadingProcess"
           @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"

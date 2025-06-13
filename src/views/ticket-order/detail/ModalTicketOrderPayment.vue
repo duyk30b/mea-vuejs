@@ -5,8 +5,9 @@ import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { nextTick, onMounted, ref } from 'vue'
 import { IconClose } from '../../../common/icon-antd'
-import { useMeStore } from '../../../modules/_me/me.store'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
+import { PaymentViewType } from '../../../modules/enum'
 import { PaymentMethodService, type PaymentMethod } from '../../../modules/payment-method'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { TicketStatus } from '../../../modules/ticket'
@@ -14,15 +15,13 @@ import { TicketOrderApi } from '../../../modules/ticket-order'
 import { ESArray } from '../../../utils'
 import TicketPaymentList from '../../ticket-base/TicketPaymentList.vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
-import { PaymentViewType } from '../../../modules/enum'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const meStore = useMeStore()
-const { permissionIdMap } = meStore
+const { userPermission } = MeService
 
 const showModal = ref(false)
 const paymentLoading = ref(false)
@@ -105,6 +104,7 @@ const startSendProductAndPaymentAndClose = async () => {
       money: money.value,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
+      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
@@ -265,7 +265,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
+              userPermission[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketOrderDetailRef.status)
             "
           >
@@ -346,7 +346,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketOrderDetailRef.status,
               )
@@ -425,9 +425,9 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
-              permissionIdMap[PermissionId.TICKET_ORDER_CLOSE] &&
+              userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
+              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.TICKET_ORDER_CLOSE] &&
               [TicketStatus.Draft].includes(ticketOrderDetailRef.status)
             "
           >
@@ -511,7 +511,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              permissionIdMap[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
               [TicketStatus.Debt].includes(ticketOrderDetailRef.status)
             "
           >

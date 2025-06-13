@@ -7,7 +7,7 @@ export class RootOrganizationGetQuery {
     users?: boolean
   }
 
-  filter?: {}
+  filter?: { id: number }
   sort?: { id?: 'ASC' | 'DESC' }
 
   static toQuery(instance: Partial<RootOrganizationGetQuery>) {
@@ -21,11 +21,11 @@ export class RootOrganizationGetQuery {
   }
 }
 
-export class RootOrganizationPaginationQuery extends RootOrganizationGetQuery {}
-export class RootOrganizationListQuery extends OmitClass(RootOrganizationGetQuery, ['page']) {}
+export class RootOrganizationPaginationQuery extends RootOrganizationGetQuery { }
+export class RootOrganizationListQuery extends OmitClass(RootOrganizationGetQuery, ['page']) { }
 export class RootOrganizationDetailQuery extends PickClass(RootOrganizationGetQuery, [
   'relation',
-]) {}
+]) { }
 
 export class RootUserGetQuery {
   page?: number
@@ -35,7 +35,7 @@ export class RootUserGetQuery {
     role?: boolean
   }
 
-  filter?: {}
+  filter?: { id: number }
   sort?: { id?: 'ASC' | 'DESC' }
 
   static toQuery(instance: Partial<RootUserGetQuery>) {
@@ -49,6 +49,6 @@ export class RootUserGetQuery {
   }
 }
 
-export class RootUserPaginationQuery extends RootUserGetQuery {}
-export class RootUserListQuery extends OmitClass(RootUserGetQuery, ['page']) {}
-export class RootUserDetailQuery extends PickClass(RootUserGetQuery, ['relation']) {}
+export class RootUserPaginationQuery extends RootUserGetQuery { }
+export class RootUserListQuery extends OmitClass(RootUserGetQuery, ['page']) { }
+export class RootUserDetailQuery extends PickClass(RootUserGetQuery, ['relation']) { }

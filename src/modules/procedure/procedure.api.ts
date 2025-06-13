@@ -1,6 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import type { Discount } from '../discount'
+import type { Position } from '../position'
 import { TicketProcedure } from '../ticket-procedure'
 import {
   ProcedureDetailQuery,
@@ -36,7 +38,7 @@ export class ProcedureApi {
       const { data } = response.data as BaseResponse
       return Procedure.fromList(data)
     },
-    200
+    200,
   )
 
   static async detail(id: number, options: ProcedureDetailQuery): Promise<Procedure> {
@@ -47,21 +49,28 @@ export class ProcedureApi {
     return Procedure.from(data.procedure)
   }
 
-  static async createOne(procedure: Procedure) {
+  static async createOne(body: {
+    procedure: Procedure
+    positionList?: Position[]
+    discountList?: Discount[]
+  }) {
+    const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.post('/procedure/create', {
-      name: procedure.name,
-      procedureGroupId: procedure.procedureGroupId,
+      procedure: {
+        procedureCode: procedure.procedureCode,
+        name: procedure.name,
+        procedureGroupId: procedure.procedureGroupId,
 
-      procedureType: procedure.procedureType,
-      quantityDefault: procedure.quantityDefault,
-      gapHours: procedure.gapHours,
-      price: procedure.price, // Giá mặc định
+        procedureType: procedure.procedureType,
+        quantityDefault: procedure.quantityDefault,
+        gapHours: procedure.gapHours,
+        price: procedure.price, // Giá mặc định
 
-      consumablesHint: procedure.consumablesHint,
-      isActive: procedure.isActive,
-
-      commissionList: (procedure.commissionList || [])
-        .filter((i) => !!i.roleId)
+        consumablesHint: procedure.consumablesHint,
+        isActive: procedure.isActive,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -69,26 +78,51 @@ export class ProcedureApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
     return Procedure.from(data.procedure)
   }
 
-  static async updateOne(id: number, procedure: Procedure) {
+  static async updateOne(
+    id: number,
+    body: {
+      procedure: Procedure
+      positionList?: Position[]
+      discountList?: Discount[]
+    },
+  ) {
+    const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
-      name: procedure.name,
-      procedureGroupId: procedure.procedureGroupId,
+      procedure: {
+        procedureCode: procedure.procedureCode,
+        name: procedure.name,
+        procedureGroupId: procedure.procedureGroupId,
 
-      procedureType: procedure.procedureType,
-      quantityDefault: procedure.quantityDefault,
-      gapHours: procedure.gapHours,
-      price: procedure.price, // Giá mặc định
+        procedureType: procedure.procedureType,
+        quantityDefault: procedure.quantityDefault,
+        gapHours: procedure.gapHours,
+        price: procedure.price, // Giá mặc định
 
-      consumablesHint: procedure.consumablesHint,
-      isActive: procedure.isActive,
-
-      commissionList: (procedure.commissionList || [])
-        .filter((i) => !!i.roleId)
+        consumablesHint: procedure.consumablesHint,
+        isActive: procedure.isActive,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -96,6 +130,20 @@ export class ProcedureApi {
             commissionCalculatorType: i.commissionCalculatorType,
           }
         }),
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ procedure: any }>
     return Procedure.from(data.procedure)

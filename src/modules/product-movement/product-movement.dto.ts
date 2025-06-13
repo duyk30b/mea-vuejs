@@ -1,6 +1,6 @@
 import { OmitClass } from '../../utils'
 import type { ConditionEnum, ConditionNumber } from '../_base/base-condition'
-import type { MovementType } from '../enum'
+import type { MovementType } from './product-movement.model'
 
 export class ProductMovementGetQuery {
   page?: number

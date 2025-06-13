@@ -1,7 +1,7 @@
 export class RadiologyGroup {
   id: number
   name: string
-
+  roomId: number
   updatedAt: number
 
   static init(): RadiologyGroup {
@@ -13,6 +13,8 @@ export class RadiologyGroup {
 
   static blank(): RadiologyGroup {
     const ins = RadiologyGroup.init()
+    ins.roomId = 0
+    ins.name = ''
     return ins
   }
 

@@ -1,6 +1,5 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { Customer } from '../customer'
 import type { TicketType } from '../ticket'
 import {
   AppointmentDetailQuery,
@@ -8,7 +7,7 @@ import {
   AppointmentListQuery,
   type AppointmentPaginationQuery,
 } from './appointment.dto'
-import { Appointment, AppointmentStatus } from './appointment.model'
+import { Appointment } from './appointment.model'
 
 export class AppointmentApi {
   static async pagination(options: AppointmentPaginationQuery) {
@@ -45,23 +44,23 @@ export class AppointmentApi {
       customer:
         appointment.customerId === 0 && appointment.customer
           ? {
-              fullName: appointment.customer.fullName,
-              phone: appointment.customer.phone,
-              facebook: appointment.customer.facebook || '',
-              zalo: appointment.customer.zalo || '',
-              customerSourceId: appointment.customer.customerSourceId || 0,
-              birthday: appointment.customer.birthday,
-              yearOfBirth: appointment.customer.yearOfBirth,
-              gender: appointment.customer.gender,
-              addressProvince: appointment.customer.addressProvince,
-              addressDistrict: appointment.customer.addressDistrict,
-              addressWard: appointment.customer.addressWard,
-              addressStreet: appointment.customer.addressStreet,
-              relative: appointment.customer.relative,
-              healthHistory: appointment.customer.healthHistory,
-              note: appointment.customer.note,
-              isActive: appointment.customer.isActive,
-            }
+            fullName: appointment.customer.fullName,
+            customerCode: appointment.customer.customerCode,
+            phone: appointment.customer.phone,
+            facebook: appointment.customer.facebook || '',
+            zalo: appointment.customer.zalo || '',
+            customerSourceId: appointment.customer.customerSourceId || 0,
+            birthday: appointment.customer.birthday,
+            yearOfBirth: appointment.customer.yearOfBirth,
+            gender: appointment.customer.gender,
+            addressProvince: appointment.customer.addressProvince,
+            addressWard: appointment.customer.addressWard,
+            addressStreet: appointment.customer.addressStreet,
+            relative: appointment.customer.relative,
+            healthHistory: appointment.customer.healthHistory,
+            note: appointment.customer.note,
+            isActive: appointment.customer.isActive,
+          }
           : undefined,
       fromTicketId: appointment.fromTicketId,
       registeredAt: appointment.registeredAt,
@@ -92,7 +91,7 @@ export class AppointmentApi {
 
   static async registerTicketClinic(
     appointmentId: number,
-    body: { registeredAt: number; ticketType: TicketType },
+    body: { roomId: number; registeredAt: number; ticketType: TicketType },
   ) {
     const response = await AxiosInstance.post(
       `/appointment/${appointmentId}/register-ticket-clinic`,

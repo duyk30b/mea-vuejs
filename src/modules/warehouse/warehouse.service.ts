@@ -62,11 +62,11 @@ export class WarehouseService {
     const limit = options.limit || 10
     await WarehouseService.fetchAll({ refresh: true })
 
-    let data = WarehouseService.executeQuery(WarehouseService.warehouseAll, options)
-    data = data.slice((page - 1) * limit, page * limit)
+    const dataQuery = WarehouseService.executeQuery(WarehouseService.warehouseAll, options)
+    const data = dataQuery.slice((page - 1) * limit, page * limit)
     return {
       data: Warehouse.fromList(data),
-      meta: { total: WarehouseService.warehouseAll.length },
+      meta: { total: dataQuery.length },
     }
   }
 

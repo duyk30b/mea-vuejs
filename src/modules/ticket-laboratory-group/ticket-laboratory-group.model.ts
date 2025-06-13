@@ -1,20 +1,20 @@
 import { Customer } from '../customer'
 import { LaboratoryGroup } from '../laboratory-group'
-import { TicketLaboratory } from '../ticket-laboratory/ticket-laboratory.model'
+import { TicketLaboratoryResult } from '../ticket-laboratory-result'
+import {
+  TicketLaboratory,
+  TicketLaboratoryStatus,
+} from '../ticket-laboratory/ticket-laboratory.model'
 import { Ticket } from '../ticket/ticket.model'
 
-export enum TicketLaboratoryGroupStatus {
-  Empty = 1,
-  Pending = 2,
-  Completed = 3,
-}
 export class TicketLaboratoryGroup {
   id: number
   ticketId: number
+  roomId: number
   customerId: number
   laboratoryGroupId: number
 
-  status: TicketLaboratoryGroupStatus
+  status: TicketLaboratoryStatus
   registeredAt: number | null
   startedAt: number | null
   result: string
@@ -23,6 +23,7 @@ export class TicketLaboratoryGroup {
   ticket?: Ticket
   laboratoryGroup?: LaboratoryGroup
   ticketLaboratoryList?: TicketLaboratory[]
+  ticketLaboratoryResultMap?: Record<string, TicketLaboratoryResult>
 
   static init(): TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
@@ -66,6 +67,9 @@ export class TicketLaboratoryGroup {
     }
     if (target.ticketLaboratoryList) {
       target.ticketLaboratoryList = TicketLaboratory.basicList(target.ticketLaboratoryList)
+    }
+    if (target.ticketLaboratoryResultMap) {
+      // todo
     }
     return target
   }

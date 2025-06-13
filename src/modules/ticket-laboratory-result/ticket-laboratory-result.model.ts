@@ -7,6 +7,7 @@ export class TicketLaboratoryResult {
   ticketId: number
   customerId: number
   laboratoryId: number
+  laboratoryGroupId: number
   ticketLaboratoryId: number
   ticketLaboratoryGroupId: number
 
