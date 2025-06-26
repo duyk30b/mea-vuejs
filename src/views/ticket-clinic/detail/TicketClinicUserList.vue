@@ -55,7 +55,7 @@ const refreshRoleIdList = () => {
 }
 
 watch(
-  () => ticketClinicRef.value.ticketUserList,
+  () => ticketClinicRef.value.ticketUserGroup,
   (newValue, oldValue) => {
     refreshRoleIdList()
   },

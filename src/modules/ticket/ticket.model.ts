@@ -230,6 +230,19 @@ export class Ticket {
     })
   }
 
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+      ; (this.ticketUserList || []).forEach((i) => {
+        if (!this.ticketUserGroup[i.positionType]) {
+          this.ticketUserGroup[i.positionType] = {}
+        }
+        if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
+          this.ticketUserGroup[i.positionType][i.ticketItemId] = []
+        }
+        this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
+      })
+  }
+
   async refreshLaboratory() {
     if (!MeService.organizationPermission.value[PermissionId.LABORATORY]) {
       return
@@ -317,19 +330,6 @@ export class Ticket {
       tp.ticketBatchList = this.ticketBatchList!.filter((tb) => {
         return tp.id === tb.ticketProductId
       })
-    })
-  }
-
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
-    ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.positionType]) {
-        this.ticketUserGroup[i.positionType] = {}
-      }
-      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
-        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
     })
   }
 
