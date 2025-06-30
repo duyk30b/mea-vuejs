@@ -50,7 +50,7 @@ export class TicketClinicService {
             : false,
         },
       })
-      ticketResponse.refreshAllData()
+      await ticketResponse.refreshAllData()
 
       TicketClinicService.ticketMap[ticket.id] = ticketResponse
     }
