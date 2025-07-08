@@ -187,9 +187,7 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td>
-                        <InputCheckbox
-                          v-model:checked="settingDisplay.invoiceItemInput.quantity"
-                        >
+                        <InputCheckbox v-model:checked="settingDisplay.invoiceItemInput.quantity">
                           Chỉnh sửa chọn số lượng
                         </InputCheckbox>
                       </td>
@@ -327,7 +325,7 @@ defineExpose({ openModal })
                                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
-                                {{ data.addressWard }} - {{ data.addressDistrict }} -
+                                {{ data.addressStreet }} - {{ data.addressWard }} -
                                 {{ data.addressProvince }}
                               </div>
                             </template>

@@ -218,7 +218,7 @@ defineExpose({ openModal })
                                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
                               </div>
                               <div>
-                                {{ data.addressWard }} - {{ data.addressDistrict }} -
+                                {{ data.addressStreet }} - {{ data.addressWard }} -
                                 {{ data.addressProvince }}
                               </div>
                             </template>

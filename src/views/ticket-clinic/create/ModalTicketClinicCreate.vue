@@ -9,6 +9,7 @@ import {
   InputFilter,
   InputHint,
   InputNumber,
+  InputOptions,
   InputRadio,
   InputText,
   VueSelect,
@@ -38,11 +39,13 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
 import { MeService } from '../../../modules/_me/me.service'
+import { Address, AddressService } from '@/modules/address'
 
 const inputFilterCustomer = ref<InstanceType<typeof InputFilter>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const modalTicketClinicCreateSetting = ref<InstanceType<typeof ModalTicketClinicCreateSetting>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const ticketClinicCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
@@ -74,9 +77,8 @@ const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: strin
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const openModal = async (ticketId?: number) => {
   showModal.value = true
@@ -90,6 +92,7 @@ const openModal = async (ticketId?: number) => {
     RoleService.getMap(),
     UserService.getMap(),
     UserRoleService.list(),
+    AddressService.fetchAll(),
   ])
     .then((result) => {
       if (!ticketId) {
@@ -127,14 +130,6 @@ const openModal = async (ticketId?: number) => {
         console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ CustomerSourceService ~ e:', e)
       })
   }
-
-  if (settingStore.TICKET_CLINIC_CREATE.addressFull) {
-    AddressInstance.getAllProvinces()
-      .then((result) => (provinceList.value = result))
-      .catch((e) => {
-        console.log('🚀 ~ file: ModalTicketClinicCreate.vue ~ AddressInstance ~ e:', e)
-      })
-  }
 }
 
 const closeModal = () => {
@@ -146,7 +141,7 @@ const closeModal = () => {
   ticketUserList.value = []
   ticketAttributeMap.value = {}
   userRoleMapRoleIdOptions.value = {}
-
+  currentAddress.value = Address.blank()
   fromAppointmentId.value = 0
 
   showModal.value = false
@@ -158,6 +153,17 @@ const selectCustomer = async (customerSelect: Customer) => {
     return
   }
   customer.value = Customer.from(customerSelect)
+
+  currentAddress.value.province = customerSelect.addressProvince
+  currentAddress.value.ward = customerSelect.addressWard
+  inputOptionsAddress.value?.setItem({
+    text: [currentAddress.value.ward || '', currentAddress.value.province || '']
+      .filter((i) => !!i)
+      .join(' - '),
+    data: currentAddress.value,
+    value: currentAddress.value.id,
+  })
+
   try {
     ticket.value.customerSourceId = customerSelect.customerSourceId
 
@@ -220,24 +226,22 @@ const handleChangeCheckboxAppointment = (e: Event, appointment: Appointment) => 
   }
 }
 
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
   }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    customer.value.addressProvince,
-    district,
-  )
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  customer.value.addressProvince = currentAddress.value.province
+  customer.value.addressWard = currentAddress.value.ward
 }
 
 const updateDuKienSinh = (DuKienSinhAny: any) => {
@@ -566,70 +570,28 @@ defineExpose({ openModal })
             </div>
           </div>
 
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.addressFull"
-            style="flex-basis: 80%; flex-grow: 1"
-          >
-            <div>Địa chỉ</div>
-            <div class="flex flex-wrap gap-x-2 gap-y-2">
-              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-                <InputHint
-                  v-model:value="customer.addressProvince"
-                  :options="provinceList"
-                  :disabled="!!customer.id"
-                  :maxHeight="180"
-                  placeholder="Thành Phố / Tỉnh"
-                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                  @update:value="handleChangeProvince"
-                />
-              </div>
-              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-                <InputHint
-                  v-model:value="customer.addressDistrict"
-                  :maxHeight="180"
-                  :disabled="!!customer.id"
-                  :options="districtList"
-                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                  placeholder="Quận / Huyện"
-                  @update:value="handleChangeDistrict"
-                />
-              </div>
-              <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
-                <InputHint
-                  v-model:value="customer.addressWard"
-                  :maxHeight="180"
-                  :disabled="!!customer.id"
-                  :options="wardList"
-                  placeholder="Phường / Xã"
-                  :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                />
-              </div>
-              <div
-                :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-                :disabled="!!customer.id"
-              >
-                <InputText
-                  v-model:value="customer.addressStreet"
-                  :disabled="!!customer.id"
-                  placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+          <template v-if="settingStore.APPOINTMENT_UPSERT.address">
+            <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+              <div>Địa chỉ</div>
+              <div>
+                <InputOptions
+                  ref="inputOptionsAddress"
+                  :max-height="260"
+                  :options="addressOptions"
+                  @selectItem="({ data }) => selectAddress(data)"
+                  @searching="searchingAddress"
+                  noClearTextWhenNotSelected
                 />
               </div>
             </div>
-          </div>
 
-          <div
-            v-if="settingStore.TICKET_CLINIC_CREATE.addressBasic"
-            :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle"
-          >
-            <div>Địa chỉ</div>
-            <div style="flex: 1">
-              <InputText
-                v-model:value="customer.addressStreet"
-                :disabled="!!customer.id"
-                placeholder=""
-              />
+            <div :style="settingStore.TICKET_CLINIC_CREATE.SCREEN.itemStyle">
+              <div>Số nhà, ngõ ...</div>
+              <div>
+                <InputText v-model:value="customer!.addressStreet" placeholder="Số nhà, ngõ ..." />
+              </div>
             </div>
-          </div>
+          </template>
 
           <div
             v-if="settingStore.TICKET_CLINIC_CREATE.relative"
@@ -951,9 +913,7 @@ defineExpose({ openModal })
       <div class="p-4 mt-2">
         <div class="flex flex-wrap gap-4">
           <VueButton
-            v-if="
-              ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status)
-            "
+            v-if="ticket.id && [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status)"
             color="red"
             icon="trash"
             @click="handleClickDestroy"

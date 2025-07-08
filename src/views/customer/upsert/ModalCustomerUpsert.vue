@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { Address, AddressService } from '@/modules/address'
 import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
 import {
   InputDate,
-  InputHint,
+  InputOptions,
   InputRadio,
   InputText,
   VueSelect,
@@ -13,18 +14,17 @@ import {
 } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { AddressInstance } from '../../../core/address.instance'
+import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { CustomerService } from '../../../modules/customer'
 import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
 import { Customer } from '../../../modules/customer/customer.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { customFilter } from '../../../utils'
 import ModalCustomerUpsertSettingScreen from './ModalCustomerUpsertSettingScreen.vue'
-import { MeService } from '../../../modules/_me/me.service'
 
 const modalCustomerUpsertSettingScreen =
   ref<InstanceType<typeof ModalCustomerUpsertSettingScreen>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{
   (e: 'success', value: Customer, type: 'CREATE' | 'UPDATE' | 'DELETE'): void
@@ -39,9 +39,8 @@ const saveLoading = ref(false)
 
 const customerSourceAll = ref<CustomerSource[]>([])
 
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const openModal = async (instance?: Customer) => {
   showModal.value = true
@@ -49,24 +48,27 @@ const openModal = async (instance?: Customer) => {
   if (settingStore.SCREEN_CUSTOMER_UPSERT.customerSource) {
     customerSourceAll.value = await CustomerSourceService.list({})
   }
-  if (settingStore.SCREEN_CUSTOMER_UPSERT.addressFull) {
-    provinceList.value = await AddressInstance.getAllProvinces()
-    if (instance?.addressProvince) {
-      districtList.value = await AddressInstance.getDistrictsByProvince(instance.addressProvince)
-      if (instance.addressDistrict) {
-        wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-          instance.addressProvince,
-          instance.addressDistrict,
-        )
-      }
-    }
-  }
+
+  const findAddress = await AddressService.findBy({
+    province: customer.value?.addressProvince || '',
+    ward: customer.value?.addressWard || '',
+  })
+
+  currentAddress.value.province = findAddress.province || instance?.addressProvince || ''
+  currentAddress.value.ward = findAddress.ward || instance?.addressWard || ''
+
+  inputOptionsAddress.value?.setItem({
+    text: [currentAddress.value.ward || '', currentAddress.value.province || '']
+      .filter((i) => !!i)
+      .join(' - '),
+    data: currentAddress.value,
+    value: currentAddress.value.id,
+  })
 }
 
 const closeModal = () => {
   customer.value = Customer.blank()
-  districtList.value = []
-  wardList.value = []
+  currentAddress.value = Address.blank()
   showModal.value = false
 }
 
@@ -125,24 +127,22 @@ const clickDelete = () => {
   })
 }
 
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
   }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    customer.value.addressProvince,
-    district,
-  )
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  customer.value.addressProvince = currentAddress.value.province
+  customer.value.addressWard = currentAddress.value.ward
 }
 
 defineExpose({ openModal })
@@ -240,60 +240,28 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressFull"
-          style="flex-basis: 80%; flex-grow: 1"
-        >
-          <div>Địa chỉ</div>
-          <div class="flex flex-wrap gap-x-4 gap-y-2">
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="customer.addressProvince"
-                :options="provinceList"
-                :maxHeight="180"
-                placeholder="Thành Phố / Tỉnh"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                @update:value="handleChangeProvince"
-              />
-            </div>
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="customer.addressDistrict"
-                :maxHeight="180"
-                :options="districtList"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict"
-              />
-            </div>
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="customer.addressWard"
-                :maxHeight="180"
-                :options="wardList"
-                placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              />
-            </div>
-
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputText
-                v-model:value="customer.addressStreet"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+        <template v-if="settingStore.SCREEN_CUSTOMER_UPSERT.address">
+          <div style="flex-basis: 40%; flex-grow: 1">
+            <div>Địa chỉ</div>
+            <div>
+              <InputOptions
+                ref="inputOptionsAddress"
+                :max-height="260"
+                :options="addressOptions"
+                @selectItem="({ data }) => selectAddress(data)"
+                @searching="searchingAddress"
+                noClearTextWhenNotSelected
               />
             </div>
           </div>
-        </div>
 
-        <div
-          v-if="settingStore.SCREEN_CUSTOMER_UPSERT.addressBasic"
-          style="flex-basis: 45%; flex-grow: 1; min-width: 300px"
-        >
-          <div>Địa chỉ</div>
-          <div>
-            <InputText v-model:value="customer.addressStreet" placeholder="" />
+          <div style="flex-basis: 40%; flex-grow: 1">
+            <div>Số nhà, ngõ ...</div>
+            <div>
+              <InputText v-model:value="customer.addressStreet" placeholder="Số nhà, ngõ ..." />
+            </div>
           </div>
-        </div>
+        </template>
 
         <div
           v-if="settingStore.SCREEN_CUSTOMER_UPSERT.relative"

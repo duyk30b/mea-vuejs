@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose, IconSetting } from '../../../common/icon-antd'
 import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputHint, InputText, VueSwitch } from '../../../common/vue-form'
+import { InputHint, InputOptions, InputText, VueSwitch } from '../../../common/vue-form'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
 import { AddressInstance } from '../../../core/address.instance'
@@ -14,8 +14,10 @@ import { Distributor } from '../../../modules/distributor/distributor.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { customFilter } from '../../../utils'
 import ModalDistributorUpsertSetting from './ModalDistributorUpsertSetting.vue'
+import { Address, AddressService } from '@/modules/address'
 
 const modalDistributorUpsertSetting = ref<InstanceType<typeof ModalDistributorUpsertSetting>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{
   (e: 'success', value: Distributor, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
@@ -28,9 +30,8 @@ const showModal = ref(false)
 const distributor = ref(Distributor.blank())
 const saveLoading = ref(false)
 
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const openModal = async (distributorId?: number) => {
   showModal.value = true
@@ -40,25 +41,24 @@ const openModal = async (distributorId?: number) => {
     distributor.value = await DistributorService.detail(distributorId)
   }
 
-  provinceList.value = await AddressInstance.getAllProvinces()
-  if (distributor.value?.addressProvince) {
-    districtList.value = await AddressInstance.getDistrictsByProvince(
-      distributor.value.addressProvince,
-    )
-    if (distributor.value.addressDistrict) {
-      wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-        distributor.value.addressProvince,
-        distributor.value.addressDistrict,
-      )
-    }
-  }
+  currentAddress.value = await AddressService.findBy({
+    province: distributor.value?.addressProvince || '',
+    ward: distributor.value?.addressWard || '',
+  })
+
+  inputOptionsAddress.value?.setItem({
+    text: [currentAddress.value.ward || '', currentAddress.value.province || '']
+      .filter((i) => !!i)
+      .join(' - '),
+    data: currentAddress.value,
+    value: currentAddress.value.id,
+  })
 }
 
 const closeModal = () => {
-  showModal.value = false
   distributor.value = Distributor.blank()
-  districtList.value = []
-  wardList.value = []
+  currentAddress.value = Address.blank()
+  showModal.value = false
 }
 
 const handleSave = async () => {
@@ -113,24 +113,22 @@ const clickDelete = () => {
   })
 }
 
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
   }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    distributor.value.addressProvince || '',
-    district,
-  )
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  distributor.value.addressProvince = currentAddress.value.province
+  distributor.value.addressWard = currentAddress.value.ward
 }
 
 defineExpose({ openModal })
@@ -175,47 +173,28 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div v-if="settingStore.SCREEN_DISTRIBUTOR_UPSERT.address" class="grow basis-[80%]">
-          <div>Địa chỉ</div>
-          <div class="flex gap-4 flex-wrap">
-            <div style="flex: 1; flex-basis: 200px">
-              <InputHint
-                v-model:value="distributor.addressProvince"
-                :options="provinceList"
-                :maxHeight="180"
-                placeholder="Thành Phố / Tỉnh"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                @update:value="handleChangeProvince"
-              />
-            </div>
-            <div style="flex: 1; flex-basis: 200px">
-              <InputHint
-                v-model:value="distributor.addressDistrict"
-                :maxHeight="180"
-                :options="districtList"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-                placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict"
-              />
-            </div>
-            <div style="flex: 1; flex-basis: 200px">
-              <InputHint
-                v-model:value="distributor.addressWard"
-                :maxHeight="180"
-                :options="wardList"
-                placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => customFilter(item, text)"
-              />
-            </div>
-
-            <div class="grow basis-[80%]">
-              <InputText
-                v-model:value="distributor.addressStreet"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+        <template v-if="settingStore.SCREEN_DISTRIBUTOR_UPSERT.address">
+          <div style="flex-basis: 40%; flex-grow: 1">
+            <div>Địa chỉ</div>
+            <div>
+              <InputOptions
+                ref="inputOptionsAddress"
+                :max-height="260"
+                :options="addressOptions"
+                @selectItem="({ data }) => selectAddress(data)"
+                @searching="searchingAddress"
+                noClearTextWhenNotSelected
               />
             </div>
           </div>
-        </div>
+
+          <div style="flex-basis: 40%; flex-grow: 1">
+            <div>Số nhà, ngõ ...</div>
+            <div>
+              <InputText v-model:value="distributor.addressStreet" placeholder="Số nhà, ngõ ..." />
+            </div>
+          </div>
+        </template>
 
         <div class="grow basis-[80%]">
           <div>Ghi chú</div>

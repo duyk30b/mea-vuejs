@@ -34,7 +34,6 @@ export class TicketClinicApi {
               yearOfBirth: customer.yearOfBirth,
               gender: customer.gender,
               addressProvince: customer.addressProvince,
-              addressDistrict: customer.addressDistrict,
               addressWard: customer.addressWard,
               addressStreet: customer.addressStreet,
               relative: customer.relative,

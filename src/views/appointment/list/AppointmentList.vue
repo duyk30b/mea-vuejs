@@ -223,7 +223,7 @@ const handleFocusFirstSearchCustomer = async () => {
                 {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
               </div>
               <div>
-                {{ data.addressWard }} - {{ data.addressDistrict }} - {{ data.addressProvince }}
+                {{ data.addressStreet }} - {{ data.addressWard }} - {{ data.addressProvince }}
               </div>
             </template>
           </InputOptions>

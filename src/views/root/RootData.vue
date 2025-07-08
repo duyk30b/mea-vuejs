@@ -7,6 +7,8 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { PermissionApi } from '../../modules/permission/permission.api'
 import { RootDataApi } from '../../modules/root-data/root-data.api'
 import { SettingApi } from '../../modules/setting/setting.api'
+import InputArea from '@/common/vue-form/InputArea.vue'
+import { AddressApi } from '@/modules/address'
 
 const settingStore = useSettingStore()
 
@@ -49,6 +51,16 @@ const startMigration = async () => {
     await RootDataApi.migration({ key: keyMigration.value })
   } catch (error) {
     console.log('🚀 ~ file: RootData.vue:51 ~ startMigration ~ error:', error)
+  }
+}
+
+const addressString = ref('[]')
+const startReplaceAddressAll = async () => {
+  try {
+    const addressAll = JSON.parse(addressString.value)
+    await AddressApi.replaceList({ addressAll })
+  } catch (error) {
+    console.log('🚀 ~ RootData.vue:63 ~ startReplaceAddressAll ~ error:', error)
   }
 }
 </script>
@@ -138,6 +150,20 @@ const startMigration = async () => {
                   <IconCloudUpload />
                   Start Upload
                 </VueButton>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-center">5</td>
+              <td colspan="2">
+                <div>AddressData</div>
+                <div>
+                  <InputArea v-model:value="addressString" />
+                </div>
+                <div class="mt-2 flex justify-end">
+                  <VueButton color="blue" icon="save" @click="startReplaceAddressAll">
+                    Cập nhật
+                  </VueButton>
+                </div>
               </td>
             </tr>
           </tbody>

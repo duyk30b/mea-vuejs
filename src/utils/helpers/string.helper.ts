@@ -145,25 +145,21 @@ export class DString {
 
   static formatAddress = (address?: {
     addressProvince?: string
-    addressDistrict?: string
     addressWard?: string
     addressStreet?: string
   }) => {
     if (!address) return ''
     const addressStreet = address.addressStreet || ''
     const addressWard = address.addressWard || ''
-    const addressDistrict = address.addressDistrict || ''
     const addressProvince = address.addressProvince || ''
 
-    return [addressStreet, addressWard, addressDistrict, addressProvince]
+    return [addressStreet, addressWard, addressProvince]
       .filter((i) => !!i)
       .join(' - ')
-      .replace('Tỉnh', '')
-      .replace('Thành phố', '')
-      .replace('Quận ', '')
-      .replace('Huyện ', '')
       .replace('Phường ', '')
       .replace('Xã ', '')
+      .replace('Tỉnh', '')
+      .replace('Thành phố', '')
   }
 
   static customFilter = (str = '', filter = '', skip = 2): boolean => {

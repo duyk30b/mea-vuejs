@@ -50,7 +50,6 @@ export class CustomerApi {
       yearOfBirth: customer.yearOfBirth,
       gender: customer.gender,
       addressProvince: customer.addressProvince,
-      addressDistrict: customer.addressDistrict,
       addressWard: customer.addressWard,
       addressStreet: customer.addressStreet,
       relative: customer.relative, // người thân
@@ -74,8 +73,6 @@ export class CustomerApi {
       gender: customer.gender !== undefined ? customer.gender : undefined,
       addressProvince:
         customer.addressProvince !== undefined ? customer.addressProvince : undefined,
-      addressDistrict:
-        customer.addressDistrict !== undefined ? customer.addressDistrict : undefined,
       addressWard: customer.addressWard !== undefined ? customer.addressWard : undefined,
       addressStreet: customer.addressStreet !== undefined ? customer.addressStreet : undefined,
       relative: customer.relative !== undefined ? customer.relative : undefined, // người thân

@@ -11,7 +11,6 @@ export class Customer {
   yearOfBirth?: number
   gender?: EGender
   addressProvince: string
-  addressDistrict: string
   addressWard: string
   addressStreet: string
   relative?: string // người thân
@@ -42,7 +41,6 @@ export class Customer {
     customer.birthday = new Date('1990-09-04').getTime()
     customer.gender = 1
     customer.addressProvince = 'Hà Nội'
-    customer.addressDistrict = 'Long Biên'
     customer.addressWard = 'Thạch Bàn'
     return customer
   }

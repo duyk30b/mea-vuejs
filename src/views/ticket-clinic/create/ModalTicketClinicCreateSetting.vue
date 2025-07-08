@@ -148,15 +148,8 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.addressFull">
+                        <InputCheckbox v-model:checked="settingDisplay.address">
                           Hiển thị điền địa chỉ đầy đủ
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:checked="settingDisplay.addressBasic">
-                          Hiển thị điền địa chỉ cơ bản
                         </InputCheckbox>
                       </td>
                     </tr>

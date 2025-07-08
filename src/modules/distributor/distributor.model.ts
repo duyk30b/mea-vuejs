@@ -3,7 +3,6 @@ export class Distributor {
   fullName: string
   phone?: string
   addressProvince: string
-  addressDistrict: string
   addressWard: string
   addressStreet: string
   debt: number

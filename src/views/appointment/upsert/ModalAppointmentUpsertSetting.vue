@@ -19,7 +19,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.APPOINTMENT_UPSERT>(
-  JSON.parse(JSON.stringify(store.APPOINTMENT_UPSERT))
+  JSON.parse(JSON.stringify(store.APPOINTMENT_UPSERT)),
 )
 const activeTab = ref(TABS_KEY.BASIC)
 const showModal = ref(false)
@@ -96,15 +96,8 @@ defineExpose({ openModal })
                     </tr>
                     <tr>
                       <td colspan="2">
-                        <InputCheckbox v-model:value="settingDisplay.addressFull">
-                          Hiển thị điền địa chỉ đầy đủ
-                        </InputCheckbox>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td colspan="2">
-                        <InputCheckbox v-model:value="settingDisplay.addressBasic">
-                          Hiển thị điền địa chỉ cơ bản
+                        <InputCheckbox v-model:value="settingDisplay.address">
+                          Hiển thị điền địa chỉ
                         </InputCheckbox>
                       </td>
                     </tr>
@@ -164,7 +157,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

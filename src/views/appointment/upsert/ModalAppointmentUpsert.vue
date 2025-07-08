@@ -23,12 +23,14 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
 import { MeService } from '../../../modules/_me/me.service'
+import { Address, AddressService } from '@/modules/address'
 
 const modalAppointmentUpsertSetting = ref<InstanceType<typeof HTMLFormElement>>()
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
 const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
+const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{
   (e: 'success'): void
@@ -48,9 +50,8 @@ const customerSourceAll = ref<CustomerSource[]>([])
 
 const appointment = ref<Appointment>(Appointment.blank())
 
-const provinceList = ref<string[]>([])
-const districtList = ref<string[]>([])
-const wardList = ref<string[]>([])
+const currentAddress = ref<Address>(Address.blank())
+const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
 const now = new Date()
 now.setMinutes(0, 0)
@@ -61,12 +62,9 @@ const firstLoadAction = async () => {
   if (!firstLoad) return
   firstLoad = false
 
-  await CustomerService.refreshDB()
+  await Promise.all([CustomerService.refreshDB(), AddressService.fetchAll()])
   if (settingStore.APPOINTMENT_UPSERT.customerSource) {
     customerSourceAll.value = await CustomerSourceService.list({})
-  }
-  if (settingStore.APPOINTMENT_UPSERT.addressFull) {
-    provinceList.value = await AddressInstance.getAllProvinces()
   }
 }
 
@@ -96,8 +94,8 @@ const openModalForUpdate = async (appointmentProp: Appointment) => {
 
 const closeModal = () => {
   customerOptions.value = []
-
   appointment.value = Appointment.blank()
+  currentAddress.value = Address.blank()
 
   showModal.value = false
 }
@@ -139,6 +137,16 @@ const selectCustomer = async (customerSelect?: Customer) => {
     appointment.value.customerId = customerSelect.id
     appointment.value.customerSourceId = customerSelect.customerSourceId
     appointment.value.customer = Customer.from(customerSelect)
+
+    currentAddress.value.province = customerSelect.addressProvince
+    currentAddress.value.ward = customerSelect.addressWard
+    inputOptionsAddress.value?.setItem({
+      text: [currentAddress.value.ward || '', currentAddress.value.province || '']
+        .filter((i) => !!i)
+        .join(' - '),
+      data: currentAddress.value,
+      value: currentAddress.value.id,
+    })
   } else {
     appointment.value.customerId = 0
     appointment.value.customerSourceId = 0
@@ -162,24 +170,22 @@ const searchingCustomer = async (text: string) => {
   }
 }
 
-const handleChangeProvince = async (province: string) => {
-  if (!province) {
-    districtList.value = []
-    wardList.value = []
-    return
+const searchingAddress = async (text: string) => {
+  currentAddress.value = Address.blank()
+  if (!text) {
+    addressOptions.value = []
+  } else {
+    const addressList = await AddressService.search(text, { limit: 20 })
+    addressOptions.value = (addressList || []).map((i) => {
+      return { value: i.id, text: `${i.ward} - ${i.province}`, data: i }
+    })
   }
-  districtList.value = await AddressInstance.getDistrictsByProvince(province)
 }
 
-const handleChangeDistrict = async (district: string) => {
-  if (!district) {
-    wardList.value = []
-    return
-  }
-  wardList.value = await AddressInstance.getWardsByProvinceAndDistrict(
-    appointment.value.customer!.addressProvince,
-    district,
-  )
+const selectAddress = async (addressData?: Address) => {
+  currentAddress.value = Address.from(addressData || Address.blank())
+  appointment.value.customer!.addressProvince = currentAddress.value.province
+  appointment.value.customer!.addressWard = currentAddress.value.ward
 }
 
 const openBlankCustomerSourceList = async () => {
@@ -313,70 +319,31 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           </div>
         </div>
 
-        <div
-          v-if="settingStore.APPOINTMENT_UPSERT.addressFull"
-          style="flex-basis: 80%; flex-grow: 1"
-        >
-          <div>Địa chỉ</div>
-          <div class="flex flex-wrap gap-x-4 gap-y-2">
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="appointment.customer!.addressProvince"
-                :options="provinceList"
-                :disabled="!!appointment.customer!.id"
-                :maxHeight="180"
-                placeholder="Thành Phố / Tỉnh"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                @update:value="handleChangeProvince"
+        <template v-if="settingStore.APPOINTMENT_UPSERT.address">
+          <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+            <div>Địa chỉ</div>
+            <div>
+              <InputOptions
+                ref="inputOptionsAddress"
+                :max-height="260"
+                :options="addressOptions"
+                @selectItem="({ data }) => selectAddress(data)"
+                @searching="searchingAddress"
+                noClearTextWhenNotSelected
               />
             </div>
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="appointment.customer!.addressDistrict"
-                :maxHeight="180"
-                :disabled="!!appointment.customer!.id"
-                :options="districtList"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-                placeholder="Quận / Huyện"
-                @update:value="handleChangeDistrict"
-              />
-            </div>
-            <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-              <InputHint
-                v-model:value="appointment.customer!.addressWard"
-                :maxHeight="180"
-                :disabled="!!appointment.customer!.id"
-                :options="wardList"
-                placeholder="Phường / Xã"
-                :logic-filter="(item: string, text: string) => DString.customFilter(item, text)"
-              />
-            </div>
-            <div
-              style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
-              :disabled="!!appointment.customer!.id"
-            >
+          </div>
+
+          <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
+            <div>Số nhà, ngõ ...</div>
+            <div>
               <InputText
                 v-model:value="appointment.customer!.addressStreet"
-                :disabled="!!appointment.customer!.id"
-                placeholder="Số nhà / Tòa nhà / Ngõ / Đường"
+                placeholder="Số nhà, ngõ ..."
               />
             </div>
           </div>
-        </div>
-
-        <div
-          v-if="settingStore.APPOINTMENT_UPSERT.addressBasic"
-          style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
-        >
-          <div>Địa chỉ</div>
-          <div style="flex: 1">
-            <InputText
-              v-model:value="appointment.customer!.addressStreet"
-              :disabled="!!appointment.customer!.id"
-              placeholder=""
-            />
-          </div>
-        </div>
+        </template>
 
         <div
           v-if="settingStore.APPOINTMENT_UPSERT.relative"
