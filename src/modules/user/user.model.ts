@@ -47,7 +47,7 @@ export class User {
     Object.assign(target, source)
     if (target.secret && !target.password) {
       try {
-        target.password = decrypt(target.secret, target.username)
+        // target.password = decrypt(target.secret, target.username)
       } catch (error) {
         console.log('🚀 ~ file: user.model.ts:117 ~ User ~ basic ~ error:', error)
       }

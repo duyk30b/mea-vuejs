@@ -10,6 +10,9 @@ export const TicketAttributeKeyGeneralList = [
   'spO2',
   'height',
   'weight',
+
+  'icd10Name',
+  'icd10Code',
 ] as const
 
 export const TicketAttributeKeyEyeList = [

@@ -1,5 +1,6 @@
-import { arrayToKeyValue, DString } from '../../utils'
-import { PositionService } from '../position'
+import { ref } from 'vue'
+import { arrayToKeyValue, DString, ESArray } from '../../utils'
+import { Position, PositionService } from '../position'
 import { ProcedureApi } from './procedure.api'
 import type {
   ProcedureDetailQuery,
@@ -8,23 +9,27 @@ import type {
   ProcedurePaginationQuery,
 } from './procedure.dto'
 import { Procedure } from './procedure.model'
+import { Discount, DiscountService } from '../discount'
 
 export class ProcedureService {
   static loadedAll: boolean = false
   static procedureAll: Procedure[] = []
+  static procedureMap = ref<Record<string, Procedure>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        ProcedureService.procedureAll = await ProcedureApi.list({})
+        const procedureAll = await ProcedureApi.list({})
+        ProcedureService.procedureAll = procedureAll
+        ProcedureService.procedureMap.value = ESArray.arrayToKeyValue(procedureAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: procedure.service.ts:20 ~ ProcedureService ~ start ~ error:', error)
+        console.log('🚀 ~ file: procedure.service.ts:26 ~ ProcedureService ~ start ~ error:', error)
       }
     }
     let fetchPromise: Promise<void> | null = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetchPromise || !ProcedureService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !ProcedureService.loadedAll || options.refetch) {
         ProcedureService.loadedAll = true
         fetchPromise = start()
       }
@@ -82,16 +87,15 @@ export class ProcedureService {
     return data
   }
 
-  static async getMap() {
-    await ProcedureService.fetchAll()
-    const procedureMap = arrayToKeyValue(ProcedureService.procedureAll, 'id')
-    return procedureMap
+  static async getMap(options?: { refetch: boolean }) {
+    await ProcedureService.fetchAll({ refetch: !!options?.refetch })
+    return ProcedureService.procedureMap.value
   }
 
-  static async pagination(query: ProcedurePaginationQuery, options?: { refresh: boolean }) {
+  static async pagination(query: ProcedurePaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await ProcedureService.fetchAll({ refresh: !!options?.refresh })
+    await ProcedureService.fetchAll({ refetch: !!options?.refetch })
 
     let data = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
     data = data.slice((page - 1) * limit, page * limit)
@@ -101,44 +105,54 @@ export class ProcedureService {
     }
   }
 
-  static async list(query: ProcedureListQuery, options?: { refresh: boolean }) {
-    await ProcedureService.fetchAll({ refresh: !!options?.refresh })
+  static async list(query: ProcedureListQuery, options?: { refetch: boolean }) {
+    await ProcedureService.fetchAll({ refetch: !!options?.refetch })
     const data = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
 
     return Procedure.fromList(data)
   }
 
-  static async detail(id: number, options: ProcedureDetailQuery = {}) {
-    const procedure = await ProcedureApi.detail(id, options)
-    if (procedure && procedure.positionList) {
+  static async detail(
+    id: number,
+    query: ProcedureDetailQuery = {},
+    options?: { refetch?: boolean; query?: boolean },
+  ) {
+    let procedure: Procedure | undefined
+    if (options?.query) {
+      procedure = await ProcedureApi.detail(id, query)
       const findIndex = ProcedureService.procedureAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) {
-        ProcedureService.procedureAll[findIndex] = procedure
-      }
+      if (findIndex !== -1) ProcedureService.procedureAll[findIndex] = procedure
+    } else {
+      await ProcedureService.fetchAll({ refetch: !!options?.refetch })
+      procedure = ProcedureService.procedureAll.find((i) => i.id === id)
     }
+
+    return procedure ? Procedure.from(procedure) : Procedure.blank()
+  }
+
+  static async createOne(body: {
+    procedure: Procedure
+    positionList?: Position[]
+    discountList?: Discount[]
+  }) {
+    const procedure = await ProcedureApi.createOne(body)
     return procedure
   }
 
-  static async createOne(procedure: Procedure) {
-    const result = await ProcedureApi.createOne(procedure)
-    PositionService.loadedAll = false
-    ProcedureService.loadedAll = false
-    return result
-  }
-
-  static async updateOne(id: number, procedure: Procedure) {
-    const result = await ProcedureApi.updateOne(id, procedure)
-    PositionService.loadedAll = false
-    ProcedureService.loadedAll = false
-    return result
+  static async updateOne(
+    id: number,
+    body: {
+      procedure: Procedure
+      positionList?: Position[]
+      discountList?: Discount[]
+    },
+  ) {
+    const procedure = await ProcedureApi.updateOne(id, body)
+    return procedure
   }
 
   static async destroyOne(id: number) {
     const result = await ProcedureApi.destroyOne(id)
-    if (result.success) {
-      ProcedureService.loadedAll = false
-      PositionService.loadedAll = false
-    }
     return result
   }
 }

@@ -12,7 +12,7 @@ import { DiscountType } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketLaboratory } from '../../../../modules/ticket-laboratory'
+import { TicketLaboratory, TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { User, UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
@@ -307,7 +307,14 @@ defineExpose({ openModal })
         </template>
 
         <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
-          <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
+          <VueButton
+            color="red"
+            icon="trash"
+            @click="clickDestroy"
+            v-if="ticketLaboratory.status === TicketLaboratoryStatus.Pending"
+          >
+            Xóa
+          </VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>

@@ -1,3 +1,4 @@
+import { Discount } from '../discount'
 import { Position } from '../position'
 import { ProcedureGroup } from '../procedure-group'
 
@@ -24,6 +25,8 @@ export class Procedure {
   procedureGroup?: ProcedureGroup
 
   positionList?: Position[]
+  discountList?: Discount[]
+  discountListExtra?: Discount[]
 
   static init() {
     const ins = new Procedure()
@@ -43,6 +46,8 @@ export class Procedure {
   static blank() {
     const ins = Procedure.init()
     ins.positionList = []
+    ins.discountList = []
+    ins.discountListExtra = []
     return ins
   }
 
@@ -70,6 +75,12 @@ export class Procedure {
 
     if (target.positionList) {
       target.positionList = Position.basicList(target.positionList)
+    }
+    if (target.discountList) {
+      target.discountList = Discount.basicList(target.discountList)
+    }
+    if (target.discountListExtra) {
+      target.discountListExtra = Discount.basicList(target.discountListExtra)
     }
     return target
   }

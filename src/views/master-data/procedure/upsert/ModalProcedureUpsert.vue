@@ -1,32 +1,41 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClose, IconDelete } from '../../../../common/icon-antd'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconDelete } from '@/common/icon-antd'
+import { IconEditSquare } from '@/common/icon-google'
+import { InputFilter, InputMoney, InputNumber, InputText, VueSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import {
-  InputFilter,
-  InputMoney,
-  InputNumber,
-  InputText,
-  VueSelect,
-} from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
-import { MeService } from '../../../../modules/_me/me.service'
-import { Position, CommissionCalculatorType, PositionType } from '../../../../modules/position'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService, ProcedureType } from '../../../../modules/procedure'
-import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
-import { Product, ProductService } from '../../../../modules/product'
-import { Role, RoleService } from '../../../../modules/role'
+  Discount,
+  DiscountInteractType,
+  DiscountRepeatType,
+  DiscountService,
+} from '@/modules/discount'
+import { DiscountType } from '@/modules/enum'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { CommissionCalculatorType, Position, PositionType } from '@/modules/position'
+import { Procedure, ProcedureService, ProcedureType } from '@/modules/procedure'
+import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
+import { Product } from '@/modules/product'
+import { Role, RoleService } from '@/modules/role'
+import { ESNumber, ESTimer } from '@/utils'
+import { computed, ref } from 'vue'
+import ModalDiscountUpsert from '../../discount/upsert/ModalDiscountUpsert.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
+  DISCOUNT: 'DISCOUNT',
   ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
 
-const emit = defineEmits<{ (e: 'success'): void }>()
+const modalDiscountUpsert = ref<InstanceType<typeof ModalDiscountUpsert>>()
 
+const emit = defineEmits<{ (e: 'success'): void }>()
+const settingStore = useSettingStore()
+const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
 const procedureOrigin = ref<Procedure>(Procedure.blank())
@@ -43,6 +52,13 @@ const activeTab = ref(TABS_KEY.BASIC)
 const showModal = ref(false)
 const saveLoading = ref(false)
 
+const hasChangeDiscountList = computed(() => {
+  return !Discount.equalList(
+    procedure.value.discountList || [],
+    procedureOrigin.value.discountList || [],
+  )
+})
+
 const hasChangeData = computed(() => {
   if (!Procedure.equal(procedure.value, procedureOrigin.value)) {
     return true
@@ -53,6 +69,9 @@ const hasChangeData = computed(() => {
       procedureOrigin.value.positionList || [],
     )
   ) {
+    return true
+  }
+  if (hasChangeDiscountList.value) {
     return true
   }
   return false
@@ -73,10 +92,12 @@ const openModal = async (procedureId?: number) => {
   showModal.value = true
 
   if (procedureId) {
-    const procedureResponse = await ProcedureService.detail(procedureId, {
-      relation: { positionList: true },
-    })
-    procedureOrigin.value = Procedure.from(procedureResponse)
+    const procedureResponse = await ProcedureService.detail(
+      procedureId,
+      { relation: { positionList: true, discountList: true } },
+      { query: true },
+    )
+    procedureOrigin.value = procedureResponse
     procedure.value = Procedure.from(procedureResponse)
     if (procedure.value?.consumablesHint) {
       // const consumableHint = JSON.parse(procedure.value.consumablesHint) as {
@@ -102,6 +123,11 @@ const openModal = async (procedureId?: number) => {
       //   }
       // }
     }
+  } else {
+    procedure.value = Procedure.blank()
+    procedure.value.discountListExtra = await DiscountService.list({
+      filter: { discountInteractId: 0, discountInteractType: DiscountInteractType.Procedure },
+    })
   }
   if (procedure.value.positionList?.length == 0) {
     handleAddPosition()
@@ -122,24 +148,6 @@ const openModal = async (procedureId?: number) => {
     .catch((e) => {
       console.log('🚀: ModalProcedureUpsert.vue:51 ~ RoleService.list ~ e:', e)
     })
-}
-
-const searchingProduct = async (text: string) => {
-  if (!text) {
-    consumableOptions.value = []
-    return
-  }
-
-  const productList = await ProductService.search(text)
-  consumableOptions.value = productList.map((i) => ({
-    value: i.id,
-    text: i.brandName,
-    data: i,
-  }))
-}
-
-const selectProduct = (p: Product) => {
-  consumableList.value.push({ product: p, quantity: 1 })
 }
 
 const closeModal = () => {
@@ -200,9 +208,17 @@ const handleSave = async () => {
   procedure.value.consumablesHint = JSON.stringify(consumablesHint)
   try {
     if (!procedure.value.id) {
-      await ProcedureService.createOne(procedure.value)
+      await ProcedureService.createOne({
+        procedure: procedure.value,
+        discountList: hasChangeDiscountList.value ? procedure.value.discountList : undefined,
+        positionList: procedure.value.positionList,
+      })
     } else {
-      await ProcedureService.updateOne(procedure.value.id, procedure.value)
+      await ProcedureService.updateOne(procedure.value.id, {
+        procedure: procedure.value,
+        discountList: hasChangeDiscountList.value ? procedure.value.discountList : undefined,
+        positionList: procedure.value.positionList,
+      })
     }
     emit('success')
     closeModal()
@@ -213,6 +229,33 @@ const handleSave = async () => {
   }
 }
 
+const handleModalDiscountUpsertSuccess = async (
+  discountData: Discount,
+  mode: 'CREATE' | 'UPDATE',
+) => {
+  if (mode === 'CREATE') {
+    procedure.value.discountList?.push(discountData)
+  }
+  if (mode === 'UPDATE') {
+    const findIndex = procedure.value.discountList!.findIndex((i) => {
+      return i._localId === discountData._localId
+    })
+    procedure.value.discountList![findIndex] = discountData
+  }
+}
+
+const clickUpsertDiscount = (options: { discount?: Discount; mode: 'CREATE' | 'UPDATE' }) => {
+  const discount = options.discount || Discount.blank()
+  modalDiscountUpsert.value?.openModal({
+    discount,
+    requiredInteract: {
+      discountInteractType: DiscountInteractType.Procedure,
+      discountInteractId: procedure.value.id,
+    },
+    mode: options.mode,
+  })
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -221,7 +264,8 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ procedure.id ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ mới' }}
+          {{ procedure.id ? 'Cập nhật dịch vụ:' : 'Tạo dịch vụ mới:' }}
+          {{ procedure.name }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -232,6 +276,7 @@ defineExpose({ openModal })
         <VueTabs v-model:tabShow="activeTab">
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.DISCOUNT">Chương trình khuyến mại</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_POSITION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
@@ -382,75 +427,113 @@ defineExpose({ openModal })
                 </div> -->
               </div>
             </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+              <div class="table-wrapper mt-4">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 30px">Độ ưu tiên</th>
+                      <th>Khuyến mại</th>
+                      <th>Thời gian</th>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="discount in procedure.discountListExtra" :key="discount._localId">
+                      <td class="text-center">{{ discount.priority }}</td>
+                      <td class="text-center">
+                        <template v-if="discount.discountType === DiscountType.VND">
+                          {{ formatMoney(discount.discountMoney) }}
+                        </template>
+                        <template v-else>
+                          {{ ESNumber.format({ number: discount.discountPercent }) }}
+                        </template>
+                        {{ discount.discountType }}
+                      </td>
+                      <td class="">
+                        <div v-if="discount.discountRepeatType === DiscountRepeatType.Weekly">
+                          <div>{{ discount.periodsDayText }}</div>
+                          <div>
+                            {{ discount.periodsTimeParse.map((i) => i.join(' => ')).join('; ') }}
+                          </div>
+                        </div>
+                        <div v-if="discount.discountRepeatType === DiscountRepeatType.Once">
+                          <div
+                            v-for="(timeDistance, index) in discount.periodsTimeParse"
+                            :key="index"
+                          >
+                            {{ ESTimer.timeToText(timeDistance[0], 'DD/MM/YYYY hh:mm') }} ==>
+                            {{ ESTimer.timeToText(timeDistance[1], 'DD/MM/YYYY hh:mm') }}
+                          </div>
+                        </div>
+                      </td>
+                      <td colspan="2">
+                        <span>Áp dụng tất cả dịch vụ</span>
+                      </td>
+                    </tr>
+                    <tr v-for="(discount, index) in procedure.discountList" :key="index">
+                      <td class="text-center">{{ discount.priority }}</td>
+                      <td class="text-center">
+                        <template v-if="discount.discountType === DiscountType.VND">
+                          {{ formatMoney(discount.discountMoney) }}
+                        </template>
+                        <template v-else>
+                          {{ ESNumber.format({ number: discount.discountPercent }) }}
+                        </template>
+                        {{ discount.discountType }}
+                      </td>
+                      <td class="">
+                        <div v-if="discount.discountRepeatType === DiscountRepeatType.Weekly">
+                          <div>{{ discount.periodsDayText }}</div>
+                          <div>
+                            {{ discount.periodsTimeParse.map((i) => i.join(' => ')).join('; ') }}
+                          </div>
+                        </div>
+                        <div v-if="discount.discountRepeatType === DiscountRepeatType.Once">
+                          <div
+                            v-for="(timeDistance, index) in discount.periodsTimeParse"
+                            :key="index"
+                          >
+                            {{ ESTimer.timeToText(timeDistance[0], 'DD/MM/YYYY hh:mm') }} ==>
+                            {{ ESTimer.timeToText(timeDistance[1], 'DD/MM/YYYY hh:mm') }}
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <a
+                          v-if="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
+                          style="color: #eca52b"
+                          class="text-xl"
+                          @click="clickUpsertDiscount({ discount, mode: 'UPDATE' })"
+                        >
+                          <IconEditSquare />
+                        </a>
+                      </td>
+                      <td class="text-center">
+                        <a
+                          style="color: var(--text-red)"
+                          class="text-xl"
+                          @click="procedure.discountList?.splice(index, 1)"
+                        >
+                          <IconDelete width="18" height="18" />
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="mt-2">
+                  <a
+                    v-if="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
+                    @click="clickUpsertDiscount({ mode: 'CREATE' })"
+                  >
+                    ✚ Thêm khuyến mại mới
+                  </a>
+                </div>
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
-                <!-- <div class="font-bold" style="flex-grow: 1; flex-basis: 90%">
-                  <DoubleRightOutlined />
-                  <span class="ml-2">Khuyến mãi</span>
-                </div>
-                <div style="flex-grow: 1; flex-basis: 90%">
-                  <div>
-                    Khuyến mại (Giá dịch vụ:
-                    <b>{{ formatMoney(procedure.price) }}</b>
-                    )
-                  </div>
-                  <div class="flex">
-                    <VueSelect
-                      v-model:value="procedure.discountType"
-                      style="width: 120px"
-                      :options="[
-                        { value: DiscountType.Percent, text: '%' },
-                        { value: DiscountType.VND, text: 'VNĐ' },
-                      ]" />
-                    <div style="width: calc(100% - 120px)">
-                      <InputMoney
-                        v-if="procedure.discountType === DiscountType.VND"
-                        v-model:value="procedure.discountMoney"
-                        @update:value="
-                          (v) =>
-                            (procedure.discountType = DiscountType.VND) &&
-                            (procedure.discountPercent =
-                              procedure.price == 0 ? 0 : Math.round((v * 100) / procedure.price))
-                        " />
-                      <InputNumber
-                        v-else
-                        v-model:value="procedure.discountPercent"
-                        @update:value="
-                          (v) =>
-                            (procedure.discountType = DiscountType.VND) &&
-                            (procedure.discountMoney = Math.round(
-                              ((procedure.price || 0) * (v || 0)) / 100
-                            ))
-                        " />
-                    </div>
-                  </div>
-                </div>
-                <div style="flex-grow: 1; flex-basis: 300px">
-                  <div>Từ ngày</div>
-                  <div>
-                    <InputDate
-                      v-model:value="procedure.discountStart"
-                      defaultType="date"
-                      showTime
-                      typeParser="number" />
-                  </div>
-                </div>
-                <div style="flex-grow: 1; flex-basis: 300px">
-                  <div>Đến ngày</div>
-                  <div>
-                    <InputDate
-                      v-model:value="procedure.discountEnd"
-                      defaultType="date"
-                      showTime
-                      typeParser="number" />
-                  </div>
-                </div> -->
-
-                <!-- <div class="mt-10 font-bold" style="flex-grow: 1; flex-basis: 90%">
-                  <DoubleRightOutlined />
-                  <span class="ml-2">Hoa hồng</span>
-                </div> -->
-
                 <div
                   v-for="(position, index) in procedure.positionList"
                   :key="index"
@@ -549,6 +632,7 @@ defineExpose({ openModal })
       </div>
     </form>
   </VueModal>
+  <ModalDiscountUpsert ref="modalDiscountUpsert" @success="handleModalDiscountUpsertSuccess" />
 </template>
 
 <style lang="scss" scoped>

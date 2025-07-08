@@ -7,8 +7,10 @@ import InputText from '@/common/vue-form/InputText.vue'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
+import { MeService } from '@/modules/_me/me.service'
 import { Image, ImageHost } from '@/modules/image/image.model'
 import { PositionService, PositionType } from '@/modules/position'
+import { compiledTemplatePrintHtml, PrintHtmlService } from '@/modules/print-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { Role, RoleService } from '@/modules/role'
 import { TicketClinicRadiologyApi } from '@/modules/ticket-clinic/ticket-clinic-radiology.api'
@@ -16,13 +18,14 @@ import { TicketRadiology, TicketRadiologyApi } from '@/modules/ticket-radiology'
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
-import { DString } from '@/utils'
+import { DString, ESDom } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
 
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const showModal = ref(false)
 
+const { userPermission, organization } = MeService
 const ticketRadiology = ref<TicketRadiology>(TicketRadiology.blank())
 
 const roleMap = ref<Record<string, Role>>({})
@@ -133,7 +136,7 @@ const closeModal = () => {
   ticketUserListOrigin.value = []
 }
 
-const startSave = async () => {
+const updateResult = async (options: { print: boolean }) => {
   try {
     saveLoading.value = true
     const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
@@ -142,19 +145,44 @@ const startSave = async () => {
       files: [],
     }
 
-    await TicketClinicRadiologyApi.updateResultTicketRadiology({
-      ticketId: ticketRadiology.value.ticketId,
+    const ticketRadiologyUpdate = await TicketRadiologyApi.updateResult({
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: ticketRadiology.value,
       imageIdsKeep,
       files,
       filesPosition,
       ticketUserList: hasChangeTicketUserList.value ? ticketUserList.value : undefined,
+      response: {
+        ticketRadiology: options.print
+          ? { ticket: true, customer: true, imageList: true, ticketUserList: true }
+          : {},
+      },
     })
 
-    showModal.value = false
+    if (options.print) {
+      await PrintHtmlService.startPrintResultTicketRadiology({
+        ticketRadiologyData: ticketRadiologyUpdate,
+        organization: organization.value,
+      })
+    }
+
+    closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalTicketRadiologyResult.vue:164 ~ startSave ~ error:', error)
+    console.log('🚀 ~ ModalTicketRadiologyResult.vue:171 ~ updateResult ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
+const cancelResult = async () => {
+  try {
+    saveLoading.value = true
+    await TicketRadiologyApi.cancelResult({
+      ticketRadiologyId: ticketRadiology.value.id,
+    })
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ ~ updateResult ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -164,7 +192,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 800px">
+  <VueModal v-model:show="showModal" style="width: 1200px">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -174,7 +202,7 @@ defineExpose({ openModal })
           <IconClose />
         </div>
       </div>
-      <form class="p-4" @submit.prevent="startSave">
+      <form class="p-4" @submit.prevent="updateResult({ print: false })">
         <div class="flex flex-wrap gap-4">
           <div class="flex-1">
             <div>Thời gian thực hiện</div>
@@ -251,11 +279,21 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-6 flex justify-end gap-4">
-          <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
-            Đóng lại
+          <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
+          <VueButton icon="close" color="red" @click="cancelResult">Hủy kết quả</VueButton>
+          <VueButton
+            style="margin-left: auto"
+            v-if="editable"
+            :loading="saveLoading"
+            color="blue"
+            type="button"
+            @click="updateResult({ print: true })"
+            icon="print"
+          >
+            Lưu và In
           </VueButton>
           <VueButton v-if="editable" :loading="saveLoading" color="blue" type="submit" icon="save">
-            Cập nhật kết quả
+            Lưu kết quả
           </VueButton>
         </div>
       </form>

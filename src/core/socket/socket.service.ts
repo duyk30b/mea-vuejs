@@ -1,9 +1,13 @@
 import { Batch } from '@/modules/batch'
+import { DiscountService, type Discount } from '@/modules/discount'
+import { LaboratoryService, type Laboratory } from '@/modules/laboratory'
+import { ProcedureService, type Procedure } from '@/modules/procedure'
+import { RadiologyService, type Radiology } from '@/modules/radiology'
 import { MeService } from '../../modules/_me/me.service'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import type { PositionType } from '../../modules/position'
+import { Position, PositionService, type PositionType } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
@@ -37,15 +41,6 @@ export class SocketService {
     await MeService.reloadSetting()
   }
 
-  static async listenCustomerUpsert(data: { customer: any }) {
-    const customer = Customer.from(data.customer)
-    await CustomerDB.upsertOne(customer)
-
-    if (ticketClinicRef.value.customerId === customer.id) {
-      ticketClinicRef.value.customer = customer
-    }
-  }
-
   static async listenDistributorUpsert(data: { distributor: any }) {
     const distributor = Distributor.from(data.distributor)
     const findIndex = DistributorService.distributorAll.findIndex((i) => {
@@ -55,6 +50,15 @@ export class SocketService {
       DistributorService.distributorAll[findIndex] = distributor
     } else {
       DistributorService.distributorAll.push(distributor)
+    }
+  }
+
+  static async listenCustomerUpsert(data: { customer: any }) {
+    const customer = Customer.from(data.customer)
+    await CustomerDB.upsertOne(customer)
+
+    if (ticketClinicRef.value.customerId === customer.id) {
+      ticketClinicRef.value.customer = customer
     }
   }
 
@@ -83,6 +87,66 @@ export class SocketService {
     if (data.batchDestroyedList?.length) {
       const batchIdDestroyList = data.batchDestroyedList.map((i) => i.id)
       await BatchDB.deleteMany(batchIdDestroyList)
+    }
+  }
+
+  static async listenProcedureListChange(data: {
+    procedureDestroyedList?: Procedure[]
+    procedureUpsertedList?: Procedure[]
+  }) {
+    if (data.procedureUpsertedList?.length) {
+      ProcedureService.loadedAll = false
+    }
+    if (data.procedureDestroyedList?.length) {
+      ProcedureService.loadedAll = false
+    }
+  }
+
+  static async listenLaboratoryListChange(data: {
+    laboratoryDestroyedList?: Laboratory[]
+    laboratoryUpsertedList?: Laboratory[]
+  }) {
+    if (data.laboratoryUpsertedList?.length) {
+      LaboratoryService.loadedAll = false
+    }
+    if (data.laboratoryDestroyedList?.length) {
+      LaboratoryService.loadedAll = false
+    }
+  }
+
+  static async listenRadiologyListChange(data: {
+    radiologyDestroyedList?: Radiology[]
+    radiologyUpsertedList?: Radiology[]
+  }) {
+    if (data.radiologyUpsertedList?.length) {
+      RadiologyService.loadedAll = false
+    }
+    if (data.radiologyDestroyedList?.length) {
+      RadiologyService.loadedAll = false
+    }
+  }
+
+  static async listenPositionListChange(data: {
+    positionDestroyedList?: Position[]
+    positionUpsertedList?: Position[]
+  }) {
+    if (data.positionUpsertedList?.length) {
+      PositionService.loadedAll = false
+    }
+    if (data.positionDestroyedList?.length) {
+      PositionService.loadedAll = false
+    }
+  }
+
+  static async listenDiscountListChange(data: {
+    discountDestroyedList?: Discount[]
+    discountUpsertedList?: Discount[]
+  }) {
+    if (data.discountUpsertedList?.length) {
+      DiscountService.loadedAll = false
+    }
+    if (data.discountDestroyedList?.length) {
+      DiscountService.loadedAll = false
     }
   }
 
@@ -245,7 +309,7 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeTicketRadiologyList(data: {
+  static async listenTicketRadiologyListChange(data: {
     ticketId: number
     ticketRadiologyInsert?: TicketRadiology
     ticketRadiologyUpdate?: TicketRadiology
@@ -292,7 +356,7 @@ export class SocketService {
     })
   }
 
-  static async listenTicketClinicChangeLaboratory(data: {
+  static async listenTicketLaboratoryListChange(data: {
     ticketId: number
     ticketLaboratoryInsertList?: TicketLaboratory[]
     ticketLaboratoryUpdateList?: TicketLaboratory[]

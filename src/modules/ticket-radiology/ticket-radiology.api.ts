@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import type { TicketUser } from '../ticket-user'
 import {
   TicketRadiologyDetailQuery,
   TicketRadiologyGetQuery,
@@ -25,5 +26,69 @@ export class TicketRadiologyApi {
     const response = await AxiosInstance.get(`/ticket-radiology/detail/${id}`, { params })
     const { data } = response.data as BaseResponse<{ ticketRadiology: any }>
     return TicketRadiology.from(data.ticketRadiology)
+  }
+
+  static async updateResult(options: {
+    ticketRadiologyId: number
+    ticketRadiology: TicketRadiology
+    imageIdsKeep: number[]
+    files: File[]
+    filesPosition: number[]
+    ticketUserList?: TicketUser[]
+    response: {
+      ticketRadiology: {
+        ticket?: boolean
+        customer?: boolean
+        ticketUserList?: boolean
+        imageList?: boolean
+      }
+    }
+  }) {
+    const { ticketRadiologyId, ticketRadiology, imageIdsKeep, files, filesPosition } = options
+
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    formData.append('imageIdsKeep', JSON.stringify(imageIdsKeep))
+    formData.append('filesPosition', JSON.stringify(filesPosition))
+    formData.append(
+      'ticketRadiology',
+      JSON.stringify({
+        description: ticketRadiology.description,
+        result: ticketRadiology.result,
+        startedAt: ticketRadiology.startedAt,
+      }),
+    )
+    if (options.ticketUserList) {
+      formData.append(
+        'ticketUserList',
+        JSON.stringify(
+          options.ticketUserList.map((i) => ({
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          })),
+        ),
+      )
+    }
+
+    const response = await AxiosInstance.post(
+      `/ticket-radiology/update-result/${ticketRadiologyId}`,
+      formData,
+      {
+        params: { response: JSON.stringify(options.response) },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    )
+    const { data } = response.data as BaseResponse<{ ticketRadiology: any }>
+    return TicketRadiology.from(data.ticketRadiology)
+  }
+
+  static async cancelResult(body: { ticketRadiologyId: number }) {
+    const { ticketRadiologyId } = body
+    const response = await AxiosInstance.post(
+      `/ticket-radiology/cancel-result/${ticketRadiologyId}`,
+    )
+    const { data } = response.data as BaseResponse<{ ticketId: number }>
+    return data
   }
 }

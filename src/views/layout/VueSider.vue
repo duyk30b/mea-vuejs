@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IconDoorOpen, IconLabPanel, IconRadiology } from '@/common/icon-google'
 import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -14,9 +15,8 @@ import {
   IconShop,
   IconTeam,
 } from '../../common/icon-antd'
-import { PermissionId } from '../../modules/permission/permission.enum'
 import { MeService } from '../../modules/_me/me.service'
-import { IconLabPanel, IconRadiology } from '@/common/icon-google'
+import { PermissionId } from '../../modules/permission/permission.enum'
 
 const props = defineProps<{ collapsed?: boolean }>()
 const { userPermission, organizationPermission, user } = MeService
@@ -64,14 +64,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         organizationPermission[PermissionId.TICKET_CLINIC] &&
         userPermission[PermissionId.TICKET_CLINIC_MENU]
       "
-      key="Clinic"
+      key="Reception"
     >
       <template #icon>
-        <IconMedicalBox />
+        <IconDoorOpen />
       </template>
-      <template #title>Phòng khám</template>
-      <a-menu-item key="TicketClinicList">
-        <router-link :to="{ name: 'TicketClinicList' }">Danh sách khám</router-link>
+      <template #title>Tiếp đón</template>
+      <a-menu-item key="ReceptionTicketList">
+        <router-link :to="{ name: 'ReceptionTicketList' }">DS Tiếp đón</router-link>
       </a-menu-item>
       <a-menu-item
         v-if="
@@ -83,6 +83,14 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
       </a-menu-item>
     </a-sub-menu>
+    <a-menu-item v-if="userPermission[PermissionId.TICKET_CLINIC_MENU]" key="TicketClinicList">
+      <template #icon>
+        <IconMedicalBox />
+      </template>
+      <span>
+        <router-link :to="{ name: 'TicketClinicList' }">Phòng Khám</router-link>
+      </span>
+    </a-menu-item>
     <a-menu-item v-if="organizationPermission[PermissionId.RADIOLOGY]" key="RoomRadiology">
       <template #icon>
         <IconRadiology />

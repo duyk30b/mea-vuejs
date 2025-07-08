@@ -327,10 +327,10 @@ const handleClickClear = () => {
     </div>
     <div class="icon-append" @click="handleClickClear">
       <div v-if="!disabled" class="icon-clear-blur">
-        <IconClose />
+        <IconClose width="11" height="11" />
       </div>
       <div v-if="!disabled" class="icon-clear-hover">
-        <IconCloseCircle />
+        <IconCloseCircle width="12" height="12" />
       </div>
     </div>
     <div v-if="showDatePicker && !disabled" class="date-picker">

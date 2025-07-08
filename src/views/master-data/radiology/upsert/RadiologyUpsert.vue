@@ -159,7 +159,7 @@ const handleSave = async () => {
 }
 
 const handleSelectPrintHtml = async () => {
-  radiology.value.printHtml = await PrintHtmlService.getPrintHtmlRadiology(
+  radiology.value.printHtml = await PrintHtmlService.getPrintHtmlRadiologyResult(
     radiology.value.printHtmlId,
   )
   updatePreview()

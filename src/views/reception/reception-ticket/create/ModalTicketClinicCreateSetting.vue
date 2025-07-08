@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputText, VueSelect } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { PositionService, PositionType } from '../../../modules/position'
-import { OrganizationService } from '../../../modules/organization'
-import { RoleService } from '../../../modules/role'
-import { TicketStatus } from '../../../modules/ticket'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputCheckbox, InputText, VueSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { PositionService, PositionType } from '@/modules/position'
+import { OrganizationService } from '@/modules/organization'
+import { RoleService } from '@/modules/role'
+import { TicketStatus } from '@/modules/ticket'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
@@ -22,7 +22,7 @@ const emit = defineEmits<{ (e: 'success'): void }>()
 
 const store = useSettingStore()
 const settingDisplay = ref<typeof store.TICKET_CLINIC_CREATE>(
-  JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE))
+  JSON.parse(JSON.stringify(store.TICKET_CLINIC_CREATE)),
 )
 
 const roleOptions = ref<{ value: number; label: string }[]>([])
@@ -101,20 +101,8 @@ defineExpose({ openModal })
                             mode="multiple"
                             style="width: 100%"
                             placeholder="Chọn vai trò hiển thị"
-                            :options="roleOptions"></a-select>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Trạng thái sau khi tiếp đón</td>
-                      <td>
-                        <div>
-                          <VueSelect
-                            v-model:value="settingDisplay.status"
-                            :options="[
-                              { value: TicketStatus.Draft, text: 'Chờ khám' },
-                              { value: TicketStatus.Executing, text: 'Vào khám' },
-                            ]" />
+                            :options="roleOptions"
+                          ></a-select>
                         </div>
                       </td>
                     </tr>
@@ -125,14 +113,14 @@ defineExpose({ openModal })
                         </InputCheckbox>
                       </td>
                     </tr>
-                                       <tr>
+                    <tr>
                       <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.zalo">
                           Hiển thị điền link zalo
                         </InputCheckbox>
                       </td>
                     </tr>
-                                       <tr>
+                    <tr>
                       <td colspan="2">
                         <InputCheckbox v-model:checked="settingDisplay.birthday">
                           Hiển thị điền ngày sinh
@@ -213,7 +201,7 @@ defineExpose({ openModal })
 
       <div class="p-4 mt-2">
         <div class="flex gap-4">
-          <VueButton icon="close" style="margin-left:auto" @click="closeModal">Hủy bỏ</VueButton>
+          <VueButton icon="close" style="margin-left: auto" @click="closeModal">Hủy bỏ</VueButton>
           <VueButton icon="save" color="blue" :loading="saveLoading" @click="handleSave">
             Lưu lại
           </VueButton>

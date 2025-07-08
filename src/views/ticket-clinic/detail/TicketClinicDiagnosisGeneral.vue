@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueTinyMCE from '../../../common/VueTinyMCE.vue'
 import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
-import { InputText } from '../../../common/vue-form'
+import { InputHint, InputOptions, InputOptionsText, InputText } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
@@ -13,9 +13,15 @@ import {
   type TicketAttributeKeyGeneralType,
 } from '../../../modules/ticket-attribute'
 import { TicketClinicApi, ticketClinicRef } from '../../../modules/ticket-clinic'
-import { DImage } from '../../../utils'
+import { DImage, DString } from '../../../utils'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { ICD, ICDService } from '@/modules/icd'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+
+const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
 
 const { userPermission } = MeService
+const settingStore = useSettingStore()
 
 const note = ref<string>('')
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
@@ -27,10 +33,17 @@ const ticketAttributeMap = ref<
   healthHistory: '',
   summary: '',
 })
+
+const icdOptions = ref<ItemOption[]>([])
+
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
-onMounted(async () => {})
+onMounted(async () => {
+  if (settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10) {
+    await ICDService.fetchAll()
+  }
+})
 
 watch(
   () => ticketClinicRef.value.note,
@@ -129,6 +142,29 @@ const saveTicketDiagnosis = async () => {
 
 const getDataTicketDiagnosis = () => {
   return { ticketAttributeMap: ticketAttributeMap.value }
+}
+
+const searchingICD = async (text: string) => {
+  if (!text) {
+    icdOptions.value = []
+  } else {
+    const icdList = await ICDService.search(text, { limit: 20 })
+    icdOptions.value = (icdList || []).map((i) => {
+      return { value: i.id, text: `${i.code} - ${i.name}`, data: i }
+    })
+  }
+}
+
+const selectICD = async (options: { data: ICD; text: string }) => {
+  note.value = options.data.name || ''
+  ticketAttributeMap.value.icd10Name = options.data.name || ''
+  ticketAttributeMap.value.icd10Code = options.data.code || ''
+}
+
+const updateTextICD = (text: string) => {
+  if (!text) {
+    ticketAttributeMap.value.icd10Code = ''
+  }
 }
 
 defineExpose({ getDataTicketDiagnosis })
@@ -236,6 +272,21 @@ defineExpose({ getDataTicketDiagnosis })
         "
         @changeImage="hasChangeImage = true"
       />
+    </div>
+    <div class="mt-4" v-if="settingStore.TICKET_CLINIC_DETAIL.diagnosis.icd10">
+      <div>Chẩn đoán theo ICD10</div>
+      <div>
+        <InputOptionsText
+          ref="inputOptionsICD"
+          :prepend="ticketAttributeMap.icd10Code || '&nbsp;&nbsp;&nbsp;&nbsp;'"
+          v-model:text="ticketAttributeMap.icd10Name"
+          :max-height="260"
+          :options="icdOptions"
+          @selectItem="({ data, text }) => selectICD({ data, text })"
+          @update:text="updateTextICD"
+          @searching="searchingICD"
+        />
+      </div>
     </div>
     <div class="mt-4">
       <div>Chẩn đoán</div>

@@ -3,10 +3,10 @@ import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { InputCheckbox, InputDate, InputNumber, InputText, VueSelect } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
 import { LaboratoryService, LaboratoryValueType } from '@/modules/laboratory'
 import { LaboratoryGroupService } from '@/modules/laboratory-group'
-import { TicketClinicLaboratoryApi } from '@/modules/ticket-clinic'
-import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
+import { PrintHtmlService } from '@/modules/print-html'
 import { TicketLaboratoryGroup, TicketLaboratoryGroupApi } from '@/modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '@/modules/ticket-laboratory-result'
 import { computed, ref } from 'vue'
@@ -14,7 +14,7 @@ import { computed, ref } from 'vue'
 const emit = defineEmits<{ (e: 'success'): void }>()
 
 const showModal = ref(false)
-
+const { userPermission, organization } = MeService
 const laboratoryMap = LaboratoryService.laboratoryMap
 const laboratoryGroupMap = LaboratoryGroupService.laboratoryGroupMap
 
@@ -96,16 +96,35 @@ const disabledButtonSave = computed(() => {
   return !hasChangeData
 })
 
-const handleSave = async () => {
+const updateResult = async (options: { print: boolean }) => {
   saveLoading.value = true
   try {
-    await TicketClinicLaboratoryApi.updateResult({
-      ticketId: ticketLaboratoryGroup.value.ticketId,
+    const ticketLaboratoryGroupUpdate = await TicketLaboratoryGroupApi.updateResult({
       ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
       startedAt: startedAt.value,
       ticketLaboratoryResultUpdateList: Object.values(ticketLaboratoryResultTree.value),
+      response: {
+        ticketLaboratoryGroup: options.print
+          ? {
+              ticket: true,
+              customer: true,
+              imageList: true,
+              ticketUserList: true,
+              ticketLaboratoryList: true,
+              ticketLaboratoryResultMap: true,
+            }
+          : {},
+      },
     })
     emit('success')
+
+    if (options.print) {
+      await PrintHtmlService.startPrintResultTicketLaboratory({
+        ticketLaboratoryGroupData: ticketLaboratoryGroupUpdate,
+        organization: organization.value,
+      })
+    }
+
     closeModal()
   } catch (error) {
     console.log('🚀 ~ file: ModalProductUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -138,6 +157,20 @@ const closeModal = () => {
   ticketLaboratoryGroup.value = TicketLaboratoryGroup.blank()
 }
 
+const cancelResult = async () => {
+  try {
+    saveLoading.value = true
+    await TicketLaboratoryGroupApi.cancelResult({
+      ticketLaboratoryGroupId: ticketLaboratoryGroupId.value,
+    })
+    closeModal()
+  } catch (error) {
+    console.log('🚀 ~ ~ updateResult ~ error:', error)
+  } finally {
+    saveLoading.value = false
+  }
+}
+
 defineExpose({ openModal })
 </script>
 
@@ -153,7 +186,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <form class="p-4" @submit.prevent="handleSave">
+      <form class="p-4" @submit.prevent="updateResult({ print: false })">
         <div class="table-wrapper mt-2">
           <table>
             <thead>
@@ -292,21 +325,21 @@ defineExpose({ openModal })
           <div><InputDate v-model:value="startedAt" show-time typeParser="number" /></div>
         </div>
 
-        <div class="pb-4 pt-8 flex gap-4">
-          <VueButton type="reset" icon="close" style="margin-left: auto" @click="closeModal">
-            Đóng lại
-          </VueButton>
+        <div class="mt-6 flex justify-end gap-4">
+          <VueButton type="reset" icon="close" @click="closeModal">Đóng lại</VueButton>
+          <VueButton icon="close" color="red" @click="cancelResult">Hủy kết quả</VueButton>
           <VueButton
-            color="blue"
-            icon="save"
-            type="submit"
+            style="margin-left: auto"
             :loading="saveLoading"
-            :disabled="disabledButtonSave"
+            color="blue"
+            type="button"
+            @click="updateResult({ print: true })"
+            icon="print"
           >
-            <span v-if="ticketLaboratoryGroup.status === TicketLaboratoryStatus.Completed">
-              Cập nhật kết quả
-            </span>
-            <span v-else>Trả kết quả</span>
+            Lưu và In
+          </VueButton>
+          <VueButton :loading="saveLoading" color="blue" type="submit" icon="save">
+            Lưu kết quả
           </VueButton>
         </div>
       </form>

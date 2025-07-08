@@ -4,7 +4,6 @@ import VuePagination from '@/common/VuePagination.vue'
 import { IconEye, IconPrint } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import { IconEditSquare } from '@/common/icon-google'
-import { AlertStore } from '@/common/vue-alert'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
@@ -12,14 +11,14 @@ import { CustomerService, type Customer } from '@/modules/customer'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '@/modules/laboratory-group'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { compiledTemplatePrintHtml, PrintHtmlService } from '@/modules/print-html'
+import { PrintHtmlService } from '@/modules/print-html'
 import { TicketLaboratoryStatus } from '@/modules/ticket-laboratory'
 import {
   TicketLaboratoryGroup,
   TicketLaboratoryGroupApi,
   TicketLaboratoryGroupService,
 } from '@/modules/ticket-laboratory-group'
-import { DString, ESDom, ESTimer } from '@/utils'
+import { DString, ESTimer } from '@/utils'
 import { onBeforeMount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Breadcrumb from '../component/Breadcrumb.vue'
@@ -100,7 +99,7 @@ onBeforeMount(async () => {
     await Promise.all([
       startFetchData(),
       CustomerService.refreshDB(),
-      LaboratoryService.reloadMap(),
+      LaboratoryService.getMap(),
       LaboratoryGroupService.reloadMap(),
     ])
   } catch (error) {
@@ -166,15 +165,7 @@ const changeLimit = async (limitSelect: any) => {
 
 const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
   try {
-    let printHtmlId = tlgProp.laboratoryGroup?.printHtmlId || 0
-    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
-    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratory(printHtmlId)
-
-    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
-      return AlertStore.addError('Cài đặt in thất bại')
-    }
-
-    const tlgData = await TicketLaboratoryGroupApi.detail(tlgProp.id, {
+    const ticketLaboratoryGroupData = await TicketLaboratoryGroupApi.detail(tlgProp.id, {
       relation: {
         // customer: true,
         // ticket: true,
@@ -183,49 +174,19 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
         ticketLaboratoryResultMap: true,
       },
     })
-    tlgData.customer = tlgProp.customer
-    tlgData.ticket = tlgProp.ticket
-    tlgData.ticketLaboratoryList = tlgProp.ticketLaboratoryList
-    tlgData.laboratoryGroup =
-      laboratoryGroupMap.value[tlgData.laboratoryGroupId] || LaboratoryGroup.blank()
-    tlgData.ticketLaboratoryList?.forEach((i) => {
+    ticketLaboratoryGroupData.customer = tlgProp.customer
+    ticketLaboratoryGroupData.ticket = tlgProp.ticket
+    ticketLaboratoryGroupData.ticketLaboratoryList = tlgProp.ticketLaboratoryList
+    ticketLaboratoryGroupData.laboratoryGroup =
+      laboratoryGroupMap.value[ticketLaboratoryGroupData.laboratoryGroupId] ||
+      LaboratoryGroup.blank()
+    ticketLaboratoryGroupData.ticketLaboratoryList?.forEach((i) => {
       i.laboratory = laboratoryMap.value[i.laboratoryId] || Laboratory.blank()
     })
 
-    const compiledHeader = compiledTemplatePrintHtml({
+    await PrintHtmlService.startPrintResultTicketLaboratory({
+      ticketLaboratoryGroupData,
       organization: organization.value,
-      ticket: tlgData.ticket!,
-      masterData: {
-        customer: tlgData.customer!,
-      },
-      data: {
-        ticketLaboratoryGroup: tlgData,
-      },
-      printHtml: printHtmlHeader,
-    })
-    const compiledContent = compiledTemplatePrintHtml({
-      organization: organization.value,
-      ticket: tlgData.ticket!,
-      masterData: {
-        customer: tlgData.customer!,
-      },
-      data: {
-        ticketLaboratoryGroup: tlgData,
-      },
-      printHtml: printHtmlLaboratory,
-      _LAYOUT: {
-        HEADER: compiledHeader.html,
-      },
-    })
-
-    if (!compiledContent.html) {
-      AlertStore.addError('Mẫu in không hợp lệ')
-      return
-    }
-
-    await ESDom.startPrint('iframe-print', {
-      html: compiledContent.html,
-      cssList: [compiledHeader.css, compiledContent.css],
     })
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
@@ -409,7 +370,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             </td>
             <td class="text-center">
               <a
-                v-if="userPermission[PermissionId.RADIOLOGY_RESULT]"
+                v-if="userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]"
                 class="text-orange-500"
                 @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
               >

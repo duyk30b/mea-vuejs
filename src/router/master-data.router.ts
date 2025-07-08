@@ -112,6 +112,19 @@ export const masterDataRouter: RouteRecordRaw = {
       ],
     },
     {
+      path: 'discount',
+      name: 'PaymentMethod',
+      meta: { title: 'Khuyến mại' },
+      redirect: () => ({ name: 'DiscountList' }),
+      children: [
+        {
+          path: 'list',
+          name: 'DiscountList',
+          component: () => import('../views/master-data/discount/list/DiscountList.vue'),
+        },
+      ],
+    },
+    {
       path: 'laboratory-sample',
       name: 'LaboratorySample',
       redirect: () => ({ name: 'LaboratorySampleList' }),
@@ -120,7 +133,8 @@ export const masterDataRouter: RouteRecordRaw = {
         {
           path: 'list',
           name: 'LaboratorySampleList',
-          component: () => import('../views/master-data/laboratory-sample/list/LaboratorySampleList.vue'),
+          component: () =>
+            import('../views/master-data/laboratory-sample/list/LaboratorySampleList.vue'),
         },
       ],
     },

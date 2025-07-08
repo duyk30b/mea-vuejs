@@ -143,14 +143,14 @@ defineExpose({ openModal })
             <tr>
               <td colspan="2">
                 <InputCheckbox v-model:checked="settingDisplay.buttonShowModalCreate">
-                  Hiển thị nút Tiếp đón
+                  Hiển thị nút Khám mới
                 </InputCheckbox>
               </td>
             </tr>
             <tr>
               <td colspan="2">
                 <InputCheckbox v-model:checked="settingDisplay.buttonShowTicketDetailBlank">
-                  Hiển thị nút khám mới
+                  Hiển thị nút Khám nhanh
                 </InputCheckbox>
               </td>
             </tr>

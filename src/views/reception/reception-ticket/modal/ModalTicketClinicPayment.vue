@@ -13,7 +13,7 @@ import { PaymentApi } from '../../../../modules/payment/payment.api'
 import { VoucherType } from '../../../../modules/payment/payment.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
+import { TicketClinicApi } from '../../../../modules/ticket-clinic'
 import { ESArray } from '../../../../utils'
 import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
 
@@ -43,20 +43,21 @@ onMounted(async () => {
   paymentMethodId.value = paymentMethodAll[0]?.id || 0
 })
 
-const openModal = async (view: PaymentViewType) => {
-  paymentView.value = view
+const openModal = async (options: { ticket: Ticket; paymentView: PaymentViewType }) => {
+  paymentView.value = options.paymentView
   money.value = 0
   showModal.value = true
 
   try {
-    ticketClinicRef.value.paymentList = await PaymentApi.list({
+    ticketClone.value = Ticket.from(options.ticket)
+
+    ticketClone.value.paymentList = await PaymentApi.list({
       filter: {
-        voucherId: ticketClinicRef.value.id,
+        voucherId: ticketClone.value.id,
         voucherType: VoucherType.Ticket,
       },
       sort: { id: 'ASC' },
     })
-    ticketClone.value = Ticket.from(ticketClinicRef.value)
 
     if (!isMobile) {
       nextTick(() => inputMoneyPayment.value?.focus())

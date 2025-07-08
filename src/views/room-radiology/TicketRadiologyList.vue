@@ -8,7 +8,7 @@ import { AlertStore } from '@/common/vue-alert'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { CustomerService, type Customer } from '@/modules/customer'
+import { Customer, CustomerService } from '@/modules/customer'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { compiledTemplatePrintHtml, PrintHtmlService } from '@/modules/print-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
@@ -25,6 +25,7 @@ import Breadcrumb from '../component/Breadcrumb.vue'
 import ModalTicketRadiologyGroupResult from './ModalTicketRadiologyResult.vue'
 import TicketRadiologyStatusTag from './TicketRadiologyStatusTag.vue'
 import { fromTime, toTime } from './ticket-radiology-list.ref'
+import { Ticket } from '@/modules/ticket'
 
 const router = useRouter()
 
@@ -96,7 +97,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
 
 onBeforeMount(async () => {
   try {
-    await Promise.all([startFetchData(), CustomerService.refreshDB(), RadiologyService.reloadMap()])
+    await Promise.all([startFetchData(), CustomerService.refreshDB(), RadiologyService.getMap()])
   } catch (error) {
     console.log('🚀 ~ onBeforeMount ~ error:', error)
   }
@@ -158,49 +159,17 @@ const changeLimit = async (limitSelect: any) => {
   await startFetchData()
 }
 
-const startPrint = async (ticketRadiologyData: TicketRadiology) => {
+const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
   try {
-    const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
-    let printHtmlId = radiologyData.printHtmlId
-    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
-    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiology(printHtmlId)
-
-    if (!printHtmlHeader || !printHtmlRadiology || !printHtmlRadiology.html) {
-      return AlertStore.addError('Cài đặt in thất bại')
-    }
-
-    const compiledHeader = compiledTemplatePrintHtml({
-      organization: organization.value,
-      ticket: ticketRadiologyData.ticket!,
-      masterData: {
-        customer: ticketRadiologyData.customer!,
-      },
-      data: ticketRadiologyData,
-      printHtml: printHtmlHeader,
-      customVariables: radiologyData.customVariables || '',
+    const ticketRadiologyData = await TicketRadiologyApi.detail(ticketRadiologySelect.id, {
+      relation: { imageList: true, ticketUserList: true },
     })
-    const compiledContent = compiledTemplatePrintHtml({
+    ticketRadiologyData.customer = Customer.from(ticketRadiologySelect.customer!)
+    ticketRadiologyData.ticket = Ticket.from(ticketRadiologySelect.ticket!)
+
+    await PrintHtmlService.startPrintResultTicketRadiology({
+      ticketRadiologyData,
       organization: organization.value,
-      ticket: ticketRadiologyData.ticket!,
-      masterData: {
-        customer: ticketRadiologyData.customer!,
-      },
-      data: ticketRadiologyData,
-      printHtml: printHtmlRadiology,
-      _LAYOUT: {
-        HEADER: compiledHeader.html,
-      },
-      customVariables: radiologyData.customVariables || '',
-    })
-
-    if (!compiledContent.html) {
-      AlertStore.addError('Mẫu in không hợp lệ')
-      return
-    }
-
-    await ESDom.startPrint('iframe-print', {
-      html: compiledContent.html,
-      cssList: [compiledHeader.css, compiledContent.css, radiologyData.customStyles],
     })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
@@ -364,7 +333,12 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               </div>
             </td>
             <td class="">
-              {{ radiologyMap[ticketRadiology.radiologyId]?.name }}
+              <div>
+                {{ radiologyMap[ticketRadiology.radiologyId]?.name }}
+              </div>
+              <div class="max-line-1 text-xs italic">
+                {{ ticketRadiology.result || '' }}
+              </div>
             </td>
             <td class="text-center">
               <TicketRadiologyStatusTag :status="ticketRadiology.status" />
@@ -375,7 +349,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
 
             <td class="text-center">
               <a
-                v-if="userPermission[PermissionId.RADIOLOGY_RESULT]"
+                v-if="userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]"
                 class="text-orange-500"
                 @click="modalTicketRadiologyGroupResult?.openModal(ticketRadiology.id)"
               >
@@ -392,7 +366,10 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
             </td>
 
             <td class="text-center">
-              <a v-if="ticketRadiology.startedAt != null" @click="startPrint(ticketRadiology)">
+              <a
+                v-if="ticketRadiology.startedAt != null"
+                @click="startPrintResult(ticketRadiology)"
+              >
                 <IconPrint width="18" height="18" />
               </a>
             </td>

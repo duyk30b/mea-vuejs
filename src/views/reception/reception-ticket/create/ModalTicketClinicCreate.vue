@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import {
   InputCheckbox,
   InputDate,
@@ -13,32 +13,29 @@ import {
   InputRadio,
   InputText,
   VueSelect,
-} from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { ModalStore } from '../../../common/vue-modal/vue-modal.store'
-import { AddressInstance } from '../../../core/address.instance'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { PositionType } from '../../../modules/position'
-import { CustomerService } from '../../../modules/customer'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
-import { Customer } from '../../../modules/customer/customer.model'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Role, RoleService } from '../../../modules/role'
-import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
-import type {
-  TicketAttributeKeyGeneralType,
-  TicketAttributeMap,
-} from '../../../modules/ticket-attribute'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
-import { TicketUser } from '../../../modules/ticket-user'
-import { User, UserService } from '../../../modules/user'
-import { UserRoleService } from '../../../modules/user-role'
-import { DString, ESTimer } from '../../../utils'
-import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
+} from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { AddressInstance } from '@/core/address.instance'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
+import { PositionType } from '@/modules/position'
+import { CustomerService } from '@/modules/customer'
+import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
+import { Customer } from '@/modules/customer/customer.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Role, RoleService } from '@/modules/role'
+import { Ticket, TicketService, TicketStatus, TicketType } from '@/modules/ticket'
+import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
+import { TicketClinicApi } from '@/modules/ticket-clinic'
+import { TicketUser } from '@/modules/ticket-user'
+import { User, UserService } from '@/modules/user'
+import { UserRoleService } from '@/modules/user-role'
+import { DString, ESTimer } from '@/utils'
+import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
-import { MeService } from '../../../modules/_me/me.service'
+import { MeService } from '@/modules/_me/me.service'
 import { Address, AddressService } from '@/modules/address'
 
 const inputFilterCustomer = ref<InstanceType<typeof InputFilter>>()
@@ -74,14 +71,19 @@ const userRoleMapRoleIdOptions = ref<Record<string, { value: number; text: strin
   {},
 )
 
+const ticketStatusRegister = ref<TicketStatus>(TicketStatus.Draft)
+
 const showModal = ref(false)
 const saveLoading = ref(false)
 
 const currentAddress = ref<Address>(Address.blank())
 const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
 
-const openModal = async (ticketId?: number) => {
+const openModal = async (options: { ticketId?: number; ticketStatusRegister?: TicketStatus }) => {
   showModal.value = true
+
+  ticketStatusRegister.value = options.ticketStatusRegister || TicketStatus.Draft
+  const ticketId = options?.ticketId || 0
 
   Promise.all([
     ticketId
@@ -392,7 +394,7 @@ const handleSubmitFormTicketClinic = async () => {
         customer: customer.value,
         ticketInformation: {
           ticketType: settingStore.TICKET_CLINIC_LIST.ticketType,
-          status: settingStore.TICKET_CLINIC_CREATE.status,
+          status: ticketStatusRegister.value,
           customType: ticket.value.customType,
           registeredAt: ticket.value.registeredAt,
           customerSourceId: ticket.value.customerSourceId,

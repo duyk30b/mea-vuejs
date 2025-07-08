@@ -23,9 +23,9 @@ import { DString, ESTimer, formatPhone } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
-import ModalTicketClinicCreate from '../create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicListSetting from './ModalTicketClinicListSetting.vue'
 import { fromTime, toTime } from './ticket-clinic-list.ref'
+import ModalTicketClinicCreate from '@/views/reception/reception-ticket/create/ModalTicketClinicCreate.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -226,9 +226,11 @@ const downloadTicketClinicList = (menu: { key: string }) => {
           "
           color="blue"
           icon="plus"
-          @click="modalTicketClinicCreate?.openModal()"
+          @click="
+            modalTicketClinicCreate?.openModal({ ticketStatusRegister: TicketStatus.Executing })
+          "
         >
-          TIẾP ĐÓN
+          Khám mới
         </VueButton>
       </div>
       <div>
@@ -405,7 +407,6 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               {{ roleMap[roleId]?.name || '' }}
             </th>
             <th>Tổng tiền</th>
-            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -505,23 +506,6 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               <div v-if="ticket.status === TicketStatus.Debt" class="text-xs">
                 Nợ: {{ formatMoney(ticket.debt) }}
               </div>
-            </td>
-            <td class="text-center">
-              <a
-                v-if="
-                  [
-                    TicketStatus.Schedule,
-                    TicketStatus.Draft,
-                    TicketStatus.Deposited,
-                    TicketStatus.Executing,
-                  ].includes(ticket.status)
-                "
-                style="color: #eca52b"
-                class="text-xl"
-                @click="modalTicketClinicCreate?.openModal(ticket.id)"
-              >
-                <IconEditSquare />
-              </a>
             </td>
           </tr>
         </tbody>

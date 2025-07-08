@@ -42,16 +42,16 @@ onBeforeMount(async () => {
 
     roleOptions.value = roleList.map((i) => ({ value: i.id, text: i.name, data: i }))
   } catch (error) {
-    console.log('🚀 ~ ModalCommissionUpsert.vue:38 ~ onBeforeMount ~ error:', error)
+    console.log('🚀 ~ ModalPositionUpsert.vue:45 ~ onBeforeMount ~ error:', error)
   }
 })
 
-const openModal = async (commissionId?: number) => {
+const openModal = async (positionId?: number) => {
   showModal.value = true
-  if (!commissionId) {
+  if (!positionId) {
     position.value = Position.blank()
   } else {
-    position.value = await PositionService.detail(commissionId, {
+    position.value = await PositionService.detail(positionId, {
       relation: {
         role: true,
         procedure: true,
@@ -80,7 +80,7 @@ const handleSave = async () => {
     }
     closeModal()
   } catch (error) {
-    console.log('🚀 ~ file: ModalCommissionUpsert.vue:80 ~ handleSave ~ error:', error)
+    console.log('🚀 ~ ModalPositionUpsert.vue:83 ~ handleSave ~ error:', error)
   } finally {
     saveLoading.value = false
   }
@@ -89,7 +89,7 @@ const handleSave = async () => {
 const clickDelete = () => {
   ModalStore.confirm({
     title: 'Bạn có chắc chắn muốn xóa loại vị trí này',
-    content: 'Tiền hoa hồng đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
+    content: 'Dữ liệu đã xóa không thể khôi phục lại được. Bạn vẫn muốn xóa ?',
     async onOk() {
       try {
         const response = await PositionService.destroyOne(position.value.id)
@@ -98,7 +98,7 @@ const clickDelete = () => {
           closeModal()
         }
       } catch (error) {
-        console.log('🚀 ~ file: ModalCommissionUpsert.vue:109 ~ clickDelete ~ error:', error)
+        console.log('🚀 ~ ModalPositionUpsert.vue:101 ~ onOk ~ error:', error)
       }
     },
   })

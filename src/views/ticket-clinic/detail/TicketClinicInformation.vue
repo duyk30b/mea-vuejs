@@ -25,7 +25,7 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import TicketClinicDeliveryStatusTag from '../TicketClinicDeliveryStatusTag.vue'
-import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
+import ModalTicketClinicPayment from '../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicRegisterAppointment from './modal/ModalTicketClinicRegisterAppointment.vue'
 import { MeService } from '../../../modules/_me/me.service'
 
@@ -189,7 +189,12 @@ const handleClickModalRegisterAppointment = () => {
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Prepayment)"
+            @click="
+              modalTicketClinicPayment?.openModal({
+                ticket: ticketClinicRef,
+                paymentView: PaymentViewType.Prepayment,
+              })
+            "
           >
             <span class="font-bold">TẠM ỨNG</span>
           </VueButton>
@@ -198,7 +203,12 @@ const handleClickModalRegisterAppointment = () => {
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.PayDebt)"
+            @click="
+              modalTicketClinicPayment?.openModal({
+                ticket: ticketClinicRef,
+                paymentView: PaymentViewType.PayDebt,
+              })
+            "
           >
             <span class="font-bold">TRẢ NỢ</span>
           </VueButton>
@@ -207,7 +217,12 @@ const handleClickModalRegisterAppointment = () => {
             size="small"
             color="green"
             icon="dollar"
-            @click="modalTicketClinicPayment?.openModal(PaymentViewType.Success)"
+            @click="
+              modalTicketClinicPayment?.openModal({
+                ticket: ticketClinicRef,
+                paymentView: PaymentViewType.Success,
+              })
+            "
           >
             <span class="font-bold">THANH TOÁN</span>
           </VueButton>

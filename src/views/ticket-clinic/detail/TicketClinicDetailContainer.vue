@@ -159,11 +159,11 @@ const startRegisterExecuting = async () => {
   })
 }
 
-const startCloseVisit = async () => {
+const startCloseTicket = async () => {
   await TicketClinicApi.close(ticketClinicRef.value.id)
 }
 
-const clickCloseVisit = () => {
+const clickCloseTicket = () => {
   if (ticketClinicRef.value.deliveryStatus === DeliveryStatus.Pending) {
     return ModalStore.alert({
       title: 'Thuốc vẫn chưa xuất hết ?',
@@ -209,12 +209,12 @@ const clickCloseVisit = () => {
       ],
       okText: 'Xác nhận Đóng phiếu',
       async onOk() {
-        await startCloseVisit()
+        await startCloseTicket()
       },
     })
   }
 
-  startCloseVisit()
+  startCloseTicket()
 }
 </script>
 
@@ -430,7 +430,7 @@ const clickCloseVisit = () => {
           size="default"
           style="margin-left: -4px; margin-right: -4px"
           :disabled="![TicketStatus.Executing].includes(ticketClinicRef.status)"
-          @click="clickCloseVisit"
+          @click="clickCloseTicket"
         >
           <IconSave />
           ĐÓNG PHIẾU KHÁM

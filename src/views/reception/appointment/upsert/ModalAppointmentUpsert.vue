@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '../../../common/icon-antd'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch, IconSetting } from '@/common/icon-antd'
 import {
   InputDate,
   InputHint,
@@ -10,20 +8,21 @@ import {
   InputRadio,
   InputText,
   VueSelect,
-} from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { AddressInstance } from '../../../core/address.instance'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment, AppointmentApi, AppointmentStatus } from '../../../modules/appointment'
-import { Customer, CustomerService } from '../../../modules/customer'
-import { CustomerSource, CustomerSourceService } from '../../../modules/customer-source'
-import { PermissionId } from '../../../modules/permission/permission.enum'
-import { DString, ESTimer } from '../../../utils'
-import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
-import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
-import { MeService } from '../../../modules/_me/me.service'
+} from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { Address, AddressService } from '@/modules/address'
+import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
+import { Customer, CustomerService } from '@/modules/customer'
+import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { DString, ESTimer } from '@/utils'
+import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
+import { nextTick, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
 
 const modalAppointmentUpsertSetting = ref<InstanceType<typeof HTMLFormElement>>()
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()

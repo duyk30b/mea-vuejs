@@ -87,7 +87,7 @@ onMounted(async () => {
     const promiseResult = await Promise.all([
       LaboratorySampleService.list({}),
       LaboratoryGroupService.reloadMap(),
-      LaboratoryService.reloadMap(),
+      LaboratoryService.getMap(),
     ])
     await ticketClinicRef.value.refreshLaboratory()
 
@@ -116,56 +116,6 @@ onMounted(async () => {
     AlertStore.add({ type: 'error', message: error.message })
   }
 })
-
-const startPrint = async (tlgData: TicketLaboratoryGroup) => {
-  try {
-    let printHtmlId = tlgData.laboratoryGroup?.printHtmlId || 0
-    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
-    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratory(printHtmlId)
-
-    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
-      return AlertStore.addError('Cài đặt in thất bại')
-    }
-
-    const compiledHeader = compiledTemplatePrintHtml({
-      organization: organization.value,
-      ticket: ticketClinicRef.value,
-      masterData: {
-        customer: ticketClinicRef.value.customer!,
-      },
-      data: {
-        ticketLaboratoryGroup: tlgData,
-      },
-      printHtml: printHtmlHeader,
-    })
-    const compiledContent = compiledTemplatePrintHtml({
-      organization: organization.value,
-      ticket: ticketClinicRef.value,
-      masterData: {
-        customer: ticketClinicRef.value.customer!,
-      },
-      data: {
-        ticketLaboratoryGroup: tlgData,
-      },
-      printHtml: printHtmlLaboratory,
-      _LAYOUT: {
-        HEADER: compiledHeader.html,
-      },
-    })
-
-    if (!compiledContent.html) {
-      AlertStore.addError('Mẫu in không hợp lệ')
-      return
-    }
-
-    await ESDom.startPrint('iframe-print', {
-      html: compiledContent.html,
-      cssList: [compiledHeader.css, compiledContent.css],
-    })
-  } catch (error) {
-    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
-  }
-}
 
 const reloadIndeterminateCheckbox = () => {
   laboratorySampleOptions.value.forEach((laboratorySample) => {
@@ -367,6 +317,99 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
     },
   })
 }
+
+const startPrintRequest = async () => {
+  try {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratoryRequest()
+
+    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlLaboratory,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
+  }
+}
+
+const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
+  try {
+    let printHtmlId = tlgData.laboratoryGroup?.printHtmlId || 0
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratoryResult(printHtmlId)
+
+    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      data: {
+        ticketLaboratoryGroup: tlgData,
+      },
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      data: {
+        ticketLaboratoryGroup: tlgData,
+      },
+      printHtml: printHtmlLaboratory,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
+  }
+}
 </script>
 <template>
   <ModalTicketLaboratoryResult ref="modalTicketLaboratoryResult" />
@@ -560,8 +603,15 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
     </div>
   </div>
   <div class="mt-8">
-    <div class="italic">Danh sách các phiếu xét nghiệm đã chỉ định</div>
-    <div class="table-wrapper">
+    <div class="flex flex-wrap items-baseline justify-between">
+      <div class="italic">Danh sách các phiếu xét nghiệm đã chỉ định</div>
+      <div>
+        <VueButton icon="print" size="small" @click="startPrintRequest">
+          In chỉ định xét nghiệm
+        </VueButton>
+      </div>
+    </div>
+    <div class="mt-2 table-wrapper">
       <table>
         <thead>
           <tr>
@@ -585,7 +635,7 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
                 <div class="flex items-center gap-2">
                   <span v-if="CONFIG.MODE === 'development'">({{ tlg.id }}) -</span>
                   <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
-                  <a @click="startPrint(tlg)">
+                  <a @click="startPrintResult(tlg)">
                     <IconPrint width="18px" height="18px" />
                   </a>
                   <span
@@ -610,7 +660,7 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
                     Sửa chỉ định
                   </VueButton>
                   <VueButton
-                    v-if="userPermission[PermissionId.LABORATORY_RESULT]"
+                    v-if="userPermission[PermissionId.LABORATORY_UPDATE_RESULT]"
                     size="small"
                     @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
                   >
@@ -622,6 +672,7 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
                 <a
                   v-if="
                     tlg.id &&
+                    tlg.status === TicketLaboratoryStatus.Pending &&
                     userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                   "
                   style="color: var(--text-red)"

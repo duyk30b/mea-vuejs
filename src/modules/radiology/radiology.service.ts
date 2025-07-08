@@ -4,6 +4,7 @@ import { PositionService } from '../position'
 import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyApi } from './radiology.api'
 import type {
+  RadiologyDetailQuery,
   RadiologyGetQuery,
   RadiologyListQuery,
   RadiologyPaginationQuery,
@@ -24,8 +25,8 @@ export class RadiologyService {
       }
     }
     let fetchPromise: Promise<void> | null = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetchPromise || !RadiologyService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !RadiologyService.loadedAll || options.refetch) {
         RadiologyService.loadedAll = true
         fetchPromise = start()
       }
@@ -78,24 +79,15 @@ export class RadiologyService {
     return data
   }
 
-  static async getMap() {
-    await RadiologyService.fetchAll()
-    const procedureMap = ESArray.arrayToKeyValue(RadiologyService.radiologyAll, 'id')
-    return procedureMap
+  static async getMap(options?: { refetch: boolean }) {
+    await RadiologyService.fetchAll({ refetch: !!options?.refetch })
+    return RadiologyService.radiologyMap.value
   }
 
-  static async reloadMap() {
-    await RadiologyService.fetchAll()
-    RadiologyService.radiologyMap.value = ESArray.arrayToKeyValue(
-      RadiologyService.radiologyAll,
-      'id',
-    )
-  }
-
-  static async pagination(query: RadiologyPaginationQuery, options?: { refresh: boolean }) {
+  static async pagination(query: RadiologyPaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await RadiologyService.fetchAll({ refresh: !!options?.refresh })
+    await RadiologyService.fetchAll({ refetch: !!options?.refetch })
 
     let data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     data = data.slice((page - 1) * limit, page * limit)
@@ -105,10 +97,28 @@ export class RadiologyService {
     }
   }
 
-  static async list(query: RadiologyListQuery, options?: { refresh: boolean }) {
-    await RadiologyService.fetchAll({ refresh: !!options?.refresh })
+  static async list(query: RadiologyListQuery, options?: { refetch: boolean }) {
+    await RadiologyService.fetchAll({ refetch: !!options?.refetch })
     const data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     return Radiology.fromList(data)
+  }
+
+  static async detail(
+    id: number,
+    query: RadiologyDetailQuery = {},
+    options?: { refetch?: boolean; query?: boolean },
+  ) {
+    let radiology: Radiology | undefined
+    if (options?.query) {
+      radiology = await RadiologyApi.detail(id, query)
+      const findIndex = RadiologyService.radiologyAll.findIndex((i) => i.id === id)
+      if (findIndex !== -1) RadiologyService.radiologyAll[findIndex] = radiology
+    } else {
+      await RadiologyService.fetchAll({ refetch: !!options?.refetch })
+      radiology = RadiologyService.radiologyAll.find((i) => i.id === id)
+    }
+
+    return radiology ? Radiology.from(radiology) : Radiology.blank()
   }
 
   static async createOne(radiology: Radiology) {

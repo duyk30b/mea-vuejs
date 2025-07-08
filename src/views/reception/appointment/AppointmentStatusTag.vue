@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import VueTag from '../../common/VueTag.vue'
-import { AppointmentStatus } from '../../modules/appointment'
+import VueTag from '@/common/VueTag.vue'
+import { AppointmentStatus } from '@/modules/appointment'
 
 const props = defineProps<{ appointmentStatus: AppointmentStatus }>()
 </script>

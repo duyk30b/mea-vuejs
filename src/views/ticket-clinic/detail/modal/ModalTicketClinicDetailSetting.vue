@@ -13,6 +13,7 @@ import { PrintHtml, PrintHtmlService } from '../../../../modules/print-html'
 import { WarehouseService } from '../../../../modules/warehouse/warehouse.service'
 
 const TABS_KEY = {
+  DIAGNOSIS: 'DIAGNOSIS',
   CONSUMABLE: 'CONSUMABLE',
   PRESCRIPTION: 'PRESCRIPTION',
 }
@@ -31,7 +32,7 @@ const printHtmlOptions = ref<{ value: number; text: string; data: PrintHtml }[]>
 const showModal = ref(false)
 const saveLoading = ref(false)
 
-const activeTab = ref(TABS_KEY.PRESCRIPTION)
+const activeTab = ref(TABS_KEY.DIAGNOSIS)
 
 const openModal = async () => {
   showModal.value = true
@@ -112,10 +113,33 @@ defineExpose({ openModal })
       <div class="px-4 mt-4 invoice-upsert-setting-screen-tabs">
         <VueTabs :tabShow="activeTab">
           <template #menu>
+            <VueTabMenu :tabKey="TABS_KEY.DIAGNOSIS">Khám & Chẩn đoán</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.CONSUMABLE">Vật tư</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.PRESCRIPTION">Đơn thuốc</VueTabMenu>
           </template>
           <template #panel>
+            <VueTabPanel :tabKey="TABS_KEY.DIAGNOSIS">
+              <div class="mt-4 pb-20 table-wrapper">
+                <table class="">
+                  <thead>
+                    <tr>
+                      <th colspan="2">Cài đặt thông tin khám & chẩn đoán</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox
+                          v-model:value="settingDisplay.diagnosis.icd10"
+                          type-parser="number"
+                          label="Hiển thị điền gợi ý chẩn đoán theo ICD10"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.CONSUMABLE">
               <div class="mt-4 pb-20 table-wrapper">
                 <table class="">

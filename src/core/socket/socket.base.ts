@@ -43,20 +43,40 @@ export const socketInit = () => {
     SocketService.listenSettingReload(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.DISTRIBUTOR_UPSERT, (data) => {
+    SocketService.listenDistributorUpsert(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.CUSTOMER_UPSERT, (data) => {
     SocketService.listenCustomerUpsert(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.DISTRIBUTOR_UPSERT, (data) => {
-    SocketService.listenDistributorUpsert(data)
+  SocketBase.on(SOCKET_EVENT.PRODUCT_LIST_CHANGE, (data) => {
+    SocketService.listenProductListChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.BATCH_LIST_CHANGE, (data) => {
     SocketService.listenBatchListChange(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.PRODUCT_LIST_CHANGE, (data) => {
-    SocketService.listenProductListChange(data)
+  SocketBase.on(SOCKET_EVENT.PROCEDURE_LIST_CHANGE, (data) => {
+    SocketService.listenProcedureListChange(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.LABORATORY_LIST_CHANGE, (data) => {
+    SocketService.listenLaboratoryListChange(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.RADIOLOGY_LIST_CHANGE, (data) => {
+    SocketService.listenRadiologyListChange(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.POSITION_LIST_CHANGE, (data) => {
+    SocketService.listenPositionListChange(data)
+  })
+
+  SocketBase.on(SOCKET_EVENT.DISCOUNT_LIST_CHANGE, (data) => {
+    SocketService.listenDiscountListChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE, (data) => {
@@ -75,11 +95,11 @@ export const socketInit = () => {
     SocketService.listenTicketClinicChangeTicketProcedureList(data)
   })
 
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_TICKET_RADIOLOGY_LIST, (data) => {
-    SocketService.listenTicketClinicChangeTicketRadiologyList(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_RADIOLOGY_LIST_CHANGE, (data) => {
+    SocketService.listenTicketRadiologyListChange(data)
   })
-  SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_LABORATORY, (data) => {
-    SocketService.listenTicketClinicChangeLaboratory(data)
+  SocketBase.on(SOCKET_EVENT.TICKET_LABORATORY_LIST_CHANGE, (data) => {
+    SocketService.listenTicketLaboratoryListChange(data)
   })
 
   SocketBase.on(SOCKET_EVENT.TICKET_CLINIC_CHANGE_PRESCRIPTION, (data) => {

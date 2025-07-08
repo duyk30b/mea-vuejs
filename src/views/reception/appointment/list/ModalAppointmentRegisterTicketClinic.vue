@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { InputDate } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Appointment, AppointmentApi } from '@/modules/appointment'
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { InputDate } from '../../../common/vue-form'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Appointment, AppointmentApi } from '../../../modules/appointment'
 
 const appointmentRegisterSuccessForm = ref<InstanceType<typeof HTMLFormElement>>()
 

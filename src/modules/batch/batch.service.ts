@@ -19,7 +19,7 @@ export class BatchService {
       if (!refreshTime) {
         refreshTime = { code: 'BATCH', dataVersion: 0, time: new Date(0).toISOString() }
       }
-      const dataVersion = MeService.organization.value.dataVersionParse.batch
+      const dataVersion = MeService.organization.value.dataVersionParse?.batch || 0
 
       let apiResponse: { time: Date; batchList: Batch[] }
 
@@ -44,7 +44,8 @@ export class BatchService {
     } catch (error: any) {
       console.log('🚀 ~ file: product.service.ts:43 ~ BatchService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      AuthService.logout()
+      await AuthService.logout()
+      location.reload()
       return
     }
   }

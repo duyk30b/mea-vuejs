@@ -25,7 +25,7 @@ export class ProductService {
       if (!refreshTime) {
         refreshTime = { code: 'PRODUCT', dataVersion: 0, time: new Date(0).toISOString() }
       }
-      const dataVersion = MeService.organization.value.dataVersionParse.product
+      const dataVersion = MeService.organization.value.dataVersionParse?.product || 0
 
       let apiResponse: { time: Date; data: Product[] }
 
@@ -50,7 +50,8 @@ export class ProductService {
     } catch (error: any) {
       console.log('🚀 ~ file: product.service.ts:43 ~ ProductService ~ refreshDB ~ error:', error)
       AlertStore.add({ type: 'error', message: error.message })
-      AuthService.logout()
+      await AuthService.logout()
+      location.reload()
       return
     }
   }
@@ -122,6 +123,11 @@ export class ProductService {
     const productList = Product.fromList(objects)
 
     return productList
+  }
+
+  static async map(params: ProductListQuery) {
+    const list = await ProductService.list(params)
+    return ESArray.arrayToKeyValue(list, 'id')
   }
 
   static async search(text: string) {

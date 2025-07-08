@@ -107,24 +107,24 @@ export class PositionService {
   }
 
   static async detail(id: number, options: PositionDetailQuery = {}) {
-    const commission = await PositionApi.detail(id, options)
-    if (commission && options.relation) {
+    const position = await PositionApi.detail(id, options)
+    if (position && options.relation) {
       const findIndex = PositionService.positionAll.findIndex((i) => i.id === id)
       if (findIndex !== -1) {
-        PositionService.positionAll[findIndex] = commission
+        PositionService.positionAll[findIndex] = position
       }
     }
-    return commission
+    return position
   }
 
-  static async createOne(commission: Position) {
-    const result = await PositionApi.createOne(commission)
+  static async createOne(position: Position) {
+    const result = await PositionApi.createOne(position)
     PositionService.loadedAll = false
     return result
   }
 
-  static async updateOne(id: number, commission: Position) {
-    const result = await PositionApi.updateOne(id, commission)
+  static async updateOne(id: number, position: Position) {
+    const result = await PositionApi.updateOne(id, position)
     PositionService.loadedAll = false
     return result
   }

@@ -12,10 +12,14 @@ const props = withDefaults(
     style: () => ({ width: '800px' }),
   },
 )
-const emit = defineEmits<{ (e: 'update:show', value: boolean): void }>()
+const emit = defineEmits<{
+  (e: 'update:show', value: boolean): void
+  (e: 'close'): void
+}>()
 
 const closeModal = () => {
   emit('update:show', false)
+  emit('close')
 }
 </script>
 

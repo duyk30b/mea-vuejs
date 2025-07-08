@@ -46,7 +46,8 @@ export class CustomerService {
       } catch (error: any) {
         console.log('🚀 ~ file: customer.service.ts:45 ~  ~ refreshDB ~ error:', error)
         AlertStore.add({ type: 'error', message: error.message })
-        AuthService.logout()
+        await AuthService.logout()
+        location.reload()
         return
       }
     },

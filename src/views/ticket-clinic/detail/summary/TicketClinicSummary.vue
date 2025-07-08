@@ -23,7 +23,7 @@ import {
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
-import ModalTicketClinicPayment from '../modal/ModalTicketClinicPayment.vue'
+import ModalTicketClinicPayment from '../../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
 import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
 import TicketClinicSummaryLaboratory from './TicketClinicSummaryLaboratory.vue'
 import TicketClinicSummaryProcedure from './TicketClinicSummaryProcedure.vue'
@@ -90,6 +90,7 @@ const validateQuantity = () => {
           ticketProductUnsent.quantity
         }`,
       )
+      return false
     }
   }
   return true
@@ -189,7 +190,10 @@ const clickRefundOverpaid = () => {
       content: 'Cần mở lại hồ sơ trước khi hoàn trả tiền',
     })
   } else {
-    modalTicketClinicPayment.value?.openModal(PaymentViewType.RefundOverpaid)
+    modalTicketClinicPayment.value?.openModal({
+      ticket: ticketClinicRef.value,
+      paymentView: PaymentViewType.RefundOverpaid,
+    })
   }
 }
 

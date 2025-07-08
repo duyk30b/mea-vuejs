@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { compiledTemplatePrintHtml, PrintHtmlService } from '@/modules/print-html'
+import { ESDom } from '@/utils'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconSpin } from '../../../../common/icon-antd'
@@ -17,7 +19,7 @@ import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.v
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
-const { userPermission } = MeService
+const { userPermission, organization } = MeService
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -83,13 +85,63 @@ const savePriorityTicketProcedure = async () => {
     console.log('🚀  TicketClinicProcedure.vue:71 ~ savePriorityTicketProcedure ~ error:', error)
   }
 }
+
+const startPrintRequest = async () => {
+  try {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlProcedureRequest()
+
+    if (!printHtmlHeader || !printHtmlLaboratory || !printHtmlLaboratory.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlLaboratory,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: TicketClinicLaboratory.vue:137 ~ startPrint ~ error:', error)
+  }
+}
 </script>
 <template>
   <ModalTicketProcedureUpdate ref="modalTicketProcedureUpdate" />
   <TicketClinicProcedureSelectItem @success="handleAddTicketProcedure" />
   <div class="mt-4">
-    <div>Danh sách các dịch vụ, thủ thuật</div>
-    <div class="table-wrapper">
+    <div class="flex flex-wrap items-baseline justify-between">
+      <div class="italic">Danh sách các dịch vụ, thủ thuật</div>
+      <div>
+        <VueButton icon="print" size="small" @click="startPrintRequest">
+          In chỉ định dịch vụ
+        </VueButton>
+      </div>
+    </div>
+    <div class="table-wrapper mt-2">
       <table>
         <thead>
           <tr>

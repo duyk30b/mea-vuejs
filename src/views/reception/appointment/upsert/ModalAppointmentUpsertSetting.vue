@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import VueButton from '../../../common/VueButton.vue'
-import { IconClose } from '../../../common/icon-antd'
-import { AlertStore } from '../../../common/vue-alert/vue-alert.store'
-import VueModal from '../../../common/vue-modal/VueModal.vue'
-import { VueTabMenu, VueTabPanel, VueTabs } from '../../../common/vue-tabs'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { SettingKey } from '../../../modules/_me/store.variable'
-import { OrganizationService } from '../../../modules/organization'
-import { InputCheckbox } from '../../../common/vue-form'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { SettingKey } from '@/modules/_me/store.variable'
+import { OrganizationService } from '@/modules/organization'
+import { InputCheckbox } from '@/common/vue-form'
 
 const TABS_KEY = {
   BASIC: 'BASIC',

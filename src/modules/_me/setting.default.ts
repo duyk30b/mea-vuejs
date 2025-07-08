@@ -11,7 +11,7 @@ export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,
   // isMobile: window.innerWidth <= 768,
   GOOGLE_DRIVER: { email: '' },
-  dataVersionParse: { address: 1 },
+  dataVersionParse: { address: 1, icd: 1 },
   SYSTEM_SETTING: {
     moneyDivisionFormat: 1,
     wholesalePrice: false,
@@ -35,12 +35,27 @@ export const SETTING_DEFAULT = {
       customVariables: '',
       customStyles: '',
     },
-    radiology: {
+    procedureRequest: {
       printHtmlId: 0,
       customVariables: '',
       customStyles: '',
     },
-    laboratory: {
+    laboratoryRequest: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    laboratoryResult: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    radiologyRequest: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
+    radiologyResult: {
       printHtmlId: 0,
       customVariables: '',
       customStyles: '',
@@ -249,7 +264,7 @@ export const SETTING_DEFAULT = {
   SCREEN_INVOICE_UPSERT: {
     invoiceItemInput: {
       warehouseIdList: [0],
-      searchIncludeZeroQuantity: false,
+      searchIncludeZeroQuantity: true,
       hintUsage: false,
       expectedPrice: true,
       costPrice: true,
@@ -300,30 +315,14 @@ export const SETTING_DEFAULT = {
     customerSource: false,
   },
 
-  TICKET_CLINIC_LIST: {
-    ticketType: TicketType.Clinic,
-    customTypeText: <string[]>['Mặc định'],
-    showCustomType: false,
-    buttonShowModalCreate: true,
-    buttonShowTicketDetailBlank: false,
+  RECEPTION_TICKET_LIST: {
     roleIdList: [],
     birthday: false,
     phone: false,
-    address: false,
+    address: true,
   },
-  TICKET_CLINIC_DETAIL: {
-    consumable: {
-      warehouseIdList: [0],
-      searchIncludeZeroQuantity: 1,
-    },
-    procedure: {},
-    prescriptions: {
-      warehouseIdList: [0],
-      searchIncludeZeroQuantity: 1,
-    },
-  },
+
   TICKET_CLINIC_CREATE: {
-    status: TicketStatus.Executing,
     facebook: false,
     zalo: false,
     birthday: true,
@@ -338,6 +337,31 @@ export const SETTING_DEFAULT = {
       itemStyle: 'flex-basis: 40%; flex-grow: 1; min-width: 300px',
     },
   },
+
+  TICKET_CLINIC_LIST: {
+    ticketType: TicketType.Clinic,
+    customTypeText: <string[]>['Mặc định'],
+    showCustomType: false,
+    buttonShowModalCreate: false,
+    buttonShowTicketDetailBlank: false,
+    roleIdList: [],
+    birthday: false,
+    phone: false,
+    address: false,
+  },
+  TICKET_CLINIC_DETAIL: {
+    diagnosis: { icd10: 0 },
+    procedure: {},
+    consumable: {
+      warehouseIdList: [0],
+      searchIncludeZeroQuantity: 1,
+    },
+    prescriptions: {
+      warehouseIdList: [0],
+      searchIncludeZeroQuantity: 1,
+    },
+  },
+
   TICKET_STATISTIC: {
     countTicket: true,
     sumTotalMoney: true,

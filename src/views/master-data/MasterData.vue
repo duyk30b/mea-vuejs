@@ -130,14 +130,23 @@ const { organizationPermission, userPermission } = MeService
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="mt-4 mx-4 bg-white">
-    <div class="px-4 py-4 text-lg font-medium" style="border-bottom: 1px solid #dfdfdf">
-      2. Danh mục phụ
-    </div>
-    <div class="p-4 flex flex-wrap gap-4">
+      <div
+        class="card"
+        @click="router.push({ name: 'PaymentMethod' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+      >
+        <div class="card-icon">
+          <IconDollar />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Chương trình khuyến mại</div>
+          <div class="card-description">
+            Cài đặt số tiền khuyến mại cho mỗi loại mặt hàng, thời gian khuyến mại ...
+          </div>
+        </div>
+      </div>
+
       <div
         class="card"
         @click="router.push({ name: 'CustomerSource' })"
@@ -151,7 +160,14 @@ const { organizationPermission, userPermission } = MeService
           <div class="card-description">Quản lý danh sách nguồn khách hàng</div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <div class="mt-4 mx-4 bg-white">
+    <div class="px-4 py-4 text-lg font-medium" style="border-bottom: 1px solid #dfdfdf">
+      2. Danh mục phụ
+    </div>
+    <div class="p-4 flex flex-wrap gap-4">
       <div
         class="card"
         @click="router.push({ name: 'PrescriptionSample' })"

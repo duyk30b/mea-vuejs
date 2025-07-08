@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { DString, ESArray } from '../../utils'
 import { LaboratoryApi } from './laboratory.api'
 import type {
+  LaboratoryDetailQuery,
   LaboratoryGetQuery,
   LaboratoryListQuery,
   LaboratoryPaginationQuery,
@@ -42,8 +43,8 @@ export class LaboratoryService {
       }
     }
     let fetchPromise: Promise<void> | null = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetchPromise || !LaboratoryService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !LaboratoryService.loadedAll || options.refetch) {
         LaboratoryService.loadedAll = true
         fetchPromise = start()
       }
@@ -98,24 +99,15 @@ export class LaboratoryService {
     return data
   }
 
-  static async getMap() {
-    await LaboratoryService.fetchAll()
-    const laboratoryMap = ESArray.arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
-    return laboratoryMap
+  static async getMap(options?: { refetch: boolean }) {
+    await LaboratoryService.fetchAll({ refetch: !!options?.refetch })
+    return LaboratoryService.laboratoryMap.value
   }
 
-  static async reloadMap() {
-    await LaboratoryService.fetchAll()
-    LaboratoryService.laboratoryMap.value = ESArray.arrayToKeyValue(
-      LaboratoryService.laboratoryAll,
-      'id',
-    )
-  }
-
-  static async pagination(query: LaboratoryPaginationQuery, options?: { refresh: boolean }) {
+  static async pagination(query: LaboratoryPaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
+    await LaboratoryService.fetchAll({ refetch: !!options?.refetch })
 
     let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryTree, query)
     data = data.slice((page - 1) * limit, page * limit)
@@ -126,11 +118,29 @@ export class LaboratoryService {
     }
   }
 
-  static async list(query: LaboratoryListQuery, options?: { refresh: boolean }) {
-    await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
+  static async list(query: LaboratoryListQuery, options?: { refetch: boolean }) {
+    await LaboratoryService.fetchAll({ refetch: !!options?.refetch })
     const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryTree, query)
 
     return Laboratory.fromList(data)
+  }
+
+  static async detail(
+    id: number,
+    query: LaboratoryDetailQuery = {},
+    options?: { refetch?: boolean; query?: boolean },
+  ) {
+    let laboratory: Laboratory | undefined
+    if (options?.query) {
+      laboratory = await LaboratoryApi.detail(id, query)
+      const findIndex = LaboratoryService.laboratoryAll.findIndex((i) => i.id === id)
+      if (findIndex !== -1) LaboratoryService.laboratoryAll[findIndex] = laboratory
+    } else {
+      await LaboratoryService.fetchAll({ refetch: !!options?.refetch })
+      laboratory = LaboratoryService.laboratoryAll.find((i) => i.id === id)
+    }
+
+    return laboratory ? Laboratory.from(laboratory) : Laboratory.blank()
   }
 
   static async create(laboratory: Laboratory) {

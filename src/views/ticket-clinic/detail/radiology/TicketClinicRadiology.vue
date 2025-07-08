@@ -135,12 +135,55 @@ const clickDestroy = async (ticketRadiologyId: number) => {
   })
 }
 
-const startPrint = async (ticketRadiologyData: TicketRadiology) => {
+const startPrintRequest = async () => {
+  try {
+    const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
+    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiologyRequest()
+
+    if (!printHtmlHeader || !printHtmlRadiology || !printHtmlRadiology.html) {
+      return AlertStore.addError('Cài đặt in thất bại')
+    }
+
+    const compiledHeader = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlHeader,
+    })
+    const compiledContent = compiledTemplatePrintHtml({
+      organization: organization.value,
+      ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
+      printHtml: printHtmlRadiology,
+      _LAYOUT: {
+        HEADER: compiledHeader.html,
+      },
+    })
+
+    if (!compiledContent.html) {
+      AlertStore.addError('Mẫu in không hợp lệ')
+      return
+    }
+
+    await ESDom.startPrint('iframe-print', {
+      html: compiledContent.html,
+      cssList: [compiledHeader.css, compiledContent.css],
+    })
+  } catch (error) {
+    console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+  }
+}
+
+const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
   try {
     const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
     let printHtmlId = radiologyData.printHtmlId
     const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
-    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiology(printHtmlId)
+    const printHtmlRadiology = await PrintHtmlService.getPrintHtmlRadiologyResult(printHtmlId)
 
     if (!printHtmlHeader || !printHtmlRadiology || !printHtmlRadiology.html) {
       return AlertStore.addError('Cài đặt in thất bại')
@@ -208,8 +251,15 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     </InputFilter>
   </div>
   <div class="mt-4">
-    <div>Danh sách các phiếu CĐHA</div>
-    <div class="table-wrapper">
+    <div class="flex flex-wrap items-baseline justify-between">
+      <div class="italic">Danh sách các phiếu CĐHA</div>
+      <div>
+        <VueButton icon="print" size="small" @click="startPrintRequest">
+          In phiếu chỉ định
+        </VueButton>
+      </div>
+    </div>
+    <div class="table-wrapper mt-2">
       <table>
         <thead>
           <tr>
@@ -293,7 +343,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                 >
                   {{ tpItem.result }}
                 </div>
-                <a v-if="tpItem.startedAt != null" @click="startPrint(tpItem)">
+                <a v-if="tpItem.startedAt != null" @click="startPrintResult(tpItem)">
                   <IconPrint width="18px" height="18px" />
                 </a>
               </div>
@@ -306,20 +356,14 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                  userPermission[PermissionId.RADIOLOGY_RESULT]
+                  userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]
                 "
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
               >
                 <IconEditSquare width="22" height="22" />
               </a>
-              <a
-                v-else-if="
-                  [TicketStatus.Debt, TicketStatus.Completed].includes(ticketClinicRef.status) &&
-                  userPermission[PermissionId.RADIOLOGY_RESULT]
-                "
-                @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })"
-              >
+              <a v-else @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
                 <IconEye width="22" height="22" />
               </a>
             </td>
@@ -327,6 +371,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-if="
                   tpItem.id &&
+                  tpItem.status === TicketRadiologyStatus.Pending &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
                 "
                 style="color: var(--text-red)"

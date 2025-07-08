@@ -107,19 +107,46 @@ const handleSaveSetting = async () => {
                   </td>
                 </tr>
                 <tr>
-                  <td>Mẫu in Xét nghiệm mặc định</td>
+                  <td>Mẫu in chỉ định dịch vụ mặc định</td>
                   <td style="min-width: 500px">
                     <VueSelect
-                      v-model:value="settingDisplay.laboratory.printHtmlId"
+                      v-model:value="settingDisplay.procedureRequest.printHtmlId"
                       :options="printHtmlOptions"
                     />
                   </td>
                 </tr>
                 <tr>
-                  <td>Mẫu in CĐHA mặc định</td>
+                  <td>Mẫu in chỉ định xét nghiệm mặc định</td>
                   <td style="min-width: 500px">
                     <VueSelect
-                      v-model:value="settingDisplay.radiology.printHtmlId"
+                      v-model:value="settingDisplay.laboratoryRequest.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in kết quả xét nghiệm mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.laboratoryResult.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in chỉ định CĐHA mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.radiologyRequest.printHtmlId"
+                      :options="printHtmlOptions"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mẫu in kết quả CĐHA mặc định</td>
+                  <td style="min-width: 500px">
+                    <VueSelect
+                      v-model:value="settingDisplay.radiologyResult.printHtmlId"
                       :options="printHtmlOptions"
                     />
                   </td>

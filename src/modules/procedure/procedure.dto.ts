@@ -7,6 +7,7 @@ export class ProcedureGetQuery {
   relation?: {
     procedureGroup?: boolean
     positionList?: boolean
+    discountList?: boolean
   }
 
   filter?: {
