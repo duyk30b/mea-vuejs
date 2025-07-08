@@ -8,6 +8,7 @@ export class TicketClinicRadiologyApi {
     const { ticketId, ticketRadiology } = body
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/add-ticket-radiology`, {
       priority: ticketRadiology.priority,
+      registeredAt: ticketRadiology.registeredAt,
       customerId: ticketRadiology.customerId,
       radiologyId: ticketRadiology.radiologyId,
       costPrice: ticketRadiology.costPrice,

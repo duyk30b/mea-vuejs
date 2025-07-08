@@ -99,7 +99,18 @@ const startSendProduct = async () => {
   sendProductLoading.value = true
   try {
     if (!validateQuantity()) return
-    await TicketClinicProductApi.sendProduct({ ticketId: ticketClinicRef.value.id })
+
+    const ticketProductUnsentList = [
+      ...(ticketClinicRef.value.ticketProductConsumableList || []),
+      ...(ticketClinicRef.value.ticketProductPrescriptionList || []),
+    ].filter((i) => {
+      return i.deliveryStatus === DeliveryStatus.Pending
+    })
+
+    await TicketClinicProductApi.sendProduct({
+      ticketId: ticketClinicRef.value.id,
+      ticketProductIdList: ticketProductUnsentList.map((i) => i.id),
+    })
   } catch (error) {
     console.log('🚀 ~ TicketClinicSummary.vue:184 ~ startSendProduct ~ error:', error)
   } finally {
@@ -204,12 +215,17 @@ const startPrint = async () => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
-      masterData: {},
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlInvoice,
       _LAYOUT: {
         HEADER: compiledHeader.html,

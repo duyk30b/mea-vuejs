@@ -9,7 +9,7 @@ import {
   IconSpin,
 } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../../common/icon-google'
+import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
@@ -24,7 +24,8 @@ import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology, TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
-import ModalTicketRadiologyResult from './ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../../room-radiology/ModalTicketRadiologyResult.vue'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const inputSearchRadiology = ref<InstanceType<typeof InputOptions>>()
@@ -80,6 +81,7 @@ const selectRadiology = async (instance?: Radiology) => {
 
     temp.radiology = instance
 
+    temp.registeredAt = Date.now()
     temp.costPrice = instance.costPrice
     temp.expectedPrice = instance.price
     temp.discountMoney = 0
@@ -113,6 +115,26 @@ const savePriorityTicketRadiology = async () => {
   }
 }
 
+const clickDestroy = async (ticketRadiologyId: number) => {
+  ModalStore.confirm({
+    title: 'Xác nhận xóa phiếu CĐHA ?',
+    content: [
+      '- Hệ thống sẽ xóa phiếu CĐHA này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    async onOk() {
+      try {
+        await TicketClinicRadiologyApi.destroyTicketRadiology({
+          ticketId: ticketClinicRef.value.id,
+          ticketRadiologyId,
+        })
+      } catch (error) {
+        console.log('🚀 ~ TicketClinicRadiology.vue:132 ~ clickDestroy ~ error:', error)
+      }
+    },
+  })
+}
+
 const startPrint = async (ticketRadiologyData: TicketRadiology) => {
   try {
     const radiologyData = ticketRadiologyData.radiology || Radiology.blank()
@@ -127,6 +149,9 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       data: ticketRadiologyData,
       printHtml: printHtmlHeader,
       customVariables: radiologyData.customVariables || '',
@@ -136,7 +161,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
       ticket: ticketClinicRef.value,
       data: ticketRadiologyData,
       masterData: {
-        radiology: radiologyData,
+        customer: ticketClinicRef.value.customer!,
       },
       printHtml: printHtmlRadiology,
       _LAYOUT: {
@@ -194,6 +219,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
             <!-- <th>BS thực hiện</th> -->
             <th>Kết quả</th>
             <th>Giá</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -297,6 +323,17 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                 <IconEye width="22" height="22" />
               </a>
             </td>
+            <td class="text-center">
+              <a
+                v-if="
+                  tpItem.id &&
+                  userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
+                "
+                style="color: var(--text-red)"
+              >
+                <IconDelete width="22" height="22" @click="clickDestroy(tpItem.id)" />
+              </a>
+            </td>
           </tr>
           <tr>
             <td colspan="4" class="text-right">
@@ -311,6 +348,7 @@ const startPrint = async (ticketRadiologyData: TicketRadiology) => {
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

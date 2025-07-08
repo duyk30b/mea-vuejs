@@ -9,7 +9,7 @@ import { Radiology } from '../../../../modules/radiology'
 import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
 import { timeToText } from '../../../../utils'
 import LinkAndStatusTicket from '../../../ticket-base/LinkAndStatusTicket.vue'
-import ModalTicketRadiologyResult from '../../../ticket-clinic/detail/radiology/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../../room-radiology/ModalTicketRadiologyResult.vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
 const props = withDefaults(defineProps<{ radiology: Radiology }>(), {

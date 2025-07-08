@@ -125,6 +125,7 @@ const sendProduct = async () => {
     loadingProcess.value = true
     const response = await TicketOrderApi.sendProduct({
       ticketId: ticketOrderDetailRef.value.id!,
+      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList

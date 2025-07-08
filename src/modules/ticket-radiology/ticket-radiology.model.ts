@@ -10,6 +10,7 @@ export enum TicketRadiologyStatus {
   Pending = 2,
   Completed = 3,
 }
+
 export class TicketRadiology {
   id: number
   priority: number
@@ -27,6 +28,7 @@ export class TicketRadiology {
   description: string
   result: string
 
+  registeredAt: number
   startedAt: number
   status: TicketRadiologyStatus
   imageIds: string

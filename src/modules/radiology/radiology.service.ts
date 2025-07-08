@@ -1,4 +1,5 @@
-import { arrayToKeyValue, customFilter } from '../../utils'
+import { ref } from 'vue'
+import { customFilter, ESArray } from '../../utils'
 import { PositionService } from '../position'
 import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyApi } from './radiology.api'
@@ -12,6 +13,7 @@ import { Radiology } from './radiology.model'
 export class RadiologyService {
   static loadedAll: boolean = false
   static radiologyAll: Radiology[] = []
+  static radiologyMap = ref<Record<string, Radiology>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
@@ -78,8 +80,16 @@ export class RadiologyService {
 
   static async getMap() {
     await RadiologyService.fetchAll()
-    const procedureMap = arrayToKeyValue(RadiologyService.radiologyAll, 'id')
+    const procedureMap = ESArray.arrayToKeyValue(RadiologyService.radiologyAll, 'id')
     return procedureMap
+  }
+
+  static async reloadMap() {
+    await RadiologyService.fetchAll()
+    RadiologyService.radiologyMap.value = ESArray.arrayToKeyValue(
+      RadiologyService.radiologyAll,
+      'id',
+    )
   }
 
   static async pagination(query: RadiologyPaginationQuery, options?: { refresh: boolean }) {

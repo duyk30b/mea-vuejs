@@ -32,6 +32,32 @@ const Router = createRouter({
         masterDataRouter,
         statisticRouter,
         {
+          path: 'room-radiology',
+          name: 'RoomRadiology',
+          redirect: () => ({ name: 'TicketRadiologyList' }),
+          children: [
+            {
+              path: 'ticket-radiology-list',
+              name: 'TicketRadiologyList',
+              meta: { title: 'Phòng CĐHA' },
+              component: () => import('../views/room-radiology/TicketRadiologyList.vue'),
+            },
+          ],
+        },
+        {
+          path: 'room-laboratory',
+          name: 'RoomLaboratory',
+          redirect: () => ({ name: 'TicketLaboratoryGroupList' }),
+          children: [
+            {
+              path: 'ticket-laboratory-list',
+              name: 'TicketLaboratoryGroupList',
+              meta: { title: 'Phòng Xét nghiệm' },
+              component: () => import('../views/room-laboratory/TicketLaboratoryGroupList.vue'),
+            },
+          ],
+        },
+        {
           path: 'customer',
           name: 'Customer',
           redirect: () => ({ name: 'CustomerList' }),

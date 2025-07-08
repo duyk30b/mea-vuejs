@@ -1,23 +1,24 @@
-import { arrayToKeyValue } from '../../utils'
+import { ref } from 'vue'
 import { LaboratoryGroupApi } from './laboratory-group.api'
 import type {
   LaboratoryGroupListQuery,
   LaboratoryGroupPaginationQuery,
 } from './laboratory-group.dto'
 import { LaboratoryGroup } from './laboratory-group.model'
+import { ESArray } from '@/utils'
 
 export class LaboratoryGroupService {
   static loadedAll: boolean = false
 
   static laboratoryGroupAll: LaboratoryGroup[] = []
-  static laboratoryGroupMap: Record<string, LaboratoryGroup> = {}
+  static laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
       try {
         const { data } = await LaboratoryGroupApi.list({ sort: { id: 'ASC' } })
         LaboratoryGroupService.laboratoryGroupAll = data
-        LaboratoryGroupService.laboratoryGroupMap = arrayToKeyValue(data, 'id')
+        LaboratoryGroupService.laboratoryGroupMap.value = ESArray.arrayToKeyValue(data, 'id')
       } catch (error: any) {
         console.log('🚀 ~ laboratory-group.service.ts:22 ~ LaboratoryGroupService ~ error:', error)
       }
@@ -34,7 +35,15 @@ export class LaboratoryGroupService {
 
   static async getMap() {
     await LaboratoryGroupService.fetchAll()
-    return LaboratoryGroupService.laboratoryGroupMap
+    return LaboratoryGroupService.laboratoryGroupMap.value
+  }
+
+  static async reloadMap() {
+    await LaboratoryGroupService.fetchAll()
+    LaboratoryGroupService.laboratoryGroupMap.value = ESArray.arrayToKeyValue(
+      LaboratoryGroupService.laboratoryGroupAll,
+      'id',
+    )
   }
 
   static async pagination(options: LaboratoryGroupPaginationQuery) {

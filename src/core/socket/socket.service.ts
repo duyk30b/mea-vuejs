@@ -10,11 +10,14 @@ import { TicketAttribute } from '../../modules/ticket-attribute'
 import { TicketBatch } from '../../modules/ticket-batch'
 import { ticketClinicPagination, ticketClinicRef } from '../../modules/ticket-clinic'
 import { TicketLaboratory } from '../../modules/ticket-laboratory'
-import { TicketLaboratoryGroup } from '../../modules/ticket-laboratory-group'
+import {
+  TicketLaboratoryGroup,
+  TicketLaboratoryGroupService,
+} from '../../modules/ticket-laboratory-group'
 import { TicketLaboratoryResult } from '../../modules/ticket-laboratory-result'
 import { TicketProcedure } from '../../modules/ticket-procedure'
 import { TicketProduct } from '../../modules/ticket-product'
-import { TicketRadiology } from '../../modules/ticket-radiology'
+import { TicketRadiology, TicketRadiologyService } from '../../modules/ticket-radiology'
 import { TicketUser } from '../../modules/ticket-user'
 import { BatchDB } from '../indexed-db/repository/batch.repository'
 import { CustomerDB } from '../indexed-db/repository/customer.repository'
@@ -249,6 +252,8 @@ export class SocketService {
     ticketRadiologyDestroy?: TicketRadiology
     ticketRadiologyList?: TicketRadiology[]
   }) {
+    TicketRadiologyService.refreshTime.value = Date.now()
+
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketRadiologyList) return
@@ -299,6 +304,8 @@ export class SocketService {
     ticketLaboratoryResultUpdateList?: TicketLaboratoryResult[]
     ticketLaboratoryResultDestroyList?: TicketLaboratoryResult[]
   }) {
+    TicketLaboratoryGroupService.refreshTime.value = Date.now()
+
     const ticketAction: Ticket[] = SocketService.getTicketAction(data.ticketId)
     ticketAction.forEach(async (ticket) => {
       if (!ticket.ticketLaboratoryList) ticket.ticketLaboratoryList = []
@@ -391,12 +398,13 @@ export class SocketService {
         })
       }
 
-      if (data.ticketLaboratoryResultUpdateList) {
-        const tlrDestroyIdList = data.ticketLaboratoryResultUpdateList.map((i) => i.id)
+      if (data.ticketLaboratoryResultDestroyList) {
+        const tlrDestroyIdList = data.ticketLaboratoryResultDestroyList.map((i) => i.id)
         ticket.ticketLaboratoryResultList = ticket.ticketLaboratoryResultList.filter((i) => {
           return !tlrDestroyIdList.includes(i.id)
         })
       }
+
       await ticket.refreshLaboratory()
     })
   }

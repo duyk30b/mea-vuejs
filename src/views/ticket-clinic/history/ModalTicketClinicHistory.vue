@@ -16,7 +16,7 @@ import { ImageHost } from '../../../modules/image/image.model'
 import { Ticket, TicketApi, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketClinicService } from '../../../modules/ticket-clinic/ticket-clinic.service'
 import { DImage, ESTimer } from '../../../utils'
-import ModalTicketRadiologyResult from '../detail/radiology/ModalTicketRadiologyResult.vue'
+import ModalTicketRadiologyResult from '../../room-radiology/ModalTicketRadiologyResult.vue'
 import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
 import { LaboratoryValueType } from '../../../modules/laboratory'
 import VueTooltip from '../../../common/popover/VueTooltip.vue'
@@ -338,7 +338,13 @@ defineExpose({ openModal })
                         v-for="(tlItem, index) in tlg.ticketLaboratoryList || []"
                         :key="tlItem.id"
                       >
-                        <tr :style="tlItem?.ticketLaboratoryResult?.attention ? 'color: red' : ''">
+                        <tr
+                          :style="
+                            tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.attention
+                              ? 'color: red'
+                              : ''
+                          "
+                        >
                           <td class="text-center">
                             <span>{{ index + 1 }}</span>
                           </td>
@@ -363,7 +369,7 @@ defineExpose({ openModal })
                           </td>
                           <td>{{ tlItem.laboratory?.name }}</td>
                           <td class="text-center">
-                            <div>{{ tlItem?.ticketLaboratoryResult?.result }}</div>
+                            <div>{{ tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.result }}</div>
                           </td>
                           <td class="text-center">
                             <span
@@ -388,25 +394,25 @@ defineExpose({ openModal })
                           </td>
                         </tr>
                         <tr
-                          v-for="(tlChild, i) in tlItem.children"
+                          v-for="(laboratoryChild, i) in tlItem.laboratory?.children || []"
                           :key="i"
-                          :style="tlChild.ticketLaboratoryResult?.attention ? 'color: red' : ''"
+                          :style="tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.attention ? 'color: red' : ''"
                         >
                           <td></td>
                           <td></td>
-                          <td>{{ tlChild.laboratory?.name }}</td>
+                          <td>{{ laboratoryChild.name }}</td>
                           <td class="text-center">
-                            <div>{{ tlChild.ticketLaboratoryResult?.result }}</div>
+                            <div>{{ tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.result }}</div>
                           </td>
                           <td class="text-center">
                             <span
-                              v-if="tlChild.laboratory?.valueType === LaboratoryValueType.Number"
+                              v-if="laboratoryChild.valueType === LaboratoryValueType.Number"
                             >
-                              {{ tlChild.laboratory?.lowValue }} -
-                              {{ tlChild.laboratory?.highValue }}
+                              {{ laboratoryChild.lowValue }} -
+                              {{ laboratoryChild.highValue }}
                             </span>
                           </td>
-                          <td class="text-center">{{ tlChild.laboratory?.unit }}</td>
+                          <td class="text-center">{{ laboratoryChild.unit }}</td>
                           <td class="text-right"></td>
                           <td class="text-center"></td>
                         </tr>

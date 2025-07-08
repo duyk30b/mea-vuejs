@@ -37,7 +37,11 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal
+    v-model:show="showModal"
+    style="max-height: 100%"
+    modalMaskStyle="background-color: rgb(89 92 135)"
+  >
     <div class="bg-white">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">Hóa đơn</div>

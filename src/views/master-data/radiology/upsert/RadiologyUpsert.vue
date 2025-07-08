@@ -7,11 +7,11 @@ import { IconDelete, IconPrint, IconRight } from '../../../../common/icon-antd'
 import MonacoEditor from '../../../../common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import {
-InputFilter,
-InputMoney,
-InputNumber,
-InputText,
-VueSelect,
+  InputFilter,
+  InputMoney,
+  InputNumber,
+  InputText,
+  VueSelect,
 } from '../../../../common/vue-form'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
@@ -20,9 +20,9 @@ import { Position, CommissionCalculatorType, PositionType } from '../../../../mo
 import { Customer } from '../../../../modules/customer'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
 import {
-PrintHtml,
-PrintHtmlService,
-compiledTemplatePrintHtml,
+  PrintHtml,
+  PrintHtmlService,
+  compiledTemplatePrintHtml,
 } from '../../../../modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '../../../../modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '../../../../modules/radiology-group'
@@ -195,6 +195,9 @@ const updatePreview = async () => {
   const compiledHeader = compiledTemplatePrintHtml({
     organization: organization.value,
     ticket: ticketDemo,
+    masterData: {
+      customer: ticketDemo.customer!,
+    },
     data,
     printHtml: printHtmlHeader.value,
     customVariables: radiology.value.customVariables,
@@ -205,7 +208,9 @@ const updatePreview = async () => {
     organization: organization.value,
     ticket: ticketDemo,
     data,
-    masterData: {},
+    masterData: {
+      customer: ticketDemo.customer!,
+    },
     printHtml,
     customVariables: radiology.value.customVariables,
     _LAYOUT: {
@@ -282,6 +287,9 @@ const startTestPrint = async () => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketDemo,
+      masterData: {
+        customer: ticketDemo.customer!,
+      },
       data,
       printHtml: printHtmlHeader.value,
       customVariables: radiology.value.customVariables,
@@ -292,7 +300,9 @@ const startTestPrint = async () => {
       organization: organization.value,
       ticket: ticketDemo,
       data,
-      masterData: {},
+      masterData: {
+        customer: ticketDemo.customer!,
+      },
       printHtml,
       _LAYOUT: {
         HEADER: _LAYOUT_HEADER,

@@ -1,4 +1,5 @@
 import { DImage, DString, ESTimer } from '../../utils'
+import type { Customer } from '../customer'
 import { LaboratoryValueType, type Laboratory } from '../laboratory'
 import type { LaboratoryGroup } from '../laboratory-group'
 import type { Organization } from '../organization'
@@ -12,10 +13,8 @@ export const compiledTemplatePrintHtml = (options: {
   organization: Organization
   ticket: Ticket
   me?: User
-  masterData?: {
-    laboratoryMap?: Record<string, Laboratory>
-    laboratoryGroupMap?: Record<string, LaboratoryGroup>
-    radiology?: Radiology
+  masterData: {
+    customer: Customer
   }
   data?: Record<string, any>
   printHtml: PrintHtml

@@ -160,7 +160,7 @@ watch(
 )
 
 watch(
-  () => ticketClinicRef.value.ticketUserList,
+  () => ticketClinicRef.value.ticketUserGroup,
   (newValue, oldValue) => {
     refreshTicketUserList()
   },
@@ -239,13 +239,18 @@ const startPrint = async () => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlHeader,
     })
 
     const compiledContent = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
-      masterData: {},
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlPrescription,
       _LAYOUT: {
         HEADER: compiledHeader.html,

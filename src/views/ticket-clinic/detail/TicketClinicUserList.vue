@@ -33,7 +33,8 @@ const refreshRoleIdList = () => {
   ticketUserTicketMap.value = {}
   const roleIdList = positionList.value.map((i) => i.roleId)
 
-  ticketClinicRef.value.ticketUserGroup?.[PositionType.Ticket]?.[0].forEach((i) => {
+  // ?.[0]? ==> trường hợp PositionType là Ticket thì ticketItemId luôn luôn = 0
+  ticketClinicRef.value.ticketUserGroup?.[PositionType.Ticket]?.[0]?.forEach((i) => {
     ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
     if (!roleIdList.includes(i.roleId)) {
       roleIdList.push(i.roleId)
@@ -55,7 +56,7 @@ const refreshRoleIdList = () => {
 }
 
 watch(
-  () => ticketClinicRef.value.ticketUserList,
+  () => ticketClinicRef.value.ticketUserGroup,
   (newValue, oldValue) => {
     refreshRoleIdList()
   },

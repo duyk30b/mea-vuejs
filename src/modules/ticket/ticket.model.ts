@@ -230,6 +230,19 @@ export class Ticket {
     })
   }
 
+  refreshTicketUserGroup() {
+    this.ticketUserGroup = {}
+    this.ticketUserList?.forEach((i) => {
+      if (!this.ticketUserGroup[i.positionType]) {
+        this.ticketUserGroup[i.positionType] = {}
+      }
+      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
+        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
+      }
+      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
+    })
+  }
+
   async refreshLaboratory() {
     if (!MeService.organizationPermission.value[PermissionId.LABORATORY]) {
       return
@@ -247,29 +260,6 @@ export class Ticket {
 
     this.ticketLaboratoryList.forEach((tl) => {
       tl.laboratory = laboratoryMap[tl.laboratoryId]
-
-      tl.ticketLaboratoryResult = this.ticketLaboratoryResultList!.find((tlr) => {
-        return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === tl.laboratoryId
-      })
-
-      if (tl.laboratory?.valueType === LaboratoryValueType.Children) {
-        tl.children =
-          tl.laboratory?.children?.map((laboratoryChild) => {
-            let currentTlr = this.ticketLaboratoryResultList!.find((tlr) => {
-              return tlr.ticketLaboratoryId === tl.id && tlr.laboratoryId === laboratoryChild.id
-            })
-            if (!currentTlr) {
-              currentTlr = TicketLaboratoryResult.blank()
-              currentTlr.laboratoryId = tl.laboratoryId
-              currentTlr.ticketLaboratoryId = tl.id
-              currentTlr.ticketLaboratoryGroupId = tl.ticketLaboratoryGroupId
-            }
-            return {
-              laboratory: laboratoryChild,
-              ticketLaboratoryResult: currentTlr,
-            }
-          }) || []
-      }
     })
 
     this.ticketLaboratoryGroupList.forEach((tlg) => {
@@ -304,6 +294,14 @@ export class Ticket {
     } else {
       this.ticketLaboratoryGroupList = this.ticketLaboratoryGroupList.filter((i) => !!i.id)
     }
+
+    // resultMap
+    this.ticketLaboratoryGroupList.forEach((tlg) => {
+      const tlrList = this.ticketLaboratoryResultList!.filter((tlr) => {
+        return tlr.ticketLaboratoryGroupId === tlg.id
+      })
+      tlg.ticketLaboratoryResultMap = ESArray.arrayToKeyValue(tlrList, 'laboratoryId')
+    })
   }
 
   refreshTicketProductHasTicketBatchList() {
@@ -317,19 +315,6 @@ export class Ticket {
       tp.ticketBatchList = this.ticketBatchList!.filter((tb) => {
         return tp.id === tb.ticketProductId
       })
-    })
-  }
-
-  refreshTicketUserGroup() {
-    this.ticketUserGroup = {}
-    ;(this.ticketUserList || []).forEach((i) => {
-      if (!this.ticketUserGroup[i.positionType]) {
-        this.ticketUserGroup[i.positionType] = {}
-      }
-      if (!this.ticketUserGroup[i.positionType][i.ticketItemId]) {
-        this.ticketUserGroup[i.positionType][i.ticketItemId] = []
-      }
-      this.ticketUserGroup[i.positionType][i.ticketItemId].push(i)
     })
   }
 

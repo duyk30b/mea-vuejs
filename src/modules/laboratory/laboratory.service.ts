@@ -1,4 +1,5 @@
-import { arrayToKeyValue, customFilter } from '../../utils'
+import { ref } from 'vue'
+import { DString, ESArray } from '../../utils'
 import { LaboratoryApi } from './laboratory.api'
 import type {
   LaboratoryGetQuery,
@@ -10,29 +11,32 @@ import { Laboratory } from './laboratory.model'
 export class LaboratoryService {
   static loadedAll: boolean = false
   static laboratoryAll: Laboratory[] = []
-  static laboratoryFlatMap: Record<string, Laboratory> = {}
+  static laboratoryTree: Laboratory[] = []
+  static laboratoryMap = ref<Record<string, Laboratory>>({})
 
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        const data = await LaboratoryApi.list({ sort: { priority: 'ASC' } })
-        const laboratoryList = data.filter((i) => i.level === 1)
-        const laboratoryMap = arrayToKeyValue(laboratoryList, 'id')
-        data.forEach((i) => {
+        const laboratoryAll = await LaboratoryApi.list({ sort: { priority: 'ASC' } })
+        const laboratoryMap = ESArray.arrayToKeyValue(laboratoryAll, 'id')
+
+        const laboratoryTree = laboratoryAll.filter((i) => i.level === 1)
+        laboratoryAll.forEach((i) => {
           try {
             i.optionsParse = JSON.parse(i.options)
           } catch (error) {
             i.optionsParse = []
           }
-          if (!laboratoryMap[i.parentId].children) {
-            laboratoryMap[i.parentId].children = []
-          }
           if (i.level === 2) {
+            if (!laboratoryMap[i.parentId].children) {
+              laboratoryMap[i.parentId].children = []
+            }
             laboratoryMap[i.parentId].children?.push(i)
           }
         })
-        LaboratoryService.laboratoryAll = laboratoryList
-        LaboratoryService.laboratoryFlatMap = arrayToKeyValue(data, 'id')
+        LaboratoryService.laboratoryAll = laboratoryAll
+        LaboratoryService.laboratoryTree = laboratoryTree
+        LaboratoryService.laboratoryMap.value = laboratoryMap
       } catch (error: any) {
         console.log('🚀 ~ file: laboratory.service.ts:35 ~ LaboratoryService ~ error:', error)
       }
@@ -68,7 +72,7 @@ export class LaboratoryService {
           }
         }
         if (filter.name) {
-          if (filter.name.LIKE && !customFilter(i.name || '', filter.name.LIKE, 2)) {
+          if (filter.name.LIKE && !DString.customFilter(i.name || '', filter.name.LIKE, 2)) {
             return false
           }
         }
@@ -96,13 +100,16 @@ export class LaboratoryService {
 
   static async getMap() {
     await LaboratoryService.fetchAll()
-    const laboratoryMap = arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
+    const laboratoryMap = ESArray.arrayToKeyValue(LaboratoryService.laboratoryAll, 'id')
     return laboratoryMap
   }
 
-  static async getFlatMap() {
+  static async reloadMap() {
     await LaboratoryService.fetchAll()
-    return LaboratoryService.laboratoryFlatMap
+    LaboratoryService.laboratoryMap.value = ESArray.arrayToKeyValue(
+      LaboratoryService.laboratoryAll,
+      'id',
+    )
   }
 
   static async pagination(query: LaboratoryPaginationQuery, options?: { refresh: boolean }) {
@@ -110,18 +117,18 @@ export class LaboratoryService {
     const limit = query.limit || 10
     await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
 
-    let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, query)
+    let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryTree, query)
     data = data.slice((page - 1) * limit, page * limit)
 
     return {
       data: Laboratory.fromList(data),
-      meta: { total: LaboratoryService.laboratoryAll.length },
+      meta: { total: LaboratoryService.laboratoryTree.length },
     }
   }
 
   static async list(query: LaboratoryListQuery, options?: { refresh: boolean }) {
     await LaboratoryService.fetchAll({ refresh: !!options?.refresh })
-    const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryAll, query)
+    const data = LaboratoryService.executeQuery(LaboratoryService.laboratoryTree, query)
 
     return Laboratory.fromList(data)
   }

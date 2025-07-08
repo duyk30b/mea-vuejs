@@ -69,6 +69,9 @@ const updatePreview = () => {
 
   const compiledHeader = compiledTemplatePrintHtml({
     organization: organization.value,
+    masterData: {
+      customer: ticket.customer!,
+    },
     ticket,
     data,
     printHtml: printHtmlHeader.value,
@@ -76,6 +79,9 @@ const updatePreview = () => {
   const compiledResult = compiledTemplatePrintHtml({
     organization: organization.value,
     ticket,
+    masterData: {
+      customer: ticket.customer!,
+    },
     data,
     printHtml: printHtml.value,
     _LAYOUT: {
@@ -153,6 +159,9 @@ const startTestPrint = async () => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket,
+      masterData: {
+        customer: ticket.customer!,
+      },
       data,
       printHtml: printHtmlHeader.value,
     })
@@ -161,6 +170,9 @@ const startTestPrint = async () => {
     const compiledResult = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket,
+      masterData: {
+        customer: ticket.customer!,
+      },
       data,
       printHtml: printHtml.value,
       _LAYOUT: {

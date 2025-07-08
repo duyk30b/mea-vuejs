@@ -15,7 +15,7 @@ export enum PositionType {
 }
 
 export const PositionTypeText = {
-  [PositionType.Ticket]: 'Lượt tiếp đón',
+  [PositionType.Ticket]: 'Phòng khám',
   [PositionType.Procedure]: 'Dịch vụ',
   [PositionType.Product]: 'Sản phẩm',
   [PositionType.Radiology]: 'Phiếu CĐHA',

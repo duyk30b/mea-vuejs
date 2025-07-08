@@ -21,7 +21,7 @@ export class CustomerService {
         if (!refreshTime) {
           refreshTime = { code: 'CUSTOMER', dataVersion: 0, time: new Date(0).toISOString() }
         }
-        const dataVersion = MeService.organization.value.dataVersionParse.customer
+        const dataVersion = MeService.organization.value.dataVersionParse?.customer || -1
 
         let apiResponse: { time: Date; data: Customer[] }
 

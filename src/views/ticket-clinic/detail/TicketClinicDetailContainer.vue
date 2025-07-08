@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserRoleService } from '@/modules/user-role'
 import { onBeforeMount, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../common/VueButton.vue'
@@ -65,6 +66,7 @@ onBeforeMount(async () => {
   await startFetchData(ticketId)
 
   ticketLoaded.value = true
+  await Promise.all([UserRoleService.reloadMap(), ticketClinicRef.value.refreshUserAndRole()])
 })
 
 onUnmounted(async () => {

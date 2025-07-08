@@ -7,25 +7,22 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
 import { CONFIG } from '../../../../config'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { LaboratorySample, LaboratorySampleService } from '../../../../modules/laboratory-sample'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import {
-  compiledTemplatePrintHtml,
-  PrintHtml,
-  PrintHtmlService,
-} from '../../../../modules/print-html'
+import { compiledTemplatePrintHtml, PrintHtmlService } from '../../../../modules/print-html'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicLaboratoryApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketLaboratory, TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import { TicketLaboratoryGroup } from '../../../../modules/ticket-laboratory-group'
 import { DString, ESArray, ESDom } from '../../../../utils'
-import ModalTicketLaboratoryResult from './ModalTicketLaboratoryResult.vue'
+import ModalTicketLaboratoryResult from '../../../room-laboratory/ModalTicketLaboratoryGroupResult.vue'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
-import { MeService } from '../../../../modules/_me/me.service'
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -35,9 +32,7 @@ const { userPermission, organization } = MeService
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
 
-let laboratoryAll: Laboratory[] = []
 let laboratorySampleAll: LaboratorySample[] = []
-const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
 
 const laboratoryOptions = ref<{ laboratoryGroup: LaboratoryGroup; laboratoryList: Laboratory[] }[]>(
   [],
@@ -46,20 +41,20 @@ const laboratorySelects = ref<Record<string, Laboratory[]>>({})
 const laboratorySampleOptions = ref<LaboratorySample[]>([])
 
 const laboratoryIdCheckbox = ref<Record<string, boolean>>({})
-const laboratorySampleIdCheckbox = ref<Record<string, { checked: boolean; indeterminate: boolean }>>(
-  {},
-)
+const laboratorySampleIdCheckbox = ref<
+  Record<string, { checked: boolean; indeterminate: boolean }>
+>({})
 const registeredAt = ref<number | null>(null)
 
-const laboratoryMap = ref<Record<string, Laboratory>>({})
-const laboratoryGroupMap = ref<Record<string, LaboratoryGroup>>({})
+const laboratoryMap = LaboratoryService.laboratoryMap
+const laboratoryGroupAll = LaboratoryGroupService.laboratoryGroupAll
+const laboratoryGroupMap = LaboratoryGroupService.laboratoryGroupMap
 
 const searchText = ref('')
 const tlgEdit = ref<TicketLaboratoryGroup>(TicketLaboratoryGroup.blank())
 
 const startFilterLaboratory = (text: string) => {
-  const laboratoryFilter = laboratoryAll.filter((l) => {
-    if (l.level !== 1) return false
+  const laboratoryFilter = LaboratoryService.laboratoryTree.filter((l) => {
     if (!DString.customFilter(l.name, text, 2)) return false
     return true
   })
@@ -90,23 +85,18 @@ const startFilterLaboratory = (text: string) => {
 onMounted(async () => {
   try {
     const promiseResult = await Promise.all([
-      LaboratoryService.list({ sort: { priority: 'ASC' } }),
-      LaboratoryGroupService.list({}),
       LaboratorySampleService.list({}),
+      LaboratoryGroupService.reloadMap(),
+      LaboratoryService.reloadMap(),
     ])
     await ticketClinicRef.value.refreshLaboratory()
-    laboratoryAll = promiseResult[0]
-    laboratoryGroupMap.value = await LaboratoryGroupService.getMap()
 
-    laboratoryGroupAll.value = promiseResult[1]
-    laboratoryGroupAll.value.forEach((g) => {
+    laboratoryGroupAll.forEach((g) => {
       laboratoryOptions.value = []
       laboratorySelects.value[g.id] = []
     })
 
-    laboratoryMap.value = await LaboratoryService.getFlatMap()
-
-    laboratorySampleAll = promiseResult[2]
+    laboratorySampleAll = promiseResult[0]
     laboratorySampleAll.forEach((i) => {
       try {
         const laboratoryIdList: number[] = JSON.parse(i.laboratoryIds)
@@ -127,9 +117,9 @@ onMounted(async () => {
   }
 })
 
-const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
+const startPrint = async (tlgData: TicketLaboratoryGroup) => {
   try {
-    let printHtmlId = ticketLaboratoryGroup.laboratoryGroup?.printHtmlId || 0
+    let printHtmlId = tlgData.laboratoryGroup?.printHtmlId || 0
     const printHtmlHeader = await PrintHtmlService.getPrintHtmlHeader()
     const printHtmlLaboratory = await PrintHtmlService.getPrintHtmlLaboratory(printHtmlId)
 
@@ -140,16 +130,22 @@ const startPrint = async (ticketLaboratoryGroup: TicketLaboratoryGroup) => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       data: {
-        ticketLaboratoryGroup,
+        ticketLaboratoryGroup: tlgData,
       },
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       data: {
-        ticketLaboratoryGroup,
+        ticketLaboratoryGroup: tlgData,
       },
       printHtml: printHtmlLaboratory,
       _LAYOUT: {
@@ -351,6 +347,26 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
   })
   reloadIndeterminateCheckbox()
 }
+
+const clickDestroy = async (ticketLaboratoryGroupId: number) => {
+  ModalStore.confirm({
+    title: 'Xác nhận xóa phiếu xét nghiệm?',
+    content: [
+      '- Hệ thống sẽ xóa tất cả xét nghiệm trên phiếu này khỏi phiếu khám',
+      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
+    ],
+    onOk: async () => {
+      try {
+        await TicketClinicLaboratoryApi.destroyTicketLaboratoryGroup({
+          ticketId: ticketClinicRef.value.id,
+          ticketLaboratoryGroupId,
+        })
+      } catch (error) {
+        console.log('🚀 ~ file: TicketClinicLaboratory.vue:118 ~ onOk: ~ error:', error)
+      }
+    },
+  })
+}
 </script>
 <template>
   <ModalTicketLaboratoryResult ref="modalTicketLaboratoryResult" />
@@ -377,13 +393,18 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
       <div class="table-wrapper flex-1" style="overflow-y: scroll">
         <table>
           <tbody>
-            <template v-for="laboratorySample in laboratorySampleOptions" :key="laboratorySample.id">
+            <template
+              v-for="laboratorySample in laboratorySampleOptions"
+              :key="laboratorySample.id"
+            >
               <tr>
                 <td>
                   <input
                     type="checkbox"
                     :checked="!!laboratorySampleIdCheckbox[laboratorySample.id]?.checked"
-                    :indeterminate="!!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate"
+                    :indeterminate="
+                      !!laboratorySampleIdCheckbox[laboratorySample.id]?.indeterminate
+                    "
                     style="cursor: pointer"
                     @change="
                       (e) =>
@@ -562,6 +583,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
             <tr>
               <td colspan="3" class="">
                 <div class="flex items-center gap-2">
+                  <span v-if="CONFIG.MODE === 'development'">({{ tlg.id }}) -</span>
                   <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
                   <a @click="startPrint(tlg)">
                     <IconPrint width="18px" height="18px" />
@@ -574,7 +596,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   </span>
                 </div>
               </td>
-              <td colspan="5">
+              <td colspan="4">
                 <div class="flex justify-end items-center gap-4">
                   <VueButton
                     v-if="
@@ -596,12 +618,29 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                   </VueButton>
                 </div>
               </td>
+              <td class="text-center">
+                <a
+                  v-if="
+                    tlg.id &&
+                    userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
+                  "
+                  style="color: var(--text-red)"
+                >
+                  <IconDelete width="22" height="22" @click="clickDestroy(tlg.id)" />
+                </a>
+              </td>
             </tr>
             <template v-for="(tlItem, index) in tlg.ticketLaboratoryList || []" :key="tlItem.id">
-              <tr :style="tlItem?.ticketLaboratoryResult?.attention ? 'color: red' : ''">
+              <tr
+                :style="
+                  tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.attention
+                    ? 'color: red'
+                    : ''
+                "
+              >
                 <td class="text-center">
+                  <span v-if="CONFIG.MODE === 'development'">({{ tlItem.id }}) -</span>
                   <span>{{ index + 1 }}</span>
-                  <span v-if="CONFIG.MODE === 'development'">- {{ tlItem.id }}</span>
                 </td>
                 <td class="text-center">
                   <VueTooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
@@ -624,7 +663,7 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                 </td>
                 <td>{{ tlItem.laboratory?.name }}</td>
                 <td class="text-center">
-                  <div>{{ tlItem?.ticketLaboratoryResult?.result }}</div>
+                  <div>{{ tlg.ticketLaboratoryResultMap?.[tlItem.laboratoryId]?.result }}</div>
                 </td>
                 <td class="text-center">
                   <span v-if="tlItem.laboratory?.valueType === LaboratoryValueType.Number">
@@ -659,23 +698,25 @@ const clickChangeLaboratoryGroup = (tlgEditId: number) => {
                 </td>
               </tr>
               <tr
-                v-for="(tlChild, i) in tlItem.children"
+                v-for="(laboratoryChild, i) in tlItem.laboratory?.children || []"
                 :key="i"
-                :style="tlChild.ticketLaboratoryResult?.attention ? 'color: red' : ''"
+                :style="
+                  tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.attention ? 'color: red' : ''
+                "
               >
                 <td></td>
                 <td></td>
-                <td>{{ tlChild.laboratory?.name }}</td>
+                <td>{{ laboratoryChild?.name }}</td>
                 <td class="text-center">
-                  <div>{{ tlChild.ticketLaboratoryResult?.result }}</div>
+                  <div>{{ tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.result }}</div>
                 </td>
                 <td class="text-center">
-                  <span v-if="tlChild.laboratory?.valueType === LaboratoryValueType.Number">
-                    {{ tlChild.laboratory?.lowValue }} -
-                    {{ tlChild.laboratory?.highValue }}
+                  <span v-if="laboratoryChild?.valueType === LaboratoryValueType.Number">
+                    {{ laboratoryChild?.lowValue }} -
+                    {{ laboratoryChild?.highValue }}
                   </span>
                 </td>
-                <td class="text-center">{{ tlChild.laboratory?.unit }}</td>
+                <td class="text-center">{{ laboratoryChild?.unit }}</td>
                 <td class="text-right"></td>
                 <td class="text-center"></td>
               </tr>

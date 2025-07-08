@@ -16,6 +16,7 @@ import {
 } from '../../common/icon-antd'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { MeService } from '../../modules/_me/me.service'
+import { IconLabPanel, IconRadiology } from '@/common/icon-google'
 
 const props = defineProps<{ collapsed?: boolean }>()
 const { userPermission, organizationPermission, user } = MeService
@@ -82,6 +83,22 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
       </a-menu-item>
     </a-sub-menu>
+    <a-menu-item v-if="organizationPermission[PermissionId.RADIOLOGY]" key="RoomRadiology">
+      <template #icon>
+        <IconRadiology />
+      </template>
+      <span>
+        <router-link :to="{ name: 'RoomRadiology' }">Phòng CĐHA</router-link>
+      </span>
+    </a-menu-item>
+    <a-menu-item v-if="organizationPermission[PermissionId.LABORATORY]" key="RoomLaboratory">
+      <template #icon>
+        <IconLabPanel />
+      </template>
+      <span>
+        <router-link :to="{ name: 'RoomLaboratory' }">Phòng Xét nghiệm</router-link>
+      </span>
+    </a-menu-item>
     <!-- <a-sub-menu
       v-if="userPermission[PermissionId.TICKET_TRADITIONAL_READ]"
       key="TicketTraditional">

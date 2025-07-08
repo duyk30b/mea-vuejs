@@ -104,6 +104,7 @@ const startSendProductAndPaymentAndClose = async () => {
       money: money.value,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
+      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
     })
     Object.assign(ticketOrderDetailRef.value, response.ticket)
     ticketOrderDetailRef.value.ticketProductList = response.ticketProductList

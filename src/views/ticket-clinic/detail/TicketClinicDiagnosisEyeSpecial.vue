@@ -94,12 +94,17 @@ const startPrint = async () => {
     const compiledHeader = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlHeader,
     })
     const compiledContent = compiledTemplatePrintHtml({
       organization: organization.value,
       ticket: ticketClinicRef.value,
-      masterData: {},
+      masterData: {
+        customer: ticketClinicRef.value.customer!,
+      },
       printHtml: printHtmlOptometry,
       _LAYOUT: {
         HEADER: compiledHeader.html,

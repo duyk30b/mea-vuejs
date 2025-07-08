@@ -182,7 +182,7 @@ defineExpose({ openModal })
               :custom-style="{
                 checkboxItemWrap: {
                   display: 'flex',
-                  gap: '30px',
+                  gap: '10px',
                   flexWrap: 'wrap',
                   alignItems: 'center',
                 },

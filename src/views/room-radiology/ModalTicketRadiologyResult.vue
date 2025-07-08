@@ -1,25 +1,23 @@
 <script setup lang="ts">
+import { IconClose } from '@/common/icon-antd'
+import ImageUploadMultiple from '@/common/image-upload/ImageUploadMultiple.vue'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputDate, InputFilter } from '@/common/vue-form'
+import InputText from '@/common/vue-form/InputText.vue'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import VueButton from '@/common/VueButton.vue'
+import VueTinyMCE from '@/common/VueTinyMCE.vue'
+import { Image, ImageHost } from '@/modules/image/image.model'
+import { PositionService, PositionType } from '@/modules/position'
+import { Radiology, RadiologyService } from '@/modules/radiology'
+import { Role, RoleService } from '@/modules/role'
+import { TicketClinicRadiologyApi } from '@/modules/ticket-clinic/ticket-clinic-radiology.api'
+import { TicketRadiology, TicketRadiologyApi } from '@/modules/ticket-radiology'
+import { TicketUser } from '@/modules/ticket-user'
+import { User, UserService } from '@/modules/user'
+import { UserRoleService } from '@/modules/user-role'
+import { DString } from '@/utils'
 import { computed, onMounted, ref } from 'vue'
-import { IconClose } from '../../../../common/icon-antd'
-import ImageUploadMultiple from '../../../../common/image-upload/ImageUploadMultiple.vue'
-import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputDate, InputFilter } from '../../../../common/vue-form'
-import InputText from '../../../../common/vue-form/InputText.vue'
-import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import VueButton from '../../../../common/VueButton.vue'
-import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
-import { PositionService, PositionType } from '../../../../modules/position'
-import { Image, ImageHost } from '../../../../modules/image/image.model'
-import { Radiology, RadiologyService } from '../../../../modules/radiology'
-import { Role, RoleService } from '../../../../modules/role'
-import { ticketClinicRef } from '../../../../modules/ticket-clinic'
-import { TicketClinicRadiologyApi } from '../../../../modules/ticket-clinic/ticket-clinic-radiology.api'
-import { TicketRadiology, TicketRadiologyApi } from '../../../../modules/ticket-radiology'
-import { TicketUser } from '../../../../modules/ticket-user'
-import { User, UserService } from '../../../../modules/user'
-import { UserRoleService } from '../../../../modules/user-role'
-import { DString } from '../../../../utils'
 
 const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
@@ -41,9 +39,7 @@ const editable = ref(true)
 
 const refreshTicketUserList = async () => {
   ticketUserListOrigin.value = []
-  const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[PositionType.Radiology]?.[ticketRadiology.value.id] ||
-    []
+  const ticketUserListRef = ticketRadiology.value.ticketUserList || []
 
   const positionList = await PositionService.list({
     filter: {
@@ -115,7 +111,7 @@ onMounted(async () => {
 const openModal = async (ticketRadiologyId: number, options?: { noEdit: boolean }) => {
   showModal.value = true
   const ticketRadiologyResponse = await TicketRadiologyApi.detail(ticketRadiologyId, {
-    relation: { imageList: true },
+    relation: { imageList: true, ticketUserList: true },
   })
   ticketRadiology.value = ticketRadiologyResponse
   if (ticketRadiology.value.startedAt == null) {
@@ -162,27 +158,6 @@ const startSave = async () => {
   } finally {
     saveLoading.value = false
   }
-}
-
-const clickDestroy = async () => {
-  ModalStore.confirm({
-    title: 'Xác nhận xóa phiếu CĐHA ?',
-    content: [
-      '- Hệ thống sẽ xóa phiếu CĐHA này khỏi phiếu khám',
-      '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
-    ],
-    async onOk() {
-      try {
-        await TicketClinicRadiologyApi.destroyTicketRadiology({
-          ticketId: ticketClinicRef.value.id,
-          ticketRadiologyId: ticketRadiology.value.id,
-        })
-        closeModal()
-      } catch (error) {
-        console.log('🚀 ~ file: ModalTicketRadiologyResult.vue:185 ~ onOk ~ error:', error)
-      }
-    },
-  })
 }
 
 defineExpose({ openModal })
@@ -276,15 +251,6 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-6 flex justify-end gap-4">
-          <VueButton
-            v-if="editable && ticketRadiology.id"
-            color="red"
-            type="button"
-            icon="close"
-            @click="clickDestroy"
-          >
-            Xóa
-          </VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại
           </VueButton>

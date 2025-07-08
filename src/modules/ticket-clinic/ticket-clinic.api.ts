@@ -141,21 +141,6 @@ export class TicketClinicApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async returnProduct(body: {
-    ticketId: number
-    returnList: {
-      ticketBatchId: number
-      quantityReturn: number
-    }[]
-  }) {
-    const { ticketId, returnList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/return-product`, {
-      returnList,
-    })
-    const { data } = response.data as BaseResponse
-    return data
-  }
-
   static async changeDiscount(
     ticketId: number,
     body: {
