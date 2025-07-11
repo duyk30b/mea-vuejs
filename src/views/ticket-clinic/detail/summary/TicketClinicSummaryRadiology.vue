@@ -13,6 +13,8 @@ import { ticketClinicRef } from '../../../../modules/ticket-clinic'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
 import ModalRadiologyDetail from '../../../master-data/radiology/detail/ModalRadiologyDetail.vue'
 import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUpdateMoney.vue'
+import { Discount } from '@/modules/discount'
+import { DiscountType } from '@/modules/enum'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
@@ -79,7 +81,7 @@ const radiologyCostAmount = computed(() => {
             <span>{{ ticketRadiology.radiology?.name }}</span>
             <a
               style="line-height: 0"
-              @click="modalRadiologyDetail?.openModal(ticketRadiology.radiology!)"
+              @click="modalRadiologyDetail?.openModal(ticketRadiology.radiologyId)"
             >
               <IconFileSearch />
             </a>
@@ -96,15 +98,20 @@ const radiologyCostAmount = computed(() => {
         </td>
         <td class="text-center">
           <div v-if="ticketRadiology.discountMoney">
-            <VueTag v-if="ticketRadiology.discountType === 'VNĐ'" color="green">
+            <VueTag v-if="ticketRadiology.discountType === DiscountType.VND" color="green">
               {{ formatMoney(ticketRadiology.discountMoney) }}
             </VueTag>
-            <VueTag v-if="ticketRadiology.discountType === '%'" color="green">
+            <VueTag v-if="ticketRadiology.discountType === DiscountType.Percent" color="green">
               {{ ticketRadiology.discountPercent || 0 }}%
             </VueTag>
           </div>
         </td>
         <td class="text-right whitespace-nowrap">
+          <div v-if="ticketRadiology.discountMoney" class="text-xs italic text-red-500">
+            <del>
+              {{ formatMoney(ticketRadiology.expectedPrice) }}
+            </del>
+          </div>
           {{ formatMoney(ticketRadiology.actualPrice) }}
         </td>
         <td class="text-center">

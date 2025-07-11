@@ -1,25 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IconDollar,
-  IconGift,
   IconPrint,
   IconReconciliation,
   IconTool,
   IconUser,
 } from '../../common/icon-antd'
 import { IconLabPanel, IconPulmonology, IconWarehouse } from '../../common/icon-google'
+import { MeService } from '../../modules/_me/me.service'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import Breadcrumb from '../component/Breadcrumb.vue'
-import ModalProcedureGroupManager from './modal/ModalProcedureGroupManager.vue'
-import ModalProductGroupManager from './modal/ModalProductGroupManager.vue'
-import ModalRadiologyGroupManager from './modal/ModalRadiologyGroupManager.vue'
-import { MeService } from '../../modules/_me/me.service'
-
-const modalProductGroupManager = ref<InstanceType<typeof ModalProductGroupManager>>()
-const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
-const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
 
 const router = useRouter()
 
@@ -133,8 +125,8 @@ const { organizationPermission, userPermission } = MeService
 
       <div
         class="card"
-        @click="router.push({ name: 'PaymentMethod' })"
-        v-if="userPermission[PermissionId.MASTER_DATA_PAYMENT_METHOD]"
+        @click="router.push({ name: 'Discount' })"
+        v-if="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
       >
         <div class="card-icon">
           <IconDollar />
@@ -195,46 +187,6 @@ const { organizationPermission, userPermission } = MeService
           <div class="card-description">
             Quản lý danh sách các bộ xét nghiệm phục vụ chỉ định nhanh xét nghiệm
           </div>
-        </div>
-      </div>
-
-      <div
-        class="card"
-        @click="modalProductGroupManager?.openModal()"
-        v-if="userPermission[PermissionId.PRODUCT_GROUP_CRUD]"
-      >
-        <div class="card-icon">
-          <IconTool />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Nhóm sản phẩm</div>
-          <div class="card-description">Quản lý danh sách nhóm sản phẩm</div>
-        </div>
-      </div>
-      <div
-        class="card"
-        @click="modalProcedureGroupManager?.openModal()"
-        v-if="userPermission[PermissionId.PROCEDURE_GROUP_CRUD]"
-      >
-        <div class="card-icon">
-          <IconTool />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Nhóm dịch vụ</div>
-          <div class="card-description">Quản lý danh sách nhóm dịch vụ</div>
-        </div>
-      </div>
-      <div
-        class="card"
-        @click="modalRadiologyGroupManager?.openModal()"
-        v-if="userPermission[PermissionId.RADIOLOGY_GROUP_CRUD]"
-      >
-        <div class="card-icon">
-          <IconTool />
-        </div>
-        <div class="card-content">
-          <div class="card-title">Nhóm phiếu CĐHA</div>
-          <div class="card-description">Quản lý nhóm các phiếu CĐHA</div>
         </div>
       </div>
     </div>

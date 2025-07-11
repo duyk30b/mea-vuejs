@@ -9,7 +9,7 @@ import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { MeService } from '@/modules/_me/me.service'
 import { Image, ImageHost } from '@/modules/image/image.model'
-import { PositionService, PositionType } from '@/modules/position'
+import { PositionService, PositionInteractType } from '@/modules/position'
 import { compiledTemplatePrintHtml, PrintHtmlService } from '@/modules/print-html'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { Role, RoleService } from '@/modules/role'
@@ -46,7 +46,7 @@ const refreshTicketUserList = async () => {
 
   const positionList = await PositionService.list({
     filter: {
-      positionType: PositionType.Radiology,
+      positionType: PositionInteractType.Radiology,
       positionInteractId: ticketRadiology.value.radiologyId,
     },
   })

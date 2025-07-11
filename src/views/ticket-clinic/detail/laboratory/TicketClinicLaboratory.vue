@@ -86,7 +86,7 @@ onMounted(async () => {
   try {
     const promiseResult = await Promise.all([
       LaboratorySampleService.list({}),
-      LaboratoryGroupService.reloadMap(),
+      LaboratoryGroupService.getMap(),
       LaboratoryService.getMap(),
     ])
     await ticketClinicRef.value.refreshLaboratory()
@@ -218,36 +218,64 @@ const clear = () => {
 
 const saveLaboratorySelected = async () => {
   try {
+    const ticketLaboratoryGroupAddList = Object.keys(laboratorySelects.value)
+      .filter((key) => {
+        if (laboratorySelects.value[key].length == 0) return false
+        if (tlgEdit.value.id && tlgEdit.value.laboratoryGroupId == Number(key)) {
+          return false
+        }
+        return true
+      })
+      .flat()
+      .map((i) => {
+        return {
+          laboratoryGroupId: Number(i),
+          registeredAt: registeredAt.value,
+          ticketLaboratoryList: laboratorySelects.value[i].map((i, index) => {
+            const ins = TicketLaboratory.blank()
+            ins.laboratory = Laboratory.from(i)
+            ins.priority = index + 1
+            ins.laboratoryId = i.id
+            ins.laboratoryGroupId = i.laboratoryGroupId
+            ins.costPrice = i.costPrice
+            ins.expectedPrice = i.price
+            ins.discountMoney = 0
+            ins.discountPercent = 0
+            ins.discountType = DiscountType.VND
+            ins.actualPrice = i.price
+            return ins
+          }),
+        }
+      })
+
+    for (let i = 0; i < ticketLaboratoryGroupAddList.length; i++) {
+      const group = ticketLaboratoryGroupAddList[i]
+      for (let j = 0; j < group.ticketLaboratoryList.length; j++) {
+        const tpItem = group.ticketLaboratoryList[j]
+
+        await LaboratoryService.executeRelation([tpItem.laboratory!], { discountList: true })
+        const discountApply = tpItem.laboratory?.discountApply
+        if (discountApply) {
+          let { discountType, discountPercent, discountMoney } = discountApply
+          const expectedPrice = tpItem.expectedPrice || 0
+          if (discountType === DiscountType.Percent) {
+            discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+          }
+          if (discountType === DiscountType.VND) {
+            discountPercent =
+              expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+          }
+          tpItem.discountType = discountType
+          tpItem.discountPercent = discountPercent
+          tpItem.discountMoney = discountMoney
+          tpItem.actualPrice = expectedPrice - discountMoney
+        }
+      }
+    }
+
     await TicketClinicLaboratoryApi.upsertLaboratory({
       ticketId: ticketClinicRef.value.id,
-      ticketLaboratoryGroupAddList: Object.keys(laboratorySelects.value)
-        .filter((key) => {
-          if (laboratorySelects.value[key].length == 0) return false
-          if (tlgEdit.value.id && tlgEdit.value.laboratoryGroupId == Number(key)) {
-            return false
-          }
-          return true
-        })
-        .flat()
-        .map((i) => {
-          return {
-            laboratoryGroupId: Number(i),
-            registeredAt: registeredAt.value,
-            ticketLaboratoryList: laboratorySelects.value[i].map((i, index) => {
-              const ins = TicketLaboratory.blank()
-              ins.priority = index + 1
-              ins.laboratoryId = i.id
-              ins.laboratoryGroupId = i.laboratoryGroupId
-              ins.costPrice = i.costPrice
-              ins.expectedPrice = i.price
-              ins.discountMoney = 0
-              ins.discountPercent = 0
-              ins.discountType = DiscountType.VND
-              ins.actualPrice = i.price
-              return ins
-            }),
-          }
-        }),
+      ticketLaboratoryGroupAddList,
       ticketLaboratoryGroupUpdate: tlgEdit.value.id
         ? {
             id: tlgEdit.value.id,

@@ -26,6 +26,7 @@ export enum DiscountRepeatType {
 export class Discount extends BaseModel {
   id: number
   priority: number
+  isActive: 0 | 1
   discountInteractType: DiscountInteractType
   discountInteractId: number
 
@@ -73,6 +74,55 @@ export class Discount extends BaseModel {
     }
   }
 
+  get valueText() {
+    if (this.discountType === DiscountType.VND) {
+      return this.discountMoney
+    }
+    if (this.discountType === DiscountType.Percent) {
+      return this.discountPercent + '%'
+    }
+    return ''
+  }
+
+  static canApplyNow(discount: Discount): boolean {
+    if (!discount.isActive) return false
+
+    const now = new Date()
+    const nowTime = now.getTime()
+    const nowDay = now.getDay()
+    const periodsDayParse = discount.periodsDayParse
+    const periodsTimeParse = discount.periodsTimeParse
+
+    if (discount.discountRepeatType === DiscountRepeatType.Once) {
+      let apply = false
+      periodsTimeParse.forEach((time) => {
+        const startTime = new Date(time[0]).getTime() // periodsTimeParse: [["2025-06-30T17:00:00.000Z","2025-07-31T16:59:59.999Z"]]
+        const endTime = new Date(time[1]).getTime()
+        if (startTime < nowTime && nowTime < endTime) {
+          apply = true
+        }
+      })
+      return apply
+    }
+    if (discount.discountRepeatType === DiscountRepeatType.Weekly) {
+      if (!periodsDayParse.includes(nowDay)) return false // periodsDayParse: [1,2,3,4,5,6,7]
+      let apply = false
+      periodsTimeParse.forEach((time) => {
+        const [startHours, startMinute] = time[0].split(':').map((i) => Number(i)) // periodsTimeParse: [["00:00","03:59"],["18:00","23:59"]]
+        const [endHours, endMinute] = time[1].split(':').map((i) => Number(i))
+        const startTime = new Date()
+        const endTime = new Date()
+        startTime.setHours(startHours, startMinute)
+        endTime.setHours(endHours, endMinute)
+        if (startTime.getTime() < nowTime && nowTime < endTime.getTime()) {
+          apply = true
+        }
+      })
+      return apply
+    }
+    return false
+  }
+
   static init(): Discount {
     const ins = new Discount()
     ins._localId = Math.random()
@@ -83,6 +133,7 @@ export class Discount extends BaseModel {
   static blank(): Discount {
     const ins = Discount.init()
     ins.priority = 0
+    ins.isActive = 1
     ins.discountInteractType = DiscountInteractType.Product
     ins.discountInteractId = 0
 
@@ -99,12 +150,12 @@ export class Discount extends BaseModel {
 
   static basic(source: Discount) {
     const target = new Discount()
-    target._localId = source.id || source._localId || Math.random()
     Object.keys(target).forEach((key) => {
       const value = target[key as keyof typeof target]
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = source.id || source._localId || Math.random()
     return target
   }
 

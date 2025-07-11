@@ -1,5 +1,7 @@
 import { ref } from 'vue'
 import { DString, ESArray } from '../../utils'
+import { DiscountInteractType, DiscountService, type Discount } from '../discount'
+import { PositionInteractType, PositionService, type Position } from '../position'
 import { LaboratoryApi } from './laboratory.api'
 import type {
   LaboratoryDetailQuery,
@@ -8,6 +10,10 @@ import type {
   LaboratoryPaginationQuery,
 } from './laboratory.dto'
 import { Laboratory } from './laboratory.model'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
+
+const LaboratoryDBQuery = new IndexedDBQuery<Laboratory>()
 
 export class LaboratoryService {
   static loadedAll: boolean = false
@@ -18,7 +24,7 @@ export class LaboratoryService {
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        const laboratoryAll = await LaboratoryApi.list({ sort: { priority: 'ASC' } })
+        const laboratoryAll = await LaboratoryApi.list({ sort: { id: 'DESC' } })
         const laboratoryMap = ESArray.arrayToKeyValue(laboratoryAll, 'id')
 
         const laboratoryTree = laboratoryAll.filter((i) => i.level === 1)
@@ -57,46 +63,60 @@ export class LaboratoryService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.laboratoryGroupId != null) {
-          if (filter.laboratoryGroupId !== i.laboratoryGroupId) {
-            return false
-          }
-        }
-        if (filter.level != null) {
-          if (filter.level !== i.level) {
-            return false
-          }
-        }
-        if (filter.parentId != null) {
-          if (filter.parentId !== i.parentId) {
-            return false
-          }
-        }
-        if (filter.name) {
-          if (filter.name.LIKE && !DString.customFilter(i.name || '', filter.name.LIKE, 2)) {
-            return false
-          }
-        }
-        return true
+        return LaboratoryDBQuery.executeFilter(i, filter as any)
       })
     }
     if (query.sort) {
-      if (query.sort.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
-      if (query.sort.priority) {
-        data.sort((a, b) => {
-          if (query.sort?.priority === 'ASC') return a.priority < b.priority ? -1 : 1
-          if (query.sort?.priority === 'DESC') return a.priority > b.priority ? -1 : 1
-          return a.priority > b.priority ? -1 : 1
-        })
-      }
+      data = LaboratoryDBQuery.executeSort(data, query.sort)
     }
     return data
+  }
+
+  static async executeRelation(
+    laboratoryList: Laboratory[],
+    relation: LaboratoryGetQuery['relation'],
+  ) {
+    try {
+      const laboratoryIdList = laboratoryList.map((i) => i.id)
+
+      const [laboratoryGroupMap, discountAll, positionAll] = await Promise.all([
+        relation?.laboratoryGroup
+          ? LaboratoryGroupService.getMap()
+          : <Record<string, LaboratoryGroup>>{},
+        relation?.discountList ? DiscountService.getAll() : <Discount[]>[],
+        relation?.positionList ? PositionService.getAll() : <Position[]>[],
+      ])
+
+      laboratoryList.forEach((laboratory) => {
+        if (relation?.laboratoryGroup) {
+          laboratory.laboratoryGroup = laboratoryGroupMap[laboratory.laboratoryGroupId]
+        }
+        if (relation?.discountList) {
+          laboratory.discountList = discountAll.filter((i) => {
+            return (
+              i.discountInteractType === DiscountInteractType.Laboratory &&
+              i.discountInteractId === laboratory.id
+            )
+          })
+          laboratory.discountListExtra = discountAll.filter((i) => {
+            return (
+              i.discountInteractType === DiscountInteractType.Laboratory &&
+              i.discountInteractId === 0
+            )
+          })
+        }
+        if (relation?.positionList) {
+          laboratory.positionList = positionAll.filter((i) => {
+            return (
+              i.positionType === PositionInteractType.Laboratory &&
+              i.positionInteractId === laboratory.id
+            )
+          })
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ laboratory.service.ts:118 ~ LaboratoryService ~ error:', error)
+    }
   }
 
   static async getMap(options?: { refetch: boolean }) {
@@ -111,7 +131,9 @@ export class LaboratoryService {
 
     let data = LaboratoryService.executeQuery(LaboratoryService.laboratoryTree, query)
     data = data.slice((page - 1) * limit, page * limit)
-
+    if (query.relation) {
+      await LaboratoryService.executeRelation(data, query.relation)
+    }
     return {
       data: Laboratory.fromList(data),
       meta: { total: LaboratoryService.laboratoryTree.length },
@@ -133,8 +155,10 @@ export class LaboratoryService {
     let laboratory: Laboratory | undefined
     if (options?.query) {
       laboratory = await LaboratoryApi.detail(id, query)
-      const findIndex = LaboratoryService.laboratoryAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) LaboratoryService.laboratoryAll[findIndex] = laboratory
+      // không sửa vì có thể dữ liệu get về không có laboratoryChildren
+      // const findIndex = LaboratoryService.laboratoryAll.findIndex((i) => i.id === id)
+      // if (findIndex !== -1) LaboratoryService.laboratoryAll[findIndex] = laboratory
+      // LaboratoryService.laboratoryMap.value[laboratory.id] = laboratory
     } else {
       await LaboratoryService.fetchAll({ refetch: !!options?.refetch })
       laboratory = LaboratoryService.laboratoryAll.find((i) => i.id === id)
@@ -143,23 +167,31 @@ export class LaboratoryService {
     return laboratory ? Laboratory.from(laboratory) : Laboratory.blank()
   }
 
-  static async create(laboratory: Laboratory) {
-    const result = await LaboratoryApi.create(laboratory)
-    LaboratoryService.loadedAll = false
+  static async create(body: {
+    laboratory: Laboratory
+    laboratoryChildren?: Laboratory[]
+    discountList?: Discount[]
+    positionList?: Position[]
+  }) {
+    const result = await LaboratoryApi.create(body)
     return result
   }
 
-  static async update(id: number, laboratory: Laboratory) {
-    const result = await LaboratoryApi.update(id, laboratory)
-    LaboratoryService.loadedAll = false
+  static async update(
+    id: number,
+    body: {
+      laboratory: Laboratory
+      laboratoryChildren?: Laboratory[]
+      discountList?: Discount[]
+      positionList?: Position[]
+    },
+  ) {
+    const result = await LaboratoryApi.update(id, body)
     return result
   }
 
   static async destroyOne(id: number) {
     const result = await LaboratoryApi.destroyOne(id)
-    if (result.success) {
-      LaboratoryService.loadedAll = false
-    }
     return result
   }
 

@@ -8,7 +8,7 @@ import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputOptions } from '../../../../common/vue-form'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionType } from '../../../../modules/position'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import {
@@ -17,7 +17,7 @@ import {
   type MedicineType,
 } from '../../../../modules/prescription-sample'
 import { PrintHtmlService, compiledTemplatePrintHtml } from '../../../../modules/print-html'
-import { Product } from '../../../../modules/product'
+import { Product, ProductService } from '../../../../modules/product'
 import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import {
@@ -86,11 +86,11 @@ const refreshTicketUserList = async () => {
   }
   const tuListOrigin: TicketUser[] = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[PositionType.PrescriptionList]?.[0] || []
+    ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.PrescriptionList]?.[0] || []
 
   const positionList = await PositionService.list({
     filter: {
-      positionType: PositionType.PrescriptionList,
+      positionType: PositionInteractType.PrescriptionList,
       positionInteractId: 0,
     },
   })
@@ -302,7 +302,7 @@ const saveTicketUserList = async () => {
   try {
     await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      positionType: PositionType.PrescriptionList,
+      positionType: PositionInteractType.PrescriptionList,
       positionInteractId: 0,
       ticketItemId: 0,
       quantity: 1,
@@ -421,6 +421,26 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
       return temp
     })
     .filter((i) => !!i)
+
+  for (let i = 0; i < ticketProductList.length; i++) {
+    const tpItem = ticketProductList[i]
+    await ProductService.executeRelation([tpItem.product!], { discountList: true })
+    const discountApply = tpItem.product?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = tpItem.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      tpItem.discountType = discountType
+      tpItem.discountPercent = discountPercent
+      tpItem.discountMoney = discountMoney
+      tpItem.actualPrice = expectedPrice - discountMoney
+    }
+  }
 
   handleAddTicketProductPrescription(ticketProductList)
 }
@@ -570,7 +590,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
                 {{
                   formatMoney(
                     ticketProductPrescriptionList.reduce((acc: number, item: TicketProduct) => {
-                      return (acc += item.expectedPrice * item.quantityPrescription)
+                      return (acc += item.actualPrice * item.quantity)
                     }, 0),
                   )
                 }}

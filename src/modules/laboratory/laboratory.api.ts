@@ -1,6 +1,8 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import { debounceAsync } from '../../utils/helpers'
 import type { BaseResponse } from '../_base/base-dto'
+import type { Discount } from '../discount'
+import type { Position } from '../position'
 import { TicketLaboratory } from '../ticket-laboratory'
 import {
   LaboratoryDetailQuery,
@@ -36,7 +38,7 @@ export class LaboratoryApi {
       const { data } = response.data as BaseResponse
       return Laboratory.fromList(data)
     },
-    200
+    200,
   )
 
   static async detail(id: number, options: LaboratoryDetailQuery): Promise<Laboratory> {
@@ -47,19 +49,30 @@ export class LaboratoryApi {
     return Laboratory.from(data.laboratory)
   }
 
-  static async create(laboratory: Laboratory) {
+  static async create(body: {
+    laboratory: Laboratory
+    laboratoryChildren?: Laboratory[]
+    discountList?: Discount[]
+    positionList?: Position[]
+  }) {
+    const { laboratory, laboratoryChildren, discountList, positionList } = body
+
     const response = await AxiosInstance.post('/laboratory/create', {
-      priority: laboratory.priority,
-      name: laboratory.name,
-      laboratoryGroupId: laboratory.laboratoryGroupId,
-      price: laboratory.price,
-      costPrice: laboratory.costPrice,
-      valueType: laboratory.valueType,
-      lowValue: laboratory.lowValue,
-      highValue: laboratory.highValue,
-      unit: laboratory.unit,
-      options: laboratory.options,
-      children: (laboratory.children || []).map((i) => {
+      laboratory: {
+        laboratoryCode: laboratory.laboratoryCode,
+        priority: laboratory.priority,
+        name: laboratory.name,
+        laboratoryGroupId: laboratory.laboratoryGroupId,
+        price: laboratory.price,
+        costPrice: laboratory.costPrice,
+        valueType: laboratory.valueType,
+        lowValue: laboratory.lowValue,
+        highValue: laboratory.highValue,
+        unit: laboratory.unit,
+        options: laboratory.options,
+      },
+
+      laboratoryChildren: (laboratoryChildren || []).map((i) => {
         return {
           name: i.name,
           priority: i.priority,
@@ -72,24 +85,61 @@ export class LaboratoryApi {
           options: i.options,
         }
       }),
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
+
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
+        }
+      }),
     })
     const { data } = response.data as BaseResponse<{ laboratory: any }>
     return Laboratory.from(data.laboratory)
   }
 
-  static async update(id: number, laboratory: Laboratory) {
+  static async update(
+    id: number,
+    body: {
+      laboratory: Laboratory
+      laboratoryChildren?: Laboratory[]
+      discountList?: Discount[]
+      positionList?: Position[]
+    },
+  ) {
+    const { laboratory, laboratoryChildren, discountList, positionList } = body
+
     const response = await AxiosInstance.patch(`/laboratory/update/${id}`, {
-      priority: laboratory.priority,
-      name: laboratory.name,
-      price: laboratory.price,
-      costPrice: laboratory.costPrice,
-      laboratoryGroupId: laboratory.laboratoryGroupId,
-      lowValue: laboratory.lowValue,
-      highValue: laboratory.highValue,
-      valueType: laboratory.valueType, // không cho cập nhật loại giá trị
-      unit: laboratory.unit,
-      options: laboratory.options,
-      children: (laboratory.children || []).map((i) => {
+      laboratory: {
+        laboratoryCode: laboratory.laboratoryCode,
+        priority: laboratory.priority,
+        name: laboratory.name,
+        price: laboratory.price,
+        costPrice: laboratory.costPrice,
+        laboratoryGroupId: laboratory.laboratoryGroupId,
+        lowValue: laboratory.lowValue,
+        highValue: laboratory.highValue,
+        valueType: laboratory.valueType, // không cho cập nhật loại giá trị
+        unit: laboratory.unit,
+        options: laboratory.options,
+      },
+      laboratoryChildren: (laboratoryChildren || []).map((i) => {
         return {
           id: i.id,
           priority: i.priority,
@@ -101,6 +151,30 @@ export class LaboratoryApi {
           valueType: i.valueType,
           unit: i.unit,
           options: i.options,
+        }
+      }),
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
+        .map((i) => {
+          return {
+            roleId: i.roleId,
+            commissionValue: i.commissionValue,
+            commissionCalculatorType: i.commissionCalculatorType,
+          }
+        }),
+
+      discountList: discountList?.map((i) => {
+        return {
+          priority: i.priority,
+          isActive: i.isActive,
+          // discountInteractType: i.discountInteractType,
+          // discountInteractId: i.discountInteractId,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          discountRepeatType: i.discountRepeatType,
+          periodsDay: i.periodsDay,
+          periodsTime: i.periodsTime,
         }
       }),
     })

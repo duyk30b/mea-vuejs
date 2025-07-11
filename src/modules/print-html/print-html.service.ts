@@ -1,31 +1,35 @@
 import { AlertStore } from '@/common/vue-alert'
+import { ref } from 'vue'
 import { ESArray, ESDom } from '../../utils'
 import { MeService } from '../_me/me.service'
+import type { Organization } from '../organization'
 import { Radiology } from '../radiology'
+import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
 import type { TicketRadiology } from '../ticket-radiology'
 import { PrintHtmlApi } from './print-html.api'
+import { compiledTemplatePrintHtml } from './print-html.compiled'
 import type { PrintHtmlGetListQuery } from './print-html.dto'
 import { PrintHtml } from './print-html.model'
-import { compiledTemplatePrintHtml } from './print-html.compiled'
-import type { Organization } from '../organization'
-import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
 
 export class PrintHtmlService {
   static loadedAll: boolean = false
   static printHtmlAll: PrintHtml[] = []
+  static printHtmlMap = ref<Record<string, PrintHtml>>({})
 
   static fetchAll = (() => {
     const start = async () => {
       try {
         const { data } = await PrintHtmlApi.getList({})
-        PrintHtmlService.printHtmlAll = data
+        const printHtmlAll = data
+        PrintHtmlService.printHtmlAll = printHtmlAll
+        PrintHtmlService.printHtmlMap.value = ESArray.arrayToKeyValue(printHtmlAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: warehouse.service.ts:20 ~ PrintHtmlService ~ start ~ error:', error)
+        console.log('🚀 ~ print-html.service.ts:27 ~ PrintHtmlService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !PrintHtmlService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !PrintHtmlService.loadedAll || options.refetch) {
         PrintHtmlService.loadedAll = true
         fetching = start()
       }
@@ -38,10 +42,14 @@ export class PrintHtmlService {
     return PrintHtml.fromList(PrintHtmlService.printHtmlAll)
   }
 
-  static async getMap() {
-    await PrintHtmlService.fetchAll()
-    const printHtmlMap = ESArray.arrayToKeyValue(PrintHtmlService.printHtmlAll, 'id')
-    return printHtmlMap
+  static async getMap(options?: { refetch: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+    return PrintHtmlService.printHtmlMap.value
+  }
+
+  static async getList(options?: { refetch: boolean }) {
+    await PrintHtmlService.fetchAll({ refetch: !!options?.refetch })
+    return PrintHtmlService.printHtmlAll
   }
 
   static async detail(id: number) {

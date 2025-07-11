@@ -124,6 +124,23 @@ const selectProduct = async (productSelect: Product) => {
     settingStore.TICKET_CLINIC_DETAIL.prescriptions.warehouseIdList,
   ) // set tạm trước thôi, tí nữa tính toán lại
 
+  await ProductService.executeRelation([productSelect], { discountList: true })
+  const discountApply = productSelect?.discountApply
+  if (discountApply) {
+    let { discountType, discountPercent, discountMoney } = discountApply
+    const expectedPrice = temp.expectedPrice || 0
+    if (discountType === DiscountType.Percent) {
+      discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+    }
+    if (discountType === DiscountType.VND) {
+      discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+    }
+    temp.discountType = discountType
+    temp.discountPercent = discountPercent
+    temp.discountMoney = discountMoney
+    temp.actualPrice = expectedPrice - discountMoney
+  }
+
   ticketProductPrescription.value = temp
 
   // Tính toán cho batchID // lằng nhằng nhé

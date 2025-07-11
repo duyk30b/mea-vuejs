@@ -1,4 +1,5 @@
-import { arrayToKeyValue } from '../../utils'
+import { ref } from 'vue'
+import { arrayToKeyValue, ESArray } from '../../utils'
 import { PositionApi } from './position.api'
 import type {
   PositionDetailQuery,
@@ -7,24 +8,30 @@ import type {
   PositionPaginationQuery,
 } from './position.dto'
 import { Position } from './position.model'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+
+const PositionDBQuery = new IndexedDBQuery<Position>()
 
 export class PositionService {
   static loadedAll: boolean = false
   static positionAll: Position[] = []
+  static positionMap = ref<Record<string, Position>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   private static fetchAll = (() => {
     const start = async () => {
       try {
         const { data } = await PositionApi.list({})
-        PositionService.positionAll = data
+        const positionAll = data
+        PositionService.positionAll = positionAll
+        PositionService.positionMap.value = ESArray.arrayToKeyValue(positionAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: commission.service.ts:20 ~ fetchAll ~ error:', error)
+        console.log('🚀 ~ position.service.ts:26 ~ PositionService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !PositionService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !PositionService.loadedAll || options.refetch) {
         PositionService.loadedAll = true
         fetching = start()
       }
@@ -37,60 +44,29 @@ export class PositionService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.positionType != null) {
-          if (filter.positionType !== i.positionType) {
-            return false
-          }
-        }
-        if (filter.positionInteractId != null) {
-          if (filter.positionInteractId !== i.positionInteractId) {
-            return false
-          }
-        }
-        if (filter.roleId != null) {
-          if (filter.roleId !== i.roleId) {
-            return false
-          }
-        }
-        return true
+        return PositionDBQuery.executeFilter(i, filter as any)
       })
     }
     if (query.sort) {
-      if (query.sort.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
-      if (query.sort.positionType) {
-        data.sort((a, b) => {
-          if (query.sort?.positionType === 'ASC') return a.positionType < b.positionType ? -1 : 1
-          if (query.sort?.positionType === 'DESC') return a.positionType > b.positionType ? -1 : 1
-          return a.positionType > b.positionType ? -1 : 1
-        })
-      }
-      if (query.sort.roleId) {
-        data.sort((a, b) => {
-          if (query.sort?.roleId === 'ASC') return a.roleId < b.roleId ? -1 : 1
-          if (query.sort?.roleId === 'DESC') return a.roleId > b.roleId ? -1 : 1
-          return a.roleId > b.roleId ? -1 : 1
-        })
-      }
+      data = PositionDBQuery.executeSort(data, query.sort)
     }
     return data
   }
 
-  static async getMap() {
-    await PositionService.fetchAll()
-    const commissionMap = arrayToKeyValue(PositionService.positionAll, 'id')
-    return commissionMap
+  static async getMap(options?: { refetch: boolean }) {
+    await PositionService.fetchAll({ refetch: !!options?.refetch })
+    return PositionService.positionMap.value
   }
 
-  static async pagination(query: PositionPaginationQuery, options?: { refresh: boolean }) {
+  static async getAll(options?: { refetch: boolean }) {
+    await PositionService.fetchAll({ refetch: !!options?.refetch })
+    return PositionService.positionAll
+  }
+
+  static async pagination(query: PositionPaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await PositionService.fetchAll({ refresh: !!options?.refresh })
+    await PositionService.fetchAll({ refetch: !!options?.refetch })
     let data = PositionService.executeQuery(PositionService.positionAll, query)
     data = data.slice((page - 1) * limit, page * limit)
     return {
@@ -99,8 +75,8 @@ export class PositionService {
     }
   }
 
-  static async list(query: PositionListQuery, options?: { refresh: boolean }) {
-    await PositionService.fetchAll({ refresh: !!options?.refresh })
+  static async list(query: PositionListQuery, options?: { refetch: boolean }) {
+    await PositionService.fetchAll({ refetch: !!options?.refetch })
 
     const data = PositionService.executeQuery(PositionService.positionAll, query)
     return Position.fromList(data)

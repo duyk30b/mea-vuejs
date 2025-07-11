@@ -62,7 +62,7 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
                 >
                   <IconFileSearch />
                 </a>
@@ -228,7 +228,7 @@ const colspan = computed(() => {
                 <a
                   v-if="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.detail"
                   class="ml-1"
-                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+                  @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
                 >
                   <IconFileSearch />
                 </a>

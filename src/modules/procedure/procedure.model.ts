@@ -10,6 +10,7 @@ export enum ProcedureType {
 
 export class Procedure {
   id: number
+  procedureCode: string
   name: string // Tên dịch vụ
   procedureType: ProcedureType
   quantityDefault: number
@@ -28,9 +29,22 @@ export class Procedure {
   discountList?: Discount[]
   discountListExtra?: Discount[]
 
+  get discountApply() {
+    const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
+    const discountFilter = discountList.filter((i) => Discount.canApplyNow(i))
+    discountFilter.sort((a, b) => {
+      if (a.priority > b.priority) return -1
+      if (a.priority < b.priority) return 1
+      if (a.priority == b.priority) return a.discountInteractId == 0 ? 1 : -1
+      return -1
+    })
+    return discountFilter[0]
+  }
+
   static init() {
     const ins = new Procedure()
     ins.id = 0
+    ins.procedureCode = ''
     ins.procedureType = ProcedureType.Basic
     ins.quantityDefault = 1
     ins.procedureGroupId = 0
@@ -91,6 +105,7 @@ export class Procedure {
 
   static equal(a: Procedure, b: Procedure) {
     if (a.id != b.id) return false
+    if (a.procedureCode != b.procedureCode) return false
     if (a.name != b.name) return false
     if (a.procedureType != b.procedureType) return false
     if (a.quantityDefault != b.quantityDefault) return false

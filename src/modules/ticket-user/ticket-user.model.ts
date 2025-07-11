@@ -1,4 +1,4 @@
-import { CommissionCalculatorType, PositionType } from '../position'
+import { CommissionCalculatorType, PositionInteractType } from '../position'
 import type { Role } from '../role'
 import { Ticket } from '../ticket/ticket.model'
 import { User } from '../user'
@@ -9,7 +9,7 @@ export class TicketUser {
   roleId: number
   userId: number
 
-  positionType: PositionType
+  positionType: PositionInteractType
   positionInteractId: number // procedureId hoặc productId hoặc radiologyId
 
   ticketItemId: number // ticketProcedureId hoặc ticketProductId hoặc ticketRadiologyId
@@ -36,7 +36,7 @@ export class TicketUser {
     ins.userId = 0
     ins.roleId = 0
 
-    ins.positionType = PositionType.Ticket
+    ins.positionType = PositionInteractType.Ticket
     ins.positionInteractId = 0
     ins.ticketItemId = 0
 

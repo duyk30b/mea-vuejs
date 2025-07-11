@@ -47,7 +47,6 @@ watch(
 )
 
 const searchingProcedure = async (text: string) => {
-  console.log("🚀 ~ InputSearchProcedure.vue:50 ~ searchingProcedure ~ text:", text)
   if (!text) {
     procedureOptions.value = []
     return
@@ -85,7 +84,7 @@ const setProcedureFromParent = async (procedureData: Procedure) => {
 
   <div class="flex gap-1 flex-wrap">
     <span>Tên dịch vụ</span>
-    <a v-if="procedure.id" @click="modalProcedureDetail?.openModal(procedure)">
+    <a v-if="procedure.id" @click="modalProcedureDetail?.openModal(procedure.id)">
       <IconFileSearch />
     </a>
   </div>

@@ -113,7 +113,7 @@ export const masterDataRouter: RouteRecordRaw = {
     },
     {
       path: 'discount',
-      name: 'PaymentMethod',
+      name: 'Discount',
       meta: { title: 'Khuyến mại' },
       redirect: () => ({ name: 'DiscountList' }),
       children: [

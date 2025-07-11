@@ -101,7 +101,7 @@ const openModalProductDetail = (product?: Product) => {
 }
 
 const openModalProcedureDetail = (procedure?: Procedure) => {
-  if (procedure) modalProcedureDetail.value?.openModal(procedure)
+  if (procedure) modalProcedureDetail.value?.openModal(procedure.id)
 }
 
 const changeTicketProductPosition = (index: number, count: number) => {

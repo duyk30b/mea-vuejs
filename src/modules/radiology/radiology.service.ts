@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { customFilter, ESArray } from '../../utils'
-import { PositionService } from '../position'
+import { Position, PositionInteractType, PositionService } from '../position'
 import { PrintHtml, PrintHtmlService } from '../print-html'
 import { RadiologyApi } from './radiology.api'
 import type {
@@ -10,6 +10,11 @@ import type {
   RadiologyPaginationQuery,
 } from './radiology.dto'
 import { Radiology } from './radiology.model'
+import { DiscountInteractType, DiscountService, type Discount } from '../discount'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { RadiologyGroup, RadiologyGroupService } from '../radiology-group'
+
+const RadiologyDBQuery = new IndexedDBQuery<Radiology>()
 
 export class RadiologyService {
   static loadedAll: boolean = false
@@ -19,9 +24,11 @@ export class RadiologyService {
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        RadiologyService.radiologyAll = await RadiologyApi.list({})
+        const radiologyAll = await RadiologyApi.list({})
+        RadiologyService.radiologyAll = radiologyAll
+        RadiologyService.radiologyMap.value = ESArray.arrayToKeyValue(radiologyAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: radiology.service.ts:19 ~ RadiologyService ~ start ~ error:', error)
+        console.log('🚀 ~ radiology.service.ts:27 ~ RadiologyService ~ start ~ error:', error)
       }
     }
     let fetchPromise: Promise<void> | null = null
@@ -39,17 +46,7 @@ export class RadiologyService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.radiologyGroupId != null) {
-          if (filter.radiologyGroupId !== i.radiologyGroupId) {
-            return false
-          }
-        }
-        if (filter.name) {
-          if (filter.name.LIKE && !customFilter(i.name || '', filter.name.LIKE, 2)) {
-            return false
-          }
-        }
-        return true
+        return RadiologyDBQuery.executeFilter(i, filter as any)
       })
     }
     if (query.relation) {
@@ -61,22 +58,60 @@ export class RadiologyService {
       }
     }
     if (query.sort) {
-      if (query.sort.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
-      if (query.sort.priority) {
-        data.sort((a, b) => {
-          if (query.sort?.priority === 'ASC') return a.priority < b.priority ? -1 : 1
-          if (query.sort?.priority === 'DESC') return a.priority > b.priority ? -1 : 1
-          return a.priority > b.priority ? -1 : 1
-        })
-      }
+      data = RadiologyDBQuery.executeSort(data, query.sort)
     }
     return data
+  }
+
+  static async executeRelation(
+    radiologyList: Radiology[],
+    relation: RadiologyGetQuery['relation'],
+  ) {
+    try {
+      const radiologyIdList = radiologyList.map((i) => i.id)
+
+      const [printHtmlMap, radiologyGroupMap, discountAll, positionAll] = await Promise.all([
+        relation?.printHtml ? PrintHtmlService.getMap() : <Record<string, PrintHtml>>{},
+        relation?.radiologyGroup
+          ? RadiologyGroupService.getMap()
+          : <Record<string, RadiologyGroup>>{},
+        relation?.discountList ? DiscountService.getAll() : <Discount[]>[],
+        relation?.positionList ? PositionService.getAll() : <Position[]>[],
+      ])
+
+      radiologyList.forEach((radiology) => {
+        if (relation?.printHtml) {
+          radiology.printHtml = printHtmlMap[radiology.printHtmlId]
+        }
+        if (relation?.radiologyGroup) {
+          radiology.radiologyGroup = radiologyGroupMap[radiology.radiologyGroupId]
+        }
+        if (relation?.discountList) {
+          radiology.discountList = discountAll.filter((i) => {
+            return (
+              i.discountInteractType === DiscountInteractType.Radiology &&
+              i.discountInteractId === radiology.id
+            )
+          })
+          radiology.discountListExtra = discountAll.filter((i) => {
+            return (
+              i.discountInteractType === DiscountInteractType.Radiology &&
+              i.discountInteractId === 0
+            )
+          })
+        }
+        if (relation?.positionList) {
+          radiology.positionList = positionAll.filter((i) => {
+            return (
+              i.positionType === PositionInteractType.Radiology &&
+              i.positionInteractId === radiology.id
+            )
+          })
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ radiology.service.ts:113 ~ RadiologyService ~ error:', error)
+    }
   }
 
   static async getMap(options?: { refetch: boolean }) {
@@ -91,6 +126,10 @@ export class RadiologyService {
 
     let data = await RadiologyService.executeQuery(RadiologyService.radiologyAll, query)
     data = data.slice((page - 1) * limit, page * limit)
+
+    if (query.relation) {
+      await RadiologyService.executeRelation(data, query.relation)
+    }
     return {
       data: Radiology.fromList(data),
       meta: { total: RadiologyService.radiologyAll.length },
@@ -113,6 +152,7 @@ export class RadiologyService {
       radiology = await RadiologyApi.detail(id, query)
       const findIndex = RadiologyService.radiologyAll.findIndex((i) => i.id === id)
       if (findIndex !== -1) RadiologyService.radiologyAll[findIndex] = radiology
+      RadiologyService.radiologyMap.value[radiology.id] = radiology
     } else {
       await RadiologyService.fetchAll({ refetch: !!options?.refetch })
       radiology = RadiologyService.radiologyAll.find((i) => i.id === id)
@@ -121,26 +161,29 @@ export class RadiologyService {
     return radiology ? Radiology.from(radiology) : Radiology.blank()
   }
 
-  static async createOne(radiology: Radiology) {
-    const result = await RadiologyApi.createOne(radiology)
-    RadiologyService.loadedAll = false
-    PositionService.loadedAll = false
+  static async createOne(body: {
+    radiology: Radiology
+    positionList?: Position[]
+    discountList?: Discount[]
+  }) {
+    const result = await RadiologyApi.createOne(body)
     return result
   }
 
-  static async updateOne(id: number, radiology: Radiology) {
-    const result = await RadiologyApi.updateOne(id, radiology)
-    RadiologyService.loadedAll = false
-    PositionService.loadedAll = false
+  static async updateOne(
+    id: number,
+    body: {
+      radiology: Radiology
+      positionList?: Position[]
+      discountList?: Discount[]
+    },
+  ) {
+    const result = await RadiologyApi.updateOne(id, body)
     return result
   }
 
   static async destroyOne(id: number) {
     const result = await RadiologyApi.destroyOne(id)
-    if (result.success) {
-      RadiologyService.loadedAll = false
-      PositionService.loadedAll = false
-    }
     return result
   }
 

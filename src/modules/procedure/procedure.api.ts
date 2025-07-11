@@ -56,19 +56,21 @@ export class ProcedureApi {
   }) {
     const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.post('/procedure/create', {
-      name: procedure.name,
-      procedureGroupId: procedure.procedureGroupId,
+      procedure: {
+        procedureCode: procedure.procedureCode,
+        name: procedure.name,
+        procedureGroupId: procedure.procedureGroupId,
 
-      procedureType: procedure.procedureType,
-      quantityDefault: procedure.quantityDefault,
-      gapHours: procedure.gapHours,
-      price: procedure.price, // Giá mặc định
+        procedureType: procedure.procedureType,
+        quantityDefault: procedure.quantityDefault,
+        gapHours: procedure.gapHours,
+        price: procedure.price, // Giá mặc định
 
-      consumablesHint: procedure.consumablesHint,
-      isActive: procedure.isActive,
-
-      positionList: (positionList || [])
-        .filter((i) => !!i.roleId)
+        consumablesHint: procedure.consumablesHint,
+        isActive: procedure.isActive,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -80,6 +82,7 @@ export class ProcedureApi {
       discountList: discountList?.map((i) => {
         return {
           priority: i.priority,
+          isActive: i.isActive,
           // discountInteractType: i.discountInteractType,
           // discountInteractId: i.discountInteractId,
           discountMoney: i.discountMoney,
@@ -105,19 +108,21 @@ export class ProcedureApi {
   ) {
     const { procedure, discountList, positionList } = body
     const response = await AxiosInstance.patch(`/procedure/update/${id}`, {
-      name: procedure.name,
-      procedureGroupId: procedure.procedureGroupId,
+      procedure: {
+        procedureCode: procedure.procedureCode,
+        name: procedure.name,
+        procedureGroupId: procedure.procedureGroupId,
 
-      procedureType: procedure.procedureType,
-      quantityDefault: procedure.quantityDefault,
-      gapHours: procedure.gapHours,
-      price: procedure.price, // Giá mặc định
+        procedureType: procedure.procedureType,
+        quantityDefault: procedure.quantityDefault,
+        gapHours: procedure.gapHours,
+        price: procedure.price, // Giá mặc định
 
-      consumablesHint: procedure.consumablesHint,
-      isActive: procedure.isActive,
-
-      positionList: (positionList || [])
-        .filter((i) => !!i.roleId)
+        consumablesHint: procedure.consumablesHint,
+        isActive: procedure.isActive,
+      },
+      positionList: positionList
+        ?.filter((i) => !!i.roleId)
         .map((i) => {
           return {
             roleId: i.roleId,
@@ -128,6 +133,7 @@ export class ProcedureApi {
       discountList: discountList?.map((i) => {
         return {
           priority: i.priority,
+          isActive: i.isActive,
           // discountInteractType: i.discountInteractType,
           // discountInteractId: i.discountInteractId,
           discountMoney: i.discountMoney,

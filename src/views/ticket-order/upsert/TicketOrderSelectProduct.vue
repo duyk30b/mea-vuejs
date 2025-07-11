@@ -106,32 +106,50 @@ const handleModalProductUpsertSuccess = (instance?: Product) => {
 const selectProduct = async (productProp?: Product) => {
   if (!productProp) return clear()
 
-  const tp = TicketProduct.blank()
-  tp.productId = productProp.id
-  tp.product = Product.from(productProp)
-  tp.pickupStrategy = PickupStrategy.AutoWithFIFO
+  const tpItem = TicketProduct.blank()
+  tpItem.productId = productProp.id
+  tpItem.product = Product.from(productProp)
+  tpItem.pickupStrategy = PickupStrategy.AutoWithFIFO
 
-  tp.deliveryStatus = DeliveryStatus.Pending
-  tp.unitRate = productProp.unitDefaultRate
-  tp.quantity = 0
+  tpItem.deliveryStatus = DeliveryStatus.Pending
+  tpItem.unitRate = productProp.unitDefaultRate
+  tpItem.quantity = 0
 
-  tp.expectedPrice = productProp.retailPrice
-  tp.discountType = DiscountType.Percent
-  tp.discountPercent = 0
-  tp.discountMoney = 0
-  tp.actualPrice = productProp.retailPrice
-  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
-    tp.hintUsage = productProp?.hintUsage || ''
+  tpItem.expectedPrice = productProp.retailPrice
+  tpItem.discountType = DiscountType.Percent
+  tpItem.discountPercent = 0
+  tpItem.discountMoney = 0
+  tpItem.actualPrice = productProp.retailPrice
+
+  await ProductService.executeRelation([productProp], { discountList: true })
+  const discountApply = productProp?.discountApply
+  if (discountApply) {
+    let { discountType, discountPercent, discountMoney } = discountApply
+    const expectedPrice = tpItem.expectedPrice || 0
+    if (discountType === DiscountType.Percent) {
+      discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+    }
+    if (discountType === DiscountType.VND) {
+      discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+    }
+    tpItem.discountType = discountType
+    tpItem.discountPercent = discountPercent
+    tpItem.discountMoney = discountMoney
+    tpItem.actualPrice = expectedPrice - discountMoney
   }
 
-  tp.warehouseIds = JSON.stringify(
+  if (settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.hintUsage) {
+    tpItem.hintUsage = productProp?.hintUsage || ''
+  }
+
+  tpItem.warehouseIds = JSON.stringify(
     settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.warehouseIdList,
   )
-  tp.costAmount = tp.quantity * (tp.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
+  tpItem.costAmount = tpItem.quantity * (tpItem.product.quantity || 0) // xuất hàng mới tính được costAmount, đây chỉ là tính lãi tạm thời
 
   product.value = Product.from(productProp)
   productOutSellType.value = 'retailPrice'
-  ticketProduct.value = tp
+  ticketProduct.value = tpItem
 
   if (!settingStore.SCREEN_INVOICE_UPSERT.invoiceItemInput.buttonSubmit) {
     addTicketProduct()

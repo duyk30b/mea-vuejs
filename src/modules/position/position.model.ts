@@ -1,10 +1,11 @@
+import { BaseModel } from '../_base/base.model'
 import { Laboratory } from '../laboratory'
 import { Procedure } from '../procedure'
 import { Product } from '../product'
 import { Radiology } from '../radiology'
 import { Role } from '../role/role.model'
 
-export enum PositionType {
+export enum PositionInteractType {
   Ticket = 1,
   Product = 2, // chỉ tương tác với sản phẩm
   Procedure = 3, // chỉ tương tác với thủ thuật
@@ -14,14 +15,14 @@ export enum PositionType {
   PrescriptionList = 7, // tương tác với tất cả sản phẩm trong cả toa thuốc
 }
 
-export const PositionTypeText = {
-  [PositionType.Ticket]: 'Phòng khám',
-  [PositionType.Procedure]: 'Dịch vụ',
-  [PositionType.Product]: 'Sản phẩm',
-  [PositionType.Radiology]: 'Phiếu CĐHA',
-  [PositionType.Laboratory]: 'Xét nghiệm',
-  [PositionType.ConsumableList]: 'Phiếu Vật tư',
-  [PositionType.PrescriptionList]: 'Đơn thuốc',
+export const PositionInteractTypeText = {
+  [PositionInteractType.Ticket]: 'Phòng khám',
+  [PositionInteractType.Procedure]: 'Dịch vụ',
+  [PositionInteractType.Product]: 'Sản phẩm',
+  [PositionInteractType.Radiology]: 'Phiếu CĐHA',
+  [PositionInteractType.Laboratory]: 'Xét nghiệm',
+  [PositionInteractType.ConsumableList]: 'Phiếu Vật tư',
+  [PositionInteractType.PrescriptionList]: 'Đơn thuốc',
 }
 
 export enum CommissionCalculatorType {
@@ -36,10 +37,10 @@ export const CommissionCalculatorTypeText = {
   [CommissionCalculatorType.PercentActual]: '% Thực tế',
 }
 
-export class Position {
+export class Position extends BaseModel {
   id: number
   roleId: number
-  positionType: PositionType
+  positionType: PositionInteractType
   positionInteractId: number
   commissionCalculatorType: CommissionCalculatorType
   commissionValue: number
@@ -52,9 +53,10 @@ export class Position {
 
   static init(): Position {
     const ins = new Position()
+    ins._localId = Math.random()
     ins.id = 0
     ins.roleId = 0
-    ins.positionType = PositionType.Ticket
+    ins.positionType = PositionInteractType.Ticket
     ins.positionInteractId = 0
     ins.commissionCalculatorType = CommissionCalculatorType.VND
     ins.commissionValue = 0
@@ -73,6 +75,7 @@ export class Position {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = source.id || source._localId || Math.random()
     return target
   }
 

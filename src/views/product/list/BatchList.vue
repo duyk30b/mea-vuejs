@@ -403,7 +403,7 @@ const handleModalUploadProductSuccess = async () => {
                   {{ batch.product?.brandName }}
                 </div>
                 <div v-if="settingStore.SCREEN_PRODUCT_LIST.detail">
-                  <a @click="modalProductDetail?.openModal(batch.product)">
+                  <a @click="modalProductDetail?.openModal(batch.product!)">
                     <IconFileSearch />
                   </a>
                 </div>
@@ -559,7 +559,7 @@ const handleModalUploadProductSuccess = async () => {
                 <a
                   v-if="settingStore.SCREEN_PRODUCT_LIST.detail"
                   class="ml-1"
-                  @click="modalProductDetail?.openModal(batch.product)"
+                  @click="modalProductDetail?.openModal(batch.product!)"
                 >
                   <IconFileSearch />
                 </a>

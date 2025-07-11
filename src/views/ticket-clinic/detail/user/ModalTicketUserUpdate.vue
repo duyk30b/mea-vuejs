@@ -9,7 +9,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { CommissionCalculatorType, PositionType } from '@/modules/position'
+import { CommissionCalculatorType, PositionInteractType } from '@/modules/position'
 import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Product, ProductService } from '@/modules/product'
 import { Radiology, RadiologyService } from '@/modules/radiology'
@@ -67,7 +67,7 @@ const openModal = async (ticketUserProp: TicketUser) => {
   ticketUserOrigin.value = TicketUser.from(ticketUserProp)
   ticketUser.value = TicketUser.from(ticketUserProp)
 
-  if (ticketUserProp.positionType === PositionType.Product) {
+  if (ticketUserProp.positionType === PositionInteractType.Product) {
     const productLocal = await ProductService.getOne(ticketUser.value.positionInteractId)
     if (productLocal) {
       product.value = productLocal
@@ -192,32 +192,32 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <template v-if="ticketUser.positionType === PositionType.Ticket">
+          <template v-if="ticketUser.positionType === PositionInteractType.Ticket">
             <div>Phiếu</div>
             <div>
               <InputText :value="'Phiếu khám'" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionType.Product">
+          <template v-if="ticketUser.positionType === PositionInteractType.Product">
             <div>Sản phẩm</div>
             <div>
               <InputText :value="product?.brandName" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionType.Procedure">
+          <template v-if="ticketUser.positionType === PositionInteractType.Procedure">
             <div>Dịch vụ</div>
             <div>
               <InputText :value="procedureMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
           </template>
-          <template v-if="ticketUser.positionType === PositionType.Laboratory">
+          <template v-if="ticketUser.positionType === PositionInteractType.Laboratory">
             <div>Xét nghiệm</div>
             <div>
               <InputText :value="laboratoryMap[ticketUser.positionInteractId]?.name" disabled />
             </div>
             {{ laboratoryMap[ticketUser.positionInteractId]?.name }}
           </template>
-          <template v-if="ticketUser.positionType === PositionType.Radiology">
+          <template v-if="ticketUser.positionType === PositionInteractType.Radiology">
             <div>Phiếu CĐHA</div>
             <div>
               <InputText :value="radiologyMap[ticketUser.positionInteractId]?.name" disabled />

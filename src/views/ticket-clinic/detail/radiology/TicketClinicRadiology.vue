@@ -67,8 +67,8 @@ onMounted(async () => {
   }
 })
 
-const selectRadiology = async (instance?: Radiology) => {
-  if (instance) {
+const selectRadiology = async (radiologyData?: Radiology) => {
+  if (radiologyData) {
     const priorityList = (ticketClinicRef.value.ticketRadiologyList || []).map((i) => i.priority)
     priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
     const priorityMax = Math.max(...priorityList)
@@ -77,17 +77,34 @@ const selectRadiology = async (instance?: Radiology) => {
     temp.ticketId = ticketClinicRef.value.id
     temp.priority = priorityMax + 1
     temp.customerId = ticketClinicRef.value.customerId
-    temp.radiologyId = instance.id
+    temp.radiologyId = radiologyData.id
 
-    temp.radiology = instance
+    temp.radiology = radiologyData
 
     temp.registeredAt = Date.now()
-    temp.costPrice = instance.costPrice
-    temp.expectedPrice = instance.price
+    temp.costPrice = radiologyData.costPrice
+    temp.expectedPrice = radiologyData.price
     temp.discountMoney = 0
     temp.discountPercent = 0
     temp.discountType = DiscountType.VND
-    temp.actualPrice = instance.price
+    temp.actualPrice = radiologyData.price
+
+    await RadiologyService.executeRelation([radiologyData], { discountList: true })
+    const discountApply = radiologyData?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
 
     ticketRadiologyList.value.push(temp)
 
@@ -348,7 +365,12 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 </a>
               </div>
             </td>
-            <td class="text-right">{{ formatMoney(tpItem.expectedPrice) }}</td>
+            <td class="text-right whitespace-nowrap">
+              <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+                <del>{{ formatMoney(tpItem.expectedPrice) }}</del>
+              </div>
+              <div>{{ formatMoney(tpItem.actualPrice) }}</div>
+            </td>
             <td class="text-center">
               <a v-if="!tpItem.id">
                 <IconSpin width="20" height="20" />
@@ -361,7 +383,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 class="text-orange-500"
                 @click="modalTicketRadiologyResult?.openModal(tpItem.id)"
               >
-                <IconEditSquare width="22" height="22" />
+                <IconEditSquare width="20" height="20" />
               </a>
               <a v-else @click="modalTicketRadiologyResult?.openModal(tpItem.id, { noEdit: true })">
                 <IconEye width="22" height="22" />
@@ -387,9 +409,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
             <td class="text-right">
               <b>
                 {{
-                  formatMoney(
-                    ticketRadiologyList.reduce((acc, item) => acc + item.expectedPrice, 0),
-                  )
+                  formatMoney(ticketRadiologyList.reduce((acc, item) => acc + item.actualPrice, 0))
                 }}
               </b>
             </td>

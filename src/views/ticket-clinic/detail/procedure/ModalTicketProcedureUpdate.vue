@@ -7,7 +7,7 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionType } from '../../../../modules/position'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicProcedureApi, ticketClinicRef } from '../../../../modules/ticket-clinic'
@@ -40,12 +40,12 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[PositionType.Procedure]?.[ticketProcedure.value.id] ||
+    ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.Procedure]?.[ticketProcedure.value.id] ||
     []
 
   const positionList = await PositionService.list({
     filter: {
-      positionType: PositionType.Procedure,
+      positionType: PositionInteractType.Procedure,
       positionInteractId: ticketProcedure.value.procedureId,
     },
   })

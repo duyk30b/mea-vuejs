@@ -9,7 +9,10 @@ import type {
   ProcedurePaginationQuery,
 } from './procedure.dto'
 import { Procedure } from './procedure.model'
-import { Discount, DiscountService } from '../discount'
+import { Discount, DiscountInteractType, DiscountService } from '../discount'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+
+const ProcedureDBQuery = new IndexedDBQuery<Procedure>()
 
 export class ProcedureService {
   static loadedAll: boolean = false
@@ -42,54 +45,48 @@ export class ProcedureService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.procedureGroupId != null) {
-          if (filter.procedureGroupId !== i.procedureGroupId) {
-            return false
-          }
-        }
-        if (filter.isActive != null) {
-          if (filter.isActive !== i.isActive) {
-            return false
-          }
-        }
-        if (filter.name) {
-          if (filter.name.LIKE) {
-            return DString.customFilter(i.name || '', filter.name.LIKE, 2)
-          }
-        }
-        return true
+        return ProcedureDBQuery.executeFilter(i, filter as any)
       })
     }
     if (query.sort) {
-      const sort = query.sort
-      if (sort?.id) {
-        data.sort((a, b) => {
-          if (sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
-      if (sort?.name) {
-        data.sort((a, b) => {
-          if (sort?.name === 'ASC') return a.name < b.name ? -1 : 1
-          if (sort?.name === 'DESC') return a.name > b.name ? -1 : 1
-          return a.name > b.name ? -1 : 1
-        })
-      }
-      if (sort?.price) {
-        data.sort((a, b) => {
-          if (sort?.price === 'ASC') return a.price < b.price ? -1 : 1
-          if (sort?.price === 'DESC') return a.price > b.price ? -1 : 1
-          return a.price > b.price ? -1 : 1
-        })
-      }
+      data = ProcedureDBQuery.executeSort(data, query.sort)
     }
     return data
+  }
+
+  static async executeRelation(
+    procedureList: Procedure[],
+    relation: ProcedureGetQuery['relation'],
+  ) {
+    try {
+      const procedureIdList = procedureList.map((i) => i.id)
+
+      await Promise.all([DiscountService.getMap()])
+
+      const discountAll = DiscountService.discountAll
+
+      procedureList.forEach((procedure) => {
+        if (relation?.discountList) {
+          procedure.discountList = discountAll.filter((i) => {
+            if (!(i.discountInteractType === DiscountInteractType.Procedure)) return false
+            if (![0, procedure.id].includes(i.discountInteractId)) return false
+            return true
+          })
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ procedure.service.ts:78 ~ ProcedureService ~ error:', error)
+    }
   }
 
   static async getMap(options?: { refetch: boolean }) {
     await ProcedureService.fetchAll({ refetch: !!options?.refetch })
     return ProcedureService.procedureMap.value
+  }
+
+  static async getAll(options?: { refetch: boolean }) {
+    await ProcedureService.fetchAll({ refetch: !!options?.refetch })
+    return ProcedureService.procedureAll
   }
 
   static async pagination(query: ProcedurePaginationQuery, options?: { refetch: boolean }) {
@@ -99,6 +96,11 @@ export class ProcedureService {
 
     let data = ProcedureService.executeQuery(ProcedureService.procedureAll, query)
     data = data.slice((page - 1) * limit, page * limit)
+
+    if (query.relation) {
+      await ProcedureService.executeRelation(data, query.relation)
+    }
+
     return {
       data: Procedure.fromList(data),
       meta: { total: ProcedureService.procedureAll.length },
@@ -122,6 +124,7 @@ export class ProcedureService {
       procedure = await ProcedureApi.detail(id, query)
       const findIndex = ProcedureService.procedureAll.findIndex((i) => i.id === id)
       if (findIndex !== -1) ProcedureService.procedureAll[findIndex] = procedure
+      ProcedureService.procedureMap.value[procedure.id] = procedure
     } else {
       await ProcedureService.fetchAll({ refetch: !!options?.refetch })
       procedure = ProcedureService.procedureAll.find((i) => i.id === id)

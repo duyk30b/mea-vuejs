@@ -24,8 +24,8 @@ export class LaboratoryGroupService {
       }
     }
     let fetchPromise: Promise<void> | null = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetchPromise || !LaboratoryGroupService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !LaboratoryGroupService.loadedAll || options.refetch) {
         LaboratoryGroupService.loadedAll = true
         fetchPromise = start()
       }
@@ -33,17 +33,14 @@ export class LaboratoryGroupService {
     }
   })()
 
-  static async getMap() {
-    await LaboratoryGroupService.fetchAll()
+  static async getMap(options?: { refetch: boolean }) {
+    await LaboratoryGroupService.fetchAll({ refetch: !!options?.refetch })
     return LaboratoryGroupService.laboratoryGroupMap.value
   }
 
-  static async reloadMap() {
-    await LaboratoryGroupService.fetchAll()
-    LaboratoryGroupService.laboratoryGroupMap.value = ESArray.arrayToKeyValue(
-      LaboratoryGroupService.laboratoryGroupAll,
-      'id',
-    )
+  static async getAll(options?: { refetch: boolean }) {
+    await LaboratoryGroupService.fetchAll({ refetch: !!options?.refetch })
+    return LaboratoryGroupService.laboratoryGroupAll
   }
 
   static async pagination(options: LaboratoryGroupPaginationQuery) {
@@ -67,20 +64,20 @@ export class LaboratoryGroupService {
     }
   }
 
-  static async list(options: LaboratoryGroupListQuery) {
-    const filter = options.filter || {}
-    await LaboratoryGroupService.fetchAll()
+  static async list(query: LaboratoryGroupListQuery, options?: { refetch: boolean }) {
+    const filter = query.filter || {}
+    await LaboratoryGroupService.fetchAll({ refetch: options?.refetch })
     let data = LaboratoryGroupService.laboratoryGroupAll
-    if (options.filter) {
+    if (query.filter) {
       data = data.filter((i) => {
         return true
       })
     }
-    if (options.sort) {
-      if (options.sort?.id) {
+    if (query.sort) {
+      if (query.sort?.id) {
         data.sort((a, b) => {
-          if (options.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (options.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
+          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
+          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
           return a.id > b.id ? -1 : 1
         })
       }

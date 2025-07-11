@@ -164,6 +164,10 @@ const focus = () => {
   }
 }
 
+const onFocusin = () => {
+  showOptions.value = true
+}
+
 defineExpose({ focus })
 </script>
 
@@ -182,6 +186,7 @@ defineExpose({ focus })
         :required="required"
         @input="handleInput"
         @keydown="handleKeydown"
+        @focusin="onFocusin"
       />
     </div>
     <div class="icon-append">

@@ -100,7 +100,7 @@ onBeforeMount(async () => {
       startFetchData(),
       CustomerService.refreshDB(),
       LaboratoryService.getMap(),
-      LaboratoryGroupService.reloadMap(),
+      LaboratoryGroupService.getMap(),
     ])
   } catch (error) {
     console.log('🚀 ~ onBeforeMount ~ error:', error)

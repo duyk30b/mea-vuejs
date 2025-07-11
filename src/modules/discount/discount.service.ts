@@ -1,4 +1,5 @@
-import { arrayToKeyValue } from '../../utils'
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { arrayToKeyValue, ESArray } from '../../utils'
 import { Laboratory, LaboratoryService } from '../laboratory'
 import { ProcedureService, type Procedure } from '../procedure'
 import { Product, ProductService } from '../product'
@@ -11,18 +12,24 @@ import type {
   DiscountPaginationQuery,
 } from './discount.dto'
 import { Discount, DiscountInteractType } from './discount.model'
+import { ref } from 'vue'
+
+const DiscountDBQuery = new IndexedDBQuery<Discount>()
 
 export class DiscountService {
   static loadedAll: boolean = false
   static discountAll: Discount[] = []
+  static discountMap = ref<Record<string, Discount>>({})
 
   // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        DiscountService.discountAll = await DiscountApi.list({})
+        const discountAll = await DiscountApi.list({})
+        DiscountService.discountAll = discountAll
+        DiscountService.discountMap.value = ESArray.arrayToKeyValue(discountAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: commission.service.ts:20 ~ fetchAll ~ error:', error)
+        console.log('🚀 ~ discount.service.ts:32 ~ DiscountService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
@@ -40,35 +47,65 @@ export class DiscountService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.discountInteractType != null) {
-          if (filter.discountInteractType !== i.discountInteractType) {
-            return false
-          }
-        }
-        if (filter.discountInteractId != null) {
-          if (filter.discountInteractId !== i.discountInteractId) {
-            return false
-          }
-        }
-        return true
+        return DiscountDBQuery.executeFilter(i, filter)
       })
     }
     if (query.sort) {
-      if (query.sort.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
+      data = DiscountDBQuery.executeSort(data, query.sort)
     }
     return data
   }
 
-  static async getMap() {
-    await DiscountService.fetchAll()
-    const commissionMap = arrayToKeyValue(DiscountService.discountAll, 'id')
-    return commissionMap
+  static async executeRelation(discountList: Discount[], relation: DiscountGetQuery['relation']) {
+    try {
+      const productIdList = discountList
+        .filter((i) => i.discountInteractType === DiscountInteractType.Product)
+        .map((i) => i.discountInteractId)
+
+      const [productMap, procedureMap, laboratoryMap, radiologyMap] = await Promise.all([
+        relation?.product
+          ? ProductService.map({ filter: { id: { IN: productIdList } } })
+          : <Record<string, Product>>{},
+        relation?.procedure ? ProcedureService.getMap() : <Record<string, Procedure>>{},
+        relation?.laboratory ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
+        relation?.radiology ? RadiologyService.getMap() : <Record<string, Radiology>>{},
+      ])
+
+      discountList.forEach((i) => {
+        if (relation?.product) {
+          if (i.discountInteractType === DiscountInteractType.Product) {
+            i.product = productMap[i.discountInteractId]
+          }
+        }
+        if (relation?.procedure) {
+          if (i.discountInteractType === DiscountInteractType.Procedure) {
+            i.procedure = procedureMap[i.discountInteractId]
+          }
+        }
+        if (relation?.laboratory) {
+          if (i.discountInteractType === DiscountInteractType.Laboratory) {
+            i.laboratory = laboratoryMap[i.discountInteractId]
+          }
+        }
+        if (relation?.radiology) {
+          if (i.discountInteractType === DiscountInteractType.Radiology) {
+            i.radiology = radiologyMap[i.discountInteractId]
+          }
+        }
+      })
+    } catch (error) {
+      console.log('🚀 ~ discount.service.ts:97 ~ DiscountService ~ executeRelation ~ error:', error)
+    }
+  }
+
+  static async getMap(options?: { refetch: boolean }) {
+    await DiscountService.fetchAll({ refetch: !!options?.refetch })
+    return DiscountService.discountMap.value
+  }
+
+  static async getAll(options?: { refetch: boolean }) {
+    await DiscountService.fetchAll({ refetch: !!options?.refetch })
+    return DiscountService.discountAll
   }
 
   static async pagination(query: DiscountPaginationQuery, options?: { refetch: boolean }) {
@@ -77,6 +114,9 @@ export class DiscountService {
     await DiscountService.fetchAll({ refetch: !!options?.refetch })
     let data = DiscountService.executeQuery(DiscountService.discountAll, query)
     data = data.slice((page - 1) * limit, page * limit)
+    if (query.relation) {
+      await DiscountService.executeRelation(data, query.relation)
+    }
     return {
       data: Discount.fromList(data),
       meta: { total: DiscountService.discountAll.length },
@@ -117,47 +157,5 @@ export class DiscountService {
     const result = await DiscountApi.destroyOne(id)
     DiscountService.loadedAll = false
     return result
-  }
-
-  static async refreshRelation(discountList: Discount[], relation: DiscountGetQuery['relation']) {
-    try {
-      const productIdList = discountList
-        .filter((i) => i.discountInteractType === DiscountInteractType.Product)
-        .map((i) => i.discountInteractId)
-
-      const [productMap, procedureMap, laboratoryMap, radiologyMap] = await Promise.all([
-        relation?.product
-          ? ProductService.map({ filter: { id: { IN: productIdList } } })
-          : <Record<string, Product>>{},
-        relation?.procedure ? ProcedureService.getMap() : <Record<string, Procedure>>{},
-        relation?.laboratory ? LaboratoryService.getMap() : <Record<string, Laboratory>>{},
-        relation?.radiology ? RadiologyService.getMap() : <Record<string, Radiology>>{},
-      ])
-
-      discountList.forEach((i) => {
-        if (relation?.product) {
-          if (i.discountInteractType === DiscountInteractType.Product) {
-            i.product = productMap[i.discountInteractId]
-          }
-        }
-        if (relation?.procedure) {
-          if (i.discountInteractType === DiscountInteractType.Procedure) {
-            i.procedure = procedureMap[i.discountInteractId]
-          }
-        }
-        if (relation?.laboratory) {
-          if (i.discountInteractType === DiscountInteractType.Laboratory) {
-            i.laboratory = laboratoryMap[i.discountInteractId]
-          }
-        }
-        if (relation?.radiology) {
-          if (i.discountInteractType === DiscountInteractType.Radiology) {
-            i.radiology = radiologyMap[i.discountInteractId]
-          }
-        }
-      })
-    } catch (error) {
-      console.log('🚀 ~ discount.service.ts:160 ~ refreshRelation ~ error:', error)
-    }
   }
 }

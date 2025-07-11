@@ -1,4 +1,5 @@
-import { arrayToKeyValue } from '../../utils'
+import { ref } from 'vue'
+import { ESArray } from '../../utils'
 import { RadiologyGroupApi } from './radiology-group.api'
 import type { RadiologyGroupListQuery, RadiologyGroupPaginationQuery } from './radiology-group.dto'
 import { RadiologyGroup } from './radiology-group.model'
@@ -6,23 +7,47 @@ import { RadiologyGroup } from './radiology-group.model'
 export class RadiologyGroupService {
   static loadedAll: boolean = false
   static radiologyGroupAll: RadiologyGroup[] = []
+  static radiologyGroupMap = ref<Record<string, RadiologyGroup>>({})
 
-  private static async getAll() {
-    if (RadiologyGroupService.loadedAll) return
-    const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
-    RadiologyGroupService.radiologyGroupAll = data
-    RadiologyGroupService.loadedAll = true
+  // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng loadedAll
+  private static fetchAll = (() => {
+    const start = async () => {
+      try {
+        const { data } = await RadiologyGroupApi.list({ sort: { id: 'ASC' } })
+        const radiologyGroupAll = data
+        RadiologyGroupService.radiologyGroupAll = radiologyGroupAll
+        RadiologyGroupService.radiologyGroupMap.value = ESArray.arrayToKeyValue(
+          radiologyGroupAll,
+          'id',
+        )
+      } catch (error: any) {
+        console.log('🚀 ~ radiology-group.service.ts:20 ~ fetchAll ~ error:', error)
+      }
+    }
+    let fetchPromise: Promise<void> | null = null
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetchPromise || !RadiologyGroupService.loadedAll || options.refetch) {
+        RadiologyGroupService.loadedAll = true
+        fetchPromise = start()
+      }
+      await fetchPromise
+    }
+  })()
+
+  static async getAll(options?: { refetch: boolean }) {
+    await RadiologyGroupService.fetchAll({ refetch: !!options?.refetch })
+    return RadiologyGroupService.radiologyGroupAll
   }
 
-  static async getMap() {
-    await RadiologyGroupService.getAll()
-    return arrayToKeyValue(RadiologyGroupService.radiologyGroupAll, 'id')
+  static async getMap(options?: { refetch: boolean }) {
+    await RadiologyGroupService.fetchAll({ refetch: !!options?.refetch })
+    return RadiologyGroupService.radiologyGroupMap.value
   }
 
-  static async pagination(options: RadiologyGroupPaginationQuery) {
-    const page = options.page || 1
-    const limit = options.limit || 10
-    await RadiologyGroupService.getAll()
+  static async pagination(query: RadiologyGroupPaginationQuery, options?: { refetch: boolean }) {
+    const page = query.page || 1
+    const limit = query.limit || 10
+    await RadiologyGroupService.fetchAll({ refetch: options?.refetch })
     let data = RadiologyGroupService.radiologyGroupAll
     data = data.slice((page - 1) * limit, page * limit)
     return {
@@ -31,11 +56,11 @@ export class RadiologyGroupService {
     }
   }
 
-  static async list(options: RadiologyGroupListQuery) {
-    await RadiologyGroupService.getAll()
+  static async list(query: RadiologyGroupListQuery, options?: { refetch: boolean }) {
+    await RadiologyGroupService.fetchAll({ refetch: options?.refetch })
     let data = RadiologyGroupService.radiologyGroupAll
-    if (options.filter) {
-      const filter = options.filter || {}
+    if (query.filter) {
+      const filter = query.filter || {}
       data = data.filter((i) => {
         return true
       })

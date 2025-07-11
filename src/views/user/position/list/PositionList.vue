@@ -14,8 +14,8 @@ import {
   CommissionCalculatorTypeText,
   Position,
   PositionService,
-  PositionType,
-  PositionTypeText,
+  PositionInteractType,
+  PositionInteractTypeText,
 } from '../../../../modules/position'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
 import { ProductService } from '../../../../modules/product'
@@ -41,7 +41,7 @@ const laboratoryMap = ref<Record<string, Laboratory>>({})
 
 const dataLoading = ref(false)
 
-const positionType = ref<PositionType | null>(null)
+const positionType = ref<PositionInteractType | null>(null)
 const roleId = ref<number>()
 
 const sortColumn = ref<'id' | 'positionType' | 'roleId' | ''>('')
@@ -51,9 +51,9 @@ const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
-const positionTypeOptions = ESTypescript.keysEnum(PositionType).map((key) => ({
-  value: PositionType[key],
-  label: PositionTypeText[PositionType[key]],
+const positionTypeOptions = ESTypescript.keysEnum(PositionInteractType).map((key) => ({
+  value: PositionInteractType[key],
+  label: PositionInteractTypeText[PositionInteractType[key]],
 }))
 
 const startFetchData = async () => {
@@ -75,7 +75,7 @@ const startFetchData = async () => {
             }
           : { id: 'DESC' },
       },
-      { refresh: false },
+      { refetch: false },
     )
     positionList.value = response.data
     total.value = response.meta.total
@@ -83,21 +83,21 @@ const startFetchData = async () => {
     dataLoading.value = false
 
     const productIdList = positionList.value
-      .filter((i) => i.positionType === PositionType.Product)
+      .filter((i) => i.positionType === PositionInteractType.Product)
       .map((i) => i.positionInteractId)
     const productList = await ProductService.list({ filter: { id: { IN: productIdList } } })
 
     positionList.value.forEach((i) => {
-      if (i.positionType === PositionType.Product) {
+      if (i.positionType === PositionInteractType.Product) {
         i.product = productList.find((p) => p.id === i.positionInteractId)
       }
-      if (i.positionType === PositionType.Procedure) {
+      if (i.positionType === PositionInteractType.Procedure) {
         i.procedure = procedureMap.value[i.positionInteractId]
       }
-      if (i.positionType === PositionType.Radiology) {
+      if (i.positionType === PositionInteractType.Radiology) {
         i.radiology = radiologyMap.value[i.positionInteractId]
       }
-      if (i.positionType === PositionType.Laboratory) {
+      if (i.positionType === PositionInteractType.Laboratory) {
         i.laboratory = laboratoryMap.value[i.positionInteractId]
       }
     })
@@ -244,33 +244,33 @@ const handleSelectItemFilterRole = (item: any) => {
             <td class="text-center">CO{{ position.id }}</td>
             <td>{{ roleMap[position.roleId]?.name }}</td>
             <td>
-              {{ PositionTypeText[position.positionType] }}
+              {{ PositionInteractTypeText[position.positionType] }}
             </td>
             <td>
-              <template v-if="position.positionType === PositionType.Product">
+              <template v-if="position.positionType === PositionInteractType.Product">
                 {{ position.product?.brandName }}
               </template>
-              <template v-if="position.positionType === PositionType.Procedure">
+              <template v-if="position.positionType === PositionInteractType.Procedure">
                 {{ position.procedure?.name }}
               </template>
-              <template v-if="position.positionType === PositionType.Radiology">
+              <template v-if="position.positionType === PositionInteractType.Radiology">
                 {{ position.radiology?.name }}
               </template>
-              <template v-if="position.positionType === PositionType.Laboratory">
+              <template v-if="position.positionType === PositionInteractType.Laboratory">
                 {{ position.laboratory?.name }}
               </template>
             </td>
             <td class="text-center">
-              <template v-if="position.positionType === PositionType.Product">
+              <template v-if="position.positionType === PositionInteractType.Product">
                 {{ formatMoney(position.product?.retailPrice) }}
               </template>
-              <template v-if="position.positionType === PositionType.Procedure">
+              <template v-if="position.positionType === PositionInteractType.Procedure">
                 {{ formatMoney(position.procedure?.price) }}
               </template>
-              <template v-if="position.positionType === PositionType.Radiology">
+              <template v-if="position.positionType === PositionInteractType.Radiology">
                 {{ formatMoney(position.radiology?.price) }}
               </template>
-              <template v-if="position.positionType === PositionType.Laboratory">
+              <template v-if="position.positionType === PositionInteractType.Laboratory">
                 {{ formatMoney(position.laboratory?.price) }}
               </template>
             </td>

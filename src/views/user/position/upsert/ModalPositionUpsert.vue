@@ -10,8 +10,8 @@ import {
   CommissionCalculatorType,
   CommissionCalculatorTypeText,
   PositionService,
-  PositionType,
-  PositionTypeText,
+  PositionInteractType,
+  PositionInteractTypeText,
 } from '../../../../modules/position'
 import { RoleService, type Role } from '../../../../modules/role'
 import { keysEnum } from '../../../../utils'
@@ -21,9 +21,9 @@ const emit = defineEmits<{
 }>()
 
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
-const positionTypeOptions = keysEnum(PositionType).map((key) => ({
-  value: PositionType[key],
-  label: PositionTypeText[PositionType[key]],
+const positionTypeOptions = keysEnum(PositionInteractType).map((key) => ({
+  value: PositionInteractType[key],
+  label: PositionInteractTypeText[PositionInteractType[key]],
 }))
 const commissionCalculatorTypeOptions = keysEnum(CommissionCalculatorType).map((key) => ({
   value: CommissionCalculatorType[key],
@@ -140,14 +140,14 @@ defineExpose({ openModal })
             <InputSelect
               v-model:value="position.positionType"
               :options="[
-                { value: PositionType.Ticket, label: PositionTypeText[PositionType.Ticket] },
+                { value: PositionInteractType.Ticket, label: PositionInteractTypeText[PositionInteractType.Ticket] },
                 {
-                  value: PositionType.ConsumableList,
-                  label: PositionTypeText[PositionType.ConsumableList],
+                  value: PositionInteractType.ConsumableList,
+                  label: PositionInteractTypeText[PositionInteractType.ConsumableList],
                 },
                 {
-                  value: PositionType.PrescriptionList,
-                  label: PositionTypeText[PositionType.PrescriptionList],
+                  value: PositionInteractType.PrescriptionList,
+                  label: PositionInteractTypeText[PositionInteractType.PrescriptionList],
                 },
               ]"
               :disabled="!!position.id"
@@ -156,28 +156,28 @@ defineExpose({ openModal })
         </div>
 
         <div style="flex-basis: 45%; flex-grow: 1; min-width: 200px">
-          <template v-if="position.positionType === PositionType.Product">
+          <template v-if="position.positionType === PositionInteractType.Product">
             <div class="">Sản phẩm</div>
             <div>
               <InputText :value="position.product?.brandName || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="position.positionType === PositionType.Procedure">
+          <template v-else-if="position.positionType === PositionInteractType.Procedure">
             <div class="">Dịch vụ</div>
             <div>
               <InputText :value="position.procedure?.name || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="position.positionType === PositionType.Radiology">
+          <template v-else-if="position.positionType === PositionInteractType.Radiology">
             <div class="">Phiếu CĐHA</div>
             <div>
               <InputText :value="position.radiology?.name || ''" disabled />
             </div>
           </template>
 
-          <template v-else-if="position.positionType === PositionType.Laboratory">
+          <template v-else-if="position.positionType === PositionInteractType.Laboratory">
             <div class="">Xét nghiệm</div>
             <div>
               <InputText :value="position.laboratory?.name || ''" disabled />

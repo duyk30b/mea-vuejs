@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { CONFIG } from '@/config'
+import { FileProcedureApi } from '@/modules/file-excel/file-procedure.api'
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VuePagination from '../../../../common/VuePagination.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconFileSearch, IconSetting } from '../../../../common/icon-antd'
+import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
@@ -17,11 +20,15 @@ import { arrayToKeyValue } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
+import ModalProcedureGroupManager from './ModalProcedureGroupManager.vue'
 import ModalProcedureListSettingScreen from './ModalProcedureListSettingScreen.vue'
+import ModalUploadProcedure from './ModalUploadProcedure.vue'
 
 const modalProcedureUpsert = ref<InstanceType<typeof ModalProcedureUpsert>>()
 const modalProcedureListSettingScreen = ref<InstanceType<typeof ModalProcedureListSettingScreen>>()
+const modalProcedureGroupManager = ref<InstanceType<typeof ModalProcedureGroupManager>>()
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
+const modalUploadProcedure = ref<InstanceType<typeof ModalUploadProcedure>>()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -40,30 +47,34 @@ const searchText = ref('')
 const procedureGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'id' | 'name' | 'price' | ''>('')
+const sortColumn = ref<'procedureCode' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const procedureGroupMap = computed(() => arrayToKeyValue(procedureGroupAll.value, 'id'))
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
     dataLoading.value = true
-    const response = await ProcedureService.pagination({
-      page: page.value,
-      limit: limit.value,
-      filter: {
-        isActive: isActive.value !== '' ? isActive.value : undefined,
-        name: searchText.value ? { LIKE: searchText.value } : undefined,
-        procedureGroupId: procedureGroupId.value ? procedureGroupId.value : undefined,
+    const response = await ProcedureService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        relation: { discountList: true },
+        filter: {
+          isActive: isActive.value !== '' ? isActive.value : undefined,
+          name: searchText.value ? { LIKE: searchText.value } : undefined,
+          procedureGroupId: procedureGroupId.value ? procedureGroupId.value : undefined,
+        },
+        sort: sortValue.value
+          ? {
+              name: sortColumn.value === 'name' ? sortValue.value : undefined,
+              id: sortColumn.value === 'procedureCode' ? sortValue.value : undefined,
+              price: sortColumn.value === 'price' ? sortValue.value : undefined,
+            }
+          : { procedureCode: 'ASC' },
       },
-      sort: sortValue.value
-        ? {
-            name: sortColumn.value === 'name' ? sortValue.value : undefined,
-            id: sortColumn.value === 'id' ? sortValue.value : undefined,
-            price: sortColumn.value === 'price' ? sortValue.value : undefined,
-          }
-        : { id: 'DESC' },
-    })
+      { refetch: !!options?.refetch },
+    )
     procedureList.value = response.data
     total.value = response.meta.total
 
@@ -87,7 +98,7 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'id' | 'name' | 'price') => {
+const changeSort = async (column: 'procedureCode' | 'name' | 'price') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -113,12 +124,35 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 const handleModalProcedureUpsertSuccess = async () => {
   await startFetchData()
 }
+
+const handleModalProcedureGroupManagerSuccess = async () => {
+  procedureGroupAll.value = await ProcedureGroupService.list({})
+}
+
+const downloadExcelProcedureList = async () => {
+  ModalStore.confirm({
+    title: 'Xác nhận tải file báo cáo',
+    content: 'Thời gian tải file có thể tốn vài phút nếu dữ liệu lớn, bạn vẫn mốn tải ?',
+    onOk: async () => {
+      await FileProcedureApi.downloadExcel()
+    },
+  })
+}
+
+const handleModalUploadProcedureSuccess = async () => {
+  await startFetchData({ refetch: true })
+}
 </script>
 
 <template>
   <ModalProcedureUpsert ref="modalProcedureUpsert" @success="handleModalProcedureUpsertSuccess" />
   <ModalProcedureListSettingScreen ref="modalProcedureListSettingScreen" />
   <ModalProcedureDetail ref="modalProcedureDetail" />
+  <ModalProcedureGroupManager
+    ref="modalProcedureGroupManager"
+    @success="handleModalProcedureGroupManagerSuccess"
+  />
+  <ModalUploadProcedure ref="modalUploadProcedure" @success="handleModalUploadProcedureSuccess" />
   <div class="mx-4 mt-4 gap-4 flex items-center">
     <div class="hidden md:block">
       <Breadcrumb />
@@ -134,6 +168,32 @@ const handleModalProcedureUpsertSuccess = async () => {
       </VueButton>
     </div>
     <div class="ml-auto flex items-center gap-8">
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_UPLOAD_PROCEDURE]"
+          :icon="IconUpload"
+          @click="modalUploadProcedure?.openModal()"
+        >
+          Upload
+        </VueButton>
+      </div>
+      <div v-if="!isMobile">
+        <VueButton
+          v-if="userPermission[PermissionId.FILE_EXCEL_DOWNLOAD_PROCEDURE]"
+          :icon="IconDownload"
+          @click="downloadExcelProcedureList"
+        >
+          Download
+        </VueButton>
+      </div>
+      <VueButton
+        v-if="userPermission[PermissionId.PROCEDURE_GROUP_CRUD]"
+        icon="send"
+        color="green"
+        @click="modalProcedureGroupManager?.openModal()"
+      >
+        Nhóm dịch vụ
+      </VueButton>
       <VueDropdown>
         <template #trigger>
           <span style="font-size: 1.2rem; cursor: pointer">
@@ -241,7 +301,7 @@ const handleModalProcedureUpsertSuccess = async () => {
               <a
                 class="text-base"
                 style="line-height: 0"
-                @click="modalProcedureDetail?.openModal(procedure)"
+                @click="modalProcedureDetail?.openModal(procedure.id)"
               >
                 <IconFileSearch />
               </a>
@@ -260,16 +320,17 @@ const handleModalProcedureUpsertSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th class="cursor-pointer" @click="changeSort('procedureCode')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Mã DV</span>
-                <IconSort v-if="sortColumn !== 'id'" style="opacity: 0.4" />
+                <IconSort v-if="sortColumn !== 'procedureCode'" style="opacity: 0.4" />
                 <IconSortUp
-                  v-if="sortColumn === 'id' && sortValue === 'ASC'"
+                  v-if="sortColumn === 'procedureCode' && sortValue === 'ASC'"
                   style="opacity: 0.4"
                 />
                 <IconSortDown
-                  v-if="sortColumn === 'id' && sortValue === 'DESC'"
+                  v-if="sortColumn === 'procedureCode' && sortValue === 'DESC'"
                   style="opacity: 0.4"
                 />
               </div>
@@ -303,6 +364,7 @@ const handleModalProcedureUpsertSuccess = async () => {
                 />
               </div>
             </th>
+            <th>Khuyến mại</th>
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status">Trạng thái</th>
             <th
               v-if="
@@ -319,13 +381,14 @@ const handleModalProcedureUpsertSuccess = async () => {
             <td colspan="20" class="text-center">No data</td>
           </tr>
           <tr v-for="(procedure, i) in procedureList" :key="i">
-            <td class="text-center">DV{{ procedure.id }}</td>
+            <td class="text-center" v-if="CONFIG.MODE === 'development'">{{ procedure.id }}</td>
+            <td class="text-center">{{ procedure.procedureCode }}</td>
             <td>
               {{ procedure.name }}
               <a
                 v-if="settingStore.SCREEN_PROCEDURE_LIST.table.detail"
                 class="ml-1"
-                @click="modalProcedureDetail?.openModal(procedure)"
+                @click="modalProcedureDetail?.openModal(procedure.id)"
               >
                 <IconFileSearch />
               </a>
@@ -335,6 +398,11 @@ const handleModalProcedureUpsertSuccess = async () => {
             </td>
             <td class="text-right">
               {{ formatMoney(procedure.price) }}
+            </td>
+            <td class="text-center">
+              <VueTag v-if="procedure.discountApply" color="blue">
+                {{ procedure.discountApply?.valueText }}
+              </VueTag>
             </td>
             <td v-if="settingStore.SCREEN_PROCEDURE_LIST.table.status" class="text-center">
               <VueTag v-if="procedure.isActive" icon="check" color="green">Active</VueTag>

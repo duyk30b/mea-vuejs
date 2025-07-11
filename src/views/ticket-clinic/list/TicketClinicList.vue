@@ -12,7 +12,7 @@ import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService, type Customer } from '@/modules/customer'
 import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PositionType } from '@/modules/position'
+import { PositionInteractType } from '@/modules/position'
 import { Role, RoleService } from '@/modules/role'
 import { TicketApi, TicketStatus, TicketType } from '@/modules/ticket'
 import { ticketClinicPagination } from '@/modules/ticket-clinic'
@@ -496,7 +496,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               {{
                 userMap[
                   ticket.ticketUserList?.find((i) => {
-                    return i.positionType === PositionType.Ticket && i.roleId === roleId
+                    return i.positionType === PositionInteractType.Ticket && i.roleId === roleId
                   })?.userId || 0
                 ]?.fullName
               }}

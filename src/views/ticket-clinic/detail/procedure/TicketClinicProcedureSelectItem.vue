@@ -6,7 +6,7 @@ import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputFilter, InputNumber, InputOptions } from '../../../../common/vue-form'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionType } from '../../../../modules/position'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DiscountType } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import { Procedure, ProcedureService } from '../../../../modules/procedure'
@@ -81,13 +81,13 @@ const refreshTicketUserList = async () => {
   ticketUserList.value = []
   const ticketUserListOrigin: TicketUser[] = []
   // const ticketUserListOrigin =
-  //   ticketClinicRef.value.ticketUserGroup?.[PositionType.Procedure]?.[
+  //   ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.Procedure]?.[
   //     ticketProcedure.value.id
   //   ] || []
 
   const positionList = await PositionService.list({
     filter: {
-      positionType: PositionType.Procedure,
+      positionType: PositionInteractType.Procedure,
       positionInteractId: ticketProcedure.value.procedureId,
     },
   })
@@ -115,8 +115,8 @@ const refreshTicketUserList = async () => {
   })
 }
 
-const selectProcedure = async (instance?: Procedure) => {
-  if (instance) {
+const selectProcedure = async (procedureProp?: Procedure) => {
+  if (procedureProp) {
     const priorityList = (ticketClinicRef.value.ticketProcedureList || []).map((i) => i.priority)
     priorityList.push(0) // tránh tạo mảng rỗng thì Math.max không tính được
     const priorityMax = Math.max(...priorityList)
@@ -126,17 +126,34 @@ const selectProcedure = async (instance?: Procedure) => {
     temp.ticketId = ticketClinicRef.value.id
     temp.priority = priorityMax + 1
     temp.customerId = ticketClinicRef.value.customerId
-    temp.procedureId = instance.id
-    temp.procedure = instance
+    temp.procedureId = procedureProp.id
+    temp.procedure = procedureProp
 
-    temp.expectedPrice = instance.price
+    temp.expectedPrice = procedureProp.price
     temp.discountMoney = 0
     temp.discountPercent = 0
     temp.discountType = DiscountType.VND
-    temp.expectedPrice = instance.price
-    temp.actualPrice = instance.price
+    temp.expectedPrice = procedureProp.price
+    temp.actualPrice = procedureProp.price
     temp.quantity = 1
     temp.startedAt = Date.now()
+
+    await ProcedureService.executeRelation([procedureProp], { discountList: true })
+    const discountApply = procedureProp?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
 
     ticketProcedure.value = temp
 
@@ -162,7 +179,7 @@ const addTicketProcedure = async () => {
         <span>Chỉ định dịch vụ</span>
         <a
           v-if="ticketProcedure.procedureId && ticketProcedure.procedure"
-          @click="modalProcedureDetail?.openModal(ticketProcedure.procedure)"
+          @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
         >
           <IconFileSearch />
         </a>

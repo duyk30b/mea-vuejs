@@ -19,7 +19,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { AddressInstance } from '@/core/address.instance'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appointment'
-import { PositionType } from '@/modules/position'
+import { PositionInteractType } from '@/modules/position'
 import { CustomerService } from '@/modules/customer'
 import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
 import { Customer } from '@/modules/customer/customer.model'
@@ -333,7 +333,7 @@ const refreshTicketUserList = () => {
   ticketUserList.value = screenRoleIdList.map((roleId) => {
     const findExist = (ticket.value.ticketUserList || []).find((i) => {
       if (i.roleId !== roleId) return false
-      if (i.positionType !== PositionType.Ticket) return false
+      if (i.positionType !== PositionInteractType.Ticket) return false
       if (i.positionInteractId !== 0) return false
       return true
     })

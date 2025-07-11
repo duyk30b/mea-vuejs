@@ -16,6 +16,7 @@ import { TicketProduct, TicketProductType } from '@/modules/ticket-product'
 import { ESTimer } from '@/utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import ModalProductUpsert from '../../../product/upsert/ModalProductUpsert.vue'
+import type { Discount } from '@/modules/discount'
 
 const emit = defineEmits<{ (e: 'success', value: TicketProduct[]): void }>()
 
@@ -120,6 +121,23 @@ const selectProduct = async (productSelect?: Product) => {
     temp.discountMoney = 0
     temp.actualPrice = productSelect.retailPrice
     temp.warehouseIds = JSON.stringify(settingStore.TICKET_CLINIC_DETAIL.consumable.warehouseIdList) // set tạm trước thôi, tí nữa tính toán lại
+
+    await ProductService.executeRelation([productSelect], { discountList: true })
+    const discountApply = productSelect?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
 
     ticketProductConsumable.value = temp
 

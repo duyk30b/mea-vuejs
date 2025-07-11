@@ -5,7 +5,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { Laboratory, LaboratoryService } from '@/modules/laboratory'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { CommissionCalculatorType, PositionType } from '@/modules/position'
+import { CommissionCalculatorType, PositionInteractType } from '@/modules/position'
 import { Procedure, ProcedureService } from '@/modules/procedure'
 import { Product, ProductService } from '@/modules/product'
 import { Radiology, RadiologyService } from '@/modules/radiology'
@@ -40,7 +40,7 @@ watch(
   () => ticketClinicRef.value.ticketUserList,
   async (newValue, oldValue) => {
     const productIdList = (newValue || [])
-      .filter((i) => i.positionType === PositionType.Product)
+      .filter((i) => i.positionType === PositionInteractType.Product)
       .map((i) => i.positionInteractId)
     let productMapLocal: Record<string, Product> = {}
     if (productIdList.length) {
@@ -91,31 +91,31 @@ watch(
             </td>
             <td>
               <div style="min-width: 100px">
-                <template v-if="ticketUser.positionType === PositionType.Ticket">
+                <template v-if="ticketUser.positionType === PositionInteractType.Ticket">
                   Phiếu khám
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.PrescriptionList">
+                <template v-if="ticketUser.positionType === PositionInteractType.PrescriptionList">
                   Đơn thuốc
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.ConsumableList">
+                <template v-if="ticketUser.positionType === PositionInteractType.ConsumableList">
                   Vật tư
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.Product">
+                <template v-if="ticketUser.positionType === PositionInteractType.Product">
                   {{ productMap[ticketUser.positionInteractId]?.brandName }}
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.Procedure">
+                <template v-if="ticketUser.positionType === PositionInteractType.Procedure">
                   {{ procedureMap[ticketUser.positionInteractId]?.name }}
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.Laboratory">
+                <template v-if="ticketUser.positionType === PositionInteractType.Laboratory">
                   {{ laboratoryMap[ticketUser.positionInteractId]?.name }}
                 </template>
-                <template v-if="ticketUser.positionType === PositionType.Radiology">
+                <template v-if="ticketUser.positionType === PositionInteractType.Radiology">
                   {{ radiologyMap[ticketUser.positionInteractId]?.name }}
                 </template>
               </div>
             </td>
             <td class="text-right">
-              <template v-if="ticketUser.positionType !== PositionType.Ticket">
+              <template v-if="ticketUser.positionType !== PositionInteractType.Ticket">
                 <div
                   v-if="ticketUser.ticketItemExpectedPrice !== ticketUser.ticketItemActualPrice"
                   class="text-xs italic text-red-500"
@@ -130,7 +130,7 @@ watch(
               </template>
             </td>
             <td class="text-center">
-              <template v-if="ticketUser.positionType !== PositionType.Ticket">
+              <template v-if="ticketUser.positionType !== PositionInteractType.Ticket">
                 {{ ticketUser.quantity }}
               </template>
             </td>

@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionEnum } from '../_base/base-condition'
-import type { PositionType } from './position.model'
+import type { PositionInteractType } from './position.model'
 
 export class PositionGetQuery {
   page?: number
@@ -15,7 +15,7 @@ export class PositionGetQuery {
 
   filter?: {
     roleId?: number
-    positionType?: PositionType | ConditionEnum<PositionType>
+    positionType?: PositionInteractType | ConditionEnum<PositionInteractType>
     positionInteractId?: number
   }
 

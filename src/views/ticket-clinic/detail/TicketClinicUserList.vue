@@ -4,7 +4,7 @@ import VueButton from '../../../common/VueButton.vue'
 import { InputFilter } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
-import { Position, PositionService, PositionType } from '../../../modules/position'
+import { Position, PositionService, PositionInteractType } from '../../../modules/position'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { RoleService } from '../../../modules/role'
 import { TicketStatus } from '../../../modules/ticket'
@@ -33,8 +33,8 @@ const refreshRoleIdList = () => {
   ticketUserTicketMap.value = {}
   const roleIdList = positionList.value.map((i) => i.roleId)
 
-  // ?.[0]? ==> trường hợp PositionType là Ticket thì ticketItemId luôn luôn = 0
-  ticketClinicRef.value.ticketUserGroup?.[PositionType.Ticket]?.[0]?.forEach((i) => {
+  // ?.[0]? ==> trường hợp PositionInteractType là Ticket thì ticketItemId luôn luôn = 0
+  ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.Ticket]?.[0]?.forEach((i) => {
     ticketUserTicketMap.value[i.roleId] = TicketUser.from(i)
     if (!roleIdList.includes(i.roleId)) {
       roleIdList.push(i.roleId)
@@ -44,7 +44,7 @@ const refreshRoleIdList = () => {
   roleIdList.forEach((roleId) => {
     if (!ticketUserTicketMap.value[roleId]) {
       const ticketUserBlank = TicketUser.blank()
-      ticketUserBlank.positionType = PositionType.Ticket
+      ticketUserBlank.positionType = PositionInteractType.Ticket
       ticketUserBlank.positionInteractId = 0
       ticketUserBlank.ticketItemId = 0
       ticketUserBlank.roleId = roleId
@@ -66,9 +66,9 @@ watch(
 onMounted(async () => {
   try {
     const fetchPromise = await Promise.all([
-      RoleService.reloadMap(),
+      RoleService.getMap(),
       UserService.reloadMap(),
-      PositionService.list({ filter: { positionType: PositionType.Ticket } }),
+      PositionService.list({ filter: { positionType: PositionInteractType.Ticket } }),
       UserRoleService.list(),
     ])
     positionList.value = fetchPromise[2]
@@ -84,7 +84,7 @@ const saveTicketUserList = async () => {
     saveLoading.value = true
     await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      positionType: PositionType.Ticket,
+      positionType: PositionInteractType.Ticket,
       positionInteractId: 0,
       ticketItemId: 0,
       quantity: 1,
@@ -98,13 +98,13 @@ const saveTicketUserList = async () => {
 }
 
 const hasChangeData = computed(() => {
-  const ticketUserOrigin = ticketClinicRef.value.ticketUserGroup?.[PositionType.Ticket]?.[0] || []
+  const ticketUserOrigin = ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.Ticket]?.[0] || []
   const ticketUserTicketList = Object.values(ticketUserTicketMap.value).filter((i) => !!i.userId)
   if (ticketUserTicketList.length !== ticketUserOrigin.length) {
     return true
   }
   for (let i = 0; i < ticketUserOrigin.length || 0; i++) {
-    const cur = ticketClinicRef.value.ticketUserGroup[PositionType.Ticket][0][i]
+    const cur = ticketClinicRef.value.ticketUserGroup[PositionInteractType.Ticket][0][i]
     if (!TicketUser.equal(cur, ticketUserTicketMap.value[cur.roleId])) {
       return true
     }

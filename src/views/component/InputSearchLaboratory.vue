@@ -84,7 +84,7 @@ const setLaboratoryFromParent = async (laboratoryData: Laboratory) => {
 
   <div class="flex gap-1 flex-wrap">
     <span>Tên xét nghiệm</span>
-    <a v-if="laboratory.id" @click="modalLaboratoryDetail?.openModal(laboratory)">
+    <a v-if="laboratory.id" @click="modalLaboratoryDetail?.openModal(laboratory.id)">
       <IconFileSearch />
     </a>
   </div>

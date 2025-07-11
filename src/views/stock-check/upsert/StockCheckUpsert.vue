@@ -266,7 +266,7 @@ const handleFocusFirstSearchProduct = async () => {
             <span>Tên sản phẩm</span>
             <a
               v-if="stockCheckItem.productId"
-              @click="modalProductDetail?.openModal(stockCheckItem.product)"
+              @click="modalProductDetail?.openModal(stockCheckItem.product!)"
             >
               <IconFileSearch />
             </a>

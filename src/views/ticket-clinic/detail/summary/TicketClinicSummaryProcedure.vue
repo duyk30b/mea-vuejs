@@ -58,7 +58,7 @@ const procedureDiscount = computed(() => {
             <span>{{ ticketProcedure.procedure?.name }}</span>
             <a
               style="line-height: 0"
-              @click="modalProcedureDetail?.openModal(ticketProcedure.procedure!)"
+              @click="modalProcedureDetail?.openModal(ticketProcedure.procedureId)"
             >
               <IconFileSearch />
             </a>

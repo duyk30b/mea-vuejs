@@ -39,24 +39,41 @@ const searchingProcedure = async (text: string) => {
     .map((i) => ({ value: i.id, text: i.name, data: i }))
 }
 
-const selectProcedure = (procedure: Procedure) => {
-  createTicketProcedure(procedure)
+const selectProcedure = async (procedure: Procedure) => {
+  await createTicketProcedure(procedure)
 }
 
-const createTicketProcedure = (instance?: Procedure) => {
-  const vp = TicketProcedure.blank()
-  if (instance) {
-    vp.procedureId = instance.id
-    vp.procedure = Procedure.from(instance)
-    vp.quantity = 1
+const createTicketProcedure = async (procedureProp?: Procedure) => {
+  const tpItem = TicketProcedure.blank()
+  if (procedureProp) {
+    tpItem.procedureId = procedureProp.id
+    tpItem.procedure = Procedure.from(procedureProp)
+    tpItem.quantity = 1
 
-    vp.expectedPrice = instance.price
-    vp.discountType = DiscountType.Percent
-    vp.discountMoney = 0
-    vp.discountPercent = 0
-    vp.actualPrice = instance.price
+    tpItem.expectedPrice = procedureProp.price
+    tpItem.discountType = DiscountType.Percent
+    tpItem.discountMoney = 0
+    tpItem.discountPercent = 0
+    tpItem.actualPrice = procedureProp.price
+
+    await ProcedureService.executeRelation([procedureProp], { discountList: true })
+    const discountApply = procedureProp?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = tpItem.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      tpItem.discountType = discountType
+      tpItem.discountPercent = discountPercent
+      tpItem.discountMoney = discountMoney
+      tpItem.actualPrice = expectedPrice - discountMoney
+    }
   }
-  ticketProcedure.value = vp
+  ticketProcedure.value = tpItem
 }
 
 const handleChangeUnitDiscountMoney = (data: number) => {

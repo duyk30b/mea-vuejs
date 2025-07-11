@@ -22,6 +22,7 @@ export class DiscountApi {
   static async createOne(discount: Discount) {
     const response = await AxiosInstance.post('/discount/create', {
       priority: discount.priority,
+      isActive: discount.isActive,
       discountInteractType: discount.discountInteractType,
       discountInteractId: discount.discountInteractId,
       discountMoney: discount.discountMoney,
@@ -38,6 +39,7 @@ export class DiscountApi {
   static async updateOne(id: number, discount: Discount) {
     const response = await AxiosInstance.patch(`/discount/update/${id}`, {
       priority: discount.priority,
+      isActive: discount.isActive,
       // discountInteractType: discount.discountInteractType,
       // discountInteractId: discount.discountInteractId,
       discountMoney: discount.discountMoney,

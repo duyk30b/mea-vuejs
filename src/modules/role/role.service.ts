@@ -1,27 +1,32 @@
+import { IndexedDBQuery } from '@/core/indexed-db/_base/indexed-db.query'
+import { ESArray } from '@/utils'
 import { ref } from 'vue'
-import { arrayToKeyValue } from '../../utils'
 import { UserRoleService } from '../user-role'
 import { RoleApi } from './role.api'
 import type { RoleDetailQuery, RoleGetQuery, RoleListQuery, RolePaginationQuery } from './role.dto'
 import { Role } from './role.model'
+
+const RoleDBQuery = new IndexedDBQuery<Role>()
 
 export class RoleService {
   static loadedAll: boolean = false
   static roleAll: Role[] = []
   static roleMap = ref<Record<string, Role>>({})
 
-  // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng refresh: true
+  // chỉ cho phép gọi 1 lần, nếu muốn gọi lại thì phải dùng refetch: true
   static fetchAll = (() => {
     const start = async () => {
       try {
-        RoleService.roleAll = await RoleApi.list({})
+        const roleAll = await RoleApi.list({})
+        RoleService.roleAll = roleAll
+        RoleService.roleMap.value = ESArray.arrayToKeyValue(roleAll, 'id')
       } catch (error: any) {
-        console.log('🚀 ~ file: role.service.ts:33 ~ :', error)
+        console.log('🚀 ~ role.service.ts:21 ~ RoleService ~ start ~ error:', error)
       }
     }
     let fetching: any = null
-    return async (options: { refresh?: boolean } = {}) => {
-      if (!fetching || !RoleService.loadedAll || options.refresh) {
+    return async (options: { refetch?: boolean } = {}) => {
+      if (!fetching || !RoleService.loadedAll || options.refetch) {
         RoleService.loadedAll = true
         fetching = start()
       }
@@ -29,14 +34,9 @@ export class RoleService {
     }
   })()
 
-  static async reloadMap() {
-    await RoleService.fetchAll()
-    RoleService.roleMap.value = arrayToKeyValue(RoleService.roleAll, 'id')
-  }
-
-  static async getMap() {
-    await RoleService.fetchAll()
-    return arrayToKeyValue(RoleService.roleAll, 'id')
+  static async getMap(options?: { refetch: boolean }) {
+    await RoleService.fetchAll({ refetch: !!options?.refetch })
+    return RoleService.roleMap.value
   }
 
   private static executeQuery(all: Role[], query: RoleGetQuery) {
@@ -44,22 +44,11 @@ export class RoleService {
     if (query.filter) {
       const filter = query.filter
       data = data.filter((i) => {
-        if (filter.isActive != null) {
-          if (filter.isActive !== i.isActive) {
-            return false
-          }
-        }
-        return true
+        return RoleDBQuery.executeFilter(i, filter as any)
       })
     }
     if (query.sort) {
-      if (query.sort?.id) {
-        data.sort((a, b) => {
-          if (query.sort?.id === 'ASC') return a.id < b.id ? -1 : 1
-          if (query.sort?.id === 'DESC') return a.id > b.id ? -1 : 1
-          return a.id > b.id ? -1 : 1
-        })
-      }
+      data = RoleDBQuery.executeSort(data, query.sort)
     }
     return data
   }
@@ -82,15 +71,23 @@ export class RoleService {
     return Role.fromList(data)
   }
 
-  static async detail(roleId: number, options: RoleDetailQuery = {}) {
-    const result = await RoleApi.detail(roleId, options)
-    const findIndex = RoleService.roleAll.findIndex((i) => {
-      return i.id === roleId
-    })
-    if (findIndex !== -1) {
-      RoleService.roleAll[findIndex] = result
+  static async detail(
+    id: number,
+    query: RoleDetailQuery = {},
+    options?: { refetch?: boolean; query?: boolean },
+  ) {
+    let role: Role | undefined
+    if (options?.query) {
+      role = await RoleApi.detail(id, query)
+      const findIndex = RoleService.roleAll.findIndex((i) => i.id === id)
+      if (findIndex !== -1) RoleService.roleAll[findIndex] = role
+      RoleService.roleMap.value[role.id] = role
+    } else {
+      await RoleService.fetchAll({ refetch: !!options?.refetch })
+      role = RoleService.roleAll.find((i) => i.id === id)
     }
-    return result
+
+    return role ? Role.from(role) : Role.blank()
   }
 
   static async createOne(role: Role, userIdList: number[]) {

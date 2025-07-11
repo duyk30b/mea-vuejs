@@ -6,7 +6,7 @@ import {
   Position,
   CommissionCalculatorType,
   PositionService,
-  PositionType,
+  PositionInteractType,
 } from '../../../../modules/position'
 import { Procedure, ProcedureApi } from '../../../../modules/procedure'
 import { Role, RoleService } from '../../../../modules/role'
@@ -31,7 +31,7 @@ const startFetchData = async () => {
         relation: { procedureGroup: true },
       }),
       PositionService.list({
-        filter: { positionType: PositionType.Procedure, positionInteractId: props.procedureId },
+        filter: { positionType: PositionInteractType.Procedure, positionInteractId: props.procedureId },
       }),
       RoleService.getMap(),
     ])

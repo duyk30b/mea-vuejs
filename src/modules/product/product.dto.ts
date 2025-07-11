@@ -24,6 +24,7 @@ export class ProductGetQuery {
     batchList?: boolean
     productGroup?: boolean
     positionList?: boolean
+    discountList?: boolean
   }
 
   filter?: ProductFilterQuery

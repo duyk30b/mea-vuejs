@@ -7,6 +7,8 @@ export class LaboratoryGetQuery {
   relation?: {
     laboratoryGroup?: boolean
     children?: boolean
+    positionList?: boolean
+    discountList?: boolean
   }
 
   filter?: {
@@ -19,7 +21,7 @@ export class LaboratoryGetQuery {
   sort?: {
     id?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
-    priority?: 'ASC' | 'DESC'
+    laboratoryCode?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<LaboratoryGetQuery>) {
@@ -33,6 +35,6 @@ export class LaboratoryGetQuery {
   }
 }
 
-export class LaboratoryPaginationQuery extends LaboratoryGetQuery {}
-export class LaboratoryListQuery extends OmitClass(LaboratoryGetQuery, ['page']) {}
-export class LaboratoryDetailQuery extends PickClass(LaboratoryGetQuery, ['relation']) {}
+export class LaboratoryPaginationQuery extends LaboratoryGetQuery { }
+export class LaboratoryListQuery extends OmitClass(LaboratoryGetQuery, ['page']) { }
+export class LaboratoryDetailQuery extends PickClass(LaboratoryGetQuery, ['relation']) { }

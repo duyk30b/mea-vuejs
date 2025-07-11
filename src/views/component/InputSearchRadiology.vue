@@ -84,7 +84,7 @@ const setRadiologyFromParent = async (radiologyData: Radiology) => {
 
   <div class="flex gap-1 flex-wrap">
     <span>Tên phiếu CĐHA</span>
-    <a v-if="radiology.id" @click="modalRadiologyDetail?.openModal(radiology)">
+    <a v-if="radiology.id" @click="modalRadiologyDetail?.openModal(radiology.id)">
       <IconFileSearch />
     </a>
   </div>

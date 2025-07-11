@@ -1,5 +1,17 @@
 <script setup lang="ts">
-import { IconDelete } from '@/common/icon-antd'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconDelete } from '@/common/icon-antd'
+import {
+  InputCheckbox,
+  InputDate,
+  InputMoney,
+  InputNumber,
+  InputRadio,
+  InputSelect,
+  InputText,
+  VueSwitch,
+} from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
 import { MeService } from '@/modules/_me/me.service'
 import {
   Discount,
@@ -9,24 +21,12 @@ import {
 } from '@/modules/discount'
 import { DiscountType } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
+import { ESTimer } from '@/utils'
 import InputSearchLaboratory from '@/views/component/InputSearchLaboratory.vue'
 import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
 import InputSearchProduct from '@/views/component/InputSearchProduct.vue'
 import InputSearchRadiology from '@/views/component/InputSearchRadiology.vue'
 import { ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import { IconClose } from '../../../../common/icon-antd'
-import {
-  InputCheckbox,
-  InputDate,
-  InputMoney,
-  InputNumber,
-  InputRadio,
-  InputSelect,
-  InputText,
-} from '../../../../common/vue-form'
-import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { ESTimer } from '../../../../utils'
 
 const emit = defineEmits<{
   (e: 'success', value: Discount, mode: 'UPDATE' | 'CREATE'): void
@@ -403,6 +403,20 @@ defineExpose({ openModal })
             </div>
           </div>
         </template>
+
+        <div
+          style="flex-grow: 1; flex-basis: 45%; min-width: 600px"
+          class="flex flex-wrap gap-4 mb-4"
+        >
+          <div style="width: 100px">Trạng thái:</div>
+          <div class="w-[60px] flex-none">
+            <VueSwitch v-model="discount.isActive" type-parser="number" />
+          </div>
+          <div>
+            <span v-if="discount.isActive">Hoạt động</span>
+            <span v-else>Inactive (Ngừng hoạt động)</span>
+          </div>
+        </div>
       </div>
 
       <div class="p-4 mt-10">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose, IconDelete, IconSetting, IconSisternode } from '@/common/icon-antd'
+import { IconClose, IconDoubleRight, IconSetting, IconSisternode } from '@/common/icon-antd'
 import {
   InputCheckbox,
   InputFilter,
@@ -10,7 +10,6 @@ import {
   InputRadio,
   InputSelect,
   InputText,
-  VueSelect,
   VueSwitch,
 } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
@@ -18,6 +17,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store.ts'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service.ts'
 import { useSettingStore } from '@/modules/_me/setting.store.ts'
+import { Discount, DiscountInteractType } from '@/modules/discount'
 import {
   ProductType,
   SplitBatchByCostPrice,
@@ -27,13 +27,15 @@ import {
   type UnitType,
 } from '@/modules/enum.ts'
 import { PermissionId } from '@/modules/permission/permission.enum.ts'
-import { CommissionCalculatorType, Position, PositionType } from '@/modules/position'
+import { Position, PositionInteractType } from '@/modules/position'
 import { Product, ProductService } from '@/modules/product'
 import { ProductGroup, ProductGroupService } from '@/modules/product-group'
 import { Role, RoleService } from '@/modules/role'
 import type { Warehouse } from '@/modules/warehouse'
 import { WarehouseService } from '@/modules/warehouse/warehouse.service.ts'
 import { customFilter, ESTimer } from '@/utils'
+import DiscountTableAction from '@/views/master-data/discount/common/DiscountTableAction.vue'
+import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
 import { computed, onMounted, ref } from 'vue'
 import ModalDataProduct from '../list/ModalDataProduct.vue'
 import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.vue'
@@ -41,6 +43,7 @@ import ModalProductUpsertSettingScreen from './ModalProductUpsertSettingScreen.v
 const TABS_KEY = {
   BASIC: 'BASIC',
   WAREHOUSE_AND_BATCH: 'WAREHOUSE_AND_BATCH',
+  DISCOUNT: 'DISCOUNT',
   ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
 
@@ -71,6 +74,8 @@ const warehouseIdSelect = ref<Record<string, boolean>>({})
 const roleOptions = ref<{ value: number; text: string; data: Role }[]>([])
 const activeTab = ref(TABS_KEY.BASIC)
 const randomId = computed(() => Math.random().toString(36).substring(2))
+
+const hasInitQuantity = ref(false)
 
 const hasChangeData = computed(() => {
   // hơi phức tạp, tạm thời bỏ logic này
@@ -156,23 +161,26 @@ splitBatchByCostPriceOptions.forEach((i) => {
 
 const handleAddPosition = () => {
   const positionBlank = Position.blank()
-  positionBlank.positionType = PositionType.Product
+  positionBlank.positionType = PositionInteractType.Product
   positionBlank.positionInteractId = product.value.id
 
   product.value.positionList!.push(positionBlank)
 }
 
-const openModal = async (productId?: number) => {
+const openModal = async (productId?: number, options?: { hasInitQuantity?: boolean }) => {
   showModal.value = true
+  hasInitQuantity.value = !!options?.hasInitQuantity
+
   if (!productId) {
+    productOrigin.value = Product.blank()
     product.value = Product.blank()
     unit.value = [{ name: '', rate: 1, default: true }]
   } else {
     try {
       const productFetch = await ProductService.detail(
         productId,
-        { relation: { positionList: true } },
-        { refetch: true },
+        { relation: { positionList: true, discountList: true } },
+        { query: true },
       )
       productOrigin.value = Product.from(productFetch)
       product.value = productFetch
@@ -253,6 +261,20 @@ const handleChangeSelectNoWarehouse = (e: Event) => {
   }
 }
 
+const hasChangeDiscountList = computed(() => {
+  return !Discount.equalList(
+    product.value.discountList || [],
+    productOrigin.value.discountList || [],
+  )
+})
+
+const hasChangePositionList = computed(() => {
+  return !Position.equalList(
+    (product.value.positionList || []).filter((i) => !!i.roleId),
+    productOrigin.value.positionList || [],
+  )
+})
+
 const handleSave = async () => {
   saveLoading.value = true
   let warehouseIdList = Object.entries(warehouseIdSelect.value)
@@ -264,11 +286,19 @@ const handleSave = async () => {
 
   try {
     if (!product.value.id) {
-      const data = await ProductService.createOne(product.value)
+      const data = await ProductService.createOne({
+        product: product.value,
+        discountList: hasChangeDiscountList.value ? product.value.discountList : undefined,
+        positionList: hasChangePositionList.value ? product.value.positionList : undefined,
+      })
       emit('success', data, 'CREATE')
       closeModal()
     } else {
-      const response = await ProductService.updateOne(product.value.id, product.value)
+      const response = await ProductService.updateOne(product.value.id, {
+        product: product.value,
+        discountList: hasChangeDiscountList.value ? product.value.discountList : undefined,
+        positionList: hasChangePositionList.value ? product.value.positionList : undefined,
+      })
       if (response.success) {
         emit('success', response.data.product, 'UPDATE')
         closeModal()
@@ -370,6 +400,7 @@ defineExpose({ openModal })
           <template #menu>
             <VueTabMenu :tabKey="TABS_KEY.BASIC">Cơ bản</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.WAREHOUSE_AND_BATCH">Kho và lô</VueTabMenu>
+            <VueTabMenu :tabKey="TABS_KEY.DISCOUNT">Khuyến mại</VueTabMenu>
             <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_POSITION">Vai trò và hoa hồng</VueTabMenu>
           </template>
           <template #panel>
@@ -523,17 +554,21 @@ defineExpose({ openModal })
                   </div>
                 </div>
 
-                <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
-                  <div class="">Số lượng</div>
-                  <div class="">
-                    <InputMoney
-                      :disabled="!!product.id"
-                      v-model:value="product.quantity"
-                      :prepend="product.unitDefaultName"
-                    />
+                <template v-if="hasInitQuantity">
+                  <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+                    <div class="font-bold italic">
+                      <IconDoubleRight />
+                      Khởi tạo số lượng ban đầu
+                    </div>
+                    <div class="">
+                      <InputMoney
+                        :disabled="!!product.id"
+                        v-model:value="product.quantity"
+                        :prepend="product.unitDefaultName"
+                      />
+                    </div>
                   </div>
-                </div>
-
+                </template>
                 <div
                   v-if="userPermission[PermissionId.PRODUCT_READ_COST_PRICE]"
                   style="flex-grow: 1; flex-basis: 40%; min-width: 300px"
@@ -605,6 +640,7 @@ defineExpose({ openModal })
                     />
                   </div>
                 </div>
+
                 <div class="mt-2 grow basis-[600px] flex items-stretch">
                   <div class="w-[60px] flex-none">
                     <VueSwitch v-model="product.isActive" type-parser="number" />
@@ -726,74 +762,25 @@ defineExpose({ openModal })
                 </div>
               </div>
             </VueTabPanel>
+            <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+              <div class="mt-4">
+                <DiscountTableAction
+                  v-model:discountList="product.discountList!"
+                  :discountInteractId="product.id"
+                  :discountInteractType="DiscountInteractType.Product"
+                  :discountListExtra="product.discountListExtra || []"
+                  :editable="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
+                />
+              </div>
+            </VueTabPanel>
             <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
               <div class="mt-4">
-                <div
-                  v-for="(position, index) in product.positionList"
-                  :key="index"
-                  class="mt-4 flex flex-wrap gap-2"
-                >
-                  <div style="flex-grow: 1; flex-basis: 250px">
-                    <div>Vai trò</div>
-                    <div>
-                      <InputFilter
-                        v-model:value="product.positionList![index].roleId"
-                        :options="roleOptions"
-                        :maxHeight="120"
-                      >
-                        <template #option="{ item: { data } }">{{ data.name }}</template>
-                      </InputFilter>
-                    </div>
-                  </div>
-                  <div style="flex-grow: 1; flex-basis: 100px">
-                    <div>Hoa hồng</div>
-                    <div>
-                      <InputNumber
-                        :value="position.commissionValue"
-                        @update:value="
-                          (v: number) => (product.positionList![index].commissionValue = v)
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div style="flex-grow: 1; flex-basis: 150px">
-                    <div>Công thức</div>
-                    <div>
-                      <VueSelect
-                        :value="position.commissionCalculatorType"
-                        :options="[
-                          { value: CommissionCalculatorType.VND, text: 'VNĐ' },
-                          {
-                            value: CommissionCalculatorType.PercentExpected,
-                            text: '% Giá niêm yết',
-                          },
-                          {
-                            value: CommissionCalculatorType.PercentActual,
-                            text: '% Giá sau chiết khấu',
-                          },
-                        ]"
-                        @update:value="
-                          (v: number) => (product.positionList![index].commissionCalculatorType = v)
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div style="width: 30px">
-                    <div>&nbsp;</div>
-                    <div class="pt-2 flex justify-center">
-                      <a
-                        style="color: var(--text-red)"
-                        @click="product.positionList!.splice(index, 1)"
-                      >
-                        <IconDelete width="18" height="18" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-2">
-                  <a @click="handleAddPosition">✚ Thêm vai trò</a>
-                </div>
+                <PositionTableAction
+                  v-model:positionList="product.positionList!"
+                  :positionType="PositionInteractType.Product"
+                  :positionInteractId="product.id"
+                  :editable="userPermission[PermissionId.POSITION]"
+                />
               </div>
             </VueTabPanel>
           </template>

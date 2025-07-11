@@ -26,6 +26,7 @@ import { DiscountType } from '@/modules/enum'
 import { CONFIG } from '@/config'
 import { IconDelete, IconSpin } from '@/common/icon-antd'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { VueTag } from '@/common'
 
 const modalDiscountUpsert = ref<InstanceType<typeof ModalDiscountUpsert>>()
 
@@ -63,6 +64,12 @@ const startFetchData = async (options?: { loading?: boolean }) => {
       {
         page: page.value,
         limit: limit.value,
+        relation: {
+          product: organizationPermission.value[PermissionId.PRODUCT],
+          procedure: organizationPermission.value[PermissionId.PROCEDURE],
+          laboratory: organizationPermission.value[PermissionId.LABORATORY],
+          radiology: organizationPermission.value[PermissionId.RADIOLOGY],
+        },
         filter: {
           discountInteractType: discountInteractType.value ? discountInteractType.value : undefined,
         },
@@ -76,12 +83,6 @@ const startFetchData = async (options?: { loading?: boolean }) => {
     )
     discountList.value = response.data
     total.value = response.meta.total
-    await DiscountService.refreshRelation(discountList.value, {
-      product: true,
-      procedure: true,
-      laboratory: true,
-      radiology: true,
-    })
   } catch (error) {
     console.log('🚀 ~ DiscountList.vue:82 ~ startFetchData ~ error:', error)
   } finally {
@@ -117,7 +118,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.limit) {
     limit.value = options.limit
   }
-  await startFilterData()
+  await startFetchData()
 }
 
 const discountIdAction = ref(0)
@@ -127,11 +128,11 @@ const handleModalDiscountUpsertSuccess = async (
 ) => {
   discountIdAction.value = discountData.id
 
-  await DiscountService.refreshRelation([discountData], {
-    laboratory: true,
-    procedure: true,
-    product: true,
-    radiology: true,
+  await DiscountService.executeRelation([discountData], {
+    product: organizationPermission.value[PermissionId.PRODUCT],
+    procedure: organizationPermission.value[PermissionId.PROCEDURE],
+    laboratory: organizationPermission.value[PermissionId.LABORATORY],
+    radiology: organizationPermission.value[PermissionId.RADIOLOGY],
   })
 
   if (mode === 'CREATE') {
@@ -158,11 +159,11 @@ const handleModalDiscountUpsertSuccess = async (
     }
   }
   discountIdAction.value = 0
-  await DiscountService.refreshRelation(discountList.value, {
-    product: true,
-    procedure: true,
-    laboratory: true,
-    radiology: true,
+  await DiscountService.executeRelation(discountList.value, {
+    product: organizationPermission.value[PermissionId.PRODUCT],
+    procedure: organizationPermission.value[PermissionId.PROCEDURE],
+    laboratory: organizationPermission.value[PermissionId.LABORATORY],
+    radiology: organizationPermission.value[PermissionId.RADIOLOGY],
   })
 }
 
@@ -229,6 +230,7 @@ const clickDelete = (discountId: number) => {
             <th style="width: 30px">Độ ưu tiên</th>
             <th>Khuyến mãi</th>
             <th>Thời gian</th>
+            <th>Trạng thái</th>
             <th></th>
             <th></th>
           </tr>
@@ -283,6 +285,10 @@ const clickDelete = (discountId: number) => {
                   {{ ESTimer.timeToText(timeDistance[1], 'DD/MM/YYYY hh:mm') }}
                 </div>
               </div>
+            </td>
+            <td class="text-center">
+              <VueTag v-if="discount.isActive" icon="check" color="green">Hoạt động</VueTag>
+              <VueTag v-else icon="minus" color="orange">Ngừng hoạt động</VueTag>
             </td>
             <td class="text-center">
               <a

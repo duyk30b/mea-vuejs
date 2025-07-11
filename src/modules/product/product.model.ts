@@ -1,4 +1,5 @@
 import { Batch } from '../batch/batch.model'
+import { Discount } from '../discount'
 import {
   ProductType,
   SplitBatchByCostPrice,
@@ -44,8 +45,15 @@ export class Product {
   productGroup?: ProductGroup
   positionList?: Position[]
 
+  discountList?: Discount[]
+  discountListExtra?: Discount[]
+
   get unitObject(): UnitType[] {
-    return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
+    try {
+      return JSON.parse(this.unit || JSON.stringify([{ name: '', rate: 1, default: true }]))
+    } catch (error) {
+      return []
+    }
   }
 
   set unitObject(data) {
@@ -105,6 +113,18 @@ export class Product {
     this.wholesalePrice = data / this.unitDefaultRate
   }
 
+  get discountApply() {
+    const discountList = [...(this.discountList || []), ...(this.discountListExtra || [])]
+    const discountFilter = discountList.filter((i) => Discount.canApplyNow(i))
+    discountFilter.sort((a, b) => {
+      if (a.priority > b.priority) return -1
+      if (a.priority < b.priority) return 1
+      if (a.priority == b.priority) return a.discountInteractId == 0 ? 1 : -1
+      return -1
+    })
+    return discountFilter[0]
+  }
+
   public getUnitNameByRate(rate: number) {
     return this.unitObject?.find((u) => u.rate === rate)?.name || ''
   }
@@ -124,7 +144,7 @@ export class Product {
     ins.warehouseIdList = [0]
 
     ins.productType = ProductType.Basic
-    
+
     ins.splitBatchByWarehouse = SplitBatchByWarehouse.Inherit
     ins.splitBatchByDistributor = SplitBatchByDistributor.Inherit
     ins.splitBatchByExpiryDate = SplitBatchByExpiryDate.Inherit
@@ -137,6 +157,8 @@ export class Product {
     const ins = Product.init()
     ins.batchList = []
     ins.positionList = []
+    ins.discountList = []
+    ins.discountListExtra = []
 
     return ins
   }
@@ -167,6 +189,12 @@ export class Product {
     }
     if (target.positionList) {
       target.positionList = Position.basicList(target.positionList)
+    }
+    if (target.discountList) {
+      target.discountList = Discount.basicList(target.discountList)
+    }
+    if (target.discountListExtra) {
+      target.discountListExtra = Discount.basicList(target.discountListExtra)
     }
 
     try {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Discount, DiscountInteractType } from '@/modules/discount'
 import { computed, nextTick, onBeforeMount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
@@ -16,9 +17,13 @@ import {
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '../../../../common/vue-tabs'
 import { MeService } from '../../../../modules/_me/me.service'
-import { Position, CommissionCalculatorType, PositionType } from '../../../../modules/position'
 import { Customer } from '../../../../modules/customer'
 import { Image, ImageHost } from '../../../../modules/image/image.model'
+import {
+  CommissionCalculatorType,
+  Position,
+  PositionInteractType,
+} from '../../../../modules/position'
 import {
   PrintHtml,
   PrintHtmlService,
@@ -32,10 +37,14 @@ import { TicketRadiology } from '../../../../modules/ticket-radiology'
 import { ESDom } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalSelectRadiologyExample from './ModalSelectRadiologyExample.vue'
+import DiscountTableAction from '../../discount/common/DiscountTableAction.vue'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import PositionTableAction from '@/views/user/position/common/PositionTableAction.vue'
 
 const TABS_KEY = {
   BASIC: 'BASIC',
   DATA_AND_PRINT: 'DATA_AND_PRINT',
+  DISCOUNT: 'DISCOUNT',
   ROLE_AND_POSITION: 'ROLE_AND_POSITION',
 }
 
@@ -45,9 +54,8 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 
-const { organization } = MeService
-
-const radiologyRoot = ref(Radiology.blank())
+const { userPermission, organization } = MeService
+const radiologyOrigin = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
 
 const radiologyGroupAll = ref<RadiologyGroup[]>([])
@@ -90,14 +98,12 @@ onMounted(async () => {
   const radiologyId = Number(route.params.id)
   if (radiologyId) {
     const radiologyResponse = await RadiologyApi.detail(radiologyId, {
-      relation: { printHtml: true, positionList: true },
+      relation: { printHtml: true, positionList: true, discountList: true },
     })
-    radiologyRoot.value = radiologyResponse
+    radiologyOrigin.value = radiologyResponse
     radiology.value = Radiology.from(radiologyResponse)
   } else {
     radiology.value = Radiology.blank()
-    const radiologyAll = await RadiologyService.list({})
-    radiology.value.priority = radiologyAll.length + 1
   }
   if (!radiology.value.positionList?.length) {
     handleAddPosition()
@@ -105,16 +111,28 @@ onMounted(async () => {
   await handleSelectPrintHtml()
 })
 
+const hasChangeDiscountList = computed(() => {
+  return !Discount.equalList(
+    radiology.value.discountList || [],
+    radiologyOrigin.value.discountList || [],
+  )
+})
+
+const hasChangePositionList = computed(() => {
+  return !Position.equalList(
+    (radiology.value.positionList || []).filter((i) => !!i.roleId),
+    radiologyOrigin.value.positionList || [],
+  )
+})
+
 const hasChangeData = computed(() => {
-  if (!Radiology.equal(radiology.value, radiologyRoot.value)) {
+  if (!Radiology.equal(radiology.value, radiologyOrigin.value)) {
     return true
   }
-  if (
-    !Position.equalList(
-      (radiology.value.positionList || []).filter((i) => !!i.roleId),
-      radiologyRoot.value.positionList || [],
-    )
-  ) {
+  if (hasChangePositionList.value) {
+    return true
+  }
+  if (hasChangeDiscountList.value) {
     return true
   }
   return false
@@ -136,20 +154,25 @@ const handleSave = async () => {
   try {
     saveLoading.value = true
     if (radiology.value.id) {
-      const radiologyResponse = await RadiologyService.updateOne(
-        radiology.value.id,
-        radiology.value,
-      )
+      const radiologyResponse = await RadiologyService.updateOne(radiology.value.id, {
+        radiology: radiology.value,
+        positionList: hasChangePositionList.value ? radiology.value.positionList : undefined,
+        discountList: hasChangeDiscountList.value ? radiology.value.discountList : undefined,
+      })
       Object.assign(radiology.value, Radiology.from(radiologyResponse))
-      Object.assign(radiologyRoot.value, Radiology.from(radiologyResponse))
+      Object.assign(radiologyOrigin.value, Radiology.from(radiologyResponse))
       AlertStore.addSuccess('Cập nhật thành công', 1000)
     } else {
-      const res = await RadiologyService.createOne(radiology.value)
+      const res = await RadiologyService.createOne({
+        radiology: radiology.value,
+        positionList: hasChangePositionList.value ? radiology.value.positionList : undefined,
+        discountList: hasChangeDiscountList.value ? radiology.value.discountList : undefined,
+      })
       router.push({ name: 'RadiologyList' })
       AlertStore.addSuccess('Tạo mới thành công', 500)
 
       radiology.value = Radiology.from(res)
-      radiologyRoot.value = Radiology.from(res)
+      radiologyOrigin.value = Radiology.from(res)
     }
   } catch (error) {
     console.log('🚀 ~ file: RadiologyUpsert.vue:91 ~ handleSave ~ error:', error)
@@ -325,7 +348,7 @@ const startTestPrint = async () => {
 
 const handleAddPosition = () => {
   const positionBlank = Position.blank()
-  positionBlank.positionType = PositionType.Radiology
+  positionBlank.positionType = PositionInteractType.Radiology
   positionBlank.positionInteractId = radiology.value.id
 
   if (!radiology.value.positionList) {
@@ -361,17 +384,25 @@ const showDataSystemPrint = () => {
           <IconPrint />
           Dữ liệu và In
         </VueTabMenu>
+        <VueTabMenu :tabKey="TABS_KEY.DISCOUNT">Khuyến mại</VueTabMenu>
         <VueTabMenu :tabKey="TABS_KEY.ROLE_AND_POSITION">Vai trò và hoa hồng</VueTabMenu>
       </template>
       <template #panel>
         <VueTabPanel :tabKey="TABS_KEY.BASIC">
           <div class="mt-4 flex flex-wrap gap-4" style="max-width: 900px">
-            <div style="flex-basis: 90%; flex-grow: 1">
+            <div style="flex-basis: 500px; flex-grow: 1">
               <div class="flex gap-4 justify-start">
                 <span>Tên phiếu</span>
               </div>
               <div>
                 <InputText v-model:value="radiology.name" required />
+              </div>
+            </div>
+
+            <div style="flex-grow: 1; flex-basis: 150px">
+              <div class="">Mã phiếu</div>
+              <div class="">
+                <InputText v-model:value="radiology.radiologyCode" placeholder="Tạo tự động" />
               </div>
             </div>
 
@@ -384,13 +415,6 @@ const showDataSystemPrint = () => {
                     radiologyGroupAll.map((group) => ({ value: group.id, text: group.name }))
                   "
                 />
-              </div>
-            </div>
-
-            <div style="flex-basis: 90%; flex-grow: 1">
-              <div>Số thứ tự trong danh sách</div>
-              <div style="flex: 1">
-                <InputNumber v-model:value="radiology.priority" :validate="{ GTE: 0 }" />
               </div>
             </div>
 
@@ -507,74 +531,25 @@ const showDataSystemPrint = () => {
             </div>
           </div>
         </VueTabPanel>
+        <VueTabPanel :tabKey="TABS_KEY.DISCOUNT">
+          <div class="mt-4">
+            <DiscountTableAction
+              v-model:discountList="radiology.discountList!"
+              :discountInteractId="radiology.id"
+              :discountInteractType="DiscountInteractType.Radiology"
+              :discountListExtra="radiology.discountListExtra || []"
+              :editable="userPermission[PermissionId.MASTER_DATA_DISCOUNT]"
+            />
+          </div>
+        </VueTabPanel>
         <VueTabPanel :tabKey="TABS_KEY.ROLE_AND_POSITION">
           <div class="mt-4">
-            <div
-              v-for="(position, index) in radiology.positionList"
-              :key="index"
-              class="mt-4 flex flex-wrap gap-2"
-            >
-              <div style="flex-grow: 1; flex-basis: 250px">
-                <div>Vai trò</div>
-                <div>
-                  <InputFilter
-                    v-model:value="radiology.positionList![index].roleId"
-                    :options="roleOptions"
-                    :maxHeight="120"
-                  >
-                    <template #option="{ item: { data } }">{{ data.name }}</template>
-                  </InputFilter>
-                </div>
-              </div>
-              <div style="flex-grow: 1; flex-basis: 100px">
-                <div>Hoa hồng</div>
-                <div>
-                  <InputNumber
-                    :value="position.commissionValue"
-                    @update:value="
-                      (v: number) => (radiology.positionList![index].commissionValue = v)
-                    "
-                  />
-                </div>
-              </div>
-              <div style="flex-grow: 1; flex-basis: 150px">
-                <div>Công thức</div>
-                <div>
-                  <VueSelect
-                    :value="position.commissionCalculatorType"
-                    :options="[
-                      { value: CommissionCalculatorType.VND, text: 'VNĐ' },
-                      {
-                        value: CommissionCalculatorType.PercentExpected,
-                        text: '% Giá niêm yết',
-                      },
-                      {
-                        value: CommissionCalculatorType.PercentActual,
-                        text: '% Giá sau chiết khấu',
-                      },
-                    ]"
-                    @update:value="
-                      (v: number) => (radiology.positionList![index].commissionCalculatorType = v)
-                    "
-                  />
-                </div>
-              </div>
-              <div style="width: 30px">
-                <div>&nbsp;</div>
-                <div class="pt-2 flex justify-center">
-                  <a
-                    style="color: var(--text-red)"
-                    @click="radiology.positionList!.splice(index, 1)"
-                  >
-                    <IconDelete width="18" height="18" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-2">
-              <a @click="handleAddPosition">✚ Thêm vai trò</a>
-            </div>
+            <PositionTableAction
+              v-model:positionList="radiology.positionList!"
+              :positionType="PositionInteractType.Radiology"
+              :positionInteractId="radiology.id"
+              :editable="userPermission[PermissionId.POSITION]"
+            />
           </div>
         </VueTabPanel>
       </template>

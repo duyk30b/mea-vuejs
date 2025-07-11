@@ -7,7 +7,7 @@ import { IconEditSquare } from '../../../../common/icon-google'
 import { InputFilter } from '../../../../common/vue-form'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionType } from '../../../../modules/position'
+import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DeliveryStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
@@ -50,11 +50,11 @@ const refreshTicketUserList = async () => {
   }
   const tuListOrigin: TicketUser[] = []
   const ticketUserListRef =
-    ticketClinicRef.value.ticketUserGroup?.[PositionType.ConsumableList]?.[0] || []
+    ticketClinicRef.value.ticketUserGroup?.[PositionInteractType.ConsumableList]?.[0] || []
 
   const positionList = await PositionService.list({
     filter: {
-      positionType: PositionType.ConsumableList,
+      positionType: PositionInteractType.ConsumableList,
       positionInteractId: 0,
     },
   })
@@ -165,7 +165,7 @@ const saveTicketUserList = async () => {
   try {
     await TicketClinicUserApi.chooseUserId({
       ticketId: ticketClinicRef.value.id,
-      positionType: PositionType.ConsumableList,
+      positionType: PositionInteractType.ConsumableList,
       positionInteractId: 0,
       ticketItemId: 0,
       quantity: 1,

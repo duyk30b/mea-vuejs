@@ -1,10 +1,8 @@
 import { DImage, DString, ESTimer } from '../../utils'
 import type { Customer } from '../customer'
-import { LaboratoryValueType, type Laboratory } from '../laboratory'
-import type { LaboratoryGroup } from '../laboratory-group'
+import { LaboratoryValueType } from '../laboratory'
 import type { Organization } from '../organization'
-import { PositionType } from '../position'
-import type { Radiology } from '../radiology'
+import { PositionInteractType } from '../position'
 import type { Ticket } from '../ticket'
 import type { User } from '../user'
 import type { PrintHtml } from './print-html.model'
@@ -36,7 +34,7 @@ export const compiledTemplatePrintHtml = (options: {
       HEADER: options?._LAYOUT?.HEADER || '',
     },
     _UTILS: {
-      PositionType,
+      PositionInteractType,
       LaboratoryValueType,
       ESTimer,
       DImage,

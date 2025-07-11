@@ -7,7 +7,7 @@ import { MeService } from '../../modules/_me/me.service'
 import { Customer } from '../../modules/customer'
 import { Distributor, DistributorService } from '../../modules/distributor'
 import { Organization } from '../../modules/organization'
-import { Position, PositionService, type PositionType } from '../../modules/position'
+import { Position, PositionService, type PositionInteractType } from '../../modules/position'
 import { Product } from '../../modules/product'
 import { Ticket } from '../../modules/ticket'
 import { TicketAttribute } from '../../modules/ticket-attribute'
@@ -202,7 +202,7 @@ export class SocketService {
     ticketUserDestroyList?: TicketUser[]
     ticketUserUpsertList?: TicketUser[]
     replace?: {
-      positionType: PositionType
+      positionType: PositionInteractType
       ticketItemId: number // ticketItemId = 0 là thay thế toàn bộ positionType đó
       ticketUserList: TicketUser[]
     }
