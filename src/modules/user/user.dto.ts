@@ -6,7 +6,8 @@ export class UserGetQuery {
   limit?: number
   relation?: {
     organization?: boolean
-    userRoleList?: { role?: boolean } | false
+    userRoleList?: { role?: boolean }
+    userRoomList?: { room?: boolean }
   }
 
   filter?: {

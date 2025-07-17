@@ -10,7 +10,7 @@ import {
   InputOptions,
   InputRadio,
   InputText,
-  VueSelect
+  VueSelect,
 } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
@@ -27,13 +27,13 @@ import { RoleService } from '@/modules/role'
 import { RoomInteractType, RoomService } from '@/modules/room'
 import {
   Ticket,
+  TicketActionApi,
   TicketReceptionApi,
   TicketService,
   TicketStatus,
   TicketType,
 } from '@/modules/ticket'
 import type { TicketAttributeKeyGeneralType, TicketAttributeMap } from '@/modules/ticket-attribute'
-import { TicketClinicApi } from '@/modules/ticket-clinic'
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
@@ -52,7 +52,7 @@ const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 const ticketClinicCreateForm = ref<InstanceType<typeof HTMLFormElement>>()
 
 const emit = defineEmits<{
-  (e: 'success'): void
+  (e: 'success', ticketId: number): void
 }>()
 
 const settingStore = useSettingStore()
@@ -389,9 +389,9 @@ const handleClickDestroy = async () => {
     content: 'Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
     onOk: async () => {
       try {
-        await TicketClinicApi.destroy(ticket.value.id)
+        await TicketActionApi.destroy(ticket.value.id)
         AlertStore.addSuccess('Xóa phiếu khám thành công')
-        emit('success')
+        emit('success', ticket.value.id)
         closeModal()
       } catch (error) {
         console.log('🚀 ModalTicketClinicCreate.vue:356 ~ handleClickDestroy: ~ error:', error)
@@ -421,7 +421,7 @@ const handleSubmitFormTicketClinic = async () => {
           key,
         })
       }
-      await TicketReceptionApi.create({
+      const ticketCreated = await TicketReceptionApi.create({
         customer: customer.value,
         ticketReception: {
           roomId: ticket.value.roomId,
@@ -436,7 +436,7 @@ const handleSubmitFormTicketClinic = async () => {
         ticketAttributeList,
         ticketUserList: ticketUserList.value,
       })
-      emit('success')
+      emit('success', ticketCreated.id)
     }
     if (ticket.value.id) {
       await TicketReceptionApi.update({
@@ -450,7 +450,7 @@ const handleSubmitFormTicketClinic = async () => {
         ticketAttributeList,
         ticketUserList: ticketUserList.value,
       })
-      emit('success')
+      emit('success', ticket.value.id)
     }
 
     closeModal()
@@ -500,9 +500,16 @@ defineExpose({ openModal })
             <div>
               <span>Tên KH</span>
               <span v-if="customer.id">
-                (nợ cũ:
-                <b>{{ formatMoney(customer.debt) }}</b>
-                )
+                <span>
+                  <span v-if="customer.debt > 0">
+                    - Nợ:
+                    <b style="color: var(--text-red)">{{ formatMoney(customer.debt) }}</b>
+                  </span>
+                  <span v-if="customer.debt < 0">
+                    - Quỹ:
+                    <b style="color: var(--text-green)">{{ formatMoney(-customer.debt) }}</b>
+                  </span>
+                </span>
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(customer.id)">
                   <IconFileSearch />
                 </a>

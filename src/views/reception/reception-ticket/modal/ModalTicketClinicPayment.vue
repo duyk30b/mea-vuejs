@@ -12,8 +12,7 @@ import { PaymentMethodService, type PaymentMethod } from '../../../../modules/pa
 import { PaymentApi } from '../../../../modules/payment/payment.api'
 import { VoucherType } from '../../../../modules/payment/payment.model'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi } from '../../../../modules/ticket-clinic'
+import { Ticket, TicketMoneyApi, TicketStatus } from '../../../../modules/ticket'
 import { ESArray } from '../../../../utils'
 import TicketPaymentList from '../../../ticket-base/TicketPaymentList.vue'
 
@@ -77,7 +76,7 @@ const closeModal = () => {
 const startPrepayment = async () => {
   paymentLoading.value = true
   try {
-    await TicketClinicApi.prepayment({
+    await TicketMoneyApi.prepayment({
       ticketId: ticketClone.value.id,
       money: money.value,
       paymentMethodId: paymentMethodId.value,
@@ -98,7 +97,7 @@ const startRefundOverpaid = async () => {
   }
   paymentLoading.value = true
   try {
-    await TicketClinicApi.refundOverpaid({
+    await TicketMoneyApi.refundOverpaid({
       ticketId: ticketClone.value.id,
       money: money.value,
       paymentMethodId: paymentMethodId.value,
@@ -116,7 +115,7 @@ const startRefundOverpaid = async () => {
 const startPayDebt = async () => {
   paymentLoading.value = true
   try {
-    await TicketClinicApi.payDebt({
+    await TicketMoneyApi.payDebt({
       ticketId: ticketClone.value.id,
       money: money.value,
       paymentMethodId: paymentMethodId.value,
@@ -266,10 +265,7 @@ defineExpose({ openModal })
                     ref="inputMoneyPayment"
                     v-model:value="money"
                     text-align="right"
-                    :validate="{
-                      gt: 0,
-                      lte: ticketClone.paid - ticketClone.totalMoney,
-                    }"
+                    :validate="{ gt: 0 }"
                   />
                 </div>
               </div>

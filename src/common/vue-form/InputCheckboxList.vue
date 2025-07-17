@@ -13,17 +13,26 @@ export type CheckboxAllPropType = {
   style?: StyleValue
 }
 
-const props = defineProps<{
-  value: Record<string, boolean | any>
-  options: CheckboxOptionType[]
-  noCheckboxAll?: boolean
-  customStyle?: {
-    checkboxAllLabel?: string
-    checkboxAllWrap?: StyleValue
-    checkboxItemWrap?: StyleValue
-    checkboxItem?: StyleValue
-  }
-}>()
+const props = withDefaults(
+  defineProps<{
+    value: Record<string, boolean | any>
+    options: CheckboxOptionType[]
+    checkboxAll?: boolean
+    customStyle?: {
+      checkboxAllLabel?: string
+      checkboxAllWrap?: StyleValue
+      checkboxItemWrap?: StyleValue
+      checkboxItem?: StyleValue
+    }
+  }>(),
+  {
+    value: () => ({}),
+    options: () => [],
+    checkboxAll: true,
+    customStyle: () => ({}),
+  },
+)
+
 const emit = defineEmits<{
   (e: 'update:value', value: Record<string, boolean | any>): void
 }>()
@@ -89,10 +98,10 @@ defineExpose({ focus })
 
 <template>
   <div
-    v-if="!noCheckboxAll"
+    v-show="checkboxAll"
     :style="
       customStyle?.checkboxAllWrap ||
-      'display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center'
+      'margin-bottom: 12px; display: flex; gap: 0.5em; flex-wrap: wrap; align-items: center'
     "
   >
     <input
@@ -111,7 +120,7 @@ defineExpose({ focus })
   <div
     :style="
       customStyle?.checkboxItemWrap ||
-      'margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center'
+      'display: flex; gap: 12px; flex-wrap: wrap; align-items: center'
     "
   >
     <div

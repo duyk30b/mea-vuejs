@@ -9,6 +9,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
 import { Image, ImageHost } from '@/modules/image/image.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtml, PrintHtmlAction, PrintHtmlCompile } from '@/modules/print-html'
 import { Radiology } from '@/modules/radiology'
 import { RadiologySample, RadiologySampleService } from '@/modules/radiology-sample'
@@ -76,6 +77,20 @@ const hasChangeData = computed(() => {
     return true
   }
   return false
+})
+
+const disabledButtonSave = computed(() => {
+  if (!userPermission.value[PermissionId.RADIOLOGY_SAMPLE_CRUD]) return true
+  if (
+    radiologySampleOrigin.value.userId !== 0 &&
+    radiologySampleOrigin.value.userId !== MeService.user.value?.id
+  ) {
+    return true
+  }
+
+  if (hasChangeData.value) return false
+
+  return true
 })
 
 const selectPrintHtml = async (printHtmlProp?: PrintHtml) => {
@@ -384,7 +399,7 @@ const startCleanHtml = () => {
         type="submit"
         :loading="saveLoading"
         icon="save"
-        :disabled="!hasChangeData"
+        :disabled="disabledButtonSave"
       >
         {{ radiologySample.id ? 'Cập nhật thông tin' : 'Tạo mới' }}
       </VueButton>

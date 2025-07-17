@@ -12,9 +12,9 @@ import {
   TicketAttributeKeyEyeList,
   type TicketAttributeKeyEyeType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { ESImage } from '../../../utils'
 import { ticketRoomRef } from '@/modules/room'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
 const { userPermission } = MeService
 

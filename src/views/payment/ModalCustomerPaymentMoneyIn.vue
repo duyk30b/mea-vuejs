@@ -11,11 +11,13 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
 import { PaymentMethodService } from '../../modules/payment-method'
 import { PermissionId } from '../../modules/permission/permission.enum'
-import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { Ticket, TicketQueryApi, TicketStatus } from '../../modules/ticket'
 import { ESString, ESTimer } from '../../utils'
 import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import { CONFIG } from '@/config'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -32,11 +34,14 @@ const { userPermission, user } = MeService
 const customerOptions = ref<ItemOption[]>([])
 const customer = ref<Customer>(Customer.blank())
 
-const money = ref(0)
+const totalMoney = ref(0)
 const note = ref('')
 const paymentMethodId = ref<number>(0)
-const ticketPaymentList = ref<{ ticket: Ticket; money: number }[]>([])
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
+
+const payDebtTicketList = ref<{ ticket: Ticket; money: number }[]>([])
+const prepaymentTicketList = ref<{ ticket: Ticket; money: number }[]>([])
+const moneyTopUp = ref(0)
 
 const showModal = ref(false)
 const ticketLoading = ref(false)
@@ -64,24 +69,46 @@ const searchingCustomer = async (text: string) => {
 
 const selectCustomer = async (data?: Customer) => {
   customer.value = data ? Customer.from(data) : Customer.blank()
-  if (customer.value.debt > 0) {
-    try {
-      ticketLoading.value = true
-      const ticketDebtList = await TicketApi.list({
-        filter: {
-          customerId: customer.value.id,
-          status: TicketStatus.Debt,
+  try {
+    ticketLoading.value = true
+    const ticketActionList = await TicketQueryApi.list({
+      filter: {
+        customerId: customer.value.id,
+        status: {
+          IN: [
+            TicketStatus.Debt,
+            TicketStatus.Draft,
+            TicketStatus.Schedule,
+            TicketStatus.Deposited,
+            TicketStatus.Executing,
+          ],
         },
-        sort: { id: 'ASC' },
-      })
-      ticketPaymentList.value = ticketDebtList.map((i) => ({ ticket: i, money: 0 }))
-    } catch (error) {
-      console.log('🚀 ~ ModalPaymentMoneyIn.vue:82 ~ selectCustomer ~ error:', error)
-    } finally {
-      ticketLoading.value = false
-    }
-  } else {
-    ticketPaymentList.value = []
+      },
+      sort: { id: 'ASC' },
+    })
+    payDebtTicketList.value = ticketActionList
+      .filter((i) => i.status === TicketStatus.Debt)
+      .map((i) => ({
+        ticket: i,
+        money: 0,
+      }))
+    prepaymentTicketList.value = ticketActionList
+      .filter((i) =>
+        [
+          TicketStatus.Draft,
+          TicketStatus.Schedule,
+          TicketStatus.Deposited,
+          TicketStatus.Executing,
+        ].includes(i.status),
+      )
+      .map((i) => ({
+        ticket: i,
+        money: 0,
+      }))
+  } catch (error) {
+    console.log('🚀 ~ ModalPaymentMoneyIn.vue:82 ~ selectCustomer ~ error:', error)
+  } finally {
+    ticketLoading.value = false
   }
 }
 
@@ -91,8 +118,10 @@ const openModal = async () => {
 
 const closeModal = () => {
   showModal.value = false
-  ticketPaymentList.value = []
-  money.value = 0
+  payDebtTicketList.value = []
+  prepaymentTicketList.value = []
+  totalMoney.value = 0
+  moneyTopUp.value = 0
   note.value = ''
   customer.value = Customer.blank()
   paymentMethodId.value = 0
@@ -101,16 +130,19 @@ const closeModal = () => {
 const handleSave = async () => {
   saveLoading.value = true
   try {
-    if (money.value === 0) {
+    if (totalMoney.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await CustomerService.customerPayment({
+    const data = await PaymentApi.customerPaymentCommon({
       customerId: customer.value.id,
       paymentMethodId: paymentMethodId.value,
       note: note.value,
       cashierId: user.value?.id || 0,
-      money: money.value,
-      ticketPaymentList: ticketPaymentList.value
+      moneyTopUp: moneyTopUp.value,
+      payDebtTicketList: payDebtTicketList.value
+        .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
+        .filter((i) => i.money > 0),
+      prepaymentTicketList: prepaymentTicketList.value
         .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
         .filter((i) => i.money > 0),
     })
@@ -124,25 +156,45 @@ const handleSave = async () => {
   }
 }
 
-const handleClickPayAllDebt = () => {
-  money.value = Math.max(customer.value.debt, 0)
+const handleClickPayAll = () => {
+  const totalDebt = payDebtTicketList.value.reduce((acc, item) => {
+    return acc + item.ticket.debt
+  }, 0)
+  const totalPrepayment = prepaymentTicketList.value.reduce((acc, item) => {
+    return acc + item.ticket.debt
+  }, 0)
+  totalMoney.value = totalDebt + totalPrepayment
   calculatorEachVoucherPayment()
 }
 
 const calculatorEachVoucherPayment = () => {
-  let totalMoney = money.value
-  ticketPaymentList.value.forEach((item) => {
-    const number = Math.min(totalMoney, item.ticket.debt)
-    item.money = number
-    totalMoney = totalMoney - number
+  let moneyRemain = totalMoney.value
+  payDebtTicketList.value.forEach((item) => {
+    if (item.ticket.paid < item.ticket.totalMoney) {
+      const number = Math.min(moneyRemain, item.ticket.debt)
+      item.money = number
+      moneyRemain = moneyRemain - number
+    }
   })
+  prepaymentTicketList.value.forEach((item) => {
+    if (item.ticket.paid < item.ticket.totalMoney) {
+      const number = Math.min(moneyRemain, item.ticket.debt)
+      item.money = number
+      moneyRemain = moneyRemain - number
+    }
+  })
+  if (moneyRemain > 0 && prepaymentTicketList.value.length) {
+    prepaymentTicketList.value[prepaymentTicketList.value.length - 1].money = moneyRemain
+    moneyRemain = moneyRemain - moneyRemain
+  }
+  moneyTopUp.value = moneyRemain
 }
 
 defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px" @close="closeModal">
     <div class="pl-4 py-3 flex items-center bg-white" style="border-bottom: 1px solid #dedede">
       <div class="flex-1 font-medium" style="font-size: 16px">Tạo phiếu thu</div>
       <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -214,21 +266,19 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div v-if="customer.debt > 0" class="mt-4">
+      <div class="mt-4">
         <div class="flex flex-wrap justify-between">
-          <span>Chọn phiếu trả nợ (tự động)</span>
-          <span>
-            Tổng nợ
-            <strong>{{ formatMoney(customer.debt) }}</strong>
-          </span>
+          <span>Chọn phiếu thanh toán</span>
+          <span v-if="customer.debt > 0"></span>
         </div>
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
+                <th v-if="CONFIG.MODE === 'development'">ID</th>
                 <th>Phiếu</th>
-                <th>Nợ</th>
-                <th>Số tiền trả</th>
+                <th>Hiện tại</th>
+                <th>Dự kiến</th>
               </tr>
             </thead>
             <tbody v-if="ticketLoading">
@@ -246,7 +296,10 @@ defineExpose({ openModal })
               </tr>
             </tbody>
             <tbody>
-              <tr v-for="(ticketPayment, index) in ticketPaymentList" :key="index">
+              <tr v-for="(ticketPayment, index) in payDebtTicketList" :key="index">
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet">
+                  {{ ticketPayment.ticket.id }}
+                </td>
                 <td>
                   <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
                   <div>
@@ -254,7 +307,26 @@ defineExpose({ openModal })
                   </div>
                 </td>
                 <td class="text-right">
-                  {{ formatMoney(ticketPayment.ticket.debt) }}
+                  {{ formatMoney(ticketPayment.ticket.paid) }}/
+                  {{ formatMoney(ticketPayment.ticket.totalMoney) }}
+                </td>
+                <td class="text-right">
+                  {{ formatMoney(ticketPayment.money) }}
+                </td>
+              </tr>
+              <tr v-for="(ticketPayment, index) in prepaymentTicketList" :key="index">
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet">
+                  {{ ticketPayment.ticket.id }}
+                </td>
+                <td>
+                  <LinkAndStatusTicket :ticket="ticketPayment.ticket" />
+                  <div>
+                    {{ ESTimer.timeToText(ticketPayment.ticket.startedAt, 'DD/MM/YYYY hh:mm') }}
+                  </div>
+                </td>
+                <td class="text-right">
+                  {{ formatMoney(ticketPayment.ticket.paid) }}/
+                  {{ formatMoney(ticketPayment.ticket.totalMoney) }}
                 </td>
                 <td class="text-right">
                   {{ formatMoney(ticketPayment.money) }}
@@ -287,28 +359,29 @@ defineExpose({ openModal })
             </div>
             <div>
               <div class="flex">
-                <VueButton color="blue" @click="handleClickPayAllDebt">Tất cả</VueButton>
+                <VueButton color="blue" @click="handleClickPayAll">Tất cả</VueButton>
                 <InputMoney
                   ref="inputMoneyPay"
-                  v-model:value="money"
+                  v-model:value="totalMoney"
                   textAlign="right"
                   :validate="{ gt: 0 }"
                   required
+                  :disabled="!customer.id"
                   @update:value="calculatorEachVoucherPayment"
                 />
               </div>
             </div>
           </div>
-          <div v-if="customer.debt - money >= 0" class="mt-4">
+          <div v-if="customer.debt >= totalMoney" class="mt-4">
             <div>Số nợ còn lại</div>
             <div>
-              <InputMoney :value="customer.debt - money" disabled textAlign="right" />
+              <InputMoney :value="customer.debt - totalMoney" disabled textAlign="right" />
             </div>
           </div>
           <div v-else class="mt-4">
-            <div>Số dư quỹ</div>
+            <div>Số dư quỹ dự kiến</div>
             <div>
-              <InputMoney :value="money - customer.debt" disabled textAlign="right" />
+              <InputMoney :value="moneyTopUp" disabled textAlign="right" />
             </div>
           </div>
         </div>

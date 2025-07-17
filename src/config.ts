@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 
 export const CONFIG = {
   CLIENT_ID: '',

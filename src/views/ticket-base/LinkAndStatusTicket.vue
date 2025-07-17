@@ -28,29 +28,34 @@ const openBlankTicketOrderDetail = async (ticketId: number) => {
   window.open(route.href, '_blank')
 }
 
-const openBlankTicketClinicDetail = async (ticketId: number) => {
+const openBlankTicketClinicDetail = async (ticket: Ticket) => {
   const route = router.resolve({
     name: 'TicketClinicSummary',
-    params: { id: ticketId },
+    params: { ticketId: ticket.id, roomId: ticket.roomId },
   })
   window.open(route.href, '_blank')
 }
 </script>
 
 <template>
-  <div v-if="!ticket.id" style="font-size: 0.8rem">
-    <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
-  </div>
-  <div v-else-if="ticket!.ticketType === TicketType.Order" style="font-size: 0.8rem">
-    <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
-      BH{{ ticket.id }}
-    </a>
-    <TicketStatusTag v-if="status" :ticket="ticket" />
-  </div>
-  <div v-else style="font-size: 0.8rem">
-    <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket.id)">
-      KB{{ ticket.id }}
-    </a>
-    <TicketStatusTag v-if="status" :ticket="ticket" />
-  </div>
+  <template v-if="!ticket">
+    <div v-if="!ticketId" style="font-size: 0.8rem"></div>
+    <div v-else style="font-size: 0.8rem">
+      <VueTag icon="exclamation">T{{ ticketId }} - Bị xóa</VueTag>
+    </div>
+  </template>
+  <template v-else>
+    <div v-if="ticket?.ticketType === TicketType.Order" style="font-size: 0.8rem">
+      <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketOrderDetail(ticket.id)">
+        BH{{ ticket.id }}
+      </a>
+      <TicketStatusTag v-if="status" :ticket="ticket" />
+    </div>
+    <div v-else style="font-size: 0.8rem">
+      <a v-if="link" style="margin-right: 0.5em" @click="openBlankTicketClinicDetail(ticket)">
+        KB{{ ticket.id }}
+      </a>
+      <TicketStatusTag v-if="status" :ticket="ticket" />
+    </div>
+  </template>
 </template>

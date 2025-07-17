@@ -83,6 +83,10 @@ export const socketInit = () => {
     SocketService.listenSocketTicketChange(data)
   })
 
+  SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_LIST_CHANGE, (data) => {
+    SocketService.listenSocketTicketListChange(data)
+  })
+
   SocketBase.on(SOCKET_EVENT.SOCKET_TICKET_ATTRIBUTE_LIST_CHANGE, (data) => {
     SocketService.listenSocketTicketAttributeChange(data)
   })

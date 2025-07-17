@@ -6,7 +6,6 @@ import { MeService } from '../_me/me.service'
 import { useSettingStore } from '../_me/setting.store'
 import { AuthService } from '../auth/auth.service'
 import { PaymentApi } from '../payment/payment.api'
-import type { CustomerPaymentBody } from '../payment/payment.dto'
 import { CustomerApi } from './customer.api'
 import type { CustomerListQuery, CustomerPaginationQuery } from './customer.dto'
 import { Customer } from './customer.model'
@@ -134,7 +133,14 @@ export class CustomerService {
     return response
   }
 
-  static async customerPayment(body: CustomerPaymentBody) {
+  static async customerPayment(body: {
+    customerId: number
+    cashierId: number
+    paymentMethodId: number
+    money: number
+    note: string
+    ticketPaymentList: { ticketId: number; money: number }[]
+  }) {
     const data = await PaymentApi.customerPayment(body)
     await CustomerDB.replaceOne(data.customer.id, data.customer)
     return data

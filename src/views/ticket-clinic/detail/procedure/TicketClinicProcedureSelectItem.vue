@@ -244,7 +244,8 @@ const addTicketProcedure = async () => {
         icon="plus"
         :disabled="
           [TicketStatus.Completed, TicketStatus.Debt].includes(ticketRoomRef.status) ||
-          !userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
+          !userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE] ||
+          !ticketProcedure.procedureId
         "
         color="blue"
         type="submit"

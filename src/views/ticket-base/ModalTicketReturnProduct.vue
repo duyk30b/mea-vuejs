@@ -5,9 +5,8 @@ import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Ticket, TicketType } from '../../modules/ticket'
+import { Ticket, TicketActionApi, TicketType } from '../../modules/ticket'
 import { TicketBatch, TicketBatchApi } from '../../modules/ticket-batch'
-import { TicketClinicApi, TicketClinicProductApi } from '../../modules/ticket-clinic'
 import { TicketOrderApi } from '../../modules/ticket-order'
 import { ESTimer } from '../../utils'
 
@@ -107,7 +106,7 @@ const startReturnProduct = async () => {
         returnList: tbReturnListConvert,
       })
     } else {
-      await TicketClinicProductApi.returnProduct({
+      await TicketActionApi.returnProduct({
         ticketId: ticket.value.id,
         returnList: tbReturnListConvert,
       })

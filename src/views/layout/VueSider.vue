@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { IconDoorOpen, IconLabPanel, IconRadiology, IconWarehouse } from '@/common/icon-google'
+import { IconDoorOpen } from '@/common/icon-google'
+import { RoomInteractType, RoomService } from '@/modules/room'
 import { onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -10,17 +11,15 @@ import {
   IconControl,
   IconDollar,
   IconHome,
-  IconMedicalBox,
   IconPicCenter,
   IconShop,
-  IconTeam,
+  IconTeam
 } from '../../common/icon-antd'
 import { MeService } from '../../modules/_me/me.service'
 import { PermissionId } from '../../modules/permission/permission.enum'
-import { Room, RoomInteractType, RoomService } from '@/modules/room'
 
 const props = defineProps<{ collapsed?: boolean }>()
-const { userPermission, organizationPermission, user } = MeService
+const { userPermission, organizationPermission, user, roomIdMap } = MeService
 
 const emit = defineEmits(['handleShowDrawer'])
 const router = useRouter()
@@ -93,7 +92,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #title>Danh mục phòng</template>
       <template v-for="room in roomList" :key="room.id">
         <a-menu-item
-          v-if="room.showMenu && room.roomInteractType === RoomInteractType.Ticket"
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Ticket"
           :key="'RoomTicket_' + room.id"
         >
           <router-link :to="{ name: 'RoomTicket', params: { roomId: room.id } }">
@@ -102,9 +101,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         </a-menu-item>
         <a-menu-item
           v-if="
-            room.showMenu &&
-            room.roomInteractType === RoomInteractType.Laboratory &&
-            userPermission[PermissionId.LABORATORY_ROOM_MENU]
+            roomIdMap[room.id] &&
+            room.roomInteractType === RoomInteractType.Laboratory 
           "
           :key="'RoomLaboratory_' + room.id"
         >
@@ -114,9 +112,8 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
         </a-menu-item>
         <a-menu-item
           v-if="
-            room.showMenu &&
-            room.roomInteractType === RoomInteractType.Radiology &&
-            userPermission[PermissionId.RADIOLOGY_ROOM_MENU]
+            roomIdMap[room.id] &&
+            room.roomInteractType === RoomInteractType.Radiology 
           "
           :key="'RoomRadiology_' + room.id"
         >

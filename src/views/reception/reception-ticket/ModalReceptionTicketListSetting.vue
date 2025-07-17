@@ -2,14 +2,13 @@
 import VueButton from '@/common/VueButton.vue'
 import { IconClose } from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputCheckbox, InputText, VueSelect } from '@/common/vue-form'
+import { InputCheckbox } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { SettingKey } from '@/modules/_me/store.variable'
 import { OrganizationService } from '@/modules/organization'
-import { PositionService, PositionInteractType } from '@/modules/position'
+import { PositionInteractType, PositionService } from '@/modules/position'
 import { RoleService } from '@/modules/role'
-import { TicketType } from '@/modules/ticket'
 import { ref } from 'vue'
 
 const emit = defineEmits<{ (e: 'success'): void }>()

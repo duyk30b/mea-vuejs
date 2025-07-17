@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { IconClose } from '../../../../common/icon-antd'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
-import { Ticket, TicketApi, TicketType } from '../../../../modules/ticket'
+import { Ticket, TicketQueryApi, TicketType } from '../../../../modules/ticket'
 import { ESTimer } from '../../../../utils'
 import VuePagination from '../../../../common/VuePagination.vue'
 import { InputSelect } from '../../../../common/vue-form'
@@ -22,7 +22,7 @@ let firstLoad = true
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {

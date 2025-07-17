@@ -123,8 +123,10 @@ export class ProcedureService {
     if (options?.query) {
       procedure = await ProcedureApi.detail(id, query)
       const findIndex = ProcedureService.procedureAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) ProcedureService.procedureAll[findIndex] = procedure
-      ProcedureService.procedureMap.value[procedure.id] = procedure
+      if (findIndex !== -1) {
+        Object.assign(ProcedureService.procedureAll[findIndex], procedure)
+        Object.assign(ProcedureService.procedureMap.value[procedure.id], procedure)
+      }
     } else {
       await ProcedureService.fetchAll({ refetch: !!options?.refetch })
       procedure = ProcedureService.procedureAll.find((i) => i.id === id)
@@ -139,6 +141,7 @@ export class ProcedureService {
     discountList?: Discount[]
   }) {
     const procedure = await ProcedureApi.createOne(body)
+    ProcedureService.loadedAll = false
     return procedure
   }
 
@@ -151,11 +154,13 @@ export class ProcedureService {
     },
   ) {
     const procedure = await ProcedureApi.updateOne(id, body)
+    ProcedureService.loadedAll = false
     return procedure
   }
 
   static async destroyOne(id: number) {
     const result = await ProcedureApi.destroyOne(id)
+    ProcedureService.loadedAll = false
     return result
   }
 }

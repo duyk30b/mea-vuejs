@@ -133,10 +133,14 @@ const handleChangeImage = () => {
 }
 
 const hasChangeDate = computed(() => {
-  if (hasChangeTicketRadiology.value) return true
+  if (
+    hasChangeTicketRadiology.value ||
+    ticketRadiology.value.status === TicketRadiologyStatus.Pending
+  ) {
+    return true
+  }
   if (hasChangeTicketUserList.value) return true
   if (hasChangeImageList.value) return true
-
   return false
 })
 
@@ -172,6 +176,9 @@ onMounted(async () => {
 const updateResult = async (options: { print: boolean }) => {
   try {
     saveLoading.value = true
+    if (!ticketRadiology.value.startedAt) {
+      ticketRadiology.value.startedAt = Date.now()
+    }
     const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
       filesPosition: [],
       imageIdsKeep: [],

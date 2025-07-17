@@ -19,7 +19,7 @@ import { Ticket, TicketStatus } from '../../../modules/ticket'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
-import { TicketApi } from '../../../modules/ticket/ticket.api'
+import { TicketQueryApi } from '../../../modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '../../../utils'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import ModalCustomerUpsert from '../../customer/upsert/ModalCustomerUpsert.vue'
@@ -80,7 +80,7 @@ onBeforeMount(async () => {
       mode.value = route.query.mode as any
     }
     if (ticketId) {
-      const ticketResponse = await TicketApi.detail(ticketId, {
+      const ticketResponse = await TicketQueryApi.detail(ticketId, {
         relation: {
           customer: true,
           // ticketAttributeList: true,

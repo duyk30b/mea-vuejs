@@ -15,7 +15,7 @@ import { Customer, CustomerService } from '../../../modules/customer'
 import { FileTicketApi } from '../../../modules/file-excel/file-ticket.api'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import { Ticket, TicketStatus, TicketType } from '../../../modules/ticket'
-import { TicketApi } from '../../../modules/ticket/ticket.api'
+import { TicketQueryApi } from '../../../modules/ticket/api/ticket-query.api'
 import { ESString, ESTimer } from '../../../utils'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
@@ -53,7 +53,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {

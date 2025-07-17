@@ -5,7 +5,9 @@ import type { RoomInteractType } from './room.model'
 export class RoomGetQuery {
   page?: number
   limit?: number
-  relation?: any
+  relation?: {
+    userRoomList?: { user?: boolean }
+  }
 
   filter?: {
     name?: ConditionString

@@ -223,6 +223,50 @@ export class SocketService {
     })
   }
 
+  static async listenSocketTicketListChange(data: {
+    ticketDestroyedList?: any[]
+    ticketUpsertedList?: any[]
+  }) {
+    data.ticketUpsertedList?.forEach((ticketPlain) => {
+      const ticket = Ticket.from(ticketPlain)
+      if (ticketRoomRef.value.id === ticket.id) {
+        Object.assign(ticketRoomRef.value, ticket)
+      }
+
+      const roomTicketPaginationReception = roomReceptionPagination.value
+
+      if (roomTicketPaginationReception) {
+        const findIndex = roomTicketPaginationReception.findIndex((i) => i.id === ticket.id)
+        if (findIndex !== -1) {
+          Object.assign(roomTicketPaginationReception[findIndex], ticket)
+        } else {
+          roomTicketPaginationReception.unshift(ticket)
+        }
+      }
+
+      Object.entries(roomTicketPagination.value).forEach((entries) => {
+        const roomId = Number(entries[0])
+        const ticketPagination = entries[1]
+
+        if (ticket.roomId === roomId || RoomService.roomMap.value[roomId]?.isCommon) {
+          const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
+          if (findIndex !== -1) {
+            Object.assign(ticketPagination[findIndex], ticket)
+          } else {
+            ticketPagination.unshift(ticket)
+          }
+        } else {
+          // Để xử lý trường hợp chuyển phòng
+          const findIndex = ticketPagination.findIndex((i) => i.id === ticket.id)
+          if (findIndex !== -1) {
+            ticketPagination.splice(findIndex, 1)
+          } else {
+          }
+        }
+      })
+    })
+  }
+
   static async listenSocketTicketAttributeChange(data: {
     ticketId: number
     ticketAttributeList: any[]

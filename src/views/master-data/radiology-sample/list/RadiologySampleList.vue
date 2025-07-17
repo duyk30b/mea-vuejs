@@ -14,7 +14,7 @@ import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
-import { IconDelete } from '@/common/icon-antd'
+import { IconDelete, IconEye } from '@/common/icon-antd'
 import InputSearchUser from '@/views/component/InputSearchUser.vue'
 import type { User } from '@/modules/user'
 
@@ -80,6 +80,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 onBeforeMount(async () => {
   try {
+    await startSearch()
     await RadiologyService.list({})
   } catch (error) {
     console.log('🚀 ~ RadiologySampleList.vue:83 ~ onBeforeMount ~ error:', error)
@@ -197,13 +198,17 @@ const handleClickDestroyRadiologySample = async (radiologySampleId: number) => {
             <td>{{ radiologySample.printHtml?.name }}</td>
             <td class="text-center">
               <router-link
-                v-if="
-                  userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD] &&
-                  (radiologySample.userId === 0 || radiologySample.userId === meId)
-                "
                 :to="{ name: 'RadiologySampleUpsert', params: { id: radiologySample.id } }"
               >
-                <IconEditSquare width="20px" height="20px" />
+                <IconEditSquare
+                  v-if="
+                    userPermission[PermissionId.RADIOLOGY_SAMPLE_CRUD] &&
+                    (radiologySample.userId === 0 || radiologySample.userId === meId)
+                  "
+                  width="20px"
+                  height="20px"
+                />
+                <IconEye v-else width="20px" height="20px" />
               </router-link>
             </td>
             <td class="text-center">

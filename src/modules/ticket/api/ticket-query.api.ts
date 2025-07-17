@@ -1,14 +1,14 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
 import {
   TicketDetailQuery,
   TicketGetQuery,
   TicketListQuery,
   type TicketPaginationQuery,
-} from './ticket.dto'
-import { Ticket } from './ticket.model'
+} from '../ticket.dto'
+import { Ticket } from '../ticket.model'
 
-export class TicketApi {
+export class TicketQueryApi {
   static async pagination(options: TicketPaginationQuery) {
     const params = TicketGetQuery.toQuery(options)
 

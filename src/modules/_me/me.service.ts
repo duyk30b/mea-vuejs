@@ -25,6 +25,7 @@ export class MeService {
   static settingMap = ref<typeof SETTING_DEFAULT>({} as any)
 
   static permissionMap = ref<Record<string, Permission>>({})
+  static roomIdMap = ref<Record<string, boolean>>({})
   static userPermission = ref<Record<string, boolean>>({})
   static organizationPermission = ref<Record<string, boolean>>({})
 
@@ -106,14 +107,25 @@ export class MeService {
 
   static async initData() {
     try {
-      const { organization, permissionAll, permissionIds, settingMap, settingMapRoot, user } =
-        await MeApi.info()
+      const {
+        organization,
+        permissionAll,
+        roomIdList,
+        permissionIds,
+        settingMap,
+        settingMapRoot,
+        user,
+      } = await MeApi.info()
 
       const settingStore = useSettingStore()
       MeService.reCalculatorSetting(settingStore, settingMap)
       MeService.reCalculatorSetting(MeService.settingMap.value, settingMap)
       MeService.reCalculatorSetting(MeService.settingMapRoot.value, settingMapRoot)
       MeService.reCalculatorPermission({ permissionAll, permissionIds, user, organization })
+
+      const roomIdMap: Record<string, boolean> = {}
+      roomIdList.forEach((roomId) => (roomIdMap[roomId] = true))
+      MeService.roomIdMap.value = roomIdMap
     } catch (error) {
       console.log('🚀 ~ file: organization.store.ts:96 ~ init ~ error:', error)
     }

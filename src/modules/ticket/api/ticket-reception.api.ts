@@ -1,8 +1,8 @@
-import { AxiosInstance } from '../../core/axios.instance'
-import type { BaseResponse } from '../_base/base-dto'
-import type { Customer } from '../customer'
-import type { TicketUser } from '../ticket-user'
-import { type TicketStatus, type TicketType } from './ticket.model'
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
+import type { Customer } from '../../customer'
+import type { TicketUser } from '../../ticket-user'
+import { Ticket, type TicketStatus, type TicketType } from '../ticket.model'
 
 export class TicketReceptionApi {
   static async create(body: {
@@ -21,7 +21,7 @@ export class TicketReceptionApi {
     ticketUserList: TicketUser[]
   }) {
     const { customer, ticketReception, ticketAttributeList, ticketUserList } = body
-    const response = await AxiosInstance.post('/ticket-reception/create-ticket', {
+    const response = await AxiosInstance.post('/ticket/reception-create', {
       customer:
         !ticketReception.customerId && customer
           ? {
@@ -60,7 +60,8 @@ export class TicketReceptionApi {
         return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
-    const { data } = response.data as BaseResponse<boolean>
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 
   static async update(body: {
@@ -75,7 +76,7 @@ export class TicketReceptionApi {
     ticketUserList: TicketUser[]
   }) {
     const { ticketId, ticketReception, ticketAttributeList, ticketUserList } = body
-    const response = await AxiosInstance.post(`/ticket-reception/update-ticket/${ticketId}`, {
+    const response = await AxiosInstance.post(`/ticket/reception-update/${ticketId}`, {
       ticketReception: {
         roomId: ticketReception.roomId,
         customType: ticketReception.customType,
@@ -89,12 +90,7 @@ export class TicketReceptionApi {
         return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
       }),
     })
-    const { data } = response.data as BaseResponse<boolean>
-  }
-
-  static async destroy(ticketId: number) {
-    const response = await AxiosInstance.delete(`/ticket-reception/destroy-ticket/${ticketId}`)
-    const { data } = response.data as BaseResponse<{ ticketId: any }>
-    return data
+    const { data } = response.data as BaseResponse<{ ticket: any }>
+    return Ticket.from(data.ticket)
   }
 }

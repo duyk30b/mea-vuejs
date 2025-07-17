@@ -186,26 +186,5 @@ export class TicketClinicProductApi {
     const { data } = response.data as BaseResponse<boolean>
   }
 
-  static async sendProduct(body: { ticketId: number; ticketProductIdList: number[] }) {
-    const { ticketId, ticketProductIdList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/send-product`, {
-      ticketProductIdList,
-    })
-    const { data } = response.data as BaseResponse
-  }
 
-  static async returnProduct(body: {
-    ticketId: number
-    returnList: {
-      ticketBatchId: number
-      quantityReturn: number
-    }[]
-  }) {
-    const { ticketId, returnList } = body
-    const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/return-product`, {
-      returnList,
-    })
-    const { data } = response.data as BaseResponse
-    return data
-  }
 }

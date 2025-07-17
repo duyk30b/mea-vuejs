@@ -8,8 +8,7 @@ import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import VueModal from '../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../modules/_me/setting.store'
-import { Ticket, TicketType } from '../../modules/ticket'
-import { TicketClinicProductApi } from '../../modules/ticket-clinic'
+import { Ticket, TicketActionApi, TicketType } from '../../modules/ticket'
 import { TicketOrderApi } from '../../modules/ticket-order'
 import { ESTimer } from '../../utils'
 
@@ -141,7 +140,7 @@ const startSendProduct = async () => {
         ticketProductIdList,
       })
     } else {
-      await TicketClinicProductApi.sendProduct({
+      await TicketActionApi.sendProduct({
         ticketId: ticket.value.id,
         ticketProductIdList,
       })

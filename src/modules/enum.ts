@@ -102,3 +102,11 @@ export enum AttributeLayoutType {
   InputAndLabelTop = 'Input và Nhãn bên trên',
   InputAndLabelLeft = 'Input và Nhãn bên trái',
 }
+
+export enum TicketType {
+  Order = 2,
+  Clinic = 3,
+  Spa = 4,
+  Eye = 5,
+  Obstetric = 6,
+}

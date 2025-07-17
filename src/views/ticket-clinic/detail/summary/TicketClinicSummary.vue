@@ -1,9 +1,10 @@
 <script lang="ts" setup>
+import { ticketRoomRef } from '@/modules/room/room.ref'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTag from '../../../../common/VueTag.vue'
-import { IconFileSync, IconMore } from '../../../../common/icon-antd'
+import { IconDollar, IconFileSync, IconMore } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
 import VueDropdown from '../../../../common/popover/VueDropdown.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
@@ -11,21 +12,18 @@ import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { CONFIG } from '../../../../config'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, PaymentViewType } from '../../../../modules/enum'
+import { DeliveryStatus, PaymentViewType, PickupStrategy } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { PrintHtmlAction, PrintHtmlService } from '../../../../modules/print-html'
-import { TicketStatus } from '../../../../modules/ticket'
-import { TicketClinicApi, TicketClinicProductApi } from '../../../../modules/ticket-clinic'
+import { PrintHtmlAction } from '../../../../modules/print-html'
+import { TicketActionApi, TicketStatus } from '../../../../modules/ticket'
 import { TicketRadiologyStatus } from '../../../../modules/ticket-radiology'
-import { ESDom } from '../../../../utils'
-import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicPayment from '../../../reception/reception-ticket/modal/ModalTicketClinicPayment.vue'
+import ModalTicketReturnProduct from '../../../ticket-base/ModalTicketReturnProduct.vue'
 import ModalTicketClinicChangeDiscount from './ModalTicketClinicChangeDiscount.vue'
 import TicketClinicSummaryLaboratory from './TicketClinicSummaryLaboratory.vue'
 import TicketClinicSummaryProcedure from './TicketClinicSummaryProcedure.vue'
 import TicketClinicSummaryProduct from './TicketClinicSummaryProduct.vue'
 import TicketClinicSummaryRadiology from './TicketClinicSummaryRadiology.vue'
-import { ticketRoomRef } from '@/modules/room/room.ref'
 
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
 const modalTicketReturnProduct = ref<InstanceType<typeof ModalTicketReturnProduct>>()
@@ -70,6 +68,9 @@ const validateQuantity = () => {
     const { product, batch } = ticketProductUnsent
 
     if (product?.warehouseIds === '[]') continue
+    if (ticketProductUnsent.pickupStrategy === PickupStrategy.NoImpact) {
+      continue
+    }
 
     if (ticketProductUnsent.quantity > (product?.quantity || 0)) {
       AlertStore.addError(
@@ -105,7 +106,7 @@ const startSendProduct = async () => {
       return i.deliveryStatus === DeliveryStatus.Pending
     })
 
-    await TicketClinicProductApi.sendProduct({
+    await TicketActionApi.sendProduct({
       ticketId: ticketRoomRef.value.id,
       ticketProductIdList: ticketProductUnsentList.map((i) => i.id),
     })
@@ -117,7 +118,7 @@ const startSendProduct = async () => {
 }
 
 const startReopenVisit = async () => {
-  await TicketClinicApi.reopen(ticketRoomRef.value.id)
+  await TicketActionApi.reopen(ticketRoomRef.value.id)
 }
 
 const clickReopenTicket = () => {
@@ -174,7 +175,7 @@ const clickDestroyTicket = () => {
     content: ['- Phiếu khám khi đã xóa không thể phục hồi lại được.', `- Vẫn hủy phiếu khám.`],
     okText: 'Xác nhận XÓA phiếu',
     async onOk() {
-      await TicketClinicApi.destroy(ticketRoomRef.value.id)
+      await TicketActionApi.destroy(ticketRoomRef.value.id)
       router.push({ name: 'RoomTicket', params: { roomId: route.params.roomId } })
     },
   })
@@ -247,6 +248,18 @@ const startPrint = async () => {
         </div>
       </template>
       <div class="vue-menu">
+        <a
+          @click="clickRefundOverpaid"
+          v-if="
+            [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketRoomRef.status) &&
+            ticketRoomRef.paid <= ticketRoomRef.totalMoney
+          "
+        >
+          <span class="text-red-500">
+            <IconDollar />
+            Hoàn tiền
+          </span>
+        </a>
         <a @click="clickReturnProduct">
           <span class="text-red-500">
             <IconFileSync />

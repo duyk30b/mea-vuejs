@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
 import VuePagination from '@/common/VuePagination.vue'
-import { IconDownload, IconFileSearch, IconRead, IconRight, IconSetting } from '@/common/icon-antd'
+import { IconFileSearch, IconRead, IconRight, IconSetting } from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
-import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { CustomerService, type Customer } from '@/modules/customer'
-import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PositionInteractType } from '@/modules/position'
 import { RoleService } from '@/modules/role'
 import { Room, RoomInteractType, RoomService } from '@/modules/room'
 import { roomTicketPagination } from '@/modules/room/room.ref'
-import { TicketApi, TicketStatus, TicketType } from '@/modules/ticket'
+import { TicketQueryApi, TicketStatus, TicketType } from '@/modules/ticket'
 import type { TicketUser } from '@/modules/ticket-user'
 import { UserService } from '@/modules/user'
 import { ESString, ESTimer, formatPhone } from '@/utils'
@@ -63,7 +61,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -177,8 +175,11 @@ const changeLimit = async (limitSelect: any) => {
   await startFetchData()
 }
 
-const handleModalTicketClinicCreateSuccess = () => {
-  // await startFetchData()
+const handleModalTicketClinicCreateSuccess = (ticketId: number) => {
+  router.push({
+    name: 'TicketClinicDetailContainer',
+    params: { roomId: currentRoom.value.id, ticketId },
+  })
 }
 
 const handleModalTicketClinicListSettingSuccess = async () => {

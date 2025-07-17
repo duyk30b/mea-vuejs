@@ -233,11 +233,18 @@ defineExpose({ openModalForCreate, openModalForUpdate })
             >
               <IconFileSearch />
             </a>
-            <span v-if="appointment.customer?.id">
-              (nợ cũ:
-              <b>{{ formatMoney(appointment.customer!.debt) }}</b>
-              )
-            </span>
+            <div>
+              <span v-if="appointment.customer!.debt > 0">
+                - Nợ:
+                <b style="color: var(--text-red)">{{ formatMoney(appointment.customer!.debt) }}</b>
+              </span>
+              <span v-if="appointment.customer!.debt < 0">
+                - Quỹ:
+                <b style="color: var(--text-green)">
+                  {{ formatMoney(-appointment.customer!.debt) }}
+                </b>
+              </span>
+            </div>
             <a
               v-if="appointment.customer!.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
               @click="modalCustomerUpsert?.openModal(appointment.customer!)"

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { ticketRoomRef } from '@/modules/room'
+import { TicketMoneyApi } from '@/modules/ticket'
 import { computed, reactive, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
@@ -6,8 +8,6 @@ import { InputMoney, InputNumber, VueSelect } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { DiscountType } from '../../../../modules/enum'
-import { TicketClinicApi } from '../../../../modules/ticket-clinic'
-import { ticketRoomRef } from '@/modules/room'
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
@@ -75,7 +75,7 @@ const closeModal = () => {
 const changeDiscount = async () => {
   saveLoading.value = true
   try {
-    await TicketClinicApi.changeDiscount(ticketRoomRef.value.id, {
+    await TicketMoneyApi.changeDiscount(ticketRoomRef.value.id, {
       discountType: money.discountType,
       discountPercent: money.discountPercent,
       discountMoney: money.discountMoney,

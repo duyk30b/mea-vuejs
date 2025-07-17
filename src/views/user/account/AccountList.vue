@@ -3,7 +3,7 @@ import { onBeforeMount, ref } from 'vue'
 import { IconApartment, IconForm } from '../../../common/icon-antd'
 import VueButton from '../../../common/VueButton.vue'
 import VueTag from '../../../common/VueTag.vue'
-import { UserApi, type User } from '../../../modules/user'
+import { UserApi, UserService, type User } from '../../../modules/user'
 import ModalAccountUpsert from './ModalAccountUpsert.vue'
 import VuePagination from '../../../common/VuePagination.vue'
 import { InputSelect } from '../../../common/vue-form'
@@ -18,14 +18,20 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('DISTRIBUTOR_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
-    const { data, meta } = await UserApi.pagination({
-      relation: { userRoleList: { role: true } },
-      page: page.value,
-      limit: limit.value,
-      sort: { id: 'ASC' },
-    })
+    const { data, meta } = await UserService.pagination(
+      {
+        relation: {
+          userRoleList: { role: true },
+          userRoomList: { room: true },
+        },
+        page: page.value,
+        limit: limit.value,
+        sort: { id: 'ASC' },
+      },
+      { refetch: !!options?.refetch },
+    )
     userList.value = data
     total.value = meta.total
   } catch (error) {
@@ -36,7 +42,7 @@ const startFetchData = async () => {
 onBeforeMount(async () => {
   try {
     dataLoading.value = true
-    await startFetchData()
+    await startFetchData({ refetch: true })
   } catch (error) {
     console.log('🚀 ~ onBeforeMount ~ error:', error)
   } finally {
@@ -50,14 +56,14 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     limit.value = options.limit
     localStorage.setItem('DISTRIBUTOR_PAGINATION_LIMIT', String(options.limit))
   }
-  await startFetchData()
+  await startFetchData({ refetch: true })
 }
 
 const handleModalAccountUpsertSuccess = async (
   data: User,
   type: 'CREATE' | 'UPDATE' | 'DELETE',
 ) => {
-  await startFetchData()
+  await startFetchData({ refetch: true })
 }
 
 const deviceLogout = async (userId: number, refreshExp: number) => {
@@ -90,7 +96,7 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
             <th>Username</th>
             <th>Họ Tên</th>
             <th>Vai trò</th>
-            <!-- <th>Thiết bị đăng nhập</th> -->
+            <th>Phòng</th>
             <th>Trạng thái</th>
             <th>Sửa</th>
           </tr>
@@ -109,6 +115,11 @@ const deviceLogout = async (userId: number, refreshExp: number) => {
               </div>
               <div>
                 {{ user.userRoleList?.map((i) => i.role?.name).join(', ') }}
+              </div>
+            </td>
+            <td>
+              <div>
+                {{ user.userRoomList?.map((i) => i.room?.name).join(', ') }}
               </div>
             </td>
             <td class="text-center">

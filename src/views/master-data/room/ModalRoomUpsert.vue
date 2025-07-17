@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import { IconClose } from '../../../common/icon-antd'
 import { InputRadio, InputSelect, InputText } from '../../../common/vue-form'
@@ -10,32 +10,62 @@ import { Room, RoomInteractType, RoomInteractTypeText } from '../../../modules/r
 import { RoomService } from '../../../modules/room/room.service'
 import { MeService } from '../../../modules/_me/me.service'
 import { AlertStore } from '@/common/vue-alert'
+import InputCheckboxUserList from '@/views/component/InputCheckboxUserList.vue'
+import { CONFIG } from '@/config'
+import { ESArray } from '@/utils'
 
 const emit = defineEmits<{
   (e: 'success', value: Room, type: 'CREATE' | 'UPDATE' | 'DESTROY'): void
 }>()
 
-const mode = ref<'UPDATE' | 'CREATE'>('CREATE')
-
 const { userPermission, organizationPermission } = MeService
 
-const showModal = ref(false)
+const roomOrigin = ref(Room.blank())
 const room = ref(Room.blank())
+const userIdListOrigin = ref<number[]>([])
+const userIdList = ref<number[]>([])
+
+const showModal = ref(false)
 const saveLoading = ref(false)
 
 const openModal = async (roomId?: number) => {
   showModal.value = true
   if (roomId) {
-    room.value = await RoomService.detail(roomId)
+    roomOrigin.value = await RoomService.detail(
+      roomId,
+      { relation: { userRoomList: { user: false } } },
+      { query: true },
+    )
+    userIdListOrigin.value = roomOrigin.value.userRoomList!.map((i) => i.userId)
   } else {
-    room.value = Room.blank()
+    roomOrigin.value = Room.blank()
+    userIdListOrigin.value = []
   }
+  room.value = Room.from(roomOrigin.value)
+  userIdList.value = [...userIdListOrigin.value]
 }
 
 const closeModal = () => {
   room.value = Room.blank()
   showModal.value = false
 }
+
+const hasChangeUserIdList = computed(() => {
+  if (!ESArray.equal(userIdListOrigin.value, userIdList.value)) {
+    return true
+  }
+  return false
+})
+
+const hasChangeData = computed(() => {
+  if (!Room.equal(roomOrigin.value, room.value)) {
+    return true
+  }
+  if (hasChangeUserIdList.value) {
+    return true
+  }
+  return false
+})
 
 const handleSave = async () => {
   if (!room.value.roomInteractType) {
@@ -44,10 +74,16 @@ const handleSave = async () => {
   try {
     saveLoading.value = true
     if (!room.value.id) {
-      const response = await RoomService.createOne({ room: room.value })
+      const response = await RoomService.createOne({
+        room: room.value,
+        userIdList: userIdList.value,
+      })
       emit('success', response, 'CREATE')
     } else {
-      const response = await RoomService.updateOne(room.value.id, { room: room.value })
+      const response = await RoomService.updateOne(room.value.id, {
+        room: room.value,
+        userIdList: hasChangeUserIdList.value ? userIdList.value : undefined,
+      })
       emit('success', response, 'UPDATE')
     }
     closeModal()
@@ -84,7 +120,7 @@ defineExpose({ openModal })
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
-          {{ room.id ? 'Cập nhật kho hàng' : 'Tạo kho hàng mới' }}
+          {{ room.id ? 'Cập nhật phòng' : 'Tạo phòng mới' }}
         </div>
         <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
           <IconClose />
@@ -147,7 +183,7 @@ defineExpose({ openModal })
         </div>
 
         <div class="mt-6 flex">
-          <div style="width: 100px">Chức năng:</div>
+          <div style="width: 120px">Chức năng:</div>
           <div style="flex: 1">
             <InputRadio
               v-model:value="room.isCommon"
@@ -159,17 +195,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-6 flex">
-          <div style="width: 100px">Menu:</div>
-          <div style="flex: 1">
-            <InputRadio
-              v-model:value="room.showMenu"
-              :options="[
-                { key: 1, label: 'Hiển thị trên menu' },
-                { key: 0, label: 'Không hiển thị' },
-              ]"
-            />
+        <div class="flex mt-4">
+          <div class="w-[120px] flex-none">
+            <div>Tài khoản</div>
+            <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+              {{ JSON.stringify(userIdList) }}
+            </div>
           </div>
+          <InputCheckboxUserList v-model:userIdList="userIdList" />
         </div>
       </div>
 
@@ -185,7 +218,13 @@ defineExpose({ openModal })
           <VueButton type="reset" style="margin-left: auto" icon="close" @click="closeModal">
             Hủy bỏ
           </VueButton>
-          <VueButton color="blue" type="submit" :loading="saveLoading" icon="save">
+          <VueButton
+            color="blue"
+            type="submit"
+            :loading="saveLoading"
+            icon="save"
+            :disabled="!hasChangeData"
+          >
             Lưu lại
           </VueButton>
         </div>

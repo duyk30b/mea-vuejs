@@ -6,7 +6,6 @@ import {
   PaymentGetQuery,
   PaymentListQuery,
   PaymentPaginationQuery,
-  type CustomerPaymentBody,
   type DistributorPaymentBody,
 } from './payment.dto'
 import { MoneyDirection, Payment } from './payment.model'
@@ -48,8 +47,32 @@ export class PaymentApi {
     return data
   }
 
-  static async customerPayment(body: CustomerPaymentBody) {
+  static async customerPayment(body: {
+    customerId: number
+    cashierId: number
+    paymentMethodId: number
+    money: number
+    note: string
+    ticketPaymentList: { ticketId: number; money: number }[]
+  }) {
     const response = await AxiosInstance.post('/payment/customer-money-in', body)
+    const { data } = response.data as BaseResponse<{ customer: any }>
+
+    const customer = Customer.from(data.customer)
+
+    return { customer }
+  }
+
+  static async customerPaymentCommon(body: {
+    customerId: number
+    cashierId: number
+    paymentMethodId: number
+    note: string
+    moneyTopUp: number
+    payDebtTicketList: { ticketId: number; money: number }[]
+    prepaymentTicketList: { ticketId: number; money: number }[]
+  }) {
+    const response = await AxiosInstance.post('/payment/customer-payment-common', body)
     const { data } = response.data as BaseResponse<{ customer: any }>
 
     const customer = Customer.from(data.customer)

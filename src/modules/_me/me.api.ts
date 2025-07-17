@@ -11,6 +11,7 @@ export class MeApi {
     return {
       organization: Organization.from(data.organization),
       permissionAll: Permission.fromList(data.permissionAll),
+      roomIdList: data.roomIdList as number[],
       permissionIds: data.permissionIds,
       settingMap: data.settingMap as Record<string, any>,
       settingMapRoot: data.settingMapRoot as Record<string, any>,

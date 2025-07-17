@@ -31,32 +31,49 @@ export class UserApi {
     return User.from(data.user)
   }
 
-  static async createOne(user: User, roleIdList: number[]) {
+  static async createOne(body: {
+    user: User
+    roleIdList: number[]
+    roomIdList: number[]
+    account: { username: string; password: string }
+  }) {
+    const { user, account, roleIdList, roomIdList } = body
     const response = await AxiosInstance.post('/user/create', {
-      phone: user.phone,
-      username: user.username,
-      password: user.password,
-      fullName: user.fullName,
-      birthday: user.birthday,
-      gender: user.gender,
-      isActive: user.isActive,
-
+      user: {
+        phone: user.phone,
+        fullName: user.fullName,
+        birthday: user.birthday,
+        gender: user.gender,
+        isActive: user.isActive,
+      },
+      account,
+      roomIdList,
       roleIdList,
     })
     const { data } = response.data as BaseResponse<{ user: any }>
     return User.from(data.user)
   }
 
-  static async updateOne(id: number, user: User, roleIdList: number[]) {
+  static async updateOne(
+    id: number,
+    body: {
+      user: User
+      account?: { username: string; password: string }
+      roleIdList?: number[]
+      roomIdList?: number[]
+    },
+  ) {
+    const { user, account, roleIdList, roomIdList } = body
     const response = await AxiosInstance.patch(`/user/update/${id}`, {
-      phone: user.phone,
-      username: user.username,
-      password: user.password, // nếu cập nhật password thì gửi thêm pass
-      fullName: user.fullName,
-      birthday: user.birthday,
-      gender: user.gender,
-      isActive: user.isActive,
-
+      user: {
+        phone: user.phone,
+        fullName: user.fullName,
+        birthday: user.birthday,
+        gender: user.gender,
+        isActive: user.isActive,
+      },
+      account,
+      roomIdList,
       roleIdList,
     })
     const { data } = response.data as BaseResponse<{ user: any }>

@@ -30,8 +30,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { Ticket, TicketActionApi, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
@@ -49,6 +48,7 @@ import TicketClinicRadiology from './radiology/TicketClinicRadiology.vue'
 import TicketClinicSummary from './summary/TicketClinicSummary.vue'
 import TicketClinicUser from './user/TicketClinicUser.vue'
 import { ticketRoomRef } from '@/modules/room'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
 const modalTicketClinicHistory = ref<InstanceType<typeof ModalTicketClinicHistory>>()
 const modalTicketClinicDetailSetting = ref<InstanceType<typeof ModalTicketClinicDetailSetting>>()
@@ -161,7 +161,7 @@ const startRegisterExecuting = async () => {
 }
 
 const startCloseTicket = async () => {
-  await TicketClinicApi.close(ticketRoomRef.value.id)
+  await TicketActionApi.close(ticketRoomRef.value.id)
 }
 
 const clickCloseTicket = () => {

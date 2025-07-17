@@ -2,7 +2,9 @@ import { decrypt } from '../../utils'
 import type { EGender } from '../enum'
 import { Organization } from '../organization'
 import { Role } from '../role/role.model'
+import { Room } from '../room'
 import { UserRole } from '../user-role/user-role.model'
+import { UserRoom } from '../user-room'
 import Device from './device.model'
 
 export class User {
@@ -11,6 +13,7 @@ export class User {
   username: string
   password: string
   secret: string
+
   fullName: string
   phone: string
   birthday?: number
@@ -18,10 +21,12 @@ export class User {
 
   isAdmin: 1 | 0 // Trạng thái
   isActive: 1 | 0 // Trạng thái
+
   updatedAt: number
   deletedAt: number
 
   userRoleList?: UserRole[]
+  userRoomList?: UserRoom[]
   organization?: Organization
   devices?: Device[]
 
@@ -70,7 +75,14 @@ export class User {
       target.userRoleList = UserRole.basicList(target.userRoleList)
       target.userRoleList.forEach((userRole) => {
         userRole.role = userRole.role ? Role.basic(userRole.role) : userRole.role
-        userRole.user = userRole.user ? User.basic(userRole.user) : userRole.user
+        // userRole.user = userRole.user ? User.basic(userRole.user) : userRole.user
+      })
+    }
+    if (target.userRoomList) {
+      target.userRoomList = UserRoom.basicList(target.userRoomList)
+      target.userRoomList.forEach((userRoom) => {
+        userRoom.room = userRoom.room ? Room.basic(userRoom.room) : userRoom.room
+        // userRoom.user = userRoom.user ? User.basic(userRoom.user) : userRoom.user
       })
     }
     if (target.devices) {
@@ -81,5 +93,21 @@ export class User {
 
   static fromList(sourceList: User[]) {
     return sourceList.map((i) => User.from(i))
+  }
+
+  static equal(a: User, b: User) {
+    if (a.id != b.id) return false
+    // if (a.username != b.username) return false
+    // if (a.password != b.password) return false
+
+    if (a.fullName != b.fullName) return false
+    if (a.phone != b.phone) return false
+
+    if (a.birthday != b.birthday) return false
+    if (a.gender != b.gender) return false
+
+    if (a.isAdmin != b.isAdmin) return false
+    if (a.isActive != b.isActive) return false
+    return true
   }
 }

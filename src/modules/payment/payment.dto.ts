@@ -43,18 +43,9 @@ export class PaymentGetQuery {
   }
 }
 
-export class PaymentPaginationQuery extends PaymentGetQuery {}
-export class PaymentListQuery extends OmitClass(PaymentGetQuery, ['page']) {}
-export class PaymentDetailQuery extends PickClass(PaymentGetQuery, ['relation']) {}
-
-export interface CustomerPaymentBody {
-  customerId: number
-  cashierId: number
-  paymentMethodId: number
-  money: number
-  note: string
-  ticketPaymentList: { ticketId: number; money: number }[]
-}
+export class PaymentPaginationQuery extends PaymentGetQuery { }
+export class PaymentListQuery extends OmitClass(PaymentGetQuery, ['page']) { }
+export class PaymentDetailQuery extends PickClass(PaymentGetQuery, ['relation']) { }
 
 export interface DistributorPaymentBody {
   distributorId: number

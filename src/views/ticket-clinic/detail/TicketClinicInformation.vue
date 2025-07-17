@@ -113,9 +113,18 @@ const handleClickModalRegisterAppointment = () => {
             <a @click="modalCustomerDetail?.openModal(ticketRoomRef.customerId)">
               <IconFileSearch />
             </a>
-            (nợ cũ:
-            <b>{{ formatMoney(ticketRoomRef.customer?.debt || 0) }}</b>
-            )
+          </span>
+          <span v-if="ticketRoomRef.customer!.debt > 0">
+            - Nợ:
+            <b style="color: var(--text-red)">
+              {{ formatMoney(ticketRoomRef.customer!.debt) }}
+            </b>
+          </span>
+          <span v-if="ticketRoomRef.customer!.debt < 0">
+            - Quỹ:
+            <b style="color: var(--text-green)">
+              {{ formatMoney(-ticketRoomRef.customer!.debt) }}
+            </b>
           </span>
         </div>
         <a

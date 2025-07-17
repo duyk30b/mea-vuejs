@@ -78,10 +78,10 @@ export class RoleService {
     }
   }
 
-  static async pagination(query: RolePaginationQuery) {
+  static async pagination(query: RolePaginationQuery, options?: { refetch: boolean }) {
     const page = query.page || 1
     const limit = query.limit || 10
-    await RoleService.fetchAll()
+    await RoleService.fetchAll({ refetch: !!options?.refetch })
     const dataQuery = RoleService.executeQuery(RoleService.roleAll, query)
     const data = dataQuery.slice((page - 1) * limit, page * limit)
 
@@ -94,8 +94,8 @@ export class RoleService {
     }
   }
 
-  static async list(query: RoleListQuery) {
-    await RoleService.fetchAll()
+  static async list(query: RoleListQuery, options?: { refetch: boolean }) {
+    await RoleService.fetchAll({ refetch: !!options?.refetch })
     const data = RoleService.executeQuery(RoleService.roleAll, query)
     if (query.relation) {
       await RoleService.executeRelation(data, query.relation)
@@ -104,23 +104,24 @@ export class RoleService {
   }
 
   static async detail(
-    id: number,
+    roleId: number,
     query: RoleDetailQuery = {},
     options?: { refetch?: boolean; query?: boolean },
   ) {
     let role: Role | undefined
     if (options?.query) {
-      role = await RoleApi.detail(id, query)
-      const findIndex = RoleService.roleAll.findIndex((i) => i.id === id)
-      if (findIndex !== -1) RoleService.roleAll[findIndex] = role
-      RoleService.roleMap.value[role.id] = role
+      role = await RoleApi.detail(roleId, query)
+      const findIndex = RoleService.roleAll.findIndex((i) => i.id === roleId)
+      if (findIndex !== -1) {
+        Object.assign(RoleService.roleAll[findIndex], role)
+        Object.assign(RoleService.roleMap.value[roleId], role)
+      }
     } else {
       await RoleService.fetchAll({ refetch: !!options?.refetch })
-      role = RoleService.roleAll.find((i) => i.id === id)
-    }
-
-    if (query.relation) {
-      await RoleService.executeRelation([role!], query.relation)
+      role = RoleService.roleMap.value[roleId]
+      if (query.relation) {
+        await RoleService.executeRelation([role!], query.relation)
+      }
     }
 
     return role ? Role.from(role) : Role.blank()

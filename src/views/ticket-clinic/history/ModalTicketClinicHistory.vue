@@ -16,7 +16,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { ImageHost } from '../../../modules/image/image.model'
 import { LaboratoryValueType } from '../../../modules/laboratory'
-import { Ticket, TicketApi, TicketType } from '../../../modules/ticket'
+import { Ticket, TicketQueryApi, TicketType } from '../../../modules/ticket'
 import { TicketClinicService } from '../../../modules/ticket-clinic/ticket-clinic.service'
 import { TicketLaboratoryStatus } from '../../../modules/ticket-laboratory'
 import { ESImage, ESTimer } from '../../../utils'
@@ -37,7 +37,7 @@ const showModal = ref(false)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {

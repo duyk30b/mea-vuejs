@@ -9,7 +9,7 @@ import {
   TicketAttributeKeyOptometryList,
   type TicketAttributeKeyOptometryType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
 const { userPermission, organization } = MeService
 

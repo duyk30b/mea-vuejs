@@ -69,7 +69,7 @@ const closeModal = () => {
 
 const clickDestroyRadiologySample = async (radiologySampleId: number) => {
   ModalStore.confirm({
-    title: 'Xác nhận xóa đơn mẫu ?',
+    title: 'Xác nhận xóa phiếu kết quả mẫu ?',
     content: [
       '- kết quả mẫu này sẽ bị xóa khỏi hệ thống',
       '- Dữ liệu đã xóa không thể phục hồi, bạn vẫn muốn xóa ?',
@@ -259,12 +259,12 @@ defineExpose({ openModal })
               </div>
             </div>
             <div style="flex-grow: 1">
-              <div>Tên đơn mẫu mới</div>
+              <div>Tên kết quả mẫu mới</div>
               <div>
                 <InputText
                   v-model:value="radiologySampleInsert.name"
                   required
-                  placeholder="Điền tên đơn mẫu tại đây"
+                  placeholder="Điền tên kết quả mẫu tại đây"
                 />
               </div>
             </div>

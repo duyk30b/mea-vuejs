@@ -5,8 +5,8 @@ import { RoomDetailQuery, RoomGetQuery, RoomListQuery, type RoomPaginationQuery 
 import { Room } from './room.model'
 
 export class RoomApi {
-  static async pagination(options: RoomPaginationQuery) {
-    const params = RoomGetQuery.toQuery(options)
+  static async pagination(query: RoomPaginationQuery) {
+    const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/room/pagination', { params })
     const { data } = response.data as BaseResponse<{
@@ -16,15 +16,15 @@ export class RoomApi {
       roomList: any[]
     }>
     return {
+      roomList: Room.fromList(data.roomList),
       total: data.total,
       page: data.page,
       limit: data.limit,
-      data: Room.fromList(data.roomList),
     }
   }
 
-  static async list(options: RoomListQuery) {
-    const params = RoomGetQuery.toQuery(options)
+  static async list(query: RoomListQuery) {
+    const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get('/room/list', { params })
     const { data } = response.data as BaseResponse<{ roomList: any[] }>
@@ -40,33 +40,37 @@ export class RoomApi {
     200,
   )
 
-  static async detail(id: number, options: RoomDetailQuery): Promise<Room> {
-    const params = RoomGetQuery.toQuery(options)
+  static async detail(id: number, query: RoomDetailQuery): Promise<Room> {
+    const params = RoomGetQuery.toQuery(query)
 
     const response = await AxiosInstance.get(`/room/detail/${id}`, { params })
     const { data } = response.data as BaseResponse<{ room: any }>
     return Room.from(data.room)
   }
 
-  static async createOne(body: { room: Room }) {
-    const { room } = body
+  static async createOne(body: { room: Room; userIdList: number[] }) {
+    const { room, userIdList } = body
     const response = await AxiosInstance.post('/room/create', {
-      name: room.name,
-      roomInteractType: room.roomInteractType,
-      isCommon: room.isCommon,
-      showMenu: room.showMenu,
+      room: {
+        name: room.name,
+        roomInteractType: room.roomInteractType,
+        isCommon: room.isCommon,
+      },
+      userIdList,
     })
     const { data } = response.data as BaseResponse<{ room: any }>
     return Room.from(data.room)
   }
 
-  static async updateOne(id: number, body: { room: Room }) {
-    const { room } = body
+  static async updateOne(id: number, body: { room: Room; userIdList?: number[] }) {
+    const { room, userIdList } = body
     const response = await AxiosInstance.patch(`/room/update/${id}`, {
-      name: room.name,
-      roomInteractType: room.roomInteractType,
-      isCommon: room.isCommon,
-      showMenu: room.showMenu,
+      room: {
+        name: room.name,
+        roomInteractType: room.roomInteractType,
+        isCommon: room.isCommon,
+      },
+      userIdList: userIdList ? userIdList : undefined, // không gửi lên nếu không cập nhật
     })
     const { data } = response.data as BaseResponse<{ room: any }>
     return Room.from(data.room)

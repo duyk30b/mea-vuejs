@@ -2,6 +2,9 @@
 import { watch } from 'vue'
 import { nextTick } from 'vue'
 import { ref } from 'vue'
+import Compressor from 'compressorjs'
+import { CONFIG } from '@/config'
+import { ESString } from '../../utils/helpers/string.helper'
 
 const imageListContainerRef = ref<HTMLElement>()
 
@@ -14,12 +17,14 @@ const props = withDefaults(
     height?: number
     rootImageList?: { thumbnail: string; id: number; enlarged: string }[]
     editable?: boolean
+    quality?: number
   }>(),
   {
     height: 150,
     rootImageList: () => [],
     editable: true,
-  }
+    quality: 0.6,
+  },
 )
 
 const imageDataList = ref<{ thumbnail: string; enlarged: string; file: any; id: number }[]>([])
@@ -36,7 +41,7 @@ watch(
   (newVal) => {
     rootImageListString.value = JSON.stringify(newVal)
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 watch(
@@ -50,7 +55,7 @@ watch(
       id: i.id,
     }))
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleAddImage = (e: Event) => {
@@ -61,24 +66,35 @@ const handleAddImage = (e: Event) => {
   let loadCount = 0
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = function (e) {
-      if (e.target?.result) {
-        imageDataList.value.push({
-          thumbnail: e.target?.result as string,
-          enlarged: e.target?.result as string,
-          file,
-          id: 0,
-        })
-      }
-      loadCount++
-      if (loadCount === files.length) {
-        nextTick(() => {
-          imageListContainerRef.value!.scrollLeft = imageListContainerRef.value!.scrollWidth
-        })
-      }
-    }
+
+    new Compressor(file, {
+      quality: props.quality,
+      maxWidth: 1024,
+      success(result) {
+        const reader = new FileReader()
+        reader.readAsDataURL(result)
+        reader.onload = function (e) {
+          if (e.target?.result) {
+            imageDataList.value.push({
+              thumbnail: e.target.result as string,
+              enlarged: e.target.result as string,
+              file: result,
+              id: 0,
+            })
+          }
+          loadCount++
+          if (loadCount === files.length) {
+            nextTick(() => {
+              imageListContainerRef.value!.scrollLeft = imageListContainerRef.value!.scrollWidth
+            })
+          }
+        }
+      },
+      error(err) {
+        console.error('Compression error:', err)
+        loadCount++
+      },
+    })
   }
   emit('changeImage')
 }
@@ -186,7 +202,8 @@ defineExpose({ imageDataList, getData })
       <div
         v-for="(imageData, index) in imageDataList"
         :key="index"
-        class="image-wrapper image-thumbnail">
+        class="image-wrapper image-thumbnail"
+      >
         <img
           :src="imageData.thumbnail"
           :style="
@@ -195,7 +212,8 @@ defineExpose({ imageDataList, getData })
               : { opacity: 0, objectFit: 'cover', height: height + 'px', width: height + 'px' }
           "
           @load="(e) => handleLoadImage(imageData.thumbnail)"
-          @click="openModal(index)" />
+          @click="openModal(index)"
+        />
         <button v-if="editable" type="button" class="btn-change-image" @click="clickChangeImage">
           Change
         </button>
@@ -203,20 +221,26 @@ defineExpose({ imageDataList, getData })
           type="file"
           accept="image/*"
           style="display: none"
-          @change="(e) => handleChangeImage(e, index)" />
+          @change="(e) => handleChangeImage(e, index)"
+        />
         <button
           v-if="editable"
           type="button"
           class="btn-remove-image"
-          @click="handleRemoveImage(index)">
+          @click="handleRemoveImage(index)"
+        >
           &times;
         </button>
+        <div v-if="CONFIG.MODE === 'development'" class="size-text-thumbnail">
+          {{ ESString.formatNumber({ number: imageData.file.size, fixed: 0 }) }}
+        </div>
       </div>
       <div
         v-if="editable"
         :style="{ height: height + 'px', width: height + 'px' }"
         class="image-wrapper image-add"
-        @click="clickAddImage">
+        @click="clickAddImage"
+      >
         <input type="file" accept="image/*" multiple @change="handleAddImage" />
         +
       </div>
@@ -229,13 +253,15 @@ defineExpose({ imageDataList, getData })
   <div
     class="modal-preview"
     :style="{ display: showModal ? 'flex' : 'none' }"
-    @click.self="clickOutsideModal">
+    @click.self="clickOutsideModal"
+  >
     <button type="button" class="close-preview" @click="closeModal()">&times;</button>
     <button
       :disabled="indexPreview <= 0"
       type="button"
       class="prev-preview"
-      @click="handleChangeIndexPreview(-1)">
+      @click="handleChangeIndexPreview(-1)"
+    >
       &#10094;
     </button>
     <div class="image-preview">
@@ -247,15 +273,20 @@ defineExpose({ imageDataList, getData })
             : { opacity: 0, objectFit: 'cover', aspectRatio: '1 / 1' }
         "
         :src="imageDataList[indexPreview]?.enlarged"
-        @load="(e) => handleLoadImage(imageDataList[indexPreview]?.enlarged)" />
+        @load="(e) => handleLoadImage(imageDataList[indexPreview]?.enlarged)"
+      />
     </div>
     <button
       :disabled="indexPreview >= imageDataList.length - 1"
       type="button"
       class="next-preview"
-      @click="handleChangeIndexPreview(1)">
+      @click="handleChangeIndexPreview(1)"
+    >
       &#10095;
     </button>
+    <div v-if="CONFIG.MODE === 'development'" class="size-text-preview">
+      {{ ESString.formatNumber({ number: imageDataList[indexPreview]?.file?.size, fixed: 0 }) }} KB
+    </div>
   </div>
 </template>
 
@@ -331,6 +362,17 @@ defineExpose({ imageDataList, getData })
         border-radius: 50%;
         cursor: pointer;
       }
+      .size-text-thumbnail {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: violet;
+        font-weight: bold;
+        padding: 0 3px;
+        font-size: 0.8em;
+        transform: translateX(-50%);
+      }
     }
   }
 }
@@ -405,6 +447,18 @@ defineExpose({ imageDataList, getData })
     top: 50%;
     right: 12px;
     padding: 10px;
+  }
+
+  .size-text-preview {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: violet;
+    font-weight: bold;
+    padding: 0 8px;
+    font-size: 1.2em;
+    transform: translateX(-50%);
   }
 }
 

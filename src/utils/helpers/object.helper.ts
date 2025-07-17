@@ -64,6 +64,19 @@ export class ESArray {
     })
     return object
   }
+
+  static equal = <T>(a: T[], b: T[]) => {
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+      const aItem = a[i]
+      const bItem = b[i]
+      if (typeof aItem !== typeof bItem) return false
+      if (aItem !== bItem) {
+        return false
+      }
+    }
+    return true
+  }
 }
 
 // Chỉ ghi đè các trường có thể ghi đè (không làm thay đổi object gốc)

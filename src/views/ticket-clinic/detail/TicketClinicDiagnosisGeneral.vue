@@ -12,12 +12,12 @@ import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
 } from '../../../modules/ticket-attribute'
-import { TicketClinicApi } from '../../../modules/ticket-clinic'
 import { ESImage, ESString } from '../../../utils'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import { ICD, ICDService } from '@/modules/icd'
 import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
 import { ticketRoomRef } from '@/modules/room'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
 const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
 

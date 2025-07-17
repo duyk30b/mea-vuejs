@@ -4,8 +4,8 @@ import {
   SplitBatchByDistributor,
   SplitBatchByExpiryDate,
   SplitBatchByWarehouse,
+  TicketType,
 } from '../enum'
-import { TicketStatus, TicketType } from '../ticket'
 
 export const SETTING_DEFAULT = {
   isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 900,

@@ -63,10 +63,6 @@ const startFetchPermission = async (roleId?: number) => {
     PermissionService.getPermissionTree(),
   ])
   const [rolePromise, userAllPromise, permissionAllPromise] = fetchPromise
-  console.log(
-    '🚀 ~ RoleUpsertContainer.vue:66 ~ startFetchPermission ~ userAllPromise:',
-    userAllPromise,
-  )
 
   checkboxUserIdOptions.value = userAllPromise.map((i) => ({ key: i.id, label: i.fullName }))
 

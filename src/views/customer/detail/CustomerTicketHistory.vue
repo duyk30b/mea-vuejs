@@ -6,7 +6,7 @@ import VuePagination from '../../../common/VuePagination.vue'
 import { MeService } from '../../../modules/_me/me.service'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketApi, TicketStatus } from '../../../modules/ticket'
+import { Ticket, TicketQueryApi, TicketStatus } from '../../../modules/ticket'
 import { ESTimer } from '../../../utils'
 import LinkAndStatusTicket from '../../ticket-base/LinkAndStatusTicket.vue'
 
@@ -26,7 +26,7 @@ const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { customerId: props.customerId },

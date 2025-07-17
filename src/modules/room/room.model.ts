@@ -1,3 +1,6 @@
+import { User } from '../user'
+import { UserRoom } from '../user-room'
+
 export enum RoomInteractType {
   Ticket = 1,
   Product = 2,
@@ -20,20 +23,20 @@ export class Room {
   roomInteractType: RoomInteractType
 
   isCommon: 1 | 0 // Trạng thái
-  showMenu: 1 | 0 // Trạng thái
+  userRoomList?: UserRoom[]
 
   static init() {
     const ins = new Room()
     ins.id = 0
+    ins.name = ''
 
     return ins
   }
 
   static blank() {
     const ins = Room.init()
-    ins.name = ''
     ins.isCommon = 1
-    ins.showMenu = 1
+    ins.userRoomList = []
     return ins
   }
 
@@ -54,6 +57,14 @@ export class Room {
   static from(source?: Room) {
     const target = Room.basic(source)
 
+    if (target.userRoomList) {
+      target.userRoomList = UserRoom.basicList(target.userRoomList)
+      target.userRoomList.forEach((userRoom) => {
+        userRoom.room = userRoom.room ? Room.basic(userRoom.room) : userRoom.room
+        userRoom.user = userRoom.user ? User.basic(userRoom.user) : userRoom.user
+      })
+    }
+
     return target
   }
 
@@ -66,7 +77,6 @@ export class Room {
     if (a.name != b.name) return false
     if (a.roomInteractType != b.roomInteractType) return false
     if (a.isCommon != b.isCommon) return false
-    if (a.showMenu != b.showMenu) return false
 
     return true
   }

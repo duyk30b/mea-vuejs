@@ -13,8 +13,7 @@ import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Role, RoleService } from '@/modules/role'
-import { Ticket, TicketApi, TicketStatus, TicketType } from '@/modules/ticket'
-import { TicketClinicApi } from '@/modules/ticket-clinic'
+import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus, TicketType } from '@/modules/ticket'
 import { User, UserService } from '@/modules/user'
 import ModalTicketSendProduct from '@/views/ticket-base/ModalTicketSendProduct.vue'
 import TicketClinicDeliveryStatusTag from '@/views/ticket-clinic/TicketClinicDeliveryStatusTag.vue'
@@ -69,7 +68,7 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       dataLoading.value = true
     }
 
-    const { data, meta } = await TicketApi.pagination({
+    const { data, meta } = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -101,7 +100,6 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
     roomReceptionPagination.value = data
     total.value = meta.total
   } catch (error) {
-    console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
   } finally {
     dataLoading.value = false
   }
@@ -116,9 +114,7 @@ onBeforeMount(async () => {
       RoleService.getMap(),
       CustomerService.refreshDB(),
     ])
-  } catch (error) {
-    console.log('🚀 ~ ReceptionTicketList.vue:113 ~ onBeforeMount ~ error:', error)
-  }
+  } catch (error) {}
 })
 
 const handleFocusFirstSearchCustomer = async () => {
@@ -180,7 +176,7 @@ const handleModalReceptionTicketListSettingSuccess = async () => {
 }
 
 const startCloseTicket = async (ticketId: number) => {
-  await TicketClinicApi.close(ticketId)
+  await TicketActionApi.close(ticketId)
 }
 
 const clickCloseTicket = (ticket: Ticket) => {
@@ -227,11 +223,9 @@ const handleClickDestroy = async (ticketId: number) => {
         roomReceptionPagination.value = roomReceptionPagination.value.filter((i) => {
           return i.id === ticketId
         })
-        await TicketClinicApi.destroy(ticketId)
+        await TicketActionApi.destroy(ticketId)
         AlertStore.addSuccess('Xóa phiếu khám thành công')
-      } catch (error) {
-        console.log('🚀 ModalTicketClinicCreate.vue:356 ~ handleClickDestroy: ~ error:', error)
-      }
+      } catch (error) {}
       await startFetchData()
     },
   })
@@ -573,7 +567,10 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               <div class="flex flex-wrap justify-between items-center">
                 <TicketClinicDeliveryStatusTag :deliveryStatus="ticket.deliveryStatus" />
                 <VueButton
-                  v-if="ticket.deliveryStatus === DeliveryStatus.Pending"
+                  v-if="
+                    ticket.deliveryStatus === DeliveryStatus.Pending &&
+                    userPermission[PermissionId.RECEIPT_SEND_PRODUCT]
+                  "
                   size="small"
                   icon="send"
                   color="green"
@@ -598,8 +595,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                       TicketStatus.Draft,
                       TicketStatus.Deposited,
                       TicketStatus.Executing,
-                    ].includes(ticket.status) &&
-                    userPermission[PermissionId.RECEPTION_CRUD_TICKET_DRAFT]
+                    ].includes(ticket.status) && userPermission[PermissionId.RECEPTION_PAYMENT]
                   "
                   size="small"
                   icon="dollar"
@@ -613,7 +609,10 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                   <span>Tạm ứng</span>
                 </VueButton>
                 <VueButton
-                  v-if="[TicketStatus.Debt].includes(ticket.status)"
+                  v-if="
+                    [TicketStatus.Debt].includes(ticket.status) &&
+                    userPermission[PermissionId.RECEPTION_PAYMENT]
+                  "
                   size="small"
                   icon="dollar"
                   @click="
@@ -647,7 +646,10 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                   </template>
                   <div class="vue-menu">
                     <a
-                      v-if="ticket.paid > ticket.totalMoney"
+                      v-if="
+                        ticket.paid > ticket.totalMoney &&
+                        userPermission[PermissionId.RECEPTION_REFUND_OVER_PAID]
+                      "
                       style="color: var(--text-red)"
                       @click="
                         modalTicketClinicPayment?.openModal({
@@ -659,7 +661,10 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                       Hoàn tiền
                     </a>
                     <a
-                      v-if="[TicketStatus.Executing].includes(ticket.status)"
+                      v-if="
+                        [TicketStatus.Executing].includes(ticket.status) &&
+                        userPermission[PermissionId.RECEPTION_CLOSE_TICKET]
+                      "
                       style="color: var(--text-red)"
                       @click="clickCloseTicket(ticket)"
                     >
@@ -673,7 +678,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
               <a
                 v-if="
                   [TicketStatus.Schedule, TicketStatus.Draft].includes(ticket.status) &&
-                  userPermission[PermissionId.RECEPTION_CRUD_TICKET_DRAFT]
+                  userPermission[PermissionId.RECEPTION_DESTROY_TICKET]
                 "
                 style="color: var(--text-red)"
                 class="text-xl"

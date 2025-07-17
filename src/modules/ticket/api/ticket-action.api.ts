@@ -1,0 +1,43 @@
+import { AxiosInstance } from '../../../core/axios.instance'
+import type { BaseResponse } from '../../_base/base-dto'
+
+export class TicketActionApi {
+  static async sendProduct(body: { ticketId: number; ticketProductIdList: number[] }) {
+    const { ticketId, ticketProductIdList } = body
+    const response = await AxiosInstance.post(`/ticket/send-product/${ticketId}`, {
+      ticketProductIdList,
+    })
+    const { data } = response.data as BaseResponse
+  }
+
+  static async returnProduct(body: {
+    ticketId: number
+    returnList: {
+      ticketBatchId: number
+      quantityReturn: number
+    }[]
+  }) {
+    const { ticketId, returnList } = body
+    const response = await AxiosInstance.post(`/ticket/return-product/${ticketId}`, {
+      returnList,
+    })
+    const { data } = response.data as BaseResponse
+    return data
+  }
+
+  static async close(ticketId: number) {
+    const response = await AxiosInstance.post(`/ticket/close/${ticketId}`)
+    const { data } = response.data as BaseResponse
+  }
+
+  static async reopen(ticketId: number) {
+    const response = await AxiosInstance.post(`/ticket/reopen/${ticketId}`)
+    const { data } = response.data as BaseResponse
+  }
+
+  static async destroy(ticketId: number) {
+    const response = await AxiosInstance.delete(`/ticket/destroy/${ticketId}`)
+    const { data } = response.data as BaseResponse<{ ticketId: any }>
+    return data
+  }
+}

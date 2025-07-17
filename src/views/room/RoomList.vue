@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { IconDoorOpen } from '@/common/icon-google'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { RoomInteractType, RoomService } from '@/modules/room'
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -8,8 +10,8 @@ import Breadcrumb from '../component/Breadcrumb.vue'
 
 const router = useRouter()
 
-const { organizationPermission, userPermission } = MeService
-const roomList = RoomService.roomList.value
+const { organizationPermission, userPermission, roomIdMap } = MeService
+const roomList = RoomService.roomList
 
 onMounted(async () => {
   await RoomService.getAll()
@@ -22,12 +24,24 @@ onMounted(async () => {
       <Breadcrumb />
     </div>
   </div>
-
   <div class="mt-4 mx-4 bg-white">
     <div class="p-4 flex flex-wrap gap-4">
+      <div
+        v-if="userPermission[PermissionId.RECEIPT_MENU]"
+        class="card"
+        @click="router.push({ name: 'ReceptionTicketList' })"
+      >
+        <div class="card-icon">
+          <IconDoorOpen />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Tiếp đón</div>
+          <div class="card-description"></div>
+        </div>
+      </div>
       <template v-for="room in roomList" :key="room.id">
         <div
-          v-if="room.showMenu && room.roomInteractType === RoomInteractType.Ticket"
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Ticket"
           class="card"
           @click="router.push({ name: 'RoomTicket', params: { roomId: room.id } })"
         >
@@ -40,7 +54,7 @@ onMounted(async () => {
           </div>
         </div>
         <div
-          v-if="room.showMenu && room.roomInteractType === RoomInteractType.Laboratory"
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Laboratory"
           class="card"
           @click="router.push({ name: 'RoomLaboratory', params: { roomId: room.id } })"
         >
@@ -53,7 +67,7 @@ onMounted(async () => {
           </div>
         </div>
         <div
-          v-if="room.showMenu && room.roomInteractType === RoomInteractType.Radiology"
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Radiology"
           class="card"
           @click="router.push({ name: 'RoomRadiology', params: { roomId: room.id } })"
         >

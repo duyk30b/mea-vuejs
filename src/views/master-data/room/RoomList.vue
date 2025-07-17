@@ -23,23 +23,23 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
-const startFetchData = async (options?: { refetch: boolean }) => {
+const startFetchData = async (options?: { refetch?: boolean; query?: boolean }) => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await RoomService.pagination(
+    const paginationResponse = await RoomService.pagination(
       {
         page: page.value,
         limit: limit.value,
-        relation: {},
+        relation: { userRoomList: { user: true } },
         filter: {},
         sort: { id: 'ASC' },
       },
-      { refetch: options?.refetch },
+      { refetch: options?.refetch, query: options?.query },
     )
 
-    roomList.value = data
-    total.value = meta.total
+    roomList.value = paginationResponse.roomList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: RoomList.vue:39 ~ startFetchData ~ error:', error)
   } finally {
@@ -60,11 +60,11 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 }
 
 onBeforeMount(async () => {
-  await startFetchData({ refetch: true })
+  await startFetchData({ query: true })
 })
 
 const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE' | 'DESTROY') => {
-  await startFetchData({ refetch: true })
+  await startFetchData({ query: true })
 }
 </script>
 
@@ -96,7 +96,7 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             <th>Tên</th>
             <th>Loại phòng</th>
             <th>Chức năng</th>
-            <th>Menu</th>
+            <th>Tài khoản truy cập</th>
             <th>#</th>
           </tr>
         </thead>
@@ -123,7 +123,7 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             <td>{{ room.name }}</td>
             <td>{{ RoomInteractTypeText[room.roomInteractType] }}</td>
             <td>{{ room.isCommon ? 'Phòng chung' : 'Phòng lẻ' }}</td>
-            <td>{{ room.showMenu ? 'Hiển thị menu' : '' }}</td>
+            <td>{{ room.userRoomList?.map((i) => i.user?.fullName).join(', ') }}</td>
             <td
               v-if="userPermission[PermissionId.MASTER_DATA_WAREHOUSE]"
               class="text-center"

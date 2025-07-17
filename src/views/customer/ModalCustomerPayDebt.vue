@@ -6,13 +6,13 @@ import { IconClose } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '../../common/vue-form'
 import VueModal from '../../common/vue-modal/VueModal.vue'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { Customer, CustomerService } from '../../modules/customer'
-import { TicketApi, TicketStatus, type Ticket } from '../../modules/ticket'
-import { ESTimer } from '../../utils'
 import { PaymentMethodService } from '../../modules/payment-method'
+import { TicketQueryApi, TicketStatus, type Ticket } from '../../modules/ticket'
+import { ESTimer } from '../../utils'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
-import { MeService } from '../../modules/_me/me.service'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -54,7 +54,7 @@ const openModal = async (customerId: number) => {
     dataLoading.value = true
     const fetchPromise = await Promise.all([
       CustomerService.detail(customerId),
-      TicketApi.list({
+      TicketQueryApi.list({
         filter: {
           customerId,
           status: TicketStatus.Debt,

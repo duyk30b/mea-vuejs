@@ -149,6 +149,8 @@ defineExpose({ startFetchData })
             <th>Số tiền</th>
             <th>Ghi nợ</th>
             <th>Công nợ</th>
+            <th>Ghi qũy</th>
+            <th>Quỹ</th>
           </tr>
         </thead>
         <tbody>
@@ -178,11 +180,34 @@ defineExpose({ startFetchData })
               {{ formatMoney(payment.paidAmount) }}
             </td>
             <td style="white-space: nowrap; text-align: right">
-              {{ formatMoney(payment.debtAmount) }}
+              <span
+                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
+              >
+                {{ formatMoney(payment.debtAmount) }}
+              </span>
             </td>
             <td class="text-right">
-              {{ formatMoney(payment.openDebt) }} ➞
-              {{ formatMoney(payment.closeDebt) }}
+              <span
+                v-if="payment.closeDebt > 0 || (payment.closeDebt == 0 && payment.openDebt >= 0)"
+              >
+                {{ formatMoney(payment.openDebt) }} ➞
+                {{ formatMoney(payment.closeDebt) }}
+              </span>
+            </td>
+            <td style="white-space: nowrap; text-align: right">
+              <span
+                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
+              >
+                {{ formatMoney(-payment.debtAmount) }}
+              </span>
+            </td>
+            <td class="text-right">
+              <span
+                v-if="payment.closeDebt < 0 || (payment.closeDebt == 0 && payment.openDebt < 0)"
+              >
+                {{ formatMoney(-payment.openDebt) }} ➞
+                {{ formatMoney(-payment.closeDebt) }}
+              </span>
             </td>
           </tr>
         </tbody>
