@@ -78,7 +78,7 @@ export class AuthApi {
   }
 
   static async forgotPassword(body: {
-    organizationPhone: string
+    organizationCode: string
     organizationEmail: string
     username: string
   }) {
@@ -88,7 +88,7 @@ export class AuthApi {
   }
 
   static async resetPassword(body: {
-    organizationPhone: string
+    organizationCode: string
     username: string
     password: string
     token: string

@@ -400,7 +400,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
             </td>
             <td class="text-center">
               <a
-                v-if="userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]"
+                v-if="userPermission[PermissionId.LABORATORY_UPDATE_RESULT]"
                 class="text-orange-500"
                 @click="modalTicketLaboratoryResult?.openModal(tlg.id)"
               >

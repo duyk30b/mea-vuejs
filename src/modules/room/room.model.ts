@@ -19,6 +19,7 @@ export const RoomInteractTypeText = {
 
 export class Room {
   id: number
+  roomCode: string
   name: string
   roomInteractType: RoomInteractType
 
@@ -28,6 +29,7 @@ export class Room {
   static init() {
     const ins = new Room()
     ins.id = 0
+    ins.roomCode = ''
     ins.name = ''
 
     return ins
@@ -74,6 +76,7 @@ export class Room {
 
   static equal(a: Room, b: Room) {
     if (a.id != b.id) return false
+    if (a.roomCode != b.roomCode) return false
     if (a.name != b.name) return false
     if (a.roomInteractType != b.roomInteractType) return false
     if (a.isCommon != b.isCommon) return false

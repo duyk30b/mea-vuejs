@@ -68,7 +68,11 @@ const setSideCollapsed = (value: boolean) => {
           <slot></slot>
         </a-layout-content>
         <a-layout-footer>
-          <div></div>
+          <div>
+            <span v-if="CONFIG.MODE === 'development'" style="color: violet; font-weight: bold">
+              {{ CONFIG.API_URL }}
+            </span>
+          </div>
           <div class="flex items-center gap-2">
             <span style="color: #333">
               <strong>MEA-v8.0</strong>

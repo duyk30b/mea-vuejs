@@ -7,6 +7,7 @@ import { MeService } from '../modules/_me/me.service'
 import { AuthService } from '../modules/auth/auth.service'
 import { ProductService } from '../modules/product'
 import VueLayout from './layout/VueLayout.vue'
+import { CustomerService } from '@/modules/customer'
 
 const loaded = ref(false)
 
@@ -21,7 +22,7 @@ onBeforeMount(async () => {
     } else {
       await MeaDatabase.runMigration()
       await MeService.initData()
-      await Promise.all([ProductService.refreshDB()])
+      await Promise.all([ProductService.refreshDB(), CustomerService.refreshDB()])
     }
   } catch (error) {
     console.log('🚀 ~ file: AppContainer.vue:26 ~ onBeforeMount ~ error:', error)

@@ -64,15 +64,15 @@ const handleUpdateUserIdChecked = (data: Record<string, boolean>) => {
 
 <template>
   <div>
-    <div v-if="CONFIG.MODE === 'development'" style="color: violet">
-      {{ JSON.stringify(userIdChecked) }}
-    </div>
     <InputCheckboxList
       v-model:value="userIdChecked"
       @update:value="handleUpdateUserIdChecked"
       :options="userIdCheckedOptions"
       :checkboxAll="checkboxAll"
     />
+    <div v-if="CONFIG.MODE === 'development'" style="color: violet">
+      {{ JSON.stringify(userIdChecked) }}
+    </div>
   </div>
 </template>
 

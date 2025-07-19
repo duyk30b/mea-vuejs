@@ -56,12 +56,12 @@ export class Appointment {
   static from(source: Appointment) {
     const target = Appointment.basic(source)
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
-      target.customer = target.customer ? Customer.basic(target.customer) : target.customer
+      target.customer = source.customer ? Customer.basic(source.customer) : source.customer
     }
     if (Object.prototype.hasOwnProperty.call(source, 'customerSource')) {
-      target.customerSource = target.customerSource
-        ? CustomerSource.basic(target.customerSource)
-        : target.customerSource
+      target.customerSource = source.customerSource
+        ? CustomerSource.basic(source.customerSource)
+        : source.customerSource
     }
     return target
   }

@@ -1,5 +1,5 @@
 export type LoginDto = {
-  orgPhone: string
+  organizationCode: string
   username: string
   password: string
 }

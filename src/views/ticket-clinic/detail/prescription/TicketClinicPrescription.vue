@@ -6,7 +6,7 @@ import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputOptions } from '../../../../common/vue-form'
+import { InputFilter, InputOptions, VueSwitch } from '../../../../common/vue-form'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PositionService, PositionInteractType } from '../../../../modules/position'
 import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
@@ -435,6 +435,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             <th>Đ.Vị</th>
             <th>Giá</th>
             <th>T.Tiền</th>
+            <th>In</th>
             <th></th>
           </tr>
         </thead>
@@ -509,6 +510,11 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             <td class="text-right whitespace-nowrap">
               {{ formatMoney(tpItem.actualPrice * tpItem.quantity || 0) }}
             </td>
+            <td class="">
+              <div class="flex justify-center">
+                <VueSwitch size="16px" :modelValue="tpItem.printPrescription" />
+              </div>
+            </td>
             <td class="text-center">
               <a v-if="!tpItem.id">
                 <IconSpin width="20" height="20" />
@@ -525,7 +531,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             </td>
           </tr>
           <tr>
-            <td colspan="7" class="text-right">
+            <td colspan="8" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { computed, ref, type StyleValue, watchEffect } from 'vue'
 
 export type CheckboxOptionType = {
@@ -141,6 +142,7 @@ defineExpose({ focus })
       />
       <label style="cursor: pointer; user-select: none" :for="randomId + '_' + index">
         {{ option.label }}
+        <span v-if="CONFIG.MODE === 'development'" style="color: violet">- {{ option.key }}</span>
       </label>
     </div>
   </div>

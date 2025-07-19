@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import type { Customer } from '@/modules/customer'
+import { PrintHtmlAction } from '@/modules/print-html'
+import { UserService } from '@/modules/user'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { VueButton, VuePagination, VueTag } from '../../common'
-import { IconFileSearch } from '../../common/icon-antd'
+import { IconFileSearch, IconPrint } from '../../common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '../../common/icon-font-awesome'
 import { IconVisibility } from '../../common/icon-google'
 import { InputDate, InputSelect, VueSelect } from '../../common/vue-form'
@@ -12,11 +15,11 @@ import { PaymentMethodService } from '../../modules/payment-method'
 import { PaymentApi } from '../../modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '../../modules/payment/payment.dto'
 import {
-MoneyDirection,
-Payment,
-PaymentTiming,
-PersonType,
-VoucherType,
+  MoneyDirection,
+  Payment,
+  PaymentTiming,
+  PersonType,
+  VoucherType,
 } from '../../modules/payment/payment.model'
 import { PermissionId } from '../../modules/permission/permission.enum'
 import { ESTimer } from '../../utils'
@@ -38,7 +41,7 @@ const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const { userPermission } = MeService
+const { userPermission, organization } = MeService
 
 const paymentList = ref<Payment[]>([])
 
@@ -72,7 +75,6 @@ const startFetchData = async () => {
       relation: {
         customer: true,
         distributor: true,
-        employee: true,
         cashier: true,
         paymentMethod: true,
       },
@@ -147,6 +149,16 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
     localStorage.setItem('PAYMENT_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
+}
+
+const startPrintPayment = async (options: { customer: Customer; payment: Payment }) => {
+  const payment = options.payment
+  payment.cashier = await UserService.detail(payment.cashierId)
+  await PrintHtmlAction.startPrintPaymentMoneyIn({
+    organization: organization.value,
+    customer: options.customer!,
+    payment,
+  })
 }
 </script>
 
@@ -308,6 +320,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             <th>Ghi nợ</th>
             <th>HT Thanh toán</th>
             <th>NV thu/chi</th>
+            <th></th>
           </tr>
         </thead>
         <tbody v-if="dataLoading">
@@ -397,6 +410,12 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
               <div>
                 {{ payment.cashier?.fullName }}
               </div>
+            </td>
+            <td>
+              <IconPrint
+                style="font-size: 18px; color: var(--text-blue); cursor: pointer"
+                @click="startPrintPayment({ payment, customer: payment.customer })"
+              />
             </td>
           </tr>
         </tbody>

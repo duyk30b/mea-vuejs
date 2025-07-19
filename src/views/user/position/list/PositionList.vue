@@ -24,6 +24,7 @@ import { Role, RoleService } from '../../../../modules/role'
 import { ESArray, ESNumber, ESTypescript } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalPositionUpsert from '../upsert/ModalPositionUpsert.vue'
+import { CONFIG } from '@/config'
 
 const modalPositionUpsert = ref<InstanceType<typeof ModalPositionUpsert>>()
 
@@ -218,10 +219,15 @@ const handleSelectItemFilterRole = (item: any) => {
       <table>
         <thead>
           <tr>
-            <th class="cursor-pointer" @click="changeSort('id')">
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
               ID &nbsp;
               <IconSort :sort="sortColumn === 'id' ? sortValue : ''" />
             </th>
+            <th>STT</th>
             <th class="cursor-pointer" @click="changeSort('roleId')">
               Vai trò &nbsp;
               <IconSort :sort="sortColumn === 'roleId' ? sortValue : ''" />
@@ -240,8 +246,11 @@ const handleSelectItemFilterRole = (item: any) => {
           <tr v-if="positionList.length === 0">
             <td colspan="20" class="text-center">Không có bản ghi nào</td>
           </tr>
-          <tr v-for="(position, i) in positionList" :key="i">
-            <td class="text-center">CO{{ position.id }}</td>
+          <tr v-for="(position, index) in positionList" :key="position.id">
+            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
+              {{ position.id }}
+            </td>
+            <td class="text-center">{{ index + 1 }}</td>
             <td>{{ roleMap[position.roleId]?.name }}</td>
             <td>
               {{ PositionInteractTypeText[position.positionType] }}

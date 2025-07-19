@@ -9,8 +9,8 @@ const router = useRouter()
   <Suspense>
     <RouterView />
   </Suspense>
-  <VueAlertStore />
   <VueModalStore />
+  <VueAlertStore />
   <iframe id="iframe-print" style="display: none" />
 </template>
 <style></style>

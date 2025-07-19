@@ -9,6 +9,7 @@ export enum OrganizationStatus {
 
 export class Organization {
   id: number
+  organizationCode: string
   phone: string
   email: string
   emailVerify: 0 | 1

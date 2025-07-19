@@ -241,7 +241,9 @@ defineExpose({ openModal })
               {{ JSON.stringify(roomIdList) }}
             </div>
           </div>
-          <InputCheckboxRoomList v-model:roomIdList="roomIdList" :checkboxAll="false" />
+          <div class="flex-1">
+            <InputCheckboxRoomList v-model:roomIdList="roomIdList" :checkboxAll="false" />
+          </div>
         </div>
 
         <div style="flex-basis: 90%; flex-grow: 1" class="flex items-center mt-3">

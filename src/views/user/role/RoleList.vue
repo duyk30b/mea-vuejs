@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { onBeforeMount, ref } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VuePagination from '../../../common/VuePagination.vue'
@@ -73,7 +74,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Mã vai trò</th>
             <th>Tên vai trò</th>
             <th>Tài khoản</th>
@@ -85,8 +86,10 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
           <tr v-if="roleList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(role, index) in roleList" :key="index">
-            <td class="text-center">R{{ role.id }}</td>
+          <tr v-for="role in roleList" :key="role.id">
+            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
+              {{ role.id }}
+            </td>
             <td>{{ role.roleCode }}</td>
             <td>{{ role.name }}</td>
             <td>
@@ -98,11 +101,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
             </td>
             <td class="text-center">
               <router-link :to="{ name: 'RoleUpsert', params: { id: role.id } }">
-                <IconForm
-                  width="20px"
-                  height="20px"
-                  style="color: var(--text-orange)"
-                />
+                <IconForm width="20px" height="20px" style="color: var(--text-orange)" />
               </router-link>
             </td>
           </tr>

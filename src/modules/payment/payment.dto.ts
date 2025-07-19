@@ -8,7 +8,6 @@ export class PaymentGetQuery {
   relation?: {
     customer?: boolean
     distributor?: boolean
-    employee?: boolean
     ticket?: boolean
     receipt?: boolean
     cashier?: boolean

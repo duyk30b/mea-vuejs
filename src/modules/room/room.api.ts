@@ -52,6 +52,7 @@ export class RoomApi {
     const { room, userIdList } = body
     const response = await AxiosInstance.post('/room/create', {
       room: {
+        roomCode: room.roomCode,
         name: room.name,
         roomInteractType: room.roomInteractType,
         isCommon: room.isCommon,
@@ -66,6 +67,7 @@ export class RoomApi {
     const { room, userIdList } = body
     const response = await AxiosInstance.patch(`/room/update/${id}`, {
       room: {
+        roomCode: room.roomCode,
         name: room.name,
         roomInteractType: room.roomInteractType,
         isCommon: room.isCommon,

@@ -84,6 +84,7 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
         <thead>
           <tr>
             <th>ID</th>
+            <th>OrganizationCode</th>
             <th>Phone</th>
             <th>Facebook</th>
             <th>Name</th>
@@ -97,8 +98,9 @@ const handleModalRootOrganizationUpsertSuccess = async () => {
           <tr v-if="organizationList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(organization, i) in organizationList" :key="i">
+          <tr v-for="organization in organizationList" :key="organization.id">
             <td class="text-center">{{ organization.id }}</td>
+            <td class="text-center">{{ organization.organizationCode }}</td>
             <td class="text-center">{{ organization.phone }}</td>
             <td>{{ organization.facebook }}</td>
             <td>{{ organization.name }}</td>

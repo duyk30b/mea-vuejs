@@ -223,6 +223,7 @@ onBeforeUnmount(() => {
 
 .dropdown-content {
   position: absolute;
+  z-index: 99999;
   border-radius: 4px;
   box-shadow: 2px 2px 20px rgba(0, 0, 0, 0.15);
   background-color: white;

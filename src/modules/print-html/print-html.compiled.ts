@@ -12,7 +12,7 @@ export class PrintHtmlCompile {
     data: Record<string, any> & {
       me?: User
       organization: Organization
-      ticket: Ticket
+      ticket?: Ticket
       customer: Customer
     }
     _LAYOUT?: {
@@ -57,8 +57,8 @@ export class PrintHtmlCompile {
     data: Record<string, any> & {
       me?: User
       organization: Organization
-      ticket: Ticket
       customer: Customer
+      ticket?: Ticket
     }
     variablesString: string[]
     template: {

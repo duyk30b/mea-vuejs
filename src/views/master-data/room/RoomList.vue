@@ -10,6 +10,7 @@ import { RoomInteractTypeText, type Room } from '../../../modules/room'
 import { RoomService } from '../../../modules/room/room.service'
 import Breadcrumb from '../../component/Breadcrumb.vue'
 import ModalRoomUpsert from './ModalRoomUpsert.vue'
+import { CONFIG } from '@/config'
 
 const modalRoomUpsert = ref<InstanceType<typeof ModalRoomUpsert>>()
 
@@ -92,6 +93,7 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>Mã</th>
             <th>Tên</th>
             <th>Loại phòng</th>
@@ -119,7 +121,14 @@ const handleModalRoomUpsertSuccess = async (data: Room, type: 'CREATE' | 'UPDATE
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="room in roomList" :key="room.id">
-            <td class="text-center" style="width: 100px">{{ room.id }}</td>
+            <td
+              v-if="CONFIG.MODE === 'development'"
+              class="text-center"
+              style="width: 100px; color: violet"
+            >
+              {{ room.id }}
+            </td>
+            <td class="text-center">{{ room.roomCode }}</td>
             <td>{{ room.name }}</td>
             <td>{{ RoomInteractTypeText[room.roomInteractType] }}</td>
             <td>{{ room.isCommon ? 'Phòng chung' : 'Phòng lẻ' }}</td>

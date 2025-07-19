@@ -29,7 +29,7 @@ export class Customer {
     ins.debt = 0
     return ins
   }
-  
+
   static blank(): Customer {
     const ins = Customer.init()
     ins.customerCode = ''
@@ -61,8 +61,8 @@ export class Customer {
     return sources.map((i) => Customer.basic(i))
   }
 
-  static from(source: Customer) {
-    const target = Customer.basic(source)
+  static from(source?: Customer) {
+    const target = source ? Customer.basic(source) : Customer.blank()
     return target
   }
 

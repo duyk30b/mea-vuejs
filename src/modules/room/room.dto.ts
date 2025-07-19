@@ -1,5 +1,5 @@
 import { OmitClass, PickClass } from '../../utils'
-import type { ConditionDate, ConditionString } from '../_base/base-condition'
+import type { ConditionString } from '../_base/base-condition'
 import type { RoomInteractType } from './room.model'
 
 export class RoomGetQuery {
@@ -18,6 +18,7 @@ export class RoomGetQuery {
 
   sort?: {
     id?: 'ASC' | 'DESC'
+    roomCode?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<RoomGetQuery>) {

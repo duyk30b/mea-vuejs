@@ -20,6 +20,7 @@ export class RootOrganizationApi {
 
   static async createOne(organization: Organization) {
     const response = await AxiosInstance.post('/root/organization/create', {
+      organizationCode: organization.organizationCode,
       phone: organization.phone,
       email: organization.email,
       emailVerify: organization.emailVerify,
@@ -42,6 +43,7 @@ export class RootOrganizationApi {
 
   static async updateOne(id: number, organization: Organization) {
     const response = await AxiosInstance.patch(`/root/organization/update/${id}`, {
+      organizationCode: organization.organizationCode,
       phone: organization.phone,
       facebook: organization.facebook,
       email: organization.email,

@@ -65,7 +65,6 @@ export class Payment {
   distributor: Distributor
   ticket: Ticket
   receipt: Receipt
-  employee: User
   cashier: User
   paymentMethod: PaymentMethod
 
@@ -108,10 +107,6 @@ export class Payment {
         ? Distributor.basic(source.distributor)
         : source.distributor
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'employee')) {
-      target.employee = source.employee ? User.basic(source.employee) : source.employee
-    }
-
     if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
       target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
     }

@@ -12,7 +12,7 @@ const router = useRouter()
 const route = useRoute()
 
 const formState = reactive({
-  organizationPhone: (route.query?.organizationPhone || '') as string,
+  organizationCode: (route.query?.organizationCode || '') as string,
   username: (route.query?.username || '') as string,
   password: '',
   passwordRepeat: '',
@@ -27,7 +27,7 @@ const startResetPassword = async () => {
       return AlertStore.addError('Điền mật khẩu lần 2 không chính xác')
     }
     await AuthApi.resetPassword({
-      organizationPhone: formState.organizationPhone,
+      organizationCode: formState.organizationCode,
       username: formState.username,
       password: formState.password,
       token: route.query?.token as string,
@@ -55,11 +55,10 @@ const startResetPassword = async () => {
           <div>ID cơ cở</div>
           <div>
             <InputText
-              v-model:value="formState.organizationPhone"
-              name="organization_phone"
+              v-model:value="formState.organizationCode"
+              name="organization_code"
               autocomplete="on"
               required
-              pattern="[0][356789][0-9]{8}"
             />
           </div>
         </div>

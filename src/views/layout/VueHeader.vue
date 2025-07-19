@@ -56,7 +56,7 @@ watchEffect(() => {
       <IconMenuUnfold class="icon-menu-fold" @click="emitShowDrawer" />
       <span class="ml-3 text-white text-xl font-medium">{{ routeTitle }}</span>
     </div>
-    <div>
+    <div class="flex items-center gap-4">
       <VueDropdown>
         <template #trigger>
           <VueButton>

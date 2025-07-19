@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DeliveryStatus } from '@/modules/enum'
+import { DeliveryStatus, PickupStrategy } from '@/modules/enum'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketProductService } from '@/modules/ticket-product/ticket-product.service'
 import { ref } from 'vue'
@@ -97,12 +97,17 @@ const validateQuantity = () => {
   }
   for (let i = 0; i < ticketProductList.value.length; i++) {
     const ticketProduct = ticketProductList.value[i]
-    if (!ticketProductIdSelect.value[ticketProduct.id]) {
+    if (ticketProduct.pickupStrategy === PickupStrategy.NoImpact) {
+      continue
+    }
+    if (ticketProduct.product?.warehouseIds === '[]') {
       continue
     }
 
+    if (!ticketProductIdSelect.value[ticketProduct.id]) {
+      continue
+    }
     const { product, batch } = ticketProduct
-    if (product?.warehouseIds === '[]') continue
 
     if (ticketProduct.quantity > (product?.quantity || 0)) {
       AlertStore.addError(

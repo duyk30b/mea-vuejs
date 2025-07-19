@@ -15,6 +15,11 @@ const showModal = ref(false)
 const organization = ref<Organization>(Organization.blank())
 const saveLoading = ref(false)
 
+const tableNameCommon = {
+  Address: 0,
+  ICD: 0,
+  Permission: 0,
+}
 const tableNameClearMapDefault = {
   Customer: 0,
   Distributor: 0,
@@ -36,6 +41,7 @@ const tableNameDeleteMapDefault = {
   LaboratorySample: 0,
   Payment: 1,
   PaymentMethod: 0,
+  Position: 0,
   PrescriptionSample: 0,
   PrintHtml: 0,
   Procedure: 0,
@@ -45,9 +51,11 @@ const tableNameDeleteMapDefault = {
   ProductMovement: 1,
   Radiology: 0,
   RadiologyGroup: 0,
+  RadiologySample: 0,
   Receipt: 1,
   ReceiptItem: 1,
   Role: 0,
+  Room: 0,
   Setting: 0,
   StockCheck: 1,
   StockCheckItem: 1,
@@ -64,6 +72,7 @@ const tableNameDeleteMapDefault = {
   TicketSurcharge: 1,
   TicketUser: 1,
   UserRole: 0,
+  UserRoom: 0,
   Warehouse: 0,
 }
 const tableNameClearMap = ref({

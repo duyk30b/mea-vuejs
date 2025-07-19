@@ -23,6 +23,7 @@ export class TicketProduct {
   deliveryStatus: DeliveryStatus
   unitRate: number
   quantityPrescription: number
+  printPrescription: number
   quantity: number
   costAmount: number // không thể có costPrice, vì có thể bao gồm nhiều lô với vốn khác nhau
   expectedPrice: number
@@ -94,6 +95,7 @@ export class TicketProduct {
     ins.deliveryStatus = DeliveryStatus.Pending
     ins.quantity = 0
     ins.quantityPrescription = 0
+    ins.printPrescription = 1
     ins.unitRate = 1
     ins.expectedPrice = 0
     ins.discountMoney = 0
@@ -161,6 +163,7 @@ export class TicketProduct {
     if (a.deliveryStatus != b.deliveryStatus) return false
     if (a.unitRate != b.unitRate) return false
     if (a.quantityPrescription != b.quantityPrescription) return false
+    if (a.printPrescription != b.printPrescription) return false
     if (a.quantity != b.quantity) return false
     if (a.costAmount != b.costAmount) return false
     if (a.expectedPrice != b.expectedPrice) return false

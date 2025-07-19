@@ -152,7 +152,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 200px; flex-grow: 1">
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 200px">
+          <div>OrganizationCode</div>
+          <div>
+            <InputText v-model:value="organization.organizationCode" required />
+          </div>
+        </div>
+
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 200px">
           <div>Phone</div>
           <div>
             <InputText
@@ -164,14 +171,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div style="flex-basis: 200px; flex-grow: 1">
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 200px">
           <div>Email</div>
           <div>
             <InputText v-model:value="organization.email" required />
           </div>
         </div>
 
-        <div style="flex-basis: 200px; flex-grow: 1">
+        <div style="flex-basis: 40%; flex-grow: 1; min-width: 200px">
           <div>Email Verify</div>
           <div>
             <VueSwitch v-model="organization.emailVerify" type-parser="number" />

@@ -9,6 +9,7 @@ import {
   InputMoney,
   InputNumber,
   VueSelect,
+  VueSwitch,
 } from '../../../../common/vue-form'
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
@@ -46,7 +47,8 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] || []
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Product]?.[ticketProduct.value.id] ||
+    []
 
   const positionList = await PositionService.list({
     filter: {
@@ -232,7 +234,7 @@ const updateTicketProduct = async () => {
     const hasUpdateTicketUser =
       ticketUserListOrigin.length || ticketUserList.value.filter((i) => !!i.userId).length
 
-        await TicketClinicProductApi.updateTicketProductPrescription({
+    await TicketClinicProductApi.updateTicketProductPrescription({
       ticketId: ticketRoomRef.value.id,
       ticketProductId: ticketProduct.value.id,
       ticketProduct: hasChangeTicketProduct.value ? ticketProduct.value : undefined,
@@ -415,6 +417,18 @@ defineExpose({ openModal })
               @update:value="handleChangeUnitActualPrice"
               :validate="{ gte: 0 }"
             />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div class="flex gap-1">
+            <span>Có in trong đơn thuốc ?</span>
+          </div>
+          <div style="width: 100%">
+            <VueSwitch
+              v-model:modelValue="ticketProduct.printPrescription"
+              :typeParser="'number'"
+            ></VueSwitch>
           </div>
         </div>
 

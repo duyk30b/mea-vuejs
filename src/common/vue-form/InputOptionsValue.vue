@@ -14,7 +14,9 @@ const props = withDefaults(
     maxHeight?: number
     prepend?: string
     required?: boolean
+    limit?: number
     logicFilter?: (item: ItemOption, text: string) => boolean
+    clearTextIfNoSelect?: boolean
     messageNoResult?: string
   }>(),
   {
@@ -23,9 +25,11 @@ const props = withDefaults(
     disabled: false,
     placeholder: '',
     maxHeight: 300,
+    limit: 100,
     prepend: undefined,
     required: false,
     logicFilter: () => true,
+    clearTextIfNoSelect: true,
     messageNoResult: 'Không tìm thấy kết quả phù hợp',
   },
 )
@@ -52,9 +56,17 @@ const randomId = computed(() => {
 })
 
 const optionsFilter = computed(() => {
-  return props.options.filter((item) => {
-    return props.logicFilter(item, searchText.value || '')
-  })
+  const optionsResult = []
+  for (let i = 0; i < props.options.length; i++) {
+    const item = props.options[i]
+    if (props.logicFilter(item, searchText.value || '')) {
+      optionsResult.push(item)
+    }
+    if (optionsResult.length >= props.limit) {
+      break
+    }
+  }
+  return optionsResult
 })
 
 watch(
@@ -132,11 +144,13 @@ const handleClickOutside = () => {
   showOptions.value = false
 
   if (!currentValue.value) {
-    if (searchText.value) {
-      searchText.value = ''
-      emit('update:text', '')
+    if (props.clearTextIfNoSelect) {
+      if (searchText.value) {
+        searchText.value = ''
+        emit('update:text', '')
+      }
+      if (propsText) propsText = ''
     }
-    if (propsText) propsText = ''
 
     if (props.value) {
       emit('update:value', 0)
@@ -279,8 +293,9 @@ defineExpose({ focus })
 .development {
   position: absolute;
   right: 30px;
+  bottom: 0;
   font-size: 0.8em;
-  transform: translate(0, -50%);
+  transform: translate(0, 50%);
   background-color: white;
   padding: 4px;
 }

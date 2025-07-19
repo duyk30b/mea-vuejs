@@ -18,7 +18,7 @@ export class RoomService {
   private static fetchAll = (() => {
     const start = async () => {
       try {
-        const roomAll = await RoomApi.list({ sort: { id: 'ASC' } })
+        const roomAll = await RoomApi.list({ sort: { roomCode: 'ASC' } })
         RoomService.roomList.value = roomAll
         RoomService.roomMap.value = ESArray.arrayToKeyValue(roomAll, 'id')
       } catch (error: any) {

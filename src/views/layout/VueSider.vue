@@ -78,10 +78,10 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       </template>
       <template #title>Tiếp đón</template>
       <a-menu-item key="ReceptionTicketList">
-        <router-link :to="{ name: 'ReceptionTicketList' }">DS Tiếp đón</router-link>
+        <router-link :to="{ name: 'ReceptionTicketList' }">Tiếp đón</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.APPOINTMENT_MENU]" key="AppointmentList">
-        <router-link :to="{ name: 'AppointmentList' }">Hẹn khám</router-link>
+        <router-link :to="{ name: 'AppointmentList' }">Danh sách Hẹn</router-link>
       </a-menu-item>
     </a-sub-menu>
 

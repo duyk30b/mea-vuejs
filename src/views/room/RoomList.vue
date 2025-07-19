@@ -39,6 +39,19 @@ onMounted(async () => {
           <div class="card-description"></div>
         </div>
       </div>
+      <div
+        v-if="userPermission[PermissionId.APPOINTMENT_MENU]"
+        class="card"
+        @click="router.push({ name: 'AppointmentList' })"
+      >
+        <div class="card-icon">
+          <IconDoorOpen />
+        </div>
+        <div class="card-content">
+          <div class="card-title">Danh sách Hẹn</div>
+          <div class="card-description"></div>
+        </div>
+      </div>
       <template v-for="room in roomList" :key="room.id">
         <div
           v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Ticket"

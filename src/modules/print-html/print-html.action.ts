@@ -9,6 +9,7 @@ import type { TicketRadiology } from '../ticket-radiology'
 import { PrintHtmlCompile } from './print-html.compiled'
 import { PrintHtml } from './print-html.model'
 import { PrintHtmlService } from './print-html.service'
+import type { Payment } from '../payment/payment.model'
 
 export class PrintHtmlAction {
   static async getPrintHtmlHeader() {
@@ -162,6 +163,24 @@ export class PrintHtmlAction {
     }
     if (printHtmlId == 0) {
       printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.invoice.printHtmlId
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+    }
+
+    return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
+  }
+
+  static async getPrintHtmlPaymentMoneyIn() {
+    let printHtml: PrintHtml | undefined
+
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.paymentMoneyIn.printHtmlId
+    if (printHtmlId != 0) {
+      printHtml = await PrintHtmlService.detail(printHtmlId)
+      if (!printHtml || !printHtml.html) {
+        printHtmlId = 0
+      }
+    }
+    if (printHtmlId == 0) {
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.paymentMoneyIn.printHtmlId
       printHtml = await PrintHtmlService.detail(printHtmlId)
     }
 
@@ -509,6 +528,48 @@ export class PrintHtmlAction {
           organization,
           ticket,
           customer,
+        },
+        template: {
+          _header: printHtmlHeader.html,
+          _content: '',
+          _html: printHtmlWrapper.html,
+        },
+        variablesString: [printHtmlHeader.initVariable, printHtmlWrapper.initVariable],
+      })
+
+      if (!printHtmlCompiled?.htmlString) {
+        AlertStore.addError('Mẫu in không hợp lệ')
+        return
+      }
+
+      await ESDom.startPrint('iframe-print', {
+        html: printHtmlCompiled?.htmlString || '',
+        cssList: [printHtmlHeader.css, printHtmlWrapper.css],
+      })
+    } catch (error) {
+      console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
+    }
+  }
+
+  static async startPrintPaymentMoneyIn(options: {
+    organization: Organization
+    customer: Customer
+    payment: Payment
+  }) {
+    const { organization, customer, payment } = options
+    try {
+      const printHtmlHeader = await PrintHtmlAction.getPrintHtmlHeader()
+      const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlPaymentMoneyIn()
+
+      if (!printHtmlHeader || !printHtmlWrapper || !printHtmlWrapper.html) {
+        return AlertStore.addError('Cài đặt in thất bại')
+      }
+
+      const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
+        data: {
+          organization,
+          customer,
+          payment,
         },
         template: {
           _header: printHtmlHeader.html,

@@ -11,7 +11,7 @@ import { VueDivider } from '../../common/vue-layout'
 const btnDisable = ref<boolean>(false)
 
 const formState = reactive({
-  organizationPhone: LocalStorageService.getOrgPhone(),
+  organizationCode: LocalStorageService.getOrganizationCode(),
   organizationEmail: '',
   username: '',
 })
@@ -22,7 +22,7 @@ const startSendEmail = async () => {
   try {
     loading.value = true
     await AuthApi.forgotPassword({
-      organizationPhone: formState.organizationPhone,
+      organizationCode: formState.organizationCode,
       organizationEmail: formState.organizationEmail,
       username: formState.username,
     })
@@ -47,11 +47,10 @@ const startSendEmail = async () => {
           <div>ID cơ cở</div>
           <div>
             <InputText
-              v-model:value="formState.organizationPhone"
-              name="organization_phone"
+              v-model:value="formState.organizationCode"
+              name="organization_code"
               autocomplete="on"
               required
-              pattern="[0][356789][0-9]{8}"
             />
           </div>
         </div>

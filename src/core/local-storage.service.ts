@@ -4,7 +4,7 @@ export const ACCESS_TOKEN = 'access_token'
 export const ACCESS_EXP = 'access_exp'
 export const REFRESH_TOKEN = 'refresh_token'
 export const REFRESH_EXP = 'refresh_exp'
-export const ORG_PHONE = 'org_phone'
+export const ORGANIZATION_CODE = 'organization_code'
 
 export class LocalStorageService {
   static setToken(data: {
@@ -48,11 +48,11 @@ export class LocalStorageService {
     return Number(localStorage.getItem(REFRESH_EXP))
   }
 
-  static setOrgPhone(phone: string) {
-    localStorage.setItem(ORG_PHONE, phone)
+  static setOrganizationCode(organizationCode: string) {
+    localStorage.setItem(ORGANIZATION_CODE, organizationCode)
   }
 
-  static getOrgPhone() {
-    return localStorage.getItem(ORG_PHONE) || ''
+  static getOrganizationCode() {
+    return localStorage.getItem(ORGANIZATION_CODE) || ''
   }
 }

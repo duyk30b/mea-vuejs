@@ -60,6 +60,11 @@ export const SETTING_DEFAULT = {
       customVariables: '',
       customStyles: '',
     },
+    paymentMoneyIn: {
+      printHtmlId: 0,
+      customVariables: '',
+      customStyles: '',
+    },
   },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,

@@ -18,6 +18,8 @@ import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import { CONFIG } from '@/config'
+import { PrintHtmlAction } from '@/modules/print-html'
+import { Payment } from '@/modules/payment/payment.model'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -29,7 +31,7 @@ const emit = defineEmits<{
 
 const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
-const { userPermission, user } = MeService
+const { userPermission, user, organization } = MeService
 
 const customerOptions = ref<ItemOption[]>([])
 const customer = ref<Customer>(Customer.blank())
@@ -188,6 +190,21 @@ const calculatorEachVoucherPayment = () => {
     moneyRemain = moneyRemain - moneyRemain
   }
   moneyTopUp.value = moneyRemain
+}
+
+const startPrintPayment = async () => {
+  const tempPayment = Payment.blank()
+  tempPayment.paidAmount = totalMoney.value
+  tempPayment.cashierId = MeService.user.value?.id || 0
+  tempPayment.cashier = MeService.user.value!
+  tempPayment.createdAt = Date.now()
+  tempPayment.note = note.value
+
+  await PrintHtmlAction.startPrintPaymentMoneyIn({
+    organization: organization.value,
+    customer: customer.value,
+    payment: tempPayment,
+  })
 }
 
 defineExpose({ openModal })
@@ -387,10 +404,17 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="flex justify-center gap-4">
+      <div class="mt-4 py-4">
+        <div class="flex gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Hủy bỏ</VueButton>
-          <VueButton type="submit" color="blue" :loading="saveLoading" icon="save">
+          <VueButton icon="print" @click="startPrintPayment">In phiếu thu</VueButton>
+          <VueButton
+            type="submit"
+            color="blue"
+            :loading="saveLoading"
+            icon="save"
+            style="margin-left: auto"
+          >
             Xác nhận thanh toán
           </VueButton>
         </div>

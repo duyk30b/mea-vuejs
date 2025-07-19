@@ -12,7 +12,7 @@ export class AuthService {
     try {
       const data = await AuthApi.register(body)
       LocalStorageService.setToken(data)
-      LocalStorageService.setOrgPhone(data.user?.organization?.phone || '')
+      LocalStorageService.setOrganizationCode(data.user?.organization?.organizationCode || '')
       MeService.user.value = data.user
       reconnectSocket()
       return true
@@ -27,7 +27,7 @@ export class AuthService {
     try {
       const data = await AuthApi.login(body)
       LocalStorageService.setToken(data)
-      LocalStorageService.setOrgPhone(body.orgPhone)
+      LocalStorageService.setOrganizationCode(body.organizationCode)
       MeService.user.value = data.user
       reconnectSocket()
       return true
@@ -42,7 +42,7 @@ export class AuthService {
     try {
       const data = await AuthApi.loginRoot(body)
       LocalStorageService.setToken(data)
-      LocalStorageService.setOrgPhone(body.orgPhone)
+      LocalStorageService.setOrganizationCode(body.organizationCode)
       MeService.user.value = data.user
       reconnectSocket()
       return true

@@ -213,7 +213,8 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_CLINIC_PAYMENT] &&
+              (userPermission[PermissionId.TICKET_CLINIC_PAYMENT] ||
+                userPermission[PermissionId.RECEPTION_PAYMENT]) &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketClone.status,
               )
@@ -289,7 +290,8 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] &&
+              (userPermission[PermissionId.TICKET_CLINIC_REFUND_OVERPAID] ||
+                userPermission[PermissionId.RECEPTION_REFUND_OVER_PAID]) &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketClone.status)
             "
           >
@@ -355,7 +357,8 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_CLINIC_PAYMENT] &&
+              (userPermission[PermissionId.RECEPTION_PAYMENT] ||
+                userPermission[PermissionId.TICKET_CLINIC_PAYMENT]) &&
               [TicketStatus.Debt].includes(ticketClone.status)
             "
           >

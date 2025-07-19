@@ -34,12 +34,13 @@ const handleRegisterVisit = async () => {
   appointment.value.customerSourceId = 0
   try {
     if (!appointment.value.id) {
-      ticketRoomRef.value.toAppointment = await AppointmentApi.createOne(appointment.value)
+      ticketRoomRef.value.toAppointment = await AppointmentApi.createOne({
+        appointment: appointment.value,
+      })
     } else {
-      ticketRoomRef.value.toAppointment = await AppointmentApi.updateOne(
-        appointment.value.id,
-        appointment.value
-      )
+      ticketRoomRef.value.toAppointment = await AppointmentApi.updateOne(appointment.value.id, {
+        appointment: appointment.value,
+      })
     }
     emit('success')
     showModal.value = false
@@ -77,7 +78,8 @@ defineExpose({ openModal })
             <InputHint
               v-model:value="appointment.reason"
               :options="['Khám lại']"
-              :logic-filter="(item: string, text: string) => customFilter(item, text)" />
+              :logic-filter="(item: string, text: string) => customFilter(item, text)"
+            />
           </div>
         </div>
       </div>

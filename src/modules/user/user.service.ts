@@ -173,7 +173,7 @@ export class UserService {
       }
     }
 
-    return user
+    return user || User.blank()
   }
 
   static async createOne(body: {

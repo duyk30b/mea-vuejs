@@ -47,6 +47,8 @@ const openModal = async (roomId?: number) => {
 
 const closeModal = () => {
   room.value = Room.blank()
+  userIdListOrigin.value = []
+  userIdList.value = []
   showModal.value = false
 }
 
@@ -116,7 +118,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal v-model:show="showModal" @close="closeModal">
     <form class="bg-white" @submit.prevent="(e) => handleSave()">
       <div class="pl-4 py-4 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -127,8 +129,15 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="p-4">
-        <div class="">
+      <div class="p-4 flex flex-wrap gap-4">
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
+          <div class="">Mã phòng</div>
+          <div class="">
+            <InputText v-model:value="room.roomCode" placeholder="Tạo tự động" />
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px">
           <div>Loại phòng</div>
           <div>
             <div>
@@ -175,14 +184,14 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="mt-4">
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
           <div>Tên phòng</div>
           <div>
             <InputText v-model:value="room.name" required />
           </div>
         </div>
 
-        <div class="mt-6 flex">
+        <div style="flex-grow: 1; flex-basis: 90%; min-width: 300px">
           <div style="width: 120px">Chức năng:</div>
           <div style="flex: 1">
             <InputRadio
@@ -195,7 +204,7 @@ defineExpose({ openModal })
           </div>
         </div>
 
-        <div class="flex mt-4">
+        <div style="flex-grow: 1; flex-basis: 40%; min-width: 300px" class="flex flex-wrap">
           <div class="w-[120px] flex-none">
             <div>Tài khoản</div>
             <div v-if="CONFIG.MODE === 'development'" style="color: violet">

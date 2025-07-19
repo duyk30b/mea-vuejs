@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { computed, onBeforeMount, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueButton } from '../../../../common'
@@ -13,7 +14,6 @@ import { Permission, PermissionService } from '../../../../modules/permission'
 import { Role, RoleService } from '../../../../modules/role'
 import { UserService } from '../../../../modules/user'
 import { Breadcrumb } from '../../../component'
-import { CONFIG } from '@/config'
 
 const TABS_KEY = {
   ROLE_INFORMATION: 'ROLE_INFORMATION',
@@ -332,7 +332,10 @@ const handleChangeCheckLevel2 = (e: Event, level1Id: number, level2Id: number) =
                           style="cursor: pointer; user-select: none"
                           :for="randomId + '_' + level1.id"
                         >
-                          {{ level1.name }}
+                          <span>{{ level1.name }}</span>
+                          <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                            - {{ level1.id }}
+                          </span>
                         </label>
                       </td>
                     </tr>
@@ -358,7 +361,10 @@ const handleChangeCheckLevel2 = (e: Event, level1Id: number, level2Id: number) =
                             style="cursor: pointer; user-select: none"
                             :for="randomId + '_' + child.id"
                           >
-                            {{ child.name }}
+                            <span>{{ child.name }}</span>
+                            <span v-if="CONFIG.MODE === 'development'" style="color: violet">
+                              - {{ child.id }}
+                            </span>
                           </label>
                         </td>
                       </tr>

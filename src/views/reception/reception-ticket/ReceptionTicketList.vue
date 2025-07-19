@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { IconDelete, IconDownload, IconFileSearch, IconMore, IconSetting } from '@/common/icon-antd'
+import {
+  IconDelete,
+  IconDownload,
+  IconFileSearch,
+  IconMore,
+  IconPrint,
+  IconSetting,
+} from '@/common/icon-antd'
 import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 import VueDropdown from '@/common/popover/VueDropdown.vue'
 import { InputDate, InputOptions, InputSelect, VueSelect } from '@/common/vue-form'
@@ -13,7 +20,14 @@ import { DeliveryStatus, PaymentViewType } from '@/modules/enum'
 import { FileTicketApi } from '@/modules/file-excel/file-ticket.api'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { Role, RoleService } from '@/modules/role'
-import { Ticket, TicketActionApi, TicketQueryApi, TicketStatus, TicketType } from '@/modules/ticket'
+import {
+  Ticket,
+  TicketActionApi,
+  TicketQueryApi,
+  TicketService,
+  TicketStatus,
+  TicketType,
+} from '@/modules/ticket'
 import { User, UserService } from '@/modules/user'
 import ModalTicketSendProduct from '@/views/ticket-base/ModalTicketSendProduct.vue'
 import TicketClinicDeliveryStatusTag from '@/views/ticket-clinic/TicketClinicDeliveryStatusTag.vue'
@@ -25,24 +39,27 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import ModalTicketClinicCreate from './create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
+import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
 import ModalReceptionTicketListSetting from './ModalReceptionTicketListSetting.vue'
 import { fromTime, toTime } from './reception-ticket-list.ref'
 import { IconEditSquare } from '@/common/icon-google'
 import { roomReceptionPagination, RoomService } from '@/modules/room'
 import { AlertStore } from '@/common/vue-alert'
 import { CONFIG } from '@/config'
+import { PrintHtmlAction } from '@/modules/print-html'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
 const modalTicketClinicListSetting = ref<InstanceType<typeof ModalReceptionTicketListSetting>>()
 const modalTicketClinicPayment = ref<InstanceType<typeof ModalTicketClinicPayment>>()
+const modalTicketChangeAllMoney = ref<InstanceType<typeof ModalTicketChangeAllMoney>>()
 const modalTicketSendProduct = ref<InstanceType<typeof ModalTicketSendProduct>>()
 
 const router = useRouter()
 
 const settingStore = useSettingStore()
 const { formatMoney } = settingStore
-const { userPermission } = MeService
+const { userPermission, organization } = MeService
 
 const customerList = ref<Customer[]>([])
 const dataLoading = ref(false)
@@ -260,12 +277,44 @@ const downloadTicketClinicList = (menu: { key: string }) => {
     },
   })
 }
+
+const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
+
+const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
+  const ticketData = await TicketService.detail(options.ticketId, {
+    relation: {
+      customer: true,
+      ticketProcedureList: {},
+      ticketProductConsumableList: {},
+      ticketProductPrescriptionList: {},
+      ticketLaboratoryList: {},
+      ticketLaboratoryGroupList: {},
+      ticketRadiologyList: {},
+    },
+  })
+  if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []
+  if (!ticketData.ticketProductConsumableList) ticketData.ticketProductConsumableList = []
+  if (!ticketData.ticketProductPrescriptionList) ticketData.ticketProductPrescriptionList = []
+  if (!ticketData.ticketRadiologyList) ticketData.ticketRadiologyList = []
+  if (!ticketData.ticketLaboratoryList) ticketData.ticketLaboratoryList = []
+  await ticketData.refreshAllData()
+
+  await PrintHtmlAction.startPrintRequestInvoice({
+    organization: organization.value,
+    ticket: ticketData,
+    customer: ticketData.customer!,
+  })
+}
 </script>
 
 <template>
   <ModalTicketClinicCreate
     ref="modalTicketClinicCreate"
     @success="handleModalTicketClinicCreateSuccess"
+  />
+  <ModalTicketChangeAllMoney
+    ref="modalTicketChangeAllMoney"
+    @success="handleModalTicketChangeAllMoneySuccess"
   />
   <ModalCustomerDetail ref="modalCustomerDetail" />
   <ModalReceptionTicketListSetting
@@ -434,7 +483,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                 />
               </div>
             </th>
-            <th>Phòng</th>
+            <th style="min-width: 100px">Phòng</th>
             <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th class="">Trạng thái</th>
 
@@ -459,6 +508,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
             <th>Thanh toán</th>
             <th>Tổng tiền</th>
             <th></th>
+            <th>In</th>
             <th></th>
           </tr>
         </thead>
@@ -569,7 +619,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                 <VueButton
                   v-if="
                     ticket.deliveryStatus === DeliveryStatus.Pending &&
-                    userPermission[PermissionId.RECEIPT_SEND_PRODUCT]
+                    userPermission[PermissionId.RECEPTION_SEND_PRODUCT]
                   "
                   size="small"
                   icon="send"
@@ -634,10 +684,7 @@ const downloadTicketClinicList = (menu: { key: string }) => {
             </td>
 
             <td>
-              <div
-                class="flex justify-center items-center"
-                v-if="[TicketStatus.Deposited, TicketStatus.Executing].includes(ticket.status)"
-              >
+              <div class="flex justify-center items-center">
                 <VueDropdown>
                   <template #trigger>
                     <div class="vue-circle" style="width: 26px !important; height: 26px !important">
@@ -645,6 +692,18 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                     </div>
                   </template>
                   <div class="vue-menu">
+                    <a
+                      v-if="userPermission[PermissionId.RECEPTION_CHANGE_ALL_MONEY]"
+                      style="color: var(--text-red)"
+                      @click="
+                        modalTicketChangeAllMoney?.openModal({
+                          ticketId: ticket.id,
+                          customer: ticket.customer!,
+                        })
+                      "
+                    >
+                      Sửa giá tiền và chiết khấu
+                    </a>
                     <a
                       v-if="
                         ticket.paid > ticket.totalMoney &&
@@ -669,6 +728,33 @@ const downloadTicketClinicList = (menu: { key: string }) => {
                       @click="clickCloseTicket(ticket)"
                     >
                       Đóng phiếu
+                    </a>
+                  </div>
+                </VueDropdown>
+              </div>
+            </td>
+            <td>
+              <div class="flex justify-center items-center">
+                <VueDropdown>
+                  <template #trigger>
+                    <IconPrint
+                      style="
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: var(--text-blue);
+                        cursor: pointer;
+                      "
+                    />
+                  </template>
+                  <div class="vue-menu">
+                    <a
+                      @click="
+                        startPrintAllItemAndMoney({
+                          ticketId: ticket.id,
+                        })
+                      "
+                    >
+                      In bảng kê chi phí
                     </a>
                   </div>
                 </VueDropdown>

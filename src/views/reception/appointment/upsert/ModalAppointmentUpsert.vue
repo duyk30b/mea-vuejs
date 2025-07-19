@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '@/common/icon-antd'
+import { IconClose, IconSetting } from '@/common/icon-antd'
 import {
   InputDate,
   InputHint,
@@ -17,18 +17,14 @@ import { Appointment, AppointmentApi, AppointmentStatus } from '@/modules/appoin
 import { Customer, CustomerService } from '@/modules/customer'
 import { CustomerSource, CustomerSourceService } from '@/modules/customer-source'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { ESString, ESTimer } from '@/utils'
-import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
-import { nextTick, ref } from 'vue'
+import { ESString } from '@/utils'
+import InputSearchCustomer from '@/views/component/InputSearchCustomer.vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ModalAppointmentUpsertSetting from './ModalAppointmentUpsertSetting.vue'
 
 const modalAppointmentUpsertSetting = ref<InstanceType<typeof HTMLFormElement>>()
 const appointmentRegisterForm = ref<InstanceType<typeof HTMLFormElement>>()
-const inputOptionsCustomer = ref<InstanceType<typeof InputOptions>>()
-const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
-const modalCustomerUpsert = ref<InstanceType<typeof ModalCustomerUpsert>>()
 const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
 const emit = defineEmits<{
@@ -51,6 +47,8 @@ const appointment = ref<Appointment>(Appointment.blank())
 
 const currentAddress = ref<Address>(Address.blank())
 const addressOptions = ref<{ value: number; text: string; data: Address }[]>([])
+
+const currentCustomer = ref(Customer.blank())
 
 const now = new Date()
 now.setMinutes(0, 0)
@@ -81,13 +79,7 @@ const openModalForCreate = async () => {
 const openModalForUpdate = async (appointmentProp: Appointment) => {
   showModal.value = true
   appointment.value = Appointment.from(appointmentProp)
-  nextTick(() => {
-    inputOptionsCustomer.value?.setItem({
-      text: appointment.value.customer?.fullName || '',
-      data: appointment.value.customer,
-      value: appointment.value.customer?.id,
-    })
-  })
+  currentCustomer.value = Customer.from(appointmentProp.customer)
   await firstLoadAction()
 }
 
@@ -95,7 +87,7 @@ const closeModal = () => {
   customerOptions.value = []
   appointment.value = Appointment.blank()
   currentAddress.value = Address.blank()
-
+  currentCustomer.value = Customer.blank()
   showModal.value = false
 }
 
@@ -109,9 +101,15 @@ const handleUpsertAppointment = async () => {
   try {
     if (!appointment.value.id) {
       appointment.value.fromTicketId = 0
-      await AppointmentApi.createOne(appointment.value)
+      appointment.value.customerId = currentCustomer.value.id
+      await AppointmentApi.createOne({
+        appointment: appointment.value,
+        newCustomer: currentCustomer.value,
+      })
     } else {
-      await AppointmentApi.updateOne(appointment.value.id, appointment.value)
+      await AppointmentApi.updateOne(appointment.value.id, {
+        appointment: appointment.value,
+      })
     }
     emit('success')
     showModal.value = false
@@ -119,53 +117,6 @@ const handleUpsertAppointment = async () => {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:106 ~  ~ error:', error)
   } finally {
     saveLoading.value = false
-  }
-}
-
-const createCustomer = (instance?: Customer) => {
-  inputOptionsCustomer.value?.setItem({
-    text: instance?.fullName || '',
-    data: instance,
-    value: instance?.id,
-  })
-  selectCustomer(instance)
-}
-
-const selectCustomer = async (customerSelect?: Customer) => {
-  if (customerSelect) {
-    appointment.value.customerId = customerSelect.id
-    appointment.value.customerSourceId = customerSelect.customerSourceId
-    appointment.value.customer = Customer.from(customerSelect)
-
-    currentAddress.value.province = customerSelect.addressProvince
-    currentAddress.value.ward = customerSelect.addressWard
-    inputOptionsAddress.value?.setItem({
-      text: [currentAddress.value.ward || '', currentAddress.value.province || '']
-        .filter((i) => !!i)
-        .join(' - '),
-      data: currentAddress.value,
-      value: currentAddress.value.id,
-    })
-  } else {
-    appointment.value.customerId = 0
-    appointment.value.customerSourceId = 0
-    appointment.value.customer = Customer.blank()
-  }
-}
-
-const searchingCustomer = async (text: string) => {
-  appointment.value.customer = Customer.blank()
-  appointment.value.customerId = 0
-  appointment.value.customer.fullName = text
-  if (text) {
-    const customerList = await CustomerService.search(text)
-    customerOptions.value = customerList.map((i) => ({
-      value: i.id,
-      text: i.fullName,
-      data: i,
-    }))
-  } else {
-    customerOptions.value = []
   }
 }
 
@@ -183,8 +134,8 @@ const searchingAddress = async (text: string) => {
 
 const selectAddress = async (addressData?: Address) => {
   currentAddress.value = Address.from(addressData || Address.blank())
-  appointment.value.customer!.addressProvince = currentAddress.value.province
-  appointment.value.customer!.addressWard = currentAddress.value.ward
+  currentCustomer.value.addressProvince = currentAddress.value.province
+  currentCustomer.value.addressWard = currentAddress.value.ward
 }
 
 const openBlankCustomerSourceList = async () => {
@@ -194,13 +145,11 @@ const openBlankCustomerSourceList = async () => {
   window.open(route.href, '_blank')
 }
 
-const handleFocusFirstSearchCustomer = async () => {}
-
 defineExpose({ openModalForCreate, openModalForUpdate })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal v-model:show="showModal" @close="closeModal">
     <form
       ref="appointmentRegisterForm"
       class="bg-white pb-2"
@@ -225,68 +174,24 @@ defineExpose({ openModalForCreate, openModalForUpdate })
 
       <div class="px-4 mt-4 gap-4 flex flex-wrap">
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
-          <div class="flex gap-1 flex-wrap">
-            <span>Tên KH</span>
-            <a
-              v-if="appointment.customer?.id"
-              @click="modalCustomerDetail?.openModal(appointment.customerId)"
-            >
-              <IconFileSearch />
-            </a>
-            <div>
-              <span v-if="appointment.customer!.debt > 0">
-                - Nợ:
-                <b style="color: var(--text-red)">{{ formatMoney(appointment.customer!.debt) }}</b>
-              </span>
-              <span v-if="appointment.customer!.debt < 0">
-                - Quỹ:
-                <b style="color: var(--text-green)">
-                  {{ formatMoney(-appointment.customer!.debt) }}
-                </b>
-              </span>
-            </div>
-            <a
-              v-if="appointment.customer!.id && userPermission[PermissionId.CUSTOMER_UPDATE]"
-              @click="modalCustomerUpsert?.openModal(appointment.customer!)"
-            >
-              Sửa thông tin KH
-            </a>
-          </div>
-          <div style="height: 40px">
-            <InputOptions
-              ref="inputOptionsCustomer"
-              :disabled="!!appointment.id"
-              :options="customerOptions"
-              :maxHeight="260"
-              placeholder="Tìm kiếm bằng tên hoặc SĐT"
-              required
-              noClearTextWhenNotSelected
-              message-no-result="Khách hàng này chưa từng đến khám"
-              @selectItem="({ data }) => selectCustomer(data)"
-              @onFocusinFirst="handleFocusFirstSearchCustomer"
-              @update:text="searchingCustomer"
-            >
-              <template #option="{ item: { data } }">
-                <div>
-                  <b>{{ data.fullName }}</b>
-                  - {{ data.phone }} -
-                  {{ ESTimer.timeToText(data.birthday, 'DD/MM/YYYY') }}
-                </div>
-                <div>{{ ESString.formatAddress(data) }}</div>
-              </template>
-            </InputOptions>
-          </div>
+          <InputSearchCustomer
+            v-model:customerId="currentCustomer.id"
+            v-model:text="currentCustomer.fullName"
+            :customer="appointment.customer"
+            @selectCustomer="(v) => (currentCustomer = Customer.from(v))"
+            :clearTextIfNoSelect="false"
+          />
         </div>
 
         <div style="flex-basis: 40%; flex-grow: 1; min-width: 300px">
           <div>Số điện thoại</div>
           <div style="height: 40px">
             <InputText
-              v-model:value="appointment.customer!.phone"
-              :disabled="!!appointment.customer!.id"
+              v-model:value="currentCustomer.phone"
+              :disabled="!!currentCustomer.id"
               pattern="[0][356789][0-9]{8}"
               title="Định dạng số điện thoại không đúng"
-              @update:value="(e) => (appointment.customer!.phone = e.replace(/ /g, ''))"
+              @update:value="(e) => (currentCustomer.phone = e.replace(/ /g, ''))"
             />
           </div>
         </div>
@@ -298,9 +203,9 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           <div>Ngày sinh</div>
           <div>
             <InputDate
-              v-model:value="appointment.customer!.birthday"
-              v-model:year="appointment.customer!.yearOfBirth"
-              :disabled="!!appointment.customer!.id"
+              v-model:value="currentCustomer.birthday"
+              v-model:year="currentCustomer.yearOfBirth"
+              :disabled="!!currentCustomer.id"
               format="DD/MM/YYYY"
               type-parser="number"
               class="w-full"
@@ -315,8 +220,8 @@ defineExpose({ openModalForCreate, openModalForUpdate })
           <div>Giới tính</div>
           <div>
             <InputRadio
-              v-model:value="appointment.customer!.gender"
-              :disabled="!!appointment.customer!.id"
+              v-model:value="currentCustomer.gender"
+              :disabled="!!currentCustomer.id"
               :options="[
                 { key: 1, label: 'Nam' },
                 { key: 0, label: 'Nữ' },
@@ -336,6 +241,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
                 @selectItem="({ data }) => selectAddress(data)"
                 @searching="searchingAddress"
                 noClearTextWhenNotSelected
+                :disabled="!!currentCustomer.id"
               />
             </div>
           </div>
@@ -344,8 +250,9 @@ defineExpose({ openModalForCreate, openModalForUpdate })
             <div>Số nhà, ngõ ...</div>
             <div>
               <InputText
-                v-model:value="appointment.customer!.addressStreet"
+                v-model:value="currentCustomer.addressStreet"
                 placeholder="Số nhà, ngõ ..."
+                :disabled="!!currentCustomer.id"
               />
             </div>
           </div>
@@ -353,14 +260,14 @@ defineExpose({ openModalForCreate, openModalForUpdate })
 
         <div
           v-if="settingStore.APPOINTMENT_UPSERT.relative"
-          :disabled="!!appointment.customer!.id"
+          :disabled="!!currentCustomer.id"
           style="flex-basis: 40%; flex-grow: 1; min-width: 300px"
         >
           <div>Liên hệ khác</div>
           <div>
             <InputText
-              v-model:value="appointment.customer!.relative"
-              :disabled="!!appointment.customer!.id"
+              v-model:value="currentCustomer.relative"
+              :disabled="!!currentCustomer.id"
               placeholder="Tên người thân, số điện thoại"
             />
           </div>
@@ -372,10 +279,7 @@ defineExpose({ openModalForCreate, openModalForUpdate })
         >
           <div>Ghi chú</div>
           <div style="flex: 1">
-            <InputText
-              v-model:value="appointment.customer!.note"
-              :disabled="!!appointment.customer!.id"
-            />
+            <InputText v-model:value="currentCustomer.note" :disabled="!!currentCustomer.id" />
           </div>
         </div>
 
@@ -477,8 +381,6 @@ defineExpose({ openModalForCreate, openModalForUpdate })
       </div>
     </form>
   </VueModal>
-  <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="createCustomer" />
   <ModalAppointmentUpsertSetting
     v-if="userPermission[PermissionId.ORGANIZATION_SETTING_UPSERT]"
     ref="modalAppointmentUpsertSetting"

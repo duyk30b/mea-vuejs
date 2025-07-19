@@ -11,7 +11,7 @@ import { AuthService } from '../../modules/auth/auth.service'
 const router = useRouter()
 
 const formState = reactive({
-  orgPhone: LocalStorageService.getOrgPhone(),
+  organizationCode: LocalStorageService.getOrganizationCode(),
   username: '',
   password: '',
   oid: 1,
@@ -21,14 +21,14 @@ const formState = reactive({
 const loading = ref(false)
 
 const isRootLogin = computed(() => {
-  return formState.orgPhone === '0986021190' && formState.username === 'ROOT'
+  return formState.organizationCode === '0986021190' && formState.username === 'ROOT'
 })
 
 const startLogin = async () => {
   loading.value = true
   if (!isRootLogin.value) {
     const result = await AuthService.login({
-      orgPhone: formState.orgPhone,
+      organizationCode: formState.organizationCode,
       username: formState.username,
       password: formState.password,
     })
@@ -37,7 +37,7 @@ const startLogin = async () => {
     }
   } else if (isRootLogin.value) {
     const result = await AuthService.loginRoot({
-      orgPhone: formState.orgPhone,
+      organizationCode: formState.organizationCode,
       username: formState.username,
       password: formState.password,
       oid: formState.oid,
@@ -71,11 +71,10 @@ const startLoginDemo = async () => {
           <div>ID cơ cở</div>
           <div>
             <InputText
-              v-model:value="formState.orgPhone"
-              name="organization_phone"
+              v-model:value="formState.organizationCode"
+              name="organization_code"
               autocomplete="on"
               required
-              pattern="[0][356789][0-9]{8}"
             />
           </div>
         </div>

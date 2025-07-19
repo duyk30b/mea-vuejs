@@ -110,7 +110,7 @@ const logoutAll = async () => {
             <td class="text-center">{{ user.id }}</td>
             <td class="text-center">{{ user.oid }}</td>
             <td>
-              <div>{{ user.organization?.phone }}</div>
+              <div>{{ user.organization?.organizationCode }}</div>
               <div>{{ user.username }}</div>
               <div>{{ user.password }}</div>
             </td>

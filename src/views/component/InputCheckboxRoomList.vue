@@ -67,6 +67,10 @@ const handleUpdateUserIdChecked = (data: Record<string, boolean>) => {
       @update:value="handleUpdateUserIdChecked"
       :options="roomIdCheckedOptions"
       :checkboxAll="checkboxAll"
+      :customStyle="{
+        checkboxItem:
+          'display: flex; gap: 0.5em; align-items: center; flex-basis: 200px; flex-grow: 1',
+      }"
     />
     <div v-if="CONFIG.MODE === 'development'" style="color: violet">
       {{ JSON.stringify(roomIdChecked) }}

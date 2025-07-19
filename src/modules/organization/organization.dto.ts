@@ -4,9 +4,13 @@ import type { ConditionDate, ConditionNumber } from '../_base/base-condition'
 export class OrganizationGetQuery {
   page?: number
   limit?: number
-  relation?: {}
+  relation?: {
+    userList?: boolean
+  }
 
-  filter?: {}
+  filter?: {
+    id?: number
+  }
 
   sort?: {
     id?: 'ASC' | 'DESC'
@@ -23,6 +27,6 @@ export class OrganizationGetQuery {
   }
 }
 
-export class OrganizationPaginationQuery extends OrganizationGetQuery {}
-export class OrganizationListQuery extends OmitClass(OrganizationGetQuery, ['page']) {}
-export class OrganizationDetailQuery extends PickClass(OrganizationGetQuery, ['relation']) {}
+export class OrganizationPaginationQuery extends OrganizationGetQuery { }
+export class OrganizationListQuery extends OmitClass(OrganizationGetQuery, ['page']) { }
+export class OrganizationDetailQuery extends PickClass(OrganizationGetQuery, ['relation']) { }
