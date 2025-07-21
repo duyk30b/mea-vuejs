@@ -1,38 +1,15 @@
 import { Customer } from '../customer/customer.model'
 import { Distributor } from '../distributor'
+import { Laboratory, LaboratoryService } from '../laboratory'
+import { PaymentItem, PaymentVoucherItemType, PaymentVoucherType } from '../payment-item'
 import { PaymentMethod } from '../payment-method'
-import { Receipt } from '../receipt'
-import { Ticket } from '../ticket'
-import { User } from '../user'
+import { ProcedureService } from '../procedure'
+import { ProductService } from '../product'
+import { RadiologyService } from '../radiology'
+import { User, UserService } from '../user'
 
-export enum PaymentTiming {
-  Other = 0, // Khác
-  Prepayment = 1, // Thanh toán trước mua hàng
-  ReceiveRefund = 2, // Nhận hoàn trả
-  Close = 3, // Thanh toán trực tiếp
-  PayDebt = 4, // Trả nợ (thanh toán sau mua hàng )
-  Reopen = 5, // Mở lại hồ sơ
-  TopUp = 10,
-}
-
-export const PaymentTimingText = {
-  [PaymentTiming.Other]: 'Khác',
-  [PaymentTiming.Prepayment]: 'Tạm ứng',
-  [PaymentTiming.ReceiveRefund]: 'Hoàn trả',
-  [PaymentTiming.Close]: 'Đóng phiếu',
-  [PaymentTiming.PayDebt]: 'Trả nợ',
-  [PaymentTiming.Reopen]: 'Mở lại phiếu',
-  [PaymentTiming.TopUp]: 'Ghi quỹ',
-}
-
-export enum VoucherType {
-  Unknown = 0,
-  Receipt = 1,
-  Ticket = 2,
-}
-
-export enum PersonType {
-  Unknown = 0,
+export enum PaymentPersonType {
+  Other = 0,
   Distributor = 1,
   Customer = 2,
   Employee = 3,
@@ -46,35 +23,33 @@ export enum MoneyDirection {
 export class Payment {
   id: number
   paymentMethodId: number
-  voucherType: VoucherType
-  voucherId: number
-  personType: PersonType
+  paymentPersonType: PaymentPersonType
   personId: number
-  paymentTiming: PaymentTiming
   createdAt: number
   moneyDirection: MoneyDirection
-  paidAmount: number // Số tiền thu
-  debtAmount: number // Ghi nợ: tiền nợ thêm hoặc trả nợ
-  openDebt: number // Công nợ đầu kỳ
-  closeDebt: number // Công nợ cuối kỳ
+  money: number // Số tiền thu
   cashierId: number
   note: string // Ghi chú
-  description: string
+  reason: string
 
   customer: Customer
   distributor: Distributor
-  ticket: Ticket
-  receipt: Receipt
+  employee: User
   cashier: User
+
+  paymentItemList: PaymentItem[]
   paymentMethod: PaymentMethod
 
   static init(): Payment {
     const ins = new Payment()
     ins.id = 0
-    ins.paidAmount = 0
-    ins.debtAmount = 0
-    ins.openDebt = 0
-    ins.closeDebt = 0
+    ins.paymentMethodId = 0
+    ins.personId = 0
+    ins.paymentPersonType = 0
+    ins.money = 0
+    ins.cashierId = 0
+    ins.note = ''
+    ins.reason = ''
     return ins
   }
 
@@ -107,25 +82,66 @@ export class Payment {
         ? Distributor.basic(source.distributor)
         : source.distributor
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'ticket')) {
-      target.ticket = source.ticket ? Ticket.basic(source.ticket) : source.ticket
+    if (Object.prototype.hasOwnProperty.call(source, 'employee')) {
+      target.employee = source.employee ? User.basic(source.employee) : source.employee
     }
-    if (Object.prototype.hasOwnProperty.call(source, 'receipt')) {
-      target.receipt = source.receipt ? Receipt.basic(source.receipt) : source.receipt
+    if (Object.prototype.hasOwnProperty.call(source, 'cashier')) {
+      target.cashier = source.cashier ? User.basic(source.cashier) : source.cashier
     }
     if (Object.prototype.hasOwnProperty.call(source, 'paymentMethod')) {
       target.paymentMethod = source.paymentMethod
         ? PaymentMethod.basic(source.paymentMethod)
         : source.paymentMethod
     }
-
-    if (Object.prototype.hasOwnProperty.call(source, 'cashier')) {
-      target.cashier = source.cashier ? User.basic(source.cashier) : source.cashier
+    if (source.paymentItemList) {
+      target.paymentItemList = PaymentItem.basicList(source.paymentItemList)
     }
     return target
   }
 
   static fromList(roots: Payment[]) {
     return roots.map((i) => Payment.from(i))
+  }
+
+  static async refreshData(payment: Payment) {
+    const productIdList = payment.paymentItemList
+      .filter((i) => {
+        return (
+          (i.voucherItemType === PaymentVoucherItemType.TicketProductConsumable ||
+            i.voucherItemType === PaymentVoucherItemType.TicketProductPrescription) &&
+          i.voucherType === PaymentVoucherType.Ticket
+        )
+      })
+      .map((i) => i.paymentInteractId)
+
+    const [productMap, procedureMap, laboratoryMap, radiologyMap, userMap] = await Promise.all([
+      ProductService.map({ filter: { id: { IN: productIdList } } }),
+      ProcedureService.getMap(),
+      LaboratoryService.getMap(),
+      RadiologyService.getMap(),
+      UserService.getMap(),
+    ])
+
+    payment.paymentItemList.forEach((i) => {
+      i.cashier = userMap[i.cashierId] || User.blank()
+
+      if (i.voucherType !== PaymentVoucherType.Ticket) return
+      if (i.voucherItemType === PaymentVoucherItemType.TicketProcedure) {
+        i.interactName = procedureMap[i.paymentInteractId]?.name || ''
+      }
+      if (i.voucherItemType === PaymentVoucherItemType.TicketProductConsumable) {
+        i.interactName = productMap[i.paymentInteractId]?.brandName || ''
+      }
+      if (i.voucherItemType === PaymentVoucherItemType.TicketProductPrescription) {
+        i.interactName = productMap[i.paymentInteractId]?.brandName || ''
+      }
+      if (i.voucherItemType === PaymentVoucherItemType.TicketLaboratory) {
+        i.interactName = laboratoryMap[i.paymentInteractId]?.name || ''
+      }
+      if (i.voucherItemType === PaymentVoucherItemType.TicketRadiology) {
+        i.interactName = radiologyMap[i.paymentInteractId]?.name || ''
+      }
+    })
+    return payment
   }
 }

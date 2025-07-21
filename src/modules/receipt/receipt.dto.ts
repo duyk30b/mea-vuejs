@@ -7,7 +7,7 @@ export class ReceiptGetQuery {
   limit?: number
   relation?: {
     distributor?: boolean
-    paymentList?: boolean
+    paymentItemList?: boolean
     receiptItemList?: { product?: boolean; batch?: boolean } | false
   }
 

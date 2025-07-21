@@ -16,6 +16,7 @@ import { TicketProcedure } from '../../../../modules/ticket-procedure'
 import type { TicketUser } from '../../../../modules/ticket-user'
 import ModalTicketProcedureUpdate from './ModalTicketProcedureUpdate.vue'
 import TicketClinicProcedureSelectItem from './TicketClinicProcedureSelectItem.vue'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
 
@@ -111,6 +112,7 @@ const startPrintRequest = async () => {
         <thead>
           <tr>
             <th>#</th>
+            <th></th>
             <th>Dịch vụ</th>
             <th>SL</th>
             <th>Giá</th>
@@ -158,6 +160,7 @@ const startPrintRequest = async () => {
                 </button>
               </div>
             </td>
+            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
             <td>{{ tpItem.procedure?.name }}</td>
             <td class="text-center">{{ tpItem.quantity }}</td>
             <td class="text-right">
@@ -186,7 +189,7 @@ const startPrintRequest = async () => {
             </td>
           </tr>
           <tr>
-            <td colspan="4" class="text-right">
+            <td colspan="5" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

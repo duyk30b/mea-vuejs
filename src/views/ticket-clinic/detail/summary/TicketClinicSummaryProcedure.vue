@@ -11,6 +11,7 @@ import { TicketStatus } from '../../../../modules/ticket'
 import ModalProcedureDetail from '../../../master-data/procedure/detail/ModalProcedureDetail.vue'
 import ModalTicketProcedureUpdate from '../procedure/ModalTicketProcedureUpdate.vue'
 import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalProcedureDetail = ref<InstanceType<typeof ModalProcedureDetail>>()
 const modalTicketProcedureUpdate = ref<InstanceType<typeof ModalTicketProcedureUpdate>>()
@@ -38,6 +39,7 @@ const procedureDiscount = computed(() => {
       <tr>
         <th>#</th>
         <th></th>
+        <th></th>
         <th colspan="3">DỊCH VỤ - THỦ THUẬT</th>
         <th>SL</th>
         <th>Giá</th>
@@ -51,6 +53,9 @@ const procedureDiscount = computed(() => {
       <tr v-for="(ticketProcedure, index) in ticketRoomRef.ticketProcedureList" :key="index">
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
+        </td>
+        <td>
+          <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketProcedure.paymentMoneyStatus" />
         </td>
         <td></td>
         <td colspan="3">

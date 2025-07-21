@@ -15,7 +15,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PositionService, PositionInteractType } from '../../../../modules/position'
-import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '../../../../modules/enum'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicProductApi } from '../../../../modules/ticket-clinic'
@@ -194,6 +194,12 @@ const clickDestroy = async () => {
         '- Thuốc đã được xuất khỏi kho sẽ không thể xóa',
         '- Chỉ có thể hoàn trả thuốc nếu bắt buộc phải thay đổi số lượng ?',
       ],
+    })
+  }
+  if (ticketProductOrigin.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+    return ModalStore.alert({
+      title: 'Không thể xóa thuốc - vật tư ?',
+      content: ['- Thuốc - vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {

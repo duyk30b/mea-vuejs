@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { ticketRoomRef } from '@/modules/room'
+import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import VueTinyMCE from '../../../../common/VueTinyMCE.vue'
@@ -6,17 +9,13 @@ import { IconFileSearch, IconSpin } from '../../../../common/icon-antd'
 import { IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
 import { IconEditSquare } from '../../../../common/icon-google'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
-import { InputFilter, InputOptions, VueSwitch } from '../../../../common/vue-form'
+import { InputFilter, VueSwitch } from '../../../../common/vue-form'
+import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PositionService, PositionInteractType } from '../../../../modules/position'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import {
-  PrescriptionSample,
-  PrescriptionSampleService,
-  type MedicineType,
-} from '../../../../modules/prescription-sample'
-import { PrintHtmlService } from '../../../../modules/print-html'
+import { PositionInteractType, PositionService } from '../../../../modules/position'
+import { PrescriptionSample, type MedicineType } from '../../../../modules/prescription-sample'
 import { Product, ProductService } from '../../../../modules/product'
 import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -33,17 +32,14 @@ import { TicketProduct, TicketProductType } from '../../../../modules/ticket-pro
 import { TicketUser } from '../../../../modules/ticket-user'
 import { UserService } from '../../../../modules/user'
 import { UserRoleService } from '../../../../modules/user-role'
-import { ESString, ESDom } from '../../../../utils'
+import { ESString } from '../../../../utils'
 import ModalProductDetail from '../../../product/detail/ModalProductDetail.vue'
 import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStatusTooltip.vue'
 import ModalSavePrescriptionSample from './ModalSavePrescriptionSample.vue'
+import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescriptionSample.vue'
 import ModalTicketClinicPrescriptionUpdate from './ModalTicketClinicPrescriptionUpdate.vue'
 import TicketClinicPrescriptionSelectItem from './TicketClinicPrescriptionSelectItem.vue'
-import ModalSelectItemFromPrescriptionSample from './ModalSelectItemFromPrescriptionSample.vue'
-import { MeService } from '../../../../modules/_me/me.service'
-import { ticketRoomRef } from '@/modules/room'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import InputSearchPrescriptionSample from '@/views/component/InputSearchPrescriptionSample.vue'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalTicketClinicPrescriptionUpdate =
   ref<InstanceType<typeof ModalTicketClinicPrescriptionUpdate>>()
@@ -429,6 +425,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
           <tr>
             <th>#</th>
             <th style="width: 32px"></th>
+            <th style="width: 32px"></th>
             <th>Tên Thuốc</th>
             <th>SL kê</th>
             <th>SL mua</th>
@@ -488,6 +485,9 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
             <td class="text-center">
               <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
+            <td class="text-center">
+              <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" />
+            </td>
             <td>
               <div style="font-weight: 500">
                 {{ tpItem.product?.brandName }}
@@ -521,6 +521,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
               </a>
               <a
                 v-else-if="
+                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_PRESCRIPTION]
                 "
                 class="text-orange-500"
@@ -545,6 +546,7 @@ const handleSelectMedicineList = async (medicineList: MedicineType[]) => {
                 }}
               </b>
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>

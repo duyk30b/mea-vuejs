@@ -1,30 +1,30 @@
 <script lang="ts" setup>
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
+import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 import { computed, onMounted, ref } from 'vue'
-import { IconCheckSquare, IconClockCircle, IconPrint, IconSpin } from '../../../../common/icon-antd'
+import { IconPrint, IconSpin } from '../../../../common/icon-antd'
 import { IconDelete, IconEditSquare } from '../../../../common/icon-google'
-import VueTooltip from '../../../../common/popover/VueTooltip.vue'
 import { AlertStore } from '../../../../common/vue-alert/vue-alert.store'
 import { InputDate, InputText } from '../../../../common/vue-form'
 import VueButton from '../../../../common/VueButton.vue'
 import { CONFIG } from '../../../../config'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DiscountType } from '../../../../modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService, LaboratoryValueType } from '../../../../modules/laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../../../../modules/laboratory-group'
 import { LaboratorySample, LaboratorySampleService } from '../../../../modules/laboratory-sample'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { PrintHtmlCompile, PrintHtmlService } from '../../../../modules/print-html'
 import { TicketStatus } from '../../../../modules/ticket'
 import { TicketClinicLaboratoryApi } from '../../../../modules/ticket-clinic'
 import { TicketLaboratory, TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import { TicketLaboratoryGroup } from '../../../../modules/ticket-laboratory-group'
-import { ESString, ESArray, ESDom } from '../../../../utils'
+import { ESArray, ESString } from '../../../../utils'
 import ModalTicketLaboratoryUpdateMoney from './ModalTicketLaboratoryUpdateMoney.vue'
-import { ticketRoomRef } from '@/modules/room'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -249,12 +249,15 @@ const saveLaboratorySelected = async () => {
           laboratoryGroupId: Number(i),
           registeredAt: registeredAt.value,
           roomId: laboratoryGroupSelects.value[i].laboratoryGroup.roomId,
+          paymentMoneyStatus: settingStore.TICKET_CLINIC_DETAIL.laboratory.paymentMoneyStatus,
           ticketLaboratoryList: laboratoryGroupSelects.value[i].laboratoryList.map((i, index) => {
             const ins = TicketLaboratory.blank()
             ins.laboratory = Laboratory.from(i)
             ins.priority = index + 1
             ins.laboratoryId = i.id
             ins.laboratoryGroupId = i.laboratoryGroupId
+            ins.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.laboratory.paymentMoneyStatus
+
             ins.costPrice = i.costPrice
             ins.expectedPrice = i.price
             ins.discountMoney = 0
@@ -591,7 +594,9 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
+            <th style="width: 32px"></th>
             <th style="width: 32px"></th>
             <th>Tên</th>
             <th>Kết quả</th>
@@ -607,9 +612,11 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           </tr>
           <template v-for="tlg in ticketRoomRef.ticketLaboratoryGroupList" :key="tlg.id">
             <tr>
-              <td colspan="3" class="">
+              <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                {{ tlg.id }}
+              </td>
+              <td colspan="4" class="">
                 <div class="flex items-center gap-2">
-                  <span v-if="CONFIG.MODE === 'development'">({{ tlg.id }}) -</span>
                   <span class="font-bold">{{ tlg.laboratoryGroup?.name }}</span>
                   <a @click="startPrintResult(tlg)">
                     <IconPrint width="18px" height="18px" />
@@ -627,6 +634,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   <VueButton
                     v-if="
                       ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                      tlg.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                       userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     size="small"
@@ -648,6 +656,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   v-if="
                     tlg.id &&
                     tlg.status === TicketLaboratoryStatus.Pending &&
+                    tlg.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                     userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                   "
                   style="color: var(--text-red)"
@@ -664,28 +673,15 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                     : ''
                 "
               >
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  {{ tlItem.id }}
+                </td>
+                <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-center">
-                  <span v-if="CONFIG.MODE === 'development'">({{ tlItem.id }}) -</span>
-                  <span>{{ index + 1 }}</span>
+                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tlItem.paymentMoneyStatus" />
                 </td>
                 <td class="text-center">
-                  <VueTooltip v-if="tlItem.status === TicketLaboratoryStatus.Pending">
-                    <template #trigger>
-                      <IconClockCircle
-                        style="font-size: 18px; color: orange; cursor: not-allowed"
-                      />
-                    </template>
-                    <div>Chưa có kết quả</div>
-                  </VueTooltip>
-
-                  <VueTooltip v-else>
-                    <template #trigger>
-                      <IconCheckSquare
-                        style="color: #52c41a; font-size: 18px; cursor: not-allowed"
-                      />
-                    </template>
-                    <div>Đã hoàn thành</div>
-                  </VueTooltip>
+                  <TicketLaboratoryStatusTooltip :status="tlItem.status" />
                 </td>
                 <td>{{ tlItem.laboratory?.name }}</td>
                 <td class="text-center">
@@ -714,6 +710,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   </a>
                   <a
                     v-else-if="
+                      tlItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                       userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_LABORATORY_LIST]
                     "
                     class="text-orange-500"
@@ -730,6 +727,10 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
                   tlg.ticketLaboratoryResultMap?.[laboratoryChild.id]?.attention ? 'color: red' : ''
                 "
               >
+                <td v-if="CONFIG.MODE === 'development'" style="color: violet; text-align: center">
+                  L{{ laboratoryChild.id }}
+                </td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td>{{ laboratoryChild?.name }}</td>
@@ -750,7 +751,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           </template>
 
           <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

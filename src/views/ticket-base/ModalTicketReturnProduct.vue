@@ -100,17 +100,12 @@ const startReturnProduct = async () => {
           quantityReturn: i.quantityReturn,
         }
       })
-    if (ticket.value.ticketType === TicketType.Order) {
-      await TicketOrderApi.returnProduct({
-        ticketId: ticket.value.id,
-        returnList: tbReturnListConvert,
-      })
-    } else {
-      await TicketActionApi.returnProduct({
-        ticketId: ticket.value.id,
-        returnList: tbReturnListConvert,
-      })
-    }
+
+    await TicketActionApi.returnProduct({
+      ticketId: ticket.value.id,
+      returnList: tbReturnListConvert,
+    })
+
     emit('success')
     closeModal()
   } catch (error) {

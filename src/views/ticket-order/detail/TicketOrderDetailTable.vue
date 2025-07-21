@@ -28,7 +28,8 @@ const colspan = computed(() => {
     4 +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit) +
     Number(settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.discount) +
-    Number(settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount)
+    Number(settingStore.SCREEN_INVOICE_DETAIL.paymentInfo.itemsCostAmount) +
+    (CONFIG.MODE === 'development' ? 1 : 0)
   )
 })
 </script>
@@ -112,10 +113,9 @@ const colspan = computed(() => {
             v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList || []"
             :key="index"
           >
-            <td
-              class="auto-index text-center whitespace-nowrap"
-              style="padding: 0.5rem 0.2rem"
-            ></td>
+            <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
+              {{ index + 1 }}
+            </td>
             <td>
               <div class="font-medium text-justify">
                 {{ ticketProduct.product!.brandName }}
@@ -202,6 +202,7 @@ const colspan = computed(() => {
       <template v-if="!isMobile">
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th style="width: 40px">#</th>
             <th style="width: 40px"></th>
             <th>Tên</th>
@@ -218,9 +219,10 @@ const colspan = computed(() => {
             v-for="(ticketProcedure, index) in ticketOrderDetailRef.ticketProcedureList"
             :key="index"
           >
-            <td class="auto-index text-center">
-              <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProcedure.id }})</span>
+            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
+              {{ ticketProcedure.id }}
             </td>
+            <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center"></td>
             <td :colspan="settingStore.SCREEN_INVOICE_DETAIL.invoiceItemsTable.unit ? '2' : '1'">
               <div class="text-justify font-medium whitespace-nowrap" style="word-break: break-all">
@@ -265,9 +267,10 @@ const colspan = computed(() => {
             </td>
           </tr>
           <tr v-for="(ticketProduct, index) in ticketOrderDetailRef.ticketProductList" :key="index">
-            <td class="auto-index text-center">
-              <span v-if="CONFIG.MODE === 'development'">- ({{ ticketProduct.id }})</span>
+            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
+              {{ ticketProduct.id }}
             </td>
+            <td class="text-center">{{ index + 1 }}</td>
             <td class="text-center">
               <TicketDeliveryStatusTooltip :deliveryStatus="ticketProduct.deliveryStatus" />
             </td>

@@ -47,6 +47,7 @@ import { roomReceptionPagination, RoomService } from '@/modules/room'
 import { AlertStore } from '@/common/vue-alert'
 import { CONFIG } from '@/config'
 import { PrintHtmlAction } from '@/modules/print-html'
+import { UserRoleService } from '@/modules/user-role'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -85,7 +86,7 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
       dataLoading.value = true
     }
 
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -114,8 +115,8 @@ const startFetchData = async (options?: { dataLoading: boolean }) => {
         : { registeredAt: 'DESC' },
     })
 
-    roomReceptionPagination.value = data
-    total.value = meta.total
+    roomReceptionPagination.value = paginationResult.ticketList
+    total.value = paginationResult.total
   } catch (error) {
   } finally {
     dataLoading.value = false
@@ -128,7 +129,7 @@ onBeforeMount(async () => {
       startFetchData({ dataLoading: true }),
       RoleService.getMap(),
       UserService.getMap(),
-      RoleService.getMap(),
+      UserRoleService.getMapList(),
       CustomerService.refreshDB(),
     ])
   } catch (error) {}
@@ -193,7 +194,7 @@ const handleModalReceptionTicketListSettingSuccess = async () => {
 }
 
 const startCloseTicket = async (ticketId: number) => {
-  await TicketActionApi.close(ticketId)
+  await TicketActionApi.close({ ticketId })
 }
 
 const clickCloseTicket = (ticket: Ticket) => {
@@ -483,13 +484,9 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                 />
               </div>
             </th>
-            <th style="min-width: 100px">Phòng</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
-            <th class="">Trạng thái</th>
-
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               <div class="flex items-center gap-1 justify-center">
-                <span>Thời gian</span>
+                <span>Trạng thái</span>
                 <IconSort v-if="sortColumn !== 'registeredAt'" style="opacity: 0.4" />
                 <IconSortUp
                   v-if="sortColumn === 'registeredAt' && sortValue === 'ASC'"
@@ -501,9 +498,8 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                 />
               </div>
             </th>
+            <th v-if="settingStore.TICKET_CLINIC_LIST.showCustomType">Phân loại</th>
             <th style="min-width: 150px">Khách hàng</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.birthday">Ngày sinh</th>
-            <th v-if="settingStore.TICKET_CLINIC_LIST.phone">SĐT</th>
             <th class="">Thuốc - Vật tư</th>
             <th>Thanh toán</th>
             <th>Tổng tiền</th>
@@ -534,7 +530,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
             <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
               {{ ticket.id }}
             </td>
-            <td class="text-center">
+            <td class="">
               <div class="flex gap-1 justify-between items-center">
                 <router-link
                   :to="{
@@ -575,18 +571,17 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                   <IconEditSquare />
                 </a>
               </div>
+              <div>{{ roomMap[ticket.roomId]?.name || '' }}</div>
             </td>
-            <td>{{ roomMap[ticket.roomId]?.name || '' }}</td>
+            <td>
+              <div><TicketStatusTag :ticket="ticket" /></div>
+              <div>{{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}</div>
+            </td>
             <td
               v-if="settingStore.TICKET_CLINIC_LIST.showCustomType"
               style="font-size: 1em; color: #555"
             >
               {{ settingStore.TICKET_CLINIC_LIST.customTypeText[ticket.customType || 0] }}
-            </td>
-            <td><TicketStatusTag :ticket="ticket" /></td>
-
-            <td class="text-center">
-              {{ ESTimer.timeToText(ticket.registeredAt, 'hh:mm DD/MM/YYYY') }}
             </td>
             <td>
               <div>
@@ -601,18 +596,18 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
               <div class="text-xs italic">
                 {{ ESString.formatAddress(ticket.customer!) }}
               </div>
+              <div>
+                {{
+                  ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
+                  ticket.customer?.yearOfBirth ||
+                  ''
+                }}
+              </div>
+              <div>
+                {{ formatPhone(ticket.customer?.phone) }}
+              </div>
             </td>
 
-            <td v-if="settingStore.TICKET_CLINIC_LIST.birthday" class="text-center">
-              {{
-                ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
-                ticket.customer?.yearOfBirth ||
-                ''
-              }}
-            </td>
-            <td v-if="settingStore.TICKET_CLINIC_LIST.phone" class="text-center">
-              {{ formatPhone(ticket.customer?.phone) }}
-            </td>
             <td>
               <div class="flex flex-wrap justify-between items-center">
                 <TicketClinicDeliveryStatusTag :deliveryStatus="ticket.deliveryStatus" />
@@ -645,7 +640,8 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                       TicketStatus.Draft,
                       TicketStatus.Deposited,
                       TicketStatus.Executing,
-                    ].includes(ticket.status) && userPermission[PermissionId.RECEPTION_PAYMENT]
+                    ].includes(ticket.status) &&
+                    userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]
                   "
                   size="small"
                   icon="dollar"
@@ -661,7 +657,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                 <VueButton
                   v-if="
                     [TicketStatus.Debt].includes(ticket.status) &&
-                    userPermission[PermissionId.RECEPTION_PAYMENT]
+                    userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]
                   "
                   size="small"
                   icon="dollar"
@@ -707,7 +703,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                     <a
                       v-if="
                         ticket.paid > ticket.totalMoney &&
-                        userPermission[PermissionId.RECEPTION_REFUND_OVER_PAID]
+                        userPermission[PermissionId.PAYMENT_CUSTOMER_REFUND]
                       "
                       style="color: var(--text-red)"
                       @click="

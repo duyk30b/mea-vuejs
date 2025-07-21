@@ -151,9 +151,6 @@ const submitAddStockCheckItem = () => {
   const hasAdd = addStockCheckItem(StockCheckItem.from(stockCheckItem.value))
   if (hasAdd) {
     clearSelectProduct()
-    if (!isMobile) {
-      inputOptionsProduct.value?.focus()
-    }
   }
 }
 

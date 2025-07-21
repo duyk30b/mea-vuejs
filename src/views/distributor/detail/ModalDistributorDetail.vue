@@ -124,7 +124,7 @@ defineExpose({ openModal })
                 <div>
                   <VueButton
                     v-if="
-                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT] &&
+                      userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT] &&
                       distributor.debt != 0
                     "
                     color="blue"

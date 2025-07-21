@@ -118,7 +118,7 @@ const startSendProduct = async () => {
 }
 
 const startReopenVisit = async () => {
-  await TicketActionApi.reopen(ticketRoomRef.value.id)
+  await TicketActionApi.reopen({ ticketId: ticketRoomRef.value.id })
 }
 
 const clickReopenTicket = () => {

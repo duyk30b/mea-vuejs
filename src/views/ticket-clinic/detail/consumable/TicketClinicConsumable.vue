@@ -8,15 +8,12 @@ import { InputFilter } from '../../../../common/vue-form'
 import { MeService } from '../../../../modules/_me/me.service'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PositionService, PositionInteractType } from '../../../../modules/position'
-import { DeliveryStatus } from '../../../../modules/enum'
+import { DeliveryStatus, PaymentMoneyStatus } from '../../../../modules/enum'
 import { PermissionId } from '../../../../modules/permission/permission.enum'
 import type { Product } from '../../../../modules/product'
 import { RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
-import {
-  TicketClinicProductApi,
-  TicketClinicUserApi,
-} from '../../../../modules/ticket-clinic'
+import { TicketClinicProductApi, TicketClinicUserApi } from '../../../../modules/ticket-clinic'
 import { TicketProduct } from '../../../../modules/ticket-product'
 import { TicketUser } from '../../../../modules/ticket-user'
 import { UserService } from '../../../../modules/user'
@@ -27,6 +24,7 @@ import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStat
 import ModalTicketClinicConsumableUpdate from './ModalTicketClinicConsumableUpdate.vue'
 import TicketClinicConsumableSelectItem from './TicketClinicConsumableSelectItem.vue'
 import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalTicketClinicConsumableUpdate =
   ref<InstanceType<typeof ModalTicketClinicConsumableUpdate>>()
@@ -216,6 +214,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
           <tr>
             <th>#</th>
             <th style="width: 32px"></th>
+            <th style="width: 32px"></th>
             <th>Tên vật tư</th>
             <th>SL</th>
             <th>Đ.Vị</th>
@@ -267,6 +266,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
                 </button>
               </div>
             </td>
+            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
             <td class="text-center">
               <TicketDeliveryStatusTooltip :deliveryStatus="tpItem.deliveryStatus" />
             </td>
@@ -300,6 +300,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
               </a>
               <a
                 v-else-if="
+                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_PRODUCT_CONSUMABLE]
                 "
                 class="text-orange-500"
@@ -310,7 +311,7 @@ const handleAddTicketProductConsumable = async (ticketProductAddList: TicketProd
             </td>
           </tr>
           <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

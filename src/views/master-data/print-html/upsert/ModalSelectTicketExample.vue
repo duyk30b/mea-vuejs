@@ -22,7 +22,7 @@ let firstLoad = true
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -32,8 +32,8 @@ const startFetchData = async () => {
       sort: { registeredAt: 'DESC' },
     })
 
-    ticketClinicList.value = data
-    total.value = meta.total
+    ticketClinicList.value = paginationResult.ticketList
+    total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: ModalSelectTicketExample.vue:37 ~ startFetchData ~ error:', error)
   }

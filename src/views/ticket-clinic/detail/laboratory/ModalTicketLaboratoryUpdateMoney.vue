@@ -8,7 +8,7 @@ import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
 import { PositionService, PositionInteractType } from '../../../../modules/position'
-import { DiscountType } from '../../../../modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '../../../../modules/enum'
 import { Laboratory, LaboratoryService } from '../../../../modules/laboratory'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketClinicLaboratoryApi } from '../../../../modules/ticket-clinic'
@@ -43,8 +43,9 @@ const saveLoading = ref(false)
 const refreshTicketUserList = async () => {
   ticketUserListOrigin = []
   const ticketUserListRef =
-    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Laboratory]?.[ticketLaboratory.value.id] ||
-    []
+    ticketRoomRef.value.ticketUserGroup?.[PositionInteractType.Laboratory]?.[
+      ticketLaboratory.value.id
+    ] || []
 
   const positionList = await PositionService.list({
     filter: {
@@ -168,6 +169,12 @@ const closeModal = () => {
 }
 
 const clickDestroy = async () => {
+  if (ticketLaboratoryOrigin.value.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+    return ModalStore.alert({
+      title: 'Không thể xóa xét nghiệm ?',
+      content: ['- Xét nghiệm đã được thanh toán sẽ không thể xóa'],
+    })
+  }
   ModalStore.confirm({
     title: 'Xác nhận xóa dịch vụ ?',
     content: [

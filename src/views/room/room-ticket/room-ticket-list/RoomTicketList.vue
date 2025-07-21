@@ -61,7 +61,7 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
@@ -91,9 +91,8 @@ const startFetchData = async () => {
         : { registeredAt: 'DESC' },
     })
 
-    roomTicketPagination.value[currentRoom.value.id] = data
-
-    total.value = meta.total
+    roomTicketPagination.value[currentRoom.value.id] = paginationResult.ticketList
+    total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: TicketClinicList.vue:84 ~ startFetchData ~ error:', error)
   } finally {

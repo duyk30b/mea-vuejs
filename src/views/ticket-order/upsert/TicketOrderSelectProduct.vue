@@ -322,9 +322,6 @@ const addTicketProduct = () => {
   }
 
   clear()
-  if (!isMobile) {
-    inputOptionsProduct.value?.focus()
-  }
 }
 
 const focus = () => {

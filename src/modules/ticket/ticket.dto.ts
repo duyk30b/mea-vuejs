@@ -1,5 +1,11 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { DeliveryStatus } from '../enum'
+import type { TicketLaboratoryListQuery } from '../ticket-laboratory'
+import type { TicketLaboratoryGroupListQuery } from '../ticket-laboratory-group'
+import type { TicketProcedureListQuery } from '../ticket-procedure'
+import type { TicketProductListQuery } from '../ticket-product'
+import type { TicketRadiologyListQuery } from '../ticket-radiology'
 import type { TicketStatus, TicketType } from './ticket.model'
 
 export class TicketGetQuery {
@@ -7,19 +13,19 @@ export class TicketGetQuery {
   limit?: number
   relation?: {
     customer?: boolean
-    paymentList?: boolean
-    ticketBatchList?: { batch?: boolean } | false
-    ticketProductList?: { product?: boolean } | false
-    ticketProductConsumableList?: { product?: boolean } | false
-    ticketProductPrescriptionList?: { product?: boolean } | false
-    ticketProcedureList?: { procedure?: boolean } | false
-    ticketLaboratoryList?: { laboratoryList?: boolean; laboratory?: boolean } | false
-    ticketLaboratoryGroupList?: { laboratoryGroup?: boolean } | false
-    ticketLaboratoryResultList?: boolean
-    ticketRadiologyList?: { radiology?: boolean } | false
-    ticketAttributeList?: boolean
+    paymentItemList?: boolean
     ticketSurchargeList?: boolean
     ticketExpenseList?: boolean
+    ticketAttributeList?: boolean
+    ticketProductList?: TicketProductListQuery
+    ticketBatchList?: { batch?: boolean } | false
+    ticketProductConsumableList?: TicketProductListQuery
+    ticketProductPrescriptionList?: TicketProductListQuery
+    ticketProcedureList?: TicketProcedureListQuery
+    ticketLaboratoryList?: TicketLaboratoryListQuery
+    ticketLaboratoryGroupList?: TicketLaboratoryGroupListQuery
+    ticketLaboratoryResultList?: boolean
+    ticketRadiologyList?: TicketRadiologyListQuery
     ticketUserList?: { user?: boolean } | false
     toAppointment?: boolean
   }
@@ -29,6 +35,7 @@ export class TicketGetQuery {
     customerId?: number
     status?: TicketStatus | ConditionEnum<TicketStatus>
     ticketType?: TicketType | ConditionEnum<TicketType>
+    deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
     customType?: number
     registeredAt?: ConditionDate
     startedAt?: ConditionDate

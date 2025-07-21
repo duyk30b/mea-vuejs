@@ -2,17 +2,20 @@ import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
 import { Customer } from '../customer'
 import { Distributor } from '../distributor'
+import { PaymentItem, type PaymentVoucherItemType } from '../payment-item'
+import { Receipt } from '../receipt'
+import { Ticket } from '../ticket'
 import {
-  PaymentGetQuery,
+  PaymentGetParams,
   PaymentListQuery,
   PaymentPaginationQuery,
-  type DistributorPaymentBody,
+  PaymentResponseParams,
 } from './payment.dto'
 import { MoneyDirection, Payment } from './payment.model'
 
 export class PaymentApi {
   static async pagination(options: PaymentPaginationQuery) {
-    const params = PaymentGetQuery.toQuery(options)
+    const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/pagination', { params })
     const { data } = response.data as BaseResponse<{
@@ -26,7 +29,7 @@ export class PaymentApi {
   }
 
   static async list(options: PaymentListQuery) {
-    const params = PaymentGetQuery.toQuery(options)
+    const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/list', { params })
     const { data } = response.data as BaseResponse<{ paymentList: any[] }>
@@ -34,7 +37,7 @@ export class PaymentApi {
   }
 
   static async sumMoney(options: PaymentListQuery) {
-    const params = PaymentGetQuery.toQuery(options)
+    const params = PaymentGetParams.toQuery(options)
 
     const response = await AxiosInstance.get('/payment/sum-money', { params })
     const { data } = response.data as BaseResponse<{
@@ -47,46 +50,118 @@ export class PaymentApi {
     return data
   }
 
-  static async customerPayment(body: {
+  static async customerPayment(options: {
+    body: {
+      customerId: number
+      paymentMethodId: number
+      totalMoney: number
+      reason: string
+      note: string
+      paymentItemData: {
+        payDebt: { ticketId: number; amount: number }[]
+        prepayment?: {
+          ticketId: number
+          itemList: {
+            ticketItemId: number // nếu không chọn ticketItem thì là tạm ứng vào đơn
+            voucherItemType: PaymentVoucherItemType
+            amount: number
+            paymentInteractId: number
+          }[]
+        }
+        moneyTopUpAdd: number
+      }
+    }
+    params?: PaymentResponseParams
+  }) {
+    const params = PaymentResponseParams.toQuery(options.params || {})
+
+    const response = await AxiosInstance.post('/payment/customer-payment', options.body, { params })
+    const { data } = response.data as BaseResponse<{
+      customerModified: any
+      paymentCreated: any
+      ticketModifiedList: any[]
+      paymentItemCreatedList: any[]
+    }>
+
+    const customerModified = Customer.from(data.customerModified)
+    const ticketModifiedList = Ticket.fromList(data.ticketModifiedList)
+    const paymentCreated = Payment.from(data.paymentCreated)
+    const paymentItemCreatedList = PaymentItem.fromList(data.paymentItemCreatedList)
+    paymentCreated.paymentItemList = paymentItemCreatedList
+
+    return { customerModified, ticketModifiedList, paymentItemCreatedList, paymentCreated }
+  }
+
+  static async customerRefund(body: {
     customerId: number
-    cashierId: number
-    paymentMethodId: number
+    ticketId: number
     money: number
-    note: string
-    ticketPaymentList: { ticketId: number; money: number }[]
-  }) {
-    const response = await AxiosInstance.post('/payment/customer-money-in', body)
-    const { data } = response.data as BaseResponse<{ customer: any }>
-
-    const customer = Customer.from(data.customer)
-
-    return { customer }
-  }
-
-  static async customerPaymentCommon(body: {
-    customerId: number
-    cashierId: number
     paymentMethodId: number
-    note: string
-    moneyTopUp: number
-    payDebtTicketList: { ticketId: number; money: number }[]
-    prepaymentTicketList: { ticketId: number; money: number }[]
+    reason: string
   }) {
-    const response = await AxiosInstance.post('/payment/customer-payment-common', body)
-    const { data } = response.data as BaseResponse<{ customer: any }>
+    const response = await AxiosInstance.post('/payment/customer-refund', body)
+    const { data } = response.data as BaseResponse<{
+      ticketModified: any
+      customer: any
+      paymentItemCreated: any
+    }>
 
     const customer = Customer.from(data.customer)
-
-    return { customer }
+    const ticketModified = Ticket.from(data.ticketModified)
+    const paymentItemCreated = PaymentItem.from(data.paymentItemCreated)
+    return { customer, ticketModified, paymentItemCreated }
   }
 
-  static async distributorPayment(body: DistributorPaymentBody) {
-    const response = await AxiosInstance.post('/payment/distributor-money-out', body)
-    const { data } = response.data as BaseResponse<{ distributor: any }>
+  static async distributorPayment(body: {
+    distributorId: number
+    paymentMethodId: number
+    totalMoney: number
+    reason: string
+    note: string
+    paymentItemData: {
+      payDebt: { receiptId: number; amount: number }[]
+      prepayment?: {
+        receiptId: number
+        itemList: {
+          amount: number
+          receiptItemId: number
+          voucherItemType: PaymentVoucherItemType
+        }[]
+      }
+      moneyTopUpAdd: number
+    }
+  }) {
+    const response = await AxiosInstance.post('/payment/distributor-payment', body)
+    const { data } = response.data as BaseResponse<{
+      distributorModified: any
+      receiptModifiedList: any[]
+      paymentItemCreatedList: any[]
+    }>
 
-    const distributor = Distributor.from(data.distributor)
+    const distributorModified = Distributor.from(data.distributorModified)
+    const receiptModifiedList = Receipt.fromList(data.receiptModifiedList)
+    const paymentItemCreatedList = PaymentItem.fromList(data.paymentItemCreatedList)
+    return { distributorModified, receiptModifiedList, paymentItemCreatedList }
+  }
 
-    return { distributor }
+  static async distributorRefund(body: {
+    distributorId: number
+    receiptId: number
+    money: number
+    paymentMethodId: number
+    reason: string
+  }) {
+    const response = await AxiosInstance.post('/payment/distributor-refund', body)
+    const { data } = response.data as BaseResponse<{
+      distributor: any
+      receiptModified: any
+      paymentItemCreated: any
+    }>
+
+    const distributor = Customer.from(data.distributor)
+    const receiptModified = Ticket.from(data.receiptModified)
+    const paymentItemCreated = PaymentItem.from(data.paymentItemCreated)
+    return { distributor, receiptModified, paymentItemCreated }
   }
 
   static async otherPaymentIn(body: { paymentMethodId: number; money: number; note: string }) {

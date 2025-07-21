@@ -12,6 +12,8 @@ import { TicketStatus } from '../../../../modules/ticket'
 import { TicketLaboratoryStatus } from '../../../../modules/ticket-laboratory'
 import ModalTicketLaboratoryUpdateMoney from '../laboratory/ModalTicketLaboratoryUpdateMoney.vue'
 import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
 
 const modalTicketLaboratoryUpdateMoney =
   ref<InstanceType<typeof ModalTicketLaboratoryUpdateMoney>>()
@@ -43,6 +45,7 @@ const laboratoryCostAmount = computed(() => {
       <tr>
         <th>#</th>
         <th></th>
+        <th></th>
         <th colspan="4" style="text-transform: uppercase">Xét nghiệm</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
@@ -61,21 +64,10 @@ const laboratoryCostAmount = computed(() => {
             {{ index + 1 }}
           </td>
           <td>
-            <div class="flex items-center justify-center">
-              <VueTooltip v-if="tl.status === TicketLaboratoryStatus.Pending">
-                <template #trigger>
-                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-                </template>
-                <div>Chưa có kết quả</div>
-              </VueTooltip>
-
-              <VueTooltip v-else>
-                <template #trigger>
-                  <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-                </template>
-                <div>Đã hoàn thành</div>
-              </VueTooltip>
-            </div>
+            <PaymentMoneyStatusTooltip :paymentMoneyStatus="tl.paymentMoneyStatus" />
+          </td>
+          <td class="text-center">
+            <TicketLaboratoryStatusTooltip :status="tl.status" />
           </td>
           <td colspan="4">
             <div class="flex items-center gap-1">

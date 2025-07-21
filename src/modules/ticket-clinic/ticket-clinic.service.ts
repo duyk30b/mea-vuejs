@@ -2,6 +2,7 @@ import { MeService } from '../_me/me.service'
 import { PermissionId } from '../permission/permission.enum'
 import { TicketQueryApi } from '../ticket/api/ticket-query.api'
 import { Ticket } from '../ticket/ticket.model'
+import { TicketService } from '../ticket/ticket.service'
 
 export class TicketClinicService {
   static ticketMap: Record<string, Ticket> = {} // lưu history
@@ -11,7 +12,7 @@ export class TicketClinicService {
       !TicketClinicService.ticketMap[ticket.id] ||
       TicketClinicService.ticketMap[ticket.id].updatedAt !== ticket.updatedAt
     ) {
-      const ticketResponse = await TicketQueryApi.detail(ticket.id, {
+      const ticketResponse = await TicketService.detail(ticket.id, {
         relation: {
           customer: true,
           ticketAttributeList: true,
@@ -19,16 +20,16 @@ export class TicketClinicService {
           ticketProductPrescriptionList: {},
           ticketProcedureList: MeService.organizationPermission.value[PermissionId.PROCEDURE]
             ? {}
-            : false,
+            : undefined,
           ticketRadiologyList: MeService.organizationPermission.value[PermissionId.RADIOLOGY]
             ? {}
-            : false,
+            : undefined,
           ticketLaboratoryList: MeService.organizationPermission.value[PermissionId.LABORATORY]
             ? {}
-            : false,
+            : undefined,
           ticketLaboratoryGroupList: MeService.organizationPermission.value[PermissionId.LABORATORY]
             ? {}
-            : false,
+            : undefined,
           ticketLaboratoryResultList: MeService.organizationPermission.value[
             PermissionId.LABORATORY
           ]

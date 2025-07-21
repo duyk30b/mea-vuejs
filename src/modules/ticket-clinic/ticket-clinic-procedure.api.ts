@@ -14,6 +14,9 @@ export class TicketClinicProcedureApi {
       ticketProcedure: {
         priority: ticketProcedure.priority,
         procedureId: ticketProcedure.procedureId,
+
+        paymentMoneyStatus: ticketProcedure.paymentMoneyStatus,
+
         quantity: ticketProcedure.quantity,
         expectedPrice: ticketProcedure.expectedPrice,
         discountMoney: ticketProcedure.discountMoney,
@@ -50,20 +53,20 @@ export class TicketClinicProcedureApi {
       {
         ticketProcedure: ticketProcedure
           ? {
-              quantity: ticketProcedure.quantity,
-              expectedPrice: ticketProcedure.expectedPrice,
-              discountType: ticketProcedure.discountType,
-              discountMoney: ticketProcedure.discountMoney,
-              discountPercent: ticketProcedure.discountPercent,
-              actualPrice: ticketProcedure.actualPrice,
-            }
+            quantity: ticketProcedure.quantity,
+            expectedPrice: ticketProcedure.expectedPrice,
+            discountType: ticketProcedure.discountType,
+            discountMoney: ticketProcedure.discountMoney,
+            discountPercent: ticketProcedure.discountPercent,
+            actualPrice: ticketProcedure.actualPrice,
+          }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            }))
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
           : undefined,
       },
     )

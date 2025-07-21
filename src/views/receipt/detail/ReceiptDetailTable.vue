@@ -32,7 +32,8 @@ const colspan = computed(() => {
   return (
     3 +
     Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.unit) +
-    Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse)
+    Number(settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse) +
+    (CONFIG.MODE === 'development' ? 1 : 0)
   )
 })
 </script>
@@ -44,6 +45,7 @@ const colspan = computed(() => {
       <thead>
         <tr>
           <th>#</th>
+          <th v-if="CONFIG.MODE === 'development'">ID</th>
           <th>Sản phẩm</th>
           <th v-if="settingStore.SCREEN_RECEIPT_DETAIL.receiptItemsTable.warehouse">Kho</th>
           <th>SL</th>
@@ -54,9 +56,9 @@ const colspan = computed(() => {
       </thead>
       <tbody>
         <tr v-for="(receiptItem, index) in receipt.receiptItemList || []" :key="index">
-          <td class="text-center">
-            <span>{{ index + 1 }}</span>
-            <span v-if="CONFIG.MODE === 'development'">({{ receiptItem.id }})</span>
+          <td class="text-center">{{ index + 1 }}</td>
+          <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
+            {{ receiptItem.id }}
           </td>
           <td>
             <div class="text-justify">

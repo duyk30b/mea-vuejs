@@ -14,10 +14,13 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          pickupStrategy: i.pickupStrategy,
           warehouseIds: i.warehouseIds,
           productId: i.productId,
           batchId: i.batchId,
+
+          pickupStrategy: i.pickupStrategy,
+          paymentMoneyStatus: i.paymentMoneyStatus,
+
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           printPrescription: i.printPrescription,
@@ -44,10 +47,13 @@ export class TicketClinicProductApi {
       {
         ticketProductList: ticketProductList.map((i) => ({
           priority: i.priority,
-          pickupStrategy: i.pickupStrategy,
           warehouseIds: i.warehouseIds,
           productId: i.productId,
           batchId: i.batchId,
+
+          pickupStrategy: i.pickupStrategy,
+          paymentMoneyStatus: i.paymentMoneyStatus,
+
           unitRate: i.unitRate,
           quantityPrescription: i.quantityPrescription,
           printPrescription: i.printPrescription,
@@ -130,24 +136,24 @@ export class TicketClinicProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-              quantity: ticketProduct.quantity,
-              quantityPrescription: ticketProduct.quantityPrescription,
-              printPrescription: ticketProduct.printPrescription,
-              expectedPrice: ticketProduct.expectedPrice,
-              discountType: ticketProduct.discountType,
-              discountMoney: ticketProduct.discountMoney,
-              discountPercent: ticketProduct.discountPercent,
-              costAmount: ticketProduct.costAmount,
-              actualPrice: ticketProduct.actualPrice,
-              hintUsage: ticketProduct.hintUsage,
-            }
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
+            printPrescription: ticketProduct.printPrescription,
+            expectedPrice: ticketProduct.expectedPrice,
+            discountType: ticketProduct.discountType,
+            discountMoney: ticketProduct.discountMoney,
+            discountPercent: ticketProduct.discountPercent,
+            costAmount: ticketProduct.costAmount,
+            actualPrice: ticketProduct.actualPrice,
+            hintUsage: ticketProduct.hintUsage,
+          }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            }))
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
           : undefined,
       },
     )
@@ -166,24 +172,24 @@ export class TicketClinicProductApi {
       {
         ticketProduct: ticketProduct
           ? {
-              quantity: ticketProduct.quantity,
-              quantityPrescription: ticketProduct.quantityPrescription,
-              printPrescription: ticketProduct.printPrescription,
-              expectedPrice: ticketProduct.expectedPrice,
-              discountType: ticketProduct.discountType,
-              discountMoney: ticketProduct.discountMoney,
-              discountPercent: ticketProduct.discountPercent,
-              costAmount: ticketProduct.costAmount,
-              actualPrice: ticketProduct.actualPrice,
-              hintUsage: ticketProduct.hintUsage,
-            }
+            quantity: ticketProduct.quantity,
+            quantityPrescription: ticketProduct.quantityPrescription,
+            printPrescription: ticketProduct.printPrescription,
+            expectedPrice: ticketProduct.expectedPrice,
+            discountType: ticketProduct.discountType,
+            discountMoney: ticketProduct.discountMoney,
+            discountPercent: ticketProduct.discountPercent,
+            costAmount: ticketProduct.costAmount,
+            actualPrice: ticketProduct.actualPrice,
+            hintUsage: ticketProduct.hintUsage,
+          }
           : undefined,
         ticketUserList: ticketUserList
           ? ticketUserList.map((i) => ({
-              id: i.id || 0,
-              roleId: i.roleId || 0,
-              userId: i.userId || 0,
-            }))
+            id: i.id || 0,
+            roleId: i.roleId || 0,
+            userId: i.userId || 0,
+          }))
           : undefined,
       },
     )

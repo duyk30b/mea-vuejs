@@ -13,10 +13,17 @@ export class TicketQueryApi {
     const params = TicketGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse<{
+      ticketList: any[]
+      total: number
+      page: number
+      limit: number
+    }>
     return {
-      meta,
-      data: Ticket.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      ticketList: Ticket.fromList(data.ticketList),
     }
   }
 
@@ -24,15 +31,15 @@ export class TicketQueryApi {
     const params = TicketGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/ticket/list', { params })
-    const { data } = response.data as BaseResponse<any[]>
-    return Ticket.fromList(data)
+    const { data } = response.data as BaseResponse<{ ticketList: any[] }>
+    return { ticketList: Ticket.fromList(data.ticketList) }
   }
 
-  static async detail(id: number, options: TicketDetailQuery): Promise<Ticket> {
+  static async detail(id: number, options: TicketDetailQuery) {
     const params = TicketGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get(`/ticket/detail/${id}`, { params })
     const { data } = response.data as BaseResponse<{ ticket: any }>
-    return Ticket.from(data.ticket)
+    return { ticket: Ticket.from(data.ticket) }
   }
 }

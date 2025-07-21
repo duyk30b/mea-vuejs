@@ -325,12 +325,14 @@ const handleModalUploadCustomerSuccess = async () => {
               v-if="settingStore.SCREEN_CUSTOMER_LIST.phone"
               style="white-space: nowrap; border-left: none; border-right: none"
             >
-              <a :href="'tel:' + customer.phone">{{ ESString.formatPhone(customer.phone || '') }}</a>
+              <a :href="'tel:' + customer.phone">
+                {{ ESString.formatPhone(customer.phone || '') }}
+              </a>
             </td>
             <td class="text-right" style="border-left: none">
               <div style="white-space: nowrap">{{ formatMoney(customer.debt) }}</div>
               <div
-                v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0"
+                v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] && customer.debt != 0"
               >
                 <VueButton
                   color="default"
@@ -482,7 +484,7 @@ const handleModalUploadCustomerSuccess = async () => {
                 <div>
                   <VueButton
                     v-if="
-                      userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN] && customer.debt != 0
+                      userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] && customer.debt != 0
                     "
                     size="small"
                     @click="modalCustomerPayDebt?.openModal(customer.id)"

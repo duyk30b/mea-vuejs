@@ -1,7 +1,8 @@
+import { ESArray } from '@/utils'
 import { MeService } from '../_me/me.service'
 import { Batch } from '../batch'
 import type { Customer } from '../customer'
-import { DeliveryStatus, DiscountType, PickupStrategy } from '../enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus, PickupStrategy } from '../enum'
 import { Product } from '../product'
 import { TicketBatch } from '../ticket-batch'
 import type { Ticket } from '../ticket/ticket.model'
@@ -13,14 +14,17 @@ export enum TicketProductType {
 export class TicketProduct {
   id: number
   priority: number
-  pickupStrategy: PickupStrategy
   customerId: number
   ticketId: number
   warehouseIds: string
   productId: number
   batchId: number
   type: TicketProductType
+
+  pickupStrategy: PickupStrategy
+  paymentMoneyStatus: PaymentMoneyStatus
   deliveryStatus: DeliveryStatus
+
   unitRate: number
   quantityPrescription: number
   printPrescription: number
@@ -87,12 +91,15 @@ export class TicketProduct {
   static init(): TicketProduct {
     const ins = new TicketProduct()
     ins.id = 0
-    ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.ticketId = 0
     ins.customerId = 0
     ins.productId = 0
     ins.batchId = 0
+
+    ins.pickupStrategy = PickupStrategy.AutoWithFIFO
     ins.deliveryStatus = DeliveryStatus.Pending
+    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
+
     ins.quantity = 0
     ins.quantityPrescription = 0
     ins.printPrescription = 1
@@ -150,17 +157,35 @@ export class TicketProduct {
     return sourceList.map((i) => TicketProduct.from(i))
   }
 
+  static updateByPartial(origin: TicketProduct, partial: Partial<TicketProduct>) {
+    return Object.assign(origin, partial)
+  }
+
+  static updateListByPartialList(
+    originList: TicketProduct[],
+    partialList?: Partial<TicketProduct>[],
+  ) {
+    const partialMap = ESArray.arrayToKeyValue(partialList || [], 'id')
+    return originList.map((i) => {
+      const partial = partialMap[i.id] || {}
+      return TicketProduct.updateByPartial(i, partial)
+    })
+  }
+
   static equal(a: TicketProduct, b: TicketProduct) {
     if (a.id != b.id) return false
     if (a.priority != b.priority) return false
-    if (a.pickupStrategy != b.pickupStrategy) return false
     if (a.customerId != b.customerId) return false
     if (a.ticketId != b.ticketId) return false
     if (a.warehouseIds != b.warehouseIds) return false
     if (a.productId != b.productId) return false
     if (a.batchId != b.batchId) return false
     if (a.type != b.type) return false
+
+    if (a.pickupStrategy != b.pickupStrategy) return false
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
     if (a.deliveryStatus != b.deliveryStatus) return false
+
     if (a.unitRate != b.unitRate) return false
     if (a.quantityPrescription != b.quantityPrescription) return false
     if (a.printPrescription != b.printPrescription) return false

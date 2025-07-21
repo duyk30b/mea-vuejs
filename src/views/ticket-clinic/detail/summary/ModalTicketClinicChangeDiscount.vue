@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ticketRoomRef } from '@/modules/room'
-import { TicketMoneyApi } from '@/modules/ticket'
+import { TicketActionApi } from '@/modules/ticket'
 import { computed, reactive, ref } from 'vue'
 import VueButton from '../../../../common/VueButton.vue'
 import { IconClose } from '../../../../common/icon-antd'
@@ -75,7 +75,7 @@ const closeModal = () => {
 const changeDiscount = async () => {
   saveLoading.value = true
   try {
-    await TicketMoneyApi.changeDiscount(ticketRoomRef.value.id, {
+    await TicketActionApi.changeDiscount(ticketRoomRef.value.id, {
       discountType: money.discountType,
       discountPercent: money.discountPercent,
       discountMoney: money.discountMoney,

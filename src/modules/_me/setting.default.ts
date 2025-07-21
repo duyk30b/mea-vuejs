@@ -1,4 +1,5 @@
 import {
+  PaymentMoneyStatus,
   PickupStrategy,
   SplitBatchByCostPrice,
   SplitBatchByDistributor,
@@ -60,7 +61,7 @@ export const SETTING_DEFAULT = {
       customVariables: '',
       customStyles: '',
     },
-    paymentMoneyIn: {
+    customerPayment: {
       printHtmlId: 0,
       customVariables: '',
       customStyles: '',
@@ -355,16 +356,26 @@ export const SETTING_DEFAULT = {
   },
   TICKET_CLINIC_DETAIL: {
     diagnosis: { icd10: 0 },
-    procedure: {},
+    procedure: {
+      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
+    },
     consumable: {
       warehouseIdList: [0],
+      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
       searchIncludeZeroQuantity: 1,
       pickupStrategy: PickupStrategy.Inherit,
     },
     prescriptions: {
       warehouseIdList: [0],
+      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
       searchIncludeZeroQuantity: 1,
       pickupStrategy: PickupStrategy.Inherit,
+    },
+    laboratory: {
+      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
+    },
+    radiology: {
+      paymentMoneyStatus: PaymentMoneyStatus.NoEffect,
     },
   },
 

@@ -14,6 +14,7 @@ import TicketDeliveryStatusTooltip from '../../../ticket-base/TicketDeliveryStat
 import ModalTicketClinicConsumableUpdate from '../consumable/ModalTicketClinicConsumableUpdate.vue'
 import ModalTicketClinicPrescriptionUpdate from '../prescription/ModalTicketClinicPrescriptionUpdate.vue'
 import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const modalProductDetail = ref<InstanceType<typeof ModalProductDetail>>()
 const modalTicketClinicConsumableUpdate =
@@ -75,6 +76,7 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th>#</th>
         <th style="width: 32px"></th>
+        <th style="width: 32px"></th>
         <th>THUỐC</th>
         <th>Đ.Vị</th>
         <th>SL kê</th>
@@ -88,13 +90,14 @@ const prescriptionCostAmount = computed(() => {
     </thead>
     <tbody>
       <tr
-        v-for="(
-          tpPrescription, tpPrescriptionIndex
-        ) in ticketRoomRef.ticketProductPrescriptionList"
+        v-for="(tpPrescription, tpPrescriptionIndex) in ticketRoomRef.ticketProductPrescriptionList"
         :key="tpPrescription.id + '_' + tpPrescriptionIndex"
       >
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpPrescriptionIndex + 1 }}
+        </td>
+        <td>
+          <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpPrescription.paymentMoneyStatus" />
         </td>
         <td class="text-center">
           <TicketDeliveryStatusTooltip :deliveryStatus="tpPrescription.deliveryStatus" />
@@ -191,6 +194,7 @@ const prescriptionCostAmount = computed(() => {
       <tr>
         <th>#</th>
         <th style="width: 32px"></th>
+        <th style="width: 32px"></th>
         <th colspan="2">VẬT TƯ</th>
         <th>Đ.Vị</th>
         <th>SL</th>
@@ -208,6 +212,9 @@ const prescriptionCostAmount = computed(() => {
       >
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ tpConsumableIndex + 1 }}
+        </td>
+        <td>
+          <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpConsumable.paymentMoneyStatus" />
         </td>
         <td class="text-center">
           <TicketDeliveryStatusTooltip :deliveryStatus="tpConsumable.deliveryStatus" />

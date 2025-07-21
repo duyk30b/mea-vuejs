@@ -129,6 +129,8 @@ const selectProcedure = async (procedureProp?: Procedure) => {
     temp.procedureId = procedureProp.id
     temp.procedure = procedureProp
 
+    temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
+
     temp.expectedPrice = procedureProp.price
     temp.discountMoney = 0
     temp.discountPercent = 0

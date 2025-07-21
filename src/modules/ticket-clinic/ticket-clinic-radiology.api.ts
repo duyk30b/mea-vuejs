@@ -9,9 +9,12 @@ export class TicketClinicRadiologyApi {
     const response = await AxiosInstance.post(`/ticket-clinic/${ticketId}/add-ticket-radiology`, {
       priority: ticketRadiology.priority,
       roomId: ticketRadiology.roomId,
-      registeredAt: ticketRadiology.registeredAt,
       customerId: ticketRadiology.customerId,
       radiologyId: ticketRadiology.radiologyId,
+
+      paymentMoneyStatus: ticketRadiology.paymentMoneyStatus,
+
+      registeredAt: ticketRadiology.registeredAt,
       costPrice: ticketRadiology.costPrice,
       expectedPrice: ticketRadiology.expectedPrice,
       discountMoney: ticketRadiology.discountMoney,

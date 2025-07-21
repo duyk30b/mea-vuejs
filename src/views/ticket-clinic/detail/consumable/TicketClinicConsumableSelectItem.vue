@@ -115,6 +115,7 @@ const selectProduct = async (productSelect?: Product) => {
 
     temp.type = TicketProductType.Consumable
     temp.deliveryStatus = DeliveryStatus.Pending
+    temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.consumable.paymentMoneyStatus
     temp.unitRate = productSelect.unitDefaultRate
 
     temp.expectedPrice = productSelect.retailPrice
@@ -239,10 +240,6 @@ const addConsumableItem = async () => {
   emit('success', [ticketProductConsumable.value])
   clear()
   inputOptionsProduct.value?.clear()
-
-  if (!isMobile) {
-    inputOptionsProduct.value?.focus()
-  }
 }
 
 const handleUpdateUnitActualPrice = (price: number) => {

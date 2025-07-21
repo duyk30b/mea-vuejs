@@ -1,6 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionEnum } from '../_base/base-condition'
-import type { DeliveryStatus } from '../enum'
+import type { DeliveryStatus, PaymentMoneyStatus } from '../enum'
 
 export class TicketProductGetQuery {
   page: number
@@ -16,6 +16,7 @@ export class TicketProductGetQuery {
     customerId?: number
     productId?: number
     deliveryStatus?: DeliveryStatus | ConditionEnum<DeliveryStatus>
+    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
   }
 
   sort?: { id?: 'ASC' | 'DESC' }
@@ -31,6 +32,6 @@ export class TicketProductGetQuery {
   }
 }
 
-export class TicketProductPaginationQuery extends TicketProductGetQuery {}
-export class TicketProductListQuery extends OmitClass(TicketProductGetQuery, ['page']) {}
-export class TicketProductDetailQuery extends PickClass(TicketProductGetQuery, ['relation']) {}
+export class TicketProductPaginationQuery extends TicketProductGetQuery { }
+export class TicketProductListQuery extends OmitClass(TicketProductGetQuery, ['page']) { }
+export class TicketProductDetailQuery extends PickClass(TicketProductGetQuery, ['relation']) { }

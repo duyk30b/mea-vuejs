@@ -30,7 +30,13 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
 import { DeliveryStatus } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketActionApi, TicketService, TicketStatus, TicketType } from '../../../modules/ticket'
+import {
+  Ticket,
+  TicketActionApi,
+  TicketService,
+  TicketStatus,
+  TicketType,
+} from '../../../modules/ticket'
 import { TicketRadiologyStatus } from '../../../modules/ticket-radiology'
 import ModalTicketClinicHistory from '../history/ModalTicketClinicHistory.vue'
 import TicketClinicDiagnosisEyeBasic from './TicketClinicDiagnosisEyeBasic.vue'
@@ -87,22 +93,24 @@ const startFetchData = async (ticketId?: number) => {
     const ticketData = await TicketService.detail(ticketId, {
       relation: {
         customer: true,
-        paymentList: false, // query khi bật modal thanh toán
+        paymentItemList: false, // query khi bật modal thanh toán
 
         ticketAttributeList: true,
         // ticketProductList: true,
         ticketProductConsumableList: {},
         ticketProductPrescriptionList: {},
         ticketBatchList: CONFIG.MODE === 'development' ? { batch: true } : undefined,
-        ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE] ? {} : false,
-        ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY] ? {} : false,
+        ticketProcedureList: organizationPermission.value[PermissionId.PROCEDURE] ? {} : undefined,
+        ticketLaboratoryList: organizationPermission.value[PermissionId.LABORATORY]
+          ? {}
+          : undefined,
         ticketLaboratoryGroupList: organizationPermission.value[PermissionId.LABORATORY]
           ? {}
-          : false,
+          : undefined,
         ticketLaboratoryResultList: organizationPermission.value[PermissionId.LABORATORY]
           ? true
           : false,
-        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : false,
+        ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
         ticketUserList: organizationPermission.value[PermissionId.POSITION] ? {} : false,
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
       },
@@ -161,7 +169,7 @@ const startRegisterExecuting = async () => {
 }
 
 const startCloseTicket = async () => {
-  await TicketActionApi.close(ticketRoomRef.value.id)
+  await TicketActionApi.close({ ticketId: ticketRoomRef.value.id })
 }
 
 const clickCloseTicket = () => {
@@ -355,7 +363,7 @@ const clickCloseTicket = () => {
               <IconDisconnect />
               Đơn thuốc
             </VueTabMenu>
-            <VueTabMenu
+            <!-- <VueTabMenu
               v-if="organizationPermission[PermissionId.POSITION]"
               style="padding: 6px 12px"
               :tabKey="TicketClinicUser.__name!"
@@ -363,7 +371,7 @@ const clickCloseTicket = () => {
             >
               <IconUser />
               Nhân Viên
-            </VueTabMenu>
+            </VueTabMenu> -->
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicSummary.__name!"

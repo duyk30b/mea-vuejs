@@ -53,14 +53,14 @@ const startFetchData = async () => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       relation: {
         customer: true,
         ticketProductList: settingStore.SCREEN_TICKET_ORDER_LIST.ticketProductList
-          ? { product: true }
-          : false,
+          ? { relation: { product: true } }
+          : undefined,
       },
       filter: {
         customerId: customerId.value ? customerId.value : undefined,
@@ -81,8 +81,8 @@ const startFetchData = async () => {
         : { id: 'DESC' },
     })
 
-    ticketList.value = data
-    total.value = meta.total
+    ticketList.value = paginationResult.ticketList
+    total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: InvoiceList.vue:50 ~ error:', error)
   } finally {

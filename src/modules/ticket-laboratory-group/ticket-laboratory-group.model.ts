@@ -1,4 +1,5 @@
 import { Customer } from '../customer'
+import { PaymentMoneyStatus } from '../enum'
 import { LaboratoryGroup } from '../laboratory-group'
 import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import {
@@ -15,6 +16,7 @@ export class TicketLaboratoryGroup {
   laboratoryGroupId: number
 
   status: TicketLaboratoryStatus
+  paymentMoneyStatus: PaymentMoneyStatus
   registeredAt: number | null
   startedAt: number | null
   result: string
@@ -29,6 +31,7 @@ export class TicketLaboratoryGroup {
     const ins = new TicketLaboratoryGroup()
     ins.id = 0
     ins.laboratoryGroupId = 0
+    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     ins.result = ''
     return ins
   }

@@ -1,5 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum, ConditionNumber } from '../_base/base-condition'
+import type { PaymentMoneyStatus } from '../enum'
 import type { TicketLaboratoryStatus } from '../ticket-laboratory/ticket-laboratory.model'
 
 export class TicketLaboratoryGroupGetQuery {
@@ -17,6 +18,7 @@ export class TicketLaboratoryGroupGetQuery {
   filter?: {
     laboratoryGroupId?: number
     status?: TicketLaboratoryStatus | ConditionEnum<TicketLaboratoryStatus>
+    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
     customerId?: number
     roomId?: number | ConditionNumber
     ticketId?: number

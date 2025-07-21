@@ -1,7 +1,7 @@
 import { Batch } from '../batch'
 import { Distributor } from '../distributor'
 import { DeliveryStatus, DiscountType } from '../enum'
-import { Payment } from '../payment/payment.model'
+import { PaymentItem } from '../payment-item'
 import { Product } from '../product'
 import { ReceiptItem } from '../receipt-item/receipt-item.model'
 
@@ -34,7 +34,7 @@ export class Receipt {
 
   receiptItemList?: ReceiptItem[]
   distributor?: Distributor
-  paymentList?: Payment[]
+  paymentItemList?: PaymentItem[]
 
   static init(): Receipt {
     const ins = new Receipt()
@@ -56,7 +56,7 @@ export class Receipt {
     const ins = Receipt.init()
     ins.receiptItemList = []
     ins.distributor = Distributor.init()
-    ins.paymentList = []
+    ins.paymentItemList = []
     return ins
   }
 
@@ -111,12 +111,8 @@ export class Receipt {
         return receiptItem
       })
     }
-    if (source.paymentList) {
-      target.paymentList = source.paymentList.map((i) => {
-        const payment = new Payment()
-        Object.assign(payment, i)
-        return payment
-      })
+    if (source.paymentItemList) {
+      target.paymentItemList = PaymentItem.basicList(source.paymentItemList)
     }
     return target
   }

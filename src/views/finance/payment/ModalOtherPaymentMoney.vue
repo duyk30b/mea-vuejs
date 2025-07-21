@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputSelect, InputText, VueSelect } from '@/common/vue-form'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
 import { onMounted, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputSelect, InputText, VueSelect } from '../../common/vue-form'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { PaymentApi } from '../../modules/payment/payment.api'
-import { MoneyDirection, Payment } from '../../modules/payment/payment.model'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -79,7 +79,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px" @close="closeModal">
     <div class="pl-4 py-3 flex items-center bg-white" style="border-bottom: 1px solid #dedede">
       <div class="flex-1 font-medium" style="font-size: 16px">Tạo phiếu thu</div>
       <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -96,7 +96,7 @@ defineExpose({ openModal })
             </div>
           </div>
           <div class="mt-4">
-            <div>Ghi chú</div>
+            <div>Lý do</div>
             <div>
               <InputText v-model:value="note" />
             </div>

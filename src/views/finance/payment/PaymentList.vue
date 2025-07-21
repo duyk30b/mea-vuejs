@@ -1,35 +1,27 @@
 <script setup lang="ts">
+import { VueButton, VuePagination, VueTag } from '@/common'
+import { IconFileSearch, IconPrint } from '@/common/icon-antd'
+import { IconSort, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Customer } from '@/modules/customer'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
+import { MoneyDirection, Payment, PaymentPersonType } from '@/modules/payment/payment.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { UserService } from '@/modules/user'
+import { ESTimer } from '@/utils'
+import { Breadcrumb } from '@/views/component'
+import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
 import { onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { VueButton, VuePagination, VueTag } from '../../common'
-import { IconFileSearch, IconPrint } from '../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../common/icon-font-awesome'
-import { IconVisibility } from '../../common/icon-google'
-import { InputDate, InputSelect, VueSelect } from '../../common/vue-form'
-import { MeService } from '../../modules/_me/me.service'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { PaymentApi } from '../../modules/payment/payment.api'
-import type { PaymentPaginationQuery } from '../../modules/payment/payment.dto'
-import {
-  MoneyDirection,
-  Payment,
-  PaymentTiming,
-  PersonType,
-  VoucherType,
-} from '../../modules/payment/payment.model'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { ESTimer } from '../../utils'
-import { Breadcrumb } from '../component'
-import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
-import ModalDistributorDetail from '../distributor/detail/ModalDistributorDetail.vue'
 import ModalCustomerPaymentMoneyIn from './ModalCustomerPaymentMoneyIn.vue'
 import ModalDistributorPaymentMoneyOut from './ModalDistributorPaymentMoneyOut.vue'
 import ModalOtherPaymentMoney from './ModalOtherPaymentMoney.vue'
-import PaymentTimingTag from './PaymentTimingTag.vue'
 
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -154,7 +146,7 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 const startPrintPayment = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
   payment.cashier = await UserService.detail(payment.cashierId)
-  await PrintHtmlAction.startPrintPaymentMoneyIn({
+  await PrintHtmlAction.startPrintCustomerPayment({
     organization: organization.value,
     customer: options.customer!,
     payment,
@@ -189,7 +181,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
         <template v-if="st.moneyDirection === MoneyDirection.Out">
           <div class="card-title">Tổng chi trong kỳ</div>
           <div class="card-number" style="font-weight: 500">
-            {{ formatMoney(-st.sumPaidAmount) }}
+            {{ formatMoney(st.sumPaidAmount) }}
           </div>
         </template>
       </div>
@@ -198,7 +190,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
         <div class="flex gap-2">
           <div style="width: 220px">
             <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_MONEY_IN]"
+              v-if="userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT]"
               color="green"
               icon="plus"
               @click="modalCustomerPaymentMoneyIn?.openModal()"
@@ -220,7 +212,7 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
         <div class="mt-2 flex gap-2">
           <div style="width: 220px">
             <VueButton
-              v-if="userPermission[PermissionId.PAYMENT_DISTRIBUTOR_MONEY_OUT]"
+              v-if="userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT]"
               color="blue"
               icon="plus"
               @click="modalDistributorPaymentMoneyOut?.openModal()"
@@ -312,12 +304,11 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
               </div>
             </th>
             <th>Loại</th>
-            <th style="min-width: 130px">Phiếu</th>
-            <th>Người nộp</th>
-            <th>Hành động</th>
+            <th>Thời gian</th>
+            <th>Người nộp/nhận</th>
+            <th>Lý do</th>
             <th>Tiền thu</th>
             <th>Tiền chi</th>
-            <th>Ghi nợ</th>
             <th>HT Thanh toán</th>
             <th>NV thu/chi</th>
             <th></th>
@@ -352,58 +343,36 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
               </div>
             </td>
             <td>
-              <div v-if="payment.voucherType === VoucherType.Receipt">
-                <router-link :to="{ name: 'ReceiptDetail', params: { id: payment.voucherId } }">
-                  NH{{ payment.voucherId }}
-                  <span class="text-lg ml-1">
-                    <IconVisibility />
-                  </span>
-                </router-link>
-              </div>
-              <div v-if="payment.voucherType === VoucherType.Ticket">
-                <router-link :to="{ name: 'TicketOrderDetail', params: { id: payment.voucherId } }">
-                  BH{{ payment.voucherId }}
-                  <span class="text-lg ml-1">
-                    <IconVisibility />
-                  </span>
-                </router-link>
-              </div>
               <div>{{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}</div>
             </td>
             <td class="">
-              <div v-if="payment.personType === PersonType.Distributor">
+              <div v-if="payment.paymentPersonType === PaymentPersonType.Distributor">
                 <span>{{ payment.distributor?.fullName }}</span>
                 <a class="ml-1" @click="modalDistributorDetail?.openModal(payment.personId)">
                   <IconFileSearch />
                 </a>
               </div>
-              <div v-if="payment.personType === PersonType.Customer">
+              <div v-if="payment.paymentPersonType === PaymentPersonType.Customer">
                 <span>{{ payment.customer?.fullName }}</span>
                 <a class="ml-1" @click="modalCustomerDetail?.openModal(payment.personId)">
                   <IconFileSearch />
                 </a>
               </div>
-              <div style="min-width: 150px; font-size: 0.9em; color: #555">
-                <div class="max-line-2" v-if="payment.note">{{ payment.note }}</div>
-                <div class="max-line-2" v-if="payment.description">{{ payment.description }}</div>
-              </div>
             </td>
             <td>
-              <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
-              <div v-if="payment.paymentTiming === PaymentTiming.TopUp">
-                {{ formatMoney(-payment.debtAmount) }}
+              <div style="min-width: 150px; color: #555">
+                <div class="max-line-2">{{ payment.reason || payment.note }}</div>
               </div>
             </td>
             <td class="text-right">
-              <span v-if="payment.paidAmount > 0">{{ formatMoney(payment.paidAmount) }}</span>
+              <span v-if="payment.moneyDirection === MoneyDirection.In">
+                {{ formatMoney(payment.money) }}
+              </span>
             </td>
             <td class="text-right">
-              <span v-if="payment.paidAmount < 0">{{ formatMoney(-payment.paidAmount) }}</span>
-            </td>
-            <td class="text-right">
-              <template v-if="payment.paymentTiming !== PaymentTiming.TopUp">
-                {{ formatMoney(payment.debtAmount) }}
-              </template>
+              <span v-if="payment.moneyDirection === MoneyDirection.Out">
+                {{ formatMoney(payment.money) }}
+              </span>
             </td>
             <td>{{ payment.paymentMethod?.name }}</td>
             <td>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { CONFIG } from '@/config'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { PaymentMethod } from '../../modules/payment-method'
 import { Ticket } from '../../modules/ticket'
 import { timeToText } from '../../utils'
-import PaymentTimingTag from '../payment/PaymentTimingTag.vue'
 
 defineProps<{
   ticket: Ticket
@@ -29,34 +29,36 @@ const { formatMoney, isMobile } = settingStore
       <table>
         <thead>
           <tr>
+            <th v-if="CONFIG.MODE === 'development'">ID</th>
             <th>#</th>
             <th>Thời gian</th>
-            <th>Loại</th>
+            <th>Note</th>
             <th>Số tiền</th>
+            <th v-if="CONFIG.MODE === 'development'">Ghi nợ</th>
+            <th v-if="CONFIG.MODE === 'development'">Nợ</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(payment, index) in ticket.paymentList" :key="index">
-            <td class="text-center">
-              {{ index + 1 }}
+          <tr v-for="(paymentItem, index) in ticket.paymentItemList" :key="index">
+            <td v-if="CONFIG.MODE === 'development'" style="color: violet" class="text-center">
+              {{ paymentItem.id }}
             </td>
-            <td class="text-left">
-              <div>
-                {{ timeToText(payment.createdAt, 'DD/MM/YY hh:mm') }}
-              </div>
-              <div>{{ paymentMethodMap[payment.paymentMethodId]?.name || '' }}</div>
-              <div v-if="payment.note" style="font-size: 0.8rem">
-                {{ payment.note }}
-              </div>
-              <div v-if="payment.description" style="font-size: 0.8rem; font-style: italic">
-                {{ payment.description }}
-              </div>
+            <td class="text-center">{{ index + 1 }}</td>
+            <td class="text-center">
+              {{ timeToText(paymentItem.createdAt, 'DD/MM/YY hh:mm') }}
             </td>
             <td>
-              <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
+              <div>{{ paymentItem.note }}</div>
             </td>
             <td class="text-right">
-              <div>{{ formatMoney(payment.paidAmount) }}</div>
+              <div>{{ formatMoney(paymentItem.paidAmount) }}</div>
+            </td>
+            <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
+              {{ formatMoney(paymentItem.debtAmount) }}
+            </td>
+            <td class="text-right" v-if="CONFIG.MODE === 'development'" style="color: violet">
+              {{ formatMoney(paymentItem.openDebt) }} ->
+              {{ formatMoney(paymentItem.closeDebt) }}
             </td>
           </tr>
           <tr>

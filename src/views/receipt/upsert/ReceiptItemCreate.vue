@@ -190,10 +190,6 @@ const addReceiptItem = async () => {
     emit('addReceiptItem', receiptItem.value)
     inputOptionsProduct.value?.clear()
     clear()
-
-    if (!isMobile) {
-      inputOptionsProduct.value?.focus()
-    }
   } catch (error) {
     console.log('🚀 ~ file: ReceiptItemCreate.vue:173 ~ addReceiptItem ~ error:', error)
   }

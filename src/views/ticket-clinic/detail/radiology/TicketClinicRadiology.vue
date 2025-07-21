@@ -9,7 +9,7 @@ import { InputFilter, InputOptions } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
-import { DiscountType } from '@/modules/enum'
+import { DiscountType, PaymentMoneyStatus } from '@/modules/enum'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Radiology, RadiologyService } from '@/modules/radiology'
@@ -18,7 +18,9 @@ import { ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketClinicRadiologyApi } from '@/modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalTicketRadiologyResult from '@/views/room/room-radiology/ModalTicketRadiologyResult.vue'
+import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 
 const modalTicketRadiologyResult = ref<InstanceType<typeof ModalTicketRadiologyResult>>()
@@ -77,6 +79,8 @@ const selectRadiology = async (radiologyData?: Radiology) => {
   temp.radiologyId = radiologyData.id
   temp.roomId = radiologyGroup.roomId
   temp.radiology = radiologyData
+
+  temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.radiology.paymentMoneyStatus
 
   temp.printHtmlId = radiologyData.printHtmlId
   temp.description = radiologyData.descriptionDefault
@@ -213,6 +217,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
           <tr>
             <th>#</th>
             <th style="width: 32px"></th>
+            <th style="width: 32px"></th>
             <th>Phiếu</th>
             <!-- <th>BS thực hiện</th> -->
             <th>Kết quả</th>
@@ -261,20 +266,9 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 </button>
               </div>
             </td>
+            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" /></td>
             <td class="text-center">
-              <VueTooltip v-if="tpItem.status === TicketRadiologyStatus.Pending">
-                <template #trigger>
-                  <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-                </template>
-                <div>Chưa có kết quả</div>
-              </VueTooltip>
-
-              <VueTooltip v-else>
-                <template #trigger>
-                  <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-                </template>
-                <div>Đã hoàn thành</div>
-              </VueTooltip>
+              <TicketRadiologyStatusTooltip :status="tpItem.status" />
             </td>
             <td>{{ tpItem.radiology?.name }}</td>
             <td style="max-width: 300px">
@@ -312,6 +306,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
               <a
                 v-else-if="
                   ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
+                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                   userPermission[PermissionId.RADIOLOGY_UPDATE_RESULT]
                 "
                 class="text-orange-500"
@@ -328,6 +323,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
                 v-if="
                   tpItem.id &&
                   tpItem.status === TicketRadiologyStatus.Pending &&
+                  tpItem.paymentMoneyStatus !== PaymentMoneyStatus.Paid &&
                   userPermission[PermissionId.TICKET_CLINIC_UPDATE_TICKET_RADIOLOGY_LIST]
                 "
                 style="color: var(--text-red)"
@@ -337,7 +333,7 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
             </td>
           </tr>
           <tr>
-            <td colspan="4" class="text-right">
+            <td colspan="5" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

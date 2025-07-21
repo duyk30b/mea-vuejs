@@ -1,4 +1,6 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionEnum } from '../_base/base-condition'
+import type { PaymentMoneyStatus } from '../enum'
 
 export class TicketProcedureGetQuery {
   page: number
@@ -10,6 +12,7 @@ export class TicketProcedureGetQuery {
   }
 
   filter?: {
+    paymentMoneyStatus?: PaymentMoneyStatus | ConditionEnum<PaymentMoneyStatus>
     procedureId?: number
     customerId?: number
     ticketId?: number
@@ -28,6 +31,6 @@ export class TicketProcedureGetQuery {
   }
 }
 
-export class TicketProcedurePaginationQuery extends TicketProcedureGetQuery {}
-export class TicketProcedureListQuery extends OmitClass(TicketProcedureGetQuery, ['page']) {}
-export class TicketProcedureDetailQuery extends PickClass(TicketProcedureGetQuery, ['relation']) {}
+export class TicketProcedurePaginationQuery extends TicketProcedureGetQuery { }
+export class TicketProcedureListQuery extends OmitClass(TicketProcedureGetQuery, ['page']) { }
+export class TicketProcedureDetailQuery extends PickClass(TicketProcedureGetQuery, ['relation']) { }

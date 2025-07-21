@@ -4,9 +4,9 @@ import { AuthService } from '../modules/auth/auth.service'
 import { inventoryRouter } from './inventory.router'
 import { masterDataRouter } from './master-data.router'
 import { receptionRouter } from './reception.router'
+import { roomRouter } from './room.router'
 import { statisticRouter } from './statistic.router'
 import { ticketRouter } from './ticket.router'
-import { roomRouter } from './room.router'
 
 enum AuthLevel {
   GUEST = 'GUEST',
@@ -95,10 +95,16 @@ const Router = createRouter({
           name: 'Finance',
           children: [
             {
-              path: 'payment',
+              path: 'payment-list',
               name: 'PaymentList',
-              component: () => import('../views/payment/PaymentList.vue'),
+              component: () => import('../views/finance/payment/PaymentList.vue'),
               meta: { title: 'Thu chi' },
+            },
+            {
+              path: 'finance-ticket-list',
+              name: 'FinanceTicketList',
+              component: () => import('../views/finance/finance-ticket/FinanceTicketList.vue'),
+              meta: { title: 'Phòng thu ngân' },
             },
           ],
         },
@@ -196,6 +202,11 @@ const Router = createRouter({
     {
       path: '/term',
       component: () => import('../views/AppTerm.vue'),
+    },
+    // Route bắt tất cả và redirect về trang chủ
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
 })

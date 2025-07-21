@@ -1,5 +1,5 @@
 import { Customer } from '../customer'
-import type { DiscountType } from '../enum'
+import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Procedure } from '../procedure'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -9,6 +9,9 @@ export class TicketProcedure {
   ticketId: number
   customerId: number
   procedureId: number
+
+  paymentMoneyStatus: PaymentMoneyStatus
+
   quantity: number
   expectedPrice: number // Giá dự kiến
   discountMoney: number // tiền giảm giá
@@ -30,6 +33,7 @@ export class TicketProcedure {
     ins.discountMoney = 0
     ins.discountPercent = 0
     ins.actualPrice = 0
+    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     return ins
   }
 
@@ -76,6 +80,9 @@ export class TicketProcedure {
     if (a.ticketId != b.ticketId) return false
     if (a.customerId != b.customerId) return false
     if (a.procedureId != b.procedureId) return false
+
+    if (a.paymentMoneyStatus != b.paymentMoneyStatus) return false
+
     if (a.quantity != b.quantity) return false
     if (a.expectedPrice != b.expectedPrice) return false
     if (a.discountMoney != b.discountMoney) return false

@@ -133,19 +133,6 @@ export class CustomerService {
     return response
   }
 
-  static async customerPayment(body: {
-    customerId: number
-    cashierId: number
-    paymentMethodId: number
-    money: number
-    note: string
-    ticketPaymentList: { ticketId: number; money: number }[]
-  }) {
-    const data = await PaymentApi.customerPayment(body)
-    await CustomerDB.replaceOne(data.customer.id, data.customer)
-    return data
-  }
-
   static async getCustomerDefault() {
     const idDefault = useSettingStore().SCREEN_INVOICE_UPSERT.customer.idDefault
     if (idDefault) {

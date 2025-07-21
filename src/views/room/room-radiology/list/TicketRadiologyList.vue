@@ -27,6 +27,8 @@ import TicketRadiologyStatusTag from '../TicketRadiologyStatusTag.vue'
 import { fromTime, toTime } from './ticket-radiology-list.ref'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import { PaymentMoneyStatus } from '@/modules/enum'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -52,6 +54,8 @@ const page = ref(1)
 const limit = ref(Number(localStorage.getItem('TICKET_RADIOLOGY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
+const paymentMoneyStatus = ref<PaymentMoneyStatus | null>(PaymentMoneyStatus.Paid)
+
 const radiologyMap = RadiologyService.radiologyMap
 const ticketRadiologyList = ref<TicketRadiology[]>([])
 
@@ -76,6 +80,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         customerId: customerId.value ? customerId.value : undefined,
         status: status.value ? status.value : undefined,
+        paymentMoneyStatus: paymentMoneyStatus.value ? paymentMoneyStatus.value : undefined,
         registeredAt:
           fromTime.value || toTime.value
             ? {
@@ -275,7 +280,23 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
       </div>
 
       <div style="flex: 1; flex-basis: 150px">
-        <div>Chọn trạng thái</div>
+        <div>Thanh toán</div>
+        <div>
+          <VueSelect
+            v-model:value="paymentMoneyStatus"
+            :options="[
+              { value: null, text: 'Tất cả' },
+              { value: PaymentMoneyStatus.NoEffect, text: 'Không áp dụng' },
+              { value: PaymentMoneyStatus.Pending, text: 'Chờ thanh toán' },
+              { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
+            ]"
+            @update:value="startFilter"
+          />
+        </div>
+      </div>
+
+      <div style="flex: 1; flex-basis: 150px">
+        <div>Kết quả</div>
         <div>
           <VueSelect
             v-model:value="status"
@@ -302,10 +323,10 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
         <thead>
           <tr>
             <th style="width: 40px">Mã</th>
-            <th v-if="CONFIG.MODE === 'development'"></th>
+            <th></th>
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
-            <th class="">Trạng thái</th>
+            <th class="">Kết quả</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>TG Chỉ định</span>
@@ -356,7 +377,9 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
                 }}
               </div>
             </td>
-            <td v-if="CONFIG.MODE === 'development'">{{ ticketRadiology.roomId }}</td>
+            <td>
+              <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus" />
+            </td>
             <td>
               <div>
                 {{ ticketRadiology.customer?.fullName }}

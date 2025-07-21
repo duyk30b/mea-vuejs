@@ -5,7 +5,7 @@ import type { TicketDetailQuery } from './ticket.dto'
 
 export class TicketService {
   static async detail(id: number, options: TicketDetailQuery) {
-    const ticket = await TicketQueryApi.detail(id, options)
+    const { ticket } = await TicketQueryApi.detail(id, options)
 
     if (ticket.customer) {
       const customer = Customer.from(ticket.customer)

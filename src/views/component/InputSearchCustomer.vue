@@ -24,6 +24,7 @@ const props = withDefaults(
     customerId: number
     customer?: Customer
     text?: string
+    editCustomer?: boolean
     disabled?: boolean
     required?: boolean
     clearTextIfNoSelect?: boolean
@@ -35,6 +36,7 @@ const props = withDefaults(
     disabled: false,
     required: false,
     clearTextIfNoSelect: true,
+    editCustomer: true,
   },
 )
 
@@ -95,7 +97,11 @@ const logicFilter = (item: ItemOption, text: string) => {
 </script>
 <template>
   <ModalCustomerDetail ref="modalCustomerDetail" />
-  <ModalCustomerUpsert ref="modalCustomerUpsert" @success="handleUpsertCustomer" />
+  <ModalCustomerUpsert
+    v-if="editCustomer"
+    ref="modalCustomerUpsert"
+    @success="handleUpsertCustomer"
+  />
 
   <div class="flex flex-wrap items-center gap-1">
     <span>Khách hàng</span>
@@ -115,7 +121,7 @@ const logicFilter = (item: ItemOption, text: string) => {
         <b style="color: var(--text-green)">{{ formatMoney(-customerCurrent!.debt) }}</b>
       </span>
       <a
-        v-if="userPermission[PermissionId.CUSTOMER_UPDATE]"
+        v-if="editCustomer && userPermission[PermissionId.CUSTOMER_UPDATE]"
         @click="modalCustomerUpsert?.openModal(customerCurrent!)"
       >
         - Sửa thông tin KH

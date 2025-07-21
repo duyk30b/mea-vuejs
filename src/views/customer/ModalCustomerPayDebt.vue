@@ -13,6 +13,7 @@ import { PaymentMethodService } from '../../modules/payment-method'
 import { TicketQueryApi, TicketStatus, type Ticket } from '../../modules/ticket'
 import { ESTimer } from '../../utils'
 import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
+import { PaymentApi } from '@/modules/payment'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -47,9 +48,6 @@ const openModal = async (customerId: number) => {
   showModal.value = true
   money.value = 0
   note.value = ''
-  if (!isMobile) {
-    nextTick(() => inputMoneyPay.value?.focus())
-  }
   try {
     dataLoading.value = true
     const fetchPromise = await Promise.all([
@@ -64,7 +62,7 @@ const openModal = async (customerId: number) => {
       PaymentMethodService.list({ sort: { priority: 'ASC' } }),
     ])
     customer.value = fetchPromise[0] || Customer.blank()
-    ticketPaymentList.value = fetchPromise[1].map((i) => ({ ticket: i, money: 0 }))
+    ticketPaymentList.value = fetchPromise[1].ticketList.map((i) => ({ ticket: i, money: 0 }))
   } catch (error) {
     console.log('🚀 ~ ModalCustomerPayDebt.vue:70 ~ openModal ~ error:', error)
   } finally {
@@ -87,18 +85,25 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await CustomerService.customerPayment({
-      customerId: customer.value.id,
-      paymentMethodId: paymentMethodId.value,
-      note: note.value,
-      cashierId: user.value?.id || 0,
-      money: money.value,
-      ticketPaymentList: ticketPaymentList.value
-        .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
-        .filter((i) => i.money > 0),
+
+    const data = await PaymentApi.customerPayment({
+      body: {
+        customerId: customer.value.id,
+        paymentMethodId: paymentMethodId.value,
+        reason: 'Trả nợ',
+        totalMoney: money.value,
+        note: '',
+        paymentItemData: {
+          moneyTopUpAdd: 0,
+          payDebt: ticketPaymentList.value
+            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
+            .filter((i) => i.amount > 0),
+          prepayment: undefined,
+        },
+      },
     })
     AlertStore.addSuccess(`Trả nợ cho KH ${customer.value.fullName} thành công`)
-    emit('success', data)
+    emit('success', { customer: data.customerModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalCustomerPayDebt.vue:105 ~ handleSave ~ error:', error)
@@ -125,7 +130,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal">
+  <VueModal v-model:show="showModal" @close="closeModal">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">

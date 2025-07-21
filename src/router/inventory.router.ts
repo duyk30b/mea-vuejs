@@ -3,13 +3,20 @@ import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router'
 export const inventoryRouter: RouteRecordRaw = {
   path: 'inventory',
   name: 'Inventory',
-  redirect: () => ({ name: 'Inventory' }),
+  meta: { title: 'Kho hàng' },
+  redirect: () => ({ name: 'ProductList' }),
   children: [
     {
-      path: 'product',
-      name: 'Product',
+      path: 'product-list',
+      name: 'ProductList',
       component: () => import('../views/product/list/ProductList.vue'),
-      meta: { title: 'Tồn kho' },
+      meta: { title: 'Sản phẩm' },
+    },
+    {
+      path: 'delivery-ticket-list',
+      name: 'DeliveryTicketList',
+      component: () => import('../views/inventory/delivery/DeliveryTicketList.vue'),
+      meta: { title: 'Chờ xuất hàng' },
     },
     {
       path: 'receipt',

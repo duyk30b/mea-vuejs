@@ -114,6 +114,7 @@ const selectProduct = async (productSelect: Product) => {
 
   temp.type = TicketProductType.Prescription
   temp.deliveryStatus = DeliveryStatus.Pending
+  temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.prescriptions.paymentMoneyStatus
   temp.unitRate = productSelect.unitDefaultRate
 
   temp.expectedPrice = productSelect.retailPrice
@@ -237,10 +238,6 @@ const addPrescriptionItem = () => {
   emit('success', [ticketProductPrescription.value])
   clear()
   inputOptionsProduct.value?.clear()
-
-  if (!isMobile) {
-    inputOptionsProduct.value?.focus()
-  }
 }
 const handleModalProductUpsertSuccess = (instance?: Product) => {
   inputOptionsProduct.value?.setItem({

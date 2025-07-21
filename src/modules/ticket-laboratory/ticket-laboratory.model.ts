@@ -1,5 +1,5 @@
 import { Customer } from '../customer'
-import type { DiscountType } from '../enum'
+import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Laboratory } from '../laboratory'
 import { TicketLaboratoryResult } from '../ticket-laboratory-result'
 import { TicketUser } from '../ticket-user'
@@ -28,6 +28,7 @@ export class TicketLaboratory {
   actualPrice: number
 
   status: TicketLaboratoryStatus
+  paymentMoneyStatus: PaymentMoneyStatus
   startedAt: number | null
 
   customer?: Customer
@@ -38,6 +39,7 @@ export class TicketLaboratory {
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
     ins.id = 0
+    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     return ins
   }
 

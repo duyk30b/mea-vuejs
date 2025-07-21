@@ -8,7 +8,7 @@ import { DeliveryStatus, DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { LaboratoryService } from '../laboratory'
 import { LaboratoryGroup, LaboratoryGroupService } from '../laboratory-group'
-import { Payment } from '../payment/payment.model'
+import { PaymentItem } from '../payment-item'
 import { PermissionId } from '../permission/permission.enum'
 import { Procedure, ProcedureService } from '../procedure'
 import { Product, ProductService } from '../product'
@@ -93,7 +93,7 @@ export class Ticket {
   updatedAt: number | null // Giờ kết thúc khám
 
   customer?: Customer
-  paymentList?: Payment[]
+  paymentItemList?: PaymentItem[]
   customerSource?: CustomerSource
   ticketAttributeList?: TicketAttribute[]
   ticketBatchList?: TicketBatch[]
@@ -141,7 +141,7 @@ export class Ticket {
   static blank(): Ticket {
     const ins = Ticket.init()
     ins.customer = Customer.init() // Uncaught ReferenceError: Cannot access 'Customer' before initialization
-    ins.paymentList = []
+    ins.paymentItemList = []
     ins.ticketAttributeList = []
     ins.ticketBatchList = []
     ins.ticketProductList = []
@@ -363,8 +363,8 @@ export class Ticket {
       target.refreshTicketUserGroup()
     }
 
-    if (source.paymentList) {
-      target.paymentList = Payment.basicList(source.paymentList)
+    if (source.paymentItemList) {
+      target.paymentItemList = PaymentItem.basicList(source.paymentItemList)
     }
     if (source.ticketProductList) {
       target.ticketProductList = TicketProduct.basicList(source.ticketProductList)

@@ -1,29 +1,26 @@
 import { OmitClass, PickClass } from '../../utils'
 import type { ConditionDate, ConditionEnum } from '../_base/base-condition'
-import type { MoneyDirection, PaymentTiming, PersonType, VoucherType } from './payment.model'
+import type { MoneyDirection, PaymentPersonType } from './payment.model'
 
-export class PaymentGetQuery {
+export class PaymentGetParams {
   page?: number
   limit?: number
   relation?: {
     customer?: boolean
     distributor?: boolean
-    ticket?: boolean
-    receipt?: boolean
+    employee?: boolean
     cashier?: boolean
     paymentMethod?: boolean
+    paymentItemList?: boolean
   }
 
   filter?: {
     paymentMethodId?: number
-    voucherType?: VoucherType | ConditionEnum<VoucherType>
-    voucherId?: number
-    personType?: PersonType | ConditionEnum<PersonType>
+    paymentPersonType?: PaymentPersonType | ConditionEnum<PaymentPersonType>
     personId?: number
-    paymentTiming?: PaymentTiming | ConditionEnum<PaymentTiming>
-    createdAt?: ConditionDate
     moneyDirection?: MoneyDirection | ConditionEnum<MoneyDirection>
     cashierId?: number
+    createdAt?: ConditionDate
   }
 
   sort?: {
@@ -31,7 +28,7 @@ export class PaymentGetQuery {
     createdAt?: 'ASC' | 'DESC'
   }
 
-  static toQuery(instance: Partial<PaymentGetQuery>) {
+  static toQuery(instance: Partial<PaymentGetParams>) {
     return {
       page: instance?.page,
       limit: instance?.limit,
@@ -42,15 +39,20 @@ export class PaymentGetQuery {
   }
 }
 
-export class PaymentPaginationQuery extends PaymentGetQuery { }
-export class PaymentListQuery extends OmitClass(PaymentGetQuery, ['page']) { }
-export class PaymentDetailQuery extends PickClass(PaymentGetQuery, ['relation']) { }
+export class PaymentPaginationQuery extends PaymentGetParams { }
+export class PaymentListQuery extends OmitClass(PaymentGetParams, ['page']) { }
+export class PaymentDetailQuery extends PickClass(PaymentGetParams, ['relation']) { }
 
-export interface DistributorPaymentBody {
-  distributorId: number
-  cashierId: number
-  paymentMethodId: number
-  money: number
-  note: string
-  receiptPaymentList: { receiptId: number; money: number }[]
+export class PaymentResponseParams {
+  response?: {
+    payment?: {
+      paymentItemList?: boolean
+    }
+  }
+
+  static toQuery(instance: Partial<PaymentResponseParams>) {
+    return {
+      response: instance.response ? JSON.stringify(instance.response) : undefined,
+    }
+  }
 }

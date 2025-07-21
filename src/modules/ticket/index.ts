@@ -1,5 +1,4 @@
 export * from './api/ticket-action.api'
-export * from './api/ticket-money.api'
 export * from './api/ticket-query.api'
 export * from './api/ticket-reception.api'
 export * from './ticket.dto'

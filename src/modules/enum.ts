@@ -110,3 +110,9 @@ export enum TicketType {
   Eye = 5,
   Obstetric = 6,
 }
+
+export enum PaymentMoneyStatus {
+  NoEffect = 1,
+  Pending = 2,
+  Paid = 3,
+}

@@ -3,6 +3,8 @@ import VueButton from '@/common/VueButton.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputMoney, InputSelect, InputText } from '@/common/vue-form'
 import VueModal from '@/common/vue-modal/VueModal.vue'
+import { PaymentApi } from '@/modules/payment'
+import { PaymentVoucherItemType } from '@/modules/payment-item'
 import { nextTick, onMounted, ref } from 'vue'
 import { IconClose } from '../../../common/icon-antd'
 import { MeService } from '../../../modules/_me/me.service'
@@ -15,6 +17,7 @@ import { TicketOrderApi } from '../../../modules/ticket-order'
 import { ESArray } from '../../../utils'
 import TicketPaymentList from '../../ticket-base/TicketPaymentList.vue'
 import { ticketOrderDetailRef } from './ticket-order-detail.ref'
+import { TicketProduct } from '@/modules/ticket-product'
 
 const inputMoneyPayment = ref<InstanceType<typeof InputMoney>>()
 const emit = defineEmits<{ (e: 'success'): void }>()
@@ -48,10 +51,6 @@ const openModal = async (view = PaymentViewType.Success) => {
   showModal.value = true
   paymentView.value = view
   money.value = 0
-
-  if (!isMobile) {
-    nextTick(() => inputMoneyPayment.value?.focus())
-  }
 }
 
 const closeModal = () => {
@@ -63,24 +62,37 @@ const closeModal = () => {
 
 const startPrepayment = async () => {
   try {
-    if (ticketOrderDetailRef.value.status === TicketStatus.Draft && money.value < 0) {
+    if (money.value <= 0) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    if (ticketOrderDetailRef.value.status !== TicketStatus.Draft && money.value <= 0) {
-      return AlertStore.addError('Số tiền không hợp lệ')
-    }
-
     paymentLoading.value = true
-    const result = await TicketOrderApi.prepayment({
-      ticketId: ticketOrderDetailRef.value.id,
-      money: money.value,
-      note: note.value,
-      paymentMethodId: paymentMethodId.value,
+    const result = await PaymentApi.customerPayment({
+      body: {
+        customerId: ticketOrderDetailRef.value.customerId,
+        paymentMethodId: paymentMethodId.value,
+        totalMoney: money.value,
+        reason: 'Tạm ứng',
+        note: '',
+        paymentItemData: {
+          moneyTopUpAdd: 0,
+          payDebt: [],
+          prepayment: {
+            ticketId: ticketOrderDetailRef.value.id,
+            itemList: [
+              {
+                amount: money.value,
+                ticketItemId: 0,
+                paymentInteractId: 0,
+                voucherItemType: PaymentVoucherItemType.Other,
+              },
+            ],
+          },
+        },
+      },
     })
-    Object.assign(ticketOrderDetailRef.value, result.ticket)
-    if (result.payment) {
-      ticketOrderDetailRef.value.paymentList?.push(result.payment)
-    }
+    Object.assign(ticketOrderDetailRef.value, result.ticketModifiedList[0])
+    ticketOrderDetailRef.value.paymentItemList!.push(...result.paymentItemCreatedList)
+
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -99,20 +111,22 @@ const startSendProductAndPaymentAndClose = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const response = await TicketOrderApi.sendProductAndPaymentAndClose({
-      ticketId: ticketOrderDetailRef.value.id,
-      money: money.value,
-      paymentMethodId: paymentMethodId.value,
-      note: note.value,
-      ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
-    })
-    Object.assign(ticketOrderDetailRef.value, response.ticket)
-    ticketOrderDetailRef.value.ticketProductList = response.ticketProductList
-    ticketOrderDetailRef.value.paymentList = ticketOrderDetailRef.value.paymentList || []
-    if (response.payment) {
-      ticketOrderDetailRef.value.paymentList.push(response.payment!)
-    }
-
+    const response = await TicketOrderApi.sendProductAndPaymentAndClose(
+      ticketOrderDetailRef.value.id,
+      {
+        customerId: ticketOrderDetailRef.value.customerId,
+        money: money.value,
+        paymentMethodId: paymentMethodId.value,
+        reason: note.value,
+        ticketProductIdList: (ticketOrderDetailRef.value.ticketProductList || []).map((i) => i.id),
+      },
+    )
+    Object.assign(ticketOrderDetailRef.value, response.ticketModified)
+    ticketOrderDetailRef.value.paymentItemList?.push(...response.paymentItemCreatedList)
+    ticketOrderDetailRef.value.ticketProductList = TicketProduct.updateListByPartialList(
+      ticketOrderDetailRef.value.ticketProductList || [],
+      response.ticketProductModifiedAll,
+    )
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -134,16 +148,17 @@ const startRefundOverpaid = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const result = await TicketOrderApi.refundOverpaid({
+
+    const result = await PaymentApi.customerRefund({
+      customerId: ticketOrderDetailRef.value.customerId,
       ticketId: ticketOrderDetailRef.value.id,
-      money: money.value,
       paymentMethodId: paymentMethodId.value,
-      note: note.value,
+      money: money.value,
+      reason: 'Hoàn tiền',
     })
-    Object.assign(ticketOrderDetailRef.value, result.ticket)
-    if (result.payment) {
-      ticketOrderDetailRef.value.paymentList?.push(result.payment)
-    }
+    Object.assign(ticketOrderDetailRef.value, result.ticketModified)
+    ticketOrderDetailRef.value.paymentItemList!.push(result.paymentItemCreated)
+
     emit('success')
     showModal.value = false
   } catch (error) {
@@ -162,16 +177,26 @@ const startPayDebt = async () => {
     ) {
       return AlertStore.addError('Số tiền không hợp lệ')
     }
-    const result = await TicketOrderApi.payDebt({
-      ticketId: ticketOrderDetailRef.value.id,
-      money: money.value,
-      paymentMethodId: paymentMethodId.value,
-      note: note.value,
+    const result = await PaymentApi.customerPayment({
+      body: {
+        customerId: ticketOrderDetailRef.value.customerId,
+        paymentMethodId: paymentMethodId.value,
+        totalMoney: money.value,
+        reason: 'Trả nợ',
+        note: '',
+        paymentItemData: {
+          moneyTopUpAdd: 0,
+          payDebt: [
+            {
+              amount: money.value,
+              ticketId: ticketOrderDetailRef.value.id,
+            },
+          ],
+        },
+      },
     })
-    Object.assign(ticketOrderDetailRef.value, result.ticket)
-    if (result.payment) {
-      ticketOrderDetailRef.value.paymentList?.push(result.payment)
-    }
+    Object.assign(ticketOrderDetailRef.value, result.ticketModifiedList[0])
+    ticketOrderDetailRef.value.paymentItemList!.push(...result.paymentItemCreatedList)
 
     emit('success')
     showModal.value = false
@@ -265,7 +290,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_ORDER_REFUND_OVERPAID] &&
+              userPermission[PermissionId.PAYMENT_CUSTOMER_REFUND] &&
               [TicketStatus.Deposited, TicketStatus.Executing].includes(ticketOrderDetailRef.status)
             "
           >
@@ -346,7 +371,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] &&
               [TicketStatus.Draft, TicketStatus.Deposited, TicketStatus.Executing].includes(
                 ticketOrderDetailRef.status,
               )
@@ -426,7 +451,7 @@ defineExpose({ openModal })
           <div
             v-if="
               userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
-              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] &&
               userPermission[PermissionId.TICKET_ORDER_CLOSE] &&
               [TicketStatus.Draft].includes(ticketOrderDetailRef.status)
             "
@@ -511,7 +536,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_ORDER_PAYMENT] &&
+              userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] &&
               [TicketStatus.Debt].includes(ticketOrderDetailRef.status)
             "
           >

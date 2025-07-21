@@ -161,10 +161,10 @@ const handleSaveSetting = async () => {
                   </td>
                 </tr>
                 <tr>
-                  <td>Phiếu thu mặc định</td>
+                  <td>Phiếu thu tiền khách hàng</td>
                   <td style="min-width: 500px">
                     <VueSelect
-                      v-model:value="settingDisplay.paymentMoneyIn.printHtmlId"
+                      v-model:value="settingDisplay.customerPayment.printHtmlId"
                       :options="printHtmlOptions"
                     />
                   </td>

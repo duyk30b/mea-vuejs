@@ -37,7 +37,7 @@ const showModal = ref(false)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: {
@@ -46,8 +46,8 @@ const startFetchData = async () => {
       },
       sort: { id: 'DESC' },
     })
-    ticketList.value = data
-    pageTotal.value = Math.ceil(meta.total / limit.value)
+    ticketList.value = paginationResult.ticketList
+    pageTotal.value = Math.ceil(paginationResult.total / limit.value)
   } catch (error) {
     console.log('🚀 ~ file: CustomerTicketsHistory.vue:66 ~ error:', error)
   }

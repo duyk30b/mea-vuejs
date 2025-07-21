@@ -23,6 +23,8 @@ import ModalTicketLaboratoryResult from './ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTag from './TicketLaboratoryStatusTag.vue'
 import { fromTime, toTime } from './ticket-laboratory-group-list.ref'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import { PaymentMoneyStatus } from '@/modules/enum'
 
 const router = useRouter()
 const route = useRoute()
@@ -40,6 +42,7 @@ const dataLoading = ref(false)
 
 const customerId = ref<number>()
 const status = ref<TicketLaboratoryStatus | null>(null)
+const paymentMoneyStatus = ref<PaymentMoneyStatus | null>(PaymentMoneyStatus.Paid)
 
 const sortColumn = ref<'registeredAt' | 'id' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
@@ -72,6 +75,7 @@ const startFetchData = async (options?: { noLoading?: boolean }) => {
         customerId: customerId.value ? customerId.value : undefined,
         roomId: currentRoom.value.isCommon ? undefined : currentRoom.value.id || 0,
         status: status.value ? status.value : undefined,
+        paymentMoneyStatus: paymentMoneyStatus.value ? paymentMoneyStatus.value : undefined,
         registeredAt:
           fromTime.value || toTime.value
             ? {
@@ -288,7 +292,23 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
       </div>
 
       <div style="flex: 1; flex-basis: 150px">
-        <div>Chọn trạng thái</div>
+        <div>Thanh toán</div>
+        <div>
+          <VueSelect
+            v-model:value="paymentMoneyStatus"
+            :options="[
+              { value: null, text: 'Tất cả' },
+              { value: PaymentMoneyStatus.NoEffect, text: 'Không áp dụng' },
+              { value: PaymentMoneyStatus.Pending, text: 'Chờ thanh toán' },
+              { value: PaymentMoneyStatus.Paid, text: 'Đã thanh toán' },
+            ]"
+            @update:value="startFilter"
+          />
+        </div>
+      </div>
+
+      <div style="flex: 1; flex-basis: 150px">
+        <div>Kết quả</div>
         <div>
           <VueSelect
             v-model:value="status"
@@ -315,9 +335,10 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
         <thead>
           <tr>
             <th style="width: 40px">Mã</th>
+            <th style="width: 32px"></th>
             <th style="min-width: 150px">Khách hàng</th>
             <th>Tên phiếu</th>
-            <th class="">Trạng thái</th>
+            <th class="">Kết quả</th>
             <th class="cursor-pointer" @click="changeSort('registeredAt')">
               <div class="flex items-center gap-1 justify-center">
                 <span>TG Chỉ định</span>
@@ -368,6 +389,7 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
                 }}
               </div>
             </td>
+            <td><PaymentMoneyStatusTooltip :paymentMoneyStatus="tlg.paymentMoneyStatus" /></td>
             <td>
               <div>
                 {{ tlg.customer?.fullName }}

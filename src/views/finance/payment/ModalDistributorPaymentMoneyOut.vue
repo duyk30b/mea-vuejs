@@ -1,21 +1,22 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputOptions, InputSelect, InputText } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Distributor, DistributorService } from '@/modules/distributor'
+import { PaymentApi } from '@/modules/payment'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { ReceiptApi, ReceiptStatus, type Receipt } from '@/modules/receipt'
+import { ESString, ESTimer } from '@/utils'
+import ModalDistributorDetail from '@/views/distributor/detail/ModalDistributorDetail.vue'
+import ModalDistributorUpsert from '@/views/distributor/upsert/ModalDistributorUpsert.vue'
+import LinkAndStatusReceipt from '@/views/receipt/LinkAndStatusReceipt.vue'
 import { onMounted, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputOptions, InputSelect, InputText } from '../../common/vue-form'
-import type { ItemOption } from '../../common/vue-form/InputOptions.vue'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { MeService } from '../../modules/_me/me.service'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Distributor, DistributorService } from '../../modules/distributor'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
-import { ESString, ESTimer } from '../../utils'
-import ModalDistributorDetail from '../distributor/detail/ModalDistributorDetail.vue'
-import ModalDistributorUpsert from '../distributor/upsert/ModalDistributorUpsert.vue'
-import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 const modalDistributorDetail = ref<InstanceType<typeof ModalDistributorDetail>>()
@@ -33,7 +34,7 @@ const distributorOptions = ref<ItemOption[]>([])
 const distributor = ref<Distributor>(Distributor.blank())
 
 const money = ref(0)
-const note = ref('')
+const reason = ref('')
 const paymentMethodId = ref<number>(0)
 const receiptPaymentList = ref<{ receipt: Receipt; money: number }[]>([])
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
@@ -93,7 +94,7 @@ const closeModal = () => {
   showModal.value = false
   receiptPaymentList.value = []
   money.value = 0
-  note.value = ''
+  reason.value = ''
   distributor.value = Distributor.blank()
   paymentMethodId.value = 0
 }
@@ -104,18 +105,21 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await DistributorService.distributorPayment({
+    const data = await PaymentApi.distributorPayment({
       distributorId: distributor.value.id,
       paymentMethodId: paymentMethodId.value,
-      note: note.value,
-      cashierId: user.value?.id || 0,
-      money: money.value,
-      receiptPaymentList: receiptPaymentList.value
-        .map((i) => ({ receiptId: i.receipt.id, money: i.money }))
-        .filter((i) => i.money > 0),
+      totalMoney: money.value,
+      reason: reason.value,
+      note: '',
+      paymentItemData: {
+        moneyTopUpAdd: 0,
+        payDebt: receiptPaymentList.value
+          .map((i) => ({ receiptId: i.receipt.id, amount: i.money }))
+          .filter((i) => i.amount > 0),
+      },
     })
     AlertStore.addSuccess(`NCC ${distributor.value.fullName} thanh toán thành công`)
-    emit('success', data)
+    emit('success', { distributor: data.distributorModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyOut.vue:125 ~ handleSave ~ error:', error)
@@ -142,7 +146,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="margin-top: 50px">
+  <VueModal v-model:show="showModal" style="margin-top: 50px" @close="closeModal">
     <div class="pl-4 py-3 flex items-center bg-white" style="border-bottom: 1px solid #dedede">
       <div class="flex-1 font-medium" style="font-size: 16px">Tạo phiếu thu</div>
       <div style="font-size: 1.2rem" class="px-4 cursor-pointer" @click="closeModal">
@@ -274,9 +278,9 @@ defineExpose({ openModal })
             </div>
           </div>
           <div class="mt-4">
-            <div>Ghi chú</div>
+            <div>Lý do nộp</div>
             <div>
-              <InputText v-model:value="note" />
+              <InputText v-model:value="reason" />
             </div>
           </div>
         </div>

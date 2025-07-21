@@ -1,5 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
+import type { PaymentMoneyStatus } from '../enum'
 import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketUser } from '../ticket-user'
 
@@ -10,6 +11,7 @@ export class TicketClinicLaboratoryApi {
       roomId: number
       laboratoryGroupId: number
       registeredAt: number | null
+      paymentMoneyStatus: PaymentMoneyStatus
       ticketLaboratoryList: TicketLaboratory[]
     }[]
     ticketLaboratoryGroupUpdate?: {
@@ -27,6 +29,7 @@ export class TicketClinicLaboratoryApi {
           laboratoryGroupId: tlg.laboratoryGroupId,
           registeredAt: tlg.registeredAt,
           roomId: tlg.roomId,
+          paymentMoneyStatus: tlg.paymentMoneyStatus,
           ticketLaboratoryList: tlg.ticketLaboratoryList.map((tl) => ({
             priority: tl.priority,
             laboratoryId: tl.laboratoryId,
@@ -37,6 +40,7 @@ export class TicketClinicLaboratoryApi {
             discountPercent: tl.discountPercent,
             discountType: tl.discountType,
             actualPrice: tl.actualPrice,
+            paymentMoneyStatus: tl.paymentMoneyStatus,
           })),
         }))
         : undefined,

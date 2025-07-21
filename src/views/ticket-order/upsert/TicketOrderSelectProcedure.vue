@@ -129,9 +129,6 @@ const addTicketProcedure = () => {
   }
 
   clear()
-  if (!isMobile) {
-    inputOptionsProcedure.value?.focus()
-  }
 }
 
 const createProcedure = (instance?: Procedure) => {

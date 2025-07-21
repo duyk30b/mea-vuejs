@@ -1,5 +1,6 @@
+import { reactive } from 'vue'
 
-export const CONFIG = {
+export const CONFIG = reactive({
   CLIENT_ID: '',
   MODE: import.meta.env.MODE,
   API_URL:
@@ -7,7 +8,7 @@ export const CONFIG = {
       ? 'https://api.medihome.vn'
       : `http://${location.hostname}:20000`,
   BUILD_TIME: '',
-}
+})
   ; (window as any)._MEA_CONFIG = CONFIG
 // CONFIG.API_URL = 'https://api.medihome.vn'
 

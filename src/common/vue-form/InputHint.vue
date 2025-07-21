@@ -10,7 +10,7 @@ const props = withDefaults(
     placeholder?: string
     maxHeight?: number
     required?: boolean
-    logicFilter?: Function
+    logicFilter?: (a: string, b: string | any) => boolean
   }>(),
   {
     value: null,

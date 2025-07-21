@@ -15,6 +15,8 @@ import ModalTicketRadiologyUpdateMoney from '../radiology/ModalTicketRadiologyUp
 import { Discount } from '@/modules/discount'
 import { DiscountType } from '@/modules/enum'
 import { ticketRoomRef } from '@/modules/room'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketRadiologyStatusTooltip from '@/views/room/room-radiology/TicketRadiologyStatusTooltip.vue'
 
 const modalRadiologyDetail = ref<InstanceType<typeof ModalRadiologyDetail>>()
 const modalTicketRadiologyUpdateMoney = ref<InstanceType<typeof ModalTicketRadiologyUpdateMoney>>()
@@ -47,7 +49,8 @@ const radiologyCostAmount = computed(() => {
     <thead>
       <tr>
         <th>#</th>
-        <th style="width: 32px"></th>
+        <th></th>
+        <th></th>
         <th colspan="4">CHẨN ĐOÁN HÌNH ẢNH</th>
         <th>Giá</th>
         <th>Chiết khấu</th>
@@ -61,20 +64,11 @@ const radiologyCostAmount = computed(() => {
         <td class="text-center whitespace-nowrap" style="padding: 0.5rem 0.2rem">
           {{ index + 1 }}
         </td>
+        <td>
+          <PaymentMoneyStatusTooltip :paymentMoneyStatus="ticketRadiology.paymentMoneyStatus" />
+        </td>
         <td class="text-center">
-          <VueTooltip v-if="ticketRadiology.status === TicketRadiologyStatus.Pending">
-            <template #trigger>
-              <IconClockCircle style="font-size: 18px; color: orange; cursor: not-allowed" />
-            </template>
-            <div>Chưa có kết quả</div>
-          </VueTooltip>
-
-          <VueTooltip v-else>
-            <template #trigger>
-              <IconCheckSquare style="color: #52c41a; font-size: 18px; cursor: not-allowed" />
-            </template>
-            <div>Đã hoàn thành</div>
-          </VueTooltip>
+          <TicketRadiologyStatusTooltip :status="ticketRadiology.status" />
         </td>
         <td colspan="4">
           <div class="flex items-center gap-1">

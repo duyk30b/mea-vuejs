@@ -21,20 +21,20 @@ const { userPermission } = MeService
 
 const ticketList = ref<Ticket[]>([])
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('CUSTOMER_TICKET_HISTORY_PAGINATION_LIMIT')) || 10)
+const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const { data, meta } = await TicketQueryApi.pagination({
+    const paginationResult = await TicketQueryApi.pagination({
       page: page.value,
       limit: limit.value,
       filter: { customerId: props.customerId },
       relation: { customer: false },
       sort: { id: 'DESC' },
     })
-    ticketList.value = data
-    total.value = meta.total
+    ticketList.value = paginationResult.ticketList
+    total.value = paginationResult.total
   } catch (error) {
     console.log('🚀 ~ file: CustomerInvoicesHistory.vue:35 ~ error:', error)
   }
@@ -44,7 +44,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('CUSTOMER_TICKET_HISTORY_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }

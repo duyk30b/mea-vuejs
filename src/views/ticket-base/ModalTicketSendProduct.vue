@@ -3,14 +3,15 @@ import { DeliveryStatus, PickupStrategy } from '@/modules/enum'
 import { TicketProduct } from '@/modules/ticket-product'
 import { TicketProductService } from '@/modules/ticket-product/ticket-product.service'
 import { ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Ticket, TicketActionApi, TicketType } from '../../modules/ticket'
-import { TicketOrderApi } from '../../modules/ticket-order'
-import { ESTimer } from '../../utils'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import VueModal from '@/common/vue-modal/VueModal.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Ticket, TicketActionApi } from '@/modules/ticket'
+import { ESTimer } from '@/utils'
+import PaymentMoneyStatusTooltip from '../finance/payment/PaymentMoneyStatusTooltip.vue'
+import TicketDeliveryStatusTooltip from './TicketDeliveryStatusTooltip.vue'
 
 const ticket = ref<Ticket>(Ticket.blank())
 const ticketProductList = ref<TicketProduct[]>([])
@@ -76,13 +77,6 @@ const handleChangeCheckedAll = (e: Event) => {
   }
 }
 
-const setSelectAll = () => {
-  checkedAll.value = true
-  ticketProductList.value.forEach((i) => {
-    ticketProductIdSelect.value[i.id] = true
-  })
-}
-
 const closeModal = () => {
   showModal.value = false
   ticket.value = Ticket.blank()
@@ -139,17 +133,11 @@ const startSendProduct = async () => {
   }
   try {
     sendLoading.value = true
-    if (ticket.value.ticketType === TicketType.Order) {
-      await TicketOrderApi.sendProduct({
-        ticketId: ticket.value.id,
-        ticketProductIdList,
-      })
-    } else {
-      await TicketActionApi.sendProduct({
-        ticketId: ticket.value.id,
-        ticketProductIdList,
-      })
-    }
+    await TicketActionApi.sendProduct({
+      ticketId: ticket.value.id,
+      ticketProductIdList,
+    })
+
     emit('success')
     closeModal()
   } catch (error) {
@@ -176,25 +164,15 @@ defineExpose({ openModal })
 
       <div class="p-4">
         <div class="flex flex-wrap justify-between items-baseline">
-          <div>Danh sách sản phẩm</div>
-          <div>
-            <VueButton type="button" @click="setSelectAll">
-              <span>Chọn tất cả</span>
-            </VueButton>
-          </div>
+          <span>Danh sách sản phẩm</span>
         </div>
         <div class="table-wrapper mt-2">
           <table>
             <thead>
               <tr>
-                <th style="width: 100px">
-                  <input
-                    style="cursor: pointer"
-                    :checked="checkedAll"
-                    type="checkbox"
-                    @change="(e) => handleChangeCheckedAll(e)"
-                  />
-                </th>
+                <th style="width: 50px">Chọn</th>
+                <th></th>
+                <th></th>
                 <th>Tên sản phẩm</th>
                 <th>SL mua</th>
                 <th>Đ.Vị</th>
@@ -229,6 +207,14 @@ defineExpose({ openModal })
                     @change="(e) => handleChangeInput(e, ticketProduct.id)"
                   />
                 </td>
+                <td>
+                  <PaymentMoneyStatusTooltip
+                    :paymentMoneyStatus="ticketProduct.paymentMoneyStatus"
+                  />
+                </td>
+                <td>
+                  <TicketDeliveryStatusTooltip :deliveryStatus="ticketProduct.deliveryStatus" />
+                </td>
                 <td class="text-left">
                   <div style="font-weight: 500">{{ ticketProduct.product?.brandName }}</div>
                   <div class="text-xs italic">
@@ -254,6 +240,17 @@ defineExpose({ openModal })
               </tr>
             </tbody>
           </table>
+          <div class="mt-2 flex justify-center">
+            <label class="flex items-center gap-2 cursor-pointer ml-8">
+              <input
+                style="cursor: pointer"
+                :checked="checkedAll"
+                type="checkbox"
+                @change="(e) => handleChangeCheckedAll(e)"
+              />
+              <a>Chọn tất cả</a>
+            </label>
+          </div>
         </div>
 
         <div class="pb-4 pt-8 flex justify-center gap-4">

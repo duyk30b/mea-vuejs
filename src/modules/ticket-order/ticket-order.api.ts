@@ -1,6 +1,6 @@
 import { AxiosInstance } from '../../core/axios.instance'
 import type { BaseResponse } from '../_base/base-dto'
-import { Payment } from '../payment/payment.model'
+import { PaymentItem } from '../payment-item'
 import { TicketProduct } from '../ticket-product'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -289,149 +289,31 @@ export class TicketOrderApi {
     return data
   }
 
-  static async sendProductAndPaymentAndClose(options: {
-    ticketId: number
-    money: number
-    paymentMethodId: number
-    note: string
-    ticketProductIdList: number[]
-  }) {
-    const { ticketId } = options
+  static async sendProductAndPaymentAndClose(
+    ticketId: number,
+    body: {
+      money: number
+      customerId: number
+      paymentMethodId: number
+      reason: string
+      ticketProductIdList: number[]
+    },
+  ) {
     const response = await AxiosInstance.post(
       `/ticket-order/${ticketId}/send-product-and-payment-and-close`,
-      {
-        money: options.money,
-        paymentMethodId: options.paymentMethodId,
-        note: options.note,
-        ticketProductIdList: options.ticketProductIdList,
-      },
+      body,
     )
     const { data } = response.data as BaseResponse<{
-      ticket: any
-      ticketProductList: any[]
-      payment?: any
+      ticketModified: any
+      paymentItemCreatedList: any[]
+      ticketProductModifiedAll?: any[]
     }>
     return {
-      ticket: Ticket.from(data.ticket),
-      ticketProductList: TicketProduct.fromList(data.ticketProductList),
-      payment: data.payment ? Payment.from(data.payment) : null,
-    }
-  }
-
-  static async prepayment(body: {
-    ticketId: number
-    money: number
-    note: string
-    paymentMethodId: number
-  }) {
-    const { ticketId } = body
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/prepayment`, {
-      money: body.money,
-      note: body.note,
-      paymentMethodId: body.paymentMethodId,
-    })
-    const { data } = response.data as BaseResponse<{ ticket: any; payment?: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      payment: data.payment ? Payment.from(data.payment) : null,
-    }
-  }
-
-  static async sendProduct(options: { ticketId: number; ticketProductIdList: number[] }) {
-    const { ticketId, ticketProductIdList } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/send-product`, {
-      ticketProductIdList,
-    })
-    const { data } = response.data as BaseResponse<{
-      ticket: any
-      ticketProductList: any[]
-    }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      ticketProductList: TicketProduct.fromList(data.ticketProductList),
-    }
-  }
-
-  static async close(options: { ticketId: number }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/close`)
-    const { data } = response.data as BaseResponse<{ ticket: any; payment?: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      payment: data.payment ? Payment.from(data.payment) : null,
-    }
-  }
-
-  static async refundOverpaid(options: {
-    ticketId: number
-    money: number
-    note: string
-    paymentMethodId: number
-  }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/refund-overpaid`, {
-      money: options.money,
-      note: options.note,
-      paymentMethodId: options.paymentMethodId,
-    })
-    const { data } = response.data as BaseResponse<{ ticket: any; payment: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      payment: data.payment ? Payment.from(data.payment) : null,
-    }
-  }
-
-  static async returnProduct(body: {
-    ticketId: number
-    returnList: {
-      ticketBatchId: number
-      quantityReturn: number
-    }[]
-  }) {
-    const { ticketId, returnList } = body
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/return-product`, {
-      returnList,
-    })
-    const { data } = response.data as BaseResponse<{ ticket: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-    }
-  }
-
-  static async payDebt(options: {
-    ticketId: number
-    money: number
-    note: string
-    paymentMethodId: number
-  }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/pay-debt`, {
-      money: options.money,
-      note: options.note,
-      paymentMethodId: options.paymentMethodId,
-    })
-    const { data } = response.data as BaseResponse<{ ticket: any; payment: any }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      payment: data.payment ? Payment.from(data.payment) : null,
-    }
-  }
-
-  static async terminate(options: { ticketId: number }) {
-    const { ticketId } = options
-    const response = await AxiosInstance.post(`/ticket-order/${ticketId}/terminate`)
-    const { data } = response.data as BaseResponse<{
-      ticket: any
-      paymentList: any
-      customer?: any
-      ticketProductList?: any[]
-    }>
-    return {
-      ticket: Ticket.from(data.ticket),
-      paymentList: Payment.fromList(data.paymentList),
-      ticketProductList: data.ticketProductList
-        ? TicketProduct.fromList(data.ticketProductList)
-        : null,
+      ticketModified: Ticket.from(data.ticketModified),
+      paymentItemCreatedList: PaymentItem.fromList(data.paymentItemCreatedList),
+      ticketProductModifiedAll: data.ticketProductModifiedAll
+        ? TicketProduct.fromList(data.ticketProductModifiedAll)
+        : undefined,
     }
   }
 }

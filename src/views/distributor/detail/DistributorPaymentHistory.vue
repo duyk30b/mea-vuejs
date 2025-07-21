@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { PaymentPersonType } from '@/modules/payment'
+import { PaymentItemApi, type PaymentItem } from '@/modules/payment-item'
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import VuePagination from '../../../common/VuePagination.vue'
-import { useSettingStore } from '../../../modules/_me/setting.store'
-import { PaymentApi } from '../../../modules/payment/payment.api'
-import { PersonType, type Payment } from '../../../modules/payment/payment.model'
-import { ESTimer } from '../../../utils'
-import PaymentTimingTag from '../../payment/PaymentTimingTag.vue'
-import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
 import { MeService } from '../../../modules/_me/me.service'
+import { useSettingStore } from '../../../modules/_me/setting.store'
+import { ESTimer } from '../../../utils'
+import LinkAndStatusReceipt from '../../receipt/LinkAndStatusReceipt.vue'
+import { CONFIG } from '@/config'
 
 const props = withDefaults(defineProps<{ distributorId: number }>(), {
   distributorId: 0,
@@ -20,24 +20,24 @@ const settingStore = useSettingStore()
 const { formatMoney, isMobile } = settingStore
 const { userPermission } = MeService
 
-const paymentList = ref<Payment[]>([])
+const paymentItemList = ref<PaymentItem[]>([])
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('PAYMENT_PAGINATION_LIMIT')) || 10)
+const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
   try {
-    const paginationResponse = await PaymentApi.pagination({
-      relation: { receipt: true, paymentMethod: true },
+    const paginationResponse = await PaymentItemApi.pagination({
+      relation: { receipt: true },
       page: page.value,
       limit: limit.value,
       filter: {
         personId: props.distributorId,
-        personType: PersonType.Distributor,
+        paymentPersonType: PaymentPersonType.Distributor,
       },
       sort: { id: 'DESC' },
     })
-    paymentList.value = paginationResponse.paymentList
+    paymentItemList.value = paginationResponse.paymentItemList
     total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: PaymentsHistory.vue:33 ~ error:', error)
@@ -48,7 +48,7 @@ watch(
   () => props.distributorId,
   async (newValue) => {
     if (newValue) await startFetchData()
-    else paymentList.value = []
+    else paymentItemList.value = []
   },
   { immediate: true },
 )
@@ -57,7 +57,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('PAYMENT_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }
@@ -74,40 +73,32 @@ defineExpose({ startFetchData })
           <th>Tiền</th>
         </tr>
       </thead>
-      <tbody style="font-size: 0.8rem">
-        <tr v-if="paymentList.length === 0">
+      <tbody style="">
+        <tr v-if="paymentItemList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(payment, index) in paymentList" :key="index">
+        <tr v-for="(paymentItem, index) in paymentItemList" :key="index">
           <td>
-            <LinkAndStatusReceipt :receipt="payment.receipt!" />
+            <LinkAndStatusReceipt :receipt="paymentItem.receipt!" :status="false" />
             <div style="white-space: nowrap">
-              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+              {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
-            <div>
-              <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
-            </div>
-            <div v-if="payment.note">
-              {{ payment.note }}
-            </div>
-            <div v-if="payment.description">
-              {{ payment.description }}
-            </div>
+            <div v-if="paymentItem.note">{{ paymentItem.note }}</div>
           </td>
           <td class="text-right">
             <div class="flex justify-between item-center">
               <span>T.Toán:</span>
-              <span>{{ formatMoney(-payment.paidAmount) }}</span>
+              <span>{{ formatMoney(paymentItem.paidAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Ghi nợ:</span>
-              <span>{{ formatMoney(payment.debtAmount) }}</span>
+              <span>{{ formatMoney(paymentItem.debtAmount) }}</span>
             </div>
             <div class="flex justify-between item-center">
               <span>Nợ:</span>
               <span>
-                {{ formatMoney(payment.openDebt) }} ➞
-                {{ formatMoney(payment.closeDebt) }}
+                {{ formatMoney(paymentItem.openDebt) }} ➞
+                {{ formatMoney(paymentItem.closeDebt) }}
               </span>
             </div>
           </td>
@@ -117,44 +108,46 @@ defineExpose({ startFetchData })
     <table v-if="!isMobile">
       <thead>
         <tr>
+          <th v-if="CONFIG.MODE === 'development'">ID</th>
           <th>Phiếu nhập</th>
-          <th>Loại</th>
-          <th>PTTT</th>
+          <th>Note</th>
           <th>Số tiền</th>
           <th>Ghi nợ</th>
           <th>Công nợ</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="paymentList.length === 0">
+        <tr v-if="paymentItemList.length === 0">
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
-        <tr v-for="(payment, index) in paymentList" :key="index">
+        <tr v-for="paymentItem in paymentItemList" :key="paymentItem.id">
+          <td v-if="CONFIG.MODE === 'development'" style="text-align: center; color: violet">
+            {{ paymentItem.id }}
+          </td>
           <td>
-            <LinkAndStatusReceipt :receipt="payment.receipt!" :receiptId="payment.voucherId" />
-            <div style="font-size: 0.8rem; white-space: nowrap">
-              {{ ESTimer.timeToText(payment.createdAt, 'hh:mm DD/MM/YYYY') }}
+            <LinkAndStatusReceipt
+              :receipt="paymentItem.receipt!"
+              :receiptId="paymentItem.voucherId"
+              :status="false"
+            />
+            <div style="white-space: nowrap">
+              {{ ESTimer.timeToText(paymentItem.createdAt, 'hh:mm DD/MM/YYYY') }}
             </div>
           </td>
           <td class="px-4">
-            <PaymentTimingTag :paymentTiming="payment.paymentTiming" />
-            <div v-if="payment.description" style="font-size: 0.8rem">
-              {{ payment.description }}
-            </div>
-            <div v-if="payment.note" style="font-size: 0.8rem">
-              {{ payment.note }}
+            <div v-if="paymentItem.note" style="">
+              {{ paymentItem.note }}
             </div>
           </td>
-          <td>{{ payment.paymentMethod?.name }}</td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(-payment.paidAmount) }}
+            {{ formatMoney(paymentItem.paidAmount) }}
           </td>
           <td style="white-space: nowrap; text-align: right">
-            {{ formatMoney(payment.debtAmount) }}
+            {{ formatMoney(paymentItem.debtAmount) }}
           </td>
           <td class="text-right">
-            {{ formatMoney(payment.openDebt) }} ➞
-            {{ formatMoney(payment.closeDebt) }}
+            {{ formatMoney(paymentItem.openDebt) }} ➞
+            {{ formatMoney(paymentItem.closeDebt) }}
           </td>
         </tr>
       </tbody>

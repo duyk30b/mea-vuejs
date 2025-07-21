@@ -13,6 +13,7 @@ import { ReceiptApi, ReceiptStatus, type Receipt } from '../../modules/receipt'
 import { ESTimer } from '../../utils'
 import LinkAndStatusReceipt from '../receipt/LinkAndStatusReceipt.vue'
 import { MeService } from '../../modules/_me/me.service'
+import { PaymentApi } from '@/modules/payment'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 
@@ -47,9 +48,6 @@ const openModal = async (distributorId: number) => {
   showModal.value = true
   money.value = 0
   note.value = ''
-  if (!isMobile) {
-    nextTick(() => inputMoneyPay.value?.focus())
-  }
   try {
     dataLoading.value = true
     const fetchPromise = await Promise.all([
@@ -86,18 +84,22 @@ const handleSave = async () => {
     if (money.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await DistributorService.distributorPayment({
+
+    const data = await PaymentApi.distributorPayment({
       distributorId: distributor.value.id,
       paymentMethodId: paymentMethodId.value,
-      note: note.value,
-      cashierId: user.value?.id || 0,
-      money: money.value,
-      receiptPaymentList: receiptPaymentList.value
-        .map((i) => ({ receiptId: i.receipt.id, money: i.money }))
-        .filter((i) => i.money > 0),
+      reason: 'Trả nợ',
+      totalMoney: money.value,
+      note: '',
+      paymentItemData: {
+        moneyTopUpAdd: 0,
+        payDebt: receiptPaymentList.value
+          .map((i) => ({ receiptId: i.receipt.id, amount: i.money }))
+          .filter((i) => i.amount > 0),
+      },
     })
     AlertStore.addSuccess(`Trả nợ cho NCC ${distributor.value.fullName} thành công`)
-    emit('success', data)
+    emit('success', { distributor: data.distributorModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalDistributorPayDebt.vue:104 ~ handleSave ~ error:', error)
@@ -124,7 +126,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 800px">
+  <VueModal v-model:show="showModal" style="width: 800px" @close="closeModal">
     <form class="bg-white" @submit.prevent="handleSave">
       <div class="pl-4 py-3 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 font-medium" style="font-size: 16px">

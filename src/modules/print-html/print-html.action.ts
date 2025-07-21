@@ -3,13 +3,13 @@ import { ESDom } from '../../utils'
 import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Organization } from '../organization'
+import type { Payment } from '../payment/payment.model'
 import type { Ticket } from '../ticket'
 import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
 import type { TicketRadiology } from '../ticket-radiology'
 import { PrintHtmlCompile } from './print-html.compiled'
 import { PrintHtml } from './print-html.model'
 import { PrintHtmlService } from './print-html.service'
-import type { Payment } from '../payment/payment.model'
 
 export class PrintHtmlAction {
   static async getPrintHtmlHeader() {
@@ -169,10 +169,10 @@ export class PrintHtmlAction {
     return printHtml ? PrintHtml.from(printHtml) : PrintHtml.blank()
   }
 
-  static async getPrintHtmlPaymentMoneyIn() {
+  static async getPrintHtmlCustomerPayment() {
     let printHtml: PrintHtml | undefined
 
-    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.paymentMoneyIn.printHtmlId
+    let printHtmlId = MeService.settingMap.value.PRINT_SETTING.customerPayment.printHtmlId
     if (printHtmlId != 0) {
       printHtml = await PrintHtmlService.detail(printHtmlId)
       if (!printHtml || !printHtml.html) {
@@ -180,7 +180,7 @@ export class PrintHtmlAction {
       }
     }
     if (printHtmlId == 0) {
-      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.paymentMoneyIn.printHtmlId
+      printHtmlId = MeService.settingMapRoot.value.PRINT_SETTING.customerPayment.printHtmlId
       printHtml = await PrintHtmlService.detail(printHtmlId)
     }
 
@@ -551,7 +551,7 @@ export class PrintHtmlAction {
     }
   }
 
-  static async startPrintPaymentMoneyIn(options: {
+  static async startPrintCustomerPayment(options: {
     organization: Organization
     customer: Customer
     payment: Payment
@@ -559,7 +559,7 @@ export class PrintHtmlAction {
     const { organization, customer, payment } = options
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlHeader()
-      const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlPaymentMoneyIn()
+      const printHtmlWrapper = await PrintHtmlAction.getPrintHtmlCustomerPayment()
 
       if (!printHtmlHeader || !printHtmlWrapper || !printHtmlWrapper.html) {
         return AlertStore.addError('Cài đặt in thất bại')

@@ -1,5 +1,5 @@
 import { Customer } from '../customer'
-import type { DiscountType } from '../enum'
+import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { Radiology } from '../radiology'
 import { TicketUser } from '../ticket-user'
@@ -35,6 +35,7 @@ export class TicketRadiology {
   registeredAt: number
   startedAt: number
   status: TicketRadiologyStatus
+  paymentMoneyStatus: PaymentMoneyStatus
   imageIds: string
 
   imageList: Image[]
@@ -46,6 +47,7 @@ export class TicketRadiology {
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
     ins.id = 0
+    ins.paymentMoneyStatus = PaymentMoneyStatus.NoEffect
     ins.printHtmlId = 0
     ins.imageIds = '[]'
     ins.description = ''

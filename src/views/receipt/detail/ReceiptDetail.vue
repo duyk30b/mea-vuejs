@@ -52,7 +52,7 @@ const startFetchData = async (receiptId: number) => {
       relation: {
         distributor: true,
         receiptItemList: { product: true, batch: true },
-        paymentList: true,
+        paymentItemList: true,
       },
     })
   } catch (error) {
@@ -93,7 +93,7 @@ const sendProduct = async () => {
     const result = await ReceiptApi.sendProduct({
       receiptId: receipt.value.id!,
     })
-    Object.assign(receipt.value, result.receipt)
+    Object.assign(receipt.value, result.receiptModified)
   } catch (error) {
     console.log('🚀 ~ startShipAndPayment ~ error:', error)
   } finally {
@@ -105,10 +105,8 @@ const close = async () => {
   try {
     loadingProcess.value = true
     const result = await ReceiptApi.close({ receiptId: receipt.value.id! })
-    Object.assign(receipt.value, result.receipt)
-    if (result.payment) {
-      receipt.value.paymentList?.push(result.payment)
-    }
+    Object.assign(receipt.value, result.receiptModified)
+    receipt.value.paymentItemList?.push(...result.paymentItemCreatedList)
   } catch (error) {
     console.log('🚀 ~ ReceiptDetail.vue:124 ~ close ~ error:', error)
   } finally {
@@ -135,8 +133,8 @@ const clickTerminate = () => {
       try {
         loadingProcess.value = true
         const result = await ReceiptApi.terminate(receipt.value.id!)
-        Object.assign(receipt.value, result.receipt)
-        receipt.value.paymentList = result.paymentList
+        Object.assign(receipt.value, result.receiptModified)
+        receipt.value.paymentItemList?.push(...result.paymentItemCreatedList)
         AlertStore.add({ type: 'success', message: 'Hủy phiếu thành công', time: 1000 })
       } catch (error) {
         console.log('🚀 ~ file: ReceiptDetail.vue:114 ~ startTerminate ~ error:', error)
@@ -177,6 +175,8 @@ const clickDestroy = () => {
 const openModalDistributorDetail = (distributorId: number) => {
   modalDistributorDetail.value?.openModal(distributorId)
 }
+
+const handleModalReceiptPaymentSuccess = () => {}
 </script>
 
 <template>
@@ -185,7 +185,7 @@ const openModalDistributorDetail = (distributorId: number) => {
     ref="modalReceiptDetailSettingScreen"
   />
   <ModalDistributorDetail ref="modalDistributorDetail" />
-  <ModalReceiptPayment ref="modalReceiptPayment" @success="startFetchData(receipt.id)" />
+  <ModalReceiptPayment ref="modalReceiptPayment" @success="handleModalReceiptPaymentSuccess" />
 
   <div class="page-header">
     <div class="flex items-center gap-4">
@@ -284,7 +284,7 @@ const openModalDistributorDetail = (distributorId: number) => {
       <div class="flex items-center gap-2">
         <VueButton
           v-if="
-            userPermission[PermissionId.RECEIPT_PAYMENT] &&
+            userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT] &&
             [ReceiptStatus.Draft, ReceiptStatus.Deposited, ReceiptStatus.Executing].includes(
               receipt.status,
             )
@@ -395,7 +395,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         <VueButton
           v-if="
             userPermission[PermissionId.RECEIPT_SEND_PRODUCT] &&
-            userPermission[PermissionId.RECEIPT_PAYMENT]
+            userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT]
           "
           color="blue"
           icon="send"
@@ -422,7 +422,7 @@ const openModalDistributorDetail = (distributorId: number) => {
         <VueButton
           v-if="
             receipt.paid > receipt.totalMoney &&
-            userPermission[PermissionId.RECEIPT_REFUND_OVERPAID]
+            userPermission[PermissionId.PAYMENT_DISTRIBUTOR_REFUND]
           "
           color="green"
           icon="dollar"
@@ -449,7 +449,7 @@ const openModalDistributorDetail = (distributorId: number) => {
 
       <template v-if="receipt.status === ReceiptStatus.Debt">
         <VueButton
-          v-if="userPermission[PermissionId.RECEIPT_PAYMENT]"
+          v-if="userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT]"
           color="blue"
           :loading="loadingProcess"
           @click="modalReceiptPayment?.openModal(PaymentViewType.PayDebt)"

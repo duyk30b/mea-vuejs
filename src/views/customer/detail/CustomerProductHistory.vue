@@ -18,7 +18,7 @@ const { formatMoney, isMobile } = settingStore
 
 const ticketProductList = ref<TicketProduct[]>([])
 const page = ref(1)
-const limit = ref(Number(localStorage.getItem('CUSTOMER_PRODUCT_HISTORY_PAGINATION_LIMIT')) || 10)
+const limit = ref(10)
 const total = ref(0)
 
 const startFetchData = async () => {
@@ -47,7 +47,6 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   if (options.page) page.value = options.page
   if (options.limit) {
     limit.value = options.limit
-    localStorage.setItem('CUSTOMER_PRODUCT_HISTORY_PAGINATION_LIMIT', String(options.limit))
   }
   await startFetchData()
 }

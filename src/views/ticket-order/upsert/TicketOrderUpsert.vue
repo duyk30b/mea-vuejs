@@ -15,7 +15,7 @@ import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer, CustomerApi, CustomerService } from '../../../modules/customer'
 import { DeliveryStatus, DiscountType } from '../../../modules/enum'
 import { PermissionId } from '../../../modules/permission/permission.enum'
-import { Ticket, TicketStatus } from '../../../modules/ticket'
+import { Ticket, TicketService, TicketStatus } from '../../../modules/ticket'
 import { TicketExpense } from '../../../modules/ticket-expense/ticket-expense.model'
 import { TicketOrderApi } from '../../../modules/ticket-order'
 import { TicketSurcharge } from '../../../modules/ticket-surcharge/ticket-surcharge.model'
@@ -80,12 +80,12 @@ onBeforeMount(async () => {
       mode.value = route.query.mode as any
     }
     if (ticketId) {
-      const ticketResponse = await TicketQueryApi.detail(ticketId, {
+      const ticketResponse = await TicketService.detail(ticketId, {
         relation: {
           customer: true,
           // ticketAttributeList: true,
-          ticketProductList: { product: true },
-          ticketProcedureList: { procedure: true },
+          ticketProductList: { relation: { product: true } },
+          ticketProcedureList: { relation: { procedure: true } },
           ticketSurchargeList: true,
           ticketExpenseList: true,
         },

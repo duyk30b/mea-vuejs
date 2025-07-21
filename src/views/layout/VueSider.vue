@@ -13,7 +13,7 @@ import {
   IconHome,
   IconPicCenter,
   IconShop,
-  IconTeam
+  IconTeam,
 } from '../../common/icon-antd'
 import { MeService } from '../../modules/_me/me.service'
 import { PermissionId } from '../../modules/permission/permission.enum'
@@ -100,10 +100,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
           </router-link>
         </a-menu-item>
         <a-menu-item
-          v-if="
-            roomIdMap[room.id] &&
-            room.roomInteractType === RoomInteractType.Laboratory 
-          "
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Laboratory"
           :key="'RoomLaboratory_' + room.id"
         >
           <router-link :to="{ name: 'RoomLaboratory', params: { roomId: room.id } }">
@@ -111,10 +108,7 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
           </router-link>
         </a-menu-item>
         <a-menu-item
-          v-if="
-            roomIdMap[room.id] &&
-            room.roomInteractType === RoomInteractType.Radiology 
-          "
+          v-if="roomIdMap[room.id] && room.roomInteractType === RoomInteractType.Radiology"
           :key="'RoomRadiology_' + room.id"
         >
           <router-link :to="{ name: 'RoomRadiology', params: { roomId: room.id } }">
@@ -162,12 +156,15 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #icon>
         <IconAppstore />
       </template>
-      <template #title>Sản phẩm</template>
-      <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="Product">
-        <router-link :to="{ name: 'Product' }">Tồn kho</router-link>
+      <template #title>Kho hàng</template>
+      <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="ProductList">
+        <router-link :to="{ name: 'ProductList' }">Sản phẩm</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.RECEIPT_MENU]" key="Receipt">
         <router-link :to="{ name: 'Receipt' }">Nhập hàng</router-link>
+      </a-menu-item>
+      <a-menu-item v-if="userPermission[PermissionId.PRODUCT_MENU]" key="DeliveryTicketList">
+        <router-link :to="{ name: 'DeliveryTicketList' }">Chờ xuất hàng</router-link>
       </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.DISTRIBUTOR_MENU]" key="Distributor">
         <router-link :to="{ name: 'Distributor' }">Nhà cung cấp</router-link>
@@ -188,7 +185,10 @@ const handleMenuClick = (menu: { key: string; keyPath: string[] }) => {
       <template #icon>
         <IconDollar />
       </template>
-      <template #title>Tài chính</template>
+      <template #title>Phòng tài chính</template>
+      <a-menu-item key="FinanceTicketList">
+        <router-link :to="{ name: 'FinanceTicketList' }">Chờ thanh toán</router-link>
+      </a-menu-item>
       <a-menu-item v-if="userPermission[PermissionId.PAYMENT_MENU]" key="PaymentList">
         <router-link :to="{ name: 'PaymentList' }">Danh sách thu chi</router-link>
       </a-menu-item>

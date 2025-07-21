@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import VueButton from '../../common/VueButton.vue'
-import { IconClose, IconFileSearch } from '../../common/icon-antd'
-import { AlertStore } from '../../common/vue-alert/vue-alert.store'
-import { InputMoney, InputOptions, InputSelect, InputText } from '../../common/vue-form'
-import type { ItemOption } from '../../common/vue-form/InputOptions.vue'
-import VueModal from '../../common/vue-modal/VueModal.vue'
-import { MeService } from '../../modules/_me/me.service'
-import { useSettingStore } from '../../modules/_me/setting.store'
-import { Customer, CustomerService } from '../../modules/customer'
-import { PaymentMethodService } from '../../modules/payment-method'
-import { PermissionId } from '../../modules/permission/permission.enum'
-import { Ticket, TicketQueryApi, TicketStatus } from '../../modules/ticket'
-import { ESString, ESTimer } from '../../utils'
-import ModalCustomerDetail from '../customer/detail/ModalCustomerDetail.vue'
-import ModalCustomerUpsert from '../customer/upsert/ModalCustomerUpsert.vue'
-import LinkAndStatusTicket from '../ticket-base/LinkAndStatusTicket.vue'
-import { PaymentApi } from '@/modules/payment/payment.api'
+import VueButton from '@/common/VueButton.vue'
+import { IconClose, IconFileSearch } from '@/common/icon-antd'
+import { AlertStore } from '@/common/vue-alert/vue-alert.store'
+import { InputMoney, InputOptions, InputSelect, InputText } from '@/common/vue-form'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+import VueModal from '@/common/vue-modal/VueModal.vue'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { Customer, CustomerService } from '@/modules/customer'
+import { PaymentVoucherItemType } from '@/modules/payment-item'
+import { PaymentMethodService } from '@/modules/payment-method'
+import { PaymentApi } from '@/modules/payment/payment.api'
+import { MoneyDirection, Payment } from '@/modules/payment/payment.model'
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
-import { Payment } from '@/modules/payment/payment.model'
+import { Ticket, TicketQueryApi, TicketStatus } from '@/modules/ticket'
+import { ESString, ESTimer } from '@/utils'
+import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
+import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
+import LinkAndStatusTicket from '@/views/ticket-base/LinkAndStatusTicket.vue'
+import { onMounted, ref } from 'vue'
 
 const inputMoneyPay = ref<InstanceType<typeof InputMoney>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -37,12 +38,13 @@ const customerOptions = ref<ItemOption[]>([])
 const customer = ref<Customer>(Customer.blank())
 
 const totalMoney = ref(0)
-const note = ref('')
+const reason = ref('')
 const paymentMethodId = ref<number>(0)
 const paymentMethodOptions = ref<{ value: any; label: string }[]>([])
 
 const payDebtTicketList = ref<{ ticket: Ticket; money: number }[]>([])
 const prepaymentTicketList = ref<{ ticket: Ticket; money: number }[]>([])
+const prepaymentTicket = ref<{ ticket: Ticket; money: number }>()
 const moneyTopUp = ref(0)
 
 const showModal = ref(false)
@@ -73,7 +75,7 @@ const selectCustomer = async (data?: Customer) => {
   customer.value = data ? Customer.from(data) : Customer.blank()
   try {
     ticketLoading.value = true
-    const ticketActionList = await TicketQueryApi.list({
+    const { ticketList: ticketActionList } = await TicketQueryApi.list({
       filter: {
         customerId: customer.value.id,
         status: {
@@ -107,6 +109,7 @@ const selectCustomer = async (data?: Customer) => {
         ticket: i,
         money: 0,
       }))
+    prepaymentTicket.value = prepaymentTicketList.value[0]
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyIn.vue:82 ~ selectCustomer ~ error:', error)
   } finally {
@@ -122,9 +125,10 @@ const closeModal = () => {
   showModal.value = false
   payDebtTicketList.value = []
   prepaymentTicketList.value = []
+  prepaymentTicket.value = undefined
   totalMoney.value = 0
   moneyTopUp.value = 0
-  note.value = ''
+  reason.value = ''
   customer.value = Customer.blank()
   paymentMethodId.value = 0
 }
@@ -135,21 +139,37 @@ const handleSave = async () => {
     if (totalMoney.value === 0) {
       return AlertStore.addError('Số tiền trả nợ phải khác 0')
     }
-    const data = await PaymentApi.customerPaymentCommon({
-      customerId: customer.value.id,
-      paymentMethodId: paymentMethodId.value,
-      note: note.value,
-      cashierId: user.value?.id || 0,
-      moneyTopUp: moneyTopUp.value,
-      payDebtTicketList: payDebtTicketList.value
-        .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
-        .filter((i) => i.money > 0),
-      prepaymentTicketList: prepaymentTicketList.value
-        .map((i) => ({ ticketId: i.ticket.id, money: i.money }))
-        .filter((i) => i.money > 0),
+
+    const data = await PaymentApi.customerPayment({
+      body: {
+        customerId: customer.value.id,
+        paymentMethodId: paymentMethodId.value,
+        reason: reason.value,
+        totalMoney: totalMoney.value,
+        note: '',
+        paymentItemData: {
+          moneyTopUpAdd: moneyTopUp.value,
+          payDebt: payDebtTicketList.value
+            .map((i) => ({ ticketId: i.ticket.id, amount: i.money }))
+            .filter((i) => i.amount > 0),
+          prepayment: prepaymentTicket.value
+            ? {
+                ticketId: prepaymentTicket.value.ticket.id,
+                itemList: [
+                  {
+                    amount: prepaymentTicket.value.money,
+                    ticketItemId: 0,
+                    paymentInteractId: 0,
+                    voucherItemType: PaymentVoucherItemType.Other,
+                  },
+                ],
+              }
+            : undefined,
+        },
+      },
     })
     AlertStore.addSuccess(`KH ${customer.value.fullName} thanh toán thành công`)
-    emit('success', data)
+    emit('success', { customer: data.customerModified })
     closeModal()
   } catch (error) {
     console.log('🚀 ~ ModalPaymentMoneyIn.vue:126 ~ handleSave ~ error:', error)
@@ -178,15 +198,8 @@ const calculatorEachVoucherPayment = () => {
       moneyRemain = moneyRemain - number
     }
   })
-  prepaymentTicketList.value.forEach((item) => {
-    if (item.ticket.paid < item.ticket.totalMoney) {
-      const number = Math.min(moneyRemain, item.ticket.debt)
-      item.money = number
-      moneyRemain = moneyRemain - number
-    }
-  })
-  if (moneyRemain > 0 && prepaymentTicketList.value.length) {
-    prepaymentTicketList.value[prepaymentTicketList.value.length - 1].money = moneyRemain
+  if (moneyRemain > 0 && prepaymentTicket.value) {
+    prepaymentTicket.value.money = moneyRemain
     moneyRemain = moneyRemain - moneyRemain
   }
   moneyTopUp.value = moneyRemain
@@ -194,13 +207,14 @@ const calculatorEachVoucherPayment = () => {
 
 const startPrintPayment = async () => {
   const tempPayment = Payment.blank()
-  tempPayment.paidAmount = totalMoney.value
+  tempPayment.money = totalMoney.value
   tempPayment.cashierId = MeService.user.value?.id || 0
   tempPayment.cashier = MeService.user.value!
   tempPayment.createdAt = Date.now()
-  tempPayment.note = note.value
+  tempPayment.reason = reason.value
+  tempPayment.moneyDirection = MoneyDirection.In
 
-  await PrintHtmlAction.startPrintPaymentMoneyIn({
+  await PrintHtmlAction.startPrintCustomerPayment({
     organization: organization.value,
     customer: customer.value,
     payment: tempPayment,
@@ -363,9 +377,9 @@ defineExpose({ openModal })
             </div>
           </div>
           <div class="mt-4">
-            <div>Ghi chú</div>
+            <div>Lý do</div>
             <div>
-              <InputText v-model:value="note" />
+              <InputText v-model:value="reason" />
             </div>
           </div>
         </div>

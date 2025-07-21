@@ -8,7 +8,7 @@ import { InputFilter, InputMoney, InputNumber, VueSelect } from '../../../../com
 import VueModal from '../../../../common/vue-modal/VueModal.vue'
 import { ModalStore } from '../../../../common/vue-modal/vue-modal.store'
 import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { DeliveryStatus, DiscountType } from '../../../../modules/enum'
+import { DeliveryStatus, DiscountType, PaymentMoneyStatus } from '../../../../modules/enum'
 import { PositionInteractType, PositionService } from '../../../../modules/position'
 import { Role, RoleService } from '../../../../modules/role'
 import { TicketStatus } from '../../../../modules/ticket'
@@ -186,6 +186,12 @@ const clickDestroy = async () => {
         '- Vật tư đã được xuất khỏi kho sẽ không thể xóa',
         '- Chỉ có thể hoàn trả vật tư nếu bắt buộc phải thay đổi số lượng ?',
       ],
+    })
+  }
+  if (ticketProductOrigin.paymentMoneyStatus === PaymentMoneyStatus.Paid) {
+    return ModalStore.alert({
+      title: 'Không thể xóa vật tư ?',
+      content: ['- Vật tư đã được thanh toán sẽ không thể xóa'],
     })
   }
   if ([TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.value.status)) {
