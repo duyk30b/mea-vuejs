@@ -450,7 +450,7 @@ defineExpose({ openModal })
           </div>
           <div
             v-if="
-              userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
+              userPermission[PermissionId.PRODUCT_SEND_PRODUCT] &&
               userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] &&
               userPermission[PermissionId.TICKET_ORDER_CLOSE] &&
               [TicketStatus.Draft].includes(ticketOrderDetailRef.status)

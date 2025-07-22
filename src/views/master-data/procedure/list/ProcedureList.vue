@@ -1,22 +1,22 @@
 <script setup lang="ts">
+import VueButton from '@/common/VueButton.vue'
+import VuePagination from '@/common/VuePagination.vue'
+import VueTag from '@/common/VueTag.vue'
+import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '@/common/icon-antd'
+import { IconSort, IconSortChange, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
+import { IconEditSquare } from '@/common/icon-google'
+import VueDropdown from '@/common/popover/VueDropdown.vue'
+import { InputSelect, InputText, VueSelect } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { CONFIG } from '@/config'
+import { MeService } from '@/modules/_me/me.service'
+import { useSettingStore } from '@/modules/_me/setting.store'
 import { FileProcedureApi } from '@/modules/file-excel/file-procedure.api'
+import { PermissionId } from '@/modules/permission/permission.enum'
+import { Procedure, ProcedureService } from '@/modules/procedure'
+import { ProcedureGroup, ProcedureGroupService } from '@/modules/procedure-group'
+import { arrayToKeyValue } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
-import VueButton from '../../../../common/VueButton.vue'
-import VuePagination from '../../../../common/VuePagination.vue'
-import VueTag from '../../../../common/VueTag.vue'
-import { IconDownload, IconFileSearch, IconSetting, IconUpload } from '../../../../common/icon-antd'
-import { IconSort, IconSortDown, IconSortUp } from '../../../../common/icon-font-awesome'
-import { IconEditSquare } from '../../../../common/icon-google'
-import VueDropdown from '../../../../common/popover/VueDropdown.vue'
-import { InputSelect, InputText, VueSelect } from '../../../../common/vue-form'
-import { MeService } from '../../../../modules/_me/me.service'
-import { useSettingStore } from '../../../../modules/_me/setting.store'
-import { PermissionId } from '../../../../modules/permission/permission.enum'
-import { Procedure, ProcedureService } from '../../../../modules/procedure'
-import { ProcedureGroup, ProcedureGroupService } from '../../../../modules/procedure-group'
-import { arrayToKeyValue } from '../../../../utils'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
 import ModalProcedureDetail from '../detail/ModalProcedureDetail.vue'
 import ModalProcedureUpsert from '../upsert/ModalProcedureUpsert.vue'
@@ -47,7 +47,7 @@ const searchText = ref('')
 const procedureGroupId = ref<number>(0)
 const isActive = ref<1 | 0 | ''>(1)
 
-const sortColumn = ref<'procedureCode' | 'name' | 'price' | ''>('')
+const sortColumn = ref<'id' | 'procedureCode' | 'name' | 'price' | ''>('')
 const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const procedureGroupMap = computed(() => arrayToKeyValue(procedureGroupAll.value, 'id'))
@@ -67,8 +67,9 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
         },
         sort: sortValue.value
           ? {
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              procedureCode: sortColumn.value === 'procedureCode' ? sortValue.value : undefined,
               name: sortColumn.value === 'name' ? sortValue.value : undefined,
-              id: sortColumn.value === 'procedureCode' ? sortValue.value : undefined,
               price: sortColumn.value === 'price' ? sortValue.value : undefined,
             }
           : { procedureCode: 'ASC' },
@@ -98,7 +99,7 @@ const startSearch = async () => {
   await startFetchData()
 }
 
-const changeSort = async (column: 'procedureCode' | 'name' | 'price') => {
+const changeSort = async (column: 'id' | 'procedureCode' | 'name' | 'price') => {
   if (sortValue.value == 'DESC') {
     sortColumn.value = ''
     sortValue.value = ''
@@ -320,48 +321,33 @@ const handleModalUploadProcedureSuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
+              <div class="flex items-center gap-1 justify-center">
+                <span>ID</span>
+                <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
+              </div>
+            </th>
             <th class="cursor-pointer" @click="changeSort('procedureCode')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Mã DV</span>
-                <IconSort v-if="sortColumn !== 'procedureCode'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'procedureCode' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'procedureCode' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
+                <IconSortChange :sort="sortColumn === 'procedureCode' ? sortValue : ''" />
               </div>
             </th>
             <th class="cursor-pointer" @click="changeSort('name')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Tên</span>
-                <IconSort v-if="sortColumn !== 'name'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'name' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'name' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
+                <IconSortChange :sort="sortColumn === 'name' ? sortValue : ''" />
               </div>
             </th>
             <th v-if="settingStore.SCREEN_PROCEDURE_LIST.table.group">Nhóm</th>
             <th class="cursor-pointer" @click="changeSort('price')">
               <div class="flex items-center gap-1 justify-center">
                 <span>Giá</span>
-                <IconSort v-if="sortColumn !== 'price'" style="opacity: 0.4" />
-                <IconSortUp
-                  v-if="sortColumn === 'price' && sortValue === 'ASC'"
-                  style="opacity: 0.4"
-                />
-                <IconSortDown
-                  v-if="sortColumn === 'price' && sortValue === 'DESC'"
-                  style="opacity: 0.4"
-                />
+                <IconSortChange :sort="sortColumn === 'price' ? sortValue : ''" />
               </div>
             </th>
             <th>Khuyến mại</th>
@@ -380,8 +366,10 @@ const handleModalUploadProcedureSuccess = async () => {
           <tr v-if="procedureList.length === 0">
             <td colspan="20" class="text-center">No data</td>
           </tr>
-          <tr v-for="(procedure, i) in procedureList" :key="i">
-            <td class="text-center" v-if="CONFIG.MODE === 'development'">{{ procedure.id }}</td>
+          <tr v-for="procedure in procedureList" :key="procedure.id">
+            <td class="text-center" v-if="CONFIG.MODE === 'development'" style="color: violet">
+              {{ procedure.id }}
+            </td>
             <td class="text-center">{{ procedure.procedureCode }}</td>
             <td>
               {{ procedure.name }}
@@ -400,7 +388,12 @@ const handleModalUploadProcedureSuccess = async () => {
               {{ formatMoney(procedure.price) }}
             </td>
             <td class="text-center">
-              <VueTag v-if="procedure.discountApply" color="blue">
+              <VueTag
+                v-if="
+                  procedure.discountApply.discountMoney || procedure.discountApply.discountPercent
+                "
+                color="blue"
+              >
                 {{ procedure.discountApply?.valueText }}
               </VueTag>
             </td>

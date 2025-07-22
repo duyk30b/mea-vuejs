@@ -342,7 +342,7 @@ const changeLimit = async (limitSelect: any) => {
                 <VueButton
                   v-if="
                     ticket.deliveryStatus === DeliveryStatus.Pending &&
-                    userPermission[PermissionId.RECEPTION_SEND_PRODUCT]
+                    userPermission[PermissionId.PRODUCT_SEND_PRODUCT]
                   "
                   size="small"
                   icon="send"

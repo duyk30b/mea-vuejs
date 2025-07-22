@@ -208,7 +208,7 @@ defineExpose({ openModal })
 </script>
 
 <template>
-  <VueModal v-model:show="showModal" style="width: 1200px" @close="closeModal">
+  <VueModal v-model:show="showModal" style="width: 1200px; margin-top: 50px" @close="closeModal">
     <div class="bg-white">
       <div class="pl-4 py-2 flex items-center" style="border-bottom: 1px solid #dedede">
         <div class="flex-1 text-lg font-medium">
@@ -703,7 +703,7 @@ defineExpose({ openModal })
             </template>
           </table>
         </div>
-        <div class="pb-4 pt-8 flex gap-4">
+        <div class="pb-4 pt-8 flex flex-wrap gap-4">
           <VueButton type="reset" icon="close" @click="closeModal">Hủy</VueButton>
           <VueButton
             style="margin-left: auto"

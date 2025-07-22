@@ -406,7 +406,7 @@ const openModalTicketOrderPreview = () => {
           <div class="vue-menu">
             <a
               v-if="
-                userPermission[PermissionId.TICKET_ORDER_RETURN_PRODUCT] &&
+                userPermission[PermissionId.PRODUCT_RETURN_PRODUCT] &&
                 [TicketStatus.Debt, TicketStatus.Completed, TicketStatus.Executing].includes(
                   ticketOrderDetailRef.status,
                 )
@@ -501,7 +501,7 @@ const openModalTicketOrderPreview = () => {
         <VueButton
           v-if="
             userPermission[PermissionId.PAYMENT_CUSTOMER_PAYMENT] &&
-            userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT] &&
+            userPermission[PermissionId.PRODUCT_SEND_PRODUCT] &&
             userPermission[PermissionId.TICKET_ORDER_CLOSE]
           "
           color="blue"
@@ -520,7 +520,7 @@ const openModalTicketOrderPreview = () => {
         <VueButton
           v-if="
             ticketOrderDetailRef.deliveryStatus === DeliveryStatus.Pending &&
-            userPermission[PermissionId.TICKET_ORDER_SEND_PRODUCT]
+            userPermission[PermissionId.PRODUCT_SEND_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"

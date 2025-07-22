@@ -394,7 +394,7 @@ const handleModalReceiptPaymentSuccess = () => {}
       <template v-if="receipt.status === ReceiptStatus.Draft">
         <VueButton
           v-if="
-            userPermission[PermissionId.RECEIPT_SEND_PRODUCT] &&
+            userPermission[PermissionId.PRODUCT_RECEIPT_PRODUCT] &&
             userPermission[PermissionId.PAYMENT_DISTRIBUTOR_PAYMENT]
           "
           color="blue"
@@ -409,7 +409,7 @@ const handleModalReceiptPaymentSuccess = () => {}
         <VueButton
           v-if="
             receipt.deliveryStatus === DeliveryStatus.Pending &&
-            userPermission[PermissionId.RECEIPT_SEND_PRODUCT]
+            userPermission[PermissionId.PRODUCT_RECEIPT_PRODUCT]
           "
           color="blue"
           :loading="loadingProcess"

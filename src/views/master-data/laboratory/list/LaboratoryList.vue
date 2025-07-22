@@ -22,6 +22,7 @@ import ModalLaboratoryUpsert from '../upsert/ModalLaboratoryUpsert.vue'
 import ModalCopyLaboratorySystem from './ModalCopyLaboratorySystem.vue'
 import ModalLaboratoryGroupManager from './ModalLaboratoryGroupManager.vue'
 import ModalUploadLaboratory from './ModalUploadLaboratory.vue'
+import { IconSortChange } from '@/common/icon-font-awesome'
 
 const modalCopyLaboratoryExample = ref<InstanceType<typeof ModalCopyLaboratorySystem>>()
 const modalLaboratoryGroupManager = ref<InstanceType<typeof ModalLaboratoryGroupManager>>()
@@ -38,14 +39,17 @@ const laboratoryList = ref<Laboratory[]>([])
 const searchText = ref('')
 const laboratoryGroupId = ref<number>(0)
 
+const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
+const laboratoryGroupMap = computed(() => arrayToKeyValue(laboratoryGroupAll.value, 'id'))
+
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('LABORATORY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const dataLoading = ref(false)
+const sortColumn = ref<'id' | 'laboratoryCode' | 'name' | 'price' | ''>('')
+const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const laboratoryGroupAll = ref<LaboratoryGroup[]>([])
-const laboratoryGroupMap = computed(() => arrayToKeyValue(laboratoryGroupAll.value, 'id'))
+const dataLoading = ref(false)
 
 const startFetchData = async (options?: { refetch?: boolean }) => {
   dataLoading.value = true
@@ -61,7 +65,14 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
           laboratoryGroupId: laboratoryGroupId.value ? laboratoryGroupId.value : undefined,
           name: searchText.value ? { LIKE: searchText.value } : undefined,
         },
-        sort: { laboratoryCode: 'ASC' },
+        sort: sortValue.value
+          ? {
+              name: sortColumn.value === 'name' ? sortValue.value : undefined,
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              laboratoryCode: sortColumn.value === 'laboratoryCode' ? sortValue.value : undefined,
+              price: sortColumn.value === 'price' ? sortValue.value : undefined,
+            }
+          : { laboratoryCode: 'ASC' },
       },
       { refetch: !!options?.refetch },
     )
@@ -79,6 +90,20 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
 const startSearch = async () => {
   page.value = 1
   startFetchData()
+}
+
+const changeSort = async (column: 'id' | 'laboratoryCode' | 'name' | 'price') => {
+  if (sortValue.value == 'DESC') {
+    sortColumn.value = ''
+    sortValue.value = ''
+  } else if (sortValue.value == 'ASC') {
+    sortColumn.value = column
+    sortValue.value = 'DESC'
+  } else {
+    sortColumn.value = column
+    sortValue.value = 'ASC'
+  }
+  await startSearch()
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -232,14 +257,38 @@ const handleModalUploadLaboratorySuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
-            <th>Mã</th>
-            <th>Tên</th>
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
+              <div class="flex items-center gap-1 justify-center">
+                <span>ID</span>
+                <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
+              </div>
+            </th>
+            <th class="cursor-pointer" @click="changeSort('laboratoryCode')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Mã</span>
+                <IconSortChange :sort="sortColumn === 'laboratoryCode' ? sortValue : ''" />
+              </div>
+            </th>
+            <th class="cursor-pointer" @click="changeSort('name')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Tên</span>
+                <IconSortChange :sort="sortColumn === 'name' ? sortValue : ''" />
+              </div>
+            </th>
             <th>Nhóm</th>
             <th>Tham chiếu</th>
             <th>Đơn vị</th>
             <th>Giá vốn</th>
-            <th>Giá bán</th>
+            <th class="cursor-pointer" @click="changeSort('price')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Giá tiền</span>
+                <IconSortChange :sort="sortColumn === 'price' ? sortValue : ''" />
+              </div>
+            </th>
             <th>Khuyến mại</th>
             <th v-if="userPermission[PermissionId.LABORATORY_UPDATE]">Action</th>
           </tr>
@@ -263,7 +312,7 @@ const handleModalUploadLaboratorySuccess = async () => {
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
           <tr v-for="laboratory in laboratoryList" :key="laboratory.id">
-            <td v-if="CONFIG.MODE === 'development'" class="text-center">
+            <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
               {{ laboratory.id }}
             </td>
             <td class="text-center">{{ laboratory.laboratoryCode }}</td>
@@ -300,7 +349,12 @@ const handleModalUploadLaboratorySuccess = async () => {
             <td class="text-right">{{ formatMoney(laboratory.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(laboratory.price) }}</td>
             <td class="text-center">
-              <VueTag v-if="laboratory.discountApply" color="blue">
+              <VueTag
+                v-if="
+                  laboratory.discountApply.discountMoney || laboratory.discountApply.discountPercent
+                "
+                color="blue"
+              >
                 {{ laboratory.discountApply?.valueText }}
               </VueTag>
             </td>

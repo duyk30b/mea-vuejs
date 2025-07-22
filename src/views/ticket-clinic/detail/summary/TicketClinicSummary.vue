@@ -292,7 +292,7 @@ const startPrint = async () => {
       <TicketClinicSummaryRadiology v-if="organizationPermission[PermissionId.RADIOLOGY]" />
       <tbody>
         <tr>
-          <td class="text-right" colspan="8">
+          <td class="text-right" colspan="9">
             <div class="flex items-center justify-end gap-2">
               <span>Tổng thành phần</span>
               <span v-if="ticketRoomRef.itemsDiscount" class="italic" style="font-size: 13px">
@@ -309,7 +309,7 @@ const startPrint = async () => {
           </td>
         </tr>
         <tr>
-          <td class="text-right" colspan="8">Chiết khấu</td>
+          <td class="text-right" colspan="9">Chiết khấu</td>
           <td class="text-center" style="width: 40px">
             <VueTag v-if="ticketRoomRef.discountType === 'VNĐ'" color="green">
               {{ formatMoney(ticketRoomRef.discountMoney) }}
@@ -322,7 +322,7 @@ const startPrint = async () => {
             <a
               v-if="
                 ![TicketStatus.Debt, TicketStatus.Completed].includes(ticketRoomRef.status) &&
-                userPermission[PermissionId.TICKET_CLINIC_CHANGE_DISCOUNT]
+                userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]
               "
               class="text-orange-500"
               @click="modalTicketClinicChangeDiscount?.openModal()"
@@ -333,7 +333,7 @@ const startPrint = async () => {
           <td v-if="CONFIG.MODE === 'development'" class="text-right italic"></td>
         </tr>
         <tr>
-          <td class="uppercase text-right font-bold" colspan="8">Tổng tiền</td>
+          <td class="uppercase text-right font-bold" colspan="9">Tổng tiền</td>
           <td class="font-bold text-right whitespace-nowrap">
             {{ formatMoney(ticketRoomRef.totalMoney) }}
           </td>

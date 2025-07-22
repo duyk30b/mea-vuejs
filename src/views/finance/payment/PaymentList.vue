@@ -6,13 +6,13 @@ import { InputDate, InputSelect, VueSelect } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
 import { useSettingStore } from '@/modules/_me/setting.store'
 import type { Customer } from '@/modules/customer'
+import { PaymentItemApi } from '@/modules/payment-item'
 import { PaymentMethodService } from '@/modules/payment-method'
 import { PaymentApi } from '@/modules/payment/payment.api'
 import type { PaymentPaginationQuery } from '@/modules/payment/payment.dto'
 import { MoneyDirection, Payment, PaymentPersonType } from '@/modules/payment/payment.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html'
-import { UserService } from '@/modules/user'
 import { ESTimer } from '@/utils'
 import { Breadcrumb } from '@/views/component'
 import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue'
@@ -145,7 +145,8 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
 
 const startPrintPayment = async (options: { customer: Customer; payment: Payment }) => {
   const payment = options.payment
-  payment.cashier = await UserService.detail(payment.cashierId)
+  payment.paymentItemList = await PaymentItemApi.list({ filter: { paymentId: payment.id } })
+  const paymentPrint = await Payment.refreshData(payment)
   await PrintHtmlAction.startPrintCustomerPayment({
     organization: organization.value,
     customer: options.customer!,

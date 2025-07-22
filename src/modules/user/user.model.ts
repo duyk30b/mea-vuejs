@@ -1,5 +1,5 @@
-import { decrypt } from '../../utils'
 import type { EGender } from '../enum'
+import { Image } from '../image/image.model'
 import { Organization } from '../organization'
 import { Role } from '../role/role.model'
 import { Room } from '../room'
@@ -19,6 +19,7 @@ export class User {
   birthday?: number
   gender?: EGender
 
+  imageIds: string
   isAdmin: 1 | 0 // Trạng thái
   isActive: 1 | 0 // Trạng thái
 
@@ -29,6 +30,7 @@ export class User {
   userRoomList?: UserRoom[]
   organization?: Organization
   devices?: Device[]
+  imageList: Image[]
 
   static init(): User {
     const ins = new User()
@@ -40,6 +42,7 @@ export class User {
 
   static blank(): User {
     const ins = User.init()
+    ins.imageList = []
     return ins
   }
 
@@ -87,6 +90,9 @@ export class User {
     }
     if (target.devices) {
       target.devices = Device.basicList(target.devices)
+    }
+    if (target.imageList) {
+      target.imageList = Image.basicList(target.imageList)
     }
     return target
   }

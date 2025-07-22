@@ -121,10 +121,9 @@ export class Payment {
       RadiologyService.getMap(),
       UserService.getMap(),
     ])
-
+    
+    payment.cashier = userMap[payment.cashierId] || User.blank()
     payment.paymentItemList.forEach((i) => {
-      i.cashier = userMap[i.cashierId] || User.blank()
-
       if (i.voucherType !== PaymentVoucherType.Ticket) return
       if (i.voucherItemType === PaymentVoucherItemType.TicketProcedure) {
         i.interactName = procedureMap[i.paymentInteractId]?.name || ''

@@ -115,7 +115,7 @@ export class MeService {
         settingMap,
         settingMapRoot,
         user,
-      } = await MeApi.info()
+      } = await MeApi.data()
 
       const settingStore = useSettingStore()
       MeService.reCalculatorSetting(settingStore, settingMap)

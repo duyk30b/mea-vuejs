@@ -313,7 +313,7 @@ defineExpose({ openModal })
           </div>
         </template>
 
-        <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex gap-4">
+        <div style="flex-grow: 1; flex-basis: 80%" class="mt-6 flex flex-wrap gap-4">
           <VueButton color="red" icon="trash" @click="clickDestroy">Xóa</VueButton>
           <VueButton style="margin-left: auto" type="reset" icon="close" @click="closeModal">
             Đóng lại

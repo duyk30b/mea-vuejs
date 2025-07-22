@@ -39,7 +39,6 @@ import ModalCustomerDetail from '../../customer/detail/ModalCustomerDetail.vue'
 import TicketStatusTag from '../../ticket-base/TicketStatusTag.vue'
 import ModalTicketClinicCreate from './create/ModalTicketClinicCreate.vue'
 import ModalTicketClinicPayment from './modal/ModalTicketClinicPayment.vue'
-import ModalTicketChangeAllMoney from './modal/ModalTicketChangeAllMoney.vue'
 import ModalReceptionTicketListSetting from './ModalReceptionTicketListSetting.vue'
 import { fromTime, toTime } from './reception-ticket-list.ref'
 import { IconEditSquare } from '@/common/icon-google'
@@ -48,6 +47,7 @@ import { AlertStore } from '@/common/vue-alert'
 import { CONFIG } from '@/config'
 import { PrintHtmlAction } from '@/modules/print-html'
 import { UserRoleService } from '@/modules/user-role'
+import ModalTicketChangeAllMoney from '@/views/finance/finance-ticket/modal/ModalTicketChangeAllMoney.vue'
 
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
 const modalTicketClinicCreate = ref<InstanceType<typeof ModalTicketClinicCreate>>()
@@ -614,7 +614,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                 <VueButton
                   v-if="
                     ticket.deliveryStatus === DeliveryStatus.Pending &&
-                    userPermission[PermissionId.RECEPTION_SEND_PRODUCT]
+                    userPermission[PermissionId.PRODUCT_SEND_PRODUCT]
                   "
                   size="small"
                   icon="send"
@@ -689,7 +689,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                   </template>
                   <div class="vue-menu">
                     <a
-                      v-if="userPermission[PermissionId.RECEPTION_CHANGE_ALL_MONEY]"
+                      v-if="userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]"
                       style="color: var(--text-red)"
                       @click="
                         modalTicketChangeAllMoney?.openModal({

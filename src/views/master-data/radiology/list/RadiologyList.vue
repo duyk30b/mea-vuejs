@@ -23,6 +23,7 @@ import ModalCopyRadiologySystem from './ModalCopyRadiologySystem.vue'
 import ModalRadiologyGroupManager from './ModalRadiologyGroupManager.vue'
 import ModalRadiologyListSettingScreen from './ModalRadiologyListSettingScreen.vue'
 import ModalUploadRadiology from './ModalUploadRadiology.vue'
+import { IconSort, IconSortChange, IconSortDown, IconSortUp } from '@/common/icon-font-awesome'
 
 const modalRadiologyListSettingScreen = ref<InstanceType<typeof ModalRadiologyListSettingScreen>>()
 const modalRadiologyGroupManager = ref<InstanceType<typeof ModalRadiologyGroupManager>>()
@@ -41,14 +42,17 @@ const radiologyList = ref<Radiology[]>([])
 const searchText = ref('')
 const radiologyGroupId = ref<number>(0)
 
+const radiologyGroupAll = ref<RadiologyGroup[]>([])
+const radiologyGroupMap = computed(() => arrayToKeyValue(radiologyGroupAll.value, 'id'))
+
 const page = ref(1)
 const limit = ref(Number(localStorage.getItem('RADIOLOGY_PAGINATION_LIMIT')) || 10)
 const total = ref(0)
 
-const dataLoading = ref(false)
+const sortColumn = ref<'id' | 'radiologyCode' | 'name' | 'price' | ''>('')
+const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
-const radiologyGroupAll = ref<RadiologyGroup[]>([])
-const radiologyGroupMap = computed(() => arrayToKeyValue(radiologyGroupAll.value, 'id'))
+const dataLoading = ref(false)
 
 const startFetchData = async (options?: { refetch?: boolean }) => {
   dataLoading.value = true
@@ -66,7 +70,14 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
           radiologyGroupId: radiologyGroupId.value ? radiologyGroupId.value : undefined,
           name: searchText.value ? { LIKE: searchText.value } : undefined,
         },
-        sort: { radiologyCode: 'ASC' },
+        sort: sortValue.value
+          ? {
+              name: sortColumn.value === 'name' ? sortValue.value : undefined,
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              radiologyCode: sortColumn.value === 'radiologyCode' ? sortValue.value : undefined,
+              price: sortColumn.value === 'price' ? sortValue.value : undefined,
+            }
+          : { radiologyCode: 'ASC' },
       },
       { refetch: !!options?.refetch },
     )
@@ -83,6 +94,20 @@ const startFetchData = async (options?: { refetch?: boolean }) => {
 const startSearch = async () => {
   page.value = 1
   startFetchData()
+}
+
+const changeSort = async (column: 'id' | 'radiologyCode' | 'name' | 'price') => {
+  if (sortValue.value == 'DESC') {
+    sortColumn.value = ''
+    sortValue.value = ''
+  } else if (sortValue.value == 'ASC') {
+    sortColumn.value = column
+    sortValue.value = 'DESC'
+  } else {
+    sortColumn.value = column
+    sortValue.value = 'ASC'
+  }
+  await startSearch()
 }
 
 const changePagination = async (options: { page?: number; limit?: number }) => {
@@ -235,13 +260,37 @@ const handleModalUploadRadiologySuccess = async () => {
       <table>
         <thead>
           <tr>
-            <th v-if="CONFIG.MODE === 'development'">ID</th>
-            <th>Mã</th>
-            <th>Tên</th>
+            <th
+              v-if="CONFIG.MODE === 'development'"
+              class="cursor-pointer"
+              @click="changeSort('id')"
+            >
+              <div class="flex items-center gap-1 justify-center">
+                <span>ID</span>
+                <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
+              </div>
+            </th>
+            <th class="cursor-pointer" @click="changeSort('radiologyCode')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Mã</span>
+                <IconSortChange :sort="sortColumn === 'radiologyCode' ? sortValue : ''" />
+              </div>
+            </th>
+            <th class="cursor-pointer" @click="changeSort('name')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Tên</span>
+                <IconSortChange :sort="sortColumn === 'name' ? sortValue : ''" />
+              </div>
+            </th>
             <th>Nhóm</th>
             <th v-if="settingStore.SCREEN_RADIOLOGY_LIST.table.printHtml">Mẫu in</th>
             <th>Giá vốn</th>
-            <th>Giá tiền</th>
+            <th class="cursor-pointer" @click="changeSort('price')">
+              <div class="flex items-center gap-1 justify-center">
+                <span>Giá tiền</span>
+                <IconSortChange :sort="sortColumn === 'price' ? sortValue : ''" />
+              </div>
+            </th>
             <th>Khuyến mại</th>
             <th v-if="userPermission[PermissionId.RADIOLOGY_UPDATE]">Action</th>
           </tr>
@@ -288,7 +337,12 @@ const handleModalUploadRadiologySuccess = async () => {
             <td class="text-right">{{ formatMoney(radiology.costPrice) }}</td>
             <td class="text-right">{{ formatMoney(radiology.price) }}</td>
             <td class="text-center">
-              <VueTag v-if="radiology.discountApply" color="blue">
+              <VueTag
+                v-if="
+                  radiology.discountApply.discountMoney || radiology.discountApply.discountPercent
+                "
+                color="blue"
+              >
                 {{ radiology.discountApply?.valueText }}
               </VueTag>
             </td>

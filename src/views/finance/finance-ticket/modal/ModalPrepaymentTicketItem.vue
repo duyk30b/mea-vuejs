@@ -633,7 +633,7 @@ defineExpose({ openModal })
         </div>
       </div>
 
-      <div class="pb-4 pt-8 px-4 flex item-center gap-4">
+      <div class="pb-4 pt-8 px-4 flex flex-wrap item-center gap-4">
         <VueButton type="reset" @click="closeModal" icon="close">Đóng lại</VueButton>
         <VueButton
           color="blue"

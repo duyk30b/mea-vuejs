@@ -320,15 +320,23 @@ const clickCloseTicket = () => {
               <IconEyeGlasses />
               Đo thị lực
             </VueTabMenu>
-            <VueTabMenu
-              v-if="organizationPermission[PermissionId.PROCEDURE]"
-              :tabKey="TicketClinicProcedure.__name!"
-              style="padding: 6px 12px"
-              @active="router.push({ name: TicketClinicProcedure.__name })"
-            >
-              <IconFluidMed />
-              Dịch vụ
-            </VueTabMenu>
+          </template>
+          <VueTabMenu
+            v-if="organizationPermission[PermissionId.PROCEDURE]"
+            :tabKey="TicketClinicProcedure.__name!"
+            style="padding: 6px 12px"
+            @active="router.push({ name: TicketClinicProcedure.__name })"
+          >
+            <IconFluidMed />
+            Dịch vụ
+          </VueTabMenu>
+          <template
+            v-if="
+              [TicketStatus.Executing, TicketStatus.Debt, TicketStatus.Completed].includes(
+                ticketRoomRef.status,
+              )
+            "
+          >
             <VueTabMenu
               style="padding: 6px 12px"
               :tabKey="TicketClinicConsumable.__name!"

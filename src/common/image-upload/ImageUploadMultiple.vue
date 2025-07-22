@@ -232,7 +232,7 @@ defineExpose({ imageDataList, getData })
           &times;
         </button>
         <div v-if="CONFIG.MODE === 'development'" class="size-text-thumbnail">
-          {{ ESString.formatNumber({ number: imageData.file.size, fixed: 0 }) }}
+          {{ ESString.formatNumber({ number: imageData.file?.size, fixed: 0 }) }}
         </div>
       </div>
       <div

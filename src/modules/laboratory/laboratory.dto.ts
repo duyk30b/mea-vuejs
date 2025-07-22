@@ -22,6 +22,7 @@ export class LaboratoryGetQuery {
     id?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
     laboratoryCode?: 'ASC' | 'DESC'
+    price?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<LaboratoryGetQuery>) {

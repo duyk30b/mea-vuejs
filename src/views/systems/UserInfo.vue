@@ -9,26 +9,46 @@ import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
 import { MeService } from '../../modules/_me/me.service'
+import { ESImage } from '@/utils'
+import { ImageHost } from '@/modules/image/image.model'
+import ImageUploadMultiple from '@/common/image-upload/ImageUploadMultiple.vue'
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
 
 const settingStore = useSettingStore()
 const { isMobile } = settingStore
+const hasChangeImage = ref(false)
 
 const user = ref<User>(User.from(MeService.user.value || User.blank()))
 const saveLoading = ref(false)
 
 onBeforeMount(async () => {
-  const apiResult = await MeApi.info()
-  user.value = apiResult.user
+  user.value = await MeApi.info()
 })
 
 const saveUser = async () => {
   try {
     saveLoading.value = true
-    const userData = await MeApi.updateInfo(user.value)
-    user.value = userData
-    MeService.user.value = User.from(userData)
+
+    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
+      filesPosition: [],
+      imageIdsKeep: [],
+      files: [],
+    }
+
+    const userModified = await MeApi.updateInfo({
+      files,
+      imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+      userInfo: {
+        fullName: user.value.fullName,
+        birthday: user.value.birthday,
+        phone: user.value.phone,
+        gender: user.value.gender,
+      },
+    })
+    user.value = userModified
+    MeService.user.value = User.from(userModified)
     AlertStore.addSuccess('Cập nhật thông tin cá nhân thành công')
   } catch (error) {
     console.log('🚀 ~ file: ModalCustomerUpsert.vue:42 ~ handleSave ~ error:', error)
@@ -37,8 +57,14 @@ const saveUser = async () => {
   }
 }
 
-const disableButtonSave = computed(() => {
-  return JSON.stringify(user.value) === JSON.stringify(MeService.user.value)
+const handleChangeData = computed(() => {
+  if (!User.equal(user.value, MeService.user.value!)) {
+    return true
+  }
+  if (hasChangeImage.value) {
+    return true
+  }
+  return false
 })
 </script>
 
@@ -103,8 +129,26 @@ const disableButtonSave = computed(() => {
         </div>
       </div>
 
+      <div class="mt-3">
+        <div>Hình ảnh</div>
+        <ImageUploadMultiple
+          ref="imageUploadMultipleRef"
+          :height="100"
+          :rootImageList="
+            (user?.imageList || [])
+              .filter((i) => i.hostType === ImageHost.GoogleDriver)
+              .map((i) => ({
+                thumbnail: ESImage.getImageLink(i, { size: 200 }),
+                enlarged: ESImage.getImageLink(i, { size: 1000 }),
+                id: i.id,
+              }))
+          "
+          @changeImage="hasChangeImage = true"
+        />
+      </div>
+
       <div class="my-8 text-center flex justify-center">
-        <VueButton color="blue" :disabled="disableButtonSave" icon="save" @click="saveUser">
+        <VueButton color="blue" :disabled="!handleChangeData" icon="save" @click="saveUser">
           Lưu lại
         </VueButton>
       </div>

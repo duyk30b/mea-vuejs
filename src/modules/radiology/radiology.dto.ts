@@ -21,6 +21,7 @@ export class RadiologyGetQuery {
     id?: 'ASC' | 'DESC'
     name?: 'ASC' | 'DESC'
     radiologyCode?: 'ASC' | 'DESC'
+    price?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<RadiologyGetQuery>) {

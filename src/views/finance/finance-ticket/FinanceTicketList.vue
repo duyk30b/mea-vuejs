@@ -378,7 +378,7 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
                   </template>
                   <div class="vue-menu">
                     <a
-                      v-if="userPermission[PermissionId.RECEPTION_CHANGE_ALL_MONEY]"
+                      v-if="userPermission[PermissionId.PAYMENT_CHANGE_DISCOUNT_TICKET]"
                       style="color: var(--text-red)"
                       @click="
                         modalTicketChangeAllMoney?.openModal({
