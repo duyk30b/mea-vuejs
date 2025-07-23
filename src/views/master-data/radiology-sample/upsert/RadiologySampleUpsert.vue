@@ -154,6 +154,8 @@ const updatePreview = async () => {
   ticketRadiology.result = radiologySample.value.result
   ticketRadiology.customStyles = radiologySample.value.customStyles
   ticketRadiology.customVariables = radiologySample.value.customVariables
+  ticketRadiology.registeredAt = Date.now()
+  ticketRadiology.startedAt = Date.now()
   ticketRadiology.imageList = Array.from({ length: 4 }, (_, i) => {
     const image = Image.blank()
     image.hostType = ImageHost.GoogleDriver
