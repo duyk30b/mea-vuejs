@@ -88,9 +88,9 @@ export class ESDom {
     const body = doc.body
 
     /* 2. Cấu hình giữ lại */
-    const allowTagName = ['colgroup', 'col']
+    const allowTagName = ['colgroup', 'col', 'img', 'image']
     const allowedAttrs = ['rowspan', 'colspan']
-    const allowedStyleProps = ['color', 'font-weight', 'font-style']
+    const allowedStyleProps = ['color', 'font-weight', 'font-style', 'text-align']
 
     /* Giữ lại một số thuộc tính style */
     function filterStyle(style: any) {

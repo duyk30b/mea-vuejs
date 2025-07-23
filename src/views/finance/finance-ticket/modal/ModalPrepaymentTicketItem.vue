@@ -228,7 +228,6 @@ const startPrepayment = async (options?: { print: boolean }) => {
     if (options?.print) {
       const paymentPrint = await Payment.refreshData(paymentCreated)
       await PrintHtmlAction.startPrintCustomerPayment({
-        organization: organization.value,
         customer: ticket.value.customer!,
         payment: paymentPrint,
       })

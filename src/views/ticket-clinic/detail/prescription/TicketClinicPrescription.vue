@@ -215,7 +215,6 @@ const changeItemPosition = (index: number, count: number) => {
 
 const startPrint = async () => {
   await PrintHtmlAction.startPrintPrescription({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

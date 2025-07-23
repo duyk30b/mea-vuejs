@@ -89,7 +89,6 @@ const savePriorityTicketProcedure = async () => {
 
 const startPrintRequest = async () => {
   await PrintHtmlAction.startPrintRequestProcedure({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

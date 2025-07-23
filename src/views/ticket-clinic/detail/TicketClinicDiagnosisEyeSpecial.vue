@@ -82,7 +82,6 @@ const saveTicketDiagnosis = async () => {
 
 const startPrint = async () => {
   await PrintHtmlAction.startPrintRequestOptometry({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

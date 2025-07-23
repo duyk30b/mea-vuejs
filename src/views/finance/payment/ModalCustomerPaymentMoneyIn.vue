@@ -215,7 +215,6 @@ const startPrintPayment = async () => {
   tempPayment.moneyDirection = MoneyDirection.In
 
   await PrintHtmlAction.startPrintCustomerPayment({
-    organization: organization.value,
     customer: customer.value,
     payment: tempPayment,
   })

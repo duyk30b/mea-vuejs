@@ -148,7 +148,6 @@ const startPrintPayment = async (options: { customer: Customer; payment: Payment
   payment.paymentItemList = await PaymentItemApi.list({ filter: { paymentId: payment.id } })
   const paymentPrint = await Payment.refreshData(payment)
   await PrintHtmlAction.startPrintCustomerPayment({
-    organization: organization.value,
     customer: options.customer!,
     payment,
   })

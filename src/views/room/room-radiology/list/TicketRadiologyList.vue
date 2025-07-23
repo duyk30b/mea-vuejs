@@ -204,7 +204,6 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
     })
     await PrintHtmlAction.startPrintResultTicketRadiology({
       ticketRadiologyData,
-      organization: organization.value,
       customer: ticketRadiologySelect.customer!,
       ticket: ticketRadiologySelect.ticket!,
     })

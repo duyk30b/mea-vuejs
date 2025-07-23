@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { ESArray } from '../../utils'
 import { PrintHtmlApi } from './print-html.api'
 import type {
-    PrintHtmlGetListQuery,
-    PrintHtmlGetQuery,
-    PrintHtmlPaginationQuery,
+  PrintHtmlGetListQuery,
+  PrintHtmlGetQuery,
+  PrintHtmlPaginationQuery,
 } from './print-html.dto'
-import { PrintHtml } from './print-html.model'
+import { PrintHtml, PrintHtmlType } from './print-html.model'
 
 const PrintHtmlDBQuery = new IndexedDBQuery<PrintHtml>()
 
@@ -19,10 +19,9 @@ export class PrintHtmlService {
   static fetchAll = (() => {
     const start = async () => {
       try {
-        const { data } = await PrintHtmlApi.getList({ sort: { id: 'DESC' } })
-        const printHtmlAll = data
-        PrintHtmlService.printHtmlAll = printHtmlAll
-        PrintHtmlService.printHtmlMap.value = ESArray.arrayToKeyValue(printHtmlAll, 'id')
+        const { printHtmlList } = await PrintHtmlApi.getList({ sort: { id: 'DESC' } })
+        PrintHtmlService.printHtmlAll = printHtmlList
+        PrintHtmlService.printHtmlMap.value = ESArray.arrayToKeyValue(printHtmlList, 'id')
       } catch (error: any) {
         console.log('🚀 ~ print-html.service.ts:27 ~ PrintHtmlService ~ start ~ error:', error)
       }
@@ -85,8 +84,8 @@ export class PrintHtmlService {
     }
 
     return {
-      data: PrintHtml.fromList(data),
-      meta: { total: dataQuery.length },
+      printHtmlList: PrintHtml.fromList(data),
+      total: dataQuery.length,
     }
   }
 
@@ -120,5 +119,13 @@ export class PrintHtmlService {
     const result = await PrintHtmlApi.destroyOne(id)
     PrintHtmlService.loadedAll = false
     return result
+  }
+
+  static async saveListDefault(body: {
+    listDefault: { printHtmlId: number; printHtmlType: PrintHtmlType }[]
+  }) {
+    const response = await PrintHtmlApi.saveListDefault(body)
+    PrintHtmlService.loadedAll = false
+    return
   }
 }

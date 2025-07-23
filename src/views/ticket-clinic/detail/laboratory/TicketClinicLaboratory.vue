@@ -375,7 +375,6 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
 
 const startPrintRequest = async () => {
   await PrintHtmlAction.startPrintRequestTicketLaboratory({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
@@ -383,7 +382,6 @@ const startPrintRequest = async () => {
 
 const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
   await PrintHtmlAction.startPrintResultTicketLaboratory({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
     ticketLaboratoryGroup: tlgData,

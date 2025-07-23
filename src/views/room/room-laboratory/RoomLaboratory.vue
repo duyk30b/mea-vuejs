@@ -216,7 +216,6 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
 
     await PrintHtmlAction.startPrintResultTicketLaboratory({
       ticketLaboratoryGroup: ticketLaboratoryGroupData,
-      organization: organization.value,
       customer: ticketLaboratoryGroupData.customer!,
       ticket: ticketLaboratoryGroupData.ticket!,
     })

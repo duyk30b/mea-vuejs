@@ -7,17 +7,19 @@ import {
   type PrintHtmlGetOneQuery,
   type PrintHtmlPaginationQuery,
 } from './print-html.dto'
-import { PrintHtml } from './print-html.model'
+import { PrintHtml, PrintHtmlType } from './print-html.model'
 
 export class PrintHtmlApi {
   static async pagination(options: PrintHtmlPaginationQuery) {
     const params = PrintHtmlGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/print-html/pagination', { params })
-    const { data, meta } = response.data as BaseResponse
+    const { data } = response.data as BaseResponse
     return {
-      meta,
-      data: PrintHtml.fromList(data),
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      printHtmlList: PrintHtml.fromList(data.printHtmlList),
     }
   }
 
@@ -25,10 +27,9 @@ export class PrintHtmlApi {
     const params = PrintHtmlGetQuery.toQuery(options)
 
     const response = await AxiosInstance.get('/print-html/get-list', { params })
-    const { data, time } = response.data as BaseResponse
+    const { data, time } = response.data as BaseResponse<{ printHtmlList: any[] }>
     return {
-      time: new Date(time),
-      data: PrintHtml.fromList(data),
+      printHtmlList: PrintHtml.fromList(data.printHtmlList),
     }
   }
 
@@ -50,6 +51,8 @@ export class PrintHtmlApi {
   static async createOne(printHtml: PrintHtml) {
     const response = await AxiosInstance.post('/print-html/create', {
       priority: printHtml.priority || 0,
+      printHtmlType: printHtml.printHtmlType || 0,
+      isDefault: printHtml.isDefault || 0,
       name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
@@ -63,6 +66,8 @@ export class PrintHtmlApi {
   static async updateOne(id: number, printHtml: PrintHtml) {
     const response = await AxiosInstance.patch(`/print-html/update/${id}`, {
       priority: printHtml.priority || 0,
+      printHtmlType: printHtml.printHtmlType || 0,
+      isDefault: printHtml.isDefault || 0,
       name: printHtml.name || '',
       html: printHtml.html || '',
       css: printHtml.css || '',
@@ -81,6 +86,14 @@ export class PrintHtmlApi {
 
   static async systemList() {
     const response = await AxiosInstance.get('/print-html/system-list')
+    const { data, time } = response.data as BaseResponse
+    return PrintHtml.fromList(data)
+  }
+
+  static async saveListDefault(body: {
+    listDefault: { printHtmlType: PrintHtmlType; printHtmlId: number }[]
+  }) {
+    const response = await AxiosInstance.put('/print-html/save-list-default', body)
     const { data, time } = response.data as BaseResponse
     return PrintHtml.fromList(data)
   }

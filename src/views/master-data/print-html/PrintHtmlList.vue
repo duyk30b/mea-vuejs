@@ -1,18 +1,23 @@
 <script setup lang="ts">
 import { VueButton } from '@/common'
 import { IconEye } from '@/common/icon-antd'
+import { IconSortChange } from '@/common/icon-font-awesome'
 import { IconDelete, IconEditSquare } from '@/common/icon-google'
-import { InputSelect } from '@/common/vue-form'
+import { InputSelect, VueSwitch } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VuePagination from '@/common/VuePagination.vue'
+import { CONFIG } from '@/config'
 import { MeService } from '@/modules/_me/me.service'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtml, PrintHtmlApi, PrintHtmlService } from '@/modules/print-html'
+import { PrintHtml, PrintHtmlApi, PrintHtmlService, PrintHtmlTypeText } from '@/modules/print-html'
 import { onBeforeMount, ref } from 'vue'
 
 const { userPermission, user } = MeService
 
 const printHtmlList = ref<PrintHtml[]>([])
+
+const sortColumn = ref<'id' | 'priority' | 'printHtmlType' | 'name' | 'isDefault' | ''>('')
+const sortValue = ref<'ASC' | 'DESC' | ''>('')
 
 const page = ref(1)
 const limit = ref(10)
@@ -20,20 +25,31 @@ const total = ref(0)
 
 const dataLoading = ref(false)
 
-const startFetchData = async () => {
+const startFetchData = async (options?: { refetch?: boolean }) => {
   try {
     dataLoading.value = true
 
-    const { data, meta } = await PrintHtmlApi.pagination({
-      page: page.value,
-      limit: limit.value,
-      relation: {},
-      filter: {},
-      sort: { priority: 'ASC' },
-    })
+    const paginationResponse = await PrintHtmlService.pagination(
+      {
+        page: page.value,
+        limit: limit.value,
+        relation: {},
+        filter: {},
+        sort: sortValue.value
+          ? {
+              id: sortColumn.value === 'id' ? sortValue.value : undefined,
+              priority: sortColumn.value === 'priority' ? sortValue.value : undefined,
+              printHtmlType: sortColumn.value === 'printHtmlType' ? sortValue.value : undefined,
+              name: sortColumn.value === 'name' ? sortValue.value : undefined,
+              isDefault: sortColumn.value === 'isDefault' ? sortValue.value : undefined,
+            }
+          : { priority: 'ASC' },
+      },
+      { refetch: !!options?.refetch },
+    )
 
-    printHtmlList.value = data
-    total.value = meta.total
+    printHtmlList.value = paginationResponse.printHtmlList
+    total.value = paginationResponse.total
   } catch (error) {
     console.log('🚀 ~ file: PrintHtmlList.vue:39 ~ startFetchData ~ error:', error)
   } finally {
@@ -48,8 +64,22 @@ const changePagination = async (options: { page?: number; limit?: number }) => {
   startFetchData()
 }
 
-onBeforeMount(async () => {
+const changeSort = async (column: 'id' | 'priority' | 'printHtmlType' | 'name' | 'isDefault') => {
+  if (sortValue.value == 'DESC') {
+    sortColumn.value = ''
+    sortValue.value = ''
+  } else if (sortValue.value == 'ASC') {
+    sortColumn.value = column
+    sortValue.value = 'DESC'
+  } else {
+    sortColumn.value = column
+    sortValue.value = 'ASC'
+  }
   await startFetchData()
+}
+
+onBeforeMount(async () => {
+  await startFetchData({ refetch: true })
 })
 
 const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
@@ -84,9 +114,36 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
     <table>
       <thead>
         <tr>
-          <th style="width: 100px; text-align: center">ID</th>
-          <th style="width: 100px">Priority</th>
-          <th>Tên</th>
+          <th v-if="CONFIG.MODE === 'development'" class="cursor-pointer" @click="changeSort('id')">
+            <div class="flex items-center gap-1 justify-center">
+              <span>ID</span>
+              <IconSortChange :sort="sortColumn === 'id' ? sortValue : ''" />
+            </div>
+          </th>
+          <th class="cursor-pointer" @click="changeSort('priority')">
+            <div class="flex items-center gap-1 justify-center">
+              <span>Mã</span>
+              <IconSortChange :sort="sortColumn === 'priority' ? sortValue : ''" />
+            </div>
+          </th>
+          <th class="cursor-pointer" @click="changeSort('name')">
+            <div class="flex items-center gap-1 justify-center">
+              <span>Tên</span>
+              <IconSortChange :sort="sortColumn === 'name' ? sortValue : ''" />
+            </div>
+          </th>
+          <th class="cursor-pointer" @click="changeSort('printHtmlType')">
+            <div class="flex items-center gap-1 justify-center">
+              <span>Loại</span>
+              <IconSortChange :sort="sortColumn === 'printHtmlType' ? sortValue : ''" />
+            </div>
+          </th>
+          <th class="cursor-pointer" @click="changeSort('isDefault')">
+            <div class="flex items-center gap-1 justify-center">
+              <span>Mặc định</span>
+              <IconSortChange :sort="sortColumn === 'isDefault' ? sortValue : ''" />
+            </div>
+          </th>
           <th style="width: 100px"></th>
         </tr>
       </thead>
@@ -109,9 +166,19 @@ const handleClickDeletePrintHtml = async (printHtml: PrintHtml) => {
           <td colspan="20" class="text-center">Không có dữ liệu</td>
         </tr>
         <tr v-for="printHtml in printHtmlList" :key="printHtml.id">
-          <td class="text-center" style="color: violet">P{{ printHtml.id }}</td>
+          <td v-if="CONFIG.MODE === 'development'" class="text-center" style="color: violet">
+            P{{ printHtml.id }}
+          </td>
           <td class="text-center">{{ printHtml.priority }}</td>
           <td>{{ printHtml.name }}</td>
+          <td>{{ PrintHtmlTypeText[printHtml.printHtmlType] }}</td>
+          <td class="text-center">
+            <VueSwitch
+              size="14px"
+              :modelValue="printHtml.isDefault"
+              typeParser="number"
+            ></VueSwitch>
+          </td>
           <td>
             <div
               v-if="userPermission[PermissionId.MASTER_DATA_PRINT_HTML]"

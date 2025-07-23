@@ -204,7 +204,6 @@ const updateResult = async (options: { print: boolean }) => {
       ticketRadiologyUpdate.ticket = ticketRadiology.value.ticket
       await PrintHtmlAction.startPrintResultTicketRadiology({
         ticketRadiologyData: ticketRadiologyUpdate,
-        organization: organization.value,
         ticket: ticketRadiology.value.ticket!,
         customer: ticketRadiology.value.customer!,
       })
@@ -298,7 +297,6 @@ const logicFilterRadiologySample = (item: ItemOption, text: string) => {
 
 const startPrintDemo = async () => {
   await PrintHtmlAction.startPrintResultTicketRadiology({
-    organization: organization.value,
     customer: ticketRadiology.value.customer!,
     ticket: ticketRadiology.value.ticket!,
     ticketRadiologyData: ticketRadiology.value,

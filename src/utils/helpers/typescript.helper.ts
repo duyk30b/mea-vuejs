@@ -2,6 +2,22 @@ export class ESTypescript {
   static keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
     return Object.keys(e).filter((key) => isNaN(Number(key))) as (keyof T)[]
   }
+
+  static valuesEnum = <T extends Record<string, string | number>>(e: T): T[keyof T][] => {
+    return keysEnum(e).map((key) => e[key])
+  }
+
+  static objectEnum = <T extends Record<string, string | number>>(
+    e: T,
+  ): { [K in keyof T]: T[K] } => {
+    return keysEnum(e).reduce(
+      (acc, key) => {
+        acc[key] = e[key]
+        return acc
+      },
+      {} as { [K in keyof T]: T[K] },
+    )
+  }
 }
 
 export const OmitClass = <T, K extends keyof T>(
@@ -16,22 +32,6 @@ export const PickClass = <T, K extends keyof T>(
 
 export const keysEnum = <T extends Record<string, string | number>>(e: T): (keyof T)[] => {
   return Object.keys(e).filter((key) => isNaN(Number(key))) as (keyof T)[]
-}
-
-export const valuesEnum = <T extends Record<string, string | number>>(e: T): T[keyof T][] => {
-  return keysEnum(e).map((key) => e[key])
-}
-
-export const objectEnum = <T extends Record<string, string | number>>(
-  e: T,
-): { [K in keyof T]: T[K] } => {
-  return keysEnum(e).reduce(
-    (acc, key) => {
-      acc[key] = e[key]
-      return acc
-    },
-    {} as { [K in keyof T]: T[K] },
-  )
 }
 
 export type Impossible<K extends keyof any> = {

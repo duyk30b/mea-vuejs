@@ -208,7 +208,6 @@ const clickReturnProduct = () => {
 
 const startPrint = async () => {
   await PrintHtmlAction.startPrintRequestInvoice({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })

@@ -351,7 +351,7 @@ const handleModalUploadLaboratorySuccess = async () => {
             <td class="text-center">
               <VueTag
                 v-if="
-                  laboratory.discountApply.discountMoney || laboratory.discountApply.discountPercent
+                  laboratory.discountApply?.discountMoney || laboratory.discountApply?.discountPercent
                 "
                 color="blue"
               >

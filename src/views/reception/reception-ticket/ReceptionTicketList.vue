@@ -301,7 +301,6 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
   await ticketData.refreshAllData()
 
   await PrintHtmlAction.startPrintRequestInvoice({
-    organization: organization.value,
     ticket: ticketData,
     customer: ticketData.customer!,
   })

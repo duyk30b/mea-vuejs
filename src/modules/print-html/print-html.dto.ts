@@ -1,14 +1,18 @@
 import { OmitClass, PickClass } from '../../utils'
+import type { ConditionNumber } from '../_base/base-condition'
 
 export class PrintHtmlGetQuery {
   page?: number
   limit?: number
   relation?: object
-  filter?: { id?: number }
+  filter?: { oid?: number | ConditionNumber }
 
   sort?: {
     id?: 'ASC' | 'DESC'
     priority?: 'ASC' | 'DESC'
+    printHtmlType?: 'ASC' | 'DESC'
+    name?: 'ASC' | 'DESC'
+    isDefault?: 'ASC' | 'DESC'
   }
 
   static toQuery(instance: Partial<PrintHtmlGetQuery>) {

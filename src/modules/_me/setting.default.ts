@@ -17,56 +17,6 @@ export const SETTING_DEFAULT = {
     moneyDivisionFormat: 1,
     wholesalePrice: false,
   },
-  PRINT_SETTING: {
-    _LAYOUT_HEADER: {
-      printHtmlId: 0,
-    },
-    invoice: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    prescription: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    optometry: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    procedureRequest: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    laboratoryRequest: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    laboratoryResult: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    radiologyRequest: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    radiologyResult: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-    customerPayment: {
-      printHtmlId: 0,
-      customVariables: '',
-      customStyles: '',
-    },
-  },
   PRODUCT_SETTING: {
     allowNegativeQuantity: false,
     splitBatchByWarehouse: SplitBatchByWarehouse.Inherit,

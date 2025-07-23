@@ -3,8 +3,8 @@ import { OmitClass, PickClass } from '../../utils'
 export class ProductGroupGetQuery {
   page?: number
   limit?: number
-  relation?: {}
-  filter?: {}
+  relation?: { productList?: boolean }
+  filter?: { id: number }
 
   sort?: {
     id?: 'ASC' | 'DESC'
@@ -21,6 +21,6 @@ export class ProductGroupGetQuery {
   }
 }
 
-export class ProductGroupPaginationQuery extends ProductGroupGetQuery {}
-export class ProductGroupListQuery extends OmitClass(ProductGroupGetQuery, ['page']) {}
-export class ProductGroupDetailQuery extends PickClass(ProductGroupGetQuery, ['relation']) {}
+export class ProductGroupPaginationQuery extends ProductGroupGetQuery { }
+export class ProductGroupListQuery extends OmitClass(ProductGroupGetQuery, ['page']) { }
+export class ProductGroupDetailQuery extends PickClass(ProductGroupGetQuery, ['relation']) { }

@@ -7,7 +7,7 @@
     "dev": "vite --host",
     "demo": "serve dist --single",
     "build": "npm run write-config & run-p type-check \"build-only {@}\" --",
-    "deploy": "firebase deploy",
+    "firebase": "firebase",
     "write-config": "node ./scripts/write-config.js",
     "preview": "vite preview",
     "build-only": "vite build",

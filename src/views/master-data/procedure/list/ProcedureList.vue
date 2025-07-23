@@ -390,7 +390,7 @@ const handleModalUploadProcedureSuccess = async () => {
             <td class="text-center">
               <VueTag
                 v-if="
-                  procedure.discountApply.discountMoney || procedure.discountApply.discountPercent
+                  procedure.discountApply?.discountMoney || procedure.discountApply?.discountPercent
                 "
                 color="blue"
               >

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 // 2 màu khác trông cũng đẹp:  9dc183 ff6761 daa520
+import { PermissionId } from '@/modules/permission/permission.enum'
 import { IconAreaChart, IconMedicalBox, IconShop, IconShoppingCart } from '../common/icon-antd'
 import AppHomeStatistic from './AppHomeStatistic.vue'
+import { MeService } from '@/modules/_me/me.service'
+
+const { userPermission, organizationPermission, user, roomIdMap } = MeService
 </script>
 
 <template>
   <div class="mt-2">
     <div class="">
       <div class="flex flex-wrap justify-between">
-        <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
+        <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px" class="p-4">
           <div
             class="bg-[#ff6f61] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
             @click="$router.push({ name: 'Room' })"
@@ -23,10 +27,14 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
           </div>
         </div>
 
-        <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
+        <div
+          v-if="userPermission[PermissionId.TICKET_ORDER_MENU]"
+          style="flex-grow: 1; flex-basis: 22%; min-width: 300px"
+          class="p-4"
+        >
           <div
             class="bg-[#0094ff] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'RoomList' })"
+            @click="$router.push({ name: 'TicketOrderList' })"
           >
             <div>
               <div class="text-xl uppercase" style="font-weight: 500">BÁN HÀNG</div>
@@ -68,10 +76,14 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
           </div>
         </div> -->
 
-        <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
+        <div
+          v-if="userPermission[PermissionId.PRODUCT_MENU]"
+          style="flex-grow: 1; flex-basis: 22%; min-width: 300px"
+          class="p-4"
+        >
           <div
             class="bg-[#2fb388] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'Product' })"
+            @click="$router.push({ name: 'ProductList' })"
           >
             <div>
               <div class="text-xl uppercase" style="font-weight: 500">Tồn kho</div>
@@ -113,14 +125,18 @@ import AppHomeStatistic from './AppHomeStatistic.vue'
           </div>
         </div> -->
 
-        <div style="flex-grow: 1; flex-basis: 22%; min-width: 300px;" class="p-4">
+        <div
+          v-if="userPermission[PermissionId.PAYMENT_MENU]"
+          style="flex-grow: 1; flex-basis: 22%; min-width: 300px"
+          class="p-4"
+        >
           <div
             class="bg-[#9859e9] h-full p-4 gap-4 flex justify-between items-start rounded text-white cursor-pointer"
-            @click="$router.push({ name: 'Statistic' })"
+            @click="$router.push({ name: 'PaymentList' })"
           >
             <div>
-              <div class="text-xl uppercase" style="font-weight: 500">Thống kê</div>
-              <div class="mt-4">Thống kê thu chi, sản phẩm bán chạy</div>
+              <div class="text-xl uppercase" style="font-weight: 500">Phòng thu ngân</div>
+              <div class="mt-4">Quản lý tài chính, thu tiền khách hàng, chi tiền dịch vụ</div>
             </div>
             <div class="text-6xl mt-2" style="opacity: 0.3">
               <IconAreaChart />

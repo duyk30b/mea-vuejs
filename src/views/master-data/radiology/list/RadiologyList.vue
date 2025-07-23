@@ -339,7 +339,7 @@ const handleModalUploadRadiologySuccess = async () => {
             <td class="text-center">
               <VueTag
                 v-if="
-                  radiology.discountApply.discountMoney || radiology.discountApply.discountPercent
+                  radiology.discountApply?.discountMoney || radiology.discountApply?.discountPercent
                 "
                 color="blue"
               >

@@ -10,7 +10,7 @@ import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
 import { Image, ImageHost } from '@/modules/image/image.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
-import { PrintHtml, PrintHtmlAction, PrintHtmlCompile } from '@/modules/print-html'
+import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
 import { Radiology } from '@/modules/radiology'
 import { RadiologySample, RadiologySampleService } from '@/modules/radiology-sample'
 import { Ticket } from '@/modules/ticket'
@@ -28,7 +28,7 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 
-const { userPermission, organization } = MeService
+const { userPermission, organization, user } = MeService
 
 const radiologySample = ref(RadiologySample.blank())
 const radiologySampleOrigin = ref(RadiologySample.blank())
@@ -43,9 +43,11 @@ let systemVarLog = {}
 const saveLoading = ref(false)
 
 const printHtmlHeader = ref(PrintHtml.blank())
+const printHtmlFooter = ref(PrintHtml.blank())
 
 onBeforeMount(async () => {
-  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlHeader()
+  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._HEADER })
+  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._FOOTER })
 })
 
 onMounted(async () => {
@@ -64,9 +66,10 @@ onMounted(async () => {
     // radiologySample.value.customStyles = `.description td { border: 1px dashed; }`
     // radiologySample.value.printHtmlId = 21
   }
-  const printHtml = await PrintHtmlAction.getPrintHtmlRadiologyResult(
-    radiologySample.value.printHtmlId,
-  )
+  const printHtml = await PrintHtmlAction.getPrintHtmlByType({
+    type: PrintHtmlType.RadiologyResult,
+    id: radiologySample.value.printHtmlId,
+  })
   radiologySample.value.printHtml = printHtml
   radiologySample.value.printHtmlId = printHtml.id
   updatePreview()
@@ -97,7 +100,9 @@ const selectPrintHtml = async (printHtmlProp?: PrintHtml) => {
   if (printHtmlProp?.id) {
     radiologySample.value.printHtml = printHtmlProp
   } else {
-    radiologySample.value.printHtml = await PrintHtmlAction.getPrintHtmlRadiologyResult(0)
+    radiologySample.value.printHtml = await PrintHtmlAction.getPrintHtmlByType({
+      type: PrintHtmlType.RadiologyResult,
+    })
   }
   updatePreview()
 }
@@ -159,17 +164,20 @@ const updatePreview = async () => {
   const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
     data: {
       organization: organization.value,
+      me: user.value!,
       ticket: ticketDemo,
       customer: ticketDemo.customer!,
       ticketRadiology,
     },
     template: {
       _header: printHtmlHeader.value.html,
+      _footer: printHtmlFooter.value.html,
       _content: ticketRadiology.description || '',
-      _html: printHtml.html,
+      _wrapper: printHtml.html,
     },
     variablesString: [
       printHtmlHeader.value.initVariable,
+      printHtmlFooter.value.initVariable,
       printHtml.initVariable,
       ticketRadiology.customVariables,
     ],
@@ -182,7 +190,12 @@ const updatePreview = async () => {
 
   ESDom.writeWindow(doc, {
     html: printHtmlCompiled?.htmlString || '',
-    cssList: [printHtmlHeader.value.css, printHtml.css, ticketRadiology.customStyles],
+    cssList: [
+      printHtmlHeader.value.css,
+      printHtmlFooter.value.css,
+      printHtml.css,
+      ticketRadiology.customStyles,
+    ],
   })
 }
 
@@ -224,17 +237,20 @@ const startTestPrint = async () => {
     const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
       data: {
         organization: organization.value,
+        me: user.value!,
         ticket: ticketDemo,
         customer: ticketDemo.customer!,
         ticketRadiology,
       },
       template: {
         _header: printHtmlHeader.value.html,
+        _footer: printHtmlFooter.value.html,
         _content: ticketRadiology.description || '',
-        _html: printHtml.html,
+        _wrapper: printHtml.html,
       },
       variablesString: [
         printHtmlHeader.value.initVariable,
+        printHtmlFooter.value.initVariable,
         printHtml.initVariable,
         ticketRadiology.customVariables,
       ],
@@ -247,7 +263,12 @@ const startTestPrint = async () => {
 
     await ESDom.startPrint('iframe-print', {
       html: printHtmlCompiled?.htmlString || '',
-      cssList: [printHtmlHeader.value.css, printHtml.css, ticketRadiology.customStyles],
+      cssList: [
+        printHtmlHeader.value.css,
+        printHtmlFooter.value.css,
+        printHtml.css,
+        ticketRadiology.customStyles,
+      ],
     })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
@@ -347,6 +368,7 @@ const startCleanHtml = () => {
                 <MonacoEditor
                   :value="
                     (printHtmlHeader?.initVariable || '') +
+                    (printHtmlFooter?.initVariable || '') +
                     (radiologySample.printHtml?.initVariable || '')
                   "
                   language="javascript"

@@ -19,6 +19,7 @@ import {
   PrintHtmlAction,
   PrintHtmlCompile,
   PrintHtmlService,
+  PrintHtmlType,
 } from '@/modules/print-html'
 import { Radiology, RadiologyApi, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroup, RadiologyGroupService } from '@/modules/radiology-group'
@@ -45,7 +46,7 @@ const iframe = ref<HTMLIFrameElement>()
 const route = useRoute()
 const router = useRouter()
 
-const { userPermission, organization } = MeService
+const { userPermission, organization, user } = MeService
 const radiologyOrigin = ref(Radiology.blank())
 const radiology = ref(Radiology.blank())
 
@@ -64,6 +65,7 @@ const activeTab = ref(TABS_KEY.BASIC)
 const saveLoading = ref(false)
 
 const printHtmlHeader = ref(PrintHtml.blank())
+const printHtmlFooter = ref(PrintHtml.blank())
 
 onBeforeMount(async () => {
   const promiseInit = await Promise.all([
@@ -82,7 +84,8 @@ onBeforeMount(async () => {
   ]
   roleOptions.value = roleAll.map((i) => ({ value: i.id, text: i.name, data: i }))
 
-  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlHeader()
+  printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._HEADER })
+  printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({ type: PrintHtmlType._FOOTER })
 })
 
 onMounted(async () => {
@@ -176,9 +179,10 @@ const handleSave = async () => {
 }
 
 const handleSelectPrintHtml = async () => {
-  radiology.value.printHtml = await PrintHtmlAction.getPrintHtmlRadiologyResult(
-    radiology.value.printHtmlId,
-  )
+  radiology.value.printHtml = await PrintHtmlAction.getPrintHtmlByType({
+    id: radiology.value.printHtmlId,
+    type: PrintHtmlType.RadiologyResult,
+  })
   updatePreview()
 }
 
@@ -214,17 +218,20 @@ const updatePreview = async () => {
   const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
     data: {
       organization: organization.value,
+      me: user.value!,
       ticket: ticketDemo,
       customer: ticketDemo.customer!,
       ticketRadiology: ticketRadiologyData,
     },
     template: {
       _header: printHtmlHeader.value.html,
+      _footer: printHtmlFooter.value.html,
+      _wrapper: printHtml.html,
       _content: radiology.value.descriptionDefault || '',
-      _html: printHtml.html,
     },
     variablesString: [
       printHtmlHeader.value.initVariable,
+      printHtmlFooter.value.initVariable,
       printHtml.initVariable,
       radiology.value.customVariables,
     ],
@@ -237,7 +244,12 @@ const updatePreview = async () => {
 
   ESDom.writeWindow(doc, {
     html: printHtmlCompiled?.htmlString || '',
-    cssList: [printHtmlHeader.value.css, printHtml.css, radiology.value.customStyles],
+    cssList: [
+      printHtmlHeader.value.css,
+      printHtmlFooter.value.css,
+      printHtml.css,
+      radiology.value.customStyles,
+    ],
   })
 }
 
@@ -301,17 +313,20 @@ const startTestPrint = async () => {
     const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
       data: {
         organization: organization.value,
+        me: user.value!,
         ticket: ticketDemo,
         customer: ticketDemo.customer!,
         ticketRadiology: ticketRadiologyData,
       },
       template: {
         _header: printHtmlHeader.value.html,
+        _footer: printHtmlFooter.value.html,
         _content: radiology.value.descriptionDefault || '',
-        _html: printHtml.html,
+        _wrapper: printHtml.html,
       },
       variablesString: [
         printHtmlHeader.value.initVariable,
+        printHtmlFooter.value.initVariable,
         printHtml.initVariable,
         radiology.value.customVariables,
       ],
@@ -324,7 +339,12 @@ const startTestPrint = async () => {
 
     await ESDom.startPrint('iframe-print', {
       html: printHtmlCompiled?.htmlString || '',
-      cssList: [printHtmlHeader.value.css, printHtml.css, radiology.value.customStyles],
+      cssList: [
+        printHtmlHeader.value.css,
+        printHtmlFooter.value.css,
+        printHtml.css,
+        radiology.value.customStyles,
+      ],
     })
   } catch (error) {
     console.log('🚀 ~ file: VisitPrescription.vue:153 ~ startPrint ~ error:', error)
@@ -477,13 +497,14 @@ const startCleanHtml = () => {
                   <summary><a>Cài đặt nâng cao</a></summary>
                   <div class="mt-4">
                     <div class="flex justify-between">
-                      <span>Khởi tạo biến mặc định</span>
+                      <span>Biến từ template</span>
                       <a @click="showDataSystemPrint">Xem biến hệ thống (console.log)</a>
                     </div>
                     <div style="height: 150px; border: 1px solid #cdcdcd">
                       <MonacoEditor
                         :value="
                           (printHtmlHeader?.initVariable || '') +
+                          (printHtmlFooter?.initVariable || '') +
                           (radiology.printHtml?.initVariable || '')
                         "
                         language="javascript"

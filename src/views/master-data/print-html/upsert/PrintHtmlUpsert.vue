@@ -2,12 +2,18 @@
 import VueButton from '@/common/VueButton.vue'
 import MonacoEditor from '@/common/monaco-editor/MonacoEditor.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
-import { InputNumber, InputText } from '@/common/vue-form'
+import { InputNumber, InputSelect, InputText, VueSwitch } from '@/common/vue-form'
 import { MeService } from '@/modules/_me/me.service'
-import { PrintHtml, PrintHtmlCompile, PrintHtmlService } from '@/modules/print-html'
+import {
+  PrintHtml,
+  PrintHtmlCompile,
+  PrintHtmlService,
+  PrintHtmlType,
+  PrintHtmlTypeText,
+} from '@/modules/print-html'
 import { Ticket, TicketService } from '@/modules/ticket'
 import type { TicketRadiology } from '@/modules/ticket-radiology'
-import { ESDom } from '@/utils'
+import { ESDom, ESTypescript } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Breadcrumb from '../../../component/Breadcrumb.vue'
@@ -30,6 +36,7 @@ const { organization, user } = MeService
 const printHtmlOrigin = ref(PrintHtml.blank())
 const printHtml = ref(PrintHtml.blank())
 const printHtmlHeader = ref(PrintHtml.blank())
+const printHtmlFooter = ref(PrintHtml.blank())
 const ticketDemo = ref(Ticket.blank())
 
 const saveLoading = ref(false)
@@ -37,6 +44,11 @@ const saveLoading = ref(false)
 const ticketMap: Record<string, Ticket> = {}
 
 let systemVarLog = {}
+
+const printHtmlTypeOptions = ESTypescript.valuesEnum(PrintHtmlType).map((value) => ({
+  value,
+  label: PrintHtmlTypeText[value],
+}))
 
 onBeforeMount(async () => {
   const printHtmlId = Number(route.params.id)
@@ -48,9 +60,22 @@ onBeforeMount(async () => {
     printHtml.value = PrintHtml.blank()
   }
 
-  const printHtmlHeaderCurrent = await PrintHtmlAction.getPrintHtmlHeader()
+  const printHtmlHeaderCurrent = await PrintHtmlAction.getPrintHtmlByType({
+    type: PrintHtmlType._HEADER,
+  })
   if (printHtmlHeaderCurrent.id !== printHtmlId) {
-    printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlHeader()
+    printHtmlHeader.value = await PrintHtmlAction.getPrintHtmlByType({
+      type: PrintHtmlType._HEADER,
+    })
+  }
+
+  const printHtmlFooterCurrent = await PrintHtmlAction.getPrintHtmlByType({
+    type: PrintHtmlType._FOOTER,
+  })
+  if (printHtmlFooterCurrent.id !== printHtmlId) {
+    printHtmlFooter.value = await PrintHtmlAction.getPrintHtmlByType({
+      type: PrintHtmlType._FOOTER,
+    })
   }
 })
 
@@ -81,17 +106,20 @@ const updatePreview = () => {
   const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
     data: {
       organization: organization.value,
+      me: user.value!,
       ticket,
       customer: ticket.customer!,
       ...data,
     },
     template: {
       _header: printHtmlHeader.value.html,
+      _footer: printHtmlFooter.value.html,
       _content: ticketRadiology.description || '',
-      _html: printHtml.value.html,
+      _wrapper: printHtml.value.html,
     },
     variablesString: [
       printHtmlHeader.value.initVariable,
+      printHtmlFooter.value.initVariable,
       printHtml.value.initVariable,
       // ticketRadiology.customVariables, // không cho ghi đè để tránh nhầm lẫn
     ],
@@ -102,6 +130,7 @@ const updatePreview = () => {
     html: printHtmlCompiled?.htmlString || '',
     cssList: [
       printHtmlHeader.value.css,
+      printHtmlFooter.value.css,
       printHtml.value.css,
       // ticketRadiology.customStyles || '' // không cho ghi đè để tránh nhầm lẫn
     ],
@@ -173,17 +202,20 @@ const startTestPrint = async () => {
     const printHtmlCompiled = PrintHtmlCompile.compilePageHtml({
       data: {
         organization: organization.value,
+        me: user.value!,
         ticket,
         customer: ticket.customer!,
         ...data,
       },
       template: {
         _header: printHtmlHeader.value.html,
+        _footer: printHtmlFooter.value.html,
+        _wrapper: printHtml.value.html,
         _content: ticketRadiology.description || '',
-        _html: printHtml.value.html,
       },
       variablesString: [
         printHtmlHeader.value.initVariable,
+        printHtmlFooter.value.initVariable,
         printHtml.value.initVariable,
         ticketRadiology.customVariables,
       ],
@@ -191,11 +223,21 @@ const startTestPrint = async () => {
     systemVarLog = printHtmlCompiled?._SYSTEM_VARIABLE || {}
     ESDom.writeWindow(doc, {
       html: printHtmlCompiled?.htmlString || '',
-      cssList: [printHtmlHeader.value.css, printHtml.value.css, ticketRadiology.customStyles || ''],
+      cssList: [
+        printHtmlHeader.value.css,
+        printHtmlFooter.value.css,
+        printHtml.value.css,
+        ticketRadiology.customStyles || '',
+      ],
     })
     await ESDom.startPrint('iframe-print', {
       html: printHtmlCompiled?.htmlString || '',
-      cssList: [printHtmlHeader.value.css, printHtml.value.css, ticketRadiology.customStyles || ''],
+      cssList: [
+        printHtmlHeader.value.css,
+        printHtmlFooter.value.css,
+        printHtml.value.css,
+        ticketRadiology.customStyles || '',
+      ],
     })
   } catch (error) {
     console.log('🚀 ~ PrintHtmlUpsert.vue:182 ~ startTestPrint ~ error:', error)
@@ -248,7 +290,15 @@ const handleSave = async () => {
 
   <form class="md:mx-4 mt-4 p-4 bg-white" @submit.prevent="handleSave">
     <div class="flex flex-wrap gap-4">
-      <div style="width: 100px">
+      <div style="flex-basis: 45%; flex: 3; min-width: 300px">
+        <div class="flex gap-4 justify-start">
+          <span>Tên mẫu in</span>
+        </div>
+        <div>
+          <InputText v-model:value="printHtml.name" required />
+        </div>
+      </div>
+      <div style="flex-basis: 100px; flex: 1">
         <div class="flex gap-4 justify-start">
           <span>STT</span>
         </div>
@@ -256,12 +306,23 @@ const handleSave = async () => {
           <InputNumber v-model:value="printHtml.priority" required />
         </div>
       </div>
-      <div style="flex: 1">
+      <div style="flex-basis: 300px; flex-grow: 1">
         <div class="flex gap-4 justify-start">
-          <span>Tên mẫu in</span>
+          <span>Loại mẫu in</span>
         </div>
         <div>
-          <InputText v-model:value="printHtml.name" required />
+          <InputSelect
+            v-model:value="printHtml.printHtmlType"
+            :options="printHtmlTypeOptions"
+          ></InputSelect>
+        </div>
+      </div>
+      <div style="flex-basis: 100px">
+        <div class="flex gap-4 justify-start">
+          <span>Đặt mặc định</span>
+        </div>
+        <div class="flex items-center">
+          <VueSwitch v-model:modelValue="printHtml.isDefault" typeParser="number" required />
         </div>
       </div>
     </div>
@@ -324,12 +385,12 @@ const handleSave = async () => {
 
       <div style="grid-area: initVariableHeader" class="flex flex-col">
         <div class="flex justify-between">
-          <span>Khởi tạo biến header</span>
+          <span>Biến từ Header và Footer</span>
           <span></span>
         </div>
         <div style="flex-grow: 1; border: 1px solid #cdcdcd; padding-top: 10px">
           <MonacoEditor
-            v-model:value="printHtmlHeader.initVariable"
+            :value="(printHtmlHeader?.initVariable || '') + (printHtmlFooter?.initVariable || '')"
             language="javascript"
             @update:value="updatePreview"
             readOnly

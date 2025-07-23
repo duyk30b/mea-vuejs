@@ -121,7 +121,6 @@ const updateResult = async (options: { print: boolean }) => {
     if (options.print) {
       await PrintHtmlAction.startPrintResultTicketLaboratory({
         ticketLaboratoryGroup: ticketLaboratoryGroupUpdate,
-        organization: organization.value,
         ticket: ticketLaboratoryGroupUpdate.ticket!,
         customer: ticketLaboratoryGroupUpdate.customer!
       })

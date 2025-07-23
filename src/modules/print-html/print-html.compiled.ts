@@ -18,6 +18,7 @@ export class PrintHtmlCompile {
     _LAYOUT?: {
       _HEADER: string
       _CONTENT: string
+      _FOOTER: string
     }
     templateString: string
     variablesString: string[]
@@ -55,7 +56,7 @@ export class PrintHtmlCompile {
 
   static compilePageHtml(options: {
     data: Record<string, any> & {
-      me?: User
+      me: User
       organization: Organization
       customer: Customer
       ticket?: Ticket
@@ -63,8 +64,9 @@ export class PrintHtmlCompile {
     variablesString: string[]
     template: {
       _header: string
+      _footer: string
       _content: string
-      _html: string
+      _wrapper: string
     }
   }) {
     const { data, variablesString, template } = options
@@ -72,6 +74,11 @@ export class PrintHtmlCompile {
       data,
       variablesString,
       templateString: template._header,
+    })
+    const footerCompiled = PrintHtmlCompile.compileContentHtml({
+      data,
+      variablesString,
+      templateString: template._footer,
     })
     const contentCompiled = PrintHtmlCompile.compileContentHtml({
       data,
@@ -81,8 +88,12 @@ export class PrintHtmlCompile {
     const wrapperCompiled = PrintHtmlCompile.compileContentHtml({
       data,
       variablesString,
-      templateString: template._html,
-      _LAYOUT: { _CONTENT: contentCompiled?.htmlString, _HEADER: headerCompiled?.htmlString },
+      templateString: template._wrapper,
+      _LAYOUT: {
+        _HEADER: headerCompiled?.htmlString,
+        _FOOTER: footerCompiled?.htmlString,
+        _CONTENT: contentCompiled?.htmlString,
+      },
     })
     return wrapperCompiled
   }

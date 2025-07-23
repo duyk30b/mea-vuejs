@@ -160,7 +160,6 @@ const clickDestroy = async (ticketRadiologyId: number) => {
 
 const startPrintRequest = async () => {
   await PrintHtmlAction.startPrintRequestTicketRadiology({
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
@@ -173,7 +172,6 @@ const startPrintResult = async (ticketRadiologyData: TicketRadiology) => {
 
   await PrintHtmlAction.startPrintResultTicketRadiology({
     ticketRadiologyData,
-    organization: organization.value,
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
   })
