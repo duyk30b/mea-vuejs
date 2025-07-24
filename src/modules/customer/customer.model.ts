@@ -21,6 +21,18 @@ export class Customer {
   isActive: 1 | 0 // Trạng thái
   updatedAt: number
 
+  get getAge() {
+    const nowYear = new Date().getFullYear()
+    if (this.yearOfBirth) {
+      return nowYear - this.yearOfBirth
+    }
+    if (this.birthday) {
+      const birthdayYear = new Date(this.birthday).getFullYear()
+      return nowYear - birthdayYear
+    }
+    return undefined
+  }
+
   static init(): Customer {
     const ins = new Customer()
     ins.id = 0

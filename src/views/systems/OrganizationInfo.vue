@@ -2,7 +2,7 @@
 import { computed, onBeforeMount, onMounted, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconSetting } from '../../common/icon-antd'
-import ImageUploadSingle from '../../common/image-upload/ImageUploadSingle.vue'
+import ImageUploadSingleCloudinary from '../../common/image-upload/ImageUploadSingleCloudinary.vue'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputHint, InputOptions, InputText } from '../../common/vue-form'
 import { AddressInstance } from '../../core/address.instance'
@@ -14,7 +14,7 @@ import { ESImage, customFilter } from '../../utils'
 import ModalChangeOrganizationEmail from './modal/ModalChangeOrganizationEmail.vue'
 import { Address, AddressService } from '@/modules/address'
 
-const imageUploadSingleRef = ref<InstanceType<typeof ImageUploadSingle>>()
+const imageUploadSingleRef = ref<InstanceType<typeof ImageUploadSingleCloudinary>>()
 const modalChangeOrganizationEmail = ref<InstanceType<typeof ModalChangeOrganizationEmail>>()
 const inputOptionsAddress = ref<InstanceType<typeof InputOptions>>()
 
@@ -78,17 +78,16 @@ const saveOrganization = async () => {
   try {
     saveLoading.value = true
 
-    const file = imageUploadSingleRef.value?.imageData.file
-    if (!file) {
-      const organizationUpdate = await OrganizationService.updateInfo(organization.value)
-      Object.assign(organization.value, organizationUpdate)
-    } else {
-      const organizationUpdate = await OrganizationService.updateInfoAndLogo(
-        organization.value,
-        file,
-      )
-      Object.assign(organization.value, organizationUpdate)
-    }
+    const imageData = imageUploadSingleRef.value?.imageData
+
+    const organizationUpdate = await OrganizationService.updateInfo({
+      organizationInfo: organization.value,
+      imagesChange: hasChangeImage.value
+        ? { files: [imageData!.file!], imageIdsWait: [0], externalUrlList: [imageData!.src!] }
+        : undefined,
+    })
+    Object.assign(organization.value, organizationUpdate)
+
     AlertStore.addSuccess('Cập nhật thông tin cơ sở thành công')
   } catch (error) {
     console.log('🚀 ~ file: OrganizationInfo.vue:84 ~ saveOrganization ~ error:', error)
@@ -190,7 +189,9 @@ const sendEmailVerify = async () => {
       <div class="mt-3 flex" :class="isMobile ? 'flex-col items-stretch mt-2' : 'items-center'">
         <div style="width: 120px; flex: none">Logo</div>
         <div>
-          <ImageUploadSingle
+          <ImageUploadSingleCloudinary
+            :oid="organization.id"
+            :customerId="organization.id"
             ref="imageUploadSingleRef"
             :height="150"
             :rootImage="{

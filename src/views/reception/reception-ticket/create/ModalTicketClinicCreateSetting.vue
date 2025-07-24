@@ -161,6 +161,13 @@ defineExpose({ openModal })
                         </InputCheckbox>
                       </td>
                     </tr>
+                    <tr>
+                      <td colspan="2">
+                        <InputCheckbox v-model:checked="settingDisplay.requestProcedure">
+                          Hiển thị yêu cầu điền dịch vụ ban đầu
+                        </InputCheckbox>
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

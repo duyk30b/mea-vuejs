@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import { ticketRoomRef } from '@/modules/room'
+import { RoomService, ticketRoomRef } from '@/modules/room'
 import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 import ModalTicketLaboratoryResult from '@/views/room/room-laboratory/ModalTicketLaboratoryGroupResult.vue'
 import TicketLaboratoryStatusTooltip from '@/views/room/room-laboratory/TicketLaboratoryStatusTooltip.vue'
@@ -374,9 +374,23 @@ const clickDestroy = async (ticketLaboratoryGroupId: number) => {
 }
 
 const startPrintRequest = async () => {
+  const roomMap = await RoomService.getMap()
+
+  const ticketLaboratoryPrint = (ticketRoomRef.value.ticketLaboratoryList || [])
+    .filter((i) => {
+      return (
+        i.paymentMoneyStatus === PaymentMoneyStatus.Pending ||
+        i.paymentMoneyStatus === PaymentMoneyStatus.NoEffect
+      )
+    })
+    .map((i) => {
+      i.room = roomMap[i.roomId]
+      return i
+    })
   await PrintHtmlAction.startPrintRequestTicketLaboratory({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
+    ticketLaboratoryList: ticketLaboratoryPrint,
   })
 }
 
@@ -563,8 +577,8 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
         </table>
       </div>
       <div class="mt-4 flex-0">
-        <div>Thời gian chỉ định</div>
-        <div><InputDate v-model:value="registeredAt" show-time /></div>
+          <div>Thời gian chỉ định</div>
+          <div><InputDate v-model:value="registeredAt" show-time /></div>
       </div>
       <div class="mt-4 flex justify-center flex-0 gap-4">
         <VueButton v-if="tlgEdit.id" @click="clear">Hủy bỏ</VueButton>
@@ -749,7 +763,7 @@ const startPrintResult = async (tlgData: TicketLaboratoryGroup) => {
           </template>
 
           <tr>
-            <td colspan="7" class="text-right">
+            <td colspan="8" class="text-right">
               <b>Tổng tiền</b>
             </td>
             <td class="text-right">

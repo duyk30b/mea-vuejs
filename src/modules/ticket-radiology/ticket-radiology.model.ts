@@ -2,6 +2,7 @@ import { Customer } from '../customer'
 import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Image } from '../image/image.model'
 import { Radiology } from '../radiology'
+import { Room } from '../room'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -43,6 +44,7 @@ export class TicketRadiology {
   customer?: Customer
   ticket?: Ticket
   ticketUserList: TicketUser[]
+  room: Room
 
   static init(): TicketRadiology {
     const ins = new TicketRadiology()
@@ -89,6 +91,10 @@ export class TicketRadiology {
     if (Object.prototype.hasOwnProperty.call(source, 'customer')) {
       target.customer = source.customer ? Customer.basic(source.customer) : source.customer
     }
+    if (Object.prototype.hasOwnProperty.call(source, 'room')) {
+      target.room = source.room ? Room.basic(source.room) : source.room
+    }
+
     if (source.imageList) {
       target.imageList = Image.basicList(source.imageList)
     }

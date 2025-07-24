@@ -10,25 +10,25 @@ export class TicketClinicApi {
   static async updateDiagnosis(options: {
     ticketId: number
     note: string
-    files: File[]
     imagesChange?: {
-      imageIdsKeep: number[]
-      filesPosition: number[]
+      files: File[]
+      imageIdsWait: number[]
+      externalUrlList: string[]
     }
     ticketAttributeChangeList?: { key: string; value: any }[]
     ticketAttributeKeyList: string[]
   }) {
-    const { ticketId, imagesChange, ticketAttributeChangeList, files } = options
+    const { ticketId, imagesChange, ticketAttributeChangeList } = options
 
     const formData = new FormData()
-    files.forEach((file) => formData.append('files', file))
     formData.append('ticketAttributeKeyList', JSON.stringify(options.ticketAttributeKeyList))
     formData.append('note', options.note)
 
     if (imagesChange) {
+      // imagesChange.files.forEach((file) => formData.append('files', file))
       const imagesChangeStr = JSON.stringify({
-        imageIdsKeep: imagesChange.imageIdsKeep,
-        filesPosition: imagesChange.filesPosition,
+        imageIdsWait: imagesChange.imageIdsWait,
+        externalUrlList: imagesChange.externalUrlList,
       })
       formData.append('imagesChange', imagesChangeStr)
     }

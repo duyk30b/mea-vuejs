@@ -19,11 +19,13 @@ const props = withDefaults(
     procedureId: number
     disabled?: boolean
     required?: boolean
+    removeLabelWrapper?: boolean
   }>(),
   {
     procedureId: 0,
     disabled: false,
     required: false,
+    removeLabelWrapper: false,
   },
 )
 
@@ -60,7 +62,7 @@ const logicFilter = (item: ItemOption, text: string) => {
 <template>
   <ModalProcedureDetail ref="modalProcedureDetail" />
 
-  <div class="flex gap-1 flex-wrap">
+  <div v-if="!removeLabelWrapper" class="flex gap-1 flex-wrap">
     <span>Tên dịch vụ</span>
     <a v-if="procedureId" @click="modalProcedureDetail?.openModal(procedureId)">
       <IconFileSearch />

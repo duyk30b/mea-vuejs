@@ -1,7 +1,7 @@
 import { Customer } from '../customer'
 import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Laboratory } from '../laboratory'
-import { TicketLaboratoryResult } from '../ticket-laboratory-result'
+import { Room } from '../room'
 import { TicketUser } from '../ticket-user'
 import { Ticket } from '../ticket/ticket.model'
 
@@ -35,6 +35,7 @@ export class TicketLaboratory {
   ticket?: Ticket
   ticketUserList: TicketUser[]
   laboratory?: Laboratory
+  room?: Room
 
   static init(): TicketLaboratory {
     const ins = new TicketLaboratory()
@@ -74,6 +75,9 @@ export class TicketLaboratory {
       target.laboratory = source.laboratory
         ? Laboratory.basic(source.laboratory)
         : source.laboratory
+    }
+    if (Object.prototype.hasOwnProperty.call(source, 'room')) {
+      target.room = source.room ? Room.basic(source.room) : source.room
     }
 
     if (target.ticketUserList) {

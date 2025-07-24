@@ -1,25 +1,24 @@
 <script lang="ts" setup>
+import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
+import { ticketRoomRef } from '@/modules/room'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueTinyMCE from '../../../common/VueTinyMCE.vue'
-import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
 import { InputDate, InputNumber, InputText } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
-import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
-TicketAttributeKeyObstetricList,
-type TicketAttributeKeyObstetricType,
+  TicketAttributeKeyObstetricList,
+  type TicketAttributeKeyObstetricType,
 } from '../../../modules/ticket-attribute'
 import { ESImage } from '../../../utils'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 
-const { userPermission } = MeService
+const { userPermission, organization } = MeService
 
 const note = ref<string>('')
-const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyObstetricType]?: any } = {}
 const ticketAttributeMap = ref<
@@ -32,8 +31,7 @@ const ticketAttributeMap = ref<
 const saveLoading = ref(false)
 const hasChangeImage = ref(false)
 
-onMounted(async () => {
-})
+onMounted(async () => {})
 
 watch(
   () => ticketRoomRef.value.note,
@@ -95,11 +93,14 @@ const hasChangeData = computed(() => {
 const saveTicketDiagnosis = async () => {
   try {
     saveLoading.value = true
-    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
-      filesPosition: [],
-      imageIdsKeep: [],
-      files: [],
-    }
+    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+      imageUploadMultipleRef.value?.getData() || {
+        filesPosition: [],
+        imageIdsWait: [],
+        imageIdsKeep: [],
+        files: [],
+        imageUrls: [],
+      }
 
     let ticketAttributeChangeList = undefined
     if (hasChangeAttribute.value) {
@@ -112,8 +113,9 @@ const saveTicketDiagnosis = async () => {
       TicketClinicApi.updateDiagnosis({
         ticketId: ticketRoomRef.value.id,
         note: note.value,
-        files,
-        imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+        imagesChange: hasChangeImage.value
+          ? { files, imageIdsWait, externalUrlList: imageUrls }
+          : undefined,
         ticketAttributeChangeList,
         ticketAttributeKeyList: TicketAttributeKeyObstetricList as any,
       }),
@@ -377,17 +379,17 @@ defineExpose({ getDataTicketDiagnosis })
     </div>
     <div v-if="ticketRoomRef.id" class="mt-4">
       <div>Hình ảnh</div>
-      <ImageUploadMultiple
+      <ImageUploadCloudinary
         ref="imageUploadMultipleRef"
+        :oid="organization.id"
+        :customerId="ticketRoomRef.customerId"
         :height="100"
         :rootImageList="
-          (ticketRoomRef?.imageList || [])
-            .filter((i) => i.hostType === ImageHost.GoogleDriver)
-            .map((i) => ({
-              thumbnail: ESImage.getImageLink(i, { size: 200 }),
-              enlarged: ESImage.getImageLink(i, { size: 1000 }),
-              id: i.id,
-            }))
+          (ticketRoomRef?.imageList || []).map((i) => ({
+            thumbnail: ESImage.getImageLink(i, { size: 200 }),
+            enlarged: ESImage.getImageLink(i, { size: 1000 }),
+            id: i.id,
+          }))
         "
         @changeImage="hasChangeImage = true"
       />

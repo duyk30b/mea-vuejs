@@ -14,7 +14,7 @@ import VueTooltip from '../../../common/popover/VueTooltip.vue'
 import VueModal from '../../../common/vue-modal/VueModal.vue'
 import { useSettingStore } from '../../../modules/_me/setting.store'
 import { Customer } from '../../../modules/customer'
-import { ImageHost } from '../../../modules/image/image.model'
+import { ImageHostType } from '../../../modules/image/image.model'
 import { LaboratoryValueType } from '../../../modules/laboratory'
 import { Ticket, TicketQueryApi, TicketType } from '../../../modules/ticket'
 import { TicketClinicService } from '../../../modules/ticket-clinic/ticket-clinic.service'
@@ -243,13 +243,11 @@ defineExpose({ openModal })
                   :height="100"
                   :editable="false"
                   :rootImageList="
-                    (ticket?.imageList || [])
-                      .filter((i) => i.hostType === ImageHost.GoogleDriver)
-                      .map((i) => ({
-                        thumbnail: ESImage.getImageLink(i, { size: 200 }),
-                        enlarged: ESImage.getImageLink(i, { size: 1000 }),
-                        id: i.id,
-                      }))
+                    (ticket?.imageList || []).map((i) => ({
+                      thumbnail: ESImage.getImageLink(i, { size: 200 }),
+                      enlarged: ESImage.getImageLink(i, { size: 1000 }),
+                      id: i.id,
+                    }))
                   "
                 />
               </div>

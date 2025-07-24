@@ -1,3 +1,4 @@
+import { TicketProcedure } from '@/modules/ticket-procedure'
 import { AxiosInstance } from '../../../core/axios.instance'
 import type { BaseResponse } from '../../_base/base-dto'
 import type { Customer } from '../../customer'
@@ -19,8 +20,10 @@ export class TicketReceptionApi {
     }
     ticketAttributeList: { key: string; value: any }[]
     ticketUserList: TicketUser[]
+    ticketProcedureList: TicketProcedure[]
   }) {
-    const { customer, ticketReception, ticketAttributeList, ticketUserList } = body
+    const { customer, ticketReception, ticketAttributeList, ticketUserList, ticketProcedureList } =
+      body
     const response = await AxiosInstance.post('/ticket/reception-create', {
       customer:
         !ticketReception.customerId && customer
@@ -58,6 +61,19 @@ export class TicketReceptionApi {
       }),
       ticketUserList: ticketUserList.map((i) => {
         return { id: i.id || 0, userId: i.userId || 0, roleId: i.roleId }
+      }),
+      ticketProcedureList: (ticketProcedureList || []).map((i) => {
+        return {
+          priority: i.priority,
+          paymentMoneyStatus: i.paymentMoneyStatus,
+          procedureId: i.procedureId,
+          quantity: i.quantity,
+          expectedPrice: i.expectedPrice,
+          discountMoney: i.discountMoney,
+          discountPercent: i.discountPercent,
+          discountType: i.discountType,
+          actualPrice: i.actualPrice,
+        }
       }),
     })
     const { data } = response.data as BaseResponse<{ ticket: any }>

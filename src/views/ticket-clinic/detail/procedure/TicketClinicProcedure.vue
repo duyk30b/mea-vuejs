@@ -123,7 +123,7 @@ const startPrintRequest = async () => {
           <tr v-if="ticketProcedureList!.length === 0">
             <td colspan="20" class="text-center">Không có dữ liệu</td>
           </tr>
-          <tr v-for="(tpItem, index) in ticketProcedureList" :key="tpItem.procedureId">
+          <tr v-for="(tpItem, index) in ticketProcedureList" :key="tpItem._localId">
             <td>
               <div class="flex flex-col items-center">
                 <button

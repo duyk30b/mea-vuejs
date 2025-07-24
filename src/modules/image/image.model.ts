@@ -1,14 +1,16 @@
-export enum ImageHost {
+export enum ImageHostType {
   GoogleDriver = 'GoogleDriver',
+  Cloudinary = 'Cloudinary',
 }
 
 export class Image {
   id: number
   name: string
   mimeType: string
-  hostType: ImageHost
+  hostType: ImageHostType
   hostAccount: string
-  hostId: string
+  externalId: string
+  externalUrl: string
   waitDelete: 0 | 1
 
   static init(): Image {

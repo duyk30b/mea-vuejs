@@ -326,12 +326,14 @@ const handleModalTicketChangeAllMoneySuccess = (ticketData: Ticket) => {}
               <div class="text-xs italic">
                 {{ ESString.formatAddress(ticket.customer!) }}
               </div>
-              <div>
+              <div class="text-xs italic">
                 {{
                   ESTimer.timeToText(ticket.customer?.birthday, 'DD/MM/YYYY') ||
                   ticket.customer?.yearOfBirth ||
                   ''
                 }}
+                -
+                {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
               </div>
             </td>
             <td class="text-right">

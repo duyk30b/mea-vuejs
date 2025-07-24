@@ -14,7 +14,7 @@ import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { Radiology, RadiologyService } from '@/modules/radiology'
 import { RadiologyGroupService } from '@/modules/radiology-group'
-import { ticketRoomRef } from '@/modules/room'
+import { RoomInteractType, RoomService, ticketRoomRef } from '@/modules/room'
 import { TicketStatus } from '@/modules/ticket'
 import { TicketClinicRadiologyApi } from '@/modules/ticket-clinic/ticket-clinic-radiology.api'
 import { TicketRadiology, TicketRadiologyStatus } from '@/modules/ticket-radiology'
@@ -159,9 +159,23 @@ const clickDestroy = async (ticketRadiologyId: number) => {
 }
 
 const startPrintRequest = async () => {
+  const roomMap = await RoomService.getMap()
+  const ticketRadiologyPrint = (ticketRoomRef.value.ticketRadiologyList || [])
+    .filter((i) => {
+      return (
+        i.paymentMoneyStatus === PaymentMoneyStatus.Pending ||
+        i.paymentMoneyStatus === PaymentMoneyStatus.NoEffect
+      )
+    })
+    .map((i) => {
+      i.room = roomMap[i.roomId]
+      return i
+    })
+
   await PrintHtmlAction.startPrintRequestTicketRadiology({
     ticket: ticketRoomRef.value,
     customer: ticketRoomRef.value.customer!,
+    ticketRadiologyList: ticketRadiologyPrint,
   })
 }
 

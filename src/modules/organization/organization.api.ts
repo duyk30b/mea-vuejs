@@ -10,32 +10,39 @@ export class OrganizationApi {
     return Organization.from(data.organization)
   }
 
-  static async updateInfo(organization: Organization) {
-    const response = await AxiosInstance.patch('/organization/update-info', {
-      name: organization.name,
-      addressProvince: organization.addressProvince,
-      addressWard: organization.addressWard,
-      addressStreet: organization.addressStreet,
-    })
-    const { data } = response.data as BaseResponse<{ organization: any }>
+  static async updateInfo(options: {
+    organizationInfo: Organization
+    imagesChange?: {
+      files: File[]
+      imageIdsWait: number[]
+      externalUrlList: string[]
+    }
+  }) {
+    const { organizationInfo, imagesChange } = options
 
-    return Organization.from(data.organization)
-  }
-
-  static async updateInfoAndLogo(organization: Organization, file: File) {
     const formData = new FormData()
-    formData.append('file', file)
-    formData.append('name', organization.name)
-    formData.append('addressProvince', organization.addressProvince)
-    formData.append('addressWard', organization.addressWard)
-    formData.append('addressStreet', organization.addressStreet)
+    const organizationInfoStr = JSON.stringify({
+      name: organizationInfo.name,
+      addressProvince: organizationInfo.addressProvince || '',
+      addressWard: organizationInfo.addressWard || '',
+      addressStreet: organizationInfo.addressStreet || '',
+    })
+    formData.append('organizationInfo', organizationInfoStr)
 
-    const response = await AxiosInstance.patch(`/organization/update-info-and-logo`, formData, {
+    if (imagesChange) {
+      // imagesChange.files.forEach((file) => formData.append('files', file))
+      const imagesChangeStr = JSON.stringify({
+        imageIdsWait: imagesChange.imageIdsWait,
+        externalUrlList: imagesChange.externalUrlList,
+      })
+      formData.append('imagesChange', imagesChangeStr)
+    }
+
+    const response = await AxiosInstance.patch('/organization/update-info', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
-
     const { data } = response.data as BaseResponse<{ organization: any }>
 
     return Organization.from(data.organization)

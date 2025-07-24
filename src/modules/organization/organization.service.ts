@@ -11,14 +11,15 @@ export class OrganizationService {
     return organization
   }
 
-  static async updateInfo(body: Organization) {
-    const organization = await OrganizationApi.updateInfo(body)
-    MeService.organization.value = Organization.from(organization)
-    return organization
-  }
-
-  static async updateInfoAndLogo(body: Organization, file: File) {
-    const organization = await OrganizationApi.updateInfoAndLogo(body, file)
+  static async updateInfo(options: {
+    organizationInfo: Organization
+    imagesChange?: {
+      files: File[]
+      imageIdsWait: number[]
+      externalUrlList: string[]
+    }
+  }) {
+    const organization = await OrganizationApi.updateInfo(options)
     MeService.organization.value = Organization.from(organization)
     return organization
   }

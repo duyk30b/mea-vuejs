@@ -28,6 +28,8 @@ export class TicketGetQuery {
     ticketRadiologyList?: TicketRadiologyListQuery
     ticketUserList?: { user?: boolean } | false
     toAppointment?: boolean
+    customerSource?: boolean
+    imageList?: boolean
   }
 
   filter?: {

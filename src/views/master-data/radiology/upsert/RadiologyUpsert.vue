@@ -12,7 +12,7 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { VueTabMenu, VueTabPanel, VueTabs } from '@/common/vue-tabs'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
-import { Image, ImageHost } from '@/modules/image/image.model'
+import { Image, ImageHostType } from '@/modules/image/image.model'
 import { CommissionCalculatorType, Position, PositionInteractType } from '@/modules/position'
 import {
   PrintHtml,
@@ -210,8 +210,8 @@ const updatePreview = async () => {
   ticketRadiologyData.customVariables = radiology.value.customVariables
   ticketRadiologyData.imageList = Array.from({ length: 4 }, (_, i) => {
     const image = Image.blank()
-    image.hostType = ImageHost.GoogleDriver
-    image.hostId = hostGoogleDriverIdExampleList[i]
+    image.hostType = ImageHostType.GoogleDriver
+    image.externalId = hostGoogleDriverIdExampleList[i]
     return image
   })
 
@@ -305,8 +305,8 @@ const startTestPrint = async () => {
     ticketRadiologyData.result = radiology.value.resultDefault
     ticketRadiologyData.imageList = Array.from({ length: 4 }, (_, i) => {
       const image = Image.blank()
-      image.hostType = ImageHost.GoogleDriver
-      image.hostId = hostGoogleDriverIdExampleList[i]
+      image.hostType = ImageHostType.GoogleDriver
+      image.externalId = hostGoogleDriverIdExampleList[i]
       return image
     })
 

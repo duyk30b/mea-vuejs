@@ -31,10 +31,12 @@ export class TicketRadiologyApi {
   static async updateResult(options: {
     ticketRadiologyId: number
     ticketRadiology: TicketRadiology
-    imageIdsKeep: number[]
-    files: File[]
-    filesPosition: number[]
     ticketUserList?: TicketUser[]
+    imagesChange?: {
+      files: File[]
+      imageIdsWait: number[]
+      externalUrlList: string[]
+    }
     response: {
       ticketRadiology: {
         ticket?: boolean
@@ -44,12 +46,17 @@ export class TicketRadiologyApi {
       }
     }
   }) {
-    const { ticketRadiologyId, ticketRadiology, imageIdsKeep, files, filesPosition } = options
+    const { ticketRadiologyId, ticketRadiology, imagesChange } = options
 
     const formData = new FormData()
-    files.forEach((file) => formData.append('files', file))
-    formData.append('imageIdsKeep', JSON.stringify(imageIdsKeep))
-    formData.append('filesPosition', JSON.stringify(filesPosition))
+    if (imagesChange) {
+      // imagesChange.files.forEach((file) => formData.append('files', file))
+      const imagesChangeStr = JSON.stringify({
+        imageIdsWait: imagesChange.imageIdsWait,
+        externalUrlList: imagesChange.externalUrlList,
+      })
+      formData.append('imagesChange', imagesChangeStr)
+    }
     formData.append(
       'ticketRadiology',
       JSON.stringify({

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import VueButton from '@/common/VueButton.vue'
-import { IconClose, IconFileSearch, IconSetting } from '@/common/icon-antd'
+import {
+  IconClose,
+  IconDelete,
+  IconDoubleRight,
+  IconFileSearch,
+  IconSetting,
+} from '@/common/icon-antd'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import {
   InputCheckbox,
@@ -42,6 +48,11 @@ import ModalCustomerDetail from '@/views/customer/detail/ModalCustomerDetail.vue
 import ModalCustomerUpsert from '@/views/customer/upsert/ModalCustomerUpsert.vue'
 import { ref } from 'vue'
 import ModalTicketClinicCreateSetting from './ModalTicketClinicCreateSetting.vue'
+import InputSearchProcedure from '@/views/component/InputSearchProcedure.vue'
+import { ProcedureService, type Procedure } from '@/modules/procedure'
+import { TicketProcedure } from '@/modules/ticket-procedure'
+import { DiscountType } from '@/modules/enum'
+import PaymentMoneyStatusTooltip from '@/views/finance/payment/PaymentMoneyStatusTooltip.vue'
 
 const inputFilterCustomer = ref<InstanceType<typeof InputFilter>>()
 const modalCustomerDetail = ref<InstanceType<typeof ModalCustomerDetail>>()
@@ -69,6 +80,9 @@ const ticket = ref<Ticket>(Ticket.blank())
 
 const ticketUserList = ref<TicketUser[]>([])
 const ticketAttributeMap = ref<TicketAttributeMap>({})
+
+const procedureId = ref(0)
+const ticketProcedureListRequest = ref<TicketProcedure[]>([])
 
 const fromAppointmentId = ref(0)
 const roleMap = RoleService.roleMap
@@ -105,7 +119,12 @@ const startFetchData = async (options: { ticketId: number; roomId: number }) => 
     const fetchPromise = await Promise.all([
       options.ticketId
         ? TicketService.detail(options.ticketId, {
-            relation: { customer: true, ticketAttributeList: true, ticketUserList: {} },
+            relation: {
+              customer: true,
+              ticketAttributeList: true,
+              ticketUserList: {},
+              customerSource: true,
+            },
           })
         : Ticket.blank(),
       UserService.getMap(),
@@ -176,6 +195,7 @@ const closeModal = () => {
   userRoleMapRoleIdOptions.value = {}
   currentAddress.value = Address.blank()
   fromAppointmentId.value = 0
+  ticketProcedureListRequest.value = []
 
   showModal.value = false
 }
@@ -435,6 +455,7 @@ const handleSubmitFormTicketClinic = async () => {
         },
         ticketAttributeList,
         ticketUserList: ticketUserList.value,
+        ticketProcedureList: ticketProcedureListRequest.value,
       })
       emit('success', ticketCreated.id)
     }
@@ -459,6 +480,49 @@ const handleSubmitFormTicketClinic = async () => {
   } finally {
     saveLoading.value = false
   }
+}
+
+const selectProcedure = async (procedureProp?: Procedure) => {
+  if (procedureProp) {
+    const temp = TicketProcedure.blank()
+
+    temp.ticketId = 0
+    temp.priority = ticketProcedureListRequest.value.length + 1
+    temp.customerId = 0
+    temp.procedureId = procedureProp.id
+    temp.procedure = procedureProp
+
+    temp.paymentMoneyStatus = settingStore.TICKET_CLINIC_DETAIL.procedure.paymentMoneyStatus
+
+    temp.expectedPrice = procedureProp.price
+    temp.discountMoney = 0
+    temp.discountPercent = 0
+    temp.discountType = DiscountType.Percent
+    temp.expectedPrice = procedureProp.price
+    temp.actualPrice = procedureProp.price
+    temp.quantity = 1
+    temp.startedAt = Date.now()
+
+    await ProcedureService.executeRelation([procedureProp], { discountList: true })
+    const discountApply = procedureProp?.discountApply
+    if (discountApply) {
+      let { discountType, discountPercent, discountMoney } = discountApply
+      const expectedPrice = temp.expectedPrice || 0
+      if (discountType === DiscountType.Percent) {
+        discountMoney = Math.round((expectedPrice * (discountPercent || 0)) / 100)
+      }
+      if (discountType === DiscountType.VND) {
+        discountPercent = expectedPrice == 0 ? 0 : Math.round((discountMoney * 100) / expectedPrice)
+      }
+      temp.discountType = discountType
+      temp.discountPercent = discountPercent
+      temp.discountMoney = discountMoney
+      temp.actualPrice = expectedPrice - discountMoney
+    }
+    ticketProcedureListRequest.value.push(temp)
+  } else {
+  }
+  procedureId.value = 0
 }
 
 defineExpose({ openModal })
@@ -961,6 +1025,68 @@ defineExpose({ openModal })
               </InputFilter>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div
+        class="px-4 mt-4"
+        v-if="settingStore.TICKET_CLINIC_CREATE.requestProcedure && !ticket.id"
+      >
+        <div class="font-bold">
+          <IconDoubleRight />
+          Yêu cầu dịch vụ ban đầu
+        </div>
+        <div>
+          <InputSearchProcedure
+            v-model:procedureId="procedureId"
+            @selectProcedure="selectProcedure"
+            removeLabelWrapper
+          />
+        </div>
+        <div class="table-wrapper mt-2">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th></th>
+                <th>Dịch vụ</th>
+                <th>SL</th>
+                <th>Giá</th>
+                <th>T.Tiền</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="ticketProcedureListRequest.length === 0">
+                <td colspan="20" class="text-center">Không có dịch vụ nào</td>
+              </tr>
+              <tr v-for="(tpItem, index) in ticketProcedureListRequest" :key="tpItem._localId">
+                <td style="text-align: center">{{ index + 1 }}</td>
+                <td>
+                  <PaymentMoneyStatusTooltip :paymentMoneyStatus="tpItem.paymentMoneyStatus" />
+                </td>
+                <td>{{ tpItem.procedure?.name }}</td>
+                <td class="text-center">{{ tpItem.quantity }}</td>
+                <td class="text-right">
+                  <div v-if="tpItem.discountMoney" class="text-xs italic text-red-500">
+                    <del>{{ formatMoney(tpItem.expectedPrice) }}</del>
+                  </div>
+                  <div>{{ formatMoney(tpItem.actualPrice) }}</div>
+                </td>
+                <td class="text-right">
+                  {{ formatMoney(tpItem.actualPrice * tpItem.quantity) }}
+                </td>
+                <td class="text-center">
+                  <div
+                    style="color: var(--text-red); cursor: pointer"
+                    @click="ticketProcedureListRequest.splice(index, 1)"
+                  >
+                    <IconDelete />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

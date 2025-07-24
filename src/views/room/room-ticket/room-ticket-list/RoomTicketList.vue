@@ -477,6 +477,7 @@ const handleModalTicketClinicListSettingSuccess = async () => {
                 ticket.customer?.yearOfBirth ||
                 ''
               }}
+              - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
             </td>
             <td v-if="settingStore.TICKET_CLINIC_LIST.phone" class="text-center">
               {{ formatPhone(ticket.customer?.phone) }}

@@ -15,6 +15,7 @@ export class TicketClinicService {
       const ticketResponse = await TicketService.detail(ticket.id, {
         relation: {
           customer: true,
+          imageList: true,
           ticketAttributeList: true,
           ticketProductConsumableList: {},
           ticketProductPrescriptionList: {},

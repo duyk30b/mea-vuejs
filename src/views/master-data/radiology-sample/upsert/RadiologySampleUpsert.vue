@@ -8,7 +8,7 @@ import { InputNumber, InputText } from '@/common/vue-form'
 import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import { MeService } from '@/modules/_me/me.service'
 import { Customer } from '@/modules/customer'
-import { Image, ImageHost } from '@/modules/image/image.model'
+import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PermissionId } from '@/modules/permission/permission.enum'
 import { PrintHtml, PrintHtmlAction, PrintHtmlCompile, PrintHtmlType } from '@/modules/print-html'
 import { Radiology } from '@/modules/radiology'
@@ -156,8 +156,8 @@ const updatePreview = async () => {
   ticketRadiology.customVariables = radiologySample.value.customVariables
   ticketRadiology.imageList = Array.from({ length: 4 }, (_, i) => {
     const image = Image.blank()
-    image.hostType = ImageHost.GoogleDriver
-    image.hostId = hostGoogleDriverIdExampleList[i]
+    image.hostType = ImageHostType.GoogleDriver
+    image.externalId = hostGoogleDriverIdExampleList[i]
     return image
   })
 
@@ -229,8 +229,8 @@ const startTestPrint = async () => {
     ticketRadiology.customVariables = radiologySample.value.customVariables
     ticketRadiology.imageList = Array.from({ length: 4 }, (_, i) => {
       const image = Image.blank()
-      image.hostType = ImageHost.GoogleDriver
-      image.hostId = hostGoogleDriverIdExampleList[i]
+      image.hostType = ImageHostType.GoogleDriver
+      image.externalId = hostGoogleDriverIdExampleList[i]
       return image
     })
 

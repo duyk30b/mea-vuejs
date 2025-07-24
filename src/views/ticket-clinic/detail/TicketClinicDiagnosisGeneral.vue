@@ -1,31 +1,30 @@
 <script lang="ts" setup>
+import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
+import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
+import { useSettingStore } from '@/modules/_me/setting.store'
+import { ICD, ICDService } from '@/modules/icd'
+import { ticketRoomRef } from '@/modules/room'
+import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
 import { computed, onMounted, ref, watch } from 'vue'
 import VueButton from '../../../common/VueButton.vue'
 import VueTinyMCE from '../../../common/VueTinyMCE.vue'
-import ImageUploadMultiple from '../../../common/image-upload/ImageUploadMultiple.vue'
-import { InputHint, InputOptions, InputOptionsText, InputText } from '../../../common/vue-form'
+import { InputOptions, InputOptionsText, InputText } from '../../../common/vue-form'
 import { MeService } from '../../../modules/_me/me.service'
 import { CustomerService } from '../../../modules/customer'
-import { ImageHost } from '../../../modules/image/image.model'
 import { PermissionId } from '../../../modules/permission/permission.enum'
 import {
   TicketAttributeKeyGeneralList,
   type TicketAttributeKeyGeneralType,
 } from '../../../modules/ticket-attribute'
-import { ESImage, ESString } from '../../../utils'
-import { useSettingStore } from '@/modules/_me/setting.store'
-import { ICD, ICDService } from '@/modules/icd'
-import type { ItemOption } from '@/common/vue-form/InputOptions.vue'
-import { ticketRoomRef } from '@/modules/room'
-import { TicketClinicApi } from '@/modules/ticket-clinic/ticket-clinic.api'
+import { ESImage } from '../../../utils'
 
 const inputOptionsICD = ref<InstanceType<typeof InputOptions>>()
 
-const { userPermission } = MeService
+const { userPermission, organization, user } = MeService
 const settingStore = useSettingStore()
 
 const note = ref<string>('')
-const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 
 const ticketAttributeOriginMap: { [P in TicketAttributeKeyGeneralType]?: any } = {}
 const ticketAttributeMap = ref<
@@ -106,10 +105,12 @@ const hasChangeData = computed(() => {
 const saveTicketDiagnosis = async () => {
   try {
     saveLoading.value = true
-    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
+    const imgData = imageUploadMultipleRef.value?.getData() || {
       filesPosition: [],
       imageIdsKeep: [],
       files: [],
+      imageUrls: [],
+      imageIdsWait: [],
     }
 
     let ticketAttributeChangeList = undefined
@@ -123,8 +124,13 @@ const saveTicketDiagnosis = async () => {
       TicketClinicApi.updateDiagnosis({
         ticketId: ticketRoomRef.value.id,
         note: note.value,
-        files,
-        imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+        imagesChange: hasChangeImage.value
+          ? {
+              files: imgData.files,
+              imageIdsWait: imgData.imageIdsWait,
+              externalUrlList: imgData.imageUrls,
+            }
+          : undefined,
         ticketAttributeChangeList,
         ticketAttributeKeyList: TicketAttributeKeyGeneralList as any,
       }),
@@ -258,18 +264,18 @@ defineExpose({ getDataTicketDiagnosis })
     <div class="mt-4"></div>
     <div class="mt-4">
       <div>Hình ảnh</div>
-      <ImageUploadMultiple
+      <ImageUploadCloudinary
         ref="imageUploadMultipleRef"
+        :oid="organization.id"
+        :customerId="ticketRoomRef.customerId"
         :editable="!!ticketRoomRef.id"
         :height="100"
         :rootImageList="
-          (ticketRoomRef?.imageList || [])
-            .filter((i) => i.hostType === ImageHost.GoogleDriver)
-            .map((i) => ({
-              thumbnail: ESImage.getImageLink(i, { size: 200 }),
-              enlarged: ESImage.getImageLink(i, { size: 1000 }),
-              id: i.id,
-            }))
+          (ticketRoomRef?.imageList || []).map((i) => ({
+            thumbnail: ESImage.getImageLink(i, { size: 200 }),
+            enlarged: ESImage.getImageLink(i, { size: 1000 }),
+            id: i.id,
+          }))
         "
         @changeImage="hasChangeImage = true"
       />

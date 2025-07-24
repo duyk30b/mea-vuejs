@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import IconRight from '@/common/icon-antd/IconRight.vue'
-import ImageUploadMultiple from '@/common/image-upload/ImageUploadMultiple.vue'
+import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
 import { AlertStore } from '@/common/vue-alert/vue-alert.store'
 import { InputDate, InputFilter } from '@/common/vue-form'
 import type { ItemOption } from '@/common/vue-form/InputOptionsValue.vue'
@@ -9,9 +8,10 @@ import { ModalStore } from '@/common/vue-modal/vue-modal.store'
 import VueButton from '@/common/VueButton.vue'
 import VueTinyMCE from '@/common/VueTinyMCE.vue'
 import { MeService } from '@/modules/_me/me.service'
-import { Image, ImageHost } from '@/modules/image/image.model'
+import { Image, ImageHostType } from '@/modules/image/image.model'
 import { PositionInteractType, PositionService } from '@/modules/position'
-import { PrintHtml, PrintHtmlService } from '@/modules/print-html'
+import { PrintHtml } from '@/modules/print-html'
+import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
 import { RadiologyService } from '@/modules/radiology'
 import { RadiologySample } from '@/modules/radiology-sample'
 import { RoleService } from '@/modules/role'
@@ -23,16 +23,11 @@ import {
 import { TicketUser } from '@/modules/ticket-user'
 import { User, UserService } from '@/modules/user'
 import { UserRoleService } from '@/modules/user-role'
-import { ESString } from '@/utils'
-import Breadcrumb from '@/views/component/Breadcrumb.vue'
+import { ESImage, ESString } from '@/utils'
 import InputSearchRadiologySample from '@/views/component/InputSearchRadiologySample.vue'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import ModalSaveRadiologySample from '../modal/ModalSaveRadiologySample.vue'
-import TicketRadiologyStatusTag from '../TicketRadiologyStatusTag.vue'
-import { PrintHtmlAction } from '@/modules/print-html/print-html.action'
-import InputSearchPrintHtml from '@/views/component/InputSearchPrintHtml.vue'
 import VueSelectPrintHtml from '@/views/component/VueSelectPrintHtml.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import ModalSaveRadiologySample from '../modal/ModalSaveRadiologySample.vue'
 
 const emit = defineEmits<{
   (e: 'updateResultSuccess', value: TicketRadiology): void
@@ -47,7 +42,7 @@ const props = withDefaults(
   { ticketRadiologyProp: () => TicketRadiology.blank(), editable: true },
 )
 
-const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
 const modalSaveRadiologySample = ref<InstanceType<typeof ModalSaveRadiologySample>>()
 
 const { userPermission, organization } = MeService
@@ -179,19 +174,22 @@ const updateResult = async (options: { print: boolean }) => {
     if (!ticketRadiology.value.startedAt) {
       ticketRadiology.value.startedAt = Date.now()
     }
-    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
-      filesPosition: [],
-      imageIdsKeep: [],
-      files: [],
-    }
+    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+      imageUploadMultipleRef.value?.getData() || {
+        filesPosition: [],
+        imageIdsWait: [],
+        imageIdsKeep: [],
+        files: [],
+        imageUrls: [],
+      }
 
     const ticketRadiologyUpdate = await TicketRadiologyApi.updateResult({
       ticketRadiologyId: ticketRadiology.value.id,
       ticketRadiology: ticketRadiology.value,
-      imageIdsKeep,
-      files,
-      filesPosition,
       ticketUserList: hasChangeTicketUserList.value ? ticketUserList.value : undefined,
+      imagesChange: hasChangeImageList.value
+        ? { files, imageIdsWait, externalUrlList: imageUrls }
+        : undefined,
       response: {
         ticketRadiology: options.print
           ? { ticket: true, customer: true, imageList: true, ticketUserList: true }
@@ -360,19 +358,19 @@ const startPrintDemo = async () => {
         </div>
         <div class="mt-3">
           <div>Hình ảnh</div>
-          <ImageUploadMultiple
+          <ImageUploadCloudinary
             ref="imageUploadMultipleRef"
             :height="100"
+            :oid="organization.id"
+            :customerId="ticketRadiology.customerId"
             :editable="editable"
             @changeImage="handleChangeImage"
             :rootImageList="
-              (ticketRadiology.imageList || [])
-                .filter((i: Image) => i.hostType === ImageHost.GoogleDriver)
-                .map((i: Image) => ({
-                  thumbnail: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w200`,
-                  enlarged: `https://drive.google.com/thumbnail?id=${i.hostId}&amp;sz=w1000`,
-                  id: i.id,
-                }))
+              (ticketRadiology.imageList || []).map((i: Image) => ({
+                thumbnail: ESImage.getImageLink(i, { size: 200 }),
+                enlarged: ESImage.getImageLink(i, { size: 1000 }),
+                id: i.id,
+              }))
             "
           />
         </div>

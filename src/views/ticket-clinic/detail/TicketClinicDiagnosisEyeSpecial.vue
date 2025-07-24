@@ -69,7 +69,6 @@ const saveTicketDiagnosis = async () => {
     await TicketClinicApi.updateDiagnosis({
       note: ticketRoomRef.value.note,
       ticketId: ticketRoomRef.value.id,
-      files: [],
       ticketAttributeChangeList,
       ticketAttributeKeyList: TicketAttributeKeyOptometryList as any,
     })

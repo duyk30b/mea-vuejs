@@ -35,21 +35,25 @@ export class MeApi {
   }
 
   static async updateInfo(options: {
-    files: File[]
     userInfo: { fullName: string; phone?: string; birthday?: number; gender?: number }
     imagesChange?: {
-      imageIdsKeep: number[]
-      filesPosition: number[]
+      files: File[]
+      imageIdsWait: number[]
+      externalUrlList: string[]
     }
   }) {
-    const { files, userInfo, imagesChange } = options
+    const { userInfo, imagesChange } = options
 
     const formData = new FormData()
-    files.forEach((file) => formData.append('files', file))
     formData.append('userInfo', JSON.stringify(userInfo))
 
     if (imagesChange) {
-      formData.append('imagesChange', JSON.stringify(imagesChange))
+      // imagesChange.files.forEach((file) => formData.append('files', file))
+      const imagesChangeStr = JSON.stringify({
+        imageIdsWait: imagesChange.imageIdsWait,
+        externalUrlList: imagesChange.externalUrlList,
+      })
+      formData.append('imagesChange', imagesChangeStr)
     }
 
     const response = await AxiosInstance.post('/me/update-info', formData, {

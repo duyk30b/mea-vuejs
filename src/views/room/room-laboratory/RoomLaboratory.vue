@@ -399,6 +399,15 @@ const startPrint = async (tlgProp: TicketLaboratoryGroup) => {
               <div class="text-xs italic">
                 {{ ESString.formatAddress(tlg.customer!) }}
               </div>
+              <div class="text-xs italic">
+                {{
+                  ESTimer.timeToText(tlg.customer?.birthday, 'DD/MM/YYYY') ||
+                  tlg.customer?.yearOfBirth ||
+                  ''
+                }}
+                -
+                {{ tlg.customer?.getAge ? tlg.customer?.getAge + ' Tuổi' : '' }}
+              </div>
             </td>
             <td class="">
               <div v-if="laboratoryGroupMap[tlg.laboratoryGroupId]?.name">

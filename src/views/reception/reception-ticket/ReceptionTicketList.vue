@@ -601,6 +601,7 @@ const startPrintAllItemAndMoney = async (options: { ticketId: number }) => {
                   ticket.customer?.yearOfBirth ||
                   ''
                 }}
+                - {{ ticket.customer?.getAge ? ticket.customer?.getAge + ' Tuổi' : '' }}
               </div>
               <div>
                 {{ formatPhone(ticket.customer?.phone) }}

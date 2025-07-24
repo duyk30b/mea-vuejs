@@ -113,6 +113,7 @@ const startFetchData = async (ticketId?: number) => {
         ticketRadiologyList: organizationPermission.value[PermissionId.RADIOLOGY] ? {} : undefined,
         ticketUserList: organizationPermission.value[PermissionId.POSITION] ? {} : false,
         toAppointment: organizationPermission.value[PermissionId.APPOINTMENT] ? true : false,
+        imageList: true,
       },
     })
     if (!ticketData.ticketProcedureList) ticketData.ticketProcedureList = []

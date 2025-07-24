@@ -4,6 +4,7 @@ import { MeService } from '../_me/me.service'
 import type { Customer } from '../customer'
 import type { Payment } from '../payment/payment.model'
 import type { Ticket } from '../ticket'
+import type { TicketLaboratory } from '../ticket-laboratory'
 import type { TicketLaboratoryGroup } from '../ticket-laboratory-group'
 import type { TicketRadiology } from '../ticket-radiology'
 import { PrintHtmlCompile } from './print-html.compiled'
@@ -140,8 +141,12 @@ export class PrintHtmlAction {
     }
   }
 
-  static async startPrintRequestTicketLaboratory(options: { ticket: Ticket; customer: Customer }) {
-    const { customer, ticket } = options
+  static async startPrintRequestTicketLaboratory(options: {
+    ticket: Ticket
+    customer: Customer
+    ticketLaboratoryList: TicketLaboratory[]
+  }) {
+    const { customer, ticket, ticketLaboratoryList } = options
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
@@ -164,6 +169,7 @@ export class PrintHtmlAction {
           me: user.value!,
           ticket,
           customer,
+          ticketLaboratoryList,
         },
         template: {
           _header: printHtmlHeader.html,
@@ -251,8 +257,12 @@ export class PrintHtmlAction {
     }
   }
 
-  static async startPrintRequestTicketRadiology(options: { ticket: Ticket; customer: Customer }) {
-    const { customer, ticket } = options
+  static async startPrintRequestTicketRadiology(options: {
+    ticket: Ticket
+    customer: Customer
+    ticketRadiologyList: TicketRadiology[]
+  }) {
+    const { customer, ticket, ticketRadiologyList } = options
     const { organization, user } = MeService
     try {
       const printHtmlHeader = await PrintHtmlAction.getPrintHtmlByType({
@@ -275,6 +285,7 @@ export class PrintHtmlAction {
           me: user.value!,
           ticket,
           customer,
+          ticketRadiologyList,
         },
         template: {
           _header: printHtmlHeader.html,

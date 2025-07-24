@@ -387,6 +387,17 @@ const startPrintResult = async (ticketRadiologySelect: TicketRadiology) => {
                 {{ ticketRadiology.customer?.note }}
               </div>
               <div class="text-xs italic">
+                {{
+                  ESTimer.timeToText(ticketRadiology.customer?.birthday, 'DD/MM/YYYY') ||
+                  ticketRadiology.customer?.yearOfBirth ||
+                  ''
+                }}
+                -
+                {{
+                  ticketRadiology.customer?.getAge ? ticketRadiology.customer?.getAge + ' Tuổi' : ''
+                }}
+              </div>
+              <div class="text-xs italic">
                 {{ ESString.formatAddress(ticketRadiology.customer!) }}
               </div>
             </td>

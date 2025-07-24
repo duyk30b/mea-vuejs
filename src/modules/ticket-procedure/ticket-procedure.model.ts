@@ -1,9 +1,10 @@
+import { BaseModel } from '../_base/base.model'
 import { Customer } from '../customer'
 import { PaymentMoneyStatus, type DiscountType } from '../enum'
 import { Procedure } from '../procedure'
 import { Ticket } from '../ticket/ticket.model'
 
-export class TicketProcedure {
+export class TicketProcedure extends BaseModel {
   id: number
   priority: number
   ticketId: number
@@ -26,6 +27,7 @@ export class TicketProcedure {
 
   static init(): TicketProcedure {
     const ins = new TicketProcedure()
+    ins._localId = Math.random()
     ins.id = 0
     ins.procedureId = 0
     ins.quantity = 0
@@ -50,6 +52,7 @@ export class TicketProcedure {
       if (value === undefined) delete target[key as keyof typeof target]
     })
     Object.assign(target, source)
+    target._localId = source.id || source._localId || Math.random()
     return target
   }
 

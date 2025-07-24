@@ -1,15 +1,15 @@
-import { ImageHost } from '../../modules/image/image.model'
+import { Image, ImageHostType } from '../../modules/image/image.model'
 
 export class ESImage {
-  static getImageLink = (
-    data?: { hostId: string; hostType: ImageHost },
-    options?: { size: number }
-  ) => {
+  static getImageLink = (data?: Image, options?: { size: number }) => {
     if (!data || !options) return ''
-    if (data.hostType === ImageHost.GoogleDriver) {
-      return `https://drive.google.com/thumbnail?id=${data.hostId}&sz=w${options.size}`
+    if (data.hostType === ImageHostType.GoogleDriver) {
+      return `https://drive.google.com/thumbnail?id=${data.externalId}&sz=w${options.size}`
+    }
+    if (data.hostType === ImageHostType.Cloudinary) {
+      return data.externalUrl
     } else {
-      return `https://drive.google.com/thumbnail?id=${data.hostId}&sz=w${options.size}`
+      return `https://drive.google.com/thumbnail?id=${data.externalId}&sz=w${options.size}`
     }
   }
 }

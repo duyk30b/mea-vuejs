@@ -1,20 +1,21 @@
 <script setup lang="ts">
+import ImageUploadCloudinary from '@/common/image-upload/ImageUploadCloudinary.vue'
+import { ESImage } from '@/utils'
 import { computed, onBeforeMount, ref } from 'vue'
 import VueButton from '../../common/VueButton.vue'
 import { IconSetting } from '../../common/icon-antd'
 import { AlertStore } from '../../common/vue-alert/vue-alert.store'
 import { InputDate, InputRadio, InputText } from '../../common/vue-form'
 import { MeApi } from '../../modules/_me/me.api'
+import { MeService } from '../../modules/_me/me.service'
 import { useSettingStore } from '../../modules/_me/setting.store'
 import { User } from '../../modules/user'
 import ModalChangePassword from './modal/ModalChangePassword.vue'
-import { MeService } from '../../modules/_me/me.service'
-import { ESImage } from '@/utils'
-import { ImageHost } from '@/modules/image/image.model'
-import ImageUploadMultiple from '@/common/image-upload/ImageUploadMultiple.vue'
 
 const modalChangePassword = ref<InstanceType<typeof ModalChangePassword>>()
-const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadMultiple>>()
+const imageUploadMultipleRef = ref<InstanceType<typeof ImageUploadCloudinary>>()
+
+const { userPermission, organization } = MeService
 
 const settingStore = useSettingStore()
 const { isMobile } = settingStore
@@ -31,15 +32,19 @@ const saveUser = async () => {
   try {
     saveLoading.value = true
 
-    const { filesPosition, imageIdsKeep, files } = imageUploadMultipleRef.value?.getData() || {
-      filesPosition: [],
-      imageIdsKeep: [],
-      files: [],
-    }
+    const { filesPosition, imageIdsKeep, files, imageUrls, imageIdsWait } =
+      imageUploadMultipleRef.value?.getData() || {
+        filesPosition: [],
+        imageIdsKeep: [],
+        files: [],
+        imageUrls: [],
+        imageIdsWait: [],
+      }
 
     const userModified = await MeApi.updateInfo({
-      files,
-      imagesChange: hasChangeImage.value ? { imageIdsKeep, filesPosition } : undefined,
+      imagesChange: hasChangeImage.value
+        ? { files, imageIdsWait, externalUrlList: imageUrls }
+        : undefined,
       userInfo: {
         fullName: user.value.fullName,
         birthday: user.value.birthday,
@@ -131,17 +136,17 @@ const handleChangeData = computed(() => {
 
       <div class="mt-3">
         <div>Hình ảnh</div>
-        <ImageUploadMultiple
+        <ImageUploadCloudinary
           ref="imageUploadMultipleRef"
+          :oid="organization.id"
+          :customerId="user.id"
           :height="100"
           :rootImageList="
-            (user?.imageList || [])
-              .filter((i) => i.hostType === ImageHost.GoogleDriver)
-              .map((i) => ({
-                thumbnail: ESImage.getImageLink(i, { size: 200 }),
-                enlarged: ESImage.getImageLink(i, { size: 1000 }),
-                id: i.id,
-              }))
+            (user?.imageList || []).map((i) => ({
+              thumbnail: ESImage.getImageLink(i, { size: 200 }),
+              enlarged: ESImage.getImageLink(i, { size: 1000 }),
+              id: i.id,
+            }))
           "
           @changeImage="hasChangeImage = true"
         />
